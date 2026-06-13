@@ -1,0 +1,1423 @@
+
+SINGAPORE
+HOME COOKS
+Product Concept & Comprehensive Scope of Development
+Version 11.0 — Final  |  June 2026  |  Confidential
+Connecting Singapore's home cooks and bakers with customers seeking authentic, personal, home-made food — one dish at a time. A two-sided technology marketplace built on trust, transparency, community, and smart automation.
+
+Prepared by: [Founder Name]  |  Contact: [email]  |  [mobile]
+Website: singaporehomecooks.sg
+
+1. Executive Summary
+Singapore Home Cooks is a two-sided digital marketplace connecting verified, SFA-registered home cooks and bakers with customers across Singapore seeking authentic, home-made food. Positioned around planned occasion orders — birthdays, festive gatherings, family spreads, and corporate events — the platform solves 12 identified pain points that home cooks face today using WhatsApp, Instagram, and Carousell.
+
+Item
+Detail
+Platform name
+Singapore Home Cooks
+Website
+singaporehomecooks.sg
+Legal identity
+Technology platform — not a food operator
+Primary focus
+Planned occasion orders: birthdays, festive, corporate, family gatherings
+Cook segments
+Home meal cooks, home bakers, retired and heritage cooks
+Revenue model
+Tiered commission 12–20% by order value; minimum S$2.00 per order
+Payment model
+Direct PayNow collection; weekly cook payouts; no gateway at launch
+Accounting
+Double-entry native ledger; three-tier dashboard; Xero separate for statutory accounts
+Target launch
+Q4 2026 (following validation phase)
+Estimated startup cost
+S$16,000 – S$27,000 (includes legal, insurance, translation, India assistant, accountant setup)
+Platform languages
+English + Mandarin (launch); Malay (Month 3); Tamil (evaluate Month 6)
+Legal documents
+English only — legally binding. Plain-language summary in Mandarin/Malay.
+Key differentiators
+Occasion-first identity, 12 cook pain points solved, ingredient transparency + AI descriptions, cook collaboration, YouTube recipe bidding, behavioural personalisation, AI calorie estimation, Home Credits loyalty, sophisticated double-entry accounting
+
+2. Problem, Cook Pain Points & Market Opportunity
+2.1 The Problem — Supply Side (Home Cooks)
+12 specific pain points identified from the current reality of home cooks selling via WhatsApp, Instagram, and Carousell:
+
+Pain Point
+Current Reality — Why Cooks Struggle
+1. Discovery & reach
+Known to ~50 people. No mechanism to reach thousands who would pay.
+2. Order management chaos
+Multiple WhatsApp threads. Messages buried. Portions miscounted. Admin overwhelming.
+3. Payment collection
+Chasing payments is awkward. Reconciling paid vs unpaid is tedious.
+4. Underpricing & anxiety
+No pricing framework. Compares to hawker prices. Fears charging too much.
+5. No professional credibility
+Looks identical on Instagram to someone who started last month.
+6. Inconsistent demand
+Overwhelmed before Hari Raya, nothing after. No demand visibility.
+7. Capacity limits
+Cannot fulfil large orders or full occasion spreads. Works alone only.
+8. No feedback loop
+Doesn't know why customers don't reorder. Cannot improve systematically.
+9. Poor food photography
+Phone photos under kitchen lighting don't do food justice.
+10. Language barriers
+Older cooks comfortable in Mandarin/Malay face English platform friction.
+11. Seasonal burnout
+Takes on too many orders before festive peaks. Quality suffers.
+12. No legacy plan
+Decades of recipe knowledge with no permanent home or broader audience.
+
+2.2 The Problem — Demand Side (Customers)
+	•	No reliable discovery for home-cooked occasion food beyond personal networks.
+	•	No trust signals — buying from an anonymous Instagram page carries real risk.
+	•	No way to request specific dishes, heritage recipes, or YouTube-inspired dishes.
+	•	No nutritional visibility — home-cooked food is a complete calorie blind spot.
+	•	No personalisation or allergy protection — no platform learns preferences or warns about dietary risks.
+
+2.3 Market Opportunity
+	•	Singapore: ~6M people, ~1.5M households. ~10% host a food gathering each weekend = 150,000 weekly food occasions.
+	•	At 1% platform penetration and S$100 AOV (occasion-focused): 1,500 orders/week, S$7.8M annual GMV, S$1.56M platform revenue.
+	•	Self-collect works naturally for planned occasion orders — customers already collect birthday cakes, festive spreads, and catering orders in Singapore.
+	•	Lalamove and delivery options viable only above S$80 order value — exactly the platform's primary focus.
+GrabFood owns daily food delivery convenience. Nobody owns occasion food discovery in Singapore. That gap is wide open.
+
+3. Legal Identity — Technology Platform
+CRITICAL FOUNDATION: Platform is unambiguously a TECHNOLOGY PLATFORM — not a food operator. Core statement in all documents and marketing: 'Singapore Home Cooks connects independent, SFA-registered home-based food businesses with customers. We do not cook food, we do not operate kitchens, we do not employ cooks, and we do not control food preparation standards.'
+
+Feature
+Incorrect (Operator) Language
+Correct (Platform) Language
+Why
+WSQ cert sponsorship
+We ensure food safety standards
+We help cooks access required certification as a joining benefit
+Operator vs partner language
+New Cook Guarantee
+Quality guarantee on food
+Platform goodwill credit for customer satisfaction — not a food quality warranty
+Warranty implies operator responsibility
+Kitchen Verified
+Platform certification of kitchen standards
+Cook voluntarily showed workspace on an introduction call
+Certification implies inspection
+Allergen alert
+Platform manages food safety
+Platform surfaces information the cook declared — customer verifies
+Management implies operator role
+Performance training
+Platform enforces quality standards
+Platform provides tools to help cooks grow — SFA compliance is cook's responsibility
+Enforcement implies control
+Cook Collaboration
+Platform directs food production
+Platform provides a communication board — cooks organise voluntarily
+Direction implies operational control
+
+Legal Requirements Before Launch
+	•	Food law specialist formal opinion: S$2,000–3,000. Question: does platform's active role in cook vetting affect classification under Singapore food regulations?
+	•	MAS Payment Services Act confirmation: collecting PayNow and disbursing weekly — confirm no licence required. Document in writing before first transaction.
+	•	Cook Agreement, Customer Terms, Privacy Policy: drafted in English only. Plain-language summary in Mandarin/Malay.
+	•	Product liability + public liability insurance: in force before first customer transaction. See Section 17.
+Legal budget revised to S$4,000–6,000: S$2,000–3,000 food law specialist + S$800–1,200 legal documents + S$300–500 review. Previous S$300–800 was materially insufficient.
+
+4. Competitive Landscape & Platform Moats
+4.1 No Direct Competitor — Replacing Informal Behaviours
+Channel
+Assessment
+Dhaba Khana Kilo Se
+Single-vendor website. Not a marketplace. Proves demand exists.
+Facebook pages
+Digital flyers. No ordering, payment, or reviews.
+Carousell
+Classifieds adapted for food — not designed for it.
+WhatsApp + word of mouth
+Dominant channel. Most cooks invisible beyond immediate social circle.
+Instagram
+Better discovery but no ordering, payment, or allergen information.
+
+4.2 Three Platform Moats
+	•	Community loyalty (deliberate): Founding Cook programme, recognition tiers, Academy. Must be built aggressively in Year 1.
+	•	Cook data and reputation (automatic): ratings, order history, repeat customers do not transfer to a competitor. Builds with every transaction.
+	•	Singapore food database (automatic): 500–1,000 ingredient profiles, AI descriptions, calorie estimates after 12 months. Cannot be replicated overnight.
+	•	Trademark filed immediately. Domains registered immediately.
+
+5. Platform Concept — Value Propositions
+5.1 For Home Cooks — 12 Pain Points Solved
+Pain Point
+Platform Solution
+1. Discovery
+Island-wide listings + SEO-indexed individual URLs for every cook and listing
+2. Order management
+Automated order system — no more WhatsApp threads
+3. Payment collection
+PayNow collected by platform, weekly automated payouts
+4. Underpricing
+Real-time earnings display + anonymous peer pricing benchmarks
+5. No credibility
+SFA badge, ratings, Cook Since date, recognition tiers, 'My Story' biography
+6. Inconsistent demand
+Seasonal demand calendar + 'Unmet demand near you' dashboard widget
+7. Capacity limits
+Cook Collaboration Board, Cook Collective Listing, group order mode
+8. No feedback loop
+Automated ratings + post-order micro-survey (every 3rd repeat order)
+9. Poor photography
+AI photo quality assessment at point of upload — 3 actionable tips instantly
+10. Language barriers
+Mandarin at launch, Malay Month 3, AI descriptions in any language
+11. Seasonal burnout
+Peak Season Capacity Planner + burnout warning notification
+12. No legacy
+Heritage Recipe Archive + Cook Spotlight + permanent public profile
+
+5.2 For Customers
+	•	Authentic home-made food for occasions — the perfect cook for birthdays, Hari Raya, CNY, Deepavali, family gatherings, corporate events.
+	•	Complete occasion packages — Cook Collective listings from multiple specialists.
+	•	Full ingredient transparency plus AI dish descriptions.
+	•	Multiple discovery modes: occasion browse, dish name search, contextual meal search, YouTube recipe request.
+	•	Allergy safety alert: 'Hold on — this dish contains peanuts. Your profile indicates a nut allergy.' Potentially life-saving.
+	•	AI calorie estimates with confidence indicators and health filters.
+	•	Home Credits loyalty programme — earn on every order, redeem against future orders.
+	•	Clear receipts with order and receipt numbers. Corporate tax invoices auto-generated.
+	•	Tiered Occasion Guarantee: orders above S$150 receive a proportional refund (up to 50% capped at S$100) for verified objective failures — not just a token credit.
+	•	Customer cancellation policy: 72+ hours before collection = full refund. 24–72 hours = 50% refund. Under 24 hours = no refund.
+	•	First-time collection guide: warm, practical two-screen guide shown on first order explaining what to expect at collection.
+	•	Platform social proof: live homepage counters showing home cooks, meals served, and planning areas covered — real numbers, updated continuously.
+
+6. Key Platform Features
+6.1 Four Discovery Modes
+Browse & Filter
+Occasion-first homepage. Filters: cuisine, availability, dietary, category, occasion type, calorie range, health profile, verified status. Customer dietary preferences auto-applied.
+
+Dish Name Search
+Fuzzy search with Singapore food vocabulary synonym map (100+ pairs). 'No results' converts to recipe request — never a dead end.
+
+Contextual Meal Search
+'Thai food for 2 people, budget S$50, under 500 calories per person' — assembles complete meal packages from available cooks. Natural language AI layer (Claude API) on structured search foundation.
+
+Recipe Request & Bidding with YouTube
+Customer posts request + optional YouTube URL. Cooks bid with price, timeline, mandatory Cook's Note. 'Cook's Interpretation' framing. Supports recurring requests.
+
+6.2 Cook Collaboration — Large Order Fulfilment
+	•	Cook Collaboration Board (Phase 3): private board for cooks to post large order opportunities. Partner cooks respond. Lead Cook coordinates. Customer sees one cook, pays once, collects once.
+	•	Cook Collective Listing (Phase 3): proactive joint listing — 'Complete Hari Raya Spread' from three specialists. Single price, one collection.
+	•	Phase 1–2: India assistant manual matchmaking + 'Large Order Request' flag on recipe requests.
+	•	Lead Cook bears full accountability. Partners are sub-contractors to Lead Cook, not to platform.
+
+6.3 Ingredient Disclosure — Three Tiers
+	•	Tier 1 — Ingredients Only (mandatory for all cooks): structured entry with ingredient dropdowns, quantities, units. AI auto-generates professional dish description. Cook reviews and approves. Allergen declaration auto-populated.
+	•	Tier 2 — Technique Notes (optional): brief cooking approach without revealing full method.
+	•	Tier 3 — Full Recipe (optional, rewarded): complete ingredients and method. 'Full Recipe Shared' badge + search ranking boost.
+
+6.4 Flexible & Dynamic Pricing
+	•	Festive demand-based pricing: cook-controlled manual adjustment. Platform sends demand alerts 6 weeks before each occasion. No algorithmic surge.
+	•	Last-minute premium: cook sets premium % for orders within configurable window. Transparently displayed: 'Pre-order: S$12.00 / Order now (last-minute): S$13.80 (+15%)'
+	•	Occasion & event listings: separate listing type for birthday packages, festive spreads, corporate events.
+	•	Real-time earnings display on ALL pricing forms: 'Your price: S$120 → Fee (15%): S$18 → You receive: S$102'
+
+6.5 Smart Personalisation Engine
+	•	Behavioural profiling only — no registration questionnaire. Profile from orders, searches, filters, reviews.
+	•	Allergy safety alert (HIGHEST PRIORITY): mandatory confirmation when customer's allergen profile matches dish allergens. One exception: optional allergy field in Account Settings.
+	•	Seven notification use cases: allergy alert, dietary consistency, dish recommendations, re-order reminders, occasion memory (opt-in), calorie awareness nudge, new cook in area.
+	•	Unmet demand mining: failed searches converted to cook recruitment intelligence.
+
+6.6 AI Calorie & Nutritional Estimation
+	•	Auto-generated from ingredient list — no extra cook effort. Green badge: full calculation (5+ ingredients). Amber badge: category estimate.
+	•	Traffic light: green under 400 cal, amber 400–600, red over 600. Macronutrient proportion visual.
+	•	Calorie filters in search and contextual meal search. HPB partnership opportunity at Month 6+.
+
+6.7 SFA Registration — Frictionless Onboarding
+	•	Requirement stays mandatory (removes it collapses legal protection). Experience redesigned to feel easy and guided.
+	•	Five-stage journey: (1) Warm welcome — cook signs up, builds profile immediately. (2) Step-by-step GoBusiness guide built into platform. (3) Pending state — not blocked — profile complete, listings drafted. (4) WSQ course — platform pays, SkillsFuture credits highlighted. (5) Go-live celebration — animated congratulations.
+	•	Positioning: 'We walk you through your official registration — 20 minutes. We pay for your food safety certification. You just cook.'
+
+6.8 Heritage Recipe Archive
+	•	Structured permanent section of cook's profile for formally documenting complete recipes with story, family history, photos.
+	•	Published permanently regardless of whether cook is still active.
+	•	Aggregate becomes Singapore Home Cooks Heritage Recipe Library.
+	•	Potential NLB/NHB partnership at Month 12+ for Singapore food heritage preservation.
+
+7. Customer Trust Architecture — Five Layers
+Layer
+Detail
+1. Video content
+30-sec dish video or 60-sec cook intro. AI photo quality assessment at upload (3 actionable tips). 'Has video' filter.
+2. Tasting portions
+S$3–5 half/quarter portion. Platform subsidises for new cooks. Real transaction generates real review.
+3. New Cook Guarantee
+First 10 orders: full platform credit if dissatisfied. Risk borne by platform. Auto-expires.
+4. Kitchen Verified badge
+Optional 10-min video call. Badge on profile. Platform facilitates — does NOT certify food safety.
+5. Cook Since date
+'Cooking since 1987' — zero cost, powerful signal.
+
+Address Privacy & Collection
+Stage
+Customer Sees
+Rationale
+Browsing
+General area only — e.g. 'Tampines'
+Not exposed to anonymous browsers
+After payment
+Full address auto-released
+Only to verified paying customer
+Optional setting
+Delay to 2 hours before collection
+Personal security, off by default
+
+	•	In-app masked order chat. No personal number exchange. History retained for disputes.
+	•	Lalamove deep-link button on orders above S$80. No API needed at Phase 1.
+
+8. Food Safety, Hygiene & Legal Disclaimer
+DRAFT DISCLAIMER — food law specialist review required: 'Food on Singapore Home Cooks is prepared by independent home-based cooks in private kitchens. Singapore Home Cooks is a technology platform. We are not a food operator, we do not prepare food, and we do not inspect cooking premises. All cooks hold valid SFA registration and WSQ Food Safety certification, but preparation standards vary and are not controlled by Singapore Home Cooks. By ordering, you acknowledge you are purchasing from an independent home cook and that Singapore Home Cooks bears no liability for food quality, allergen content, food safety outcomes, or any illness, injury, or damage.'
+
+Allergen Disclosure — Mandatory Field
+	•	Required: nuts/peanuts, shellfish/seafood, dairy, gluten/wheat, eggs, soy, halal/non-halal, 'may contain'. Displayed ABOVE order button.
+	•	False allergen information = immediate permanent removal. In Cook Agreement explicitly.
+
+Operational Standards
+	•	WSQ Level 1 mandatory. Platform sponsors S$30. Recovery clause if cook earns less than S$150 in 6 months.
+	•	Hygiene Guide, Cook Hygiene Declaration (signed and timestamped), self-certification model.
+	•	Proactive quality check-in: India assistant contacts every cook at 50-order milestones.
+
+Crisis Protocol
+Situation
+Immediate
+Follow-up
+Resolution
+Single illness report
+Cook listings paused. Cook contacted.
+Investigate.
+Reinstate or suspend based on evidence.
+Multiple illness reports
+Account suspended. SFA notified.
+Full SFA cooperation.
+Permanent removal if confirmed.
+Confirmed incident
+Permanent removal.
+Review procedures.
+Compensate customers.
+Foreign object (photo)
+Platform credit. Cook notified.
+Hygiene reminder.
+Second incident = formal review.
+
+9. Platform Policies
+9.1 Tiered Occasion Guarantee — Replacing New Cook Guarantee
+Following four-perspective critical analysis, the New Cook Guarantee (flat S$10–15 credit for first 10 orders) is replaced by a Tiered Occasion Guarantee proportional to order value. This is legally cleaner (not a quality warranty — a goodwill commitment for objective failures) and more meaningful for high-value occasion orders.
+
+Order Value
+Guarantee for Verified Objective Failures
+Under S$150
+Platform credit S$10–15. Funded from platform commission. Cook earnings never reduced.
+S$150 and above
+Refund up to 50% of order value, capped at S$100. Funded from Guarantee Reserve (0.5% of high-value order GMV set aside monthly).
+
+	•	Qualifying objective failures (both tiers): food not delivered at all, completely wrong dish delivered, verified food safety issue. Photo evidence required within 2 hours of collection. Subjective dissatisfaction never qualifies.
+	•	Cook earnings are NEVER reduced by any guarantee payment. Guarantee funded entirely from platform commission revenue and the Guarantee Reserve. This is explicit in the Cook Agreement in English and Mandarin.
+	•	New Cook badge: retained for cooks with fewer than 10 completed orders as a transparency indicator. Not the guarantee mechanism — the tiered guarantee applies to all cooks.
+	•	Guarantee Reserve: 0.5% of GMV from orders above S$150, set aside monthly. Balance shown in CEO dashboard as Guarantee Reserve Liability (Account 2005). Insurer informed and coverage confirmed.
+
+9.2 Minimum Order Value
+S$50 minimum order value across the board. Single threshold — no tiered approach. Stored in platform_config (minimum_order_value: 50) — fully adjustable by CEO via admin interface without any code change.
+	•	Applies to all standard listings and order types. Enforced at checkout — if order total falls below S$50, customer sees: 'Minimum order is S$50. Please add more portions or select a different listing.'
+	•	Tasting portions (maximum S$8) are exempt — flagged as tasting_portion: true in database, minimum order check bypassed.
+	•	Commission tier impact: with S$50 minimum, effective tiers are S$50–S$80 at 18%, S$81–S$150 at 15%, above S$150 at 12%. The 20% tier (up to S$30) is dormant at standard minimum.
+	•	Adjustable examples: raise to S$80 during CNY/Hari Raya peak. Drop to S$30 for promotional campaigns. All via platform_config admin panel, zero developer involvement.
+
+9.3 Customer Cancellation Policy
+Completely absent from previous versions — identified as a critical gap. Now added in full, aligned with standard Singapore catering industry practice.
+
+Notice Before Collection
+Customer Refund
+72+ hours
+100% refund — full amount
+24–72 hours
+50% refund
+Under 24 hours
+No refund
+Corporate accounts
+100% refund with 5 business days notice
+
+	•	Cancellation button available in customer order detail up to 24 hours before collection. Under 24 hours: contact support.
+	•	Refund (where applicable) issued as PayNow reversal within 24 hours of cancellation.
+	•	Cook notified immediately on customer cancellation. Customer cancellation does NOT count against cook performance record.
+	•	Cook receives goodwill payment on 50% cancellations: cook receives 50% of their expected net earnings, funded from platform commission. Cook is not penalised for customer-initiated cancellations.
+
+9.3 Dispute & Refund
+	•	No cash refunds on collected food. Photo evidence required within 2 hours for any claim. Subjective complaints not grounds for any refund or credit. Platform decision final.
+	•	Cook earnings not clawed back unless fraud confirmed. Credits and guarantees funded entirely from platform commission and Guarantee Reserve.
+
+9.4 Cook Capacity & Fulfilment
+Strike
+Notice
+Cook Consequence
+Customer Remedy
+1st cancellation
+Any
+Automated warning.
+Full refund + S$5 credit.
+2nd within 90 days
+Any
+48-hour suspension.
+Full refund + S$5 credit.
+3rd within 90 days
+Any
+Account review.
+Full refund + S$5 credit.
+Same-day last-minute
+Under 4 hours
+Weighted heavily.
+Full refund + S$8 credit.
+
+9.5 Cook Recognition & Commission
+Tier
+Requirements
+Key Benefit
+Commission
+Home Cook
+Registered + SFA + WSQ
+Listing, analytics, demand calendar
+20% (up to S$30 orders)
+Trusted Cook
+20+ orders, 4.5+ rating
+Badge, priority search
+20% (priority benefit)
+Star Cook
+100+ orders, 4.8+ rating
+Star badge, homepage, Cook Spotlight
+15% all orders
+Master Cook
+500+ orders, 4.9+ rating
+Master badge, Academy contributor
+12% all orders
+
+	•	Founding Cook (first 50): permanent badge, 12% locked for life, consulted on product decisions.
+	•	Commission rule: lower of order value tier or recognition tier always in cook's favour. Minimum S$2.00 floor.
+
+9.6 Cook Data Portability on Platform Closure
+Added following home cook perspective analysis: If Singapore Home Cooks ceases operations permanently, the platform will: (1) provide written notice to all cooks at least 90 days before cessation; (2) within that 90-day period, provide each cook with a complete data export including: complete order history (CSV), all reviews received (CSV and PDF), complete earnings records including all payout statements (CSV and PDF), all listing content including descriptions and photos (ZIP). This commitment is binding and survives any change of ownership or platform restructuring.
+
+9.7 Cook Governance — Training First
+Situation
+Action
+Tone
+Module
+Escalation
+Rating below 4.0
+Automated personalised training invitation. Invitation shows specific orders that received lower ratings.
+Warm
+Diagnostic-based
+None
+Below 4.0 after training
+Second module + 15-min founder call
+Collaborative
+Second module
+Flag
+Below 3.5 after 2nd
+Account review
+Compassionate
+N/A
+Founder
+Single rude complaint
+Soft note + invitation
+Gentle
+Customer Interaction
+None
+3+ same-type complaints
+Mandatory module + call
+Firm
+Relevant
+Flag
+
+Per-order rating visibility: cook dashboard shows each order's individual star rating, review text, and date — not just aggregate score. Training invitations include links to specific low-rated orders so cooks can understand and address the exact problem.
+
+10. Singapore Home Cooks Academy
+10.1 Demand Intelligence
+	•	Monthly 'What's Trending' digest. Seasonal demand calendar: 6-week festive alerts for every Singapore occasion, pre-programmed annually.
+	•	'Unmet demand near you' widget: specific dishes customers searched in cook's area with no matching listings. Updated weekly. More actionable than generic alerts.
+
+10.2 Business Tools
+	•	Pricing Calculator with anonymous peer benchmarks: 'Other Malay occasion cooks in your area charge S$12–18 per portion.'
+	•	Order Analytics Dashboard: views, conversion, best dishes, best days, repeat customer rate.
+	•	AI Dish Description Generator: ingredients in → professional description out. In any language.
+	•	AI Photo Quality Assessment: 3 specific actionable tips at point of upload.
+	•	Interactive First-Listing Wizard: cook provides ingredients, photo, price. Platform generates everything else.
+	•	Peak Season Capacity Planner: 6 weeks before each occasion — capacity planning tool with optional auto-cap.
+	•	Nutrition Awareness Module: calorie profiles of own dishes, lighter variant development.
+
+10.3 Community & Recognition
+	•	Cook Community: Facebook Group initially, in-app community from Phase 3.
+	•	Monthly Cook Spotlight: earnings stories in Academy/community (separate from customer-facing Recipe Story).
+	•	Heritage Recipe Archive: permanent documentation of complete recipes with family history.
+	•	Supplier Partnerships (Phase 4): negotiated bulk discounts with Phoon Huat, Sia Huat.
+
+11. Comprehensive Accounting System
+11.1 Architecture — No Compromises
+Double-entry accounting engine built natively into platform. Every financial event generates balanced ledger entries. Every entry is immutable — corrections via reversing entries only. Xero kept SEPARATE as statutory accounts tool. Weekly structured export from platform to Xero — no live API integration.
+
+11.2 Double-Entry Transaction Examples
+Transaction
+Ledger Entries
+Customer pays S$120
+DR Cash S$120 / CR Cook Earnings Payable S$102 / CR Commission Revenue S$18
+Cook payout S$102
+DR Cook Earnings Payable S$102 / CR Cash S$102
+Platform issues S$15 credit
+DR Customer Credits Expense S$15 / CR Customer Credits Liability S$15
+Customer redeems S$10 credits
+DR Customer Credits Liability S$10 / CR Commission Revenue (reduction) S$10
+Credit expires
+DR Customer Credits Liability S$10 / CR Expired Credits Income S$10
+Cert sponsorship S$30
+DR Cook Acquisition Cost S$30 / CR Cash S$30
+
+11.3 Chart of Accounts (Key Accounts)
+Code
+Account
+Type
+1001
+Cash — Business Bank Account
+Asset
+1002
+PayNow Receipts Pending
+Asset (clears 30 min)
+2001
+Cook Earnings Payable
+Liability
+2002
+Customer Credits Liability
+Liability
+2003
+GST Payable
+Liability
+3001
+Platform Commission — Standard
+Revenue
+3002
+Platform Commission — Reduced
+Revenue
+3003
+Platform Commission — Founding Cook
+Revenue
+3004
+Expired Credits Income
+Revenue
+4001
+Cook Acquisition Cost
+Expense
+4002
+Customer Credits Issued
+Expense
+4005
+India Assistant Cost
+Expense
+4006
+Technology Infrastructure
+Expense
+4008
+Insurance
+Expense
+4009
+Legal and Professional Fees
+Expense
+4010
+Marketing and Advertising
+Expense
+
+11.4 Financial Reports — Produced Natively
+	•	Income Statement (P&L): any period — day, week, month, quarter, year, custom range.
+	•	Balance Sheet: assets minus liabilities = equity. Shows Cook Earnings Payable liability critically.
+	•	Revenue Waterfall: GMV → commission → less credits → net revenue.
+	•	Cook Earnings Payable Report: by cook, amount, age in days.
+	•	Commission Analysis: revenue by tier showing recognition programme impact.
+	•	Customer Lifetime Value and Cook Lifetime Revenue reports.
+	•	GST Readiness Report: running total, threshold proximity, projected crossing date.
+	•	IRAS Export Package: annual income/expense statement + quarterly GST tracking. PDF and CSV.
+
+11.5 Reconciliation Engine — Before Every Payout
+Every Monday before payouts execute: automatic three-way reconciliation — (1) platform ledger Cook Earnings Payable, (2) sum of individual cook payout records, (3) actual bank account balance. If these three do not agree within S$0.01 → PAYOUT HALTED → India assistant alerted → No money moves until explained and corrected.
+
+11.6 Audit Trail
+	•	Every ledger entry: timestamp to millisecond, user/system that created it, order number trigger, full debit/credit details. Immutable — no edits ever. Complete traceability from any figure to originating transaction.
+
+11B. Comprehensive Receipt Architecture
+Three distinct document types serve three distinct audiences. All transparent about the commission split. All legally structured for Singapore requirements. All exportable as PDF. Generated on demand — never pre-stored.
+
+11B.1 Document Numbering — Corrected Design
+Order numbers and receipt numbers use SEPARATE sequential counters. This ensures no gaps in the receipt sequence — a clean requirement for IRAS and any future audit.
+Document
+Format and Trigger
+Order number
+SHC-YYYY-MM-NNNNN — issued on order placement (whether or not payment follows)
+Receipt number
+RCP-YYYY-NNNNN — issued ONLY on confirmed payment. Annual counter, resets 1 January. No gaps in sequence.
+Corporate invoice number
+INV-YYYY-NNNNN — same counter as receipt, different prefix
+Credit note
+CN-YYYY-NNNNN — issued when refund or credit applied. Original receipt never modified.
+Payout reference
+PAY-YYYY-WNN-[CookID] — issued Monday per cook payout
+
+11B.2 Commission Transparency Decision
+Customer pays the listed price. Commission is deducted from the cook's share — not added on top. Receipt shows the split transparently: 'Amount to [Cook Name]: S$19.68 / Platform service fee (18%): S$4.32 / Total charged: S$24.00'. Transparency about the commission builds trust. Opacity creates resentment.
+
+11B.3 Individual Customer Receipt
+Receipt Block
+Content
+Header
+Singapore Home Cooks logo, UEN, registered address, support email. Document title: RECEIPT
+Receipt ID
+Receipt No (RCP-), Order No (SHC-), date, time (SGT), payment method (PayNow)
+Customer
+Customer name as registered. No address — customer knows their own.
+Cook and dish
+Cook display name, Cook SFA Registration No (captured at transaction time), dish name, cuisine, collection date/time, collection address, special requests
+Financial
+Unit price, quantity, subtotal, amount to cook (named), platform service fee (% and dollar amount), total charged, PayNow bank reference
+Footer
+'This receipt is issued by Singapore Home Cooks (UEN: [number]) as payment facilitator on behalf of [Cook Name], an independent SFA-registered home-based food business (SFA Reg: [number]). Singapore Home Cooks is a technology platform and is not the food operator.' Legal language establishing correct liability position.
+GST
+Pre-threshold: 'GST not applicable — Singapore Home Cooks is not currently GST-registered.' Post-threshold: full GST breakdown with GST Reg No.
+
+11B.4 Corporate Tax Invoice
+	•	Document title: TAX INVOICE (once GST-registered) or INVOICE (before threshold).
+	•	Buyer details: company name, Singapore UEN, billing address, attention to designated approver.
+	•	Dietary group order breakdown: table showing halal/vegetarian/no-shellfish/standard portions with unit price and subtotal per category. What corporate accounts payable teams need.
+	•	Bank transfer payment details for corporate bank transfer accounts: bank, account name, account number, PayNow UEN, payment reference.
+	•	Remittance advice slip (cut-off line at bottom): invoice number, amount, reference. For Singapore corporate finance teams that still use these.
+
+11B.5 Cook Payout Statement
+	•	Detailed order table: every contributing order — order number, dish, collection date, gross, platform fee, net to cook. Week total row. Cook can reconcile against her order history line by line.
+	•	PayNow transfer confirmation: exact amount, PayNow number, transfer date and time, payout reference.
+	•	Year-to-date running totals from 1 January: gross sales, total platform fees, net earnings, order count, average order value. Enables real-time IRAS position tracking throughout the year.
+	•	Footer: 'Platform fees are deductible as business expenses on your IRAS income tax return. Your annual IRAS earnings statement will be generated on 1 January [next year].'
+
+11B.6 Credit Notes
+	•	When a refund credit is applied: credit note issued (CN-YYYY-NNNNN) referencing original receipt number.
+	•	Shows: original receipt number, original amount, credit amount, reason, revised net amount.
+	•	Original receipt is NEVER modified. Credit note is the accounting correction document. Immutable audit trail maintained.
+
+11B.7 Receipt Storage and Retention
+	•	Generated on demand — not pre-stored. Data retained permanently for re-generation at any time.
+	•	Receipt records retained minimum 5 years per IRAS record-keeping requirements.
+	•	Cook SFA number stored at transaction time — not linked to current profile. Ensures historical receipts remain accurate even if cook's SFA number changes.
+	•	Email delivery: HTML receipt embedded inline + PDF attachment. Both identical content.
+	•	Bulk corporate download: all invoices for a date range as ZIP file. Or consolidated monthly statement in one PDF.
+
+12. Three-Tier Dashboard System
+12.1 Cook Dashboard (Individual Cook Login)
+	•	Four accounting views: daily (individual orders), weekly (payout matched), monthly (trend), annual IRAS statement (auto 1 January).
+	•	Expense Tracker: date, category, amount, optional receipt photo. IRAS allowable categories pre-loaded.
+	•	Tax Estimate Calculator: real-time estimate using Singapore resident tax rates. Disclaimer: estimate only.
+	•	Customisable widgets: show/hide toggles — today's orders, earnings, upcoming collections, rating, demand alerts, portions remaining.
+	•	All views downloadable as PDF and CSV at any time. Cook never needs to contact platform to understand her own earnings.
+
+12.2 Operations Dashboard (Operations Login)
+	•	Access: orders, cook alerts, payout workflow, customer issues, platform health. Cannot see CEO financial data.
+	•	Live order feed (24 hours). Cook alert queue (certificate expiries, pending verification, strikes, declining ratings). Customer issues (disputes, credit requests, PayNow mismatches). Monday payout workflow.
+	•	50-order quality check-in queue. Platform health indicators (orders today, cancellation rate, response times).
+
+12.3 CEO Dashboard (CEO Login)
+	•	Full access: all data including financial P&L, historical analytics, geographic intelligence.
+	•	Management P&L (real-time from platform ledger). Management Balance Sheet (daily). Revenue Waterfall.
+	•	Growth analytics: all metrics as time series — GMV, cooks, customers, AOV, acquisition, retention, churn.
+	•	Geographic intelligence: Singapore heatmap — cook density vs customer demand density. Gap analysis = recruitment priority areas.
+	•	IRAS/Tax Documents: downloadable PDF and CSV.
+	•	Financial forecasting: current month projection, break-even tracking, cook cohort analysis.
+
+12.4 Cook IRAS Support
+Expense Type
+IRAS Allowable
+Ingredients
+Yes — for sold food only
+Packaging
+Yes — for sold food only
+Gas/electricity
+Partial — ~20–30% proportion for cooking
+Kitchen equipment
+Yes — capital allowance
+WSQ course fee (if self-paid)
+Yes — professional development
+Platform commission
+Yes — automatically in IRAS statement
+Mobile phone
+Partial — ~30% business proportion
+
+Accountant involvement: engage Singapore accountant for initial Xero setup (S$500–800 one-time). Annual accounting fees S$1,500–3,000/year. Platform manages transactions; accountant prepares statutory accounts.
+
+13. Home Credits — Customer Loyalty Programme
+13.1 Earning Mechanics
+Behaviour
+Earning Rate
+Every order (base)
+1 Home Credit per S$10 spent
+Orders above S$150
+10% bonus on base credits
+First order from a new cook
+Bonus 5 credits (once per cook)
+Successful referral
+20 credits to referrer (on referred customer's first order)
+New customer (referred)
+20 welcome credits on first order
+
+Tier
+Lifetime Credits
+Rate
+Key Benefit
+Home Guest
+0–99
+1 per S$10
+Standard earning
+Regular
+100–499
+1.2 per S$10
+Priority service
+Foodie
+500–1,499
+1.5 per S$10
+Early access to new listings
+Table Regular
+1,500+
+2 per S$10
+Personal recommendations, occasion reminders
+
+	•	10 credits = S$1. Minimum 50 credits (S$5). Maximum 15% of order value — never exceeds commission. Expire after 12 months.
+	•	Tiers based on lifetime credits EARNED — never goes down. No quarterly spending requirements.
+	•	Referral: S$4 cost vs S$18+ commission on first order = 4.5× immediate ROI.
+	•	Launch: Phase 3 (Month 5–6). Soft-launch to existing customers first.
+
+14. Payment Architecture
+Phase
+Method
+Notes
+Phase 1 (Launch)
+PayNow QR (individual); bank transfer (corporate)
+~S$0/transaction. Bank account ~S$15/month.
+Phase 2 (Month 3–6)
+Add DBS/OCBC bulk payment API for automated payouts
+Eliminates manual Monday process.
+Phase 3 (Month 6+)
+Add HitPay for card and GrabPay
+Only when corporate card volume justifies 2.5%.
+
+Phase 1 PayNow limitation: no real-time callback API. Customer taps 'Payment sent' button. 30-minute window — auto-cancellation if not confirmed. Daily bank reconciliation check. DBS PayNow API at Phase 2 is CRITICAL PRIORITY, not optional.
+
+MAS Payment Services Act: confirm no licence required before first transaction. Document in writing.
+
+15. Regulatory & Compliance
+15.1 SFA Requirements
+Requirement
+Implementation
+Home-based food business registration
+Mandatory upload. Account cannot go live without this. Expiry tracked — 60 and 30-day reminders. Auto-pause on expiry.
+WSQ Food Safety Level 1
+Mandatory. Platform sponsors S$30. SkillsFuture credits highlighted. Expiry tracked same as SFA.
+Home-based restrictions
+Cooks may not employ workers. Onboarding guide explains all restrictions.
+Platform liability
+Technology marketplace, not food operator. Documented in all legal agreements.
+SFA cooperation
+Full cooperation with any investigation. Cook listing paused immediately if SFA contact received.
+
+15.2 PDPA Compliance
+	•	Comprehensive Privacy Policy before launch covering all data uses including behavioural personalisation and allergen profiling.
+	•	Legal review of allergen profiling and occasion memory features required before launch.
+	•	Data Protection Officer designated from day one — founder initially.
+
+15.3 GST Compliance — Comprehensive Framework
+CRITICAL PRE-LAUNCH ACTION: Engage Singapore tax specialist to determine whether platform's taxable turnover is (A) gross GMV (principal basis — early registration) or (B) commission revenue only (agent basis — later registration). Written opinion required. Material financial and pricing implications.
+
+Phase 1 — Before Registration (from Day One)
+	•	CEO dashboard GST Readiness Report: running total of taxable turnover, warning flag at 75% of S$1M threshold, projected crossing date based on current growth rate. Built from day one — missing the 30-day compulsory registration window results in back-tax, penalties, and interest.
+	•	All receipts include: 'GST not applicable — Singapore Home Cooks is not currently GST-registered.' Already in receipt architecture.
+	•	5-year accounting record retention: satisfied by double-entry ledger and receipt retention policy.
+	•	Voluntary registration consideration at Month 6: if significant GST-registered corporate customers, early registration enables them to claim input tax credits — making the platform more attractive for corporate procurement.
+
+Phase 2 — At the Threshold
+	•	CEO dashboard 75% flag triggers: accountant engaged immediately, GST registration filed with IRAS through myTax Portal. Processing: 2–4 weeks.
+	•	Update platform_config (zero code changes): gst_enabled: true, gst_rate: 0.09, gst_registration_number: [IRAS number], gst_display_mode: inclusive. Single config change = GST applied across entire platform immediately.
+
+Phase 3 — After Registration
+	•	Price display: all prices must be GST-INCLUSIVE (Singapore law). Cook sets GST-exclusive price. Platform calculates and displays GST-inclusive price. When GST rate changes: update gst_rate in config → all displayed prices updated automatically, no code change.
+	•	Tax invoices: receipts become TAX INVOICES. Must include GST registration number, GST rate, GST amount separately, GST-exclusive amount, GST-inclusive total. Simplified tax invoice (no buyer details) for transactions under S$1,000 — most food orders qualify.
+	•	Quarterly F5 return: Xero handles preparation when correctly configured. Accountant reviews and submits. Due: last day of month following quarter end.
+	•	Input tax claims: GST paid on Xero subscription, legal fees, insurance (from GST-registered suppliers) is claimable — partially offsets compliance cost.
+	•	GST on Claude API (Overseas Vendor Registration): Anthropic is a US company — check if GST-registered in Singapore. If not: platform may need to self-account for GST on API costs under reverse charge mechanism. Accountant to advise. At S$30–100/month API cost, amount is trivial but compliance obligation must be correctly handled.
+
+GST Chart of Accounts Additions
+Code
+Account
+Purpose
+1004
+GST Receivable (Input Tax)
+GST paid to suppliers, claimable from IRAS quarterly
+2003
+GST Payable (Output Tax)
+GST collected from customers, owed to IRAS quarterly
+2004
+GST Clearing
+Temporary reconciliation account during quarterly F5 filing
+
+15.4 Cook Income Tax Support
+	•	Annual IRAS earnings statement auto-generated 1 January each year. Complete IRAS filing data in one PDF.
+	•	Cook expense tracker with IRAS allowable deduction categories pre-loaded.
+	•	Tax estimate calculator: real-time estimate using Singapore resident tax rates. Disclaimer: estimate only.
+
+15.5 Financial Compliance
+	•	Xero connected to business bank account from launch. Auto-reconciled via bank feed.
+	•	Accountant setup: S$500–800 initial Xero configuration. Annual accounting fees: S$1,500–3,000/year. Quarterly GST F5 filing (once registered): additional S$200–400/quarter.
+
+16. Insurance
+Product liability + public liability + cyber liability insurance purchased before first customer transaction. Cold approach to three insurers simultaneously.
+
+Insurer
+Why
+Priority
+NTUC Income
+Most Singapore-centric. Most cost-effective for SMEs.
+First
+AXA Singapore
+Digital SME quote process. Fast baseline.
+Second
+MSIG Singapore
+Strong on product liability. Good for intermediary businesses.
+Third
+
+Exact description for all insurers: 'I am the founder of a technology marketplace platform called Singapore Home Cooks. The platform connects independent, SFA-registered home-based food businesses with customers in Singapore. We are a technology intermediary — we do not prepare food, employ cooks, or control food preparation. All food businesses hold valid SFA registration and WSQ certification. I am looking for combined Public Liability and Product Liability. Estimated Year 1 GMV: S$50,000–100,000. Coverage required: minimum S$1M per claim, S$2M annual aggregate.'
+
+Cover
+Estimated Annual Cost
+Public + Product Liability
+S$1,500–3,000
+Cyber Liability
+S$800–1,500
+Directors and Officers
+S$500–800
+Total
+S$2,800–5,300/year
+
+Insurance procurement takes 2–3 weeks. Start Week 1. Must be in force before first transaction.
+
+16B. Comprehensive AI Integration Strategy
+Every AI feature on Singapore Home Cooks runs through a single provider — the Claude API by Anthropic. One interface, one billing account, one quality standard. No patchwork of different AI providers. This simplifies development and ensures consistency across all 18 features. Estimated cost: S$30–100 per month at launch scale.
+
+16B.1 Architecture — RAG for Chatbots, Direct API for Features
+	•	All chatbots use Retrieval-Augmented Generation (RAG): Claude reads the platform's specific knowledge base stored in Supabase and answers only from documented content. Never makes up answers. Knowledge base updated via simple admin interface — no retraining required.
+	•	All other AI features use direct Claude API calls with feature-specific system prompts.
+	•	Standard pattern: claude-sonnet-4-20250514, max_tokens 1000, feature system prompt, user input or platform data.
+	•	All responses wrapped in try-catch. JSON responses strip markdown fences before parsing. On failure: graceful fallback — empty structured form, generic message, or route to human. Never show technical errors to users.
+	•	Feedback loop: thumbs up/down on every chatbot response. Thumbs down reviewed weekly. Knowledge base updated. Chatbot improves continuously without model retraining.
+
+16B.2 Cook-Facing AI — 7 Features
+Feature
+What It Does
+Phase
+Notes
+Dish description generator
+Ingredients in → professional Singapore food description. Any language. Cook reviews and approves.
+1
+Already in roadmap Step 21
+Photo quality assessment
+3 specific actionable tips at point of photo upload. Advisory — cook can dismiss.
+1
+Already in roadmap Step 23
+Calorie estimation
+Auto-generated from ingredient list. Green badge (5+ ingredients) or amber badge (fewer).
+1
+Already in roadmap Step 22
+First-listing wizard
+Cook provides ingredients, photo, price. Claude generates description, allergens, calorie, price suggestion.
+1
+Already in roadmap Step 20
+AI pricing suggestion
+Dish-specific price range based on ingredients, cuisine type, and comparable platform listings.
+2
+NEW — Phase 2
+Bid writing assistant
+Cook describes experience loosely → Claude structures into professional Cook's Note for recipe requests.
+2
+NEW — Phase 2
+Listing optimisation review
+Background process analyses each cook's listings and surfaces improvement suggestions in Academy dashboard.
+3
+NEW — Phase 3
+
+16B.3 Customer-Facing AI — 6 Features
+Feature
+What It Does
+Phase
+Notes
+Natural language meal search
+'Thai food for 2, S$50, under 500 cal' → complete single-cook meal packages assembled.
+1 struct / 3 NL
+Step 59–60 in roadmap
+Behavioural personalisation
+Preferences inferred from orders, searches, filters, reviews. No questionnaire ever.
+3
+Step 61–62 in roadmap
+Allergy safety alert
+Mandatory confirmation when customer allergen profile matches dish. Potentially life-saving.
+3
+Step 63 in roadmap
+AI occasion planner
+'Birthday for 8, 2 halal, 1 vegetarian, S$200' → complete curated occasion food plan with specific cooks.
+3
+NEW — Phase 3
+Recipe request helper
+Customer types loosely what they want → Claude structures into clear, detailed request cooks can bid on.
+2
+NEW — Phase 2
+AI similarity search
+'Loved that rendang — what tastes similar?' Flavour profile matching across all cuisines.
+3
+NEW — Phase 3
+
+16B.4 Operations AI — 5 Features
+Feature
+What It Does
+Phase
+Value
+Daily operations brief
+8am plain-English briefing for India assistant: certificate issues, payment timeouts, rating changes needing attention today.
+2
+Turns passive dashboard into active daily briefing
+Cook performance diagnostics
+Analyses review text patterns → personalised diagnosis. 'Customers say your dishes are milder than described.'
+2
+Far more useful than generic training invitation
+Payout anomaly detection
+Scans all transactions before Monday payouts. Flags suspicious patterns for India assistant review.
+2
+Lightweight fraud detection layer
+Cook recruitment intelligence
+Weekly: specific cuisine gaps + underserved areas + suggested Facebook groups. Surgical recruitment targeting.
+3
+Turns recruitment from generic to precise
+Platform health narrative
+Weekly plain-English CEO briefing contextualising dashboard numbers with insight and concern flags.
+3
+CEO sees insight, not just numbers
+
+16B.5 AI Chatbot System — Three Contexts
+Three separate chatbots with different knowledge bases, all using the same RAG architecture. Name: 'SHC Assistant' — clearly identified as AI, never pretends to be human.
+
+Chatbot
+Knowledge Base Includes
+Launch Phase
+Cook chatbot (customer-visible)
+Cook Agreement, SFA registration step-by-step, WSQ enrolment and SkillsFuture credits, payout process, accounting dashboard, IRAS tax filing guide, recognition tiers, collaboration mechanics, all cook FAQs.
+Phase 1
+Customer chatbot (customer-visible)
+Customer Terms, refund and dispute policy, allergen information, how to order, recipe request and bidding, Home Credits programme, Lalamove delivery guide, address privacy policy, all customer FAQs.
+Phase 1
+Operations chatbot (internal)
+All operational procedures, Monday payout workflow, certificate verification steps, dispute resolution procedures, crisis protocol, cook suspension and reactivation process, all India assistant process documentation.
+Phase 2
+
+CHATBOT ESCALATION PROTOCOL: Immediately escalate to human when: (1) question about a specific account issue, (2) any complaint, (3) Claude's confidence is low, (4) emotional language detected ('I'm really upset', 'I demand', 'unacceptable'). On escalation: 'I don't have the information to answer that accurately. Let me connect you with a team member who can help.' Routes with full conversation context attached. Never close a conversation without offering human escalation when the customer is dissatisfied.
+
+16C. Platform Flexibility & Agility Architecture
+Two architectural principles designed in from day one: a configurable commission engine where every rule lives in a database table, and an agile platform architecture where new features can be added without touching existing code.
+
+16C.1 Configurable Commission Engine
+Commission rules live in a database table — never in code. Code reads and applies rules. Zero code changes, zero redeployments needed to change any commission rate or add any new commission rule. All changes made through CEO dashboard admin interface.
+
+Rule Type
+Purpose and Example
+Order value tier
+Current four tiers (up to S$30 at 20%, S$31–80 at 18%, etc.) stored as separate rules. Change any rate through admin interface.
+Cook recognition tier
+Star Cook 15%, Master Cook 12% — stored as rules. Adjust thresholds or rates anytime.
+Cook designation
+Founding Cook 12% permanent — stored as rule with no expiry date.
+Promotional (time-bounded)
+'New cooks joining before December 25 get 10% for first 20 orders.' Set dates, it activates and deactivates automatically.
+Cuisine / occasion type
+'Corporate orders above S$500 at 10% to encourage adoption.' Future capability — no code change needed.
+Customer loyalty tier
+'Table Regular customers generate 1% additional reduction passed to cook.' Future capability.
+Minimum floor
+S$2.00 minimum commission — single rule enforced regardless of percentage.
+
+16C.2 Five Agile Architectural Principles
+	•	Feature flags: every new feature launched behind a flag. Toggle on/off without code deployment. CEO dashboard feature flags panel. Test with specific users before full rollout.
+	•	Plugin-style modules: each feature has own database tables, API routes, and components. Adding a feature adds a module — existing code is never touched.
+	•	Event-driven automation: actions fire events (order.collected, cook.registered, etc.). New automations simply listen — event-firing code is never modified.
+	•	Configuration tables: every value that might change lives in platform_config. Change one row, effect is immediate. No redeployment.
+	•	Migration discipline: all schema changes via Supabase migrations. New features only add tables — existing data never at risk.
+	•	AI prompt management: prompts stored in database (ai_prompts table). Update any AI feature through admin interface. Version history retained. A/B test prompts without code.
+
+16C.3 Platform_Config — Key Configurable Values
+Configuration Key
+Current Value
+review_request_delay_hours
+2
+payout_day
+monday
+min_order_lalamove_button
+S$80
+credits_expiry_months
+12
+max_credits_redemption_pct
+15%
+cook_tier_trusted_orders
+20
+cook_tier_star_orders
+100
+cook_tier_master_orders
+500
+new_cook_guarantee_orders
+10
+cert_expiry_warning_days_1
+60
+cert_expiry_warning_days_2
+30
+paypal_confirm_window_minutes
+30
+calorie_green_threshold
+400 cal
+calorie_amber_threshold
+600 cal
+
+16D. Data Mining & Trend Intelligence
+Singapore Home Cooks is the only entity in Singapore with visibility into home-cooked food demand at granular level. GrabFood knows restaurant orders. Fairprice knows grocery purchases. Nobody knows what home-cooked dishes Singapore residents are actively searching for. This data is captured systematically from day one.
+
+16D.1 Four Mining Dimensions
+Dimension
+What Is Captured
+Demand intelligence
+Every search query: cuisine, dish name, area, dietary requirements, party size, budget, time, resulted in order or not. Gap between searches and orders = most actionable insight. Builds Singapore Home Food Demand Index.
+Cook performance
+Correlations: video listing vs conversion rate, ingredient count vs order frequency, response time vs repeat customer rate, price vs demand elasticity. Fed back as Academy recommendations.
+Customer behaviour
+Repeat order rate by cuisine, time between orders, review submission vs repeat ordering, allergy alert users vs non-users LTV, acquisition channel vs lifetime value.
+Platform health (leading indicators)
+Rising cancellation rate in cuisine = early warning. Declining review scores by area = quality issue emerging. Registration vs first listing gap = onboarding friction.
+
+16D.2 Analytics Architecture
+	•	Two-layer: operational database (live transactions, fast, reliable) + analytics schema (nightly ETL jobs, analysis-friendly aggregations). Heavy queries never run on operational database.
+	•	Nightly analytics jobs: daily platform summary, cuisine performance, cook metrics, demand gap analysis, customer cohort analysis, geographic heatmap, seasonal trends, cook behaviour correlations.
+	•	At launch: Supabase scheduled SQL functions. At scale: Metabase (open source, self-hosted) for visual analytics dashboards.
+
+16D.3 Singapore Home Food Demand Index
+Proprietary weekly dataset showing which cuisines, dishes, and areas have the most unmet demand. Builds over time into a genuinely valuable cultural and commercial asset:
+	•	NLB, HPB, NTU food science, Singapore Tourism Board — potential data partners at Month 12+.
+	•	Quarterly Singapore Home Food Trends Report (anonymised, aggregate data only) — content marketing asset and platform positioning as cultural institution.
+	•	Seasonal demand preview for upcoming occasions — commercially valuable for cook recruitment targeting.
+
+16E. Accounting Exports — PDF, Excel & Word Formats
+Every accounting output is exportable in the appropriate format for the recipient. PDF for formal documents, Excel for data manipulation, Word for structured reports. Generated on demand — fresh each time for accuracy. Professional formatting with platform branding. Powered by Puppeteer (PDF), ExcelJS (Excel), docx library (Word).
+
+16E.1 Cook-Facing Exports
+Document
+Format and Content
+Annual IRAS Statement
+PDF — Platform logo + UEN, cook's name/NRIC, tax year, gross sales by month, commission paid (as deductible business expense), cook's entered expenses by category, estimated net taxable income. Generated 1 January each year. Downloadable anytime.
+Monthly Earnings Statement
+PDF + Excel — Orders by date, gross, commission, net. Monthly totals. Excel allows cook or accountant to manipulate and chart.
+Expense Tracker Export
+PDF + Excel — Expenses by category and month. Ready for accountant. Excel with category, date, amount, description columns.
+Full Year Accounting Package
+ZIP — All 12 monthly statements + annual IRAS statement + expense tracker annual export. Everything accountant needs in one download.
+
+16E.2 Customer-Facing Exports
+Document
+Format and Content
+Per-order receipt
+PDF — Order number, receipt number, dish, cook, price, platform service fee, total. Professional letterhead.
+Corporate tax invoice
+PDF — Invoice number, platform UEN, company billing details, line items, GST. Auto-generated on order confirmation.
+Bulk invoice export (corporate)
+ZIP — All invoices for selected date range. Or: consolidated monthly statement showing all orders, amounts, and invoice numbers in one PDF.
+Corporate spending report
+Excel — Tabs: summary by month, spend by cook, spend by cuisine, spend by occasion type, raw order data.
+
+16E.3 Platform-Facing Exports (CEO Dashboard)
+Document
+Format and Content
+Management P&L Workbook
+Excel (multi-tab) — P&L summary with YTD, revenue breakdown by tier/cuisine/occasion, costs by category, GMV analysis, cook cohort performance, customer analytics. Platform branding and conditional formatting.
+Management P&L Summary
+PDF — Formatted income statement for sharing with investors, advisors, or partners.
+Platform IRAS Export
+PDF — Platform's annual income statement for corporate tax filing: total revenue, itemised expenses, net taxable income, GST tracking summary.
+Xero Weekly Export
+CSV — Existing. Continues unchanged. Accountant imports weekly.
+Operations Weekly Report
+PDF — Monday morning analytics brief: GMV, orders, new cooks, top dishes, cancellations, alerts.
+Singapore Home Food Demand Index
+PDF (Phase 3+) — Quarterly: top searched dishes, fastest growing cuisines, geographic demand, seasonal preview. Anonymised aggregate data only.
+
+17. Technology Architecture & Development Phases
+17.1 Technology Stack
+Component
+Approach
+Frontend
+React.js (Next.js) — mobile-responsive. PWA in Phase 3.
+Backend / Database
+Supabase (PostgreSQL) — auth, database, file storage, real-time, RBAC.
+Hosting
+Vercel — global CDN, free tier.
+Payment Phase 1
+Direct PayNow QR. Zero gateway cost.
+Payment Phase 2
+DBS/OCBC bulk payment API — automated Monday payouts.
+Payment Phase 3
+HitPay — card and GrabPay when corporate card volume justifies.
+Accounting
+Native double-entry ledger in Supabase. Xero separate. Weekly export.
+Email
+Resend — free tier at launch.
+SMS
+Twilio — ~S$0.05/SMS.
+Push notifications
+OneSignal — free tier.
+Support chatbot
+Tidio or Intercom — free tier (for fallback). Primary: AI chatbot powered by Claude API.
+AI — All features
+Claude API (Anthropic) — single provider for all 18 AI features. Cook: description, photo, calories, wizard, pricing, bid writing, listing review. Customer: meal search, personalisation, allergy alert, occasion planner, request helper, similarity. Operations: daily brief, diagnostics, anomaly detection, recruitment intel, health narrative.
+AI Chatbots
+Claude API with RAG architecture. Knowledge base in Supabase table. Cook chatbot, customer chatbot, operations chatbot (internal). Auto-escalation protocol.
+PDF generation
+Puppeteer — renders HTML templates to pixel-perfect PDF server-side. All platform PDFs: receipts, invoices, IRAS statements, earnings reports, P&L summaries.
+Excel generation
+ExcelJS — multi-tab workbooks with formatted cells, borders, conditional formatting. Management P&L workbook, corporate spending report, monthly earnings exports.
+Word generation
+docx library — structured Word documents with tables and branding. Operations reports and structured document exports.
+Commission engine
+Database-driven rule evaluation. commission_rules table. All rates and conditions configurable via CEO admin interface without code changes.
+Feature flags
+feature_flags table. Toggle features on/off, set rollout %, beta test with specific users. CEO dashboard panel.
+Platform config
+platform_config key-value table. Every configurable value — review delays, tier thresholds, credit rules — changed via admin interface, no redeployment.
+Event system
+Central event bus. All automations are listeners on events. Adding automations never touches event-firing code.
+Analytics schema
+Nightly ETL jobs populate analytics tables from operational data. Supabase scheduled functions at launch. Metabase at scale.
+SEO
+Individual indexable URLs + schema.org food product markup for every listing and profile.
+Mobile — PWA (Phase 1)
+Progressive Web App: web app manifest + service worker. Installable on iOS and Android home screen without App Store. Push notifications, camera access, offline caching. 1–2 additional weeks of development.
+Mobile — Android (Phase 2)
+React Native with Expo. Reuses web business logic and API calls. Expo Camera, Expo Notifications, Expo ImagePicker, React Navigation. APK beta via WhatsApp before Play Store. 6–8 additional weeks.
+Mobile — iOS (Phase 3)
+Port from Android React Native codebase. TestFlight beta before App Store. PayNow for food is exempt from Apple in-app purchase requirement. 3–4 additional weeks.
+
+17.2 Development Phases
+Phase 1 — MVP (Weeks 1–8)
+	•	Cook registration, SFA/WSQ upload, five-stage frictionless onboarding. Three-tier ingredient disclosure with AI description generation. AI photo quality assessment at upload.
+	•	Dish listing: allergen (mandatory, above button), calorie estimate with confidence badge, dietary tags, occasion flags, pricing with real-time earnings display. Minimum order value S$50 enforced at checkout. Tasting portions exempt.
+	•	Interactive first-listing wizard: cook provides ingredients, photo, price — Claude generates everything else.
+	•	Cook and customer chatbots with initial knowledge base. SHC Assistant clearly identified as AI.
+	•	Customer browse and dish name search with synonym map. Occasion-first homepage with live social proof counters (cooks, meals served, planning areas).
+	•	PayNow QR checkout with 30-minute confirm window. Order + receipt number generation. Tiered Occasion Guarantee system and Guarantee Reserve posting.
+	•	Customer cancellation policy: 72+ hours full refund, 24–72 hours 50% refund, under 24 hours no refund. Cancellation timer on order detail page.
+	•	First-time customer collection guide: two-screen flow on first order only.
+	•	Cook dashboard: order management, per-order rating visibility, availability toggle, earnings summary.
+	•	Automated notifications, ratings and review flow, cook onboarding email sequence.
+	•	Native double-entry accounting ledger. Monday payout calculation. Reconciliation engine. Commission rules engine. Platform_config table. Feature flags. Event bus.
+	•	Analytics schema setup. PDF and Excel export foundations. Three-role access control.
+	•	PWA: web app manifest + service worker. Platform installable on iOS and Android home screen without App Store. Push notifications via OneSignal.
+
+Phase 2 — Differentiation (Weeks 9–20)
+	•	Recipe request, bidding, YouTube embed, Cook's Note. Last-minute pricing premium. Occasion listing type.
+	•	Corporate accounts, group order mode, auto-invoice PDF. Cook-to-cook direct messaging.
+	•	Cook recognition tiers. Cancellation strike system. Rating-triggered training with per-order links.
+	•	Unmet demand near you widget. Anonymous peer pricing benchmarks. Post-order micro-survey.
+	•	AI Phase 2: pricing suggestion, bid writing assistant, recipe request helper, daily operations brief, cook performance diagnostics, payout anomaly detection. Operations chatbot.
+	•	Excel exports, analytics jobs, DBS PayNow API (critical priority). Mandarin language support.
+	•	Android native app: React Native with Expo. APK beta to Founding Cooks via WhatsApp (2 weeks). Google Play Store submission and launch. One-tap order confirm/decline from push notification.
+
+Phase 3 — Growth Engine (Months 5–6)
+	•	Contextual meal search, behavioural personalisation engine with allergy alert, Home Credits loyalty programme.
+	•	Cook Collaboration Board, Cook Collective Listing, Peak Season Capacity Planner, Heritage Recipe Archive.
+	•	Academy: demand calendar, pricing calculator, listing optimisation. Cook Spotlight, in-app community feed.
+	•	CEO dashboard full financial reports, IRAS statements, GST Readiness Report. PWA updated.
+	•	AI Phase 3: occasion planner, similarity search, listing optimisation review, recruitment intelligence, platform health narrative. All chatbots enhanced.
+	•	iOS native app: port from Android React Native codebase. TestFlight beta to Founding Cooks. App Store submission and launch.
+
+Phase 4 — Scale (Month 7+)
+	•	Lalamove/Grab Express API full integration. HitPay card and GrabPay (when justified).
+	•	Native app enhancements: home screen widgets, biometric login, Wear OS/Apple Watch companion (evaluate).
+	•	Subscription meal plans. Academy masterclasses, guest video library. Supplier partnerships.
+	•	Malay language support. Tamil evaluated at Month 6. HPB, NLB/NHB partnership approach.
+
+18. Financial Model & Projections
+18.1 Revenue Model
+Element
+Detail
+Commission
+Tiered by order value. Lower of order value tier or recognition tier in cook's favour. Min S$2.00 floor.
+Payment processing
+Phase 1: ~S$0 (PayNow). Phase 3+: HitPay ~0.8–2.5% depending on method.
+No subscription fees
+Neither cooks nor customers pay to join or maintain accounts.
+Certification sponsorship
+S$30 per cook, acquisition cost. Recovery clause if under S$150 in 6 months.
+Loyalty credit provision
+~0.5–1% of GMV tracked as deferred liability.
+Credits and refunds provision
+~2% of GMV.
+Future streams
+Featured placement (Phase 3), Academy premium (Phase 4), supplier referral fees (Phase 4).
+
+18.2 Startup Cost Estimate
+Item
+Estimated Cost (S$)
+Web application development (AI-assisted)
+2,000–5,000
+Domain and hosting (6 months)
+200–400
+Business registration (ACRA)
+115–315
+Logo, branding, visual identity
+100–300
+Legal: food law specialist opinion
+2,000–3,000
+Legal: Cook Agreement, Customer Terms, Privacy Policy
+800–1,200
+Accountant: initial Xero setup
+500–800
+Insurance: all three covers (Year 1)
+2,800–5,300
+Mandarin translation (operational platform)
+2,000–3,000
+India operations assistant (Month 1–6 at S$400/month)
+2,400
+Cook certification sponsorship (first 50 at S$30)
+1,500
+Xero subscription (6 months at S$30/month)
+180
+Anthropic API (AI features, 6 months at S$60/month average)
+360
+Initial marketing and cook recruitment
+500–1,500
+PDPA Data Protection Impact Assessment (DPIA)
+1,500–2,500
+Guarantee Reserve initial funding (0.5% of first 3 months high-value GMV)
+500–1,000
+Google Play Developer account (one-time)
+35
+Apple Developer Program (Year 1)
+135
+Contingency (10%)
+1,500–2,000
+Total estimated
+S$18,385–S$31,065
+
+18.3 Revenue Projections — Two-Cohort Segmented Model
+Following four-perspective investor analysis, the financial model is rebuilt with two distinct cook cohorts rather than a single blended assumption. This produces more conservative and more credible projections.
+
+Cook Cohorts
+Cohort A — Occasion Specialists (70% of cook base)
+Cohort B — Daily and Weekly Cooks (30% of cook base)
+Bakers, festive food, heritage cuisine specialists
+Nasi lemak, curry, zi char, bento, weekly meal prep
+8–15 orders per month
+20–40 orders per month
+S$80–180 average order value
+S$15–45 average order value
+Commission: 15% (S$81–150) and 12% (above S$150) tiers
+Commission: 20% (up to S$30) and 18% (S$31–80) tiers
+Example: birthday cake baker, 10 orders/month at S$130 = S$1,300 GMV, S$182 commission
+Example: nasi lemak cook, 30 orders/month at S$20 = S$600 GMV, S$120 commission
+
+Base Case Projections (Segmented)
+Metric
+Cohort A (84 cooks)
+Cohort B (36 cooks)
+Orders per cook per month
+10
+28
+Average order value
+S$120
+S$22
+Monthly GMV per cook
+S$1,200
+S$616
+Total monthly GMV Month 12
+S$100,800
+S$22,176
+Commission rate average
+15%
+19%
+Monthly commission Month 12
+S$15,120
+S$4,213
+
+Year 1 Ramp and Annual Totals
+Period
+Active Cooks (Cumulative)
+Months 1–3
+20 active cooks (pilot cohort, platform building)
+Months 4–6
+50 active cooks
+Months 7–9
+85 active cooks
+Months 10–12
+120 active cooks
+
+Financial Metric
+Segmented Model Value
+Year 1 blended total GMV
+~S$520,000
+Year 1 blended total commission (~16% blended)
+~S$84,000
+Less: guarantee reserve, credits, cancellations (~3%)
+~S$15,600
+Less: DPIA cost (one-time)
+~S$2,000
+Year 1 net platform revenue
+~S$68,000
+Break-even month (with ~S$1,120/month fixed operating costs)
+Month 8–9
+Note
+Year 1 net revenue of S$68,000 is more conservative than previous S$200,000 base case — because the previous model incorrectly assumed 120 active cooks throughout the year. Segmented model ramps to 120 by year end.
+
+19. Marketing & Growth Strategy
+19.1 Cook Acquisition — 12 Pain Point Hooks
+Cook Recruitment Message: 'Hi [Name], I came across your [specific dish] and it looks incredible. I'm building Singapore Home Cooks — a platform for home cooks and bakers. No more managing orders on WhatsApp. We handle everything — orders, payments, and customer discovery. We even write your listing description for you from your ingredients. And we pay for your food safety certification. No upfront cost — we only earn when you earn. I'd love to have you as a Founding Cook.'
+
+Recruitment Channels
+	•	Facebook community groups: Singapore Home Bakers, Mummies@SG, SG Home Cooks and Bakers, SG Malay Cooking, Singapore Indian Cooking, HDB estate groups.
+	•	Instagram direct outreach: personalised DMs referencing specific food by name. #sgbaker #sgcakes #sghomecook.
+	•	WhatsApp community networks, RC/CC networks, CC cooking class instructors.
+	•	Word of mouth from founding cooks — most cost-effective channel, cannot be manufactured.
+
+19.2 Customer Acquisition
+	•	Cook network spillover (primary early channel). Cook Spotlight organic reach.
+	•	Home Credits referral programme (Phase 3): S$4 cost per referred customer acquired.
+	•	Instagram and TikTok: Recipe Story format — two sentences on recipe origin, dish photo, ingredient list.
+	•	SEO: individual indexed cook and listing pages rank for Singapore food search terms.
+	•	Paid social: S$500/month from Month 3. Optimise for cost per first order.
+	•	LinkedIn: platform story and occasion food content for HR managers and office admins.
+
+19.3 Content Strategy
+Signature format — Recipe Story: 'My mother taught me this rendang when I was eight years old. She learned it from her mother in Johor.' Paired with dish photo and ingredient list. Endlessly reproducible, deeply emotional.
+	•	One hour per day founder time. Batched: one cook visit per week produces full week of content.
+	•	India assistant handles scheduling, captions, hashtags, comments from Month 1.
+
+20. Pre-Launch Validation Plan
+Phase
+Activity
+Timeline
+Success Criteria
+1. Customer demand
+Personal outreach to 20–30 potential customers. Key question: would you pay S$80–200 for home-cooked occasion food from a verified cook?
+Weeks 1–2
+Clear willingness to pay for occasion orders.
+2. Cook supply
+Recruitment messages in Facebook groups and Instagram. Google Form sign-up.
+Weeks 2–3
+30+ genuine cook sign-up responses within 2 weeks.
+3. Manual pilot
+5–10 cooks. Real PayNow orders. Must include at least 3 occasion group orders above S$80.
+Weeks 3–6
+50+ completed transactions including 3+ occasion orders above S$80.
+4. Refinement
+Review learnings. Update documents. Confirm legal, insurance, assistant in place.
+Weeks 7–8
+Updated documents signed off. Development brief ready.
+
+Go / No-Go Decision
+	•	Go: 30+ cook responses AND 50+ transactions AND 3+ occasion orders above S$80.
+	•	Conditional go: cook target met but no occasion orders above S$80. Conservative scenario only.
+	•	No-go: fewer than 20 cook responses OR fewer than 30 transactions. Revisit assumptions.
+
+21. Risk Assessment
+Risk
+Likelihood
+Impact
+Mitigation
+Priority
+Food law opinion not obtained
+High if skipped
+Very High
+Formal written opinion before launch. S$2,000–3,000. Non-negotiable.
+Pre-launch critical
+MAS Payment Services Act
+Low-Medium
+High
+Confirm with legal before first transaction. Document in writing.
+Pre-launch critical
+Insurance not in force
+High if skipped
+Very High
+Purchase before first transaction. Three insurers.
+Pre-launch critical
+PDPA breach (personalisation)
+Low
+High
+PDPA-compliant privacy policy, opt-in framework, legal review, DPO.
+Pre-launch
+SFA non-compliance by cooks
+Medium
+Very High
+Mandatory cert upload, expiry tracking, auto-pause, Cook Agreement.
+Immediate
+Cold start marketplace
+High
+High
+Manual pilot first. 20+ cook pre-recruitment. Founding Cook programme.
+Week 1
+Occasion AOV assumption wrong
+Medium
+High
+Pilot must test 3+ occasion orders above S$80 before go decision.
+Pilot
+Food safety incident
+Low
+Very High
+WSQ mandatory, Hygiene Guide, allergen mandatory, disclaimer, crisis protocol.
+Ongoing
+Cook off-platform transactions
+Medium
+Medium
+Platform value proposition. Cook data moat grows with every order.
+Platform design
+Copycat competitor
+Medium
+Medium
+Trademark immediately. Three moats building continuously.
+Month 3+
+Founder burnout
+Medium
+High
+India assistant Day 1. Transition trigger at S$20,000/month.
+Ongoing
+
+22. Next Steps & Action Plan
+22.1 This Week
+	•	Register domains: singaporehomecooks.sg and .com.
+	•	File trademark with IPOS — Class 43 and Class 42.
+	•	Create Instagram @singaporehomecooks.
+	•	Open DBS/OCBC/UOB business bank account with PayNow enabled.
+	•	Register business with ACRA — obtain UEN.
+	•	Begin insurance procurement: email NTUC Income, AXA Singapore, MSIG Singapore simultaneously.
+	•	Contact legal network for informal food law classification conversation.
+	•	Set up Google Form for cook pre-registration.
+	•	Begin customer validation interviews — 10–15 people this week.
+	•	Post first cook recruitment messages in Singapore Home Bakers, Mummies@SG, 2–3 HDB estate groups.
+
+22.2 Within 30 Days
+	•	Complete manual pilot: 50+ transactions including 3+ occasion orders above S$80.
+	•	Engage Singapore food law specialist for formal written opinion.
+	•	Engage commercial lawyer for Cook Agreement, Customer Terms, Privacy Policy.
+	•	Source and engage India-based operations assistant.
+	•	Confirm MAS Payment Services Act position in writing.
+	•	Complete insurance procurement — in force before first transaction.
+	•	Set up Xero + engage accountant for initial configuration (S$500–800).
+	•	Source Mandarin professional translator.
+	•	Review pilot learnings and update documents.
+
+22.3 Month 2 — Development Start (Subject to Validation)
+	•	Begin Phase 1 MVP development — AI-assisted, 6–8 weeks to launch-ready.
+	•	Onboard 30–50 Founding Cook cohort before public customer launch.
+	•	Soft launch to pilot customers and cook networks before paid marketing.
+
+This document is Version 11.0 — FINAL — the complete, comprehensive, definitive edition of the Singapore Home Cooks product concept. Every decision made during the full development session is captured here. Adds four-perspective critical analysis resolutions: Tiered Occasion Guarantee replacing New Cook Guarantee, customer cancellation policy (three tiers), cook data portability commitment, segmented two-cohort financial model (~S$68K Year 1 net revenue), per-order rating visibility, first-time collection guide, homepage social proof counters, PDPA DPIA requirement, founder absence protocol, GST substance analysis. Plus full GST compliance framework (Section 15.3) with three-phase approach, agent vs principal determination requirement, platform_config GST keys, tax invoice requirements, F5 return process, and comprehensive receipt architecture (individual receipt with commission transparency, corporate tax invoice with dietary breakdown, cook payout statement with YTD totals, credit notes), plus platform flexibility (configurable commission engine, five agile principles), data mining strategy (four dimensions, Singapore Home Food Demand Index), accounting exports (PDF/Excel/Word for all three parties), and 18 AI features across cook, customer, operations, and chatbot dimensions — all powered by Claude API. RAG chatbot architecture with three contexts and escalation protocol. All previous decisions retained. Update after validation phase and before each development phase. June 2026.

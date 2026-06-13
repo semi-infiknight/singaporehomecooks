@@ -1,0 +1,1107 @@
+
+SINGAPORE HOME COOKS
+Practical Development Roadmap
+Every step from idea to fully developed product — Version 8.0 — Final
+June 2026  |  Confidential
+This roadmap is grounded in reality. Every small, obvious, and tedious step is included — not just the exciting ones. Challenges are identified honestly with resolutions proposed. Updated with sophisticated accounting system, three-tier dashboard, pain point solutions, frictionless SFA onboarding, and cook collaboration features.
+
+To resume development in a new Claude session: upload this roadmap + the Decisions Log and say 'I am building Singapore Home Cooks. Let's continue from Step [N].'
+
+1. Honest Capability Statement
+1.1 What Claude Can Genuinely Do
+	•	Write all frontend code: React/Next.js components, pages, forms, navigation, styling, responsive layouts, animations.
+	•	Write all backend logic: Supabase database schema, API routes, authentication flows, business logic, data transformations.
+	•	Build the complete double-entry accounting ledger: transaction posting, chart of accounts, reconciliation engine, all financial reports.
+	•	Build every AI feature: calorie estimation, natural language meal search, AI dish descriptions, photo quality assessment, personalisation inference.
+	•	Generate all automated workflows: order lifecycle, certificate expiry, payout calculation, email sequences, credit award triggers.
+	•	Build all PDF generators: receipts, payout statements, corporate invoices, IRAS annual statements.
+	•	Write all content: email templates, onboarding guides, Cook Agreement drafts, marketing copy.
+	•	Debug code when things break — and things will break. This is normal development.
+
+1.2 What Claude Cannot Do
+	•	Deploy code to live servers independently — founder executes final deployment steps with guidance.
+	•	Purchase domains, register accounts, sign contracts, or make payments.
+	•	Guarantee zero bugs on first attempt — debugging is normal, not failure.
+	•	Test on live devices independently — founder tests and reports back.
+	•	Replace an accountant for SFRS-compliant statutory accounts.
+
+1.3 What the Founder Must Contribute
+	•	Active participation: be present to review, test, feedback, and decide. Weeks between sessions slow the build significantly.
+	•	All account registrations: Supabase, Vercel, GitHub, Resend, Twilio, OneSignal, Xero, eventually HitPay.
+	•	Testing on real phone and real browser — report exactly what is wrong, including exact error messages.
+	•	Decision-making: when two approaches are possible, choose one and commit.
+Reality check: The MVP can be built in 6–8 weeks of consistent work — meaning 3–4 sessions per week. If sessions happen once a fortnight, the same work takes 6–8 months of calendar time. Commitment to the build schedule is the single biggest factor in timeline.
+
+2. Pre-Development Phase — Before Writing Code
+2.1 Legal & Compliance (Weeks 1–3)
+Step 1: Domain Registration
+	•	Go to Vodien.com or Namecheap.com.
+	•	Register singaporehomecooks.sg (requires Singapore entity/individual, ~S$30/year) and singaporehomecooks.com (~S$20/year).
+	•	Do this today — domains can be taken while you wait.
+
+Step 2: Trademark Filing
+	•	Go to IPOS website (ipos.gov.sg). File for 'Singapore Home Cooks' under Class 43 (food and beverage services) and Class 42 (technology platform services).
+	•	Cost: approximately S$240–340 per class. Budget S$500–700 total. File online — straightforward wordmark.
+	•	Filing gives protection from the filing date even before mark is registered.
+
+Step 3: Business Bank Account
+	•	Open DBS Business Multi-Currency Account or OCBC Business Account.
+	•	Register for PayNow Business — link to business UEN or mobile number.
+	•	This account receives all customer payments and makes all cook payouts.
+
+Step 4: Business Registration
+	•	Register sole proprietor or private limited company with ACRA (acra.gov.sg).
+	•	Sole proprietorship: S$115, simpler. Private limited: S$315, better for future investment.
+	•	You need a UEN for the business bank account, PayNow, and corporate invoices.
+
+Step 5: Legal Documents
+	•	Engage Singapore food law specialist first (before Cook Agreement drafting) — formal written opinion on platform classification. S$2,000–3,000. Non-negotiable.
+	•	Once opinion received: engage general commercial lawyer for Cook Agreement, Customer Terms, Privacy Policy.
+	•	Brief precisely: 'We are a technology marketplace platform for independent SFA-registered home-based food businesses. We are not a food operator.'
+
+Step 6: MAS Payment Services Act Confirmation
+	•	Ask legal contact before first transaction: 'Does collecting PayNow payments and disbursing weekly to individual payees require a MAS Payment Services Act licence?'
+	•	Document the answer in writing. This must be confirmed before any real money moves.
+
+Step 7: Insurance Procurement
+	•	Email NTUC Income, AXA Singapore, and MSIG Singapore simultaneously using exact description from Concept Document Section 16.
+	•	Request: Combined Public and Product Liability (S$1M per claim, S$2M aggregate) + Cyber Liability + Directors and Officers.
+	•	Allow 5–7 business days per response. Compare quotes. Purchase before first customer transaction.
+	•	Budget: S$2,800–5,300/year total.
+
+2.2 Accounts & Services Setup (Week 2)
+Step 8: Create All Required Service Accounts
+	•	Supabase (supabase.com): database, auth, file storage. Free tier. Project name: 'singapore-home-cooks'.
+	•	Vercel (vercel.com): hosting. Free tier. Connect to GitHub.
+	•	GitHub (github.com): code repository. Free. Private repo: 'shc-platform'.
+	•	Resend (resend.com): email delivery. Free tier (100 emails/day). Verify your domain.
+	•	Twilio (twilio.com): SMS. Pay-per-use (~S$0.05/SMS). Get Singapore sender number.
+	•	OneSignal (onesignal.com): push notifications. Free tier.
+	•	Xero (xero.com): accounting. S$30/month. Connect to business bank account via bank feed.
+	•	Cloudinary (cloudinary.com): image and video storage. Free tier (25GB).
+	•	Anthropic API (console.anthropic.com): AI features. Pay-per-use. Budget S$20–50/month at launch.
+
+Step 9: Engage Accountant
+	•	Engage Singapore accountant for initial Xero setup and configuration. S$500–800 one-time.
+	•	Brief: sole proprietor or private limited company, marketplace business model, need Singapore tax treatment, GST tracking, and SFRS compliance.
+	•	Annual accounting fees: S$1,500–3,000/year.
+
+2.3 Design & Content Preparation (Weeks 2–3)
+Step 10: Finalise Branding
+	•	Brand colour confirmed: green #1D9E75. Commission logo — Fiverr, S$50–150 for clean wordmark.
+	•	Collect 10–15 food photos for placeholder use during development — pilot cook visit photos ideal.
+
+Step 11: Content Preparation
+	•	Singapore food vocabulary synonym map: list 100+ dish name variation pairs for the search engine.
+	•	10 most common FAQ answers for cooks and customers — feeds support chatbot.
+	•	Hygiene disclaimer final text (after lawyer review).
+	•	Cook onboarding email sequence: 5 emails (Days 1, 3, 7, 14, 30) — draft together with Claude.
+	•	IRAS allowable expense categories list for cook expense tracker.
+
+2.4 Manual Pilot (Weeks 1–6, Parallel)
+Step 12: Run the Manual Pilot
+	•	Recruit 5–10 cooks via Facebook groups and Instagram DMs.
+	•	Create Instagram page @singaporehomecooks. Post cook photos and dishes.
+	•	Take real orders via Instagram DM or WhatsApp. Collect PayNow to personal account.
+	•	MUST include at least 3 occasion group orders above S$80 to validate AOV assumption.
+	•	Document everything: what confuses cooks, what customers ask about, what goes wrong, what delights.
+	•	Go/No-Go decision at end of pilot based on criteria in Concept Document Section 20.
+
+3. Development Environment Setup
+Step 13: Install Development Tools
+	•	Download and install Node.js LTS (nodejs.org). Required to run the React application.
+	•	Install VS Code (code.visualstudio.com). The code editor used throughout.
+	•	Install Git (git-scm.com). For version control and deployment.
+	•	Free tools. 15–20 minutes total installation.
+
+Step 14: Create the Application
+	•	Open terminal. Run: npx create-next-app@latest singapore-home-cooks
+	•	This creates the complete application scaffold in 2–3 minutes.
+	•	Connect to GitHub: git remote add origin [your GitHub repo URL]
+	•	Connect to Vercel: vercel link — creates automatic deployment pipeline.
+	•	Every code push to GitHub auto-deploys to Vercel. No manual deployment needed.
+
+Step 15: Configure Services
+	•	Create .env.local file with all credentials: Supabase URL and key, Resend API key, Twilio credentials, Anthropic API key, Cloudinary credentials.
+	•	Add same credentials to Vercel environment variables dashboard.
+	•	This file is never committed to GitHub — it contains secrets.
+
+Step 16: Build the Database Schema
+The foundation everything sits on. Getting this right before building features saves significant rework. Build all tables in the first session:
+	•	users: id, email, name, phone, area, role (cook/customer/operations/ceo), dietary_preferences, allergy_profile, home_credits_balance, credits_tier, created_at
+	•	cooks: id, user_id, display_name, bio, my_story (free-form), cuisine_specialties, area, sfa_reg_number, sfa_expiry, wsq_cert_expiry, cook_since_year, tier, rating, total_orders, status, created_at
+	•	dishes: id, cook_id, name, ai_description, ingredients (JSON), allergens (JSON), calories_estimate, calories_confidence (full/category), price, last_minute_price, last_minute_window_hours, category, occasion_flags, availability_type, portions_available, photos (JSON), video_url, seo_slug, schema_markup (JSON), status, created_at
+	•	orders: id, order_number, receipt_number, customer_id, cook_id, dish_id, quantity, unit_price, commission_rate, commission_amount, cook_net, status, collection_date, special_requests, customer_address_released, created_at
+	•	ledger_entries: id, entry_date, debit_account, debit_amount, credit_account, credit_amount, order_id, description, created_by, created_at — IMMUTABLE: no updates, only inserts
+	•	payouts: id, payout_reference, cook_id, week_start, gross_amount, commission_amount, net_amount, status, paid_at
+	•	credits_ledger: id, customer_id, order_id, credit_type, credits_earned, credits_spent, balance_after, expires_at, created_at
+	•	requests: id, customer_id, dish_description, youtube_url, portions, budget_min, budget_max, date_required, area, dietary_requirements, is_large_order, status, created_at
+	•	bids: id, request_id, cook_id, price, timeline, cook_note, status, created_at
+	•	certificates: id, cook_id, cert_type, cert_number, expiry_date, file_url, verified, created_at
+	•	collaborations: id, lead_cook_id, title, description, status, total_price, created_at
+	•	collab_members: id, collaboration_id, cook_id, role, portion_description, amount, created_at
+	•	customer_events: id, customer_id, event_type, metadata (JSON), created_at — for personalisation engine
+	•	customer_preferences: id, customer_id, preference_type, preference_value, confidence, updated_at
+
+4. Phase 1 Development — MVP (Weeks 1–8 of Build)
+Build what enables a cook to list and a customer to find, pay, and collect. Build the accounting system, commission engine, agility foundations, and analytics schema from day one — retrofitting all of these is expensive.
+
+4.1 Week 1: Authentication, Cook Registration, Accounting Foundation & Agility Setup
+Step 16B: Commission Rules Engine
+	•	Create commission_rules table: id, name, rule_type (enum), conditions (JSON), commission_rate, priority, effective_from, effective_to (nullable), is_active, created_by, notes.
+	•	Seed with all current commission rules as database entries — do NOT hardcode any rate in application logic.
+	•	Build evaluate_commission(order_value, cook_tier, cook_designation, occasion_type, customer_tier) function: queries active rules matching conditions, sorts by priority, returns lowest rate in cook's favour, applies S$2.00 floor.
+	•	Every commission calculation in the platform calls this function — never uses hardcoded rates.
+	•	CEO admin interface for commission rules: list all rules, create new rule, edit (creates versioned copy), deactivate, schedule future rule, preview calculator.
+
+Step 16C: Platform Agility Foundations
+	•	Create feature_flags table: feature_name, is_enabled, enabled_for (JSON), rollout_percentage, created_at, updated_at. Seed with all Phase 1 features set to enabled.
+	•	Create platform_config table: key (unique), value (string), description, last_updated_by, last_updated_at. Seed with all configurable values.
+	•	GST config keys to add at setup (all pre-registration values): gst_enabled: false, gst_rate: 0, gst_registration_number: null, gst_registered_from: null, gst_invoice_threshold: null, gst_display_mode: exclusive. These are already built in — flip gst_enabled to true when registration occurs.
+	•	Build checkFeatureFlag(feature_name, userId) helper function used throughout codebase.
+	•	Build getConfig(key) helper function — every configurable value fetched via this, never hardcoded.
+	•	Register event bus: central event emitter. Define all event names. Each feature registers its listeners at application startup.
+	•	CEO dashboard: Feature Flags panel (toggle any feature), Platform Config panel (edit any key-value).
+
+Step 16D: Analytics Schema Setup
+	•	Create analytics schema in Supabase separate from operational schema.
+	•	Create core analytics tables: analytics.demand_gaps, analytics.cook_metrics, analytics.daily_summary, analytics.seasonal_patterns, analytics.customer_cohorts, analytics.geographic_data.
+	•	Create customer_events table in operational schema: customer_id, event_type, metadata (JSON), created_at. Log every significant customer action from day one.
+	•	Set up first nightly ETL job (Supabase scheduled function): daily_platform_summary — runs at 2am, calculates yesterday's GMV, orders, new cooks, new customers, cancellation rate, stores in analytics.daily_summary.
+	•	Set up demand_gap_analysis job: runs nightly, finds searches with no orders by cuisine, dish, area, stores in analytics.demand_gaps. This feeds the 'Unmet demand near you' widget from Phase 2.
+
+Step 16E: PDF Export Foundation
+	•	Install and configure Puppeteer in the Next.js backend.
+	•	Create base PDF HTML template: Singapore Home Cooks branding, header with logo and UEN, footer with page number and confidentiality notice.
+	•	Build first PDF: per-order receipt. Test with a sample order. Verify formatting on both A4 and digital viewing.
+	•	Build export API route: /api/export/[document_type]/[id] — accepts parameters, generates document, streams as file download.
+
+Step 16F: ExcelJS Setup
+	•	Install ExcelJS library.
+	•	Build base Excel workbook helper: creates workbook with platform branding in header row, standard column widths, number formatting for currency (S$).
+	•	Test with a simple single-tab export (daily earnings table). Verify formatting renders correctly in Excel and Google Sheets.
+
+Step 17: Authentication System
+	•	Login and signup pages for cook and customer accounts. Supabase Auth with email/password and Google OAuth.
+	•	Role assignment at registration: cook or customer. Three additional roles in database only: operations, ceo (assigned manually by founder).
+	•	Email verification required. Password reset flow. Session management (30-day login).
+
+Step 18: Five-Stage Cook Onboarding Flow
+	•	Stage 1 — Warm welcome: cook signs up, creates account immediately, starts building profile. SFA not mentioned yet. 'Welcome! Let us get your kitchen ready to earn.'
+	•	Stage 2 — Profile building: display name, Cook Since year, bio, 'My Story' (free-form, no limit), cuisine specialties, area, profile photo.
+	•	Stage 3 — SFA registration guide built into platform: step-by-step GoBusiness walkthrough. Platform opens GoBusiness page in new tab. Each step explained with WHY it benefits her. 'Your SFA registration number on your profile tells customers you are an approved food business.'
+	•	Stage 4 — WSQ course: 'We pay for it. Here is how to enrol. SkillsFuture credits may cover it entirely for Singaporeans.'
+	•	Stage 5 — Pending state: account created in pending_verification status. Profile complete, listings draftable, nothing live yet. Dashboard shows: 'Add your SFA registration number to go live.'
+	•	Stage 6 — Go-live celebration: animated congratulations when both SFA number entered and WSQ certificate uploaded and verified by admin.
+
+Step 19: Double-Entry Accounting Ledger Foundation
+	•	Create ledger_entries table as append-only, immutable log. Add Supabase Row Level Security (RLS): only server-side functions can insert — no user can modify entries.
+	•	Create chart_of_accounts table: load all accounts from chart of accounts in Concept Document Section 11.3.
+	•	Build posting function: post_transaction(debit_account, debit_amount, credit_account, credit_amount, order_id, description). Validates that debit equals credit before inserting. Rejects unbalanced entries.
+	•	Build reconciliation check function: compare sum of all ledger entries for account 2001 (Cook Earnings Payable) against sum of all unpaid payout records. Alert if discrepancy.
+
+4.2 Week 2: Dish Listing Creation
+Step 20: Interactive First-Listing Wizard
+	•	For each cook's very first listing only: guided wizard that minimises inputs.
+	•	Cook provides: ingredient list (structured entry), one photo, and a price.
+	•	Platform automatically generates: AI dish description, allergen declaration pre-populated from ingredients, calorie estimate with confidence badge, price suggestion based on similar listings.
+	•	Cook reviews all generated content and approves or edits. First listing in approximately 5 minutes.
+	•	After first listing: full listing creation form available for subsequent listings.
+
+Step 21: AI Dish Description Generator
+	•	Structured ingredient entry form: ingredient name dropdown (Singapore ingredients pre-loaded), quantity field, unit dropdown (g, ml, cups, pieces, tbsp, tsp, 'to taste').
+	•	'Generate Description' button: send to Claude API with prompt: 'You are helping a Singapore home cook write a professional listing description. Based on these ingredients: [list], write a 2–3 sentence description that is accurate, appetising, and culturally authentic to Singapore food. Include key flavours and notable characteristics. Do not invent ingredients not listed. Return only the description.'
+	•	Display in editable text field — cook can modify before saving.
+
+Step 22: AI Calorie Estimation
+	•	On listing save: send ingredients to Claude API: 'Calculate estimated calories per portion. Ingredients: [list]. Number of portions: [n]. Cooking method: [method]. Return JSON only: {calories: integer, protein_ratio: float, carb_ratio: float, fat_ratio: float, confidence: full or category}'
+	•	Parse response. If 5+ ingredients with quantities: confidence = full, green badge. Fewer: confidence = category, amber badge.
+	•	Store in dish record. Display traffic light + macronutrient visual on listing page.
+
+Step 23: AI Photo Quality Assessment
+	•	On each dish photo upload: send image to Claude API vision model with prompt: 'Assess this food photo for quality. Provide exactly 3 specific actionable tips to improve it, each in under 15 words. Focus on: lighting, composition, background, colour, plating. Return JSON: {tip1: string, tip2: string, tip3: string}'
+	•	Display tips as dismissible cards below the uploaded photo. Cook can dismiss and upload anyway — assessment is advisory.
+	•	Cost: fraction of a cent per photo. Meaningful improvement in listing quality across entire platform.
+
+Step 24: Full Listing Creation Form
+	•	Dish name, category, cuisine type.
+	•	Photo upload: up to 5 photos via Cloudinary. Video upload: optional, up to 60 seconds.
+	•	Ingredient section with three-tier toggle: Ingredients Only / Add Technique Notes / Share Full Recipe.
+	•	Allergen declaration: mandatory checkboxes — nuts/peanuts, shellfish/seafood, dairy, gluten/wheat, eggs, soy, halal/non-halal, may contain. Cannot submit without completing. Displayed ABOVE order button.
+	•	Price per portion. Last-minute premium toggle: if enabled, premium % slider and advance window hours selector.
+	•	Standard price and last-minute price shown in real-time earnings display: 'Standard price: S$12.00 → You receive: S$10.20. Last-minute price: S$13.80 → You receive: S$11.73'
+	•	Availability type, daily portions limit, collection days and times.
+	•	Dietary tags, occasion flags. SEO slug auto-generated from dish name and cook name.
+
+4.3 Week 3: Customer Browse & Search
+Step 25: Individual SEO-Indexed URLs
+	•	Every cook profile: /cooks/[cook-slug] — e.g. /cooks/auntie-ros-tampines
+	•	Every dish listing: /dishes/[dish-slug] — e.g. /dishes/nasi-lemak-sambal-prawn-auntie-ros
+	•	Add schema.org JSON-LD to every listing page: FoodEstablishment, FoodService, or MenuItem schema as appropriate.
+	•	Add Open Graph and Twitter card meta tags for social sharing.
+	•	This is Phase 1 work — do not defer. Expensive to retrofit.
+
+Step 26: Occasion-First Homepage
+	•	Upcoming occasion banner: dynamically shows next festive occasion and days remaining.
+	•	Cuisine category tiles. Available today section. Top-rated cooks section.
+	•	Schema.org markup on homepage for Singapore local food discovery.
+
+Step 27: Dish Name Search with Synonym Map
+	•	Load Singapore food synonym map as JSON file (100+ pairs from content preparation).
+	•	On search query: expand terms using synonyms before querying database.
+	•	Search results: dish photo, cook name, rating, price, last-minute price if applicable, calorie badge, dietary tags, earliest collection slot.
+	•	Sort options: relevance, rating, price low to high, earliest available.
+	•	'No results' flow: 'No cooks currently offer [query]. Post a request and let our cooks bid for you.' Button links to recipe request form.
+
+4.4 Week 4: Order & Payment Flow
+Step 28: Order Placement
+	•	'Place Order' button creates order record in database with status pending_payment.
+	•	Order number generated: SHC-[YYYY]-[MM]-[auto-increment padded to 5 digits].
+	•	Order confirmation page: PayNow QR code (generated from business PayNow ID and exact amount), order summary, 30-minute countdown timer.
+
+Step 29: Payment Confirmation — Phase 1 Manual Solution
+	•	Customer taps 'I have paid via PayNow' button.
+	•	Receipt number generated: RCP-[YYYY]-[MM]-[same sequential number as order].
+	•	Post transaction to ledger: DR Cash (1001) full amount / CR Cook Earnings Payable (2001) cook net / CR Platform Commission Earned (3001) commission amount.
+	•	Cook receives SMS and push notification immediately.
+	•	Customer receives confirmation email with order number, receipt number, order summary.
+	•	Cook's full address released to customer via email and order confirmation screen.
+	•	In-app order chat thread opened automatically.
+30-minute window: if customer does not confirm payment within 30 minutes, order is automatically cancelled and released. Cook is notified. Customer receives cancellation email with option to reorder.
+
+Step 30: Cook Order Management Dashboard
+	•	Incoming orders list with order number, dish, customer, quantity, collection date, status.
+	•	Order action buttons: Confirm Order, Mark Ready for Collection, Mark Collected, Flag Issue.
+	•	Availability toggle: prominent one-tap pause/unpause.
+	•	Daily accounting view: all today's orders with gross, commission, net. Running total.
+
+4.5 Week 5: Notifications & Automation
+Step 31: Email Notification Templates
+	•	Build all templates in Resend: order confirmation (customer), new order (cook), order confirmed by cook (customer), order ready (customer), order collected (both), review request (both — 2-hour delay), payout sent (cook), weekly earnings summary (cook), certificate expiry warnings (60 and 30 days), welcome email (cook and customer).
+
+Step 32: Cook Onboarding Email Sequence
+	•	Day 1: welcome, platform guide PDF, how to create first listing. Include link to first-listing wizard.
+	•	Day 3: listing tips, photo quality assessment explanation, allergen declaration importance.
+	•	Day 7: check-in, video upload prompt, demand calendar introduction.
+	•	Day 14: one-week review, Academy intro, Cook Community invitation.
+	•	Day 30: one-month milestone, pricing calculator intro, upcoming festive demand alert.
+
+Step 33: Certificate Expiry Tracking
+	•	Supabase cron job runs daily at 9am. Queries certificates expiring within 60 days.
+	•	60-day threshold: send first reminder email. 30-day: send urgent reminder + SMS. Expired: set all cook listings to paused status, send suspension email with reactivation instructions.
+	•	On new certificate upload and admin verification: reactivate all paused listings, send congratulations email.
+
+4.6 Week 6: Address Privacy, Ratings & Reviews
+Step 34: Address Privacy System
+	•	Cook profile and listing pages: area only shown (e.g. 'Tampines').
+	•	On order payment confirmed: release cook's full address to customer in confirmation email and order detail page only.
+	•	Cook can set address_delay preference in dashboard: immediate (default) or 2 hours before collection time.
+	•	In-app order chat opens automatically on payment confirmation. Cook and customer communicate without phone numbers.
+
+Step 35: Automated Ratings & Reviews
+	•	2-hour post-collection cron job: send review request to both cook and customer.
+	•	Review form: 1–5 stars, optional written text (minimum 20 characters if written), optional photo.
+	•	Review published automatically. Cook overall rating recalculated on each new review.
+	•	48-hour reminder if no review submitted.
+
+4.7 Week 7: Accounting System & Payouts
+Step 36: Cook Accounting Dashboard
+	•	Daily view: query ledger entries for today's cook's transactions. Display order number, dish, customer first name, gross, commission rate, commission amount, net. Running total. Export PDF/CSV.
+	•	Weekly view: aggregate by week. Show payout reference when paid. Match calculated net against actual payout.
+	•	Monthly view: aggregate by month with comparison chart. Export PDF/CSV.
+	•	Annual IRAS statement (scheduled for 1 January each year): gross sales, total commission deducted, net income, cook's entered expenses, estimated taxable income. Downloadable PDF.
+
+Step 37: Cook Expense Tracker
+	•	Simple log: date, category (ingredients, packaging, gas/electricity, equipment, WSQ course, mobile phone, other), amount, optional receipt photo upload.
+	•	Auto-totals by category and by month. Feeds into annual IRAS statement calculation.
+	•	Pre-loaded help text for each category explaining IRAS allowability.
+
+Step 38: Tax Estimate Calculator
+	•	Takes: net platform income year-to-date + cook-entered expenses = estimated taxable income.
+	•	Applies Singapore resident personal income tax rates (progressive scale).
+	•	Shows estimated annual liability if current pace continues.
+	•	Disclaimer: 'This is an estimate only. Consult a tax professional for your final filing.'
+	•	Updates automatically as new orders complete.
+
+Step 39: Three-Role Access Control
+	•	Supabase RLS policies for three roles: cook, operations, ceo.
+	•	Cook: can only see own records in all tables.
+	•	Operations: can see all orders, cook accounts, customer issues. Cannot see CEO financial views.
+	•	CEO: full access to all data including ledger, financial reports, analytics.
+	•	Test every RLS policy exhaustively before launch. Cross-user data access must be completely blocked.
+
+Step 40: Manual Payout Workflow
+	•	Every Sunday evening: Supabase function calculates each cook's weekly earnings from ledger. Generates payout list for India assistant: cook names, PayNow IDs, net amounts.
+	•	Monday morning: India assistant prepares transfer list, founder reviews and executes PayNow transfers.
+	•	After each transfer: post to ledger: DR Cook Earnings Payable (2001) / CR Cash (1001). Mark payout as paid. Send automated earnings email to cook.
+	•	Reconciliation check runs before payout execution: ledger balance vs payout sum vs bank balance. Must agree within S$0.01 or payout halted.
+
+Step 41: Weekly Xero Export
+	•	Every Monday: generate structured CSV of week's ledger entries in Xero-compatible format.
+	•	Include: all income entries, commission entries, credit/refund entries, cook payout entries.
+	•	Email to accountant for import into Xero. Two-minute process for accountant.
+	•	This is the only connection between platform and Xero — no live API integration.
+
+Step 41B: Phase 1 Receipt and PDF Export Suite
+	•	RECEIPT NUMBER COUNTER: Create separate receipt_counter table distinct from order counter. Receipt counter increments only on confirmed payment — never on order placement. Annual reset 1 January. Format: RCP-YYYY-NNNNN.
+	•	INDIVIDUAL CUSTOMER RECEIPT PDF: Build Puppeteer HTML template with all required blocks — header (logo, UEN, registered address), receipt ID block (receipt number, order number, date/time SGT, payment method), customer block, cook and dish block (including cook SFA number captured at transaction time), financial transparency block (amount to named cook, platform service fee % and amount, total, PayNow reference), footer with legally required platform facilitator language and GST statement.
+	•	CORPORATE TAX INVOICE PDF: Extended template adding — document title TAX INVOICE or INVOICE, buyer details block (company name, UEN, billing address, attention), dietary group order breakdown table (halal/vegetarian/no-shellfish/standard portions with subtotals per category), bank transfer payment details, remittance advice slip (cut-off line).
+	•	COOK PAYOUT STATEMENT PDF: Template with — payout reference, cook name and PayNow ID, period covered, detailed order table (every order: number, dish, collection date, gross, platform fee, net), PayNow transfer confirmation block, year-to-date running totals (gross, fees, net, order count, average order value).
+	•	CREDIT NOTE PDF: Template for accounting corrections — credit note number (CN-YYYY-NNNNN), original receipt number reference, original amount, credit amount, reason, revised net amount. Note: original receipt is NEVER modified — credit note is the correction document.
+	•	EMAIL DELIVERY: HTML receipt embedded inline in email (visible without downloading) + PDF attachment. Both contain identical information. Receipt resend available from customer order history at any time.
+	•	RECEIPT STORAGE: Receipt data stored permanently in database for re-generation. Minimum 5-year retention per IRAS requirements. Cook SFA number stored at transaction time — not linked to current profile (ensures historical accuracy if SFA number changes).
+	•	PRE-LAUNCH TEST: Generate test receipts for all four document types. Verify: all required fields present, commission split displayed correctly, legal footer language approved by lawyer, GST statement accurate, financial figures balance, PDF renders correctly on screen and when printed.
+
+Step 41C: Phase 1 Accounting Exports from Cook Dashboard
+	•	Daily view export button: downloads daily orders as PDF. Clean table with order number, dish, gross, commission, net. Running total at bottom.
+	•	Weekly view export button: downloads weekly summary as PDF and Excel. Excel allows accountant to manipulate data.
+	•	Commission rules admin: verify CEO can create, edit, deactivate commission rules through admin interface. Test that changing a rule immediately affects real-time earnings display on cook listing forms.
+
+Step 41D: Tiered Occasion Guarantee System
+	•	Add account 2005 (Guarantee Reserve Liability) to chart of accounts.
+	•	Add to platform_config: guarantee_reserve_pct: 0.005, guarantee_high_value_threshold: 150.
+	•	Monthly guarantee reserve posting job: on 1st of each month, calculate 0.5% of prior month's GMV from orders above S$150. Post to ledger: DR Guarantee Reserve Expense / CR Guarantee Reserve Liability (2005). Display reserve balance in CEO dashboard.
+	•	Update dispute resolution flow: when customer reports objective failure, operations dashboard shows order value. If above S$150, calculate refund amount (up to 50%, capped at S$100). If below S$150, issue platform credit S$10–15. In both cases, cook earnings never reduced.
+	•	Remove New Cook badge from guarantee mechanism — badge remains as transparency indicator for cooks with fewer than 10 orders, but guarantee now applies to all cooks based on order value tier.
+
+Step 41E: Customer Cancellation Policy
+	•	Add to platform_config: cancellation_full_refund_hours: 72, cancellation_partial_refund_hours: 24, cancellation_partial_pct: 0.50.
+	•	Order detail page: show cancellation window timer — 'Cancellation available until [datetime]' and 'Full refund until [datetime], 50% refund until [datetime]'. Timer hides when under 24 hours.
+	•	Cancellation button in order detail: triggers cancellation flow. Show refund amount based on notice period. Confirm cancellation. Initiate PayNow reversal within 24 hours.
+	•	Cook notification: immediate message when customer cancels. Customer cancellation flag recorded — never counts against cook performance.
+	•	Cook goodwill payment on 50% cancellation: post ledger entries — DR Cook Earnings Payable (goodwill 50%) / DR Customer Cancellation Expense / CR Cash (50% to customer) / CR Cash (50% goodwill to cook).
+
+Step 41F: Social Proof Counters on Homepage
+	•	Add four live counters to homepage, populated from real-time database queries:
+	•	'X home cooks across Singapore' — COUNT(cooks where status = active). Updates on each cook verification.
+	•	'X meals served' — COUNT(orders where status = collected). Updates on each collection confirmation.
+	•	'X Singapore planning areas covered' — COUNT(distinct areas from active cook profiles). Updates as cooks join.
+	•	'X happy customers' — COUNT(distinct customers with at least one completed order). Add from Month 3.
+	•	Displayed prominently on homepage between occasion banner and cuisine tiles. Small numbers are fine — real numbers are trustworthy.
+
+Step 41G: Per-Order Rating Visibility in Cook Dashboard
+	•	Cook dashboard ratings section redesigned: every completed order shows individual star rating (if review submitted), review text, date of review.
+	•	Sort options: lowest rated first, most recent first, by dish name.
+	•	Summary header: 'Your rating history — average [X] from [N] reviews. [N] reviews below 4 stars.'
+	•	Training invitations now include: 'Based on your recent ratings, we think [specific Academy module] might help. Click here to see which orders received lower ratings.' Link opens filtered rating history.
+
+Step 41H: First-Time Customer Collection Guide
+	•	Trigger: fires on first order per customer only. Never shown again after first order.
+	•	Screen 1 — shown immediately after order confirmation: 'What happens next' — PayNow confirmation explained, cook notification confirmed, address release explained, in-app chat introduced. Progress bar: Order placed → Cook confirms → Ready for collection → Collected.
+	•	Screen 2 — shown 24 hours before collection time: 'Your collection guide' — cook expects you by name, collection takes 2–5 minutes, what to say at the door, what to do if cook is not immediately available, how to contact support.
+	•	Available in English, Mandarin, and Malay (customer's account language preference). Warm, conversational tone — not legal language.
+
+4.8 Week 8: Testing, Security & Soft Launch
+Step 41I: Minimum Order Value Enforcement
+	•	Add minimum_order_value: 50 and tasting_portion_max_price: 8 to platform_config table.
+	•	Checkout validation: if order total below getConfig('minimum_order_value') AND dish is not tasting_portion: show error 'Minimum order is S$50. Please add more portions or select a different listing.' Block submission.
+	•	Tasting portion bypass: if dish.tasting_portion === true, skip minimum order check.
+	•	Cook listing creation form: display notice 'Minimum order on this platform is S$50. Price your listing so customers can reach this minimum.' Show example: 'S$12/portion means minimum 5 portions. Or price at S$50+ for a complete tray.'
+	•	Recipe request form: minimum budget field defaulting to S$50 with note 'Minimum request budget is S$50.'
+
+Step 41J: Progressive Web App (PWA)
+	•	Create /public/manifest.json: name 'Singapore Home Cooks', short_name 'SHC', icons (192px and 512px in platform green), start_url '/', display 'standalone', theme_color '#1D9E75', background_color '#FFFFFF'.
+	•	Create /public/sw.js service worker: cache-first strategy for static assets, network-first for API calls. Offline fallback page: 'You appear to be offline. Please check your connection and try again.'
+	•	Register service worker in app layout. Add install prompt logic: listen for beforeinstallprompt event, show 'Add to Home Screen' banner after third visit or after first order placed.
+	•	iOS-specific: add apple-mobile-web-app-capable and apple-touch-icon meta tags to app layout.
+	•	Configure OneSignal for PWA push notifications: web push certificates, vapid keys. Test push notification delivery on both iOS Safari and Android Chrome.
+	•	Touch optimisation: review all interactive elements for minimum 44px touch targets. Remove hover-only interactions. Add touch-specific feedback (subtle scale animation on tap).
+	•	Test PWA install flow: Android Chrome shows install banner. iOS Safari shows Add to Home Screen instruction. Installed app opens to platform, not browser UI. Push notifications arrive when app is in background.
+
+4.8 Week 8: Testing, Security & Soft Launch
+Step 42: End-to-End Testing
+	•	Create three test cook accounts. Create three test customer accounts. Test complete customer journey and complete cook journey.
+	•	Test all notification emails. Test on iPhone and Android — both as PWA installed and as mobile browser.
+	•	Test certificate upload and expiry system. Test three-role access control exhaustively.
+	•	Test accounting ledger balance after every transaction type. Verify reconciliation engine catches any discrepancy.
+	•	Test minimum order validation: attempt to place order below S$50 — must be blocked. Tasting portion order below S$50 — must proceed.
+	•	Test Tiered Occasion Guarantee: verify Guarantee Reserve posts correctly monthly. Test dispute flow for order above S$150 (proportional refund) vs below S$150 (credit).
+	•	Test customer cancellation: cancel at 73 hours (full refund), at 36 hours (50% refund), at 6 hours (no refund). Verify PayNow reversals and cook goodwill payments.
+	•	Test social proof counters: confirm they update in real time as cooks verify and orders complete.
+	•	Test first-time collection guide: fires on first order, does not appear on second order.
+	•	Test per-order rating visibility: after submitting review, verify cook dashboard shows individual order rating.
+	•	Test SEO: check that individual listing and profile pages are indexable (no noindex tags, correct canonical URLs, schema markup valid).
+
+Step 43: Security Checks
+	•	All API keys in Vercel environment — never in code. Supabase RLS policies verified.
+	•	Check: customer cannot access another customer's order or address. Cook cannot see another cook's earnings.
+	•	Verify ledger is truly immutable: attempt to update a ledger entry and confirm it is rejected.
+	•	HTTPS enabled on all pages — Vercel handles automatically.
+
+Step 44: Soft Launch
+	•	Invite 30–50 Founding Cook cohort to register on live platform. Help each one complete onboarding, verify certificates, create first listing.
+	•	Invite pilot customers to create accounts and place first platform orders.
+	•	Monitor first 48 hours in real time: every order, every notification, every PayNow confirmation, every ledger entry.
+	•	Fix all issues before opening to public registration.
+
+5. Phase 2 Development — Differentiation (Weeks 9–16)
+5.1 Recipe Request, Bidding & YouTube
+Step 45: Recipe Request Form
+	•	Form fields: dish description, YouTube URL (optional), portions, budget range, date, area, dietary requirements, occasion type.
+	•	Add 'Large Order Request' toggle: customer flags this as a group/occasion order. Prominently visible to cooks.
+	•	YouTube URL: call YouTube oEmbed API to fetch title and thumbnail. Display preview card. No API key needed.
+	•	Submit creates request record. Status: open.
+
+Step 46: Cook Bidding & Acceptance
+	•	Cooks see open requests in dashboard. 'Large Order Request' requests highlighted prominently.
+	•	Bid form: price with real-time earnings display, timeline, Cook's Note (mandatory, minimum 100 characters).
+	•	Customer reviews bids, accepts one. Platform creates order from accepted bid. Routes to PayNow checkout.
+	•	Other cooks notified: 'Thank you for your bid — another cook has been selected.'
+
+5.2 Last-Minute Pricing & Occasion Listings
+Step 47: Last-Minute Price Display
+	•	Check if current time is within cook's last-minute window for requested collection date.
+	•	If yes: show both prices transparently: 'Pre-order for tomorrow: S$12.00 / Order for today (last-minute): S$13.80 (+15%)'
+	•	Order uses appropriate price based on collection date selected.
+
+Step 48: Occasion Listing Type
+	•	New listing type: Occasion Package. Additional fields: minimum advance notice (days), package description, included dishes summary.
+	•	Appear in dedicated occasion search results and seasonal pages.
+
+5.3 Corporate Orders
+Step 49: Group Order Mode & Corporate Accounts
+	•	Cook listing: 'Accept Group Orders' toggle + minimum group quantity field. 'Can Handle Group Orders' badge: auto-awarded when cook completes 15+ portion order.
+	•	Customer registration: add 'Corporate account' option. Additional fields: company name, UEN, billing address, approver.
+	•	Corporate accounts: bank transfer payment option enabled.
+
+Step 50: Automatic Tax Invoice PDF
+	•	On corporate order payment confirmation: generate PDF invoice using jsPDF or Puppeteer.
+	•	Invoice: invoice number (= receipt number with INV prefix), platform name and UEN, company billing details, order number, line items, platform service fee, GST where applicable, payment reference.
+	•	Email to corporate billing address. Available for download in order history.
+
+5.4 DBS PayNow API — CRITICAL PRIORITY
+Step 51: Automated Payment Confirmation
+	•	Apply for DBS PayNow API access (or equivalent bank API). This may take 4–8 weeks to be approved.
+	•	Integration: on PayNow payment received, bank API sends webhook to platform. Platform automatically confirms payment, posts ledger entry, releases address, notifies cook. No customer action needed.
+	•	This replaces the Phase 1 manual tap-to-confirm workaround. Treat as highest Phase 2 priority.
+Start the bank API application process in Month 1 of development — not Month 2. Approval takes time.
+
+5.5 Cook Recognition & Performance Features
+Step 52: Automatic Tier Calculation & Commission
+	•	On every order completion: check if cook has crossed tier threshold. If yes: update tier, send congratulations email, update badge, apply new commission rate.
+	•	All commission calculations use cook's current tier rate — lower of order value tier or recognition tier.
+
+Step 53: Training Invitation Automation
+	•	Cron job checks cook ratings daily. If rating drops below 4.0: automatically send personalised training invitation email.
+	•	If 3+ same-type complaints in 90 days: automatically recommend specific Academy module.
+	•	Flagged cooks appear in operations dashboard cook alert queue.
+
+5.6 Unmet Demand & Peer Pricing Benchmarks
+Step 54: Unmet Demand Near You Widget
+	•	Weekly batch job: for each cook, find search queries from customers in the cook's area for dishes with no matching listings in the last 30 days.
+	•	Display in cook dashboard: 'Unmet demand near you — these dishes were searched by customers in [area] this week with no matching listings: [dish 1], [dish 2], [dish 3]'
+	•	Updated every Monday. More actionable than generic festive calendar alerts.
+
+Step 55: Anonymous Peer Pricing Benchmarks
+	•	In Academy pricing calculator: add benchmark data — 'Other cooks offering [cuisine] occasion spreads in your area are pricing at S$[min]–S$[max] per portion.'
+	•	Anonymised aggregate data. No individual cook prices ever shown.
+	•	Updates weekly as new order data accumulates.
+
+5.7 Post-Order Micro-Survey
+Step 56: Third Repeat Order Survey
+	•	Trigger: customer places their 3rd order from the same cook.
+	•	One-question micro-survey in order confirmation screen: 'What would make you order from [cook name] even more often?' Four options: More dish variety / Easier collection times / Smaller portions available / Better photos.
+	•	Results aggregated in cook's analytics dashboard as 'What customers want more of' themes.
+	•	Takes 10 seconds for customer. Produces actionable insight for cook.
+
+5.8 Cook-to-Cook Messaging
+Step 57: Direct Messaging
+	•	Any registered cook can send a direct message to any other registered cook via in-app messaging.
+	•	Message thread stored in database. Email and push notification to recipient.
+	•	Enables cooks to self-organise large order collaborations before Phase 3 Collaboration Board.
+	•	India assistant manually matchmaking: when large occasion request arrives, India assistant identifies and messages relevant cooks proactively.
+
+5.9 Mandarin Language Support
+Step 58: Internationalisation
+	•	Install next-intl for Next.js internationalisation.
+	•	Extract all UI text strings to /locales/en/common.json and /locales/zh/common.json.
+	•	Professional Mandarin translation applied to all operational strings (not legal documents).
+	•	Language toggle in header and in user profile settings.
+AI-generated content (dish descriptions) in Mandarin: pass language preference to Claude API call and request response in appropriate language. Human review of AI-translated food descriptions required.
+
+5C. Android Native App — Phase 2 (Weeks 15–20 of Build)
+React Native with Expo. Significant web codebase reuse: business logic, API calls, Supabase client, state management all transfer directly. Mobile-specific layer built on top.
+
+Step 58B: React Native with Expo Setup
+	•	Initialise Expo project: npx create-expo-app singapore-home-cooks-mobile --template bare-minimum
+	•	Install dependencies: @supabase/supabase-js (same client as web), expo-camera, expo-image-picker, expo-notifications, expo-secure-store (for token storage), react-navigation (navigation library), @react-navigation/bottom-tabs, @react-navigation/native-stack.
+	•	Configure app.json: name 'Singapore Home Cooks', slug 'singapore-home-cooks', version '1.0.0', icon in platform green, splash screen, Android package name 'sg.singaporehomecooks.app', iOS bundle ID 'sg.singaporehomecooks.app'.
+	•	Environment variables: use expo-constants to access Supabase URL, anon key, Anthropic API key from app.config.js (never in source code).
+
+Step 58C: Core Navigation and Authentication
+	•	Bottom tab navigator: Home (customer discovery), Orders (order management for cooks and customers), Account (profile, settings, accounting). Plus modal stack for dish detail, checkout, cook profile.
+	•	Authentication: reuse Supabase Auth from web. Store session token securely using expo-secure-store. Biometric authentication option: expo-local-authentication for Face ID and fingerprint login — especially important for older cooks.
+	•	Role-based routing: on login, check user role (cook vs customer). Cook sees cook home screen (order management, dashboard). Customer sees customer home screen (discovery, browse).
+
+Step 58D: Cook-Specific Mobile Features
+	•	Camera integration: cook taps 'Add photo' on listing → expo-image-picker opens camera or photo library directly. No file selection dialogue. Photo compressed and uploaded to Cloudinary in background.
+	•	One-tap order management from push notification: when new order arrives, notification shows 'New order: [dish] for [date]. Confirm or Decline.' Two action buttons directly on notification. Tapping Confirm posts order confirmation without opening app.
+	•	Offline queue: use expo-sqlite to cache pending orders locally. If network drops (HDB lift, MRT tunnel), orders still visible. Syncs when connection restored.
+	•	Biometric login: on each app open, offer Face ID/fingerprint instead of password. Once authenticated, session persists for 30 days.
+
+Step 58E: APK Beta Distribution and Play Store
+	•	Build APK: eas build --platform android --profile preview. Generates downloadable APK file.
+	•	Distribute to Founding Cook cohort via WhatsApp message: 'Hi [Name], our app is ready for testing. Download here: [link]. Install it on your Android phone and tell us what you think.'
+	•	2-week beta period: collect feedback, fix issues, iterate. Focus on: order notification speed, camera upload reliability, earnings dashboard accuracy, biometric login success rate.
+	•	Play Store submission: eas build --platform android --profile production. Upload AAB to Google Play Console. Complete store listing: app name, description, screenshots (phone and tablet), feature graphic. Set content rating: Everyone. Category: Food & Drink.
+	•	Google Play review: typically 1–3 days. Once approved: live on Google Play. Update platform_config: android_app_version: '1.0.0', app_store_url_android: '[Play Store URL]'.
+	•	Play Store URL added to website header: 'Get the app: [Android badge]'
+
+5B. Phase 2 Analytics, Exports & Flexibility Enhancements
+Step 57B: Phase 2 Analytics Jobs
+	•	Set up remaining nightly ETL jobs: cuisine_performance (orders, GMV, AOV by cuisine), cook_performance_metrics (conversion rate, repeat customer rate, avg rating trend per cook), customer_cohort_analysis (new vs returning, LTV by acquisition month), geographic_heatmap (cook density vs customer demand by planning area).
+	•	'Unmet demand near you' widget: reads from analytics.demand_gaps table populated by nightly job. Displays in cook Academy dashboard: 'Customers in [area] searched for [dish] [N] times this week with no matching listings.'
+	•	Cook performance trend charts in Academy dashboard: views per listing over time, conversion rate trend, repeat customer rate trend. All read from analytics.cook_metrics.
+
+Step 57C: Phase 2 Full Export Suite
+	•	Annual IRAS Statement PDF: full template with platform logo, cook name/NRIC, tax year, gross sales by month, commission deducted, cook expenses from tracker, estimated net taxable income, disclaimer. Scheduled to auto-generate 1 January. Cook can download anytime from accounting dashboard → Annual view.
+	•	Monthly earnings Excel export: ExcelJS workbook — orders by date, gross, commission, net, monthly totals. Available from accounting dashboard → Monthly view → Download Excel.
+	•	Expense tracker PDF and Excel export: expenses by category and month. Formatted as clean accountant-ready table.
+	•	Full year accounting package ZIP: one-click download of all 12 monthly statements + annual IRAS + expense tracker annual. Available from accounting dashboard → Annual view → Download Full Package.
+	•	Bulk corporate invoice ZIP: corporate account dashboard → Invoices → select date range → Download All (ZIP).
+	•	Corporate spending report Excel: multi-tab workbook (summary by month, by cook, by cuisine, by occasion, raw data).
+	•	Management P&L workbook Excel: multi-tab workbook (P&L summary with YTD, revenue breakdown, costs by category, GMV analysis, cook cohort performance, customer analytics). CEO dashboard → Financial → Download P&L (Excel).
+	•	Operations weekly report PDF: Monday morning analytics brief in formatted PDF. CEO dashboard → Operations → Download Week Report.
+
+Step 57D: Phase 2 Commission Rules Enhancements
+	•	Add promotional rule type to commission engine: time-bounded rules with automatic activation and deactivation based on effective_from and effective_to dates.
+	•	Test: create a 2-week promotional rule, verify it activates and deactivates automatically. Verify real-time earnings display reflects promotion during active period.
+	•	Commission analytics in CEO dashboard: revenue by commission tier showing financial impact of cook recognition programme. Which tier generates most platform revenue?
+
+6. Phase 3 Development — Growth Engine (Months 5–6)
+6.1 Contextual Meal Search
+Step 59: Structured Meal Search
+	•	Meal Search page with form: cuisine type dropdown, number of people (1–50), budget slider, calorie target (optional), dietary requirements, area, date.
+	•	Backend: calculate per-person budget. Find dish combinations from same cook that feed N people within budget, matching dietary and calorie constraints. Sort by rating.
+	•	Display as complete meal packages: 'From [cook] in [area]: [dish 1] + [dish 2] = S$[total] for [n] people, [cal]/person. Available [date].'
+
+Step 60: Natural Language Layer
+	•	Add plain text bar to Meal Search page: 'Describe what you want...'
+	•	Claude API call: 'Extract meal search parameters from this query: [text]. Return JSON with: cuisine, people, budget_max, calories_per_person, dietary (array), area, date. Return only valid JSON.'
+	•	Parse JSON response, pre-fill structured form, run search.
+Always wrap JSON parsing in try-catch. On failure: fall back to empty structured form with message 'We couldn't fully understand that — please fill in the details below.' Never show a technical error to the user.
+
+6.2 Behavioural Personalisation Engine
+Step 61: Event Logging
+	•	Log customer events: dish viewed, search performed, filter applied, order placed, review submitted, cook profile viewed.
+	•	Store in customer_events table: customer_id, event_type, metadata (JSON), created_at.
+
+Step 62: Preference Inference
+	•	Weekly batch job: analyse each active customer's event log from last 90 days.
+	•	Infer: cuisine preferences, dietary patterns, favourite cooks, calorie preferences.
+	•	Store in customer_preferences table. Update weekly.
+
+Step 63: Allergy Alert at Checkout
+	•	On order placement: check customer's allergy profile (from Account Settings field) AND inferred allergen avoidance against dish allergen list.
+	•	If match found: intercept checkout with modal: 'Hold on — this dish contains [allergen]. Your profile indicates a [allergen] sensitivity. Are you sure you want to continue?'
+	•	Two buttons: 'Yes, continue' and 'Go back'. 'Yes, continue' logs confirmed override with timestamp.
+	•	This check fires before any payment is initiated.
+
+6.3 Home Credits Loyalty Programme
+Step 64: Credit Ledger & Award Triggers
+	•	On order marked collected: award base credits (1 per S$10). If order > S$150: 10% bonus. If first order from this cook: +5 bonus credits.
+	•	On referred customer's first completed order: +20 credits to referrer, +20 credits to new customer.
+	•	Credit expiry: monthly cron job marks credits older than 12 months as expired. Post to ledger: DR Customer Credits Liability / CR Expired Credits Income.
+
+Step 65: Tier Calculation & Display
+	•	On any credit award: recalculate lifetime credits earned total. Update tier if threshold crossed.
+	•	Persistent credit balance display in header: '[Tier name] · [balance] credits'
+	•	Animated award notification after order completion.
+
+Step 66: Redemption at Checkout
+	•	If customer has 50+ credits: show redemption toggle at checkout.
+	•	Maximum redemption: 15% of order value — enforce in both frontend and backend.
+	•	On redemption: post to ledger: DR Customer Credits Liability / CR Commission Revenue (reduction).
+
+6.4 Cook Collaboration Board & Collective Listings
+Step 67: Cook Collaboration Board
+	•	New page in cook dashboard: 'Collaboration Opportunities'. Cook posts opportunity: order details, their portion offer, partner spots needed.
+	•	Eligibility check on partner response: minimum 4.0 rating, minimum 10 orders, no active suspension.
+	•	Lead Cook confirms partners. Collaboration record created. Links to orders when collaborative order is placed.
+
+Step 68: Cook Collective Listing
+	•	New listing type: Collective. Lead Cook creates and invites partner cooks from platform.
+	•	Partners accept/decline. Commission calculated on full package value. Posted to ledger as single transaction.
+
+6.5 Academy Growth Features
+Step 69: Peak Season Capacity Planner
+	•	Triggered 6 weeks before each major festive occasion.
+	•	Shows cook estimated demand based on platform data and her order history.
+	•	Optional cap setter: cook sets maximum orders for the period. System auto-pauses new orders when cap reached.
+	•	Burnout warning notification: fires when weekly orders exceed 2× baseline. Single-tap dismiss. Once per peak period.
+
+Step 70: Heritage Recipe Archive
+	•	Structured section of cook's profile: formal documentation of complete recipes with story, family history, photos.
+	•	Published permanently regardless of whether cook is still active.
+	•	Aggregate becomes Singapore Home Cooks Heritage Recipe Library.
+
+Step 71: CEO Financial Dashboard
+	•	Management P&L: query ledger entries, calculate revenue minus expenses, display as formatted income statement.
+	•	Revenue Waterfall: GMV → commission → less credits → less refunds → net revenue. Visualised as waterfall chart.
+	•	Cook Earnings Payable Report: total liability, breakdown by cook, age of each liability.
+	•	Geographic heatmap: Singapore planning areas data, cook density vs customer search density overlay.
+	•	IRAS Export Package: generate annual income/expense PDF and CSV from ledger data.
+	•	Financial forecasting: current month run rate projection, break-even tracking.
+	•	GST Readiness Report: running total of taxable turnover (using whichever basis — GMV or commission — determined by tax specialist). Warning flag at 75% of S$1M threshold shown prominently. Projected crossing date based on 13-week rolling growth rate. When gst_enabled is false, this section is the most important dashboard item for the founder to monitor weekly.
+	•	GST F5 Preparation (once registered): quarterly data extract in F5 format showing output tax (Box 6), input tax (Box 7), net GST payable (Box 8). Export as formatted PDF for accountant review before IRAS submission.
+
+Step 71B: Phase 3 Advanced Analytics
+	•	Singapore Home Food Demand Index dashboard: full week-by-week demand gap analysis. Top 10 unmet dishes by cuisine and area. Week-on-week trend for each cuisine category. Searchable and filterable.
+	•	Cook cohort performance analysis: how do cooks who joined in different months perform at 3, 6, and 12 months? Displayed as cohort comparison chart in CEO dashboard.
+	•	Customer LTV by acquisition channel: what is the 6-month LTV of a customer acquired through word of mouth vs paid social vs referral? Informs marketing budget allocation.
+	•	Seasonal demand pattern visualisation: for each upcoming occasion, show historical demand data and current cook readiness (how many cooks have relevant listings and capacity).
+	•	Cook behaviour correlations dashboard: video listing vs conversion rate, ingredient count vs orders, response time vs repeat rate. Data-backed Academy recommendation engine reads from this.
+
+Step 71C: Phase 3 Full Export Suite
+	•	Management P&L PDF: formatted, investor-ready income statement generated from ledger data. CEO dashboard → Financial → Download P&L Summary (PDF).
+	•	Platform IRAS export PDF: platform's own annual income statement for corporate tax. Generated from ledger: total revenue, itemised expenses, net taxable income, GST summary. Available from January each year.
+	•	Singapore Home Food Demand Index PDF: quarterly report with top searched dishes, fastest growing cuisines, geographic demand distribution, seasonal preview. Anonymised aggregate data. CEO dashboard → Analytics → Download Demand Index (PDF).
+	•	Metabase evaluation: at 50+ active cooks, evaluate whether Metabase open-source self-hosted analytics tool is worth deploying for visual dashboards beyond the built-in CEO dashboard.
+
+6.6 DBS Bulk Payment API — Automated Payouts
+Step 72: Automated Monday Payouts
+	•	Every Monday at 8am: system queries all completed orders from prior week, calculates net per cook, submits batch payment instruction to DBS bulk payment API.
+	•	Bank executes all PayNow transfers. System marks payouts as paid on API confirmation. Posts to ledger automatically.
+	•	Eliminates manual Monday payout process entirely.
+
+6C. iOS Native App — Phase 3 (Month 5–6)
+Port of the Android React Native codebase with iOS-specific adjustments. Significant time saving — iOS is not a rebuild, it is an adaptation.
+
+Step 72B: iOS Port and TestFlight Beta
+	•	iOS-specific adjustments to React Native codebase: replace Android-specific navigation gestures with iOS conventions. Adjust notification handling for iOS push certificate requirements. Update keyboard avoiding behaviour for iOS keyboard different from Android.
+	•	Configure Apple-specific settings in app.json: ios.bundleIdentifier, ios.supportsTablet, ios.infoPlist (camera usage description, photo library usage description, Face ID usage description).
+	•	Apple Developer Program: enrol at developer.apple.com — US$99/year (~S$135). Create App ID, provisioning profiles, and push notification certificates.
+	•	TestFlight beta: upload build to App Store Connect. Add Founding Cook cohort as external testers (up to 10,000). 2-week beta period.
+	•	iOS-specific features to verify: Face ID login (expo-local-authentication), iOS push notifications with rich notification actions (confirm/decline order), iOS share sheet for listing photos, iOS file picker behaviour.
+
+Step 72C: App Store Submission
+	•	App Store Connect: complete store listing — app name 'Singapore Home Cooks', subtitle 'Home Cooks & Bakers', description (max 4,000 characters), keywords, support URL, privacy policy URL.
+	•	Screenshots required: 6.5-inch iPhone (iPhone 14 Pro Max), 5.5-inch iPhone (iPhone 8 Plus), 12.9-inch iPad Pro. At least 3 screenshots each. Show: homepage with cook listings, dish detail page, cook dashboard, order confirmation.
+	•	App review notes: 'This is a marketplace platform for SFA-registered home-based food businesses in Singapore. PayNow payment is used for food purchases — this is a physical goods transaction exempt from Apple in-app purchase requirements per App Store Review Guidelines Section 3.1.5(a).'
+	•	App Store review: typically 1–2 weeks. Common rejection reasons: missing privacy policy (already have), in-app purchase issues (explicitly exempt for food), metadata accuracy (ensure screenshots match actual app).
+	•	Once approved: update platform_config — ios_app_version: '1.0.0', app_store_url_ios: '[App Store URL]'. Update website header: 'Get the app: [Android badge] [iOS badge]'.
+
+6B. AI Development Steps — All Phases
+All AI features use the Claude API (Anthropic). Steps are distributed across phases but grouped here for reference. The standard API call pattern applies to all: model claude-sonnet-4-20250514, max_tokens 1000, feature-specific system prompt, always wrap in try-catch, always provide graceful fallback.
+
+6B.1 Phase 1 AI Steps (Built During Weeks 1–8)
+Step 19B: Cook and Customer Chatbot Foundation
+	•	Create chatbot_knowledge table in Supabase: id, context (cook/customer/operations), category, question, answer, updated_at.
+	•	Seed with initial content: Cook Agreement summary, SFA registration guide, WSQ enrolment steps, payout process, allergen policy, refund policy, ordering guide, Home Credits guide, Lalamove guide.
+	•	Build chatbot API route: receives message + context (cook or customer) + conversation history. Fetches relevant knowledge base entries (top 10 by semantic similarity or keyword match). Sends to Claude API with system prompt: 'You are SHC Assistant, a helpful AI for Singapore Home Cooks platform. Answer only using the provided knowledge base. If you cannot answer accurately from the knowledge base, say: I don't have the information to answer that accurately. Let me connect you with a team member. Never pretend to be human. Knowledge base: [entries]'
+	•	Escalation detection: check response for low-confidence indicators, check user message for complaint/emotional language keywords. If detected: prepend escalation message and log conversation for India assistant review.
+	•	Frontend: persistent chat button on all cook and customer pages. Chat window with SHC Assistant branding, AI clearly labelled. Thumbs up/down on every response. Conversation history maintained within session.
+	•	Phase 1 chatbot is intentionally simple — grows more capable as knowledge base is expanded over time.
+
+Already covered in earlier steps:
+	•	Step 20: Interactive first-listing wizard (Claude API generates description, allergens, calorie, price suggestion from ingredients + photo + price)
+	•	Step 21: AI dish description generator
+	•	Step 22: AI calorie estimation
+	•	Step 23: AI photo quality assessment
+
+6B.2 Phase 2 AI Steps (Weeks 9–16)
+Step 53B: AI Pricing Suggestion
+	•	On listing creation form, after cook enters ingredients and cuisine type: send to Claude API — 'Based on these ingredients [list] and cuisine type [type], what price range per portion would be appropriate for a home cook in Singapore selling as an occasion food? Consider ingredient quality signals and typical Singapore home food pricing. Return JSON: {min_price: integer, max_price: integer, rationale: string (under 30 words)}'
+	•	Display suggestion below price field: 'Based on your ingredients and similar listings, we suggest S$[min]–S$[max] per portion. [rationale].' Cook can ignore and set any price.
+	•	Only fires if 5+ ingredients are entered (sufficient data for meaningful suggestion).
+
+Step 53C: AI Bid Writing Assistant
+	•	On recipe request bid form: add optional text field 'Tell us about your experience with this dish in your own words.'
+	•	When cook fills this in and clicks 'Improve my Cook's Note': send to Claude API — 'A home cook in Singapore is bidding on a recipe request. Her experience description: [text]. Write a professional, warm, and specific Cook's Note for her bid that covers: (1) her relevant experience, (2) how she would approach this dish, (3) any adaptations for a home kitchen, (4) honest presentation expectations. Under 150 words. Return only the Cook's Note text.'
+	•	Display in Cook's Note field — cook reviews and edits. Saves significantly on writing time for less confident cooks.
+
+Step 53D: AI Recipe Request Helper
+	•	On recipe request form: add optional field 'Describe what you want in your own words.'
+	•	When customer fills this in and clicks 'Help me write my request': send to Claude API — 'A customer wants to post a recipe request. Their description: [text]. Extract and structure this into a clear recipe request with: dish_name (string), description (2 sentences), key_requirements (array of strings), cuisine_type (string). Return JSON only.'
+	•	Pre-fill the structured request form from the JSON response. Customer reviews and adjusts.
+
+Step 53E: Operations AI Daily Brief
+	•	Supabase scheduled function runs every day at 7:30am Singapore time.
+	•	Queries: certificate expiries in next 7 days, orders in pending_payment for more than 25 minutes, cooks whose rating has dropped more than 0.3 in the last 7 days, any open dispute tickets older than 24 hours, PayNow reconciliation mismatches from last 24 hours.
+	•	Sends data to Claude API: 'You are an operations assistant for Singapore Home Cooks marketplace. Here is today's operational data: [data]. Generate a concise plain-English daily briefing for the operations manager. Format as: (1) Urgent items requiring action today, (2) Items to monitor, (3) Nothing to worry about. Keep each item to one sentence. Be specific and actionable.'
+	•	Email the generated brief to operations email address at 8am. Also display as first item in operations dashboard.
+
+Step 53F: AI Cook Performance Diagnostics
+	•	When cook's rating drops below 4.0 (currently triggers generic training invitation): instead, gather last 10 reviews under 4 stars. Send to Claude API: 'These are recent lower-rated customer reviews for a Singapore home cook. Review texts: [reviews]. Identify the 1–2 most common specific issues mentioned. Generate a personalised, warm diagnosis message (under 100 words) that: names the specific pattern you see, suggests one concrete improvement, does not use the word performance or lecture the cook. Return only the message.'
+	•	Replace the generic training invitation with this personalised diagnostic message. Same email trigger, far more useful content.
+
+Step 53G: AI Payout Anomaly Detection
+	•	Runs as part of Monday payout preparation (before reconciliation engine).
+	•	Queries: all orders from the week. Calculates: average order value for the week vs rolling 4-week average, new customer accounts (registered in last 7 days) who placed large orders (above 2× platform average), any single cook whose weekly earnings are more than 3× their previous week.
+	•	Sends to Claude API: 'Review these transaction patterns for a Singapore home food marketplace and identify any that seem unusual or warrant human review before paying out. Data: [patterns]. Return: list of items to review with one-sentence explanation each. Only flag genuine anomalies — do not flag normal festive season increases.'
+	•	Display flagged items in Monday payout workflow section of operations dashboard. India assistant reviews before executing any transfers.
+
+Step 53H: Operations Chatbot
+	•	Same architecture as cook and customer chatbots but with operations knowledge base.
+	•	Knowledge base includes: all process documentation, payout workflow steps, certificate verification criteria, dispute resolution procedures, crisis protocol, cook suspension process, training invitation process.
+	•	Only accessible to operations and CEO login roles.
+	•	India assistant asks questions and gets precise step-by-step answers rather than searching documentation.
+
+6B.3 Phase 3 AI Steps (Months 5–6)
+Step 63B: AI Occasion Planner
+	•	New conversational interface on customer homepage: 'Tell me about your occasion and I'll find the perfect home cooks for you.'
+	•	Customer types naturally: 'Birthday dinner for 8 people next Saturday, 2 halal, 1 vegetarian, budget S$200, want a variety of Singaporean cuisines.'
+	•	Claude API call: extract parameters (party_size, dietary_requirements, budget, date, cuisine_preferences, occasion_type). Then query available listings matching parameters. Then Claude generates a complete occasion plan: 'Here's a curated plan for your birthday dinner: [3–4 specific dishes from specific cooks with prices, rationale, and collection logistics]. Total: S$[amount]. All within your budget.'
+	•	Customer can tap any recommended item to go directly to that cook's listing. Or tap 'Book this plan' to add all items to cart simultaneously.
+	•	This is the platform's most powerful customer-facing feature. Market-first in Singapore.
+
+Step 63C: AI Similarity Search
+	•	On every dish listing page and every cook profile: 'Find dishes with similar flavours →' button.
+	•	Claude API call: 'Based on this dish profile [ingredients, cuisine, description], what flavour characteristics define it? Identify 3–5 flavour descriptors. Return JSON: {descriptors: array}'
+	•	Use descriptors to query other listings with matching ingredients, cuisine tags, and occasion flags. Return top 5 most similar dishes from other cooks.
+	•	Display as 'You might also love' section at the bottom of every listing. Drives cross-cook discovery.
+
+Step 69B: AI Listing Optimisation Review
+	•	Weekly batch job: for each cook's active listings, send to Claude API — 'Review this Singapore home food listing for a [cuisine] dish and suggest improvements. Listing: [full listing data including photos count, video presence, description, ingredient count, review count, conversion rate from analytics]. Suggest 1–2 specific improvements. Be specific and actionable. Under 60 words. Return JSON: {suggestion_1: string, suggestion_2: string (null if only one suggestion)}'
+	•	Display suggestions in Academy dashboard under 'Improve your listings': 'Your [dish name] listing: [suggestion].' Dismiss button once actioned.
+	•	Only surface if suggestion would genuinely help — cook's with 4.8+ rating and good conversion rates get fewer suggestions.
+
+Step 69C: AI Cook Recruitment Intelligence
+	•	Weekly batch job: analyse unmet demand data (search queries with no results by area) + cook density by area + most common cuisine gaps.
+	•	Claude API call: 'Here is Singapore Home Cooks weekly demand data: unmet searches by cuisine and area: [data]. Current cook distribution: [data]. Identify the top 3 highest-opportunity cook recruitment targets this week. For each: specify the cuisine needed, the Singapore area where demand is highest, the specific Facebook group or community to post in, and a suggested recruitment message hook. Be specific and actionable.'
+	•	Generate weekly recruitment brief displayed in CEO dashboard and emailed to operations. India assistant uses for targeted outreach.
+
+Step 69D: AI Platform Health Narrative
+	•	Weekly batch job every Monday: gather CEO dashboard metrics for the week.
+	•	Claude API call: 'You are a business analyst for Singapore Home Cooks, a home food marketplace. Here is this week's performance data: [GMV, new cooks, new customers, cancellation rate, average order value, top cuisines, top cooks, any anomalies]. Write a concise weekly business narrative (under 200 words) covering: key performance highlights, any concerns or trends to watch, one recommended action for next week. Write for a founder who wants insight, not raw numbers.'
+	•	Display as first card in CEO dashboard weekly view. Also emailed to founder every Monday at 9am.
+
+7. Phase 4 Development — Scale (Month 7+)
+7.1 Delivery Integration
+Step 73: Lalamove API Integration
+	•	Phase 1 already has the Lalamove deep-link button (pre-fill address, no API). Phase 4 adds full integration.
+	•	At checkout: customer selects 'Arrange delivery'. Enters delivery address. Platform calls Lalamove API for price quote. Customer confirms. Lalamove booking made automatically.
+	•	Delivery cost added to order total, paid by customer. Platform does not subsidise delivery.
+
+7.2 HitPay — Card & GrabPay
+Step 74: Payment Gateway Integration
+	•	When corporate card volume justifies 2.5% fee: integrate HitPay JavaScript SDK.
+	•	HitPay hosted payment page handles PayNow, cards, and GrabPay in one integration.
+	•	HitPay webhook provides automatic payment confirmation — replaces Phase 1 DBS PayNow API.
+	•	Update ledger posting to trigger from HitPay webhook instead of manual confirmation.
+
+7.3 Native Mobile Apps
+Step 75: PWA First (Phase 3), Native Second (Phase 4)
+	•	PWA (Phase 3): add web app manifest and service worker. Allows home screen installation. Takes 1–2 days.
+	•	Native iOS and Android (Phase 4): React Native with Expo. 6–8 weeks additional development.
+	•	Apple Developer account: S$99/year. Google Play: US$25 one-time.
+	•	Build native app only when web platform has 200+ active monthly users.
+
+8. Development Challenges & Resolutions
+8.1 Technical Challenges
+Challenge
+Likelihood
+Impact
+Resolution
+PayNow real-time payment confirmation
+Certain in Phase 1
+Medium
+Manual tap-to-confirm Phase 1. DBS PayNow API Phase 2 — start application process Month 1.
+Double-entry ledger balance discrepancies
+Low if built correctly
+High
+Reconciliation engine runs before every payout. Any discrepancy halts payouts until resolved.
+AI calorie estimation accuracy
+Medium
+Low (estimate only)
+Green/amber confidence display. Honest disclaimer. Structured ingredient entry improves accuracy.
+Natural language search misinterpretation
+Medium
+Low (fallback available)
+Always fall back to structured form on AI parse failure. Never show error to user.
+Database performance at scale
+Low at launch
+High at scale
+Add database indexes from day one for common query patterns. Review at 10,000+ orders.
+Supabase RLS policy complexity
+Medium
+High (security risk)
+Test every RLS policy exhaustively. Verify cross-user data access is completely blocked.
+Ledger immutability enforcement
+Low
+High
+Supabase RLS: only server-side functions can insert to ledger. No user can update any ledger entry.
+Email delivery to spam
+Medium
+Medium
+Resend with verified domain. Set up SPF and DKIM DNS records. Monitor bounce rates.
+
+8.2 Operational Challenges
+Challenge
+Likelihood
+Impact
+Resolution
+Cook certificate verification backlog
+High at launch
+Medium
+India assistant handles routine verification. Target 24-hour turnaround. Document verification criteria clearly.
+Cook listing quality varies widely
+High
+Medium
+AI description generator raises the floor. Photo quality AI assessment. 50-order check-in identifies persistent low-quality listings.
+PayNow payment mismatches
+Low-Medium
+High
+Daily bank reconciliation check. Mismatches flagged immediately. Monday reconciliation engine halts payouts if unresolved.
+Cook over-commits during festive periods
+Medium
+Medium
+Peak Season Capacity Planner. Burnout warning notification. Availability toggle easy to access.
+India assistant quality consistency
+Medium
+Medium
+Written process documentation for every task. Weekly brief. Monthly performance review.
+
+8.3 Legal & Compliance Challenges
+Challenge
+Likelihood
+Impact
+Resolution
+Food law classification ambiguity
+Medium
+Very High
+Formal legal opinion before launch. Non-negotiable. Feature language corrected to facilitation throughout.
+PDPA compliance for personalisation
+Medium
+High
+Legal review of allergen profiling and occasion memory. Explicit opt-in. DPO designated.
+MAS Payment Services Act
+Low-Medium
+High
+Confirm before first transaction. Document in writing. Weekly payouts keep float period short.
+Customer with allergy overrides alert and claims harm
+Low
+Very High
+Mandatory confirmation step. Logged timestamp. Customer Terms state customer responsibility. Product liability insurance.
+GST threshold approach
+Low at launch
+Medium
+GST tracking in platform from day one. Alert in Xero at 75% of S$1M. Engage accountant when threshold approaching.
+
+8.4 AI-Specific Challenges
+Challenge
+Likelihood
+Impact
+Resolution
+AI generates inaccurate dish descriptions
+Medium
+Medium
+Cook reviews and approves every AI-generated description before publishing. Cook is the quality gate.
+Chatbot gives wrong policy information
+Medium
+High
+RAG architecture — Claude answers only from documented knowledge base. When uncertain: escalates to human. Knowledge base reviewed weekly.
+AI occasion planner suggests unavailable cook
+Low-Medium
+Medium
+Query available listings in real time before generating plan. Only recommend cooks with active listings and capacity.
+Allergen alert false positive frustrates users
+Low
+Low
+Alert is advisory with dismiss option for customer-facing recommendations. Mandatory confirmation only when declared allergen matches listing allergen exactly.
+Claude API downtime affects platform features
+Low
+High
+All AI features have graceful fallback. Cook registration, ordering, and payouts all function without AI. Non-AI features are never blocked by AI failures.
+AI pricing suggestion inconsistent
+Medium
+Low
+Framed as suggestion only — cook always sets their own price. Consistent system prompt. Review outlier suggestions weekly.
+Operations daily brief misses urgent issues
+Low
+High
+Brief supplements, never replaces, the operations dashboard. India assistant checks both. Brief is a first filter, not the only filter.
+
+8.5 Mobile-Specific Challenges
+Challenge
+Likelihood
+Impact
+Resolution
+Android manufacturer push notification restrictions
+High
+Medium
+Test on Samsung, Xiaomi, Oppo devices. These manufacturers restrict background notifications. Provide in-app troubleshooting guide. Guide cook to enable notifications in battery settings.
+Apple App Store rejection for payment method
+Low
+High
+Prepare detailed App Review notes citing Section 3.1.5(a) physical goods exemption. Food purchases via PayNow are explicitly exempt. Have documentation ready before submission.
+iOS push notification certificate management
+Medium
+Medium
+Use Expo Push Notification service — handles certificate management automatically. Test on real iPhone device (not simulator) before TestFlight.
+React Native performance on older Android devices
+Medium
+Medium
+Target Android 8.0+. Use FlatList for long lists. Profile on Samsung Galaxy A32 (common budget device in target demographic).
+App Store review delay during peak periods
+Medium
+Low
+Submit iOS app in Month 5 — provides buffer. Never submit during December/January when Apple review times increase significantly.
+PWA install prompt not shown on iOS
+Medium
+Medium
+iOS Safari does not show automatic install banner. Provide in-app tutorial showing 'Add to Home Screen' steps. Trigger after first completed order.
+
+9. Pre-Launch Checklist — Nothing Goes Live Until All Ticked
+9.1 Legal & Compliance
+	•	Domain registered: singaporehomecooks.sg and .com
+	•	Trademark filed with IPOS — Class 43 and Class 42
+	•	Business registered with ACRA — UEN obtained
+	•	Business bank account open with PayNow Business enabled
+	•	Food law specialist formal written opinion received
+	•	GST tax specialist written opinion received: agent vs principal determination for GST taxable turnover basis
+	•	GST config keys in platform_config set to pre-registration values (gst_enabled: false, gst_rate: 0)
+	•	GST Readiness Report in CEO dashboard built and showing running taxable turnover from day one
+	•	Claude API (Anthropic) GST treatment confirmed with accountant — OVR regime applicability
+	•	Cook Agreement finalised and reviewed by lawyer — English only
+	•	Customer Terms of Service finalised and reviewed by lawyer
+	•	Privacy Policy finalised and reviewed — PDPA compliant
+	•	MAS Payment Services Act position confirmed in writing
+	•	Product liability and public liability insurance policy in force
+	•	Cyber liability insurance policy in force
+
+9.2 Platform
+	•	End-to-end order flow tested on iPhone and Android
+	•	All email notifications tested and arriving correctly
+	•	All SMS notifications tested and arriving correctly
+	•	First-order hygiene disclaimer fires correctly — timestamp stored
+	•	Allergen declaration visible ABOVE order button on every listing
+	•	Certificate expiry tracking and auto-pause tested
+	•	Tiered address release tested — address not visible before payment
+	•	In-app order chat functional
+	•	30-minute PayNow confirm window working — auto-cancellation on timeout
+	•	Double-entry ledger posting correctly for all transaction types
+	•	Ledger is immutable — no user can update any entry (tested)
+	•	Reconciliation engine tested — correctly catches discrepancies
+	•	Three-role access control tested — cross-user data access completely blocked
+	•	Individual SEO URLs indexable — no noindex tags, schema markup valid
+	•	All PDF generators tested: receipts, payout statements, IRAS statement
+	•	Cook accounting dashboard showing correct figures in all four views
+	•	Tax estimate calculator functioning correctly with Singapore tax rates
+	•	Xero connected to bank account with working bank feed
+	•	Weekly Xero export generates correctly formatted CSV
+	•	HTTPS enabled on all pages
+
+9.2B AI Features
+	•	Cook chatbot tested with 20+ real cook questions — responses accurate
+	•	Customer chatbot tested with 20+ real customer questions — refund and allergen policy correct
+	•	Chatbot escalation protocol tested — correctly escalates on complaint language
+	•	All AI features have graceful fallback — ordering functions if Claude API unavailable
+
+9.2C Four-Perspective Gap Resolutions
+	•	Tiered Occasion Guarantee system tested: orders above S$150 route to proportional refund flow, orders below S$150 route to credit flow. Cook earnings in neither case reduced.
+	•	Guarantee Reserve posting tested: 0.5% of high-value GMV posting correctly to Account 2005 on monthly job.
+	•	Customer cancellation policy tested: cancellation timer displays correctly, refund amounts calculate correctly (100% at 72+ hours, 50% at 24–72 hours, none under 24 hours), PayNow reversal confirmed.
+	•	Social proof counters on homepage: displaying real database values, updating correctly on new cook verification and order collection.
+	•	Per-order rating visibility in cook dashboard: every completed order shows individual rating and review text. Training invitations link to specific low-rated orders.
+	•	First-time customer collection guide: fires on first order, does not repeat on subsequent orders. Both screens display correctly. Available in English, Mandarin, Malay.
+	•	Cook data portability export tested: can generate full data export (orders, reviews, earnings, listings) for a test cook account.
+	•	WSQ recovery clause: individual acknowledgement tick box at onboarding functions correctly. Separate from general Cook Agreement acceptance.
+
+9.3 Operations
+	•	India assistant engaged, trained on all processes, and ready to start
+	•	Accountant has completed initial Xero setup and configuration
+	•	Cook onboarding email sequence tested end-to-end
+	•	Operations chatbot knowledge base seeded with all process documentation
+	•	Weekly payout process documented and tested with dummy data
+	•	Monday reconciliation process documented and tested
+	•	Crisis protocol documented — food safety incident response plan
+	•	Founder absence protocol documented and tested with India assistant: Tier 1 (1–7 days), Tier 2 (7–30 days), Tier 3 (30+ days) procedures all written down and confirmed with India assistant and named Singapore contact.
+	•	Named Singapore contact briefed, has read-only CEO dashboard access, and is willing and available.
+	•	PDPA Data Protection Impact Assessment completed by Singapore-qualified specialist. Any required changes implemented.
+	•	Insurance: insurer confirmed in writing that policy covers Tiered Occasion Guarantee payments.
+	•	Founder available for first 72 hours post-launch to monitor everything
+
+9.4 Cook Cohort & Content
+	•	30–50 Founding Cook accounts created, verified, and with active listings
+	•	Each Founding Cook has completed five-stage onboarding
+	•	At least 10 Founding Cooks have uploaded a dish photo
+	•	At least 5 Founding Cooks have uploaded a listing video
+	•	Cook Community Facebook Group created and Founding Cooks invited
+	•	First Cook Spotlight content prepared for soft launch week
+	•	Singapore food synonym map loaded (100+ pairs) in search system
+	•	Festive demand calendar pre-programmed for current year
+
+9.5 PWA (Phase 1 — Before Public Launch)
+	•	PWA manifest.json created: name, icons, splash screen, theme colour correct
+	•	Service worker registered: offline fallback page displays when no connection
+	•	PWA install tested on Android Chrome: install banner appears, app installs to home screen
+	•	PWA install tested on iOS Safari: 'Add to Home Screen' instruction shows correctly in-app after first order
+	•	Push notifications tested on both iOS Safari PWA and Android Chrome PWA via OneSignal
+	•	Installed PWA opens to correct screen, shows no browser UI, loads faster than browser
+
+10. Realistic Timeline Summary
+Period
+Phase
+Key Deliverable
+NOT Yet Built
+Weeks 1–3
+Pre-development
+Legal, accounts, insurance, pilot, India assistant, accountant setup
+No application code
+Weeks 1–2 of build
+Database + Auth + Accounting + Agility
+Supabase schema, ledger, commission engine, platform_config, feature flags, event bus, analytics schema
+No listings, no customer features
+Week 3 of build
+Listing creation + Min Order
+First-listing wizard, AI description, calorie estimate, photo assessment, allergen, S$50 minimum enforced
+No customer browse
+Week 4 of build
+Customer browse + search
+Homepage with social proof counters, dish name search, synonym map
+No orders yet
+Week 5 of build
+Orders + payment + Guarantee
+PayNow checkout, 30-min confirm, Tiered Occasion Guarantee, cancellation policy, ledger posting
+No notifications
+Week 6 of build
+Notifications + automation + Collection Guide
+All email/SMS flows, onboarding sequence, cert expiry, ratings, first-time collection guide
+No payouts, no dashboards
+Week 7 of build
+Accounting + payouts + Exports
+Cook accounting (4 views), expense tracker, tax calculator, payout workflow, Xero export, PDF/Excel exports
+No Phase 2 features
+Week 8 of build
+PWA + Testing + soft launch
+PWA manifest + service worker, full QA including mobile, Founding Cook onboarding
+No Phase 2 features
+Weeks 9–20
+Phase 2
+Bidding, YouTube, DBS PayNow API, corporate orders, tiers, AI Phase 2, Android native app (APK beta Week 15, Play Store Week 18–20)
+No personalisation, no loyalty, no iOS
+Months 5–6
+Phase 3
+Contextual meal search, personalisation, Home Credits, Collaboration Board, CEO dashboard, iOS native app (TestFlight Month 5, App Store Month 6)
+No delivery API
+Month 7+
+Phase 4
+Lalamove API, HitPay, app widgets, subscription plans, supplier partnerships
+Ongoing
+
+Final note: software development always takes longer than estimated. Double every estimate in your personal planning. What matters is consistent progress, not a rigid timeline. A feature that takes 2 days ideally may take 4 days with debugging. This is normal. The roadmap is complete. The plan is solid. The next step is to start.
+
+11. How We Work Together
+How to Start a Development Session
+	•	Always state which specific step number you want to work on. 'Let's build Step 22 — the search page' is far more productive than 'let's continue the platform.'
+	•	Share the current state if something broke: copy the exact error message. Never paraphrase error messages — the exact text matters.
+	•	Have VS Code open and your development server running (npm run dev) before the session starts.
+
+What to Do With Code Provided
+	•	Copy exactly into the specified file. Do not retype — copy and paste preserves exact formatting.
+	•	After copying: save the file and check your browser. Tell what you see.
+	•	If there is an error: copy the full error from the browser console (right-click > Inspect > Console tab) or terminal. Share in next message.
+	•	If it works: confirm it works and we move to the next step.
+
+When Things Break
+	•	Things will break. This is normal development. Do not delete what was built — first understand what broke.
+	•	Most common causes: typo in environment variable, missing import at top of file, database table not yet created, missing step.
+	•	Share: exact error message, file where error occurs, last change made before error appeared.
+
+Testing Protocol
+	•	After each major feature: test yourself before moving on. Use the application as a real cook and as a real customer.
+	•	Test on your phone — not just your laptop. Singapore Home Cooks will be used primarily on mobile.
+	•	For accounting features: manually verify that ledger entries balance after each transaction type.
+
+The roadmap is Version 8.0 — FINAL — the complete, comprehensive, definitive edition. Every feature, every step, every challenge and resolution captured. Key additions in this version: Step 41I (S$50 minimum order enforcement with tasting portion exception), Step 41J (PWA at Phase 1 — manifest, service worker, OneSignal push, iOS install tutorial), Steps 58B-E (Android native app with React Native + Expo, APK beta distribution, Play Store submission), Section 6C Steps 72B-C (iOS native app port, TestFlight beta, App Store submission with physical goods payment exemption), Section 8.5 (6 mobile-specific challenges), Section 9.5 (PWA pre-launch checklist), updated timeline showing PWA at Week 8, Android at Weeks 15-20 of Phase 2, iOS at Month 5-6 of Phase 3. June 2026.
