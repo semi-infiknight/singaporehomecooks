@@ -33,13 +33,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const { status = "active", area, limit, offset } = parse.data;
 
-  const cookService: ShcCookModuleService = req.scope.resolve("shcCookService") as any;
-  const [cooks, count] = await cookService.listAndCountCooks({
-    filters: { ...(status && { status }), ...(area && { area }) },
-    skip: offset,
-    take: limit,
-    order: { display_name: "ASC" },
-  });
+  const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
+  const filters: Record<string, unknown> = {};
+  if (status) filters.status = status;
+  if (area) filters.area = area;
+  const [cooks, count] = await cookService.listAndCountCooks(filters, { skip: offset, take: limit });
 
   // Audit stub for list access (personal data related for cooks)
   logger.info?.(`[SHC-AUDIT] ${JSON.stringify({ ts: new Date().toISOString(), actor: 'store-public', action: 'cooks.list', meta: { count, pubKeyPresent: !!pubKey } })}`);

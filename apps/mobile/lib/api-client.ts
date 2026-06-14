@@ -14,7 +14,8 @@ export function setUseRealMedusa(enabled: boolean) { USE_REAL_MEDUSA = !!enabled
 export function getUseRealMedusa() { return USE_REAL_MEDUSA; }
 
 const MEDUSA_BASE = process.env.EXPO_PUBLIC_MEDUSA_BASE || 'http://localhost:9000';
-const STORE_PUB_KEY = process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || 'pk_demo_publishable_key_from_bootstrap'; // Set via EXPO_PUBLIC_ after running bootstrap:medusa (copy the publishable key created)
+// Set via apps/mobile/.env.local after `pnpm bootstrap:medusa`
+const STORE_PUB_KEY = process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '';
 
 // Simple Zod for response validation on real (subset of contracts)
 const CooksResponseSchema = z.object({ cooks: z.array(z.any()), count: z.number().optional() });

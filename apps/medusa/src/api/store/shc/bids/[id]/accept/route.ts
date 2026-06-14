@@ -24,9 +24,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid accept payload", (bodyParse as any).error?.format?.() as any) });
   }
   const parsedBody = bodyParse.success ? bodyParse.data : {};
-  const bidService: ShcBidModuleService = req.scope.resolve("shcBidService") as any;
-  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequestService") as any;
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMetaService") as any;
+  const bidService: ShcBidModuleService = req.scope.resolve("shcBid") as any;
+  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
   const actor = (req as any).auth?.actor_id || "user-unknown";
   try {
     const bid = await bidService.getBid(bidId);

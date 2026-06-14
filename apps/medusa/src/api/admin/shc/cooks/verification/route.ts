@@ -19,9 +19,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const { status, limit } = parse.data;
 
-  const cookService: ShcCookModuleService = req.scope.resolve("shcCookService") as any;
+  const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
   const where: any = status !== "all" ? { status } : {};
-  const [cooks] = await cookService.listAndCountCooks({ filters: where, take: limit });
+  const [cooks] = await cookService.listAndCountCooks(where, { take: limit });
 
   res.json({
     cooks: cooks.map((c: any) => ({

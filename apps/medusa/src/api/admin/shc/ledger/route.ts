@@ -23,8 +23,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const { order_id, cook_id, batch_id, limit } = parse.data;
 
-  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedgerService") as any;
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMetaService") as any;
+  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedger") as any;
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
 
   try {
     let entries: any[] = [];

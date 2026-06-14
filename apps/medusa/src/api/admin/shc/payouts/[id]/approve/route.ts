@@ -22,7 +22,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const { actor } = parse.data;
 
-  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatchService") as any;
+  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatch") as any;
 
   try {
     const approved = await payoutService.approvePayoutBatch(batchId, actor, req.scope);

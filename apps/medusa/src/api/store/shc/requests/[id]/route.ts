@@ -8,7 +8,7 @@ import ShcRequestModuleService from "../../../../../modules/shc-request/service"
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params as { id: string };
-  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequestService") as any;
+  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
   try {
     const request = await reqService.getRequest(id);
     if (!request) {

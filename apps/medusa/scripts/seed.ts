@@ -94,18 +94,97 @@ async function seed() {
   }
 
   console.log("[SEED] All seed data validated against contracts (05-data-model + 09-order-state).");
-  console.log("  In real: use Medusa Admin to create Products in shc-mobile channel, then run upsert via /admin routes or service.");
-  console.log("  Or enhance this script to use container.resolve('productService') etc when invoked in medusa context.");
+
+  const dbUrl = process.env.DATABASE_URL || "postgres://shc:shc_dev@localhost:5432/shc_medusa";
+  const pg = new Client({ connectionString: dbUrl });
+  await pg.connect();
+
+  // Insert canonical cooks from seed/assets (idempotent) for real /store/shc/cooks
+  const cooksFromAssets = [
+    {
+      id: "cook_rose_tampines_001",
+      auth_identity_id: "auth_cook_001",
+      slug: "auntie-rose-tampines",
+      display_name: "Auntie Rose (Tampines)",
+      story: cookSeed.story,
+      area: "Tampines",
+      status: "active",
+    },
+    {
+      id: "cook_doris_katong_002",
+      auth_identity_id: "auth_cook_002",
+      slug: "auntie-doris-katong",
+      display_name: "Auntie Doris (Katong)",
+      story: "Eurasian heritage cook from Katong/Joo Chiat.",
+      area: "Katong",
+      status: "active",
+    },
+  ];
+  for (const c of cooksFromAssets) {
+    shcCookSchema.partial().parse(c);
+    await pg.query(
+      `INSERT INTO shc_cook (id, auth_identity_id, slug, display_name, story, area, status, availability_paused, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,false,now(),now())
+       ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, story=EXCLUDED.story, status=EXCLUDED.status, updated_at=now()`,
+      [c.id, c.auth_identity_id, c.slug, c.display_name, c.story, c.area, c.status]
+    );
+    console.log(`  ✓ shc_cook seeded: ${c.slug}`);
+  }
+
+  // Product meta + availability for /store/shc/products
+  for (const p of productsToCreate) {
+    const productId = `prod_${p.title.toLowerCase().replace(/\s+/g, "_")}`;
+    const meta = {
+      product_id: productId,
+      cook_id: "cook_rose_tampines_001",
+      cuisine: p.cuisine,
+      occasion_tags: ["family-gathering", "hari-raya"],
+      allergen_tiers: { tier1: p.allergens, tier2: [], tier3: [] },
+      halal: false,
+      calories: p.calories,
+      calories_confidence: "full" as const,
+      ingredients: p.ingredients,
+      min_qty: p.min_qty,
+    };
+    shcProductMetaSchema.parse(meta);
+    await pg.query(
+      `INSERT INTO shc_product_meta (id, product_id, cook_id, cuisine, occasion_tags, allergen_tiers, halal, calories, calories_confidence, ingredients, min_qty, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())
+       ON CONFLICT (product_id) DO UPDATE SET cuisine=EXCLUDED.cuisine, min_qty=EXCLUDED.min_qty, updated_at=now()`,
+      [
+        `meta_${productId}`,
+        meta.product_id,
+        meta.cook_id,
+        meta.cuisine,
+        JSON.stringify(meta.occasion_tags),
+        JSON.stringify(meta.allergen_tiers),
+        meta.halal,
+        meta.calories,
+        meta.calories_confidence,
+        JSON.stringify(meta.ingredients),
+        meta.min_qty,
+      ]
+    );
+    await pg.query(
+      `INSERT INTO shc_availability (id, product_id, portions_per_day, collection_days, time_slots, paused, created_at, updated_at)
+       VALUES ($1,$2,20,$3,$4,false,now(),now())
+       ON CONFLICT (product_id) DO NOTHING`,
+      [
+        `avail_${productId}`,
+        productId,
+        JSON.stringify([1, 2, 3, 4, 5, 6]),
+        JSON.stringify(["18:00-19:00", "19:00-20:00"]),
+      ]
+    );
+    console.log(`  ✓ shc_product_meta + availability seeded: ${p.title}`);
+  }
 
   // Phase 6: extend seed to create sample completed orders + ledger entries + one payout batch.
   // Validates vs frozen contracts (@shc/types). Idempotent via existence checks. Uses business-rules for 15% calc.
   // Demo uses synthetic order_ids + cook from above; totals chosen to exercise double-entry + weekly sim.
   // Run after migrations + server/DB up: pnpm seed (in apps/medusa)
   console.log("[SEED][PHASE6-MONEY] Seeding sample completed orders + ledger + payout batch (demo)...");
-  const dbUrl = process.env.DATABASE_URL || "postgres://shc:shc_dev@localhost:5432/shc_medusa";
-  const pg = new Client({ connectionString: dbUrl });
   try {
-    await pg.connect();
 
     const demoCookId = cookSeed.id;
     const demoOrders = [

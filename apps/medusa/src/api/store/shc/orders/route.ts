@@ -25,15 +25,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const { cook_id, status, limit } = parse.data;
 
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMetaService") as any;
-  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedgerService") as any;
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
+  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedger") as any;
 
   try {
     const where: any = {};
     if (cook_id) where.cook_id = cook_id;
     if (status) where.shc_status = status;
 
-    const [metas, count] = await metaService.listAndCountOrderMetas({ filters: where, take: limit } as any);
+    const [metas, count] = await metaService.listAndCountOrderMetas(where, { take: limit });
 
     // Enrich with ledger summary if cook scoped (for earnings view)
     let earningsSummary: any = null;

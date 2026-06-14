@@ -25,7 +25,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad heritage query (cook_id required)", parse.error.format() as any) });
   }
-  const herService: ShcHeritageModuleService = req.scope.resolve("shcHeritageService") as any;
+  const herService: ShcHeritageModuleService = req.scope.resolve("shcHeritage") as any;
   const cookId = parse.data.cook_id;
   try {
     const archive = await herService.getArchiveForCook(cookId);
@@ -42,7 +42,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid heritage entry", parse.error.format() as any) });
   }
-  const herService: ShcHeritageModuleService = req.scope.resolve("shcHeritageService") as any;
+  const herService: ShcHeritageModuleService = req.scope.resolve("shcHeritage") as any;
   const actor = (req as any).auth?.actor_id || parse.data.cook_id || "cook-unknown";
   const cookId = parse.data.cook_id || actor;
   try {

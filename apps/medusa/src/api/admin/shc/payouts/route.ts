@@ -29,7 +29,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const { status, week_start, limit } = parse.data;
 
-  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatchService") as any;
+  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatch") as any;
   const where: any = {};
   if (status !== "all") where.status = status;
   if (week_start) where.week_start = week_start;
@@ -50,8 +50,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const { week_start } = parse.data;
 
-  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatchService") as any;
-  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedgerService") as any;
+  const payoutService: ShcPayoutBatchModuleService = req.scope.resolve("shcPayoutBatch") as any;
+  const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedger") as any;
 
   const ws = week_start || new Date().toISOString().slice(0, 10); // caller should use monday; sim accepts
 

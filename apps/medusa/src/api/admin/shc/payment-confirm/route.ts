@@ -24,7 +24,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const { order_id, paynow_reference } = parse.data;
 
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMetaModuleService") as any; // alias may be service
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any; // alias may be service
 
   try {
     // Update paynow + release address (per locked: release on payment confirm)
@@ -44,7 +44,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     // Use order totals for amount. Idempotent inside ledger service.
     let totalCents = 0;
     try {
-      const orderService = req.scope.resolve("orderService") as any;
+      const orderService = req.scope.resolve("order") as any;
       const order = await orderService.retrieveOrder(order_id, { relations: ["items"] });
       if (order?.items?.length) {
         totalCents = order.items.reduce((sum: number, item: any) => {
@@ -60,7 +60,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     }
 
     if (totalCents > 0) {
-      const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedgerService") as any;
+      const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedger") as any;
       await ledgerService.postCommission({
         orderId: order_id,
         totalCents,

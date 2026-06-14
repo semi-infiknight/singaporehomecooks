@@ -27,33 +27,74 @@ jobs:
       - run: npx tsx scripts/seed.ts --validate
       - run: pnpm verify:local
 
-  # Maestro E2E (full device parity)
-  # Per production/testing-strategy.md + phase-7/10: runs on PRs for integrate/phase-N or manually.
-  # Requires: maestro CLI + device (iOS sim/Android emu) or Maestro Cloud / EAS device farm / self-hosted runner with hardware.
-  # Local dev: `maestro test apps/mobile/e2e/*.yaml` (after `pnpm --filter mobile dev` + testIDs present).
-  # For cloud CI: use `maestro cloud` (requires MAESTRO_CLOUD_TOKEN secret) or GitHub Actions macos + simulators.
-  # Currently: documented + stub flows (onboarding, full-order-fulfil covering PDPA/state/money, credits).
-  # Add secrets for Expo EAS + real device cloud when enabling prod device E2E gate.
-  maestro-e2e:
-    runs-on: macos-latest  # or ubuntu + cloud
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integrate/')
+  medusa-real-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: shc
+          POSTGRES_PASSWORD: shc_dev
+          POSTGRES_DB: shc_medusa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shc -d shc_medusa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://shc:shc_dev@localhost:5432/shc_medusa
+      MEDUSA_DISABLE_ADMIN: 'true'
+      JWT_SECRET: ci-test-jwt-secret
+      COOKIE_SECRET: ci-test-cookie-secret
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      # Example: install maestro (or use prebuilt)
-      # - run: curl -fsSL "https://get.maestro.mobile.dev" | bash
-      # Real: start expo in bg or use EAS build + cloud test; for now notes + manual trigger.
-      - name: Maestro E2E (notes + optional)
+      - run: pnpm --filter @shc/types build && pnpm --filter @shc/business-rules build
+      - run: cd apps/medusa && pnpm exec medusa db:migrate
+      - run: cd apps/medusa && pnpm exec medusa build
+      - name: Start Medusa + bootstrap + seed + verify
         run: |
-          echo "Maestro E2E stub run in CI (full device/cloud recommended for PRs)."
-          echo "Run locally: maestro test apps/mobile/e2e/onboarding.yaml apps/mobile/e2e/full-order-fulfil.yaml apps/mobile/e2e/credits-earnings-payout.yaml"
-          echo "Requires: running Expo dev server + physical/sim device or maestro cloud."
-          # Uncomment when device farm/EAS configured: maestro cloud ... or npx eas build + test
-        continue-on-error: true  # non-blocking until real device secrets added
+          cd apps/medusa
+          MEDUSA_DISABLE_ADMIN=true pnpm exec medusa start &
+          SERVER_PID=$!
+          sleep 25
+          cd ../..
+          node scripts/bootstrap-medusa.js
+          cd apps/medusa && pnpm seed
+          cd ../..
+          pnpm verify:real-e2e
+          kill $SERVER_PID || true
 
-  # Future: separate EAS build status check (preview on PRs via eas-github-action)
+  maestro-e2e:
+    runs-on: macos-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integrate/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Install Maestro + validate flows
+        run: |
+          chmod +x scripts/maestro-validate.sh
+          ./scripts/maestro-validate.sh
+      - name: Maestro device run (optional)
+        if: vars.MAESTRO_RUN_DEVICE == 'true'
+        run: |
+          export MAESTRO_RUN_DEVICE=true
+          pnpm --filter mobile start &
+          sleep 30
+          maestro test apps/mobile/e2e/onboarding.yaml

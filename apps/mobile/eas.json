@@ -27,7 +27,8 @@
       },
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_USE_REAL_MEDUSA": "true"
+        "EXPO_PUBLIC_USE_REAL_MEDUSA": "true",
+        "EXPO_PUBLIC_MEDUSA_BASE": "https://shc-medusa-staging.up.railway.app"
       }
     },
     "production": {

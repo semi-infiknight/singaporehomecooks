@@ -34,8 +34,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const { collection_date, collection_slot, paynow_reference, allergen_acked, pdpa_consent, creditsToApply = 0, isCorporate = false, origin_request_id, corporate_note } = parse.data;
 
   const cartService = req.scope.resolve("cartService") as any;
-  const orderService = req.scope.resolve("orderService") as any; // after complete
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMetaService") as any;
+  const orderService = req.scope.resolve("order") as any; // after complete
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
 
   try {
     // Fetch cart + items (MVP enrichment)
@@ -45,7 +45,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     }
 
     // Derive cook_id from product meta of first item (enforce one-cook already in rule)
-    const productMetaService = req.scope.resolve("shcProductMetaService") as any;
+    const productMetaService = req.scope.resolve("shcProductMeta") as any;
     const firstItem = cart.items[0];
     const meta = await productMetaService.getMetaForProduct(firstItem.product_id || firstItem.variant?.product_id);
     const cookId = meta?.cook_id || "cook_unknown";
@@ -74,7 +74,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     let creditsApplied = 0;
     if (creditsToApply > 0) {
       try {
-        const credService = req.scope.resolve("shcCreditWalletService") as any;
+        const credService = req.scope.resolve("shcCreditWallet") as any;
         const r = await credService.redeemCredits("cust_demo", creditsToApply, req.scope);
         creditsApplied = r.used || creditsToApply;
         // Ledger redemption already posted inside credit service.

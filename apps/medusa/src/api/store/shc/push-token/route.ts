@@ -22,7 +22,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const { cook_id, expo_push_token } = parse.data;
 
-  const cookService: ShcCookModuleService = req.scope.resolve("shcCookService") as any;
+  const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
   const logger = (req.scope as any).resolve?.("logger") || console;
 
   try {

@@ -24,7 +24,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad credits query", parse.error.format() as any) });
   }
-  const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWalletService") as any;
+  const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
   const customerId = parse.data.customer_id || (req as any).auth?.actor_id || "cust_demo";
   try {
     const balance = await credService.getBalance(customerId);
@@ -44,7 +44,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid redeem payload", parse.error.format() as any) });
   }
-  const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWalletService") as any;
+  const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
   const actor = (req as any).auth?.actor_id || parse.data.customer_id || "cust_demo";
   try {
     const before = await credService.getBalance(actor);

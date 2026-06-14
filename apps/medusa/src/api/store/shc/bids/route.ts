@@ -27,7 +27,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad bids query", parse.error.format() as any) });
   }
-  const bidService: ShcBidModuleService = req.scope.resolve("shcBidService") as any;
+  const bidService: ShcBidModuleService = req.scope.resolve("shcBid") as any;
   try {
     let bids: any[] = [];
     if (parse.data.request_id) {
@@ -51,8 +51,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid bid payload", parse.error.format() as any) });
   }
-  const bidService: ShcBidModuleService = req.scope.resolve("shcBidService") as any;
-  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequestService") as any;
+  const bidService: ShcBidModuleService = req.scope.resolve("shcBid") as any;
+  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
   const actor = (req as any).auth?.actor_id || "cook-unknown";
   try {
     const before = { request_id: parse.data.request_id };

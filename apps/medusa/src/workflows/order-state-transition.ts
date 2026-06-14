@@ -23,7 +23,7 @@ export const validateTransitionStep = createStep(
 export const transitionStateStep = createStep(
   "transition-state-step",
   async (input: { orderId: string; to: SHCOrderStatus; container: any }) => {
-    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMetaService"); // module service name derived from registration
+    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMeta"); // module service name derived from registration
     const result = await orderMetaService.transitionOrderState(input.orderId, input.to);
     if (!result.valid) {
       const err = createSHCError("SHC-ORDER-001", result.error || "Transition failed");
@@ -43,8 +43,8 @@ export const postCommissionOnCompleteStep = createStep(
     }
     let creditsAwarded = 0;
     try {
-      const ledgerService: ShcLedgerModuleService = input.container.resolve("shcLedgerService");
-      const orderService = input.container.resolve("orderService") as any;
+      const ledgerService: ShcLedgerModuleService = input.container.resolve("shcLedger");
+      const orderService = input.container.resolve("order") as any;
       let totalCents = 0;
       let customerId: string | undefined;
       try {
@@ -60,7 +60,7 @@ export const postCommissionOnCompleteStep = createStep(
       // Growth: award credits to customer (ties ledger credit issuance)
       if (customerId && totalCents > 0) {
         try {
-          const credService = input.container.resolve("shcCreditWalletService");
+          const credService = input.container.resolve("shcCreditWallet");
           const aw = await credService.awardCreditsOnComplete(customerId, totalCents, input.orderId, input.container);
           creditsAwarded = aw.awarded || 0;
         } catch {}

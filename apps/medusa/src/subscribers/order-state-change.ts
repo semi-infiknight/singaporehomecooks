@@ -43,7 +43,7 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
   }
 
   try {
-    const cookService = (container as any).resolve ? (container as any).resolve("shcCookService") : null;
+    const cookService = (container as any).resolve ? (container as any).resolve("shcCook") : null;
     let cookToken: string | undefined;
     if (cookService && orderId) {
       // Best effort: derive cook from meta if possible (subscriber data limited; in full join order meta)
@@ -77,12 +77,12 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
   // Phase 8-9 growth: also award Home Credits (5%) to customer via credit-wallet (posts ledger issuance inside)
   if (to === "completed" && orderId) {
     try {
-      const ledgerService: ShcLedgerModuleService = (container as any).resolve("shcLedgerService");
+      const ledgerService: ShcLedgerModuleService = (container as any).resolve("shcLedger");
       // Derive total from order (items or total)
       let totalCents = 0;
       let custId: string | undefined;
       try {
-        const orderService = (container as any).resolve("orderService");
+        const orderService = (container as any).resolve("order");
         const order = await orderService.retrieveOrder(orderId, { relations: ["items", "customer"] });
         if (order?.items?.length) {
           totalCents = order.items.reduce((sum: number, item: any) => {
@@ -110,7 +110,7 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
       // Award credits for growth flow
       if (custId && totalCents > 0) {
         try {
-          const cred = (container as any).resolve("shcCreditWalletService");
+          const cred = (container as any).resolve("shcCreditWallet");
           const aw = await cred.awardCreditsOnComplete(custId, totalCents, orderId, container);
           logger.info?.({ event: "credit.awarded_on_completed", orderId, customer: custId, awarded: aw?.awarded });
         } catch {}

@@ -18,7 +18,8 @@ export class Migration20250614000000CreateShcCook extends Migration {
         "sfa_reg_number" text,
         "wsq_cert_expiry" timestamptz,
         "created_at" timestamptz NOT NULL DEFAULT now(),
-        "updated_at" timestamptz NOT NULL DEFAULT now()
+        "updated_at" timestamptz NOT NULL DEFAULT now(),
+        "deleted_at" timestamptz
       );
     `);
     // Index for common queries

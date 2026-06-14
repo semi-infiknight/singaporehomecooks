@@ -29,7 +29,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad query", parse.error.format() as any) });
   }
-  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequestService") as any;
+  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
   try {
     const requests = await reqService.listOpenRequests({ limit: parse.data.limit });
     const logger = (req.scope as any).resolve?.("logger") || console;
@@ -45,7 +45,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid request payload", parse.error.format() as any) });
   }
-  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequestService") as any;
+  const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
   const actor = (req as any).auth?.actor_id || "customer-unknown"; // auth per 07
   try {
     const before = {};

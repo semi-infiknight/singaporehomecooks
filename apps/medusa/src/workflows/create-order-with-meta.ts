@@ -36,7 +36,7 @@ export const validateCartRulesStep = createStep(
 export const createShcOrderMetaStep = createStep(
   "create-shc-order-meta-step",
   async (input: { orderId: string; cookId: string; collectionDate: string; collectionSlot: string; paynowRef?: string; container: any }) => {
-    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMetaService");
+    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMeta");
     const meta = await orderMetaService.createOrUpdateMeta({
       order_id: input.orderId,
       cook_id: input.cookId,
