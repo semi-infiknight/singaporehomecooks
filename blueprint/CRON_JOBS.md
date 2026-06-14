@@ -28,6 +28,8 @@
 - Every job execution is logged with duration, success/failure, and affected record counts.
 - Idempotency keys prevent duplicate processing.
 
+**Phase 6 (2026-06-14 Backend-Money-Agent):** Weekly Payout implemented as local sim script (apps/medusa/scripts/weekly-payout.ts) - idempotent, uses contracts + business-rules 15%, posts to ledger/payout_batch, verifies double-entry, auto-approves with sim transfer_ref. Run manually (documented in medusa README/bootstrap). Node-cron stub comment included for worker. Full infra cron later.
+
 ## Multi-Agent Notes
 
 Backend Track owns job implementations. Infra Track ensures worker service health and alerting on job failures.

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, 'integrate/*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-test-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm turbo build
+      - run: pnpm turbo test
+      - run: pnpm turbo typecheck
+      - run: pnpm turbo lint
+      - run: npx tsx scripts/seed.ts --validate
+      - run: pnpm verify:local
+
+  # Maestro E2E (full device parity)
+  # Per production/testing-strategy.md + phase-7/10: runs on PRs for integrate/phase-N or manually.
+  # Requires: maestro CLI + device (iOS sim/Android emu) or Maestro Cloud / EAS device farm / self-hosted runner with hardware.
+  # Local dev: `maestro test apps/mobile/e2e/*.yaml` (after `pnpm --filter mobile dev` + testIDs present).
+  # For cloud CI: use `maestro cloud` (requires MAESTRO_CLOUD_TOKEN secret) or GitHub Actions macos + simulators.
+  # Currently: documented + stub flows (onboarding, full-order-fulfil covering PDPA/state/money, credits).
+  # Add secrets for Expo EAS + real device cloud when enabling prod device E2E gate.
+  maestro-e2e:
+    runs-on: macos-latest  # or ubuntu + cloud
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integrate/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      # Example: install maestro (or use prebuilt)
+      # - run: curl -fsSL "https://get.maestro.mobile.dev" | bash
+      # Real: start expo in bg or use EAS build + cloud test; for now notes + manual trigger.
+      - name: Maestro E2E (notes + optional)
+        run: |
+          echo "Maestro E2E stub run in CI (full device/cloud recommended for PRs)."
+          echo "Run locally: maestro test apps/mobile/e2e/onboarding.yaml apps/mobile/e2e/full-order-fulfil.yaml apps/mobile/e2e/credits-earnings-payout.yaml"
+          echo "Requires: running Expo dev server + physical/sim device or maestro cloud."
+          # Uncomment when device farm/EAS configured: maestro cloud ... or npx eas build + test
+        continue-on-error: true  # non-blocking until real device secrets added
+
+  # Future: separate EAS build status check (preview on PRs via eas-github-action)

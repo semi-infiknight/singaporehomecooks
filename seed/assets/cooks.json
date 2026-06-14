@@ -1,0 +1,34 @@
+[
+  {
+    "id": "cook_rose_tampines_001",
+    "auth_identity_id": "auth_cook_001",
+    "slug": "auntie-rose-tampines",
+    "display_name": "Auntie Rose (Tampines)",
+    "story": "I am a 3rd generation Peranakan cook from the Katong lineage. My grandmother started cooking these recipes in her Katong shophouse kitchen in 1972, using fresh prawns from the market every morning and grinding rempah by hand on the batu lesung. When the family moved to a 4-room HDB in Tampines in the early 1980s, the recipes came with us — the same love, the same care, now in a modern HDB kitchen overlooking the park connector. I specialise in Nyonya dishes for family gatherings, Hari Raya, Chinese New Year, and birthdays. Every dish carries the story of my Ah Mah and the women before her. I cook only what I would serve my own grandchildren. Collection from Blk 456 Tampines Street 42, #05-123. Shoes off at the door, please — it is still a home.",
+    "area": "Tampines",
+    "collection_address": "Blk 456 Tampines Street 42, #05-123, Singapore 520456",
+    "collection_instructions": "Lift landing on 5th floor. Call or WhatsApp 9654 3210 when you arrive (15 min early is fine). Please remove shoes at the door. Void deck parking available. Young grandchildren often napping — quiet voices appreciated. Reusable containers welcome; I provide sturdy takeaway boxes otherwise.",
+    "status": "active",
+    "availability_paused": false,
+    "sfa_reg_number": "SFA-HB-2024-78421",
+    "wsq_cert_expiry": "2027-03-15T00:00:00.000Z",
+    "created_at": "2024-11-01T08:00:00.000Z",
+    "updated_at": "2026-06-13T10:30:00.000Z"
+  },
+  {
+    "id": "cook_doris_katong_002",
+    "auth_identity_id": "auth_cook_002",
+    "slug": "auntie-doris-katong",
+    "display_name": "Auntie Doris (Katong)",
+    "story": "My family is Eurasian — a beautiful mix of Portuguese, Dutch, Malay, and Chinese roots that has lived in Katong for over 100 years. My grandmother (Nenek) cooked for British families in the 1950s and passed down her Devil's Curry, Galinha Assam, and sugee cake recipes to my mother and then to me. We moved from a landed house to Blk 89 Joo Chiat Place HDB in the 1990s but the kitchen rituals stayed: the pounding of spices, the slow vinegar braise, the festive spreads for Christmas, weddings, and Full Moon parties. I am 2nd generation in this HDB but the heritage is deep. I cook with heart for occasions that matter — and I always have time to tell you the story behind each dish. Collection from my Katong home kitchen. You will smell the rempah before you reach the lift.",
+    "area": "Katong / Joo Chiat",
+    "collection_address": "Blk 89 Joo Chiat Place, #03-17, Singapore 427808",
+    "collection_instructions": "3rd floor, no lift lobby. Ring doorbell or call 9123 8876. Park at Joo Chiat Complex or side roads. Please bring your own bags or tiffin if possible — I love seeing traditional carriers come home. Festive orders (Christmas, weddings) often ready early morning. I am happy to chat about the Eurasian history of the dish while you collect.",
+    "status": "active",
+    "availability_paused": false,
+    "sfa_reg_number": "SFA-HB-2025-11903",
+    "wsq_cert_expiry": "2026-11-20T00:00:00.000Z",
+    "created_at": "2025-02-14T14:20:00.000Z",
+    "updated_at": "2026-06-12T16:45:00.000Z"
+  }
+]

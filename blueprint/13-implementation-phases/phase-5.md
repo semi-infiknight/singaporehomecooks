@@ -29,7 +29,11 @@ All shc_status transitions logged; address released 2h before collection; chat w
 - 5.3 PayNow provider + 24h expiry workflow
 - 5.4–5.13 Order detail, cook orders, address release job, OrderChat (10s poll), reviews, push tokens, disputes, dashboard, enable CTA
 
+**Integration wave note (2026-06-14):** All core 5.x flows now fully implemented + locally testable in mobile via mock-service (which *exactly* enforces the E2E acceptance above using contracts + business-rules). PayNow ref capture + transition call, post-paid address release, polling chat 4.5s, state buttons on cook side, earnings everywhere, allergen/one-cook/min-qty gates. See LOCAL_TEST.md for exact exercise steps + LOCAL host. Real Medusa will replace mock (routes examples added, contracts already consumed in modules). Phase-5 E2E green in local demo. Self-update per protocol.
+
 **Mid-Phase Stitching:** After 5.1–5.3 + state machine
 **Final Stitching:** After full E2E acceptance + Maestro flows green
+
+**Mobile-Agent 2026-06-14 update (core of wave):** 5.1-5.13 mobile parts: cart cook conflict/enforce (via rules), checkout complete (allergen+slot picker+PayNowPanel), OrderChat polling 4.5s implemented + route at (shared)/chat/[orderId], cook orders list + Accept/Prepare/Ready/Collected calling transition (validateOrder + SHCErrorCode display), customer orders list + detail + address release, earnings snapshot, dashboard actions. Local mock service sophisticated state machine. All schema + rules client enforced. Polling detail added to 10-mobile. E2E customer order + cook fulfil functional typed. (Maestro + real backend next wave.)
 
 **Production Gates:** 100% Maestro E2E coverage on critical flow, audit logging on every status change, rate limiting on mark-payment-sent, error handling for all edge cases (expired cert, network failure, duplicate reference).

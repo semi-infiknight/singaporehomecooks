@@ -1,0 +1,15 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+overrides:
+  react-native: 0.74.0
+  metro-cache: 0.80.12
+  metro: 0.80.12
+  metro-config: 0.80.12
+allowBuilds:
+  '@medusajs/telemetry': true
+  esbuild: true
+  msgpackr-extract: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true

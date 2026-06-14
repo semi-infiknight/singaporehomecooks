@@ -1,0 +1,97 @@
+[
+  {
+    "id": "dish_nasi_lemak_prawn_001",
+    "cook_id": "cook_rose_tampines_001",
+    "name": "Nasi Lemak Sambal Prawn",
+    "description": "Fragrant coconut rice steamed with pandan and lemongrass, topped with fiery sambal prawns (fresh from the market), crispy ikan bilis, roasted peanuts, cool cucumber slices, and a perfectly fried egg. This is the 1972 Katong family recipe — rich, comforting, and unmistakably Peranakan. The sambal is made in small batches with belacan, fresh chillies, and a touch of gula melaka for balance. Perfect for family gatherings, Hari Raya breakfast spreads, or any day you need a taste of home. 450 cal per generous portion (full ingredient-based calculation).",
+    "price": 12,
+    "currency": "SGD",
+    "min_qty": 5,
+    "calories": 450,
+    "calories_confidence": "full",
+    "heritage_note": "Peranakan family recipe since 1972, Katong. My grandmother used fresh prawns from the market every morning. Still made the same way in our Tampines HDB kitchen.",
+    "cuisine": "Peranakan",
+    "occasion_tags": ["Family Gathering", "Hari Raya", "Birthday", "Chinese New Year"],
+    "festive_timing": "Hari Raya: ideal for breakfast or lunch on the eve or 1st day. CNY: popular as light lunch after visiting. Book 5-7 days ahead for large parties during festive peaks.",
+    "halal": false,
+    "allergen_tiers": {
+      "tier1": ["Shellfish (Prawns, Ikan Bilis)", "Crustaceans (Belacan in sambal)", "Nuts (Peanuts)", "Eggs"],
+      "tier2": ["Coconut (milk in rice)"],
+      "tier3": []
+    },
+    "ingredients": [
+      { "name": "Coconut rice (pandan, lemongrass)", "quantity": 1, "unit": "portion base" },
+      { "name": "Sambal prawns (fresh)", "quantity": 4, "unit": "large prawns" },
+      { "name": "Ikan bilis (anchovies)", "quantity": 15, "unit": "g" },
+      { "name": "Roasted peanuts", "quantity": 20, "unit": "g" },
+      { "name": "Cucumber", "quantity": 4, "unit": "slices" },
+      { "name": "Fried egg", "quantity": 1, "unit": "whole" }
+    ],
+    "image_placeholder": "seed/assets/images/nasi-lemak-sambal-prawn-hero.jpg — High-resolution 1200px WebP of plated Nasi Lemak on banana leaf in warm HDB kitchen light, prawns glistening with sambal, peanuts scattered, egg yolk visible. Alt: 'Auntie Rose's 1972 Peranakan Nasi Lemak Sambal Prawn — heritage in every grain'. Additional: close-up rempah pounding, finished dish with family table setting. Requires AI quality pass before live.",
+    "last_minute_premium_pct": 15,
+    "status": "active"
+  },
+  {
+    "id": "dish_ayam_buah_keluak_002",
+    "cook_id": "cook_rose_tampines_001",
+    "name": "Ayam Buah Keluak",
+    "description": "Tender chicken pieces slow-braised in a complex, earthy rempah with buah keluak (the signature black Indonesian black nut). The nut is painstakingly soaked, cleaned, and pounded into a rich, almost chocolate-like paste that gives the dish its deep, nutty, slightly bitter depth — balanced with tamarind, lemongrass, galangal, and a hint of gula melaka. A true Peranakan heirloom dish, labour-intensive and worth every step. Served with steamed rice. Signature of Auntie Rose's table for special occasions. 380 cal (category + sampled full calc).",
+    "price": 15,
+    "currency": "SGD",
+    "min_qty": 4,
+    "calories": 380,
+    "calories_confidence": "category",
+    "heritage_note": "Signature heritage dish passed from my grandmother's Katong kitchen, 1972. The buah keluak ritual — soaking for days, scraping the flesh — is the same one my mother taught me in the Tampines HDB.",
+    "cuisine": "Peranakan",
+    "occasion_tags": ["Family Gathering", "Hari Raya", "Birthday", "Deepavali"],
+    "festive_timing": "Labour of love — best ordered 3-5 days ahead. Popular centrepiece for Hari Raya and birthday celebrations. During Chinese New Year, pairs beautifully with other Nyonya dishes for reunion meals.",
+    "halal": false,
+    "allergen_tiers": {
+      "tier1": ["Nuts (Buah Keluak / Candlenut family)", "Shellfish (possible belacan trace in rempah base)"],
+      "tier2": ["Coconut (in some variants)"],
+      "tier3": []
+    },
+    "ingredients": [
+      { "name": "Chicken (bone-in pieces)", "quantity": 500, "unit": "g" },
+      { "name": "Buah keluak (prepared)", "quantity": 8, "unit": "nuts" },
+      { "name": "Rempah (galangal, lemongrass, chilli, belacan)", "quantity": 1, "unit": "batch" },
+      { "name": "Tamarind pulp", "quantity": 2, "unit": "tbsp" },
+      { "name": "Gula melaka", "quantity": 1, "unit": "tbsp" }
+    ],
+    "image_placeholder": "seed/assets/images/ayam-buah-keluak-hero.jpg — Rich dark stew in traditional Peranakan bowl, chicken pieces visible with keluak shells on side for authenticity, on warm wooden table with HDB window light. Close-up of the pounded keluak paste texture. Requires sharp focus and colour accuracy for heritage appeal.",
+    "last_minute_premium_pct": 10,
+    "status": "active"
+  },
+  {
+    "id": "dish_devils_curry_003",
+    "cook_id": "cook_doris_katong_002",
+    "name": "Eurasian Devil's Curry (Chicken)",
+    "description": "Spicy, tangy, and deeply aromatic — the iconic Singapore Eurasian Devil's Curry. Bone-in chicken (or traditional mix with pork elements on request) slow-cooked with a potent blend of fresh chillies, mustard seeds, vinegar, turmeric, ginger, garlic, and potatoes. The vinegar gives it the signature 'devil' sour-heat that cuts through the richness. A Christmas, wedding, and Full Moon table staple in Katong Eurasian homes for generations. My grandmother learned it cooking for colonial households and made it her own. Served with crusty bread or rice to sop up every drop of the glorious gravy. 520 cal (full calc from ingredients).",
+    "price": 14,
+    "currency": "SGD",
+    "min_qty": 5,
+    "calories": 520,
+    "calories_confidence": "full",
+    "heritage_note": "Eurasian Kristang heritage from my grandmother's 1950s Katong kitchen. The devilish heat and sour tang tell the story of our Portuguese-Malay-Chinese roots. Still made exactly as Nenek taught in our Joo Chiat HDB.",
+    "cuisine": "Eurasian",
+    "occasion_tags": ["Family Gathering", "Christmas", "Wedding", "Full Moon / Baby Full Month", "Birthday"],
+    "festive_timing": "Christmas Eve and Day centrepiece. Also popular for Eurasian weddings and Full Moon celebrations year-round. Book early for December — many families order 10+ portions. Last-minute premiums apply on 23-25 Dec.",
+    "halal": false,
+    "allergen_tiers": {
+      "tier1": ["Mustard seeds", "Chillies (nightshade)", "Chicken"],
+      "tier2": ["Vinegar (trace alcohol)", "Potato"],
+      "tier3": ["Pork (traditional variant available on request — non-halal confirmed)"]
+    },
+    "ingredients": [
+      { "name": "Chicken (bone-in thighs/drumsticks)", "quantity": 600, "unit": "g" },
+      { "name": "Fresh red chillies", "quantity": 8, "unit": "pcs" },
+      { "name": "Mustard seeds", "quantity": 1, "unit": "tsp" },
+      { "name": "White vinegar", "quantity": 3, "unit": "tbsp" },
+      { "name": "Turmeric, ginger, garlic, shallots", "quantity": 1, "unit": "rempah batch" },
+      { "name": "Potatoes", "quantity": 2, "unit": "medium" }
+    ],
+    "image_placeholder": "seed/assets/images/devils-curry-hero.jpg — Vibrant red-orange gravy with chicken and potato chunks in a large Peranakan-style serving bowl, steam rising, mustard seeds visible, served with sliced baguette or white rice on a festive tablecloth. Background hint of Katong Joo Chiat architecture. High contrast, appetising, heritage-authentic styling.",
+    "last_minute_premium_pct": 20,
+    "status": "active"
+  }
+]

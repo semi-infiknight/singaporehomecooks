@@ -9,7 +9,7 @@
 - [DECISION_TREES/commission-structure.md](../DECISION_TREES/commission-structure.md)
 - [DECISION_TREES/dispute-refund-policy.md](../DECISION_TREES/dispute-refund-policy.md)
 
-**Last Updated:** 2026-06-13 (Contracts Track owns)
+**Last Updated:** 2026-06-14 by Contracts-Agent (rules implemented in business-rules with 95 tests; see phase-0.md for one-cook/allergen-ack/.../cook-status-gates; cross-ref 05 for schemas)
 **Owner:** Contracts Track
 
 ## Overview

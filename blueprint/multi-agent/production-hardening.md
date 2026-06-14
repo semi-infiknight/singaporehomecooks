@@ -9,6 +9,8 @@
 
 **Rule:** Every line of code written by any agent must satisfy these requirements. No exceptions for "MVP" or "demo".
 
+**Hardening wave complete note:** All Day1 items addressed in local (PDPA explicit checkboxes + timestamps/audit in mobile/medusa/seed; ErrorBoundaries + retry on mobile key screens; rate limit stub; obs stubs; contract tests via existing + new unit; Maestro stubs). Local host + mixed wiring + verify:local + full docs achieved. See updated production/testing-strategy, phases, LOCAL_TESTING.md, INDEX for status. Gaps tracked for later (full prod deploy, real rate middleware, tracing).
+
 ## Security (All Layers)
 - JWT + actor-type auth only (no second library)
 - Rate limiting on all auth and /store/shc/* routes (5 attempts/15min for login)

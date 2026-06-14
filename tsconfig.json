@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-native",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@shc/types": ["packages/shc-types/src"],
+      "@shc/ui": ["packages/shc-ui/src"],
+      "@shc/utils": ["packages/shc-utils/src"],
+      "@shc/business-rules": ["packages/business-rules/src"]
+    }
+  },
+  "references": [
+    { "path": "packages/shc-types" },
+    { "path": "packages/business-rules" },
+    { "path": "packages/shc-ui" },
+    { "path": "packages/shc-utils" },
+    { "path": "apps/medusa" },
+    { "path": "apps/mobile" }
+  ],
+  // Note: shc-ui and shc-utils are empty skeletons; tsc may complain until implemented. For Medusa focus they can be excluded temporarily.
+  "include": [],
+  "exclude": ["node_modules", "dist"]
+}

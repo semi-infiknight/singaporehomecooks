@@ -1,0 +1,58 @@
+[
+  {
+    "tag": "Hari Raya",
+    "display": "Hari Raya Puasa",
+    "description": "Eid celebrations — family open houses, forgiveness visits. Traditional spreads feature coconut rice dishes, rich curries, sambals, and sweets. Many Peranakan and Malay cooks prepare 3–7 days ahead. Peak ordering window: 10–14 days before Raya. Halal options strongly recommended. Collection often morning of or eve.",
+    "festive_window_weeks_before": 2,
+    "typical_dishes": ["Nasi Lemak Sambal Prawn", "Ayam Buah Keluak", "Rendang variants", "Ketupat"],
+    "cultural_notes": "Muslim customers; many non-Muslim Singaporeans join open houses. Address respect for prayer times during collection."
+  },
+  {
+    "tag": "Deepavali",
+    "display": "Deepavali (Diwali)",
+    "description": "Festival of Lights. Indian and Peranakan households celebrate with sweets, savouries, and hearty curries/veg dishes. Vegetable-heavy and vegetarian options popular. Peak: 7–10 days prior. Families gather for prayers and feasts.",
+    "festive_window_weeks_before": 1.5,
+    "typical_dishes": ["Ayam Buah Keluak (veg adaptations)", "Chap Chye", "Murukku sides", "Fish head or mutton curries"],
+    "cultural_notes": "Respect for vegetarian requests. Lamps and new clothes; food gifting common between neighbours."
+  },
+  {
+    "tag": "Chinese New Year",
+    "display": "Chinese New Year (CNY)",
+    "description": "15-day spring festival of reunion, prosperity, and visiting. Pineapple tarts, yu sheng, bak kwa-inspired, and rich Nyonya spreads. Many dishes prepped weeks in advance. Eve and first 3 days are busiest for collection. Last-minute premiums common.",
+    "festive_window_weeks_before": 3,
+    "typical_dishes": ["Nasi Lemak variants", "Ayam Buah Keluak", "Peranakan Chap Chye", "Kueh pie tee"],
+    "cultural_notes": "Oranges, red packets, 'lo hei' tossing. Avoid unlucky foods. Many HDB collections happen before visiting relatives."
+  },
+  {
+    "tag": "Birthday",
+    "display": "Birthday / Family Milestone",
+    "description": "Everyday but meaningful — 1st birthday, 21st, 60th, 80th. Home-cooked feasts feel more personal than restaurant. Flexible portions. Often combined with other tags.",
+    "festive_window_weeks_before": 0.5,
+    "typical_dishes": ["Nasi Lemak Sambal Prawn", "Eurasian Devil's Curry", "Any signature dish"],
+    "cultural_notes": "Longevity noodles or symbolic dishes sometimes requested. Multi-generational HDB tables common."
+  },
+  {
+    "tag": "Family Gathering",
+    "display": "Family Gathering / Potluck",
+    "description": "Weekly or monthly reunions, 'makan' sessions, weekend lunches. The heart of Singapore home cooking culture. Flexible dates, steady demand year-round.",
+    "festive_window_weeks_before": 0.3,
+    "typical_dishes": ["All three featured dishes", "Mix & match from cook archive"],
+    "cultural_notes": "HDB void deck or living room tables. Often 8–20 portions. One-cook rule means families pick a specialist."
+  },
+  {
+    "tag": "Christmas",
+    "display": "Christmas / Year-End",
+    "description": "Eurasian and Christian families' big celebration. Devil's Curry, roast elements, sugee cake, fruit cake. Peak last week of December. Strong Eurasian cook demand.",
+    "festive_window_weeks_before": 2,
+    "typical_dishes": ["Eurasian Devil's Curry", "Galinha Assam", "Sugee cake sides"],
+    "cultural_notes": "Midnight mass, gift exchanges. Many collections on 24th evening or 25th morning."
+  },
+  {
+    "tag": "Full Moon / Baby Full Month",
+    "display": "Baby Full Moon / Confinement",
+    "description": "Celebrating baby's first month. Red eggs, ginger, traditional confinement-friendly dishes. Eurasian and Chinese/Peranakan families mark it joyfully. Smaller, high-quality orders common.",
+    "festive_window_weeks_before": 0.5,
+    "typical_dishes": ["Eurasian Devil's Curry (mild)", "Ginger-rich variants", "Nasi Lemak (lighter)"],
+    "cultural_notes": "Gifting of eggs and cakes. Often daytime collections. Respect new mother rest."
+  }
+]

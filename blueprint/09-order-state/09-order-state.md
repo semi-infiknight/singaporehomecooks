@@ -10,7 +10,7 @@
 - [DECISION_TREES/dispute-refund-policy.md](../DECISION_TREES/dispute-refund-policy.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-06-13 (Contracts Track owns)
+**Last Updated:** 2026-06-14 by Contracts-Agent (order-state rule + SHCOrderStatus + transitions fully in @shc/types + @shc/business-rules; FSM tests 14 cases; 05/ERROR_CODES synced)
 **Owner:** Contracts Track
 
 ## Overview

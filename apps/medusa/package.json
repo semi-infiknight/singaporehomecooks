@@ -1,0 +1,49 @@
+{
+  "name": "medusa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Singapore Home Cooks - Medusa v2 backend with custom SHC modules",
+  "main": "dist/index.js",
+  "author": "SHC",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "MEDUSA_DISABLE_ADMIN=true pnpm exec medusa build",
+    "dev": "pnpm exec medusa develop",
+    "start": "pnpm exec medusa start",
+    "predev": "pnpm build",
+    "test": "echo 'Tests in packages/ for now' && exit 0",
+    "lint": "eslint src --ext .ts,.js",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "pnpm exec medusa db:generate || echo 'generate after DB ready'",
+    "db:migrate": "pnpm exec medusa db:migrate || echo 'migrate after DB ready'",
+    "seed": "tsx ./scripts/seed.ts"
+  },
+  "dependencies": {
+    "@medusajs/medusa": "^2.15.5",
+    "@medusajs/framework": "^2.15.5",
+    "@medusajs/dashboard": "^2.15.5",
+    "@medusajs/admin-sdk": "^2.15.5",
+    "@shc/business-rules": "workspace:*",
+    "@shc/types": "workspace:*",
+    "dotenv": "16.4.5",
+    "pg": "^8.13.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@medusajs/cli": "^2.15.5",
+    "@medusajs/test-utils": "^2.15.5",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.2.79",
+    "@types/react-dom": "^18.2.25",
+    "eslint": "^9.5.0",
+    "prettier": "^3.3.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

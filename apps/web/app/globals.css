@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --shc-primary: #1D9E75;
+  --shc-accent: #B85C38;
+  --shc-bg: #FAF7F2;
+  --shc-surface: #F5F0E6;
+  --shc-text: #2C2416;
+  --shc-text-light: #5C5144;
+  --shc-success: #2E8B57;
+  --shc-error: #B91C1C;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: #FAF7F2;
+  color: #2C2416;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+a { color: inherit; }
+.shc-card { background: #fff; border: 1px solid #E8D5B7; border-radius: 12px; padding: 16px; }
+input, select, textarea { border: 1px solid #E8D5B7; border-radius: 8px; padding: 8px 12px; background: #fff; }
+input:focus, select:focus { outline: 2px solid #1D9E75; outline-offset: -1px; }
+.testid { /* for visual */ }

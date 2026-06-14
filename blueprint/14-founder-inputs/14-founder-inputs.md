@@ -6,7 +6,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../00-locked-decisions/00-locked-decisions.md](../00-locked-decisions/00-locked-decisions.md)
 
-**Last Updated:** 2026-06-13 (Content Track owns)
+**Last Updated:** 2026-06-14 by Content + Seed Track Agent (Phase 0 content complete — trust copy, seeds, paynow doc, mobile render, seed script all reinforce "Trust & Safety First" + SG regulatory + cook empowerment + heritage focus)
 **Owner:** Content Track
 
 ## Overview
@@ -39,6 +39,12 @@ Each input is tagged with:
 - PayNow as primary (and initially only) payment method
 - Strict one-cook-per-order logistics model
 - Emphasis on collection (not delivery) for MVP to reduce operational complexity
+
+**2026-06-14 Content Track Deliverables (aligning founder priorities):**
+- 5-layer trust + full policies in content/trust-and-safety.md (and rendered in mobile) — Trust & Safety First.
+- Rich seed with HDB/festive/allergen realism — Singapore Regulatory + Customer Delight via authentic heritage.
+- Exact PayNow ops + how-it-works — supports cook empowerment (earnings transparent) and simplicity.
+- Shared typed seeds (scripts/seed.ts + seed/index.ts) for mocks/Medusa — phased discipline + future-proof.
 
 ## How Agents Should Consume This File
 

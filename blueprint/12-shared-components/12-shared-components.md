@@ -7,7 +7,7 @@
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
 
-**Last Updated:** 2026-06-13 (Mobile Track owns)
+**Last Updated:** 2026-06-14 by Mobile + Growth/Differentiation Subagent (extracted & implemented: SHCButton, SHCCard, SHCBadge, SHCSectionTitle, OrderStatusBadge, CookCard, OrderCard, PayNowPanel, CollectionSlotPicker, ListingWizardStep, AllergenAckCheckbox, IngredientTierEditor, OccasionTagPicker, PriceEarningsCalc, SHCErrorBanner + full theme tokens; replaced inline in all mobile screens. **Phases 7-9:** CreditBadge, WalletCard (credits/tier/redeem), AICalorieBadge, PhotoTipsModalContent, RequestDishForm — with testIDs, a11y, SG heritage. See 10-mobile update.)
 **Owner:** Mobile Track
 
 ## Overview

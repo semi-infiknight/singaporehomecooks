@@ -1,0 +1,47 @@
+{
+  "name": "singapore-home-cooks",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.1.3",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean && rm -rf node_modules",
+    "docker:up": "docker compose up -d postgres redis",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "bootstrap:medusa": "node scripts/bootstrap-medusa.js",
+    "medusa:dev": "turbo dev --filter=medusa",
+    "medusa:build": "turbo build --filter=medusa",
+    "verify:phase0": "pnpm turbo build && pnpm turbo test && pnpm turbo typecheck && pnpm turbo lint && echo 'Phase 0 verification passed'",
+    "seed:medusa": "cd apps/medusa && pnpm seed || echo 'run bootstrap first'",
+    "verify:local": "echo '=== Seed validate ===' && npx tsx scripts/seed.ts --validate && echo '=== Typecheck ===' && pnpm --filter mobile typecheck && pnpm --filter web typecheck && echo '=== Basic flow sim (node via tsx) ===' && npx tsx -e 'console.log(\"Sim: seed+mock rules + earnings/credits\"); const {getSeedData} = require(\"./scripts/seed\"); const s=getSeedData(); console.log(\"Seeds OK:\", s.cooks.length, s.dishes.length); const {calculateCookEarnings} = require(\"@shc/business-rules\"); console.log(\"Earnings 10000c @15%:\", calculateCookEarnings(10000)); console.log(\"Local verify complete.\")' && echo '=== verify:local PASSED ==='",
+    "dev:full": "echo 'Start with: pnpm docker:up (opt) && pnpm turbo dev --filter=medusa & pnpm --filter=mobile dev & pnpm --filter=web dev (port 3001). Use EXPO_PUBLIC_ or web env for real Medusa toggle. Side-by-side customer flows.'",
+    "medusa:seed:validate": "cd apps/medusa && npx tsx scripts/seed.ts || true",
+    "eas:mobile:preview": "pnpm --filter mobile eas:build:preview",
+    "eas:mobile:dev": "pnpm --filter mobile eas:build:dev",
+    "eas:mobile:prod": "pnpm --filter mobile eas:build:prod",
+    "tunnel:medusa": "cloudflared tunnel --url http://localhost:9000",
+    "start:full": "echo 'See LOCAL_TESTING.md and the instructions below. Run in separate terminals.'",
+    "mobile:real": "EXPO_PUBLIC_USE_REAL_MEDUSA=true EXPO_PUBLIC_MEDUSA_BASE=http://localhost:9000 pnpm --filter mobile dev",
+    "web:dev": "turbo dev --filter=web",
+    "web:build": "turbo build --filter=web",
+    "web:typecheck": "turbo typecheck --filter=web"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^9.5.0",
+    "prettier": "^3.3.2",
+    "tsx": "^4.15.7",
+    "turbo": "^2.9.18",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

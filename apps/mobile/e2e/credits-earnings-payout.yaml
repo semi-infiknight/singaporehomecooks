@@ -1,0 +1,19 @@
+# Maestro stub for credit redeem (phase9), earnings, payout sim (phase6)
+# Document: after `maestro test apps/mobile/e2e/credits-earnings-payout.yaml` (requires seeded completed orders + hooks)
+appId: com.singaporehomecooks.mobile
+---
+- launchApp
+- tapOn: "DEV SWITCH (test full E2E):"
+- tapOn: "Cook (Auntie Rose)"
+- assertVisible: "earnings"
+- tapOn: "Earnings & Payouts"
+- assertVisible: "This week earnings" # live from completed
+# Credit redeem stub in future customer profile/checkout
+- tapOn: "DEV SWITCH"
+- tapOn: "Customer"
+- tapOn: "Profile"
+- assertVisible: "Home Credits balance" # 45 stub + redeem note
+- tapOn: "View My Orders"
+- stopApp
+# How to run full: maestro test apps/mobile/e2e/*.yaml --env=local (add maestro/ dir for org later)
+# See LOCAL_TESTING.md for integration with verify.

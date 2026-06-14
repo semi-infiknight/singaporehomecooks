@@ -8,7 +8,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - [multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-13 (Infra Track owns)
+**Last Updated:** 2026-06-14 by Launch/Final Polish + Stitch (Infra/Launch) — EAS/mobile deploy notes, real push via Expo, PayU stub prep (KYC deferred), cart/checkout wiring parity for growth, CI/Maestro.
 **Owner:** Infra Track
 
 ## Overview
@@ -57,6 +57,31 @@ All secrets and config are stored exclusively in Railway environment variables. 
 - Secrets rotation policy (quarterly for high-impact keys).
 - Logging aggregation to Railway + external observability (see `production/observability.md`).
 - Zero-downtime deploys with health gate.
+
+## Mobile Builds & EAS Distribution (Expo)
+
+- EAS config: `apps/mobile/eas.json` (development/preview/production profiles; internal distribution for TestFlight + Play Console internal testing).
+- Scripts: `pnpm eas:mobile:preview` (or cd apps/mobile; pnpm eas:build:preview etc). Internal builds for TestFlight/Play (no public store until Phase 7.4 assets/KYC).
+- Instructions: 
+  1. `npx eas login` (Expo account).
+  2. `npx eas build --profile preview --platform ios` (or all). Use `eas:submit:*` for TestFlight/Play internal track.
+  3. Bundle ID/package in app.json: com.singaporehomecooks.app (update on real certs).
+  4. For push: real Expo tokens + backend registration work with any build profile.
+- Real push: Expo push tokens registered via /store/shc/push-token (stored on shc_cook). Subscriber sends on paid/ready_for_collection/collected/completed. 
+  - Document: **Real Expo Push Notification service required for production** (install `expo-server-sdk` in medusa, obtain credentials, handle token validation/receipts in worker). Stubs + wiring complete for local + EAS builds.
+- PWA/web parity notes deferred to Phase 10 (manifest already in app.json web).
+
+## Real PayU / Payment Prep (Stubbed, KYC Deferred)
+
+- Current: manual PayNow via Admin /admin/shc/payment-confirm (per content/paynow-flow.md + locked decisions). Full provider stub in place (no KYC/PayU corporate keys).
+- Prep: provider interface ready (see 08/09 + payment-confirm workflow); when founder provides PayU KYC/corporate creds, swap in Medusa payment provider + real /store/shc/carts complete.
+- Notes: No real money movement yet. All ledger/payout sims (15% commission double-entry) local. KYC/PayU integration last item per founder inputs.
+- GST/tax invoice stubs via corporate flag in checkout.
+
+## Cloudflare Tunnel + Local Share (Ready for Demo)
+
+- See LOCAL_TESTING.md: `cloudflared tunnel --url http://localhost:9000` exposes Medusa publicly for remote testers (with EXPO_PUBLIC_MEDUSA_BASE + pubkey).
+- Mobile (real toggle) + full flows (incl. push stubs, growth checkout, money) work via shared tunnel + cloned repo on tester device. No permanent infra.
 
 ## Multi-Agent Notes
 
