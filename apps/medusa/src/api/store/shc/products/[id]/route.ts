@@ -43,8 +43,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       min_qty: meta.min_qty || 1,
       shc_availability: avail,
       shc_meta: meta,
-      heritage_note: meta.heritage_note || "",
-      description: meta.description || "",
+      heritage_note: (meta as any).heritage_note || "",
+      description: (meta as any).description || "",
     },
   });
 }
