@@ -61,7 +61,11 @@ jobs:
       - run: pnpm --filter @shc/types build && pnpm --filter @shc/business-rules build
       - run: cd apps/medusa && pnpm exec medusa db:migrate
       - run: cd apps/medusa && pnpm exec medusa build
+      - name: Create admin user (offline, before server start)
+        run: cd apps/medusa && pnpm exec medusa user -e admin@shc.local -p supersecret || true
       - name: Start Medusa + bootstrap + seed + verify
+        env:
+          SKIP_MEDUSA_USER_CLI: "true"
         run: |
           cd apps/medusa
           MEDUSA_DISABLE_ADMIN=true pnpm exec medusa start &

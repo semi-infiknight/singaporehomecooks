@@ -67,6 +67,10 @@ async function ensureAdmin() {
     console.log('  ✓ Admin login OK (existing user)');
     return;
   } catch { /* create below */ }
+  if (process.env.SKIP_MEDUSA_USER_CLI === 'true') {
+    console.log('  · Admin user create skipped (SKIP_MEDUSA_USER_CLI — create via CI/offline step)');
+    return;
+  }
   try {
     execSync(`pnpm exec medusa user -e ${ADMIN_EMAIL} -p ${ADMIN_PASS}`, {
       cwd: MEDUSA_DIR,

@@ -35,8 +35,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   try {
   const [allMetas] = await metaService.listAndCountProductMetas({} as any, { take: 200 }).catch(() => [[]]);
-
   let filtered = (allMetas as any[]) || [];
+  if (!filtered.length) {
+    const { listProductMetasFromDb } = await import("../../../../lib/shc-product-meta-pg");
+    filtered = await listProductMetasFromDb(200);
+  }
   if (cook_id) filtered = filtered.filter((m) => m.cook_id === cook_id);
   if (cuisine) filtered = filtered.filter((m) => m.cuisine?.toLowerCase().includes(cuisine.toLowerCase()));
   if (search) {
