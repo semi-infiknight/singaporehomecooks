@@ -37,7 +37,9 @@ RUN chmod +x docker-entrypoint.sh && \
   done && \
   cp dist/medusa-config.js medusa-config.js && \
   rm -f medusa-config.ts && \
-  find src -type f \( -name '*.ts' -o -name '*.tsx' \) -delete
+  find src -type f -name '*.ts' -delete && \
+  find src -type f -name '*.tsx' -delete && \
+  test -z "$(find src -type f -name '*.ts' -print -quit)" || (echo "FATAL: .ts sources remain under src/" && find src -name '*.ts' && exit 1)
 
 EXPOSE 9000
 ENTRYPOINT ["./docker-entrypoint.sh"]
