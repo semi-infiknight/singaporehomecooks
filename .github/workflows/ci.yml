@@ -95,6 +95,7 @@ jobs:
         if: vars.MAESTRO_RUN_DEVICE == 'true'
         run: |
           export MAESTRO_RUN_DEVICE=true
-          pnpm --filter mobile start &
+          pnpm customer:dev &
+          pnpm cook:dev &
           sleep 30
-          maestro test apps/mobile/e2e/onboarding.yaml
+          maestro test apps/mobile-customer/e2e/customer-auth.yaml apps/mobile-cook/e2e/cook-auth.yaml

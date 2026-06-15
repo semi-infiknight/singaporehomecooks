@@ -153,6 +153,50 @@ export async function medusaCustomerRegister(baseUrl: string, email: string, pas
   return body as { token: string };
 }
 
+export async function ensureStoreCustomer(
+  baseUrl: string,
+  token: string,
+  publishableKey: string,
+  profile: { email: string; first_name?: string; last_name?: string }
+) {
+  try {
+    return await fetchCustomerProfile(baseUrl, token, publishableKey);
+  } catch {
+    /* auth exists but store customer row may be missing */
+  }
+  if (!publishableKey) {
+    return { id: profile.email, email: profile.email, first_name: profile.first_name, last_name: profile.last_name };
+  }
+  const res = await fetch(`${baseUrl}/store/customers`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "x-publishable-api-key": publishableKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: profile.email,
+      first_name: profile.first_name || "Customer",
+      last_name: profile.last_name || "",
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    try {
+      return await fetchCustomerProfile(baseUrl, token, publishableKey);
+    } catch {
+      throw new Error((body as any)?.message || `Failed to create store customer (${res.status})`);
+    }
+  }
+  const customer = (body as any).customer || body;
+  return {
+    id: customer.id as string,
+    email: customer.email as string,
+    first_name: customer.first_name as string | undefined,
+    last_name: customer.last_name as string | undefined,
+  };
+}
+
 export async function fetchCustomerProfile(baseUrl: string, token: string, publishableKey: string) {
   const res = await fetch(`${baseUrl}/store/customers/me`, {
     headers: {

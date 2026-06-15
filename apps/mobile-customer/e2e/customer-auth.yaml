@@ -1,0 +1,12 @@
+# Customer app — auth + discover (no dev switcher)
+# Run: pnpm customer:dev & maestro test apps/mobile-customer/e2e/customer-auth.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp
+- tapOn: "Sign in"
+- tapOn: "Email"
+- inputText: "customer@shc.local"
+- tapOn: "Password"
+- inputText: "customersecret"
+- tapOn: "Sign in"
+- assertVisible: "Discover"

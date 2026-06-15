@@ -31,6 +31,7 @@
     "@shc/business-rules": "workspace:*",
     "@shc/types": "workspace:*",
     "dotenv": "16.4.5",
+    "ioredis": "^5.11.1",
     "pg": "^8.13.1",
     "zod": "^3.23.8"
   },

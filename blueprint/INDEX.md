@@ -1,13 +1,13 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-15 by Integration Agent — Medusa full wiring (`@shc/api-client`), web+mobile real mode default, admin UI fixes. See [CURRENT_STATE.md](./CURRENT_STATE.md). Prior: 2026-06-14 Web/Phase 10, Launch/Final Polish, Growth, Money waves.
+**Last Updated:** 2026-06-15 by Integration Agent — extended `verify:real-e2e` (checkout + cook transitions), Redis cart, auth hardening, split-app Maestro, GitHub push. See [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
 ## Current State (read this first if picking up the repo cold)
 
-**[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: architecture, what's wired to real Medusa, route file map, commands, gotchas, gaps, uncommitted work. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
+**[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
 

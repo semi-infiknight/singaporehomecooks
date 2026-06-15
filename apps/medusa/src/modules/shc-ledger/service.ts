@@ -144,11 +144,9 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     if (filters.order_id) where.order_id = filters.order_id;
     if (filters.batch_id) where.batch_id = filters.batch_id;
     const take = filters.limit || 100;
-    const [entries] = await (this as any).listAndCountLedgerEntries({
-      filters: where,
-      take,
-      order: { created_at: "DESC" },
-    } as any);
+    const [entries] = await (this as any)
+      .listAndCountLedgerEntries(where, { take, order: { created_at: "DESC" } })
+      .catch(() => [[]]);
     return entries;
   }
 

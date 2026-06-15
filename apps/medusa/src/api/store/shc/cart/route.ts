@@ -1,22 +1,18 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { getCustomerId } from "../../../../lib/shc-actors";
+import { getCustomerId, unauthorized } from "../../../../lib/shc-actors";
 import { addToCart, clearCart, getCart } from "../../../../lib/shc-cart-store";
 import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
 import { shapeProduct } from "../../../../lib/shc-product-shape";
-
-function unauthorized(res: MedusaResponse) {
-  return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Customer login required") });
-}
 
 /** GET /store/shc/cart */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
-    res.json({ cart: getCart(customerId) });
+    res.json({ cart: await getCart(customerId) });
   } catch {
-    return unauthorized(res);
+    return unauthorized(res, "Customer login required");
   }
 }
 
@@ -24,9 +20,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
-    res.json({ cart: clearCart(customerId) });
+    res.json({ cart: await clearCart(customerId) });
   } catch {
-    return unauthorized(res);
+    return unauthorized(res, "Customer login required");
   }
 }
 
@@ -45,7 +41,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     customerId = getCustomerId(req);
   } catch {
-    return unauthorized(res);
+    return unauthorized(res, "Customer login required");
   }
   const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
   const meta = await metaService.getMetaForProduct(parse.data.product_id);
@@ -54,7 +50,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const shaped = await shapeProduct(meta, req.scope);
   try {
-    const cart = addToCart(customerId, {
+    const cart = await addToCart(customerId, {
       product_id: parse.data.product_id,
       name: shaped.name,
       qty: parse.data.qty,

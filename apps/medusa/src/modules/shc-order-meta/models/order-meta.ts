@@ -4,9 +4,12 @@ export const OrderMeta = model.define("shc_order_meta", {
   id: model.id().primaryKey(),
   order_id: model.text().unique(), // 1:1 link to medusa order
   cook_id: model.text(),
+  customer_id: model.text().nullable(),
   collection_date: model.text(), // YYYY-MM-DD
   collection_slot: model.text(),
   allergen_acked_at: model.dateTime().nullable(),
+  pdpa_consent_at: model.dateTime().nullable(),
+  pdpa_consent_version: model.text().nullable(),
   address_released_at: model.dateTime().nullable(),
   paynow_reference: model.text().nullable(),
   shc_status: model.enum([

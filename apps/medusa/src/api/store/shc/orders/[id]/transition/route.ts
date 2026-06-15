@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-state-transition";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
-import { getCookId, getCustomerId } from "../../../../../../lib/shc-actors";
+import { getCookId, unauthorized } from "../../../../../../lib/shc-actors";
 import { pushNotification } from "../../../../../../lib/shc-notifications-store";
 
 const BodySchema = z.object({
@@ -25,7 +25,14 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${id}`) });
   }
 
-  const result = await metaService.transitionOrderState(id, to, getCookId(req));
+  let cookId: string;
+  try {
+    cookId = getCookId(req);
+  } catch {
+    return unauthorized(res, "Cook login required");
+  }
+
+  const result = await metaService.transitionOrderState(id, to, cookId);
   if (!result.valid) {
     return res.status(400).json({ error: createSHCError("SHC-ORDER-001", result.error || "Transition failed") });
   }
@@ -34,9 +41,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   } as any).catch(() => null);
 
   const updated = await metaService.getOrderMetaWithMessages(id);
-  const cookId = getCookId(req);
-  const customerId = getCustomerId(req);
-  pushNotification(customerId, { type: "order", body: `Order ${id} is now ${to}.` });
+  const customerId = String((current as any).customer_id || (updated.meta as any)?.customer_id || "");
+  if (customerId) {
+    pushNotification(customerId, { type: "order", body: `Order ${id} is now ${to}.` });
+  }
   pushNotification(cookId, { type: "order", body: `Order ${id} moved to ${to}.` });
 
   res.json({ order: updated.meta, messages: updated.messages });

@@ -1,0 +1,12 @@
+# Cook app — auth + dashboard
+# Run: pnpm cook:dev & maestro test apps/mobile-cook/e2e/cook-auth.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp
+- tapOn: "Sign in"
+- tapOn: "Email"
+- inputText: "rose@shc.local"
+- tapOn: "Password"
+- inputText: "cooksecret"
+- tapOn: "Sign in"
+- assertVisible: "Cook Dashboard"

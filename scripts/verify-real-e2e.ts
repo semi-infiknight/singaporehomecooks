@@ -63,6 +63,18 @@ async function loginCook() {
   return r.body.token as string;
 }
 
+async function transitionOrder(orderId: string, to: string, cookToken: string) {
+  const r = await shcFetch(
+    `/store/shc/orders/${orderId}/transition`,
+    { method: 'POST', body: JSON.stringify({ to }) },
+    cookToken
+  );
+  if (r.status !== 200) {
+    throw new Error(`Transition to ${to} failed ${r.status}: ${JSON.stringify(r.body)}`);
+  }
+  return r.body;
+}
+
 async function main() {
   console.log('=== SHC Real Medusa E2E Smoke Test ===');
   console.log('Base:', BASE);
@@ -95,8 +107,12 @@ async function main() {
   console.log('✅ customer auth login');
 
   const me = await shcFetch('/store/shc/auth/me', { method: 'GET' }, customerToken);
-  if (me.status !== 200) throw new Error(`/auth/me failed ${me.status}`);
+  if (me.status !== 200 || !me.body?.user?.id) {
+    throw new Error(`/auth/me failed ${me.status}: ${JSON.stringify(me.body)}`);
+  }
   console.log('✅ /store/shc/auth/me (customer)');
+
+  await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);
 
   const cartAdd = await shcFetch(
     '/store/shc/cart',
@@ -106,12 +122,50 @@ async function main() {
   if (cartAdd.status !== 200) throw new Error(`Cart add failed ${cartAdd.status}: ${JSON.stringify(cartAdd.body)}`);
   console.log('✅ /store/shc/cart POST (authenticated)');
 
+  const checkout = await shcFetch(
+    '/store/shc/carts/demo-complete',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        collection_date: '2026-06-20',
+        collection_slot: '18:00-19:00',
+        allergen_acked: true,
+        pdpa_consent: true,
+      }),
+    },
+    customerToken
+  );
+  if (checkout.status !== 200 || !checkout.body?.order?.id) {
+    throw new Error(`Checkout failed ${checkout.status}: ${JSON.stringify(checkout.body)}`);
+  }
+  const orderId = checkout.body.order.id as string;
+  console.log(`✅ /store/shc/carts/demo-complete (${orderId})`);
+
+  const customerOrders = await shcFetch('/store/shc/orders?role=customer', { method: 'GET' }, customerToken);
+  if (customerOrders.status !== 200) throw new Error(`Customer orders failed ${customerOrders.status}`);
+  const found = (customerOrders.body?.orders ?? []).some((o: { order_id?: string }) => o.order_id === orderId);
+  if (!found) throw new Error(`Order ${orderId} not in customer orders list`);
+  console.log('✅ /store/shc/orders?role=customer');
+
   const cookToken = await loginCook();
   console.log('✅ cook auth login');
 
   const cookOrders = await shcFetch('/store/shc/orders?role=cook', { method: 'GET' }, cookToken);
   if (cookOrders.status !== 200) throw new Error(`Cook orders failed ${cookOrders.status}`);
   console.log('✅ /store/shc/orders?role=cook');
+
+  for (const state of ['accepted', 'preparing', 'ready_for_collection'] as const) {
+    await transitionOrder(orderId, state, cookToken);
+    console.log(`✅ order transition → ${state}`);
+  }
+
+  const orderDetail = await shcFetch(`/store/shc/orders/${orderId}`, { method: 'GET' }, cookToken);
+  if (orderDetail.status !== 200) throw new Error(`Order detail failed ${orderDetail.status}`);
+  const status = orderDetail.body?.order?.shc_status || orderDetail.body?.shc_meta?.shc_status;
+  if (status !== 'ready_for_collection') {
+    throw new Error(`Expected ready_for_collection, got ${status}`);
+  }
+  console.log('✅ /store/shc/orders/:id (ready_for_collection)');
 
   console.log('\n=== verify:real-e2e PASSED ===');
 }

@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { fetchCustomerProfile, medusaCustomerRegister } from "../../../../../../lib/shc-auth";
+import { ensureStoreCustomer, medusaCustomerRegister } from "../../../../../../lib/shc-auth";
 
 const BodySchema = z.object({
   email: z.string().email(),
@@ -21,19 +21,18 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   try {
     const { token } = await medusaCustomerRegister(baseUrl, parse.data.email, parse.data.password);
-    let profile: { id: string; email: string; first_name?: string; last_name?: string } = {
-      id: parse.data.email,
-      email: parse.data.email,
-      first_name: parse.data.first_name || "",
-      last_name: parse.data.last_name || "",
-    };
-    if (publishableKey) {
-      try {
-        profile = await fetchCustomerProfile(baseUrl, token, publishableKey);
-      } catch {
-        /* ok */
-      }
-    }
+    const profile = publishableKey
+      ? await ensureStoreCustomer(baseUrl, token, publishableKey, {
+          email: parse.data.email,
+          first_name: parse.data.first_name,
+          last_name: parse.data.last_name,
+        })
+      : {
+          id: parse.data.email,
+          email: parse.data.email,
+          first_name: parse.data.first_name || "",
+          last_name: parse.data.last_name || "",
+        };
     res.status(201).json({
       token,
       user: {

@@ -55,14 +55,18 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     // Enrich with ledger summary if cook scoped (for earnings view)
     let earningsSummary: any = null;
     if (cook_id && metas?.length) {
-      const orderIds = metas.map((m: any) => m.order_id);
-      const summary = await ledgerService.getLedgerSummaryForOrders(orderIds);
-      earningsSummary = {
-        cook_earnings_cents: summary.totalCookEarnings,
-        platform_fees_cents: summary.totalPlatformFees,
-        orders_with_ledger: summary.entries.length ? orderIds.length : 0,
-        note: "Earnings from double-entry ledger (15% platform default). Updated on completed + payout batches.",
-      };
+      try {
+        const orderIds = metas.map((m: any) => m.order_id);
+        const summary = await ledgerService.getLedgerSummaryForOrders(orderIds);
+        earningsSummary = {
+          cook_earnings_cents: summary.totalCookEarnings,
+          platform_fees_cents: summary.totalPlatformFees,
+          orders_with_ledger: summary.entries.length ? orderIds.length : 0,
+          note: "Earnings from double-entry ledger (15% platform default). Updated on completed + payout batches.",
+        };
+      } catch {
+        earningsSummary = null;
+      }
     }
 
     // Basic shape + growth metadata (credits/earnings/requests) for Phase 8-9 parity with mock. Additive only.
