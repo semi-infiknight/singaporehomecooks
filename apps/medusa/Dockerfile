@@ -33,7 +33,7 @@ RUN chmod +x docker-entrypoint.sh && \
   test -d dist/src || (echo "FATAL: dist/src missing — medusa build did not compile backend" && ls -la dist 2>/dev/null; exit 1) && \
   echo "[shc-medusa] Replacing src/ with compiled dist/src..." && \
   rm -rf src && cp -a dist/src src && \
-  node -e "const fs=require('fs');for(const f of fs.readdirSync('src/links').filter(x=>x.endsWith('.js')&&!x.endsWith('.map'))){const p='src/links/'+f;fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace(/require\\(\\\"\\.\\.\\/modules\\/([^\\\"]+)\\\"\\)/g,'require(\\\"../modules/\\$1/index.js\\\")'));}" && \
+  node -e 'const fs=require("fs");for(const f of fs.readdirSync("src/links").filter(x=>x.endsWith(".js"))){const p="src/links/"+f;fs.writeFileSync(p,fs.readFileSync(p,"utf8").replace(/require\("\.\.\/modules\/([^"]+)"\)/g,(m,n)=>`require("../modules/${n}/index.js")`));}' && \
   find src -name '*.map' -delete && \
   cp dist/medusa-config.js medusa-config.js && \
   rm -f medusa-config.ts && \
