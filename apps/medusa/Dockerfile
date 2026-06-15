@@ -10,6 +10,8 @@ COPY apps/medusa ./apps/medusa
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
+# Never use runtime wrapper during image build (dist/ does not exist yet)
+RUN rm -f apps/medusa/medusa-config.js
 RUN pnpm --filter @shc/types build
 RUN pnpm --filter @shc/business-rules build
 ENV MEDUSA_DISABLE_ADMIN=true
