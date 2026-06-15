@@ -29,7 +29,13 @@ COPY --from=build /app/apps/medusa ./apps/medusa
 COPY package.json pnpm-workspace.yaml ./
 
 WORKDIR /app/apps/medusa
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh && \
+  test -d dist/src || (echo "FATAL: dist/src missing — medusa build did not compile backend" && ls -la dist 2>/dev/null; exit 1) && \
+  echo "[shc-medusa] Baking compiled sources from dist/ into src/..." && \
+  for dir in api lib links modules subscribers utils workflows; do \
+    if [ -d "dist/src/$dir" ]; then rm -rf "src/$dir" && cp -a "dist/src/$dir" "src/$dir"; fi; \
+  done && \
+  cp dist/medusa-config.js medusa-config.js
 
 EXPOSE 9000
 ENTRYPOINT ["./docker-entrypoint.sh"]
