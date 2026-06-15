@@ -18,8 +18,8 @@ class ShcAvailabilityModuleService extends MedusaService({ Availability }) {
   }
 
   async getAvailability(productId: string): Promise<SHCAvailability | null> {
-    const list = await this.listAvailabilities({ filters: { product_id: productId } });
-    return (list[0] as unknown as SHCAvailability) || null;
+    const [list] = await this.listAndCountAvailabilities({ product_id: productId } as any, { take: 1 }).catch(() => [[]]);
+    return ((list as any[])?.[0] as unknown as SHCAvailability) || null;
   }
 
   async checkPortionsAvailable(productId: string, date: string, requestedQty: number): Promise<{ available: boolean; remaining?: number }> {

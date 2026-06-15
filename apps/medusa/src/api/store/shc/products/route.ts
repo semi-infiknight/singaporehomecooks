@@ -34,9 +34,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
 
   try {
-  const [metas] = await metaService.listAndCountProductMetas({}, { skip: offset, take: limit });
+  const [allMetas] = await metaService.listAndCountProductMetas({} as any, { take: 200 }).catch(() => [[]]);
 
-  let filtered = metas as any[];
+  let filtered = (allMetas as any[]) || [];
   if (cook_id) filtered = filtered.filter((m) => m.cook_id === cook_id);
   if (cuisine) filtered = filtered.filter((m) => m.cuisine?.toLowerCase().includes(cuisine.toLowerCase()));
   if (search) {
@@ -48,8 +48,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     );
   }
 
+  const page = filtered.slice(offset, offset + limit);
   const products = await Promise.all(
-    filtered.map(async (meta) => {
+    page.map(async (meta) => {
       const avail = await availService.getAvailability(meta.product_id).catch(() => null);
       return {
         id: meta.product_id,
