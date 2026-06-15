@@ -33,6 +33,9 @@ RUN chmod +x docker-entrypoint.sh && \
   test -d dist/src || (echo "FATAL: dist/src missing — medusa build did not compile backend" && ls -la dist 2>/dev/null; exit 1) && \
   echo "[shc-medusa] Replacing src/ with compiled dist/src..." && \
   rm -rf src && cp -a dist/src src && \
+  for f in src/links/*.js; do \
+    sed -i 's|require("../modules/\([^"]*\)")|require("../modules/\1/index.js")|g' "$f"; \
+  done && \
   cp dist/medusa-config.js medusa-config.js && \
   rm -f medusa-config.ts && \
   find . -path ./scripts -prune -o -path ./dist -prune -o -type f -name '*.ts' -print -delete && \
