@@ -1,0 +1,37 @@
+# Maestro E2E stub: full customer order + cook fulfil + money/earnings + PDPA/audit covered
+# Critical path from phase-5/7 + hardening. Includes allergen, one-cook, slots, PayNow, transitions, PDPA consent at checkout.
+# Run: (maestro test apps/mobile/e2e/full-order-fulfil.yaml) when app + expo dev active (testIDs present in screens)
+# CI: see .github/workflows/ci.yml (macos or cloud); local per LOCAL_TESTING.md. Also covers notif bell + order events (push stubbed via backend).
+appId: com.singaporehomecooks.mobile
+---
+- launchApp
+- tapOn: "DEV SWITCH (test full E2E):"
+- tapOn: "Customer"
+- assertVisible: "Discover"
+- tapOn: "search-input" # if present
+- inputText: "Nasi Lemak"
+- tapOn: "Nasi Lemak Sambal Prawn" # or first card
+- tapOn: "AllergenAckCheckbox" # mandatory
+- tapOn: "add-to-cart-btn"
+- assertVisible: "Cart"
+- tapOn: "proceed-checkout"
+# Slot + PDPA consent explicit
+- tapOn: "CollectionSlotPicker" # first slot approx
+- tapOn: "I consent to the collection and use of my personal data" # PDPA checkbox
+- tapOn: "do-checkout"
+- tapOn: "paynow-ref-input" # in PayNowPanel
+- inputText: "TEST-REF-123"
+- tapOn: "confirm-paynow"
+- assertVisible: "Track Order"
+- stopApp
+# Switch role for fulfil (in same session or re-run with state)
+- launchApp
+- tapOn: "DEV SWITCH"
+- tapOn: "Cook (Auntie Rose)"
+- tapOn: "Manage" # or orders link
+- tapOn: "Accept" # paid -> accepted (address release + audit)
+- tapOn: "Prepare"
+- tapOn: "Ready for Collection"
+- tapOn: "Collected" # completes + earnings update + ledger sim
+- assertVisible: "earnings"
+- stopApp

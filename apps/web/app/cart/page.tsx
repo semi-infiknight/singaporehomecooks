@@ -3,43 +3,80 @@
 import React from 'react';
 import Link from 'next/link';
 import { useCart, useClearCart } from '../../lib/useProducts';
-import { useAuth } from '../../lib/useAuth';
-import { SHCCard, SHCButton, SHCSectionTitle, PriceEarningsCalc } from '../components/SHCWebComponents';
+import { SHCCard, SHCButton, SHCEmptyState, SHCPageHeader, PriceEarningsCalc } from '../components/SHCWebComponents';
 
 export default function CartPage() {
-  const { data: cart = {items:[]}, isLoading } = useCart();
+  const { data: cart = { items: [] }, isLoading } = useCart();
   const clear = useClearCart();
-  const { user } = useAuth();
+  const total = (cart.items || []).reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
 
-  const total = (cart.items || []).reduce((s:number,i:any)=>s + i.price * i.qty, 0);
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <SHCPageHeader title="Your cart" />
+        <p className="text-[#5C5144]">Loading…</p>
+      </div>
+    );
+  }
 
-  if (isLoading) return <p>Loading cart...</p>;
+  const items = cart.items || [];
 
   return (
-    <div>
-      <h1 className="text-3xl font-semibold">Your Cart — {cart.cookId ? 'One Cook Enforced' : 'Empty'}</h1>
-      <p className="text-sm text-[#5C5144]">Same enforcement + seeds as Expo mobile cart.</p>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <SHCPageHeader
+        title="Your cart"
+        subtitle="One cook per order — all dishes must come from the same home kitchen."
+        backHref="/"
+        backLabel="Continue browsing"
+      />
 
-      {(!cart.items || cart.items.length === 0) ? (
-        <SHCCard className="mt-4"><p>No items yet. Browse discover, pick heritage dishes (min qty enforced by business-rules).</p><Link href="/"><SHCButton className="mt-2">Discover dishes</SHCButton></Link></SHCCard>
+      {items.length === 0 ? (
+        <SHCEmptyState
+          title="Your cart is empty"
+          description="Browse heritage dishes for your next Hari Raya, CNY, or family gathering."
+          action={
+            <Link href="/">
+              <SHCButton>Discover dishes</SHCButton>
+            </Link>
+          }
+        />
       ) : (
-        <SHCCard className="mt-4">
-          {(cart.items||[]).map((it:any, idx:number)=> (
-            <div key={idx} className="py-1 border-b last:border-0">{it.qty}× {it.name} @ S${it.price} = S${(it.qty*it.price).toFixed(2)}</div>
-          ))}
-          <div className="mt-3 font-semibold text-lg">Total S${total}</div>
-          <PriceEarningsCalc total={total} />
-        </SHCCard>
-      )}
+        <>
+          <SHCCard>
+            <ul className="divide-y divide-[#E8D5B7]/60">
+              {items.map((it: { name: string; qty: number; price: number }, idx: number) => (
+                <li key={idx} className="py-3 flex justify-between items-start gap-4 first:pt-0 last:pb-0">
+                  <div>
+                    <div className="font-medium">{it.name}</div>
+                    <div className="text-sm text-[#5C5144]">
+                      {it.qty} × S${it.price.toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="font-semibold tabular-nums">S${(it.qty * it.price).toFixed(2)}</div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 pt-4 border-t border-[#E8D5B7] flex justify-between items-center">
+              <span className="font-semibold">Total</span>
+              <span className="text-xl font-semibold tabular-nums">S${total.toFixed(2)}</span>
+            </div>
+            <div className="mt-2">
+              <PriceEarningsCalc total={total} />
+            </div>
+          </SHCCard>
 
-      {cart.items?.length > 0 && (
-        <div className="mt-4 flex flex-col gap-2 max-w-xs">
-          <Link href="/checkout"><SHCButton testID="proceed-checkout-web">Proceed to Checkout (PayNow + PDPA + Slots + Credits)</SHCButton></Link>
-          <SHCButton variant="outline" onClick={()=>clear.mutate()}>Clear Cart</SHCButton>
-        </div>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <Link href="/checkout" className="flex-1">
+              <SHCButton className="w-full" testID="proceed-checkout-web" size="lg">
+                Proceed to checkout
+              </SHCButton>
+            </Link>
+            <SHCButton variant="ghost" onClick={() => clear.mutate()}>
+              Clear cart
+            </SHCButton>
+          </div>
+        </>
       )}
-
-      <p className="mt-8 text-xs">Rules active: one-cook, min-qty, allergen ack, PDPA explicit consent. See production/compliance-pdpa.md.</p>
     </div>
   );
 }

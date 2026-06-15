@@ -1,11 +1,33 @@
 # 06 — API Surface (Canonical Routes)
 
 **Related Files:**
+- [../CURRENT_STATE.md](../CURRENT_STATE.md) — **implemented route file map + client wiring matrix (authoritative snapshot)**
 - [../05-data-model/05-data-model.md](../05-data-model/05-data-model.md)
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
+**Last Updated:** 2026-06-15 by Integration Agent (implemented routes index; canonical spec below unchanged)
+
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
+
+## Implementation Status (2026-06-15)
+
+**Canonical spec** for all planned routes remains in the sections below. For **what is implemented today** (file paths, methods, client wiring, gaps), see **[CURRENT_STATE.md §3–§5](../CURRENT_STATE.md)**.
+
+| Area | Status | Notes |
+|------|--------|-------|
+| Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots` |
+| Cart + checkout | ✅ Partial | In-memory server cart; `demo-complete`, `checkout-credits` |
+| Orders + messages + transitions | ✅ Implemented | Per-order routes under `/store/shc/orders/:id/*` |
+| Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Phase 8–9 routes live |
+| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications in-memory (dev) |
+| Search | 🟡 Stub | `/store/shc/search` returns empty |
+| Auth (login/register JWT) | ❌ Not implemented | Clients use dev role switcher + mock `loginAs` |
+| Admin (payment-confirm, payouts, ledger) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
+| Media upload (MinIO/S3) | ❌ Not implemented | — |
+| Reviews | ❌ Not implemented | — |
+
+**Client integration:** `packages/shc-api-client` calls these routes when `USE_REAL_MEDUSA` is on (default after `pnpm bootstrap:medusa`). See CURRENT_STATE.md §3.
 
 ## Standard Medusa Store API (Use SDK)
 

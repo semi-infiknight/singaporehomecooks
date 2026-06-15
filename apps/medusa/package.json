@@ -8,8 +8,11 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "MEDUSA_DISABLE_ADMIN=true pnpm exec medusa build",
+    "build:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa build && rm -rf public/admin && cp -R dist/public/admin public/admin",
     "dev": "pnpm exec medusa develop",
+    "dev:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa develop",
     "start": "pnpm exec medusa start",
+    "start:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa start",
     "predev": "pnpm build",
     "test": "echo 'Tests in packages/ for now' && exit 0",
     "lint": "eslint src --ext .ts,.js",
@@ -19,10 +22,12 @@
     "seed": "tsx ./scripts/seed.ts"
   },
   "dependencies": {
-    "@medusajs/medusa": "^2.15.5",
-    "@medusajs/framework": "^2.15.5",
-    "@medusajs/dashboard": "^2.15.5",
     "@medusajs/admin-sdk": "^2.15.5",
+    "@medusajs/admin-shared": "^2.15.5",
+    "@medusajs/dashboard": "^2.15.5",
+    "@medusajs/draft-order": "^2.15.5",
+    "@medusajs/framework": "^2.15.5",
+    "@medusajs/medusa": "^2.15.5",
     "@shc/business-rules": "workspace:*",
     "@shc/types": "workspace:*",
     "dotenv": "16.4.5",

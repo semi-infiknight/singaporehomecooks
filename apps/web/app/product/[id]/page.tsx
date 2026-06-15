@@ -3,11 +3,25 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useProduct, useAddToCart, useCollectionSlots, useCart, useAICalorieEstimate } from '../../../lib/useProducts';
-import { SHCCard, SHCButton, SHCBadge, SHCSectionTitle, AllergenAckCheckbox, PriceEarningsCalc, SHCErrorBanner, CollectionSlotPicker } from '../../components/SHCWebComponents';
-import { useAuth } from '../../../lib/useAuth';
-import { createSHCError } from '../../../lib/api-client';
-// shcColors inlined (no @shc/ui to prevent gluestack/RN module resolution failure in web build)
+import { Minus, Plus } from 'lucide-react';
+import {
+  useProduct,
+  useAddToCart,
+  useCollectionSlots,
+  useAICalorieEstimate,
+} from '../../../lib/useProducts';
+import {
+  SHCCard,
+  SHCButton,
+  SHCBadge,
+  SHCSectionTitle,
+  AllergenAckCheckbox,
+  SHCErrorBanner,
+  CollectionSlotPicker,
+  SHCLoading,
+  SHCPageHeader,
+  CalorieBadge,
+} from '../../components/SHCWebComponents';
 
 export default function ProductDetail() {
   const params = useParams<{ id: string }>();
@@ -15,91 +29,159 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useProduct(id || '');
   const { data: slots = [] } = useCollectionSlots(id || '');
   const addMut = useAddToCart();
-  const { data: cart } = useCart();
-  const { user } = useAuth();
   const aiMut = useAICalorieEstimate();
 
   const [allergenAck, setAllergenAck] = useState(false);
-  const [qty, setQty] = useState(5);
+  const [qty, setQty] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [aiBadge, setAiBadge] = useState<any>(null);
+  const [aiCalories, setAiCalories] = useState<number | null>(null);
 
-  if (isLoading || !product) return <p>Loading dish detail + shared contracts...</p>;
+  if (isLoading || !product) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <SHCLoading label="Loading dish details…" />
+      </div>
+    );
+  }
 
-  const total = product.price * qty;
   const tier1 = product.allergen_tiers?.tier1 || [];
+  const cookSlug = product.cook_id?.replace('cook_', '') || '';
+  const minQty = product.min_qty || 1;
+  const effectiveQty = Math.max(minQty, qty);
 
   const handleAdd = async () => {
     setError(null);
-    if (!allergenAck) { setError('Allergen acknowledgment required (SHC-CART-003)'); return; }
+    if (!allergenAck) {
+      setError('Please acknowledge allergens before adding to cart.');
+      return;
+    }
     try {
-      await addMut.mutateAsync({ productId: product.id, qty });
+      await addMut.mutateAsync({ productId: product.id, qty: effectiveQty });
       window.location.href = '/cart';
-    } catch (e: any) {
-      setError(e?.message || (e.code ? `${e.code}: ${e.message}` : 'Add failed (one-cook or min-qty)'));
+    } catch (e: unknown) {
+      const err = e as { message?: string; code?: string };
+      setError(err?.message || 'Unable to add to cart. You may already have items from another cook.');
     }
   };
 
   const runAI = async () => {
     try {
       const res = await aiMut.mutateAsync(product.ingredients || []);
-      setAiBadge(res);
-    } catch {}
+      setAiCalories((res as { calories?: number }).calories ?? null);
+    } catch {
+      /* optional enhancement */
+    }
   };
 
+  const displayCal = aiCalories ?? product.calories ?? 450;
+
   return (
-    <div>
-      <Link href="/" className="text-sm underline">← Discover</Link>
-      <h1 className="text-3xl font-semibold mt-2">{product.name}</h1>
-      <p style={{color: '#B85C38'}} className="text-lg">by {product.cook_name} • S${product.price}/portion • min {product.min_qty} • {product.cuisine}</p>
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <SHCPageHeader
+        title={product.name}
+        subtitle={`by ${product.cook_name} · S$${product.price} per portion · min ${minQty} portions`}
+        backHref="/"
+        backLabel="All dishes"
+      />
 
-      <SHCCard className="mt-4">
-        <p className="italic">{product.heritage_note}</p>
-        <div className="mt-1 text-xs">Festive: {product.festive_timing}</div>
-      </SHCCard>
-
-      <div className="flex gap-2 mt-3 flex-wrap">
+      <div className="flex flex-wrap gap-2 mb-6">
         <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>
+        <CalorieBadge calories={displayCal} />
         {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
-        <span className="text-sm">Calories: {product.calories} ({product.calories_confidence})</span>
-        {aiBadge && <SHCBadge variant="success">AI est: {aiBadge.calories} cal (stub)</SHCBadge>}
+        {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
       </div>
 
-      <SHCSectionTitle>3-Tier Allergen + Ingredients Disclosure (mandatory)</SHCSectionTitle>
-      <SHCCard>
-        <div className="text-sm"><strong className="text-[#B91C1C]">Tier 1 (Mandatory):</strong> {(tier1 || []).join(', ') || '—'}</div>
-        <div className="text-sm mt-1">Tier 2: {(product.allergen_tiers?.tier2 || []).join(', ') || '—'}</div>
-        <div className="text-sm">Tier 3 (trace): {(product.allergen_tiers?.tier3 || []).join(', ') || '—'}</div>
-        <div className="text-xs mt-2">Ingredients: {JSON.stringify(product.ingredients)}</div>
+      <SHCCard className="mb-6">
+        <p className="text-[#2C2416] leading-relaxed italic">{product.heritage_note}</p>
       </SHCCard>
 
-      <button onClick={runAI} className="mt-2 text-xs underline">Estimate calories via AI stub (Phase 7 parity)</button>
+      <SHCSectionTitle subtitle="Mandatory disclosure — please review before ordering">Ingredients & allergens</SHCSectionTitle>
+      <SHCCard>
+        {tier1.length > 0 && (
+          <div className="mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-red-700">Contains</span>
+            <p className="text-sm mt-1">{tier1.join(', ')}</p>
+          </div>
+        )}
+        {(product.allergen_tiers?.tier2 || []).length > 0 && (
+          <div className="mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#5C5144]">May contain</span>
+            <p className="text-sm mt-1">{(product.allergen_tiers?.tier2 || []).join(', ')}</p>
+          </div>
+        )}
+        {(product.allergen_tiers?.tier3 || []).length > 0 && (
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#5C5144]">Trace</span>
+            <p className="text-sm mt-1">{(product.allergen_tiers?.tier3 || []).join(', ')}</p>
+          </div>
+        )}
+        {Array.isArray(product.ingredients) && product.ingredients.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-[#E8D5B7]/60">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#5C5144]">Ingredients</span>
+            <ul className="text-sm mt-2 space-y-1 text-[#5C5144]">
+              {product.ingredients.map((ing: { name?: string; qty?: string }, i: number) => (
+                <li key={i}>
+                  {ing.name || String(ing)}
+                  {ing.qty ? ` — ${ing.qty}` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button type="button" onClick={runAI} className="mt-3 text-xs text-[#1D9E75] hover:underline" disabled={aiMut.isPending}>
+          {aiMut.isPending ? 'Estimating…' : 'Refresh calorie estimate'}
+        </button>
+      </SHCCard>
 
       <SHCSectionTitle>Quantity</SHCSectionTitle>
       <div className="flex items-center gap-4">
-        <button onClick={()=>setQty(Math.max(product.min_qty, qty-1))} className="text-3xl text-[#1D9E75]">-</button>
-        <span className="text-2xl font-semibold">{qty}</span>
-        <button onClick={()=>setQty(qty+1)} className="text-3xl text-[#1D9E75]">+</button>
+        <button
+          type="button"
+          onClick={() => setQty(Math.max(minQty, effectiveQty - 1))}
+          className="w-10 h-10 rounded-lg border border-[#E8D5B7] flex items-center justify-center hover:bg-[#F5F0E6] transition-colors"
+          aria-label="Decrease quantity"
+        >
+          <Minus className="w-4 h-4" />
+        </button>
+        <span className="text-2xl font-semibold tabular-nums w-12 text-center">{effectiveQty}</span>
+        <button
+          type="button"
+          onClick={() => setQty(effectiveQty + 1)}
+          className="w-10 h-10 rounded-lg border border-[#E8D5B7] flex items-center justify-center hover:bg-[#F5F0E6] transition-colors"
+          aria-label="Increase quantity"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
+        <span className="text-sm text-[#5C5144]">Minimum {minQty} portions</span>
       </div>
 
-      <SHCSectionTitle>Allergen Acknowledgment (gate)</SHCSectionTitle>
-      <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-ack-web" />
-
-      {error && <SHCErrorBanner code="SHC-CART-003" message={error} />}
-
-      <div className="mt-4">
-        <PriceEarningsCalc total={total} />
+      <div className="mt-6">
+        <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-ack-web" />
       </div>
 
-      <div className="mt-4 flex gap-3">
-        <SHCButton onClick={handleAdd} disabled={!allergenAck} testID="add-to-cart-web">Add to Cart (enforce rules)</SHCButton>
-        <Link href={`/cook/${product.cook_id?.replace('cook_','') || ''}`}><SHCButton variant="outline">View full Cook profile + heritage</SHCButton></Link>
+      {error && <SHCErrorBanner message={error} />}
+
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <SHCButton
+          onClick={handleAdd}
+          disabled={!allergenAck || addMut.isPending}
+          testID="add-to-cart-web"
+          size="lg"
+          className="flex-1"
+        >
+          Add to cart · S${(product.price * effectiveQty).toFixed(2)}
+        </SHCButton>
+        {cookSlug && (
+          <Link href={`/cook/${cookSlug}`}>
+            <SHCButton variant="outline" size="lg">
+              Meet {product.cook_name?.split(' ')[0]}
+            </SHCButton>
+          </Link>
+        )}
       </div>
 
-      <SHCSectionTitle>Collection Slots (availability from seed + shc_availability)</SHCSectionTitle>
-      <CollectionSlotPicker slots={slots} selected={null} onSelect={()=>{ /* preview only on product */ }} />
-
-      <p className="mt-6 text-xs text-[#5C5144]">Request custom variation? Go to profile. Earnings preview shown everywhere. Same as mobile product/[id]. SSR metadata + JSON-LD would be added in prod.</p>
+      <SHCSectionTitle subtitle="Preview availability — confirm at checkout">Collection slots</SHCSectionTitle>
+      <CollectionSlotPicker slots={slots} selected={null} onSelect={() => {}} />
     </div>
   );
 }

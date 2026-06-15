@@ -2,57 +2,133 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useOrder, useChat, useTransitionOrder } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
-import { SHCCard, SHCButton, SHCSectionTitle } from '../../components/SHCWebComponents';
+import { SHCCard, SHCButton, SHCSectionTitle, SHCPageHeader, SHCLoading } from '../../components/SHCWebComponents';
 import { SHCOrderStatus } from '@shc/types';
 
+const statusLabels: Record<string, string> = {
+  pending: 'Awaiting payment',
+  paid: 'Payment received',
+  accepted: 'Cook confirmed',
+  preparing: 'Being prepared',
+  ready: 'Ready for collection',
+  collected: 'Collected',
+  completed: 'Completed',
+};
+
 export default function TrackOrder() {
-  const params = useParams<{id:string}>();
+  const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  const { data: order } = useOrder(id);
+  const { data: order, isLoading } = useOrder(id);
   const { messages, send } = useChat(id);
   const { user } = useAuth();
   const transMut = useTransitionOrder();
   const [msg, setMsg] = useState('');
-  const [refInput, setRefInput] = useState('');
 
-  if (!order) return <p>Loading order (shared state + contracts)...</p>;
+  if (isLoading || !order) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <SHCLoading label="Loading order…" />
+      </div>
+    );
+  }
+
+  const status = order.shc_status || 'pending';
 
   const handleTransition = async (to: SHCOrderStatus) => {
-    try { await transMut.mutateAsync({orderId: id, to}); } catch(e){ alert((e as any).message); }
+    try {
+      await transMut.mutateAsync({ orderId: id, to });
+    } catch (e) {
+      alert((e as Error).message);
+    }
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Track {id}</h1>
-      <SHCCard>
-        <div>Status: <strong>{order.shc_status}</strong> • {order.collection_date} {order.collection_slot}</div>
-        <div>Total S${order.total} • Cook: {order.cook_name}</div>
-        {order.paynow_reference && <div>PayNow ref: {order.paynow_reference}</div>}
-        <div className="mt-1 text-xs">Address released ~2h before slot (post paid). Collection instructions in cook profile.</div>
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <SHCPageHeader
+        title={statusLabels[status] || String(status)}
+        subtitle={`Order ${id}`}
+        backHref="/orders"
+        backLabel="All orders"
+      />
+
+      <SHCCard className="mb-6">
+        <div className="grid sm:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-[#5C5144]">Collection</span>
+            <p className="font-medium mt-0.5">
+              {order.collection_date} · {order.collection_slot}
+            </p>
+          </div>
+          <div>
+            <span className="text-[#5C5144]">Total</span>
+            <p className="font-medium mt-0.5 tabular-nums">S${order.total}</p>
+          </div>
+          <div>
+            <span className="text-[#5C5144]">Cook</span>
+            <p className="font-medium mt-0.5">{order.cook_name}</p>
+          </div>
+          {order.paynow_reference && (
+            <div>
+              <span className="text-[#5C5144]">PayNow ref</span>
+              <p className="font-medium mt-0.5 font-mono text-xs">{order.paynow_reference}</p>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-[#5C5144] mt-4 pt-4 border-t border-[#E8D5B7]/60">
+          Your collection address will be shared about 2 hours before your slot, after payment is confirmed.
+        </p>
       </SHCCard>
 
-      <SHCSectionTitle>Order Chat (polling 4.5s parity)</SHCSectionTitle>
-      <div className="border bg-white p-3 rounded h-48 overflow-auto mb-2 text-sm">
-        {messages.map((m:any,i:number)=> <div key={i} className={m.sender_actor==='cook'?'text-[#1D9E75]':'text-[#B85C38]'}><strong>{m.sender_actor}:</strong> {m.body}</div>)}
-      </div>
-      <div className="flex gap-2">
-        <input value={msg} onChange={e=>setMsg(e.target.value)} className="flex-1" placeholder="Message..." />
-        <SHCButton size="sm" onClick={()=>{ if(msg) { send({body:msg, from: user.role==='cook'?'cook':'customer'}); setMsg(''); }}}>Send</SHCButton>
-      </div>
-
-      {user.role==='cook' && (
-        <div className="mt-4">
-          <SHCSectionTitle>Cook Actions (state machine)</SHCSectionTitle>
-          <div className="flex gap-2 flex-wrap">
-            {['accepted','preparing','ready','collected','completed'].map((st,i)=> <SHCButton key={i} size="sm" onClick={()=>handleTransition(st as any)}>{st}</SHCButton>)}
-          </div>
-          <p className="text-xs mt-1">Transitions validated by 09-order-state + business-rules. Earnings post on completed.</p>
+      <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Chat</SHCSectionTitle>
+      <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
+        <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
+          {messages.length === 0 && (
+            <p className="text-[#5C5144] text-center py-8">No messages yet. Say hello to your cook.</p>
+          )}
+          {messages.map((m: { sender_actor?: string; body?: string }, i: number) => (
+            <div
+              key={i}
+              className={`max-w-[85%] p-3 rounded-lg ${
+                m.sender_actor === 'cook'
+                  ? 'bg-[#F5F0E6] text-[#2C2416] mr-auto'
+                  : 'bg-[#1D9E75] text-white ml-auto'
+              }`}
+            >
+              {m.body}
+            </div>
+          ))}
         </div>
-      )}
+        <div className="flex gap-2 p-3 border-t border-[#E8D5B7] bg-[#FAF7F2]">
+          <input
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            className="shc-input flex-1 py-2"
+            placeholder="Type a message…"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && msg.trim()) {
+                send({ body: msg, from: 'customer' });
+                setMsg('');
+              }
+            }}
+          />
+          <SHCButton
+            size="sm"
+            onClick={() => {
+              if (msg.trim()) {
+                send({ body: msg, from: 'customer' });
+                setMsg('');
+              }
+            }}
+          >
+            Send
+          </SHCButton>
+        </div>
+      </div>
 
-      <a href="/cook-portal" className="underline text-sm mt-6 block">Back to Cook Portal (or switch role)</a>
+
     </div>
   );
 }

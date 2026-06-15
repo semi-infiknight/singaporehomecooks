@@ -13,9 +13,13 @@ dist/
 expo/
 *.tsbuildinfo
 
+# Brand design previews (generated)
+.brand-preview/
+
 # Misc
 .DS_Store
 *.pem
+*.bak
 
 # Debug
 npm-debug.log*

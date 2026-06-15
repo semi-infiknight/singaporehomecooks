@@ -20,6 +20,7 @@
     "export": "expo export"
   },
   "dependencies": {
+    "@shc/api-client": "workspace:*",
     "@shc/types": "workspace:*",
     "@shc/ui": "workspace:*",
     "@shc/utils": "workspace:*",

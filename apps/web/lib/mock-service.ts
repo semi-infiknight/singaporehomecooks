@@ -74,7 +74,7 @@ seed();
 
 export const api = {
   loginAs(role: 'customer'|'cook', name?:string, pdpa?:any) {
-    currentUser = { role, id: role==='cook'?'cook_auntierose':'cust_demo', name: name||(role==='cook'?'Auntie Rose':'Demo Customer'), pdpa_consent_at: pdpa?.at||new Date().toISOString(), pdpa_consent_version: pdpa?.version||'v1.0-pdpa-2025' };
+    currentUser = { role, id: role==='cook'?'cook_rose_tampines_001':'cust_demo', name: name||(role==='cook'?'Auntie Rose':'Demo Customer'), pdpa_consent_at: pdpa?.at||new Date().toISOString(), pdpa_consent_version: pdpa?.version||'v1.0-pdpa-2025' };
     auditLog(currentUser.id, 'auth.loginAs');
     return currentUser;
   },

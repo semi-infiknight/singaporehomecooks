@@ -22,12 +22,13 @@
 ## Quick Start for a New Agent
 
 ```markdown
+0. Read ../CURRENT_STATE.md — current project state (real Medusa vs mock, routes, commands, gaps)
 1. Read this file + tracks.md
 2. Read the phase file for your current phase (e.g. ../13-implementation-phases/phase-5.md)
 3. Read the specific section files your task touches (use "Related Files" headers)
 4. Implement using TDD + contracts
 5. Run verification commands from the phase file
-6. Patch the section file(s) per self-updating-rules.md
+6. Patch CURRENT_STATE.md (if integration changed) + section file(s) per self-updating-rules.md
 7. Notify stitching agent
 ```
 

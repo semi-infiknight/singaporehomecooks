@@ -1,10 +1,12 @@
-# Project Status — Fully Built
+# Project Status — Fully Built (feature-complete mocks; see handoff for integration)
+
+> **For another agent workflow:** Read **[blueprint/CURRENT_STATE.md](./blueprint/CURRENT_STATE.md)** first. It documents the accurate 2026-06-15 state: `@shc/api-client` wiring, real Medusa routes, admin UI, web brand, env/bootstrap, gaps, and uncommitted work. This file summarizes the earlier "final polish" wave; it does **not** replace the current state doc for integration details.
 
 **Singapore Home Cooks** — Two-sided marketplace for authentic home-cooked Singapore occasion food. Heritage in every dish.
 
-**Date:** 2026-06-14  
+**Date:** 2026-06-14 (STATUS summary); integration snapshot **2026-06-15** in `blueprint/CURRENT_STATE.md`
 **Wave:** Launch / Final Polish + Stitch (final wave, cross-track coordination + Infra/Launch focus)  
-**Overall State:** **READY FOR USER TO HOST ON TUNNEL AND SHARE.** All core + growth + money + hardening + launch items delivered and stitched. Local experience is production-grade for blueprint Phases 0-9 (full E2E customer/cook flows with every rule, SG heritage, PDPA, money/ledger, credits, requests, etc.). Foundation for Phase 10 (web parity) + store submission.
+**Overall State:** **READY FOR USER TO HOST ON TUNNEL AND SHARE** (mock-first E2E). Real Medusa integration is **~70% wired** via `@shc/api-client` — see CURRENT_STATE.md §3–§5. Auth, persistent cart, and production deploy remain open.
 
 ## Summary of Final Polish + Stitch Deliverables
 1. **EAS + distribution**  

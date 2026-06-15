@@ -44,9 +44,15 @@ importers:
       '@medusajs/admin-sdk':
         specifier: ^2.15.5
         version: 2.15.5
+      '@medusajs/admin-shared':
+        specifier: ^2.15.5
+        version: 2.15.5
       '@medusajs/dashboard':
         specifier: ^2.15.5
         version: 2.15.5(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(typescript@5.9.3)
+      '@medusajs/draft-order':
+        specifier: ^2.15.5
+        version: 2.15.5(@medusajs/admin-sdk@2.15.5)(@medusajs/cli@2.15.5(@types/node@20.19.43))(@medusajs/framework@2.15.5(@medusajs/cli@2.15.5(@types/node@20.19.43))(@types/node@20.19.43)(ioredis@5.11.1)(vite@5.4.21(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.48.0))(zod@3.25.76))(@medusajs/icons@2.15.5(react@18.2.0))(@medusajs/test-utils@2.15.5)(@medusajs/ui@4.1.15(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.3.1(react@18.2.0))(react@18.2.0)(typescript@5.9.3))(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.3.1(react@18.2.0))(react-router-dom@6.30.3(react-dom@18.3.1(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@medusajs/framework':
         specifier: ^2.15.5
         version: 2.15.5(@medusajs/cli@2.15.5(@types/node@20.19.43))(@types/node@20.19.43)(ioredis@5.11.1)(vite@5.4.21(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.48.0))(zod@3.25.76)
@@ -117,6 +123,173 @@ importers:
       '@gluestack-ui/themed':
         specifier: ^1.1.73
         version: 1.1.73(bf4635104fc4800bbf9f4b2e27b23aba)
+      '@shc/api-client':
+        specifier: workspace:*
+        version: link:../../packages/shc-api-client
+      '@shc/business-rules':
+        specifier: workspace:*
+        version: link:../../packages/business-rules
+      '@shc/types':
+        specifier: workspace:*
+        version: link:../../packages/shc-types
+      '@shc/ui':
+        specifier: workspace:*
+        version: link:../../packages/shc-ui
+      '@shc/utils':
+        specifier: workspace:*
+        version: link:../../packages/shc-utils
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.101.0(react@18.2.0)
+      expo:
+        specifier: ~51.0.0
+        version: 51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      expo-constants:
+        specifier: ~16.0.0
+        version: 16.0.2(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-font:
+        specifier: ~12.0.0
+        version: 12.0.10(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-linking:
+        specifier: ~6.3.1
+        version: 6.3.1(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-router:
+        specifier: ~3.5.0
+        version: 3.5.24(ffa55a4f9811b11a37e92061ee0c374c)
+      expo-secure-store:
+        specifier: ~13.0.0
+        version: 13.0.2(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-splash-screen:
+        specifier: ~0.27.0
+        version: 0.27.7(expo-modules-autolinking@56.0.15(typescript@5.3.3))(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-status-bar:
+        specifier: ~1.12.1
+        version: 1.12.1
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-native:
+        specifier: 0.74.0
+        version: 0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0)
+      react-native-safe-area-context:
+        specifier: 4.10.0
+        version: 4.10.0(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      react-native-screens:
+        specifier: 3.31.1
+        version: 3.31.1(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      react-native-svg:
+        specifier: 15.2.0
+        version: 15.2.0(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ~18.2.79
+        version: 18.2.79
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.4(jiti@2.7.0)
+      typescript:
+        specifier: ~5.3.3
+        version: 5.3.3
+
+  apps/mobile-cook:
+    dependencies:
+      '@babel/runtime':
+        specifier: ^7.24.0
+        version: 7.29.7
+      '@gluestack-style/react':
+        specifier: ^1.0.57
+        version: 1.0.57
+      '@gluestack-ui/themed':
+        specifier: ^1.1.73
+        version: 1.1.73(bf4635104fc4800bbf9f4b2e27b23aba)
+      '@shc/api-client':
+        specifier: workspace:*
+        version: link:../../packages/shc-api-client
+      '@shc/business-rules':
+        specifier: workspace:*
+        version: link:../../packages/business-rules
+      '@shc/types':
+        specifier: workspace:*
+        version: link:../../packages/shc-types
+      '@shc/ui':
+        specifier: workspace:*
+        version: link:../../packages/shc-ui
+      '@shc/utils':
+        specifier: workspace:*
+        version: link:../../packages/shc-utils
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.101.0(react@18.2.0)
+      expo:
+        specifier: ~51.0.0
+        version: 51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      expo-constants:
+        specifier: ~16.0.0
+        version: 16.0.2(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-font:
+        specifier: ~12.0.0
+        version: 12.0.10(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-linking:
+        specifier: ~6.3.1
+        version: 6.3.1(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-router:
+        specifier: ~3.5.0
+        version: 3.5.24(ffa55a4f9811b11a37e92061ee0c374c)
+      expo-secure-store:
+        specifier: ~13.0.0
+        version: 13.0.2(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-splash-screen:
+        specifier: ~0.27.0
+        version: 0.27.7(expo-modules-autolinking@56.0.15(typescript@5.3.3))(expo@51.0.39(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0))
+      expo-status-bar:
+        specifier: ~1.12.1
+        version: 1.12.1
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-native:
+        specifier: 0.74.0
+        version: 0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0)
+      react-native-safe-area-context:
+        specifier: 4.10.0
+        version: 4.10.0(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      react-native-screens:
+        specifier: 3.31.1
+        version: 3.31.1(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      react-native-svg:
+        specifier: 15.2.0
+        version: 15.2.0(react-native@0.74.0(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ~18.2.79
+        version: 18.2.79
+      eslint:
+        specifier: ^9.0.0
+        version: 9.39.4(jiti@2.7.0)
+      typescript:
+        specifier: ~5.3.3
+        version: 5.3.3
+
+  apps/mobile-customer:
+    dependencies:
+      '@babel/runtime':
+        specifier: ^7.24.0
+        version: 7.29.7
+      '@gluestack-style/react':
+        specifier: ^1.0.57
+        version: 1.0.57
+      '@gluestack-ui/themed':
+        specifier: ^1.1.73
+        version: 1.1.73(bf4635104fc4800bbf9f4b2e27b23aba)
+      '@shc/api-client':
+        specifier: workspace:*
+        version: link:../../packages/shc-api-client
       '@shc/business-rules':
         specifier: workspace:*
         version: link:../../packages/business-rules
@@ -187,6 +360,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@shc/api-client':
+        specifier: workspace:*
+        version: link:../../packages/shc-api-client
       '@shc/business-rules':
         specifier: workspace:*
         version: link:../../packages/business-rules
@@ -264,6 +440,25 @@ importers:
       vitest:
         specifier: ^1.6.1
         version: 1.6.1(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.48.0)
+
+  packages/shc-api-client:
+    dependencies:
+      '@shc/types':
+        specifier: workspace:*
+        version: link:../shc-types
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
+      eslint:
+        specifier: ^9.5.0
+        version: 9.39.4(jiti@2.7.0)
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
 
   packages/shc-types:
     dependencies:
@@ -18230,7 +18425,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.81': {}
 

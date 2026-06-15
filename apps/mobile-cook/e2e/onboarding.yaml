@@ -1,0 +1,23 @@
+# Maestro E2E stub for onboarding + PDPA consent (cook + customer)
+# Run: maestro test apps/mobile/e2e/onboarding.yaml  (after expo running or with maestro cloud/device)
+# Per production/testing-strategy + phase-7: Maestro for critical paths.
+appId: com.singaporehomecooks.mobile # update with real bundle
+---
+- launchApp
+- tapOn: "DEV SWITCH (test full E2E):"
+- tapOn: "Customer"
+- tapOn: "Revisit Onboarding & Trust" # or direct nav if needed
+- tapOn: "I'm a Customer.*"
+- tapOn: "Continue"
+# PDPA info shown (no strict checkbox for customer in onboarding)
+- tapOn: "Finish & Enter (dev)"
+- assertVisible: "Discover"
+- tapOn: "DEV SWITCH"
+- tapOn: "Cook (Auntie Rose)"
+- tapOn: "Revisit Onboarding"
+- tapOn: "I'm a Home Cook"
+- tapOn: "Continue"
+- tapOn: "I \\(the cook\\) explicitly consent to PDPA" # checkbox
+- tapOn: "Finish & Enter (dev)"
+- assertVisible: "Cook Dashboard"
+- stopApp

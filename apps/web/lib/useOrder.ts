@@ -4,7 +4,7 @@ import { checkout, transitionOrder, getOrder, getMyOrders, getMessages, sendMess
 import type { SHCErrorCode } from '@shc/types';
 import { SHCOrderStatus } from '@shc/types';
 
-export function useOrders(role: 'customer'|'cook') { return useQuery({queryKey:['orders',role], queryFn:()=>getMyOrders(role)}); }
+export function useOrders() { return useQuery({queryKey:['orders','customer'], queryFn:()=>getMyOrders()}); }
 export const useMyOrders = useOrders;
 
 export function useCheckout() {

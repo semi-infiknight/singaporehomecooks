@@ -23,7 +23,9 @@ export function useClearCart() {
 }
 
 // Growth parity
-export function useCredits() { return useQuery({queryKey:['credits'], queryFn:getCredits, staleTime:10000}); }
+export function useCredits() {
+  return useQuery<{ balance?: number; tier?: string }>({ queryKey: ['credits'], queryFn: () => getCredits() as Promise<{ balance?: number; tier?: string }>, staleTime: 10000 });
+}
 export function useRedeemCredits() {
   const qc=useQueryClient();
   return useMutation({ mutationFn:(amt:number)=>redeemCredits(amt), onSuccess:()=>{qc.invalidateQueries({queryKey:['credits']}); qc.invalidateQueries({queryKey:['cart']});} });

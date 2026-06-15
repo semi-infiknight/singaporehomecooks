@@ -1,9 +1,15 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-14 by Web/Phase 10 Subagent (final wave, Web track + coordination) — Web parity delivered (apps/web Next.js full E2E marketplace + cook portal + SSR/SEO/PWA + contracts reuse + hardening + tables; build success; side-by-side run ready). Self-updated phase-10/10-mobile/INDEX. "Web/Phase 10 Wave ready for stitch". Prior: 2026-06-14 by Launch / Final Polish + Stitch Subagent ... "Ready for user to host on tunnel and share." Final Polish + Stitch Wave complete. Prior: ... + 2026-06-14 by Mobile + Growth... "Growth Wave ready". + Backend-Money "Money Wave ready for stitch".  
+**Last Updated:** 2026-06-15 by Integration Agent — Medusa full wiring (`@shc/api-client`), web+mobile real mode default, admin UI fixes. See [CURRENT_STATE.md](./CURRENT_STATE.md). Prior: 2026-06-14 Web/Phase 10, Launch/Final Polish, Growth, Money waves.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
+
+## Current State (read this first if picking up the repo cold)
+
+**[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: architecture, what's wired to real Medusa, route file map, commands, gotchas, gaps, uncommitted work. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
+
+**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
 
 ## Navigation for AI Agents (Efficient Web)
 
@@ -77,6 +83,20 @@ Every table, decision, route, task, acceptance criterion, and production require
 - `.hermes/plans/2026-06-13_SingaporeHomeCooks_MultiAgent_Production_Plan.md` — content merged here
 
 **Next Step for Agents:** Read `./multi-agent/README.md` then the section matching your current task.
+
+## Progress Update (2026-06-15 by Integration Agent — MEDUSA FULL WIRING + CURRENT STATE DOC)
+
+**Integration wiring wave (this agent):**
+- New `packages/shc-api-client` — shared real-first Medusa client with mock fallback; used by `apps/web` and `apps/mobile`.
+- New Medusa store routes: cart, cook/product detail, order detail/transition/messages, earnings, listings, notifications; server libs in `apps/medusa/src/lib/`.
+- Real mode default after `pnpm bootstrap:medusa` (writes `.env.local` for web + mobile).
+- Admin UI fixes: `medusa:dev:admin`, `backendUrl: "/"`, CORS for localhost/127.0.0.1; docs in `apps/medusa/ADMIN.md`.
+- Web: Peach Comfort brand (`brand.md`), `AppHeader`/`AppFooter`, DevRoleSwitcher Medusa toggle.
+- **Current state doc:** [CURRENT_STATE.md](./CURRENT_STATE.md) — authoritative project snapshot for cold-start builders.
+- Cross-links: `INDEX.md`, `AGENTS.md`, `04-monorepo.md`, `06-api-surface.md`, `multi-agent/README.md`, `STATUS.md` disclaimer.
+- **Still open:** real JWT auth, persistent cart, product ID alignment (`dish_*` vs `prod_*`), commit uncommitted wiring wave.
+
+---
 
 ## Progress Update (2026-06-14 by Integration + Local Host + Polish Subagent (cross-track, stitching protocol) — INTEGRATION WAVE COMPLETE)
 **Integration wave summary (this subagent):** 

@@ -1,26 +1,189 @@
 @import "tailwindcss";
 
-:root {
-  --shc-primary: #1D9E75;
-  --shc-accent: #B85C38;
-  --shc-bg: #FAF7F2;
-  --shc-surface: #F5F0E6;
-  --shc-text: #2C2416;
-  --shc-text-light: #5C5144;
-  --shc-success: #2E8B57;
-  --shc-error: #B91C1C;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-dm-mono);
+  --font-display: var(--font-dm-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  :root {
+    /* Light mode — Peach Comfort */
+    --background: oklch(0.97 0.02 45);
+    --foreground: oklch(0.22 0.02 30);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.02 30);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.02 30);
+    --primary: oklch(0.62 0.19 30);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.94 0.015 45);
+    --secondary-foreground: oklch(0.22 0.02 30);
+    --muted: oklch(0.94 0.015 45);
+    --muted-foreground: oklch(0.45 0.03 30);
+    --accent: oklch(0.92 0.03 35);
+    --accent-foreground: oklch(0.22 0.02 30);
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.88 0.02 45);
+    --input: oklch(0.95 0.015 45);
+    --ring: oklch(0.62 0.19 30);
+    --radius: 0.625rem;
+
+    /* SHC semantic aliases (Peach Comfort) */
+    --shc-primary: oklch(0.62 0.19 30);
+    --shc-primary-dark: oklch(0.52 0.17 30);
+    --shc-accent: oklch(0.80 0.14 30);
+    --shc-accent-dark: oklch(0.65 0.15 30);
+    --shc-bg: oklch(0.97 0.02 45);
+    --shc-surface: oklch(0.94 0.015 45);
+    --shc-surface-alt: oklch(0.98 0.012 45);
+    --shc-border: oklch(0.88 0.02 45);
+    --shc-text: oklch(0.22 0.02 30);
+    --shc-text-light: oklch(0.45 0.03 30);
+    --shc-success: oklch(0.52 0.12 155);
+    --shc-warning: oklch(0.62 0.15 55);
+    --shc-error: oklch(0.55 0.22 25);
+    --shc-heritage: oklch(0.48 0.10 50);
+    --shc-radius: 0.625rem;
+    --shc-shadow: 0 1px 3px oklch(0.22 0.02 30 / 0.06), 0 4px 12px oklch(0.22 0.02 30 / 0.04);
+    --shc-shadow-lg: 0 8px 24px oklch(0.22 0.02 30 / 0.08);
+    --gradient-bg: linear-gradient(135deg, oklch(0.97 0.02 45) 0%, oklch(0.94 0.025 60) 100%);
+    --gradient-accent: linear-gradient(to right, oklch(0.62 0.19 30) 0%, oklch(0.68 0.17 40) 100%);
+    --font-sans: var(--font-dm-sans);
+    --font-display: var(--font-dm-sans);
+    --font-mono: var(--font-dm-mono);
+  }
+
+  .dark {
+    /* Dark mode — Peach Comfort */
+    --background: oklch(0.14 0.02 30);
+    --foreground: oklch(0.97 0.01 45);
+    --card: oklch(0.19 0.03 30);
+    --card-foreground: oklch(0.97 0.01 45);
+    --popover: oklch(0.21 0.03 30);
+    --popover-foreground: oklch(0.97 0.01 45);
+    --primary: oklch(0.70 0.19 30);
+    --primary-foreground: oklch(0.12 0 0);
+    --secondary: oklch(0.23 0.03 30);
+    --secondary-foreground: oklch(0.97 0.01 45);
+    --muted: oklch(0.21 0.025 30);
+    --muted-foreground: oklch(0.65 0.02 45);
+    --accent: oklch(0.25 0.04 35);
+    --accent-foreground: oklch(0.97 0.01 45);
+    --destructive: oklch(0.65 0.22 25);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.27 0.03 30);
+    --input: oklch(0.19 0.03 30);
+    --ring: oklch(0.70 0.19 30);
+    --radius: 0.625rem;
+
+    --shc-primary: oklch(0.70 0.19 30);
+    --shc-primary-dark: oklch(0.60 0.17 30);
+    --shc-accent: oklch(0.75 0.14 30);
+    --shc-accent-dark: oklch(0.62 0.15 30);
+    --shc-bg: oklch(0.14 0.02 30);
+    --shc-surface: oklch(0.21 0.025 30);
+    --shc-surface-alt: oklch(0.19 0.03 30);
+    --shc-border: oklch(0.27 0.03 30);
+    --shc-text: oklch(0.97 0.01 45);
+    --shc-text-light: oklch(0.65 0.02 45);
+    --gradient-bg: linear-gradient(135deg, oklch(0.14 0.02 30) 0%, oklch(0.17 0.025 45) 100%);
+    --gradient-accent: linear-gradient(to right, oklch(0.70 0.19 30) 0%, oklch(0.65 0.17 40) 100%);
+  }
 }
 
 body {
-  background: #FAF7F2;
-  color: #2C2416;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-a { color: inherit; }
-.shc-card { background: #fff; border: 1px solid #E8D5B7; border-radius: 12px; padding: 16px; }
-input, select, textarea { border: 1px solid #E8D5B7; border-radius: 8px; padding: 8px 12px; background: #fff; }
-input:focus, select:focus { outline: 2px solid #1D9E75; outline-offset: -1px; }
-.testid { /* for visual */ }
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.shc-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.bg-brand-bg {
+  background: var(--gradient-bg);
+}
+
+.bg-brand-accent {
+  background: var(--gradient-accent);
+}
+
+.shc-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 2px);
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shc-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px oklch(0.62 0.19 30 / 0.15);
+}
+
+.shc-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.shc-chip:active {
+  transform: scale(0.98);
+}
+
+.shc-chip-active {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.shc-chip-inactive {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.shc-chip-inactive:hover {
+  background: var(--accent);
+}
+
+.shc-skeleton {
+  background: linear-gradient(90deg, var(--secondary) 25%, var(--card) 50%, var(--secondary) 75%);
+  background-size: 200% 100%;
+  animation: shc-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+@keyframes shc-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -9,9 +9,9 @@ export default defineConfig({
   projectConfig: {
     databaseUrl: DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:8081,http://localhost:3000,http://127.0.0.1:*,https://*.trycloudflare.com",
-      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:3000,http://127.0.0.1:*,https://*.trycloudflare.com",
-      authCors: process.env.AUTH_CORS || "http://localhost:9000,http://localhost:8081,http://127.0.0.1:*,https://*.trycloudflare.com",
+      storeCors: process.env.STORE_CORS || "http://localhost:8081,http://localhost:8082,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
+      authCors: process.env.AUTH_CORS || "http://localhost:9000,http://localhost:8081,http://localhost:8082,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
       jwtSecret: process.env.JWT_SECRET || "supersecret_jwt_for_shc_local_only_change_in_prod",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret_cookie_for_shc_local_only_change_in_prod",
     },
@@ -19,7 +19,9 @@ export default defineConfig({
   admin: {
     // Admin UI bundle is optional for SHC API/mobile integration; enable when ops needs dashboard.
     disable: process.env.MEDUSA_DISABLE_ADMIN === "true",
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    // Use same-origin in dev so login works whether you open localhost or 127.0.0.1.
+    // Set MEDUSA_BACKEND_URL in production (e.g. Railway).
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "/",
   },
   modules: [
     ...modules,

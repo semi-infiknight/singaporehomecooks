@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/service";
 import ShcLedgerModuleService from "../../../../modules/shc-ledger/service";
+import { requireCookId, requireCustomerId } from "../../../../lib/shc-actors";
 
 /**
  * GET /store/shc/orders
@@ -14,6 +15,7 @@ import ShcLedgerModuleService from "../../../../modules/shc-ledger/service";
 const QuerySchema = z.object({
   customer_id: z.string().optional(),
   cook_id: z.string().optional(),
+  role: z.enum(["customer", "cook"]).optional(),
   status: z.string().optional(),
   limit: z.coerce.number().default(20),
 }).strict();
@@ -23,7 +25,21 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad query", parse.error.format() as any) });
   }
-  const { cook_id, status, limit } = parse.data;
+  let { cook_id, status, limit } = parse.data;
+  let customer_id = parse.data.customer_id;
+
+  const role = parse.data.role;
+  if (role === "customer") {
+    customer_id = requireCustomerId(req) || undefined;
+    if (!customer_id) {
+      return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Customer login required") });
+    }
+  } else if (role === "cook") {
+    cook_id = requireCookId(req) || undefined;
+    if (!cook_id) {
+      return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
+    }
+  }
 
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
   const ledgerService: ShcLedgerModuleService = req.scope.resolve("shcLedger") as any;
@@ -31,6 +47,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const where: any = {};
     if (cook_id) where.cook_id = cook_id;
+    if (customer_id) where.customer_id = customer_id;
     if (status) where.shc_status = status;
 
     const [metas, count] = await metaService.listAndCountOrderMetas(where, { take: limit });

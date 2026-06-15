@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "SHC Customer",
+    "slug": "shc-customer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F0E6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.singaporehomecooks.customer"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1D9E75"
+      },
+      "package": "com.singaporehomecooks.customer"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "display": "standalone",
+      "themeColor": "#1D9E75",
+      "backgroundColor": "#F5F0E6",
+      "name": "Singapore Home Cooks",
+      "shortName": "SHC Home Cooks",
+      "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "shc-customer",
+    "extra": {
+      "eas": {
+        "projectId": "placeholder-project-id"
+      }
+    }
+  }
+}
