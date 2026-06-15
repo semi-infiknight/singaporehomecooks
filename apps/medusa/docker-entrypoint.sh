@@ -1,10 +1,8 @@
 #!/bin/sh
 set -e
 
-# Production: Medusa CLI loads medusa-config.js at app root; wrapper re-exports dist build
-if [ -f medusa-config.prod.js ] && [ ! -f medusa-config.js ]; then
-  cp medusa-config.prod.js medusa-config.js
-fi
+# Never use generated wrapper — load medusa-config.ts via tsx in production
+rm -f medusa-config.js
 
 echo "[shc-medusa] Running database migrations..."
 pnpm exec medusa db:migrate
