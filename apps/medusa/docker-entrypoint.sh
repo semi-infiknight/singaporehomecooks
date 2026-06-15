@@ -1,8 +1,17 @@
 #!/bin/sh
 set -e
 
-# Never use generated wrapper — load medusa-config.ts via tsx in production
-rm -f medusa-config.js
+# Production Node cannot load .ts — activate compiled JS from dist/ (image build keeps .ts for medusa build)
+if [ -d dist/src ]; then
+  echo "[shc-medusa] Activating compiled sources from dist/..."
+  for dir in api lib links modules subscribers utils workflows; do
+    if [ -d "dist/src/$dir" ]; then
+      rm -rf "src/$dir"
+      cp -a "dist/src/$dir" "src/$dir"
+    fi
+  done
+  cp dist/medusa-config.js medusa-config.js
+fi
 
 echo "[shc-medusa] Running database migrations..."
 pnpm exec medusa db:migrate
