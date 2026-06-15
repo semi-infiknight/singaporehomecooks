@@ -1,5 +1,6 @@
 import ShcAvailabilityModuleService from "../modules/shc-availability/service";
 import ShcCookModuleService from "../modules/shc-cook/service";
+import { productTitleFromId } from "./shc-product-titles";
 
 /** Shape product meta + availability into client-friendly object (mock parity). */
 export async function shapeProduct(
@@ -13,10 +14,7 @@ export async function shapeProduct(
   const avail = await availSvc.getAvailability(meta.product_id).catch(() => null);
   const [cooks] = await cookSvc.listAndCountCooks({ id: meta.cook_id } as any, { take: 1 }).catch(() => [[]]);
   const cook = (cooks as any[])?.[0];
-  const title = meta.product_id
-    .replace(/^prod_|^dish_/i, "")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const title = productTitleFromId(meta.product_id);
   return {
     id: meta.product_id,
     name: title,

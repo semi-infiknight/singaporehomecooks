@@ -3,6 +3,7 @@ import { createSHCError } from "@shc/types";
 import ShcProductMetaModuleService from "../../../../../modules/shc-product-meta/service";
 import ShcAvailabilityModuleService from "../../../../../modules/shc-availability/service";
 import ShcCookModuleService from "../../../../../modules/shc-cook/service";
+import { productTitleFromId } from "../../../../../lib/shc-product-titles";
 
 /** GET /store/shc/products/:id — single product with meta + availability */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -20,10 +21,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const [cooks] = await cookService.listAndCountCooks({ id: meta.cook_id } as any, { take: 1 }).catch(() => [[]]);
   const cook = (cooks as any[])?.[0];
 
-  const title = String(meta.product_id)
-    .replace(/^prod_|^dish_/i, "")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const title = productTitleFromId(meta.product_id);
 
   res.json({
     product: {

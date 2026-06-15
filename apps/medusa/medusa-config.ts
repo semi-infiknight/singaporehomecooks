@@ -5,13 +5,20 @@ loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
 const DATABASE_URL = process.env.DATABASE_URL || "postgres://shc:shc_dev@localhost:5432/shc_medusa";
 
+const LOCAL_CORS =
+  "http://localhost:8081,http://localhost:8082,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com";
+const railwayOrigin = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `,https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : "";
+const webOrigin = process.env.WEB_PUBLIC_URL ? `,${process.env.WEB_PUBLIC_URL}` : "";
+
 export default defineConfig({
   projectConfig: {
     databaseUrl: DATABASE_URL,
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:8081,http://localhost:8082,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
-      adminCors: process.env.ADMIN_CORS || "http://localhost:9000,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
-      authCors: process.env.AUTH_CORS || "http://localhost:9000,http://localhost:8081,http://localhost:8082,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com",
+      storeCors: process.env.STORE_CORS || `${LOCAL_CORS}${railwayOrigin}${webOrigin}`,
+      adminCors: process.env.ADMIN_CORS || `${LOCAL_CORS}${railwayOrigin}${webOrigin}`,
+      authCors: process.env.AUTH_CORS || `${LOCAL_CORS}${railwayOrigin}${webOrigin}`,
       jwtSecret: process.env.JWT_SECRET || "supersecret_jwt_for_shc_local_only_change_in_prod",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret_cookie_for_shc_local_only_change_in_prod",
     },

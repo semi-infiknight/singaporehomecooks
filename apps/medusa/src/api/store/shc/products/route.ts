@@ -1,9 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
-import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
-import ShcAvailabilityModuleService from "../../../../modules/shc-availability/service";
 import { createSHCError } from "@shc/types";
-import { listProductMetasFromDb } from "../../../../lib/shc-product-meta-pg";
+import { listShcProducts } from "../../../../lib/shc-product-list";
 
 const QuerySchema = z.object({
   cook_id: z.string().optional(),
@@ -13,10 +11,7 @@ const QuerySchema = z.object({
   offset: z.coerce.number().default(0),
 });
 
-/**
- * GET /store/shc/products
- * Lists SHC product meta (+ availability). Medusa core Product join optional later.
- */
+/** GET /store/shc/products — lists SHC products with meta + availability */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const q = req.query as Record<string, unknown>;
   const parse = QuerySchema.safeParse({
@@ -29,43 +24,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad query params", parse.error.format() as any) });
   }
-  const { cook_id, cuisine, q: search, limit, offset } = parse.data;
-
-  const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
-  const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
 
   try {
-  const [allMetas] = await metaService.listAndCountProductMetas({} as any, { take: 200 }).catch(() => [[]]);
-  let filtered = (allMetas as any[]) || [];
-  if (!filtered.length) {
-    filtered = await listProductMetasFromDb(200);
-  }
-  if (cook_id) filtered = filtered.filter((m) => m.cook_id === cook_id);
-  if (cuisine) filtered = filtered.filter((m) => m.cuisine?.toLowerCase().includes(cuisine.toLowerCase()));
-  if (search) {
-    const ql = search.toLowerCase();
-    filtered = filtered.filter((m) =>
-      m.product_id?.toLowerCase().includes(ql) ||
-      m.cuisine?.toLowerCase().includes(ql) ||
-      m.occasion_tags?.some((t: string) => t.toLowerCase().includes(ql))
-    );
-  }
-
-  const page = filtered.slice(offset, offset + limit);
-  const products = await Promise.all(
-    page.map(async (meta) => {
-      const avail = await availService.getAvailability(meta.product_id).catch(() => null);
-      return {
-        id: meta.product_id,
-        title: meta.product_id.replace(/_/g, " ").replace(/prod /i, ""),
-        shc_meta: meta,
-        shc_availability: avail,
-        price_cents: meta.min_qty ? meta.min_qty * 1200 : 1200,
-      };
-    })
-  );
-
-  res.json({ products, count: products.length });
+    const result = await listShcProducts(req.scope, parse.data);
+    res.json(result);
   } catch (e: any) {
     return res.status(500).json({ error: createSHCError("SHC-GENERIC-001", e?.message || "Products query failed") });
   }

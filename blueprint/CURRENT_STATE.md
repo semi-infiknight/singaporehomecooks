@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-15 by Integration Agent (E2E order lifecycle, Redis cart, auth hardening, split-app Maestro)
+**Last Updated:** 2026-06-15 by Integration Agent (CI green, search polish, Railway deploy pack)
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -20,7 +20,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cart** | 🟡 Redis-backed | Persists when `REDIS_URL` set; in-memory fallback |
 | **E2E verifier** | ✅ Extended | Auth → cart → checkout → cook transitions |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
-| **Production deploy** | ❌ Not live | Railway/EAS configs exist; founder keys needed |
+| **Production deploy** | 🟡 Ready to ship | `RAILWAY_DEPLOY.md` + Dockerfiles; founder runs Railway + EAS |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file is the accurate snapshot.**
 
@@ -193,7 +193,7 @@ pnpm verify:local                 # Seed validate + typecheck
 |------|-----|----------|
 | Cart | Medusa core cart module (vs Redis dev store) | P1 |
 | Cook auth | Hashed passwords / Medusa auth actors (not dev map) | P1 |
-| Search | `/store/shc/search` returns empty stub | P2 |
+| Search | `/store/shc/search` wired to product list + titles | ✅ |
 | Notifications | In-memory only; no push inbox persistence | P2 |
 | Upload | MinIO/S3 media routes | P2 |
 | Reviews | No review routes | P3 |
@@ -207,7 +207,7 @@ pnpm verify:local                 # Seed validate + typecheck
 1. **Manual split-app walkthrough** — customer order → cook fulfil on simulators
 2. **Medusa core cart** — replace Redis dev store for production parity
 3. **Cook auth production** — link `shc_cook.auth_identity_id` to Medusa auth
-4. **Railway staging** — deploy Medusa; point EAS preview env at staging URL
+4. **Railway staging** — follow `RAILWAY_DEPLOY.md`; run `pnpm railway:init` after first deploy
 5. **Extend E2E** — credits checkout, message send, collected → completed + ledger
 
 ---
