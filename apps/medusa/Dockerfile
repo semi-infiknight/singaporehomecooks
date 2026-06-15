@@ -35,7 +35,9 @@ RUN chmod +x docker-entrypoint.sh && \
   for dir in api lib links modules subscribers utils workflows; do \
     if [ -d "dist/src/$dir" ]; then rm -rf "src/$dir" && cp -a "dist/src/$dir" "src/$dir"; fi; \
   done && \
-  cp dist/medusa-config.js medusa-config.js
+  cp dist/medusa-config.js medusa-config.js && \
+  rm -f medusa-config.ts && \
+  find src -type f \( -name '*.ts' -o -name '*.tsx' \) -delete
 
 EXPOSE 9000
 ENTRYPOINT ["./docker-entrypoint.sh"]
