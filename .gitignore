@@ -27,6 +27,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Generated Medusa production config wrapper (created at container start)
+apps/medusa/medusa-config.js
+
 # Local env files
 .env
 .env*.local
