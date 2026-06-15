@@ -1,6 +1,7 @@
 import { MedusaService } from "@medusajs/framework/utils";
 import { ProductMeta } from "./models/product-meta";
 import { SHCProductMeta, shcProductMetaSchema } from "@shc/types";
+import { getProductMetaFromDb } from "../../lib/shc-product-meta-pg";
 
 class ShcProductMetaModuleService extends MedusaService({ ProductMeta }) {
   async upsertProductMeta(data: Partial<SHCProductMeta>): Promise<SHCProductMeta> {
@@ -22,7 +23,6 @@ class ShcProductMetaModuleService extends MedusaService({ ProductMeta }) {
     const [all] = await this.listAndCountProductMetas({} as any, { take: 200 }).catch(() => [[]]);
     let meta = (all as any[])?.find((m) => m.product_id === productId) || null;
     if (!meta) {
-      const { getProductMetaFromDb } = await import("../../lib/shc-product-meta-pg");
       meta = await getProductMetaFromDb(productId);
     }
     return (meta as unknown as SHCProductMeta) || null;

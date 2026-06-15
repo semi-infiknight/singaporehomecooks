@@ -1,3 +1,4 @@
+// @ts-ignore — pg types resolved at runtime (same as scripts/seed.ts)
 import { Client } from "pg";
 
 function parseJson<T>(val: unknown, fallback: T): T {

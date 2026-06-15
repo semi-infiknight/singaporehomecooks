@@ -3,6 +3,7 @@ import { z } from "zod";
 import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
 import ShcAvailabilityModuleService from "../../../../modules/shc-availability/service";
 import { createSHCError } from "@shc/types";
+import { listProductMetasFromDb } from "../../../../lib/shc-product-meta-pg";
 
 const QuerySchema = z.object({
   cook_id: z.string().optional(),
@@ -37,7 +38,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const [allMetas] = await metaService.listAndCountProductMetas({} as any, { take: 200 }).catch(() => [[]]);
   let filtered = (allMetas as any[]) || [];
   if (!filtered.length) {
-    const { listProductMetasFromDb } = await import("../../../../lib/shc-product-meta-pg");
     filtered = await listProductMetasFromDb(200);
   }
   if (cook_id) filtered = filtered.filter((m) => m.cook_id === cook_id);
