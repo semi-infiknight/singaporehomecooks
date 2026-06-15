@@ -1,6 +1,6 @@
 import { defineLink } from "@medusajs/framework/utils";
 import ProductModule from "@medusajs/medusa/product";
-import ShcAvailabilityModule from "../modules/shc-availability";
+import ShcAvailabilityModule from "../modules/shc-availability/index.js";
 
 export default defineLink(
   {

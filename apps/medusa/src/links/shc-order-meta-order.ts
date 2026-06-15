@@ -1,6 +1,6 @@
 import { defineLink } from "@medusajs/framework/utils";
 import OrderModule from "@medusajs/medusa/order";
-import ShcOrderMetaModule from "../modules/shc-order-meta";
+import ShcOrderMetaModule from "../modules/shc-order-meta/index.js";
 
 export default defineLink(
   {
