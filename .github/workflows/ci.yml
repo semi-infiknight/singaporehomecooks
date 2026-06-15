@@ -17,7 +17,7 @@ jobs:
           version: 11.1.3
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo build
@@ -55,7 +55,7 @@ jobs:
           version: 11.1.3
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @shc/types build && pnpm --filter @shc/business-rules build
@@ -84,7 +84,7 @@ jobs:
           version: 11.1.3
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: Install Maestro + validate flows
