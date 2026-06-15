@@ -31,14 +31,12 @@ COPY package.json pnpm-workspace.yaml ./
 WORKDIR /app/apps/medusa
 RUN chmod +x docker-entrypoint.sh && \
   test -d dist/src || (echo "FATAL: dist/src missing — medusa build did not compile backend" && ls -la dist 2>/dev/null; exit 1) && \
-  echo "[shc-medusa] Baking compiled sources from dist/ into src/..." && \
-  for dir in api lib links modules subscribers utils workflows; do \
-    if [ -d "dist/src/$dir" ]; then rm -rf "src/$dir" && cp -a "dist/src/$dir" "src/$dir"; fi; \
-  done && \
+  echo "[shc-medusa] Replacing src/ with compiled dist/src..." && \
+  rm -rf src && cp -a dist/src src && \
   cp dist/medusa-config.js medusa-config.js && \
   rm -f medusa-config.ts && \
-  find src -type f -name '*.ts' -delete && \
-  find src -type f -name '*.tsx' -delete && \
+  find . -path ./scripts -prune -o -path ./dist -prune -o -type f -name '*.ts' -print -delete && \
+  find . -path ./scripts -prune -o -path ./dist -prune -o -type f -name '*.tsx' -print -delete && \
   test -z "$(find src -type f -name '*.ts' -print -quit)" || (echo "FATAL: .ts sources remain under src/" && find src -name '*.ts' && exit 1)
 
 EXPOSE 9000
