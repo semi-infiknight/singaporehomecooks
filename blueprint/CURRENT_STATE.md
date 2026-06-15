@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-15 by Integration Agent (CI green, search polish, Railway deploy pack)
+**Last Updated:** 2026-06-15 by Infra (Railway staging live, web config fix, bootstrap HTTPS)
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -20,7 +20,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cart** | 🟡 Redis-backed | Persists when `REDIS_URL` set; in-memory fallback |
 | **E2E verifier** | ✅ Extended | Auth → cart → checkout → cook transitions |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
-| **Production deploy** | 🟡 Ready to ship | `RAILWAY_DEPLOY.md` + Dockerfiles; founder runs Railway + EAS |
+| **Production deploy** | ✅ Staging live | Railway `homecooks`: Medusa + web online; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file is the accurate snapshot.**
 
@@ -172,6 +172,10 @@ pnpm web:dev                      # Web :3001
 
 pnpm verify:real-e2e              # Full smoke (auth + checkout + transitions)
 pnpm verify:local                 # Seed validate + typecheck
+
+# Railway (after railway login + railway link)
+pnpm railway:configure-web        # Point web service at railway.web.toml
+MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 ```
 
 ---
@@ -184,6 +188,8 @@ pnpm verify:local                 # Seed validate + typecheck
 4. **Cook login** — dev credentials in `shc-auth.ts`; login verifies cook row in `shc_cook` table.
 5. **Cart** — Redis when `REDIS_URL=redis://localhost:6379`; otherwise in-memory (lost on restart).
 6. **Legacy `apps/mobile`** — deprecated; use `mobile-customer` + `mobile-cook`.
+7. **Railway web service** — must use `railway.web.toml`; root `railway.toml` is Medusa-only (`pnpm railway:configure-web`).
+8. **Railway bootstrap** — use `MEDUSA_URL=https://...`; do not `railway run medusa user` from laptop (internal DB URL).
 
 ---
 
@@ -197,7 +203,7 @@ pnpm verify:local                 # Seed validate + typecheck
 | Notifications | In-memory only; no push inbox persistence | P2 |
 | Upload | MinIO/S3 media routes | P2 |
 | Reviews | No review routes | P3 |
-| Production | Railway deploy, real Expo push, PayU KYC | Founder |
+| Production | Custom domains, real Expo push, PayU KYC | Founder |
 | Maestro device | YAML validated in CI; device run needs simulator + secrets | Infra |
 
 ---
@@ -207,7 +213,7 @@ pnpm verify:local                 # Seed validate + typecheck
 1. **Manual split-app walkthrough** — customer order → cook fulfil on simulators
 2. **Medusa core cart** — replace Redis dev store for production parity
 3. **Cook auth production** — link `shc_cook.auth_identity_id` to Medusa auth
-4. **Railway staging** — follow `RAILWAY_DEPLOY.md`; run `pnpm railway:init` after first deploy
+4. **Railway staging** — `RAILWAY_DEPLOY.md`; after web service created run `pnpm railway:configure-web`; then `MEDUSA_URL=... pnpm railway:init`
 5. **Extend E2E** — credits checkout, message send, collected → completed + ledger
 
 ---

@@ -1,5 +1,6 @@
-# Railway staging topology — Singapore Home Cooks
-# Docs: blueprint/03-railway/03-railway.md
+# Railway config for the Medusa API service ONLY.
+# Web service MUST use railway.web.toml (or pnpm railway:configure-web).
+# Docs: RAILWAY_DEPLOY.md, blueprint/03-railway/03-railway.md
 
 [build]
 builder = "DOCKERFILE"

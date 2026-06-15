@@ -1,6 +1,7 @@
 # Railway config for the Next.js web service (create a second service in Railway dashboard)
 # Set Root Directory: / (repo root)
-# Override config file path: railway.web.toml
+# Settings → Config file: railway.web.toml  (required — root railway.toml is Medusa-only)
+# Or run: node scripts/railway-configure-web.mjs
 
 [build]
 builder = "DOCKERFILE"

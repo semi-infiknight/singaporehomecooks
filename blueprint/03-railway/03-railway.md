@@ -2,91 +2,162 @@
 
 **Related Files:**
 - [../INDEX.md](../INDEX.md)
+- [../../RAILWAY_DEPLOY.md](../../RAILWAY_DEPLOY.md) — step-by-step operator guide
 - [../04-monorepo/04-monorepo.md](../04-monorepo/04-monorepo.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/observability.md](../production/observability.md)
-- [production/testing-strategy.md](../production/testing-strategy.md)
-- [multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-14 by Launch/Final Polish + Stitch (Infra/Launch) — EAS/mobile deploy notes, real push via Expo, PayU stub prep (KYC deferred), cart/checkout wiring parity for growth, CI/Maestro.
+**Last Updated:** 2026-06-15 by Infra — live staging on Railway (`homecooks` project); Medusa + web Dockerfiles, config-as-code split, bootstrap HTTPS, admin auto-provision.
 **Owner:** Infra Track
 
 ## Overview
 
-Railway provides the hosting, networking, and managed services layer for the entire platform. All production workloads (Medusa, worker, databases, object storage, cache) run on Railway with environment-group-based configuration and automatic scaling.
+Railway hosts the **staging/production API and web** for Singapore Home Cooks. Mobile apps (Expo) are **not** deployed on Railway — they call the public Medusa URL from EAS builds.
 
-## Service Topology
+**Operator guide:** [`RAILWAY_DEPLOY.md`](../../RAILWAY_DEPLOY.md) at repo root.
 
-| Service              | Type                  | Purpose                                      | Environment Variables Group | Health Check |
-|----------------------|-----------------------|----------------------------------------------|-----------------------------|--------------|
-| postgres             | Managed Postgres      | Primary database (Medusa + SHC tables)       | `DATABASE_URL`              | /health      |
-| redis                | Managed Redis         | Cache, session, job queue, rate limiting     | `REDIS_URL`                 | PING         |
-| medusa               | Web service           | Main API server (Store + Admin)              | Full Medusa + SHC config    | /store/health|
-| worker               | Worker / Cron         | Background jobs, payouts, notifications      | Same as medusa + worker flag| Internal     |
-| minio                | Object storage        | Compliance docs, product images, receipts    | `MINIO_*` buckets           | /minio/health|
-| admin                | Web service (optional)| Dedicated Admin UI if split                  | Admin-specific              | /admin/health|
+## Live staging topology (2026-06-15)
 
-## Environment Groups (Railway)
+| Service | Config file | Dockerfile | Healthcheck | Purpose |
+|---------|-------------|------------|-------------|---------|
+| **medusa** | `railway.toml` (repo root) | `apps/medusa/Dockerfile` | `/health` | Medusa API + SHC custom routes |
+| **web** | `railway.web.toml` (**required**) | `apps/web/Dockerfile` | `/` | Next.js customer web |
+| **Postgres** | — | Railway template | — | Primary DB |
+| **Redis** | — | Railway template | — | Cache / sessions (wire `REDIS_URL` on medusa) |
 
-- `production` — live customer traffic
-- `staging` — pre-production validation
-- `preview` — per-PR ephemeral environments
-- `local` — developer machines (via Railway CLI or docker-compose parity)
+```
+┌─────────────┐     ┌─────────────┐
+│  web        │────▶│  medusa     │
+│  (Next.js)  │     │  (API)      │
+└─────────────┘     └──────┬──────┘
+                           │
+                    ┌──────┴──────┐
+                    │             │
+               ┌────▼────┐   ┌────▼────┐
+               │ Postgres│   │  Redis  │
+               └─────────┘   └─────────┘
+```
 
-All secrets and config are stored exclusively in Railway environment variables. No `.env` files are committed.
+Mobile (Expo) → Medusa public URL directly.
 
-## Networking & Domains
+## Critical: two config files
 
-- Custom domain for production API and Admin.
-- Internal service discovery via Railway private networking.
-- CORS and allowed origins strictly limited to mobile app and admin domains.
-- Rate limiting and DDoS protection configured at the Railway edge where possible.
+Root **`railway.toml` is Medusa-only**. Railway config-as-code **overrides** dashboard env vars (including `RAILWAY_DOCKERFILE_PATH`).
 
-## Deployment Pipeline
+If the **web** service uses root `railway.toml`, it will:
+1. Build `apps/medusa/Dockerfile` instead of Next.js
+2. Run migrations against Postgres without `DATABASE_URL`
+3. Fail healthcheck (`/health` vs Next.js `/`)
 
-1. Git push to `main` or `integrate/phase-N` triggers GitHub Action.
-2. `turbo build` produces artifacts.
-3. Railway CLI or GitHub integration deploys updated services.
-4. Health checks and smoke tests run post-deploy.
-5. Rollback via Railway dashboard or CLI if needed.
+**Fix (pick one):**
+- Dashboard: web service → Settings → Build → **Config file** = `railway.web.toml`
+- CLI (after `railway login` + `railway link`): `pnpm railway:configure-web`
 
-## Production Hardening (Infra Owned)
+## Medusa container boot sequence
 
-- All services have resource limits and autoscaling rules.
-- Backups: daily Postgres snapshots + point-in-time recovery.
-- Secrets rotation policy (quarterly for high-impact keys).
-- Logging aggregation to Railway + external observability (see `production/observability.md`).
-- Zero-downtime deploys with health gate.
+`apps/medusa/docker-entrypoint.sh`:
 
-## Mobile Builds & EAS Distribution (Expo)
+1. `NODE_OPTIONS=--import tsx` — load TypeScript custom modules in production
+2. `medusa db:migrate`
+3. `medusa user -e admin@shc.local -p supersecret` (idempotent)
+4. `seed.ts` when `RAILWAY_RUN_SEED=true` (first deploy only)
+5. `medusa start` on `$PORT` (Railway injects, typically 8080)
 
-- EAS config: `apps/mobile/eas.json` (development/preview/production profiles; internal distribution for TestFlight + Play Console internal testing).
-- Scripts: `pnpm eas:mobile:preview` (or cd apps/mobile; pnpm eas:build:preview etc). Internal builds for TestFlight/Play (no public store until Phase 7.4 assets/KYC).
-- Instructions: 
-  1. `npx eas login` (Expo account).
-  2. `npx eas build --profile preview --platform ios` (or all). Use `eas:submit:*` for TestFlight/Play internal track.
-  3. Bundle ID/package in app.json: com.singaporehomecooks.app (update on real certs).
-  4. For push: real Expo tokens + backend registration work with any build profile.
-- Real push: Expo push tokens registered via /store/shc/push-token (stored on shc_cook). Subscriber sends on paid/ready_for_collection/collected/completed. 
-  - Document: **Real Expo Push Notification service required for production** (install `expo-server-sdk` in medusa, obtain credentials, handle token validation/receipts in worker). Stubs + wiring complete for local + EAS builds.
-- PWA/web parity notes deferred to Phase 10 (manifest already in app.json web).
+## Required Railway variables
 
-## Real PayU / Payment Prep (Stubbed, KYC Deferred)
+### Medusa service
 
-- Current: manual PayNow via Admin /admin/shc/payment-confirm (per content/paynow-flow.md + locked decisions). Full provider stub in place (no KYC/PayU corporate keys).
-- Prep: provider interface ready (see 08/09 + payment-confirm workflow); when founder provides PayU KYC/corporate creds, swap in Medusa payment provider + real /store/shc/carts complete.
-- Notes: No real money movement yet. All ledger/payout sims (15% commission double-entry) local. KYC/PayU integration last item per founder inputs.
-- GST/tax invoice stubs via corporate flag in checkout.
+| Variable | Value |
+|----------|--------|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `REDIS_URL` | `${{Redis.REDIS_URL}}` |
+| `JWT_SECRET` | random 32+ chars |
+| `COOKIE_SECRET` | random 32+ chars |
+| `MEDUSA_DISABLE_ADMIN` | `true` |
+| `MEDUSA_PUBLIC_URL` | `https://<medusa-domain>.up.railway.app` |
+| `RAILWAY_PUBLIC_DOMAIN` | `<medusa-domain>.up.railway.app` |
+| `RAILWAY_RUN_SEED` | `true` once, then remove |
 
-## Cloudflare Tunnel + Local Share (Ready for Demo)
+### Web service
 
-- See LOCAL_TESTING.md: `cloudflared tunnel --url http://localhost:9000` exposes Medusa publicly for remote testers (with EXPO_PUBLIC_MEDUSA_BASE + pubkey).
-- Mobile (real toggle) + full flows (incl. push stubs, growth checkout, money) work via shared tunnel + cloned repo on tester device. No permanent infra.
+| Variable | Value |
+|----------|--------|
+| `NEXT_PUBLIC_SHC_API_BASE` | `https://<medusa-domain>.up.railway.app` |
+| `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` | from bootstrap (see below) |
+| `WEB_PUBLIC_URL` | `https://<web-domain>.up.railway.app` (optional CORS) |
+
+`NEXT_PUBLIC_*` are **build-time** — redeploy web after changing them.
+
+## Post-deploy bootstrap
+
+From a laptop (Medusa must be up and reachable over HTTPS):
+
+```bash
+MEDUSA_URL=https://<medusa-domain>.up.railway.app pnpm railway:init
+```
+
+`scripts/bootstrap-medusa.js` supports HTTPS URLs. It creates/reuses:
+- Admin session
+- Publishable API key
+- Demo customer store profile
+- Local `.env.local` files for mobile + web
+
+Copy the publishable key into Railway web vars, then redeploy web.
+
+**Do not** run `railway run medusa user` from a laptop — `DATABASE_URL` points at Railway internal Postgres and will timeout.
+
+## Repo scripts
+
+| Script | Purpose |
+|--------|---------|
+| `pnpm railway:init` | Bootstrap against remote Medusa (`MEDUSA_URL` required) |
+| `pnpm railway:bootstrap` | Same bootstrap script (local or remote) |
+| `pnpm railway:configure-web` | Set web service `railwayConfigFile` + redeploy |
+
+## Smoke test (remote)
+
+```bash
+MEDUSA_URL=https://<medusa-domain>.up.railway.app pnpm verify:real-e2e
+```
+
+## Demo accounts (after seed + bootstrap)
+
+| Role | Email | Password |
+|------|--------|----------|
+| Customer | `customer@shc.local` | `customersecret` |
+| Cook | `rose@shc.local` | `cooksecret` |
+| Admin | `admin@shc.local` | `supersecret` |
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Web logs show `[shc-medusa]` / Postgres retries | Web using wrong config — `pnpm railway:configure-web` |
+| Bootstrap "Medusa not reachable" on HTTPS | Fixed in `bootstrap-medusa.js` (uses `https` module) |
+| Admin login 401 on Railway | Redeploy medusa (entrypoint creates admin) |
+| Empty products | `RAILWAY_RUN_SEED=true` or `railway run pnpm seed` on medusa |
+| Web stale API URL | Redeploy web after `NEXT_PUBLIC_*` change |
+| CORS from web | Set `STORE_CORS` / `AUTH_CORS` on medusa |
+
+## Future / not on Railway yet
+
+| Service | Notes |
+|---------|-------|
+| worker | Cron / payouts / push — Phase 7+ |
+| minio | Object storage — local/dev or S3 later |
+| dedicated admin UI | Optional split; currently `MEDUSA_DISABLE_ADMIN=true` |
+
+## Environment groups
+
+- `production` — live (current `homecooks` project)
+- `staging` / `preview` — per-PR ephemeral (future)
+- `local` — `docker-compose` + `pnpm medusa:dev:admin`
+
+All secrets live in Railway dashboard variables. No `.env` files committed.
 
 ## Multi-Agent Notes
 
-- **Infra Track** owns all Railway service definitions, environment groups, and deployment scripts.
-- Other tracks request new environment variables or service changes via Infra.
-- After Phase 0, infrastructure changes require Infra approval and are documented here.
+- **Infra Track** owns `railway.toml`, `railway.web.toml`, Dockerfiles, `RAILWAY_DEPLOY.md`, and bootstrap scripts.
+- Other tracks request new env vars via Infra; document changes here and in `RAILWAY_DEPLOY.md`.
 
-**Infra Track Rule:** Never store secrets in code or repo. All configuration changes go through Railway UI or infrastructure-as-code checked into the monorepo.
+**Infra Track Rule:** Never store secrets in code or repo. Configuration changes go through Railway UI, `railway-configure-web.mjs`, or checked-in config-as-code (non-secret only).

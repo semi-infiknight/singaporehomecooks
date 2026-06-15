@@ -37,7 +37,8 @@
     "web:build": "turbo build --filter=web",
     "web:typecheck": "turbo typecheck --filter=web",
     "railway:init": "bash scripts/railway-init.sh",
-    "railway:bootstrap": "node scripts/bootstrap-medusa.js"
+    "railway:bootstrap": "node scripts/bootstrap-medusa.js",
+    "railway:configure-web": "node scripts/railway-configure-web.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

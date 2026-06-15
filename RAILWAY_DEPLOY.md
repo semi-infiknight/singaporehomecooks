@@ -84,8 +84,8 @@ railway run pnpm seed
 
 1. **New Service** → same GitHub repo
 2. **Settings → Build**:
-   - Config file: `railway.web.toml`
-   - Or set Dockerfile path: `apps/web/Dockerfile`
+   - **Config file: `railway.web.toml`** (required — root `railway.toml` is Medusa-only and will break web deploys)
+   - Or run: `pnpm railway:configure-web` (after `railway login` + `railway link`)
 3. **Networking** → public domain (e.g. `shc-web.up.railway.app`)
 4. **Variables**:
 
@@ -142,11 +142,9 @@ Requires bootstrap + seed completed on Railway.
 | Cook | `rose@shc.local` | `cooksecret` |
 | Admin | `admin@shc.local` | `supersecret` |
 
-Create admin on first deploy (one-time, via Railway shell):
+Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). No manual step required.
 
-```bash
-railway run pnpm exec medusa user -e admin@shc.local -p supersecret
-```
+**Do not** run `railway run medusa user` from a laptop — `DATABASE_URL` is Railway-internal and will timeout.
 
 ---
 
@@ -159,6 +157,7 @@ railway run pnpm exec medusa user -e admin@shc.local -p supersecret
 | Empty products | Run seed: `RAILWAY_RUN_SEED=true` or `railway run pnpm seed` |
 | Cart 401 | Run `./scripts/railway-init.sh` (demo customer profile) |
 | Web shows stale API | Redeploy web after changing `NEXT_PUBLIC_*` |
+| Web runs Medusa / Postgres errors in web logs | Set web **Config file** to `railway.web.toml` (see §5) |
 
 ---
 

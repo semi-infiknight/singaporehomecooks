@@ -10,6 +10,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const https = require('https');
 
 const ROOT = path.join(__dirname, '..');
 const MEDUSA_DIR = path.join(ROOT, 'apps', 'medusa');
@@ -26,7 +27,9 @@ const ENV_EXAMPLE = path.join(ROOT, '.env.example');
 function httpJson(method, urlPath, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
-    const req = http.request(`${BASE_URL}${urlPath}`, {
+    const url = new URL(`${BASE_URL}${urlPath}`);
+    const transport = url.protocol === 'https:' ? https : http;
+    const req = transport.request(url, {
       method,
       headers: {
         'Content-Type': 'application/json',

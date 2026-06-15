@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-15 by Integration Agent — extended `verify:real-e2e` (checkout + cook transitions), Redis cart, auth hardening, split-app Maestro, GitHub push. See [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-06-15 by Infra — Railway staging live (Medusa + web), `railway:configure-web`, blueprint `03-railway` refresh. See [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
