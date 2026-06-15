@@ -33,13 +33,13 @@ RUN chmod +x docker-entrypoint.sh && \
   test -d dist/src || (echo "FATAL: dist/src missing — medusa build did not compile backend" && ls -la dist 2>/dev/null; exit 1) && \
   echo "[shc-medusa] Replacing src/ with compiled dist/src..." && \
   rm -rf src && cp -a dist/src src && \
-  for f in src/links/*.js; do \
-    sed -i 's|require("../modules/\([^"]*\)")|require("../modules/\1/index.js")|g' "$f"; \
-  done && \
+  node -e "const fs=require('fs');for(const f of fs.readdirSync('src/links').filter(x=>x.endsWith('.js')&&!x.endsWith('.map'))){const p='src/links/'+f;fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace(/require\\(\\\"\\.\\.\\/modules\\/([^\\\"]+)\\\"\\)/g,'require(\\\"../modules/\\$1/index.js\\\")'));}" && \
+  find src -name '*.map' -delete && \
   cp dist/medusa-config.js medusa-config.js && \
   rm -f medusa-config.ts && \
-  find . -path ./scripts -prune -o -path ./dist -prune -o -type f -name '*.ts' -print -delete && \
-  find . -path ./scripts -prune -o -path ./dist -prune -o -type f -name '*.tsx' -print -delete && \
+  find src -type f -name '*.ts' -delete && \
+  find src -type f -name '*.tsx' -delete && \
+  rm -f scripts/*.ts scripts/*.tsx && \
   test -z "$(find src -type f -name '*.ts' -print -quit)" || (echo "FATAL: .ts sources remain under src/" && find src -name '*.ts' && exit 1)
 
 EXPOSE 9000
