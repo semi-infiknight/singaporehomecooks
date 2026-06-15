@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+# Production start resolves medusa-config.js at app root (not dist/)
+if [ -f dist/medusa-config.js ] && [ ! -f medusa-config.js ]; then
+  cp dist/medusa-config.js medusa-config.js
+fi
+
 echo "[shc-medusa] Running database migrations..."
 pnpm exec medusa db:migrate
 

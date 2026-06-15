@@ -27,7 +27,8 @@ COPY --from=build /app/apps/medusa ./apps/medusa
 COPY package.json pnpm-workspace.yaml ./
 
 WORKDIR /app/apps/medusa
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh && \
+    if [ -f dist/medusa-config.js ]; then cp dist/medusa-config.js medusa-config.js; fi
 
 EXPOSE 9000
 ENTRYPOINT ["./docker-entrypoint.sh"]
