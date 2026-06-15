@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "tsc --noEmit",
+    "build": "echo 'deprecated — use apps/mobile-customer and apps/mobile-cook' && exit 0",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "echo 'Maestro E2E or jest here' && exit 0",

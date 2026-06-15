@@ -20,10 +20,10 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo build
-      - run: pnpm turbo test
-      - run: pnpm turbo typecheck
-      - run: pnpm turbo lint
+      - run: pnpm turbo build --filter=!mobile
+      - run: pnpm turbo test --filter=!mobile
+      - run: pnpm turbo typecheck --filter=!mobile
+      - run: pnpm turbo lint --filter=!mobile
       - run: npx tsx scripts/seed.ts --validate
       - run: pnpm verify:local
 
@@ -66,7 +66,10 @@ jobs:
           cd apps/medusa
           MEDUSA_DISABLE_ADMIN=true pnpm exec medusa start &
           SERVER_PID=$!
-          sleep 25
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/health >/dev/null && break
+            sleep 2
+          done
           cd ../..
           node scripts/bootstrap-medusa.js
           cd apps/medusa && pnpm seed
