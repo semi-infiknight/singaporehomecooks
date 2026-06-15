@@ -11,8 +11,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
 
-  const [all] = await metaService.listAndCountProductMetas({}, { take: 200 });
-  const meta = (all as any[]).find((m) => m.product_id === id) || null;
+  const meta = await metaService.getMetaForProduct(id);
   if (!meta) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Product not found: ${id}`) });
   }
