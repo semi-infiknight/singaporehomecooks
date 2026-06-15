@@ -39,10 +39,13 @@ async function seed() {
   console.log("  ✓ Cook seed validated");
 
   // Medusa product seeds + meta
+  // Canonical dish_* IDs from seed/index.ts (must match mobile/web discovery)
   const productsToCreate = [
     {
+      id: "dish_nasi_lemak_prawn_001",
       title: "Nasi Lemak Sambal Prawn",
-      price: 1200, // cents
+      cook_id: "cook_rose_tampines_001",
+      price: 1200,
       cuisine: "Peranakan",
       ingredients: [{ name: "Coconut rice", quantity: 1, unit: "portion" }, { name: "Sambal prawn", quantity: 5, unit: "pcs" }, { name: "Ikan bilis", quantity: 20, unit: "g" }, { name: "Peanuts", quantity: 30, unit: "g" }, { name: "Cucumber", quantity: 50, unit: "g" }, { name: "Egg", quantity: 1, unit: "pcs" }],
       allergens: ["Shellfish", "Nuts"],
@@ -51,14 +54,28 @@ async function seed() {
       heritage: "Family recipe since 1972",
     },
     {
+      id: "dish_ayam_buah_keluak_002",
       title: "Ayam Buah Keluak",
+      cook_id: "cook_rose_tampines_001",
       price: 1500,
       cuisine: "Peranakan",
       ingredients: [{ name: "Chicken", quantity: 500, unit: "g" }, { name: "Buah Keluak", quantity: 8, unit: "pcs" }],
       allergens: ["Nuts"],
       calories: 380,
-      min_qty: 2,
+      min_qty: 4,
       heritage: "Signature heritage dish",
+    },
+    {
+      id: "dish_devils_curry_003",
+      title: "Eurasian Devil's Curry (Chicken)",
+      cook_id: "cook_doris_katong_002",
+      price: 1400,
+      cuisine: "Eurasian",
+      ingredients: [{ name: "Chicken", quantity: 500, unit: "g" }, { name: "Potatoes", quantity: 200, unit: "g" }],
+      allergens: ["Mustard"],
+      calories: 520,
+      min_qty: 5,
+      heritage: "Katong Eurasian heritage",
     },
   ];
 
@@ -66,8 +83,8 @@ async function seed() {
   // For Wave1: log validated data (run after Admin product creation or use in bootstrap flow).
   for (const p of productsToCreate) {
     const meta = {
-      product_id: `prod_${p.title.toLowerCase().replace(/\s+/g, "_")}`,
-      cook_id: cookSeed.id,
+      product_id: p.id,
+      cook_id: p.cook_id,
       cuisine: p.cuisine,
       occasion_tags: ["family-gathering", "hari-raya", "deepavali"],
       allergen_tiers: { tier1: p.allergens, tier2: [], tier3: [] },
@@ -133,10 +150,10 @@ async function seed() {
 
   // Product meta + availability for /store/shc/products
   for (const p of productsToCreate) {
-    const productId = `prod_${p.title.toLowerCase().replace(/\s+/g, "_")}`;
+    const productId = p.id;
     const meta = {
       product_id: productId,
-      cook_id: "cook_rose_tampines_001",
+      cook_id: p.cook_id,
       cuisine: p.cuisine,
       occasion_tags: ["family-gathering", "hari-raya"],
       allergen_tiers: { tier1: p.allergens, tier2: [], tier3: [] },

@@ -19,8 +19,8 @@ class ShcProductMetaModuleService extends MedusaService({ ProductMeta }) {
   }
 
   async getMetaForProduct(productId: string): Promise<SHCProductMeta | null> {
-    const metas = await this.listProductMetas({ filters: { product_id: productId } });
-    return (metas[0] as unknown as SHCProductMeta) || null;
+    const [metas] = await this.listAndCountProductMetas({ product_id: productId } as any, { take: 1 }).catch(() => [[]]);
+    return ((metas as any[])?.[0] as unknown as SHCProductMeta) || null;
   }
 }
 
