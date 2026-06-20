@@ -10,7 +10,7 @@
 - [DECISION_TREES/dispute-refund-policy.md](../DECISION_TREES/dispute-refund-policy.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-06-14 by Contracts-Agent (order-state rule + SHCOrderStatus + transitions fully in @shc/types + @shc/business-rules; FSM tests 14 cases; 05/ERROR_CODES synced)
+**Last Updated:** 2026-06-20 (Blueprint Sync) — order state machine + transition + review gating + ledger post on complete wired and matching contracts.
 **Owner:** Contracts Track
 
 ## Overview

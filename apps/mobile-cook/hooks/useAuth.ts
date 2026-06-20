@@ -26,6 +26,9 @@ export function useAuth() {
     const { token, user: u } = await apiLogin(email, password);
     await persistSession(token, u);
     setUser(u);
+    if (u?.id) {
+      import('../lib/push').then(({ registerCookPushToken }) => registerCookPushToken(u.id).catch(() => null));
+    }
     return u;
   }, []);
 

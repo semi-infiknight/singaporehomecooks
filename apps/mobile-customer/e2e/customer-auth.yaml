@@ -1,12 +1,29 @@
-# Customer app — auth + discover (no dev switcher)
-# Run: pnpm customer:dev & maestro test apps/mobile-customer/e2e/customer-auth.yaml
+# Customer app — guest browse + sign in (Railway backend)
+# Run: bash scripts/start-mobile-dev.sh & maestro test apps/mobile-customer/e2e/customer-auth.yaml
 appId: com.singaporehomecooks.customer
 ---
-- launchApp
-- tapOn: "Sign in"
-- tapOn: "Email"
-- inputText: "customer@shc.local"
-- tapOn: "Password"
-- inputText: "customersecret"
-- tapOn: "Sign in"
-- assertVisible: "Discover"
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 60000
+- tapOn:
+    id: "guest-browse-bar"
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 120000
+- assertVisible: "Hari Raya"

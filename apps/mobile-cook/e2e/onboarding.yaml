@@ -1,23 +1,26 @@
-# Maestro E2E stub for onboarding + PDPA consent (cook + customer)
-# Run: maestro test apps/mobile/e2e/onboarding.yaml  (after expo running or with maestro cloud/device)
-# Per production/testing-strategy + phase-7: Maestro for critical paths.
-appId: com.singaporehomecooks.mobile # update with real bundle
+# Cook app — first-run onboarding tour
+# Run: maestro test apps/mobile-cook/e2e/cook-onboarding.yaml
+appId: com.singaporehomecooks.cook
 ---
-- launchApp
-- tapOn: "DEV SWITCH (test full E2E):"
-- tapOn: "Customer"
-- tapOn: "Revisit Onboarding & Trust" # or direct nav if needed
-- tapOn: "I'm a Customer.*"
-- tapOn: "Continue"
-# PDPA info shown (no strict checkbox for customer in onboarding)
-- tapOn: "Finish & Enter (dev)"
-- assertVisible: "Discover"
-- tapOn: "DEV SWITCH"
-- tapOn: "Cook (Auntie Rose)"
-- tapOn: "Revisit Onboarding"
-- tapOn: "I'm a Home Cook"
-- tapOn: "Continue"
-- tapOn: "I \\(the cook\\) explicitly consent to PDPA" # checkbox
-- tapOn: "Finish & Enter (dev)"
-- assertVisible: "Cook Dashboard"
-- stopApp
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible: "Sign in as cook"
+    timeout: 90000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible: "Welcome, home cook"
+    timeout: 30000
+- tapOn:
+    id: "cook-onboarding-finish-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 60000
+- assertVisible:
+    id: "cook-dashboard"

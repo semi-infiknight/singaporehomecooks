@@ -42,8 +42,8 @@ export default function TrustPage() {
       <div className="space-y-4 mb-10">
         {layers.map((layer) => (
           <SHCCard key={layer.title} className="flex gap-4">
-            <div className="w-10 h-10 rounded-full bg-[#F5F0E6] flex items-center justify-center shrink-0">
-              <layer.icon className="w-5 h-5 text-[#1D9E75]" aria-hidden />
+            <div className="w-10 h-10 rounded-full bg-secondary border-2 border-border flex items-center justify-center shrink-0">
+              <layer.icon className="w-5 h-5 text-primary" aria-hidden />
             </div>
             <div>
               <h3 className="font-semibold text-[#2C2416]">{layer.title}</h3>
@@ -79,7 +79,7 @@ export default function TrustPage() {
       </SHCCard>
 
       <div className="mt-8 text-center">
-        <Link href="/" className="text-sm text-[#1D9E75] font-medium hover:underline">
+        <Link href="/" className="text-sm text-primary font-medium hover:underline">
           ← Start browsing dishes
         </Link>
       </div>

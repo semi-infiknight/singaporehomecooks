@@ -7,7 +7,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/observability.md](../production/observability.md)
 
-**Last Updated:** 2026-06-15 by Infra — live staging on Railway (`homecooks` project); Medusa + web Dockerfiles, config-as-code split, bootstrap HTTPS, admin auto-provision.
+**Last Updated:** 2026-06-20 (Blueprint Sync) — railway.toml (medusa), railway.web.toml, bootstrap supports HTTPS, pnpm railway:configure-web. Matches CURRENT_STATE + RAILWAY_DEPLOY.md.
 **Owner:** Infra Track
 
 ## Overview

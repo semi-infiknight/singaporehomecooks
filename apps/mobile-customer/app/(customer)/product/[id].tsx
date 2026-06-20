@@ -1,109 +1,213 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Image, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, AllergenAckCheckbox, PriceEarningsCalc, SHCBadge, SHCSectionTitle, shcColors } from '@shc/ui';
-import { useProduct, useAddToCart, useCollectionSlots } from '../../../hooks/useProducts';
-import { useCart } from '../../../hooks/useProducts';
-import { createSHCError } from '../../../lib/api-client';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  GourmeatDiscountBadge,
+  GourmeatProductStickyBar,
+  GourmeatCard,
+  gourmeatColors,
+  gourmeatRadii,
+  gourmeatShadows,
+  gourmeatDiscountPercent,
+  shcSpacing,
+  AllergenAckCheckbox,
+  SHCDishOrderingInfo,
+  SHCFavoriteButton,
+} from '@shc/ui';
+import { getDishImageUrl } from '@shc/utils';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProduct, useAddToCart } from '../../../hooks/useProducts';
+import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
+import { useAuth } from '../../../hooks/useAuth';
+import { hydrateSession, isAuthenticated } from '../../../lib/api-client';
+import { useFavorites } from '../../../hooks/useFavorites';
 
-// Full product detail: 3-tier ingredients, video stub, heritage archive, calorie traffic, min qty, allergen gate using business rule + SHCErrorCode display.
 export default function ProductDetail() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id || '');
-  const { data: slots } = useCollectionSlots(id || '');
+  const qc = useQueryClient();
   const addMut = useAddToCart();
-  const { data: cart } = useCart();
+  const { loading: authLoading, user } = useAuth();
+  const { requireAuth } = useGuestAuthGate();
+  const { isFavorite, toggle } = useFavorites();
   const [allergenAck, setAllergenAck] = useState(false);
   const [qty, setQty] = useState(5);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading || !product) return <Text style={{ padding: 16 }}>Loading heritage dish...</Text>;
+  if (authLoading || isLoading || !product) {
+    return (
+      <View style={styles.loadingWrap}>
+        <Text style={styles.loadingText}>{authLoading ? 'Restoring session…' : 'Loading dish…'}</Text>
+      </View>
+    );
+  }
 
-  const total = product.price * qty;
   const tier1 = product.allergen_tiers?.tier1 || product.allergens || [];
+  const calConfidence = (product.calories_confidence as 'full' | 'category') || 'category';
+  const discount = gourmeatDiscountPercent(product.id);
 
   const handleAdd = async () => {
     setError(null);
+    await hydrateSession();
+    if (!isAuthenticated() && !requireAuth('Sign in to add this dish to your cart.')) return;
     if (!allergenAck) {
-      setError('Allergen acknowledgment required (SHC-CART-003 per 08-marketplace-rules.md)');
+      setError('Please acknowledge allergens before adding to cart.');
       return;
     }
     try {
-      await addMut.mutateAsync({ productId: product.id, qty });
+      const cart = await addMut.mutateAsync({ productId: product.id, qty });
+      qc.setQueryData(['cart'], cart);
+      if (!cart?.items?.length) {
+        setError('Cart did not update — try again.');
+        return;
+      }
       router.push('/(customer)/cart' as any);
     } catch (e: any) {
-      const msg = e?.message || (e.code ? `${e.code}: ${e.message}` : 'Failed to add');
-      setError(msg);
+      setError(e?.message || 'Failed to add to cart');
     }
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: shcColors.text }}>{product.name}</Text>
-      <Text style={{ color: shcColors.accent }}>by {product.cook_name} • S${product.price}/portion • {product.area || 'Singapore HDB'}</Text>
+    <View style={styles.screen} testID="product-detail-screen">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.heroWrap}>
+          <Image
+            source={{ uri: getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name }) }}
+            style={styles.heroImage}
+            resizeMode="cover"
+            testID="pdp-hero-image"
+          />
+          <View style={[styles.heroOverlay, { paddingTop: insets.top + shcSpacing.sm }]}>
+            <View style={styles.heroTopRow}>
+              <Pressable onPress={() => router.back()} style={styles.iconBtn} testID="pdp-back-btn">
+                <Text style={styles.backIcon}>←</Text>
+              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <GourmeatDiscountBadge percent={discount} />
+                <View style={styles.iconBtn}>
+                  <SHCFavoriteButton
+                    active={isFavorite(product.id)}
+                    onPress={() =>
+                      toggle({
+                        id: product.id,
+                        name: product.name,
+                        cook_name: product.cook_name,
+                        price: product.price,
+                        cuisine: product.cuisine,
+                      })
+                    }
+                    testID="pdp-favorite-btn"
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
 
-      <SHCCard style={{ marginVertical: 12, backgroundColor: shcColors.surfaceAlt }}>
-        <Text style={{ fontStyle: 'italic', color: shcColors.heritage }}>{product.heritage_note}</Text>
-        <Text style={{ marginTop: 8, fontSize: 11, color: shcColors.textLight }}>Heritage archive stub: Story from 1972 Katong kitchen • family HDB recipes preserved for next generation.</Text>
-      </SHCCard>
+        <View style={styles.body}>
+          <Text style={styles.productName}>{product.name}</Text>
+          <View style={styles.productMetaRow}>
+            {(product as { cook_slug?: string }).cook_slug ? (
+              <Pressable onPress={() => router.push(`/(customer)/cook/${(product as { cook_slug: string }).cook_slug}` as any)}>
+                <Text style={styles.cookLink}>{product.cook_name} ›</Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.productMeta}>{product.cook_name}</Text>
+            )}
+            <Text style={styles.productMeta}> · <Text style={styles.price}>S${product.price}</Text></Text>
+          </View>
+          <View style={styles.badgeRow}>
+            {product.cuisine ? <Text style={styles.badge}>{product.cuisine}</Text> : null}
+            {product.halal ? <Text style={[styles.badge, styles.badgeHalal]}>Halal</Text> : null}
+            <Text style={styles.badge}>min {product.min_qty}</Text>
+          </View>
 
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-        <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>
-        {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
-        <Text style={{ color: shcColors.textLight }}>min qty {product.min_qty}</Text>
+          <GourmeatCard>
+            <SHCDishOrderingInfo
+              tier1={tier1}
+              tier2={product.allergen_tiers?.tier2}
+              tier3={product.allergen_tiers?.tier3}
+              ingredients={product.ingredients}
+              calories={product.calories}
+              caloriesConfidence={calConfidence}
+              heritageNote={product.heritage_note}
+            />
+          </GourmeatCard>
+
+          <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} tier1={tier1} />
+          {error && <Text style={styles.errorText} testID="pdp-add-error">{error}</Text>}
+        </View>
+      </ScrollView>
+
+      <View style={[styles.stickyBar, { paddingBottom: Math.max(insets.bottom, shcSpacing.sm) }]}>
+        <GourmeatProductStickyBar
+          qty={qty}
+          minQty={product.min_qty}
+          lineTotal={product.price * qty}
+          onDecrement={() => setQty(Math.max(product.min_qty, qty - 1))}
+          onIncrement={() => setQty(qty + 1)}
+          onAdd={handleAdd}
+          disabled={!allergenAck || addMut.isPending}
+          loading={addMut.isPending}
+          testID={allergenAck && !addMut.isPending ? 'pdp-sticky-ready' : 'pdp-sticky-bar'}
+        />
       </View>
-
-      {/* Calorie traffic light */}
-      <Text style={{ color: product.calories_confidence === 'full' ? shcColors.trafficGreen : shcColors.trafficYellow }}>
-        Calories: {product.calories} ({product.calories_confidence} confidence)
-      </Text>
-
-      <SHCSectionTitle>3-Tier Ingredients Disclosure</SHCSectionTitle>
-      <SHCCard>
-        <Text style={{ fontWeight: '600', color: shcColors.error }}>Tier 1 (Mandatory allergens): {(product.allergen_tiers?.tier1 || []).join(', ') || 'None declared'}</Text>
-        <Text style={{ marginTop: 4 }}>Tier 2: {(product.allergen_tiers?.tier2 || []).join(', ') || '—'}</Text>
-        <Text>Tier 3 (trace): {(product.allergen_tiers?.tier3 || []).join(', ') || '—'}</Text>
-        <Text style={{ marginTop: 8, fontSize: 13 }}>Full ingredients: {JSON.stringify(product.ingredients)}</Text>
-      </SHCCard>
-
-      {/* Video stub + heritage */}
-      <SHCSectionTitle>Video Walkthrough (stub)</SHCSectionTitle>
-      <SHCCard><Text style={{ color: shcColors.textLight }}>📹 Video player stub — cook demo of prep in HDB kitchen. (Real: Expo AV / YouTube later)</Text></SHCCard>
-
-      <SHCSectionTitle>Quantity (min {product.min_qty})</SHCSectionTitle>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-        <Pressable onPress={() => setQty(Math.max(product.min_qty, qty - 1))}><Text style={{ fontSize: 28, color: shcColors.primary }}>-</Text></Pressable>
-        <Text style={{ fontSize: 22, fontWeight: '600' }}>{qty}</Text>
-        <Pressable onPress={() => setQty(qty + 1)}><Text style={{ fontSize: 28, color: shcColors.primary }}>+</Text></Pressable>
-      </View>
-
-      <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} tier1={tier1} />
-
-      {error && <Text style={{ color: shcColors.error, marginVertical: 8 }}>{error}</Text>}
-
-      <PriceEarningsCalc price={product.price} qty={qty} minQty={product.min_qty} />
-
-      <SHCButton onPress={handleAdd} disabled={!allergenAck || addMut.isPending} style={{ marginTop: 12 }} testID="add-to-cart-btn">
-        <SHCButtonText>{addMut.isPending ? 'Adding...' : 'Add to Cart (one cook only)'}</SHCButtonText>
-      </SHCButton>
-
-      <Text style={{ fontSize: 11, marginTop: 8, color: shcColors.textLight }}>One-cook + min-qty + allergen rules enforced live via @shc/business-rules.</Text>
-
-      <View style={{ marginTop: 20 }}>
-        <SHCButton variant="outline" onPress={() => router.push('/(customer)/cart' as any)}>
-          <SHCButtonText>Go to Cart</SHCButtonText>
-        </SHCButton>
-      </View>
-
-      {/* Public trust content render (from seed + content/trust-and-safety.md) */}
-      <SHCCard style={{ marginTop: 24, padding: 12, backgroundColor: shcColors.surface }}>
-        <SHCSectionTitle>Trust, Collection &amp; Guarantees</SHCSectionTitle>
-        <Text style={{ fontSize: 13, color: shcColors.textLight, marginBottom: 6 }}>5-layer trust: PDPA address gate, allergen ack, one-cook, verified cooks, post-collect review.</Text>
-        <Text style={{ fontSize: 12, marginTop: 4 }}>Address released only after payment. HDB collection instructions shared in chat.</Text>
-        <Text style={{ fontSize: 12, marginTop: 4, color: shcColors.accent }}>Money-back if not as described (see trust copy).</Text>
-        <Text style={{ fontSize: 11, marginTop: 8, color: shcColors.textLight }}>Allergen ack is mandatory before add-to-cart (see above). Common local allergens listed in dish meta. Full policy: content/trust-and-safety.md. PayNow: content/paynow-flow.md</Text>
-      </SHCCard>
-    </ScrollView>
+    </View>
   );
 }
+
+const heroHeight = Math.round(Dimensions.get('window').width * 0.65);
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
+  stickyBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 20,
+    backgroundColor: gourmeatColors.surface,
+  },
+  loadingWrap: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background, justifyContent: 'center' },
+  loadingText: { fontWeight: '600', color: gourmeatColors.textLight },
+  scroll: { flex: 1 },
+  heroWrap: { width: '100%', height: heroHeight, backgroundColor: gourmeatColors.surfaceAlt },
+  heroImage: { width: '100%', height: '100%' },
+  heroOverlay: { ...StyleSheet.absoluteFillObject, paddingHorizontal: shcSpacing.md },
+  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: gourmeatColors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...gourmeatShadows.soft,
+  },
+  backIcon: { fontSize: 20, fontWeight: '700', color: gourmeatColors.text },
+  body: { padding: shcSpacing.md },
+  productName: { fontSize: 24, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.3 },
+  productMetaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 4 },
+  productMeta: { fontSize: 14, color: gourmeatColors.textLight, fontWeight: '500' },
+  cookLink: { fontSize: 14, color: gourmeatColors.primary, fontWeight: '700' },
+  price: { color: gourmeatColors.primary, fontWeight: '800' },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: shcSpacing.md },
+  badge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: gourmeatColors.textLight,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: gourmeatRadii.pill,
+  },
+  badgeHalal: { color: gourmeatColors.success, backgroundColor: '#E8F8EE' },
+  errorText: { color: gourmeatColors.error, marginTop: shcSpacing.sm, fontWeight: '600', fontSize: 13 },
+});

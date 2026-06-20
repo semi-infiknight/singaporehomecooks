@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-06-15 by Integration Agent (implemented routes index; canonical spec below unchanged)
+**Last Updated:** 2026-06-20 (full sync) — all listed areas now ✅ except noted production items. See CURRENT_STATE for live file map + client wiring. Auth, cart (Postgres), reviews, search live.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -16,18 +16,18 @@
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots` |
-| Cart + checkout | ✅ Partial | In-memory server cart; `demo-complete`, `checkout-credits` |
-| Orders + messages + transitions | ✅ Implemented | Per-order routes under `/store/shc/orders/:id/*` |
-| Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Phase 8–9 routes live |
-| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications in-memory (dev) |
-| Search | 🟡 Stub | `/store/shc/search` returns empty |
-| Auth (login/register JWT) | ❌ Not implemented | Clients use dev role switcher + mock `loginAs` |
-| Admin (payment-confirm, payouts, ledger) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
-| Media upload (MinIO/S3) | ❌ Not implemented | — |
-| Reviews | ❌ Not implemented | — |
+| Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots`, search |
+| Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` + `checkout-credits` + complete route (PDPA, credits, corporate) |
+| Orders + messages + transitions + review | ✅ Implemented | Full per-order: list/detail/transition/messages/review |
+| Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
+| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications dev in-mem; push registration + dispatch wired |
+| Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
+| Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook (SHC JWT + scrypt hash on shc_cook) + /me |
+| Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
+| Media upload (MinIO/S3) | ❌ Not implemented | Deferred |
+| Reviews | ✅ Implemented | GET/POST /orders/:id/review (customer post-collection only) |
 
-**Client integration:** `packages/shc-api-client` calls these routes when `USE_REAL_MEDUSA` is on (default after `pnpm bootstrap:medusa`). See CURRENT_STATE.md §3.
+**Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
 
 ## Standard Medusa Store API (Use SDK)
 
@@ -35,7 +35,7 @@
 
 ## Cook Auth Actor Routes
 
-(Full register/login/reset for `cook` actor type — creates shc_cook row)
+Cook login uses SHC JWT (issueCookToken) verifying against `shc_cook.login_email` + `password_hash` (scrypt). Dev plaintext fallback behind `SHC_COOK_ALLOW_DEV_PLAINTEXT`. Customer uses Medusa auth + ensureStoreCustomer. See 07-auth.md + shc-auth.ts + seed.
 
 ## SHC Store API (`/store/shc/*`)
 

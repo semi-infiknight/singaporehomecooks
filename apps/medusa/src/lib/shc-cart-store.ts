@@ -1,8 +1,8 @@
 import { Redis } from "ioredis";
 
 /**
- * Server cart for /store/shc/cart — Redis-backed with in-memory fallback.
- * TTL 7 days. Survives Medusa restarts when REDIS_URL is set.
+ * @deprecated Use shc-cart module (Postgres-backed) via cart routes. Kept for unit tests / legacy imports.
+ * Server cart — Redis-backed with in-memory fallback.
  */
 export type ShcCartItem = { product_id: string; name: string; qty: number; price: number; cook_id: string };
 export type ShcCart = { items: ShcCartItem[]; cookId: string | null };

@@ -7,7 +7,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-06-14 by Contracts-Agent (expanded full column definitions for all tables per 05-data-model rule; added audit/PDPA/compliance fields referenced in 07-auth, 08, 09, GST, DATA_RETENTION etc. Exact fields now used by all .strict() Zod schemas)
+**Last Updated:** 2026-06-20 (synced with code + contracts) — added shc_cart table + shc_cook login_email + password_hash (scrypt); aligned to current modules (incl. shc-cart, shc-review); shcCookSchema extended. See CURRENT_STATE, 06-api-surface.
 
 ## Medusa Native Tables (Configured, Not Custom)
 
@@ -23,7 +23,7 @@
 
 | Table | Full Columns (exact) | Types / Notes | Multi-Agent Notes |
 | --- | --- | --- | --- |
-| `shc_cook` | id, auth_identity_id, slug, display_name, story, area, collection_address, collection_instructions, status, availability_paused, expo_push_token, sfa_reg_number, wsq_cert_expiry, pdpa_consent_at, pdpa_consent_version, created_at, updated_at | status: enum pending|active|paused|suspended; dates ISO; PDPA required for production (07-auth) | Linked to auth_identity; status machine in Phase 2; compliance gates in cook-status-gates rule |
+| `shc_cook` | id, auth_identity_id, slug, display_name, story, area, collection_address, collection_instructions, status, availability_paused, expo_push_token, sfa_reg_number, wsq_cert_expiry, **login_email**, **password_hash** (scrypt), pdpa_consent_at, pdpa_consent_version, created_at, updated_at | status: enum pending\|active\|paused\|suspended; login_email for cook auth; password_hash never exposed; PDPA required (07-auth) | Linked to auth_identity; cook login now supports real hashed + dev fallback; status machine + compliance |
 | `shc_product_meta` | product_id, cook_id, cuisine, occasion_tags, allergen_tiers (JSON: {tier1: string[], tier2?: string[], tier3?: string[]}), halal, calories, calories_confidence, ingredients (JSON array {name, quantity, unit}), min_qty, last_minute_premium_pct, created_at, updated_at | occasion_tags array, allergen tiers object, ingredients validated | One cook per product enforced (business-rules + cart) |
 | `shc_availability` | product_id, portions_per_day, collection_days (int[] 0-6), time_slots (JSON array of slot strings or objects), paused, created_at, updated_at | portions_per_day >0; used for portions check | Checked at checkout + availability rule |
 | `shc_compliance_doc` | id, cook_id, type (sfa\|wsq), file_key, expiry_date, verified_at, created_at, updated_at | MinIO cook-certs bucket; verified_at set by ops | Compliance gates for accept/payout |
@@ -40,6 +40,7 @@
 | `shc_platform_stat` | key, value (JSON or number), updated_at | | Analytics cron; see CRON_JOBS.md |
 | `shc_request` | id, customer_id, body, youtube_url, party_size, budget_cents, date, status, created_at, updated_at | Phase 8 custom orders | |
 | `shc_bid` | id, request_id, cook_id, price_cents, message, status (pending\|accepted\|rejected), created_at, updated_at | Phase 8 | |
+| `shc_cart` | id (or customer_id PK), customer_id, items (JSON array of {product_id, name, qty, price, cook_id}), cook_id (enforced one-cook), created_at, updated_at | Postgres-backed; one-cook cart enforced at add time via business-rules; used by /store/shc/cart | Core for checkout; legacy shc-cart-store deprecated |
 
 **Medusa Native Tables (Configured, Not Custom):** product, product_variant, product_image, customer, customer_address, cart, line_item, order, order_item, payment, fulfillment, sales_channel, region, stock_location (links defined below). All custom SHC tables reference their IDs.
 

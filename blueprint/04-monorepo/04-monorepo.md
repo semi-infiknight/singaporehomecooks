@@ -8,7 +8,7 @@
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-15 by Integration Agent (`shc-api-client`, `apps/web`, bootstrap env)
+**Last Updated:** 2026-06-20 (Blueprint Sync) — split apps (mobile-customer/cook primary), packages/@shc/* (api-client real, shc-ui tri, types+rules), legacy mobile deprecated. Real wiring confirmed.
 **Owner:** Infra Track
 
 ## Overview

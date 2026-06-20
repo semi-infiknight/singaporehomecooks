@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { getCustomerId, unauthorized } from "../../../../lib/shc-actors";
-import { addToCart, clearCart, getCart } from "../../../../lib/shc-cart-store";
+import ShcCartModuleService from "../../../../modules/shc-cart/service";
 import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
 import { shapeProduct } from "../../../../lib/shc-product-shape";
 
@@ -10,7 +10,8 @@ import { shapeProduct } from "../../../../lib/shc-product-shape";
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
-    res.json({ cart: await getCart(customerId) });
+    const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
+    res.json({ cart: await cartService.getCart(customerId) });
   } catch {
     return unauthorized(res, "Customer login required");
   }
@@ -20,7 +21,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
-    res.json({ cart: await clearCart(customerId) });
+    const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
+    res.json({ cart: await cartService.clearCart(customerId) });
   } catch {
     return unauthorized(res, "Customer login required");
   }
@@ -50,7 +52,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const shaped = await shapeProduct(meta, req.scope);
   try {
-    const cart = await addToCart(customerId, {
+    const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
+    const cart = await cartService.addToCart(customerId, {
       product_id: parse.data.product_id,
       name: shaped.name,
       qty: parse.data.qty,

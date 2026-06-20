@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcCreditWalletModuleService from "../../../../modules/shc-credit-wallet/service";
+import { getAuthContext, getCustomerId, unauthorized } from "../../../../lib/shc-actors";
 
 /**
  * GET /store/shc/credits?customer_id=...
@@ -24,8 +25,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Bad credits query", parse.error.format() as any) });
   }
+  getAuthContext(req);
   const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
-  const customerId = parse.data.customer_id || (req as any).auth?.actor_id || "cust_demo";
+  let customerId: string;
+  try {
+    customerId = getCustomerId(req);
+  } catch {
+    if (!parse.data.customer_id) return unauthorized(res, "Customer login required");
+    customerId = parse.data.customer_id;
+  }
   try {
     const balance = await credService.getBalance(customerId);
     const history = await credService.getHistory(customerId, req.scope).catch(() => []);
@@ -44,8 +52,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid redeem payload", parse.error.format() as any) });
   }
+  getAuthContext(req);
   const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
-  const actor = (req as any).auth?.actor_id || parse.data.customer_id || "cust_demo";
+  let actor: string;
+  try {
+    actor = getCustomerId(req);
+  } catch {
+    if (!parse.data.customer_id) return unauthorized(res, "Customer login required");
+    actor = parse.data.customer_id;
+  }
   try {
     const before = await credService.getBalance(actor);
     const result = await credService.redeemCredits(actor, parse.data.amount, req.scope);

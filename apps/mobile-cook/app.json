@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F0E6"
+      "backgroundColor": "#FFF8F0"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1D9E75"
+        "backgroundColor": "#D96C4A"
       },
       "package": "com.singaporehomecooks.cook"
     },
@@ -29,8 +29,8 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "display": "standalone",
-      "themeColor": "#1D9E75",
-      "backgroundColor": "#F5F0E6",
+      "themeColor": "#D96C4A",
+      "backgroundColor": "#FFF8F0",
       "name": "Singapore Home Cooks",
       "shortName": "SHC Home Cooks",
       "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."

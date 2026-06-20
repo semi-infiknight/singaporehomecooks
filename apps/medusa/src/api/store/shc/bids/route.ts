@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcBidModuleService from "../../../../modules/shc-bid/service";
 import ShcRequestModuleService from "../../../../modules/shc-request/service";
+import { getAuthContext, getCookId } from "../../../../lib/shc-actors";
 
 /**
  * GET /store/shc/bids?cook_id=... or ?request_id=...
@@ -51,9 +52,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid bid payload", parse.error.format() as any) });
   }
+  getAuthContext(req);
   const bidService: ShcBidModuleService = req.scope.resolve("shcBid") as any;
   const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
-  const actor = (req as any).auth?.actor_id || "cook-unknown";
+  const actor = getCookId(req);
   try {
     const before = { request_id: parse.data.request_id };
     const bid = await bidService.createBid({ ...parse.data, cook_id: actor } as any);

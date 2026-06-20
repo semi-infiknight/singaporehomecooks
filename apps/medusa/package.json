@@ -31,6 +31,7 @@
     "@shc/business-rules": "workspace:*",
     "@shc/types": "workspace:*",
     "dotenv": "16.4.5",
+    "expo-server-sdk": "^3.13.0",
     "ioredis": "^5.11.1",
     "pg": "^8.13.1",
     "tsx": "^4.15.7",

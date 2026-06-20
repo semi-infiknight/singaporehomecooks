@@ -17,17 +17,17 @@ export function AppFooter() {
             <div className="text-xs font-semibold uppercase tracking-wider text-[#5C5144] mb-3">For customers</div>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/#discover" className="text-[#2C2416] hover:text-[#1D9E75]">
+                <Link href="/#discover" className="text-[#2C2416] hover:text-primary">
                   Browse dishes
                 </Link>
               </li>
               <li>
-                <Link href="/content/trust" className="text-[#2C2416] hover:text-[#1D9E75]">
+                <Link href="/content/trust" className="text-[#2C2416] hover:text-primary">
                   Trust & Safety
                 </Link>
               </li>
               <li>
-                <Link href="/profile" className="text-[#2C2416] hover:text-[#1D9E75]">
+                <Link href="/profile" className="text-[#2C2416] hover:text-primary">
                   Home Credits
                 </Link>
               </li>
@@ -37,7 +37,7 @@ export function AppFooter() {
             <div className="text-xs font-semibold uppercase tracking-wider text-[#5C5144] mb-3">For cooks</div>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/cook-portal" className="text-[#2C2416] hover:text-[#1D9E75]">
+                <Link href="/cook-portal" className="text-[#2C2416] hover:text-primary">
                   Cook dashboard
                 </Link>
               </li>

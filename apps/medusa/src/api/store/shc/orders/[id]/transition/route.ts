@@ -5,6 +5,7 @@ import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import { getCookId, unauthorized } from "../../../../../../lib/shc-actors";
 import { pushNotification } from "../../../../../../lib/shc-notifications-store";
+import { notifyOrderStatusPush } from "../../../../../../lib/shc-order-push";
 
 const BodySchema = z.object({
   to: z.string(),
@@ -46,6 +47,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     pushNotification(customerId, { type: "order", body: `Order ${id} is now ${to}.` });
   }
   pushNotification(cookId, { type: "order", body: `Order ${id} moved to ${to}.` });
+
+  const logger = (req.scope as any).resolve?.("logger") || console;
+  await notifyOrderStatusPush(req.scope, id, to, logger).catch(() => null);
 
   res.json({ order: updated.meta, messages: updated.messages });
 }

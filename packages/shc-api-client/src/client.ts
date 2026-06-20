@@ -197,6 +197,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).messages;
     },
 
+    async getCookListings() {
+      const r = await request("/store/shc/listings", { method: "GET" });
+      return (r as any).listings || (r as any).products || [];
+    },
+
     async createCookListing(input: Record<string, unknown>) {
       const r = await request("/store/shc/listings", { method: "POST", body: JSON.stringify(input) });
       return (r as any).listing || (r as any).product;
@@ -269,11 +274,31 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).tips ? r : { tips: (r as any).tips };
     },
 
-    async registerPushToken(cookId: string, token: string) {
+    async registerPushToken(
+      token: string,
+      opts?: { cookId?: string; role?: "cook" | "customer" }
+    ) {
       return request("/store/shc/push-token", {
         method: "POST",
-        body: JSON.stringify({ cook_id: cookId, expo_push_token: token }),
+        body: JSON.stringify({
+          cook_id: opts?.cookId,
+          expo_push_token: token,
+          role: opts?.role,
+        }),
       });
+    },
+
+    async getReview(orderId: string) {
+      const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/review`, { method: "GET" });
+      return (r as any).review;
+    },
+
+    async submitReview(orderId: string, rating: number, body?: string) {
+      const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/review`, {
+        method: "POST",
+        body: JSON.stringify({ rating, body }),
+      });
+      return (r as any).review;
     },
   };
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { transitionOrder, getOrder, getMyOrders, getMessages, sendMessage, createSHCError } from '../lib/api-client.js';
+import { transitionOrder, getOrder, getMyOrders, getMessages, sendMessage, createSHCError } from '../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 import type { SHCErrorCode } from '@shc/types';
 
@@ -49,7 +49,7 @@ export function useRequests() {
   return useQuery({
     queryKey: ['requests'],
     queryFn: async () => {
-      const { listOpenRequests } = await import('../lib/api-client.js');
+      const { listOpenRequests } = await import('../lib/api-client');
       return listOpenRequests();
     },
   });
@@ -59,7 +59,7 @@ export function useBids(requestId?: string) {
   return useQuery({
     queryKey: ['bids', requestId],
     queryFn: async () => {
-      const { getBids } = await import('../lib/api-client.js');
+      const { getBids } = await import('../lib/api-client');
       return getBids(requestId);
     },
   });
@@ -69,7 +69,7 @@ export function useCreateBid() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ requestId, priceCents, message }: { requestId: string; priceCents: number; message?: string }) => {
-      const { createBid } = await import('../lib/api-client.js');
+      const { createBid } = await import('../lib/api-client');
       return createBid(requestId, priceCents, message);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bids'] }),
@@ -80,7 +80,7 @@ export function useAcceptBid() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (bidId: string) => {
-      const { acceptBid } = await import('../lib/api-client.js');
+      const { acceptBid } = await import('../lib/api-client');
       return acceptBid(bidId);
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const { getNotifications } = await import('../lib/api-client.js');
+      const { getNotifications } = await import('../lib/api-client');
       return getNotifications();
     },
     refetchInterval: 8000,

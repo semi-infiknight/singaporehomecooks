@@ -1,63 +1,153 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, SHCBadge, shcColors } from '@shc/ui';
-import { useProducts } from '../../hooks/useProducts';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SHCButton,
+  SHCButtonText,
+  SHCSearchBar,
+  SHCFilterChipRow,
+  SHCDishCard,
+  SHCSearchResultsPanel,
+  SHCMindSectionTitle,
+  SHCIcon,
+  type SHCDishCardData,
+  shcColors,
+  shcSpacing,
+} from '@shc/ui';
+import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@shc/utils';
+import { useProducts, useAddToCart } from '../../hooks/useProducts';
+import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
+import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 
-// search.tsx route per 10-mobile.md — enhanced filters (calorie traffic light badge, occasion, max cal). Fully wired to mock + rules.
 export default function SearchScreen() {
+  const insets = useSafeAreaInsets();
   const [q, setQ] = useState('');
   const [occ, setOcc] = useState('');
-  const [maxC, setMaxC] = useState(700);
   const [cuisine, setCuisine] = useState('');
-  const [halalOnly, setHalalOnly] = useState(false);
+  const { halalOnly, maxCal, toggleHalalOnly, setMaxCal } = useDiscoverPrefs();
+  const maxC = maxCal ?? 700;
   const router = useRouter();
-  const { data: results = [] } = useProducts(q, { occasion: occ || undefined, maxCal: maxC, cuisine: cuisine || undefined, halal: halalOnly || undefined });
+  const { data: rawResults = [] } = useProducts('');
+  const addMut = useAddToCart();
+  const { requireAuth } = useGuestAuthGate();
+
+  const results = React.useMemo(() => {
+    let list = rawResults as any[];
+    const ql = q.trim().toLowerCase();
+    if (ql) {
+      list = list.filter((p: any) => {
+        const name = String(p.name || '').toLowerCase();
+        const cook = String(p.cook_name || '').toLowerCase();
+        const cuisineName = String(p.cuisine || '').toLowerCase();
+        return name.includes(ql) || cook.includes(ql) || cuisineName.includes(ql) || String(p.id || '').toLowerCase().includes(ql);
+      });
+    }
+    if (cuisine) list = list.filter((p: any) => String(p.cuisine || '').toLowerCase().includes(cuisine.toLowerCase()));
+    if (occ) list = list.filter((p: any) => productMatchesOccasion(p.occasion_tags, occ));
+    if (halalOnly) list = list.filter((p: any) => Boolean(p.halal));
+    if (maxC != null) list = list.filter((p: any) => (p.calories as number || 999) <= maxC);
+    return list;
+  }, [rawResults, q, cuisine, occ, halalOnly, maxC]);
 
   const goProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
 
+  const toDish = (p: any): SHCDishCardData => ({
+    id: p.id,
+    name: p.name,
+    cook_name: p.cook_name,
+    price: p.price,
+    cuisine: p.cuisine,
+    rating: p.rating || 4.8,
+    image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name }),
+  });
+
+  const occasionChips = [
+    { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
+    { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
+    { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
+    { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
+    { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
+  ];
+
+  const filterChips = [
+    { id: 'halal', label: 'Halal', iconKey: 'leaf' as const, active: halalOnly, testID: 'halal-filter' },
+    { id: 'peranakan', label: 'Peranakan', iconKey: 'restaurant' as const, active: cuisine === 'Peranakan' },
+    { id: 'eurasian', label: 'Eurasian', iconKey: 'restaurant' as const, active: cuisine === 'Eurasian' },
+    { id: 'light', label: 'Light (<500 cal)', iconKey: 'leaf' as const, active: maxCal === 500 },
+    { id: 'moderate', label: '≤550 cal', iconKey: 'restaurant' as const, active: maxCal === 550 },
+  ];
+
+  const handleOccasion = (id: string) => {
+    const map: Record<string, string> = {
+      any: '',
+      raya: 'Hari Raya',
+      cny: 'Chinese New Year',
+      family: 'Family Gathering',
+      xmas: 'Christmas',
+    };
+    setOcc(map[id] ?? '');
+  };
+
+  const handleFilter = (id: string) => {
+    if (id === 'halal') toggleHalalOnly();
+    else if (id === 'peranakan') setCuisine(cuisine === 'Peranakan' ? '' : 'Peranakan');
+    else if (id === 'eurasian') setCuisine(cuisine === 'Eurasian' ? '' : 'Eurasian');
+    else if (id === 'light') setMaxCal(maxCal === 500 ? undefined : 500);
+    else if (id === 'moderate') setMaxCal(maxCal === 550 ? undefined : 550);
+  };
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: shcColors.text }}>Advanced Search</Text>
-      <Text style={{ color: shcColors.textLight }}>Calorie traffic light + occasion + full rule-backed results</Text>
-
-      <TextInput placeholder="Search..." value={q} onChangeText={setQ} style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8D5B7', borderRadius: 8, padding: 12, marginVertical: 12 }} />
-
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-        {['', 'Hari Raya', 'Chinese New Year', 'Family Gathering', 'Christmas'].map(o => (
-          <Pressable key={o} onPress={() => setOcc(o)} style={{ padding: 6, backgroundColor: occ === o ? shcColors.primary : shcColors.surface, borderRadius: 6 }}>
-            <Text style={{ color: occ === o ? '#fff' : shcColors.text, fontSize: 12 }}>{o || 'Any'}</Text>
-          </Pressable>
-        ))}
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 80 }]}
+    >
+      <View style={styles.header}>
+        <SHCIcon name="search" size={24} color={shcColors.primary} active />
+        <Text style={styles.title}>Advanced Search</Text>
       </View>
 
-      <Text>Max cal: {maxC} <Pressable onPress={() => setMaxC(Math.max(300, maxC-50))}><Text style={{ color: shcColors.primary }}>-</Text></Pressable> <Pressable onPress={() => setMaxC(maxC+50)}><Text style={{ color: shcColors.primary }}>+</Text></Pressable></Text>
+      <SHCSearchBar value={q} onChangeText={setQ} placeholder="Search dishes, cooks…" testID="search-input" />
 
-      <View style={{ flexDirection: 'row', gap: 8, marginVertical: 8, flexWrap: 'wrap' }}>
-        <Pressable onPress={() => setHalalOnly(!halalOnly)} style={{ padding: 6, backgroundColor: halalOnly ? shcColors.success : shcColors.surface, borderRadius: 6 }} testID="halal-filter"><Text style={{ fontSize: 12 }}>Halal only</Text></Pressable>
-        {['', 'Peranakan', 'Eurasian'].map(c => <Pressable key={c} onPress={() => setCuisine(c)} style={{ padding: 6, backgroundColor: cuisine === c ? shcColors.primary : shcColors.surface, borderRadius: 6 }}><Text style={{ fontSize: 12 }}>{c || 'Any cuisine'}</Text></Pressable>)}
-      </View>
+      <SHCMindSectionTitle>Occasion</SHCMindSectionTitle>
+      <SHCFilterChipRow chips={occasionChips} onChipPress={handleOccasion} testID="search-occasion-chips" />
 
-      {results.map((p: any) => {
-        const cal = p.calories || 400;
-        const t = cal < 400 ? 'trafficGreen' : cal < 550 ? 'trafficYellow' : 'trafficRed';
-        return (
-          <SHCCard key={p.id} style={{ marginTop: 8 }}>
-            <Pressable onPress={() => goProduct(p.id)}>
-              <Text style={{ fontWeight: '600' }}>{p.name} by {p.cook_name}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <SHCBadge variant="heritage">{p.cuisine}</SHCBadge>
-                <View style={{ backgroundColor: shcColors[t as keyof typeof shcColors], paddingHorizontal: 4, borderRadius: 3 }}><Text style={{ color: '#fff', fontSize: 10 }}>{cal} cal</Text></View>
-                <Text>min {p.min_qty}</Text>
-              </View>
-              <Text style={{ fontSize: 12, color: shcColors.textLight }}>{p.heritage_note}</Text>
-            </Pressable>
-            <SHCButton size="sm" style={{ marginTop: 8 }} onPress={() => goProduct(p.id)}><SHCButtonText>View &amp; Add</SHCButtonText></SHCButton>
-          </SHCCard>
-        );
-      })}
-
-      <SHCButton onPress={() => router.back()} style={{ marginTop: 24 }}><SHCButtonText>Back</SHCButtonText></SHCButton>
+      <SHCMindSectionTitle>Filters</SHCMindSectionTitle>
+      <SHCFilterChipRow chips={filterChips} onChipPress={handleFilter} testID="search-filter-chips" />
+      <Text style={styles.resultsTitle}>{results.length} results</Text>
+      {q.trim() ? (
+        <SHCSearchResultsPanel
+          query={q}
+          dishes={results.map(toDish)}
+          onDishPress={goProduct}
+          onAddPress={(id) => {
+            if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
+            addMut.mutate({ productId: id, qty: 1 });
+          }}
+          testID="search-results-panel"
+        />
+      ) : (
+        <View style={styles.grid}>
+          {results.map((p: any) => (
+            <View key={p.id} style={styles.gridItem}>
+              <SHCDishCard dish={toDish(p)} onPress={() => goProduct(p.id)} testID={`search-dish-${p.id}`} />
+            </View>
+          ))}
+        </View>
+      )}
+      <SHCButton onPress={() => router.back()} style={{ marginTop: shcSpacing.md }}>
+        <SHCButtonText>Back</SHCButtonText>
+      </SHCButton>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: shcColors.background },
+  content: { paddingHorizontal: shcSpacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
+  title: { fontSize: 24, fontWeight: '900', color: shcColors.text },
+  resultsTitle: { fontSize: 13, fontWeight: '700', color: shcColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
+  gridItem: { width: '48%' },
+});

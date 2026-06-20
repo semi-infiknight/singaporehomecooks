@@ -1,5 +1,9 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { estimateCaloriesAI, getPhotoTips } from '../lib/api-client.js';
+import { estimateCaloriesAI, getPhotoTips, getCookListings } from '../lib/api-client';
+
+export function useCookListings() {
+  return useQuery({ queryKey: ['cook-listings'], queryFn: () => getCookListings() });
+}
 
 export function usePhotoTips() {
   return useQuery({ queryKey: ['photo-tips'], queryFn: () => getPhotoTips() });

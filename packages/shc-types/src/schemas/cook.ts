@@ -18,6 +18,8 @@ export const shcCookSchema = z.object({
   expo_push_token: z.string().optional(),
   sfa_reg_number: z.string().optional(),
   wsq_cert_expiry: z.string().datetime().optional(),
+  login_email: z.string().optional(),
+  password_hash: z.string().optional(), // internal; never returned to clients
   pdpa_consent_at: z.string().datetime().optional(),
   pdpa_consent_version: z.string().optional(),
   created_at: z.string().datetime().optional(),

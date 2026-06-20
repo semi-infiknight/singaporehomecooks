@@ -1,5 +1,6 @@
 import type { MedusaRequest } from "@medusajs/framework/http";
 import { createHmac, timingSafeEqual } from "crypto";
+import { verifyCookPassword } from "./shc-password";
 
 export type ShcAuthContext = {
   actor_type: "customer" | "cook";
@@ -62,10 +63,59 @@ export function issueCookToken(email: string, cookId: string, name: string) {
   return signShcToken({ actor_type: "cook", actor_id: cookId, email, name, shc: true });
 }
 
-export function verifyCookLogin(email: string, password: string) {
+/** Dev-only plaintext fallback — disable in prod via SHC_COOK_ALLOW_DEV_PLAINTEXT=false */
+export function verifyCookLoginDevFallback(email: string, password: string) {
+  if (process.env.SHC_COOK_ALLOW_DEV_PLAINTEXT === "false") return null;
   const cred = DEV_COOK_CREDENTIALS[email.toLowerCase().trim()];
   if (!cred || cred.password !== password) return null;
   return { cook_id: cred.cook_id, email: email.toLowerCase().trim(), name: cred.name };
+}
+
+/** Resolve cook from DB by login_email after password check (auth_identity_id is source of truth). */
+export async function authenticateCookWithDb(
+  cookService: { findByLoginEmail: (email: string) => Promise<any>; listAndCountCooks?: (f: any, o?: any) => Promise<any[]> },
+  email: string,
+  password: string
+) {
+  const normalized = email.toLowerCase().trim();
+  const byEmail = await cookService.findByLoginEmail(normalized);
+
+  if (byEmail?.password_hash) {
+    if (!verifyCookPassword(password, byEmail.password_hash)) return null;
+    return {
+      cook_id: byEmail.id,
+      email: normalized,
+      name: byEmail.display_name,
+      auth_identity_id: byEmail.auth_identity_id,
+    };
+  }
+
+  const cred = verifyCookLoginDevFallback(normalized, password);
+  if (!cred) return null;
+
+  if (byEmail) {
+    return {
+      cook_id: byEmail.id,
+      email: normalized,
+      name: byEmail.display_name || cred.name,
+      auth_identity_id: byEmail.auth_identity_id,
+    };
+  }
+
+  if (cookService.listAndCountCooks) {
+    const [rows] = await cookService.listAndCountCooks({ id: cred.cook_id } as any, { take: 1 }).catch(() => [[]]);
+    const row = (rows as any[])?.[0];
+    if (row) {
+      return {
+        cook_id: row.id,
+        email: normalized,
+        name: row.display_name || cred.name,
+        auth_identity_id: row.auth_identity_id,
+      };
+    }
+  }
+
+  return cred;
 }
 
 export function getBearerToken(req: MedusaRequest): string | null {

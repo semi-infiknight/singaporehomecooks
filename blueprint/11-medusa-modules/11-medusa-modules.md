@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-14 by Backend-Money-Agent (Phase 6) — added shc-ledger + shc-payout-batch modules/services/migrations, expanded payment-confirm + subscriber + workflow for ledger posts on completed/confirm, new admin payouts/ledger routes + store orders earnings, weekly sim script, seed extension, hardening (Zod/SHC/audit/double-entry), docs + bootstrap. See phase-6.md. Pre-existing baseline type issues unchanged.
+**Last Updated:** 2026-06-20 (Blueprint Sync) — full modules list now includes shc-cart (Postgres) + shc-review. shc-cook has password_hash support + login_email. shc-types synced. All 12 custom modules registered. See modules/index.ts + 05-data-model + CURRENT_STATE.
 **Owner:** Backend Track
 
 ## Overview
@@ -17,11 +17,13 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 
 ## Custom Modules (src/modules/shc-*)
 
-**Wave 1 Implemented (Phase 0/1 completion):**
-- shc-cook (models/cook, service with status/push/verify, migration)
-- shc-product-meta (linked to product, cuisine/allergen_tiers/calories/min_qty JSON, migration)
-- shc-order-meta ( + shc_order_message for chat, state, paynow, collection, allergen/address timestamps, migration)
-- shc-availability (portions, slots, paused, linked to product, migration)
+**Wave 1 + Later Implemented (current):**
+- shc-cook (models/cook + login_email/password_hash (scrypt), service with status/push/findByLoginEmail, migrations incl. 2025-06-20 hash)
+- shc-product-meta, shc-order-meta (+ messages), shc-availability
+- shc-ledger + shc-payout-batch (money)
+- shc-request, shc-bid, shc-credit-wallet, shc-heritage (growth)
+- **shc-review** (full review lifecycle)
+- **shc-cart** (Postgres one-cook cart)
 
 **Phase 6 Backend-Money (2026-06-14):** 
 - shc-ledger: models/ledger-entry, migration, service (postCommission using 15% business-rules calc + double-entry legs e.g. Cook-Earnings-Payable/Order-Sales + Platform-Commission; postPayout clearing leg; list + summary + verifyInvariant; audit logs).
@@ -44,10 +46,11 @@ Links: src/links/shc-*-*.ts using defineLink to Medusa product/order.
 | shc-product-meta        | Extended product attributes (cuisine, calories, allergens) | shc_product_meta | One-cook enforcement, calorie estimation hook |
 | shc-availability        | Time-slot and portion management             | shc_availability                 | Real-time stock for collection days |
 | shc-order-meta          | Order state, collection details, PayNow ref  | shc_order_meta, shc_order_message| State machine driver |
-| shc-review              | Post-collection ratings and feedback         | shc_review                       | One-per-order, public display rules |
-| shc-dispute             | Dispute lifecycle and resolution             | shc_dispute                      | Ops workflow integration |
+| shc-review              | Post-collection ratings and feedback         | shc_review                       | One-per-order (customer only post-collected), GET/POST via api-client |
+| shc-dispute             | Dispute lifecycle and resolution             | shc_dispute                      | Ops workflow integration (not fully module-ized yet) |
 | shc-ledger              | Double-entry accounting for commissions/payouts | shc_ledger_entry (order_id/batch_id), shc_payout_batch | postCommission/postPayout, invariant, 15% via business-rules; immutable |
 | shc-payout-batch        | Weekly batches (Mon cron-sim), approve flow  | shc_payout_batch (status, transfer_ref) | Idempotent weekly sim script, sim transfer_ref on approve |
+| **shc-cart**            | Customer cart (one-cook enforced)            | shc_cart (JSON items + cook_id)  | Postgres module; used by /store/shc/cart; legacy store deprecated |
 | shc-feature-flag        | Growth experiment toggles                    | shc_feature_flag                 | Cohort-based rollout |
 
 ## Workflows (src/workflows)

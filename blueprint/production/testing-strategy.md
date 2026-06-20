@@ -7,7 +7,7 @@
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-06-14 by Launch/Final-Polish+Stitch Subagent (Infra/Launch) — full CI + Maestro in workflows, EAS notes, push wiring.
+**Last Updated:** 2026-06-20 (Blueprint Sync) — CI (build-test + medusa-real-e2e + optional maestro), scripts/run-maestro-full-tour, verify:real-e2e cover review/credits/push. Matches current.
 **Owners:** Infra Track (backend & CI), Mobile Track (E2E & Maestro)
 
 ## Testing Pyramid

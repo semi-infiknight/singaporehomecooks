@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/compliance-pdpa.md](../production/compliance-pdpa.md)
 
-**Last Updated:** 2026-06-13 (Backend Track owns)
+**Last Updated:** 2026-06-20 (Blueprint Sync) — Cook login now uses real password_hash (scrypt) + login_email on shc_cook. Hybrid with dev fallback. Customer via Medusa. shc-auth.ts + shc-password.ts + seed updated. See CURRENT_STATE auth row + 06.
 **Owner:** Backend Track
 
 ## Overview
@@ -20,7 +20,7 @@ Authentication and authorization are built on Medusa's native `auth_identity` sy
 | Actor Type   | Primary Identifier     | Key Capabilities                                      | Restrictions                                      | Auth Method          |
 |--------------|------------------------|-------------------------------------------------------|---------------------------------------------------|----------------------|
 | Customer     | `auth_identity_id`     | Browse listings, place orders, manage profile, chat   | Cannot access cook-only routes or admin           | Email + OTP / Magic link |
-| Cook         | `shc_cook.auth_identity_id` | Manage listings, accept orders, upload compliance, view earnings | Cannot access other cooks' data or customer admin | Email + OTP + SFA/WSQ verification |
+| Cook         | `shc_cook` (login_email + password_hash) + SHC JWT | Manage listings, accept orders, upload compliance, view earnings | Cannot access other cooks' data or customer admin | SHC JWT (scrypt hash on shc_cook; dev plaintext fallback env-gated) + compliance |
 | Ops / Admin  | Medusa `user` + custom role | Full access to Admin, dispute resolution, payouts     | Subject to audit logging                          | Medusa Admin + 2FA   |
 
 ## Authentication Flows
@@ -38,11 +38,16 @@ Authentication and authorization are built on Medusa's native `auth_identity` sy
 - Token refresh handled via dedicated `/auth/refresh` endpoint.
 - All `/store/shc/*` and `/admin/shc/*` routes validate the actor type before processing.
 
-### Cook Verification Layer
+### Cook Verification Layer + Current Login
 Cooks must complete:
-- SFA (Singapore Food Agency) food handler cert
-- WSQ (Workforce Skills Qualifications) food hygiene cert
-- These are stored in `shc_compliance_doc` and checked on every sensitive action (order acceptance, payout request).
+- SFA + WSQ certs (shc_compliance_doc)
+
+**Current login impl (2026-06-20):** 
+- POST /store/shc/auth/cook/login → verifies via `findByLoginEmail` + verifyCookPassword (scrypt) against password_hash (or dev fallback if not disabled).
+- Token issued with issueCookToken (HS256 JWT).
+- Seed populates login_email + password_hash for demo cooks.
+- Controlled by `SHC_COOK_ALLOW_DEV_PLAINTEXT` (default allows for local; set false in prod).
+See shc-auth.ts, shc-password.ts, cook model, auth/cook/login/route.ts, seed.ts.
 
 ## Authorization Rules (Enforced in Middleware)
 

@@ -1,11 +1,12 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
+import { completeDemoCartCheckout } from "../../../../lib/shc-demo-checkout";
+import { unauthorized } from "../../../../lib/shc-actors";
 
 /**
  * POST /store/shc/checkout-credits
- * Compat for api-client checkoutWithCredits real toggle (growth items: credits + corporate).
- * Returns same shape as mock. Delegates to demo-complete logic or enhanced in future.
+ * Growth checkout with Home Credits redemption — same persistence as demo-complete.
  */
 const BodySchema = z.object({
   allergenAck: z.boolean(),
@@ -21,17 +22,22 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   const { allergenAck, collection, creditsToApply, isCorporate } = parse.data;
 
-  // Mirror demo complete
-  const orderId = `SHC-CR-${Date.now().toString().slice(-6)}`;
-  const order = {
-    id: orderId,
-    shc_status: 'paid',
-    collection_date: collection.date,
-    collection_slot: collection.slot,
-    credits_applied: creditsToApply,
-    is_corporate: isCorporate,
-  };
-  const logger = (req.scope as any).resolve?.("logger") || console;
-  logger.info?.(`[SHC-STORE] /checkout-credits real toggle path credits=${creditsToApply}`);
-  res.json({ order, shc_meta: order, earningsPreview: 85 /* percent calc stub */ });
+  try {
+    const result = await completeDemoCartCheckout(req, {
+      collection_date: collection.date,
+      collection_slot: collection.slot,
+      allergen_acked: allergenAck,
+      pdpa_consent: true,
+      creditsToApply,
+      isCorporate,
+    });
+    const logger = (req.scope as any).resolve?.("logger") || console;
+    logger.info?.(`[SHC-STORE] /checkout-credits order=${result.order.id} credits=${result.credits_applied}`);
+    res.json(result);
+  } catch (e: any) {
+    if (e?.message?.includes("login required") || e?.message?.includes("Customer login")) {
+      return unauthorized(res, "Customer login required");
+    }
+    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", e?.message || "Checkout with credits failed") });
+  }
 }

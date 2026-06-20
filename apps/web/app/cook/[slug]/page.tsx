@@ -73,7 +73,7 @@ export default function CookProfile() {
               <div className="font-medium text-[#2C2416]">{h.title}</div>
               <p className="text-sm text-[#5C5144] mt-2 leading-relaxed">{h.story}</p>
               {h.created_at && (
-                <p className="text-xs text-[#1D9E75] mt-3">Published {h.created_at.slice(0, 10)}</p>
+                <p className="text-xs text-primary mt-3">Published {h.created_at.slice(0, 10)}</p>
               )}
             </SHCCard>
           ))

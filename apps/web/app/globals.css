@@ -20,88 +20,102 @@
 
 @layer base {
   :root {
-    /* Light mode — Peach Comfort */
-    --background: oklch(0.97 0.02 45);
-    --foreground: oklch(0.22 0.02 30);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.22 0.02 30);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.22 0.02 30);
-    --primary: oklch(0.62 0.19 30);
-    --primary-foreground: oklch(0.98 0 0);
-    --secondary: oklch(0.94 0.015 45);
-    --secondary-foreground: oklch(0.22 0.02 30);
-    --muted: oklch(0.94 0.015 45);
-    --muted-foreground: oklch(0.45 0.03 30);
-    --accent: oklch(0.92 0.03 35);
-    --accent-foreground: oklch(0.22 0.02 30);
-    --destructive: oklch(0.55 0.22 25);
-    --destructive-foreground: oklch(0.98 0 0);
-    --border: oklch(0.88 0.02 45);
-    --input: oklch(0.95 0.015 45);
-    --ring: oklch(0.62 0.19 30);
-    --radius: 0.625rem;
+    /* Gourmeat customer skin (Orbix Studio) — cook app keeps neo-brutalist in @shc/ui */
+    --background: #FAFAFA;
+    --foreground: #1C1C1C;
+    --card: #FFFFFF;
+    --card-foreground: #1C1C1C;
+    --popover: #FFFFFF;
+    --popover-foreground: #1C1C1C;
+    --primary: #F87048;
+    --primary-foreground: #FFFFFF;
+    --secondary: #FFF0EB;
+    --secondary-foreground: #1C1C1C;
+    --muted: #F5F5F5;
+    --muted-foreground: #8A8A8A;
+    --accent: #FFB800;
+    --accent-foreground: #1C1C1C;
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+    --border: #E8E8E8;
+    --input: #FFFFFF;
+    --ring: #F87048;
+    --radius: 0.75rem;
 
-    /* SHC semantic aliases (Peach Comfort) */
-    --shc-primary: oklch(0.62 0.19 30);
-    --shc-primary-dark: oklch(0.52 0.17 30);
-    --shc-accent: oklch(0.80 0.14 30);
-    --shc-accent-dark: oklch(0.65 0.15 30);
-    --shc-bg: oklch(0.97 0.02 45);
-    --shc-surface: oklch(0.94 0.015 45);
-    --shc-surface-alt: oklch(0.98 0.012 45);
-    --shc-border: oklch(0.88 0.02 45);
-    --shc-text: oklch(0.22 0.02 30);
-    --shc-text-light: oklch(0.45 0.03 30);
-    --shc-success: oklch(0.52 0.12 155);
-    --shc-warning: oklch(0.62 0.15 55);
-    --shc-error: oklch(0.55 0.22 25);
-    --shc-heritage: oklch(0.48 0.10 50);
+    /* Brutalist shadows + bento surfaces */
+    --shc-shadow-brutal: 4px 4px 0 #241812;
+    --shc-shadow-brutal-sm: 2px 2px 0 #241812;
+    --shc-bento-mint: #E8F5E9;
+    --shc-bento-peach: #FFE8DC;
+    --shc-bento-yellow: #FFF3C4;
+    --shc-section-gap: 1.25rem;
+    --shc-border-brutal: #241812;
+
+    /* Gourmeat + SHC semantic aliases */
+    --shc-primary: #F87048;
+    --shc-primary-dark: #E05A32;
+    --shc-accent: #FFB800;
+    --shc-accent-dark: #E5A600;
+    --shc-bg: #FAFAFA;
+    --shc-surface: #FFFFFF;
+    --shc-surface-alt: #F5F5F5;
+    --shc-border: #E8E8E8;
+    --shc-text: #1C1C1C;
+    --shc-text-light: #8A8A8A;
+    --shc-gourmeat-nav: #1C1C1C;
+    --shc-gourmeat-pay: #1C1C1C;
+    --shc-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shc-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shc-success: #15803D;
+    --shc-warning: #CA8A04;
+    --shc-error: #B91C1C;
+    --shc-cal-light: var(--shc-success);
+    --shc-cal-moderate: var(--shc-warning);
+    --shc-cal-hearty: var(--shc-error);
+    --shc-heritage: #8B5E3C;
     --shc-radius: 0.625rem;
-    --shc-shadow: 0 1px 3px oklch(0.22 0.02 30 / 0.06), 0 4px 12px oklch(0.22 0.02 30 / 0.04);
-    --shc-shadow-lg: 0 8px 24px oklch(0.22 0.02 30 / 0.08);
-    --gradient-bg: linear-gradient(135deg, oklch(0.97 0.02 45) 0%, oklch(0.94 0.025 60) 100%);
-    --gradient-accent: linear-gradient(to right, oklch(0.62 0.19 30) 0%, oklch(0.68 0.17 40) 100%);
+    --shc-shadow: var(--shc-shadow-brutal-sm);
+    --shc-shadow-lg: var(--shc-shadow-brutal);
+    --gradient-bg: linear-gradient(135deg, #FFF8F0 0%, #FFE8DC 100%);
+    --gradient-accent: linear-gradient(to right, #D96C4A 0%, #E88A6A 100%);
     --font-sans: var(--font-dm-sans);
     --font-display: var(--font-dm-sans);
     --font-mono: var(--font-dm-mono);
   }
 
   .dark {
-    /* Dark mode — Peach Comfort */
-    --background: oklch(0.14 0.02 30);
-    --foreground: oklch(0.97 0.01 45);
-    --card: oklch(0.19 0.03 30);
-    --card-foreground: oklch(0.97 0.01 45);
-    --popover: oklch(0.21 0.03 30);
-    --popover-foreground: oklch(0.97 0.01 45);
-    --primary: oklch(0.70 0.19 30);
-    --primary-foreground: oklch(0.12 0 0);
-    --secondary: oklch(0.23 0.03 30);
-    --secondary-foreground: oklch(0.97 0.01 45);
-    --muted: oklch(0.21 0.025 30);
-    --muted-foreground: oklch(0.65 0.02 45);
-    --accent: oklch(0.25 0.04 35);
-    --accent-foreground: oklch(0.97 0.01 45);
-    --destructive: oklch(0.65 0.22 25);
-    --destructive-foreground: oklch(0.98 0 0);
-    --border: oklch(0.27 0.03 30);
-    --input: oklch(0.19 0.03 30);
-    --ring: oklch(0.70 0.19 30);
-    --radius: 0.625rem;
+    --background: #1A1210;
+    --foreground: #FFF8F0;
+    --card: #241812;
+    --card-foreground: #FFF8F0;
+    --popover: #2C2018;
+    --popover-foreground: #FFF8F0;
+    --primary: #E88A6A;
+    --primary-foreground: #1A1210;
+    --secondary: #3D2E24;
+    --secondary-foreground: #FFF8F0;
+    --muted: #3D3528;
+    --muted-foreground: #C4B5A5;
+    --accent: #FFB800;
+    --accent-foreground: #1A1210;
+    --destructive: #EF5350;
+    --destructive-foreground: #FFFFFF;
+    --border: #5C4A3E;
+    --input: #241812;
+    --ring: #E88A6A;
 
-    --shc-primary: oklch(0.70 0.19 30);
-    --shc-primary-dark: oklch(0.60 0.17 30);
-    --shc-accent: oklch(0.75 0.14 30);
-    --shc-accent-dark: oklch(0.62 0.15 30);
-    --shc-bg: oklch(0.14 0.02 30);
-    --shc-surface: oklch(0.21 0.025 30);
-    --shc-surface-alt: oklch(0.19 0.03 30);
-    --shc-border: oklch(0.27 0.03 30);
-    --shc-text: oklch(0.97 0.01 45);
-    --shc-text-light: oklch(0.65 0.02 45);
-    --gradient-bg: linear-gradient(135deg, oklch(0.14 0.02 30) 0%, oklch(0.17 0.025 45) 100%);
-    --gradient-accent: linear-gradient(to right, oklch(0.70 0.19 30) 0%, oklch(0.65 0.17 40) 100%);
+    --shc-primary: #E88A6A;
+    --shc-primary-dark: #D96C4A;
+    --shc-accent: #FFB800;
+    --shc-accent-dark: #E5A600;
+    --shc-bg: #1A1210;
+    --shc-surface: #3D2E24;
+    --shc-surface-alt: #241812;
+    --shc-border: #5C4A3E;
+    --shc-text: #FFF8F0;
+    --shc-text-light: #C4B5A5;
+    --gradient-bg: linear-gradient(135deg, #1A1210 0%, #2C2018 100%);
+    --gradient-accent: linear-gradient(to right, #E88A6A 0%, #D96C4A 100%);
   }
 }
 
@@ -119,8 +133,8 @@ a {
 
 .shc-display {
   font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 .bg-brand-bg {
@@ -131,49 +145,92 @@ a {
   background: var(--gradient-accent);
 }
 
+/* Brutalist input */
 .shc-input {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 2px solid var(--shc-border-brutal);
   border-radius: calc(var(--radius) + 2px);
   padding: 0.75rem 1rem;
   background: var(--card);
   color: var(--foreground);
-  font-size: 0.9375rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--shc-shadow-brutal-sm);
+  transition: box-shadow 0.1s, transform 0.1s;
 }
 
 .shc-input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px oklch(0.62 0.19 30 / 0.15);
+  border-color: var(--shc-border-brutal);
+  box-shadow: var(--shc-shadow-brutal);
 }
 
+/* Brutalist chips — Swiggy-style pills */
 .shc-chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.875rem;
+  padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-size: 0.8125rem;
-  font-weight: 500;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  font-weight: 600;
+  border: 2px solid var(--shc-border-brutal);
+  white-space: nowrap;
+  transition: background 0.1s, transform 0.1s, box-shadow 0.1s;
 }
 
 .shc-chip:active {
-  transform: scale(0.98);
+  transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 .shc-chip-active {
   background: var(--primary);
   color: var(--primary-foreground);
+  box-shadow: var(--shc-shadow-brutal-sm);
 }
 
 .shc-chip-inactive {
-  background: var(--secondary);
+  background: var(--card);
   color: var(--foreground);
+  box-shadow: var(--shc-shadow-brutal-sm);
 }
 
 .shc-chip-inactive:hover {
-  background: var(--accent);
+  background: var(--shc-bento-peach);
+}
+
+/* Bento surface utilities */
+.shc-bento-mint {
+  background: var(--shc-bento-mint);
+}
+
+.shc-bento-peach {
+  background: var(--shc-bento-peach);
+}
+
+.shc-bento-yellow {
+  background: var(--shc-bento-yellow);
+}
+
+/* Brutalist card base */
+.shc-brutal-card {
+  background: var(--card);
+  border: 2px solid var(--shc-border-brutal);
+  border-radius: 0.75rem;
+  box-shadow: var(--shc-shadow-brutal-sm);
+}
+
+.shc-brutal-card:hover {
+  box-shadow: var(--shc-shadow-brutal);
+}
+
+/* Bottom sticky bar safe area */
+.shc-bottom-bar-pad {
+  padding-bottom: 5.5rem;
+}
+
+.shc-section-gap {
+  margin-top: var(--shc-section-gap);
 }
 
 .shc-skeleton {
@@ -187,3 +244,17 @@ a {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+@keyframes shc-promo-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shc-promo-enter {
+  animation: shc-promo-enter 0.3s ease both;
+}
+
+/* Calorie traffic light dots */
+.shc-cal-light { background: var(--shc-cal-light); }
+.shc-cal-moderate { background: var(--shc-cal-moderate); }
+.shc-cal-hearty { background: var(--shc-cal-hearty); }

@@ -16,6 +16,20 @@ const CreateSchema = z.object({
   occasion_tags: z.array(z.string()).optional(),
 }).strict();
 
+/** GET /store/shc/listings — cook's published product metas */
+export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  let cookId: string;
+  try {
+    cookId = getCookId(req);
+  } catch {
+    return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
+  }
+  const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
+  const [metas] = await metaService.listAndCountProductMetas({ cook_id: cookId } as any, { take: 100 }).catch(() => [[]]);
+  const listings = await Promise.all((metas as any[]).map((m) => shapeProduct(m, req.scope)));
+  res.json({ listings });
+}
+
 /** POST /store/shc/listings — cook creates product meta + availability */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const parse = CreateSchema.safeParse(req.body || {});

@@ -24,13 +24,11 @@ class ShcCookModuleService extends MedusaService({ Cook }) {
   }
 
   async registerPushToken(cookId: string, token: string): Promise<SHCCook> {
-    // Persist expo_push_token on cook entity (for subscriber to target real Expo pushes on order events)
+    await this.updateCooks({
+      selector: { id: cookId },
+      data: { expo_push_token: token, updated_at: new Date() } as any,
+    });
     const cooks = await this.listCooks({ filters: { id: cookId } } as any);
-    if (cooks && cooks[0]) {
-      (cooks[0] as any).expo_push_token = token;
-      (cooks[0] as any).updated_at = new Date().toISOString();
-      // Full: use update methods on MedusaService base; list+mutate is MVP compat
-    }
     return (cooks[0] || { id: cookId, expo_push_token: token }) as unknown as SHCCook;
   }
 
@@ -44,6 +42,12 @@ class ShcCookModuleService extends MedusaService({ Cook }) {
     const where: any = {};
     if (filters?.status) where.status = filters.status;
     return this.listAndCountCooks({ where });
+  }
+
+  async findByLoginEmail(email: string) {
+    const normalized = email.toLowerCase().trim();
+    const [rows] = await this.listAndCountCooks({ login_email: normalized } as any, { take: 1 }).catch(() => [[]]);
+    return (rows as any[])?.[0] || null;
   }
 }
 

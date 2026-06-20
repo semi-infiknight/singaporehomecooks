@@ -1,6 +1,20 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { searchProducts, getCookBySlug, getProduct, getSlots, addToCart, getCart, clearCart, createSHCError, getCredits, redeemCredits, estimateCaloriesAI, getPhotoTips } from './api-client';
+import {
+  searchProducts,
+  getCookBySlug,
+  getProduct,
+  getSlots,
+  addToCart,
+  getCart,
+  clearCart,
+  createSHCError,
+  getCredits,
+  redeemCredits,
+  estimateCaloriesAI,
+  getPhotoTips,
+  isAuthenticated,
+} from './api-client';
 import type { SHCErrorCode } from '@shc/types';
 
 export function useProducts(query='', filters?: {occasion?:string; halal?:boolean; maxCal?:number; cuisine?:string}) {
@@ -16,7 +30,17 @@ export function useAddToCart() {
     onSuccess:()=>qc.invalidateQueries({queryKey:['cart']}),
     onError:(e:any)=>{ if(e?.code) throw createSHCError(e.code as SHCErrorCode, e.message); } });
 }
-export function useCart() { return useQuery({queryKey:['cart'], queryFn:getCart, staleTime:5000}); }
+const EMPTY_CART = { items: [] as { qty: number; price: number }[], cookId: null as string | null };
+
+export function useCart() {
+  return useQuery({
+    queryKey: ['cart'],
+    queryFn: getCart,
+    staleTime: 5000,
+    enabled: isAuthenticated(),
+    placeholderData: EMPTY_CART,
+  });
+}
 export function useClearCart() {
   const qc=useQueryClient();
   return useMutation({mutationFn:clearCart, onSuccess:()=>qc.invalidateQueries({queryKey:['cart']})});
@@ -24,7 +48,13 @@ export function useClearCart() {
 
 // Growth parity
 export function useCredits() {
-  return useQuery<{ balance?: number; tier?: string }>({ queryKey: ['credits'], queryFn: () => getCredits() as Promise<{ balance?: number; tier?: string }>, staleTime: 10000 });
+  return useQuery<{ balance?: number; tier?: string }>({
+    queryKey: ['credits'],
+    queryFn: () => getCredits() as Promise<{ balance?: number; tier?: string }>,
+    staleTime: 10000,
+    enabled: isAuthenticated(),
+    placeholderData: { balance: 0, tier: 'Bronze' },
+  });
 }
 export function useRedeemCredits() {
   const qc=useQueryClient();

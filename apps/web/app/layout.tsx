@@ -6,11 +6,12 @@ import { QueryClientProvider } from "./providers";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppHeader } from "./components/AppHeader";
 import { AppFooter } from "./components/AppFooter";
+import { AppMobileTabBar } from "./components/AppMobileTabBar";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 const dmMono = DM_Mono({
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#D96C4A",
+  themeColor: "#F87048",
   width: "device-width",
   initialScale: 1,
 };
@@ -56,8 +57,11 @@ export default function RootLayout({
         <QueryClientProvider>
           <ErrorBoundary>
             <AppHeader />
-            <main className="flex-1 w-full">{children}</main>
-            <AppFooter />
+            <main className="flex-1 w-full pb-[110px] md:pb-0">{children}</main>
+            <div className="hidden md:block">
+              <AppFooter />
+            </div>
+            <AppMobileTabBar />
           </ErrorBoundary>
         </QueryClientProvider>
       </body>

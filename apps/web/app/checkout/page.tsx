@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
 import { useCheckout } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
@@ -15,8 +17,9 @@ import {
   WalletCard,
   SHCSectionTitle,
   SHCPageHeader,
+  BottomStickyBar,
+  CheckoutStepper,
 } from '../components/SHCWebComponents';
-
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -33,8 +36,8 @@ export default function CheckoutPage() {
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
 
-  const firstPid = (cart.items || [])[0]?.productId;
-  const { data: slots = [] } = useCollectionSlots(firstPid || '');
+  const firstPid = getFirstCartProductId(cart.items || []);
+  const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
   const total = (cart.items || []).reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
   const creditBal = creditsData?.balance || 0;
   const amountDue = Math.max(0, total - Math.floor(creditsApply / 4));
@@ -63,7 +66,6 @@ export default function CheckoutPage() {
       });
       const oid = res?.order?.id || res?.id || 'SHC-' + Date.now();
       setOrderId(oid);
-      // Corporate flag passed via checkoutWithCredits when enabled
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       setError({ code: err?.code, message: err?.message || 'Unable to place order. Please try again.' });
@@ -72,11 +74,14 @@ export default function CheckoutPage() {
 
   if (orderId) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-10">
-        <SHCPageHeader
-          title="Order placed"
-          subtitle={`Reference ${orderId} — complete your PayNow transfer to confirm.`}
-        />
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
+          <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
+          <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
+            <h1 className="text-xl font-black text-white">Order placed</h1>
+            <p className="text-xs font-semibold text-white/90">Ref {orderId} — complete PayNow to confirm</p>
+          </div>
+        </div>
         <PayNowPanel amount={amountDue} reference={paynowRef || orderId} onRefChange={setPaynowRef} />
         <SHCButton className="mt-6 w-full" size="lg" onClick={() => router.push(`/orders/${orderId}`)}>
           Track your order
@@ -88,25 +93,49 @@ export default function CheckoutPage() {
   const items = cart.items || [];
   if (items.length === 0) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-10">
+      <div className="max-w-xl mx-auto px-4 py-8">
         <SHCPageHeader title="Checkout" subtitle="Your cart is empty." backHref="/cart" backLabel="Back to cart" />
       </div>
     );
   }
 
-  return (
-    <div className="max-w-xl mx-auto px-4 py-10">
-      <SHCPageHeader
-        title="Checkout"
-        subtitle="Review your order, pick a collection slot, and pay with PayNow."
-        backHref="/cart"
-        backLabel="Back to cart"
-      />
+  const canPlace = selected && allergenAck && pdpaConsent && !checkoutMut.isPending;
+  const checkoutSteps = [
+    { id: 'slot', label: 'Collection', done: !!selected },
+    { id: 'safety', label: 'Safety', done: allergenAck && pdpaConsent },
+    { id: 'pay', label: 'PayNow', done: false },
+  ];
+  const checkoutStep = !selected ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
 
-      <SHCCard className="mb-6">
-        <div className="flex justify-between">
-          <span className="text-[#5C5144]">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-          <span className="text-xl font-semibold tabular-nums">S${total.toFixed(2)}</span>
+  return (
+    <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad">
+      <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
+        <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
+        <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
+          <h1 className="text-xl font-black text-white">Checkout</h1>
+          <p className="text-xs font-semibold text-white/90">
+            {items.length} item{items.length !== 1 ? 's' : ''} · PayNow collection
+          </p>
+        </div>
+      </div>
+      <a
+        href="/cart"
+        className="text-sm font-semibold text-muted-foreground hover:text-primary mb-4 inline-block"
+      >
+        ← Back to cart
+      </a>
+      <p className="text-muted-foreground mb-4 text-sm">
+        3 quick steps — collection, safety, then PayNow.
+      </p>
+
+      <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
+
+      <SHCCard className="mb-6 shc-bento-peach">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground font-semibold">
+            {items.length} item{items.length !== 1 ? 's' : ''}
+          </span>
+          <span className="text-2xl font-black tabular-nums font-mono">S${total.toFixed(2)}</span>
         </div>
       </SHCCard>
 
@@ -115,15 +144,15 @@ export default function CheckoutPage() {
 
       <SHCSectionTitle subtitle="Required before we can process your order">Safety & consent</SHCSectionTitle>
       <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-checkout-web" />
-      <label className="mt-3 flex gap-3 text-sm p-4 bg-white border border-[#E8D5B7] rounded-lg cursor-pointer">
+      <label className="mt-3 flex gap-3 text-sm p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg cursor-pointer shadow-[var(--shc-shadow-brutal-sm)]">
         <input
           type="checkbox"
           checked={pdpaConsent}
           onChange={(e) => setPdpaConsent(e.target.checked)}
           data-testid="pdpa-consent-web"
-          className="mt-0.5 w-4 h-4 accent-[#1D9E75] rounded"
+          className="mt-0.5 w-4 h-4 accent-primary rounded"
         />
-        <span>
+        <span className="font-medium">
           I consent to Singapore Home Cooks processing my order and contact details in accordance with our privacy
           policy.
         </span>
@@ -132,8 +161,8 @@ export default function CheckoutPage() {
       <SHCSectionTitle subtitle="Earn 5% back on every collected order">Home Credits</SHCSectionTitle>
       <WalletCard balance={creditBal} tier={creditsData?.tier} />
       <div className="mt-3 flex flex-wrap gap-3 items-center text-sm">
-        <label className="flex items-center gap-2">
-          <span className="text-[#5C5144]">Apply</span>
+        <label className="flex items-center gap-2 font-semibold">
+          <span className="text-muted-foreground">Apply</span>
           <input
             type="number"
             min={0}
@@ -142,13 +171,13 @@ export default function CheckoutPage() {
             onChange={(e) => setCreditsApply(Math.min(creditBal, parseInt(e.target.value) || 0))}
             className="shc-input w-20 py-1.5"
           />
-          <span className="text-[#5C5144]">credits (~S${(creditsApply / 4).toFixed(0)} off)</span>
+          <span className="text-muted-foreground">credits (~S${(creditsApply / 4).toFixed(0)} off)</span>
         </label>
         <button
           type="button"
           onClick={() => setIsCorp(!isCorp)}
-          className={`text-xs px-3 py-1.5 border rounded-lg transition-colors ${
-            isCorp ? 'bg-[#B85C38] text-white border-[#B85C38]' : 'border-[#E8D5B7] hover:bg-[#F5F0E6]'
+          className={`text-xs px-3 py-1.5 border-2 border-[var(--shc-border-brutal)] rounded-lg font-bold transition-colors shadow-[var(--shc-shadow-brutal-sm)] ${
+            isCorp ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'
           }`}
         >
           Corporate invoice
@@ -160,15 +189,35 @@ export default function CheckoutPage() {
       <SHCSectionTitle>Payment</SHCSectionTitle>
       <PayNowPanel amount={amountDue} reference={'WEB-' + Date.now().toString().slice(-6)} onRefChange={setPaynowRef} />
 
+      {/* Desktop CTA */}
       <SHCButton
-        className="mt-6 w-full"
+        className="mt-6 w-full hidden sm:flex"
         size="lg"
         onClick={doCheckout}
-        disabled={!selected || checkoutMut.isPending}
+        disabled={!canPlace}
         testID="complete-checkout-web"
       >
-        {checkoutMut.isPending ? 'Placing order…' : 'Place order'}
+        {checkoutMut.isPending ? 'Placing order…' : `Place order · S$${amountDue.toFixed(2)}`}
       </SHCButton>
+
+      {/* Mobile bottom sticky CTA */}
+      <BottomStickyBar className="sm:hidden">
+        <div className="flex gap-3 items-center">
+          <div className="shrink-0">
+            <div className="text-xs font-bold text-muted-foreground">Due</div>
+            <div className="text-lg font-black font-mono tabular-nums">S${amountDue.toFixed(2)}</div>
+          </div>
+          <SHCButton
+            className="flex-1"
+            size="lg"
+            onClick={doCheckout}
+            disabled={!canPlace}
+            testID="complete-checkout-web"
+          >
+            {checkoutMut.isPending ? 'Placing…' : 'Place order'}
+          </SHCButton>
+        </div>
+      </BottomStickyBar>
     </div>
   );
 }

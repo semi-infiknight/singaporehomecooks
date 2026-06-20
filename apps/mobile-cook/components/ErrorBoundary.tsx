@@ -4,6 +4,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { shcColors, SHCButton, SHCButtonText } from '@shc/ui';
 import { SHCErrorCode } from '@shc/types';
 
@@ -66,8 +67,8 @@ export default class ErrorBoundary extends Component<Props, State> {
           <SHCButton onPress={this.handleRetry}>
             <SHCButtonText>Retry</SHCButtonText>
           </SHCButton>
-          <Pressable onPress={() => { /* could navigate home */ }} style={{ marginTop: 12 }}>
-            <Text style={{ color: shcColors.primary, textAlign: 'center' }}>Go to Discover</Text>
+          <Pressable onPress={() => router.replace('/(cook)/dashboard')} style={{ marginTop: 12 }}>
+            <Text style={{ color: shcColors.primary, textAlign: 'center' }}>Go to dashboard</Text>
           </Pressable>
         </View>
       );

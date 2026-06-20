@@ -7,7 +7,7 @@
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 - [OPERATIONS_RUNBOOK.md](../OPERATIONS_RUNBOOK.md)
 
-**Last Updated:** 2026-06-14 by Contracts-Agent (full enum expanded to 23 codes matching SHCErrorCode in @shc/types; descriptions synced; added codes for all marketplace rules, order states, ledger/payout, portions, cook gates, requests per 08/09/05)
+**Last Updated:** 2026-06-20 (Blueprint Sync) — codes current with implemented routes (cart errors, review, credits, etc.). Aligns with @shc/types + usage in medusa routes.
 **Owner:** Contracts Track
 
 ## Error Code Catalog

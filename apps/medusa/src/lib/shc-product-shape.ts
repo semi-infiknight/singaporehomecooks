@@ -20,6 +20,7 @@ export async function shapeProduct(
     name: title,
     price: meta.min_qty ? meta.min_qty * 12 : 12,
     cook_id: meta.cook_id,
+    cook_slug: cook?.slug || null,
     cook_name: cook?.display_name || "Home Cook",
     cuisine: meta.cuisine,
     occasion_tags: meta.occasion_tags || [],

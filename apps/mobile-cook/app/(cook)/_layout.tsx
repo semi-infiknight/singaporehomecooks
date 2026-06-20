@@ -1,14 +1,35 @@
-import { Stack } from 'expo-router';
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { gourmeatColors } from '@shc/ui';
+import { CookTabBar } from '../../components/CookTabBar';
 
 export default function CookLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="dashboard" options={{ title: 'Cook Dashboard' }} />
-      <Stack.Screen name="listings" options={{ title: 'My Listings & Wizard' }} />
-      <Stack.Screen name="orders" options={{ title: 'Cook Orders' }} />
-      <Stack.Screen name="orders/[id]" options={{ title: 'Manage Order' }} />
-      <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
-      <Stack.Screen name="compliance/index" options={{ title: 'Compliance' }} />
-    </Stack>
+    <Tabs
+      screenOptions={{
+        headerStyle: { backgroundColor: gourmeatColors.background },
+        headerTintColor: gourmeatColors.text,
+        headerTitleStyle: { fontWeight: '800' },
+        tabBarStyle: {
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+        },
+        sceneContainerStyle: { paddingBottom: 88 },
+      }}
+      tabBar={(props) => <CookTabBar {...props} />}
+    >
+      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', headerShown: false }} />
+      <Tabs.Screen name="orders" options={{ title: 'Cook Orders', headerShown: false }} />
+      <Tabs.Screen name="listings" options={{ title: 'My Listings', headerShown: false }} />
+      <Tabs.Screen name="compliance" options={{ title: 'Compliance', headerShown: false }} />
+
+      <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Manage Order', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="earnings" options={{ href: null, title: 'Earnings', tabBarStyle: { display: 'none' } }} />
+    </Tabs>
   );
 }

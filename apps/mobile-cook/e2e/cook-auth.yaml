@@ -2,11 +2,26 @@
 # Run: pnpm cook:dev & maestro test apps/mobile-cook/e2e/cook-auth.yaml
 appId: com.singaporehomecooks.cook
 ---
-- launchApp
-- tapOn: "Sign in"
-- tapOn: "Email"
-- inputText: "rose@shc.local"
-- tapOn: "Password"
-- inputText: "cooksecret"
-- tapOn: "Sign in"
-- assertVisible: "Cook Dashboard"
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible: "Sign in as cook"
+    timeout: 90000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- runFlow:
+    when:
+      visible: "Welcome, home cook"
+    commands:
+      - tapOn:
+          id: "cook-onboarding-finish-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 120000
+- assertVisible:
+    id: "cook-dashboard"

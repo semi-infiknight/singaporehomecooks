@@ -1,32 +1,66 @@
-// Customer profile (polished): dietary, credits, history links, trust copy from Content/Seed, earnings awareness.
-// Phase 7-9: WalletCard + CreditBadge + RequestDishForm modal (posts to shc_request), in-app notifs bell, redeem preview. All embedded (no new route files).
-import React, { useState } from 'react';
-import { Text, ScrollView, View, Modal, Pressable } from 'react-native';
-import { shcColors, SHCCard, SHCButton, SHCButtonText, WalletCard, RequestDishForm, SHCSectionTitle } from '@shc/ui';
+import React, { useState, useEffect } from 'react';
+import { Text, ScrollView, View, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  shcColors,
+  SHCCard,
+  SHCButton,
+  SHCButtonText,
+  WalletCard,
+  RequestDishForm,
+  SHCProfileHero,
+  SHCVisualBentoTile,
+  SHCIcon,
+  shcSpacing,
+  shcBorders,
+  shcRadii,
+  GourmeatScreenHeader,
+  gourmeatColors,
+} from '@shc/ui';
+import { BENTO_ACTION_IMAGES, favoritesToReorderDishes } from '@shc/utils';
+import { useFavorites } from '../../../hooks/useFavorites';
+import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
-import { Link } from 'expo-router';
-import { useCredits, useRedeemCredits, useCreateRequest, useNotifications } from '../../../hooks/useProducts';
-// Rich trust snippets from seed for onboarding/profile consistency
-import { trustSnippets } from '../../../../../seed';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
+import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
+import { useCreateRequest, useNotifications } from '../../../hooks/useOrder';
+
+const QUICK_TILES = [
+  { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
+  { iconKey: 'search' as const, label: 'Search', image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
+];
 
 export default function Profile() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { showRequest } = useLocalSearchParams<{ showRequest?: string }>();
   const { user, logout } = useAuth();
   const { data: credits } = useCredits();
   const redeemMut = useRedeemCredits();
   const createReqMut = useCreateRequest();
   const { data: notifs = [] } = useNotifications();
-  const [showRequestModal, setShowRequestModal] = useState(false);
+  const { favorites } = useFavorites();
+  const savedDishes = favoritesToReorderDishes(favorites);
+  const [showRequestModal, setShowRequestModal] = useState(showRequest === '1');
+  useEffect(() => {
+    if (showRequest === '1') setShowRequestModal(true);
+  }, [showRequest]);
   const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
   const [showNotifs, setShowNotifs] = useState(false);
 
-  const bal = credits?.balance ?? 45;
-  const spend = credits?.lifetimeSpend ?? 320;
+  const bal = credits?.balance ?? 0;
+  const spend = credits?.lifetimeSpend ?? 0;
   const tier = credits?.tier ?? 'Bronze';
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/(shared)/auth');
+  };
 
   const handleRequestSubmit = async (data: any) => {
     try {
       const req = await createReqMut.mutateAsync(data);
-      setRequestSuccess(`Request ${req.id} posted! Cooks will bid on the Collaboration Board.`);
+      setRequestSuccess(`Request ${req.id} posted!`);
       setShowRequestModal(false);
       setTimeout(() => setRequestSuccess(null), 4000);
     } catch (e: any) {
@@ -35,16 +69,58 @@ export default function Profile() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }} testID="customer-profile-screen">
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: shcColors.text }}>Profile • {user?.name}</Text>
-        <Pressable onPress={() => setShowNotifs(!showNotifs)} testID="notif-bell" accessibilityLabel="Notifications bell, shows recent order/credit/request events" style={{ padding: 8 }}>
-          <Text style={{ fontSize: 20 }}>🛎️</Text>
-          {notifs.length > 0 && <Text style={{ position: 'absolute', top: 4, right: 4, fontSize: 9, color: shcColors.error }}>({notifs.length})</Text>}
+    <View style={styles.screen} testID="customer-profile-screen">
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.heroWrap}>
+          <GourmeatScreenHeader
+            title={user?.name || 'Guest'}
+            subtitle={`${tier} tier · HDB home cook lover`}
+          />
+        </View>
+        <Pressable
+          onPress={() => setShowNotifs(!showNotifs)}
+          testID="notif-bell"
+          accessibilityLabel="Notifications"
+          style={styles.bellBtn}
+        >
+          <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
+          {notifs.length > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellCount}>{notifs.length}</Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
-      {/* Phase 9 Growth: Wallet + Credits redeem + tier. SG-specific: earn on collected, redeem for family feasts */}
+      <View style={styles.tilesRow}>
+        {QUICK_TILES.map((t) => (
+          <View key={t.label} style={styles.tileCol}>
+            <Link href={t.href as any} asChild>
+              <SHCVisualBentoTile
+                imageUri={t.image}
+                iconKey={t.iconKey}
+                label={t.label}
+                testID={t.testID}
+                variant="bento-mint"
+              />
+            </Link>
+          </View>
+        ))}
+        <View style={styles.tileCol}>
+          <SHCVisualBentoTile
+            imageUri={BENTO_ACTION_IMAGES.credits}
+            iconKey="credits"
+            label={`${bal} Credits`}
+            variant="bento-yellow"
+            testID="profile-credits-tile"
+          />
+        </View>
+      </View>
+
       <WalletCard
         balance={bal}
         lifetimeSpend={spend}
@@ -52,48 +128,162 @@ export default function Profile() {
         onRedeem={(amt) => redeemMut.mutate(amt)}
       />
 
-      {requestSuccess && <SHCCard style={{ marginTop: 8, backgroundColor: '#DCFCE7' }}><Text style={{ color: shcColors.success }}>{requestSuccess}</Text></SHCCard>}
+      {savedDishes.length > 0 && (
+        <View style={{ marginTop: shcSpacing.md }}>
+          <Text style={styles.savedTitle}>Saved dishes</Text>
+          <Text style={styles.savedSub}>Tap a dish to order again</Text>
+          <SHCZomatoDishRowRail
+            title=""
+            dishes={savedDishes.map((d) => ({
+              id: d.id,
+              name: d.name,
+              cook_name: d.cook_name || '',
+              price: d.price,
+              cuisine: d.cuisine,
+            }))}
+            onDishPress={(id) => router.push(`/(customer)/product/${id}` as any)}
+            testID="profile-saved-rail"
+          />
+        </View>
+      )}
 
-      <SHCCard>
-        <Text>Role: {user?.role}. HDB home cook lover. Earn 5% credits on completed orders (12-month expiry). Redeem at checkout (auto or manual). Tier: {tier}</Text>
-        <Text style={{ marginTop: 8, fontSize: 12 }}>Dietary prefs: (stub) — will filter on search. Allergen history tracked for safety.</Text>
-      </SHCCard>
-
-      <SHCCard style={{ marginTop: 12 }}>
-        <Text style={{ fontWeight: '600', color: shcColors.primary }}>5-Layer Trust (from content)</Text>
-        <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 4 }}>{trustSnippets.fiveLayersSummary}</Text>
-        <Text style={{ marginTop: 6, fontSize: 11 }}>{trustSnippets.allergenNote}</Text>
-      </SHCCard>
-
-      <Link href="/(customer)/orders" asChild><SHCButton style={{ marginTop: 12 }}><SHCButtonText>View My Orders &amp; Track</SHCButtonText></SHCButton></Link>
-      <Link href="/(shared)/onboarding" asChild><SHCButton variant="outline" style={{ marginTop: 8 }}><SHCButtonText>Revisit Onboarding &amp; Trust</SHCButtonText></SHCButton></Link>
-      <Link href="/(customer)/search" asChild><SHCButton variant="outline" style={{ marginTop: 8 }} testID="advanced-search-link"><SHCButtonText>Advanced Search + Filters (synonyms + NL)</SHCButtonText></SHCButton></Link>
-
-      <SHCSectionTitle style={{ marginTop: 12 }}>Differentiation</SHCSectionTitle>
-      <SHCButton onPress={() => setShowRequestModal(true)} testID="open-request-modal-btn" style={{ marginBottom: 8 }}>
-        <SHCButtonText>🍲 Request Custom Dish (Recipe Bidding)</SHCButtonText>
-      </SHCButton>
-      <Text style={{ fontSize: 11, color: shcColors.textLight, marginBottom: 8 }}>Post description + optional YT → cooks bid (see cook Collaboration Board) → accept creates order.</Text>
-
-      <Text onPress={logout} style={{ color: shcColors.error, marginTop: 24, textAlign: 'center' }} accessibilityRole="button">Logout (dev — resets SecureStore)</Text>
-
-      <Text style={{ marginTop: 24, fontSize: 11, color: shcColors.textLight, textAlign: 'center' }}>Earnings for cooks visible to you on checkout. Home Credits (Phase 9) + requests (Phase 8) live in mock.</Text>
-
-      {/* Request modal */}
-      <Modal visible={showRequestModal} animationType="slide" onRequestClose={() => setShowRequestModal(false)}>
-        <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }}>
-          <RequestDishForm onSubmit={handleRequestSubmit} onClose={() => setShowRequestModal(false)} />
-        </ScrollView>
-      </Modal>
-
-      {/* Simple notif panel (stub bell) */}
-      {showNotifs && (
-        <SHCCard style={{ marginTop: 12 }}>
-          <Text style={{ fontWeight: '600' }}>Recent (in-app bell stub)</Text>
-          {notifs.length === 0 && <Text style={{ color: shcColors.textLight }}>No events. Place/complete order or request to see.</Text>}
-          {notifs.map((n: any, i: number) => <Text key={i} style={{ fontSize: 12, marginTop: 4 }}>{n.body} ({new Date(n.created_at).toLocaleTimeString('en-SG')})</Text>)}
+      {requestSuccess && (
+        <SHCCard variant="bento-mint" style={styles.successCard}>
+          <View style={styles.successRow}>
+            <SHCIcon name="checkmark" size={16} color={shcColors.success} active />
+            <Text style={styles.successText}>{requestSuccess}</Text>
+          </View>
         </SHCCard>
       )}
+
+      <SHCCard variant="bento-peach" style={styles.trustCard}>
+        <SHCIcon name="compliance" size={28} color={shcColors.primary} active />
+        <Text style={styles.trustTitle}>5-Layer Trust</Text>
+        <Text style={styles.trustBody}>Verified cooks · allergen disclosure · HDB collection · PayNow escrow</Text>
+      </SHCCard>
+
+      <Link href="/(customer)/orders" asChild>
+        <SHCButton style={styles.actionBtn}>
+          <SHCButtonText>View My Orders</SHCButtonText>
+        </SHCButton>
+      </Link>
+      <Link href="/(shared)/onboarding" asChild>
+        <SHCButton variant="outline" style={styles.actionBtn} testID="trust-safety-link">
+          <SHCButtonText variant="outline">Trust & Safety</SHCButtonText>
+        </SHCButton>
+      </Link>
+      <Link href="/(customer)/search" asChild>
+        <SHCButton variant="outline" style={styles.actionBtn} testID="advanced-search-link">
+          <SHCButtonText>Advanced Search</SHCButtonText>
+        </SHCButton>
+      </Link>
+
+      <Pressable
+        onPress={() => setShowRequestModal(true)}
+        testID="open-request-modal-btn"
+        accessibilityRole="button"
+        style={[styles.actionBtn, styles.requestBtn]}
+      >
+        <Text style={styles.requestBtnText}>Request Custom Dish</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleLogout}
+        style={styles.logoutBtn}
+        testID="logout-btn"
+        accessibilityRole="button"
+        accessibilityLabel="Logout"
+      >
+        <Text style={styles.logout}>Logout</Text>
+      </Pressable>
+
+      {showNotifs && (
+        <SHCCard style={styles.notifsCard}>
+          <View style={styles.notifsTitleRow}>
+            <SHCIcon name="notifications" size={18} color={shcColors.text} active />
+            <Text style={styles.notifsTitle}>Notifications</Text>
+          </View>
+          {notifs.length === 0 && <Text style={styles.notifsEmpty}>No events yet</Text>}
+          {notifs.map((n: any, i: number) => (
+            <Text key={i} style={styles.notifItem}>
+              {n.body}
+            </Text>
+          ))}
+        </SHCCard>
+      )}
+
+      {showRequestModal && (
+        <View testID="request-modal" style={styles.requestPanel}>
+          <RequestDishForm onSubmit={handleRequestSubmit} onClose={() => setShowRequestModal(false)} />
+        </View>
+      )}
     </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: shcColors.background },
+  content: { paddingHorizontal: shcSpacing.md },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
+  heroWrap: { flex: 1 },
+  bellBtn: {
+    padding: shcSpacing.sm,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.md,
+    backgroundColor: shcColors.surface,
+    marginTop: shcSpacing.md,
+  },
+  bellIcon: { fontSize: 20 },
+  bellBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: shcColors.error,
+    borderRadius: shcRadii.pill,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellCount: { fontSize: 9, color: '#fff', fontWeight: '800' },
+  tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
+  tileCol: { flex: 1 },
+  successCard: { marginTop: shcSpacing.sm },
+  successRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  successText: { color: shcColors.success, fontWeight: '600', flex: 1 },
+  trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },
+  savedTitle: { fontSize: 16, fontWeight: '900', color: shcColors.text },
+  savedSub: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
+  trustTitle: { fontWeight: '800', color: shcColors.primary, marginTop: 4 },
+  trustBody: { fontSize: 12, color: shcColors.textLight, textAlign: 'center', marginTop: 4 },
+  actionBtn: { marginTop: shcSpacing.sm },
+  requestBtn: {
+    backgroundColor: shcColors.primary,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.md,
+    paddingVertical: shcSpacing.md,
+    paddingHorizontal: shcSpacing.lg,
+    alignItems: 'center',
+  },
+  requestBtnText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15 },
+  logoutBtn: {
+    marginTop: shcSpacing.lg,
+    paddingVertical: shcSpacing.md,
+    paddingHorizontal: shcSpacing.lg,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.error,
+    borderRadius: shcRadii.md,
+    backgroundColor: shcColors.surfaceError,
+    alignItems: 'center',
+  },
+  logout: { color: shcColors.error, textAlign: 'center', fontWeight: '800', fontSize: 15 },
+  notifsCard: { marginTop: shcSpacing.md },
+  notifsTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  notifsTitle: { fontWeight: '800' },
+  notifsEmpty: { color: shcColors.textLight, fontSize: 12 },
+  notifItem: { fontSize: 12, marginTop: 4 },
+  requestPanel: { marginTop: shcSpacing.md },
+});

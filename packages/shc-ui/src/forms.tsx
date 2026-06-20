@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { SHCCard, SHCButton, SHCButtonText, SHCSectionTitle } from './primitives';
-import { shcColors as colors } from './theme';
+import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
 
 // Re-export improved AllergenAckCheckbox from domain for forms consumers
 export { AllergenAckCheckbox } from './domain';
@@ -19,7 +19,7 @@ export function IngredientTierEditor({ value, onChange, label = '3-Tier Ingredie
         onBlur={() => {
           try { onChange(JSON.parse(text)); } catch {}
         }}
-        style={{ height: 120, borderWidth: 1, borderColor: '#E8D5B7', borderRadius: 8, padding: 8, fontFamily: 'monospace', backgroundColor: '#fff' }}
+        style={{ height: 120, borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, fontFamily: 'monospace', backgroundColor: colors.surface, color: colors.text }}
         placeholder='[{"name":"Coconut milk","quantity":200,"unit":"ml"}, ...]'
       />
       <Text style={{ fontSize: 10, color: colors.textLight }}>Tier1 (mandatory allergens) disclosed to customer. Use for product-meta.ingredients</Text>
@@ -33,8 +33,8 @@ export function OccasionTagPicker({ selected, onToggle, options = ['Hari Raya', 
       {options.map(tag => {
         const sel = selected.includes(tag);
         return (
-          <Pressable key={tag} onPress={() => onToggle(tag)} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: sel ? colors.primary : '#F5F0E6' }}>
-            <Text style={{ color: sel ? '#fff' : colors.text, fontSize: 12 }}>{tag}</Text>
+          <Pressable key={tag} onPress={() => onToggle(tag)} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: shcRadii.pill, borderWidth: shcBorders.brutal, borderColor: colors.border, backgroundColor: sel ? colors.primary : colors.surfaceAlt }}>
+            <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{tag}</Text>
           </Pressable>
         );
       })}

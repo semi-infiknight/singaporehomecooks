@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-15 by Infra (Railway staging live, web config fix, bootstrap HTTPS)
+**Last Updated:** 2026-06-20 (Blueprint Sync) — full reconciliation across code, contracts (@shc/types), routes, data model, auth (hashed cook), modules (shc-cart), clients (real-only api-client). See INDEX + self-updating-rules.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -12,19 +12,23 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Email/password auth + register; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Cook-only login; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer only | `/login`; Peach Comfort brand; no dev switcher |
-| **Medusa API** (`:9000`) | ✅ ~75% routes | Custom `/store/shc/*` + `/admin/shc/*`; admin UI at `/app` |
-| **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT |
-| **Cart** | 🟡 Redis-backed | Persists when `REDIS_URL` set; in-memory fallback |
-| **E2E verifier** | ✅ Extended | Auth → cart → checkout → cook transitions |
+| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Zomato discover (promo rail, filter chips, photo bento, vector tab icons); Toptal checkout stepper + search ADD + heritage banner + “Order again”; Expo `:8081` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
+| **Web** (Next.js `:3001`) | ✅ Customer only | Zomato discover reorder, `AppMobileTabBar`, `SearchResultsDropdown`, `HeritageStoryBanner`, Lucide bento icons; tri-platform sync with `@shc/ui` |
+| **Design system** | ✅ v3 | `brand.md` (Toptal UX section) + `@shc/ui` (`zomato`, `visuals`, `icons`, `motion`, `food-ux`) + `@shc/utils` (`food-visuals`, `reorder`); skill `.agents/skills/tri-platform-ui-sync/` |
+| **Medusa API** (`:9000`) | ✅ ~75% routes | Custom `/store/shc/*` + `/admin/shc/*`; admin UI at `/app`; production `https://medusa-production-d2ba.up.railway.app` |
+| **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
+| **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
+| **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid |
+| **Maestro device E2E** | ✅ Android + iOS | Real PDP add-to-cart (no API cart pre-seed); `scripts/run-maestro-full-tour.sh` |
+| **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; order transitions notify cook + customer |
+| **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: Medusa + web online; see `RAILWAY_DEPLOY.md` |
 
-**Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file is the accurate snapshot.**
+**Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (`main` pushed 2026-06-15)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint fully synced 2026-06-20; see commit history for code changes)
 
 ---
 
@@ -110,6 +114,8 @@ pnpm verify:real-e2e
 6. Cook login + orders list
 7. Cook transitions: `paid` → `accepted` → `preparing` → `ready_for_collection`
 8. Order detail confirms final status
+9. Messages (customer + cook), `collected` → `completed`, credits balance, review POST/GET
+10. Request → bid → accept (growth flow); optional admin ledger check
 
 CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on push to `main`.
 
@@ -140,6 +146,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/orders/:id` | GET | public (meta lookup) |
 | `/store/shc/orders/:id/transition` | POST | cook JWT |
 | `/store/shc/orders/:id/messages` | GET, POST | customer/cook JWT |
+| `/store/shc/orders/:id/review` | GET, POST | POST: customer JWT (post-collection) |
 | `/store/shc/earnings` | GET | cook JWT |
 | `/store/shc/notifications` | GET | customer or cook JWT |
 | `/store/shc/listings` | POST | cook JWT |
@@ -151,7 +158,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 |------|---------|
 | `shc-auth.ts` | JWT sign/verify, Medusa customer login/register, `ensureStoreCustomer` |
 | `shc-actors.ts` | Resolve customer/cook from Bearer token |
-| `shc-cart-store.ts` | Redis-backed cart (7-day TTL) + memory fallback |
+| `shc-cart` module | Postgres-backed cart (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | `shc-product-shape.ts` | Product DTO mapper |
 | `shc-notifications-store.ts` | In-memory notifications (dev) |
 
@@ -170,6 +177,10 @@ pnpm customer:dev                 # Mobile customer :8081
 pnpm cook:dev                     # Mobile cook :8082
 pnpm web:dev                      # Web :3001
 
+bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb reverse
+bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
+bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
+
 pnpm verify:real-e2e              # Full smoke (auth + checkout + transitions)
 pnpm verify:local                 # Seed validate + typecheck
 
@@ -185,11 +196,13 @@ MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 1. **`pnpm medusa:start` disables admin** — use `pnpm medusa:dev:admin`.
 2. **Store customer profile required** — bootstrap/register/login call `ensureStoreCustomer`; without it JWT `actor_id` is empty and cart returns 401.
 3. **Product IDs** — canonical `dish_*` from seed; re-run `pnpm seed` after migrate.
-4. **Cook login** — dev credentials in `shc-auth.ts`; login verifies cook row in `shc_cook` table.
-5. **Cart** — Redis when `REDIS_URL=redis://localhost:6379`; otherwise in-memory (lost on restart).
+4. **Cook login** — scrypt `password_hash` on `shc_cook`; seed sets hashes; `SHC_COOK_ALLOW_DEV_PLAINTEXT=false` disables env fallback in prod.
+5. **Cart** — Postgres `shc-cart` module in production paths; legacy Redis/in-memory store deprecated (`shc-cart-store.ts`).
 6. **Legacy `apps/mobile`** — deprecated; use `mobile-customer` + `mobile-cook`.
 7. **Railway web service** — must use `railway.web.toml`; root `railway.toml` is Medusa-only (`pnpm railway:configure-web`).
 8. **Railway bootstrap** — use `MEDUSA_URL=https://...`; do not `railway run medusa user` from laptop (internal DB URL).
+9. **iOS `RNGestureHandlerModule`** — stale native binary without gesture-handler pods; run `scripts/rebuild-ios-apps.sh` after adding Reanimated/Gesture Handler.
+10. **Cook Metro port** — cook app must hit `:8082`; `scripts/start-mobile-dev.sh` starts both; cook `AppDelegate` rewrites `:8081` → `:8082` deep links.
 
 ---
 
@@ -197,30 +210,35 @@ MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 
 | Area | Gap | Priority |
 |------|-----|----------|
-| Cart | Medusa core cart module (vs Redis dev store) | P1 |
-| Cook auth | Hashed passwords / Medusa auth actors (not dev map) | P1 |
-| Search | `/store/shc/search` wired to product list + titles | ✅ |
-| Notifications | In-memory only; no push inbox persistence | P2 |
-| Upload | MinIO/S3 media routes | P2 |
-| Reviews | No review routes | P3 |
-| Production | Custom domains, real Expo push, PayU KYC | Founder |
-| Maestro device | YAML validated in CI; device run needs simulator + secrets | Infra |
+| Push inbox | In-app notifications still in-memory only (no persistence module) | P2 |
+| Customer push tokens | No DB persistence for customer expo_push_token (cooks have on shc_cook) | P2 |
+| Cook auth | Still hybrid (SHC JWT primary + login_email; not full Medusa auth_identity actor for cooks) | P2 |
+| Media/Upload | No MinIO/S3 routes or signed URLs for dish photos | P2 |
+| Notifications module | shc-notifications-store is in-mem dev only | P2 |
+
+| Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, full cron worker | Founder |
+
+**Blueprint Sync 2026-06-20:** shc_cart + shc-review + search + cook password_hash all documented as ✅; @shc/types cook schema extended; 05/06/INDEX/CURRENT_STATE/11 reconciled. Real api-client everywhere. Legacy cart-store still present but unused in prod paths.
 
 ---
 
 ## 9. Recommended Next Tasks
 
-1. **Manual split-app walkthrough** — customer order → cook fulfil on simulators
-2. **Medusa core cart** — replace Redis dev store for production parity
-3. **Cook auth production** — link `shc_cook.auth_identity_id` to Medusa auth
-4. **Railway staging** — `RAILWAY_DEPLOY.md`; after web service created run `pnpm railway:configure-web`; then `MEDUSA_URL=... pnpm railway:init`
-5. **Extend E2E** — credits checkout, message send, collected → completed + ledger
+1. **Persist customer push tokens** — DB column or module (survive Medusa restart)
+2. **Push inbox** — Postgres notifications module replacing in-memory store
+3. **Upload / media** — MinIO/S3 routes for dish photos
+4. **Manual split-app walkthrough** — customer order → cook fulfil → push on device → review
+5. **Commit + push** — large local diff still uncommitted on `main`
 
 ---
 
-## 10. Self-Update Protocol
+## 10. Self-Update Protocol (MANDATORY)
 
-When you change integration state, update **this file** + `INDEX.md` (Last Updated line). Do not only update `STATUS.md`.
+**Rule:** Every code change that affects documented behavior (new/changed route, module, table/column, client feature, contract, UI component in tri-platform, auth flow, error, cron, etc.) **MUST** include updates to the relevant blueprint file(s) + CURRENT_STATE.md + INDEX.md "Last Updated" in the **same commit**.
+
+See [multi-agent/self-updating-rules.md](../multi-agent/self-updating-rules.md) for the full checklist and examples. Stitching/verification runs include blueprint consistency.
+
+Update this file + INDEX.md on integration state changes. Never only touch STATUS.md or phase files.
 
 ---
 

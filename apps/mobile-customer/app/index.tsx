@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { shcColors } from '@shc/ui';
 
 export default function RootIndex() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,9 +14,6 @@ export default function RootIndex() {
     );
   }
 
-  if (!user) {
-    return <Redirect href="/(shared)/auth" />;
-  }
-
+  // Principle 5 (Weavers Web 2025): guest browse — sign in only at checkout
   return <Redirect href="/(customer)" />;
 }

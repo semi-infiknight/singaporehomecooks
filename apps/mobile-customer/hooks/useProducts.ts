@@ -2,8 +2,20 @@
 // Discovery, cook profile, product detail. Uses TanStack Query + mock client with rule data.
 // Exports: useProducts (alias for discovery), useOrders (via companion), useCart, useChat (in useOrder)
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { searchProducts, getCookBySlug, getProduct, getSlots, addToCart, getCart, clearCart, createSHCError } from '../lib/api-client.js';
+import {
+  searchProducts,
+  getCookBySlug,
+  getProduct,
+  getSlots,
+  addToCart,
+  getCart,
+  clearCart,
+  createSHCError,
+  isAuthenticated,
+  hydrateSession,
+} from '../lib/api-client';
 import type { SHCErrorCode } from '@shc/types';
+import { useAuth } from './useAuth';
 
 export function useProducts(query = '', filters?: { occasion?: string; halal?: boolean; maxCal?: number; cuisine?: string; minPrice?: number }) {
   // Primary useProducts hook per Integration spec (wraps search + filters including calorie)
@@ -35,9 +47,12 @@ export function useCollectionSlots(productId: string) {
 export function useAddToCart() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, qty }: { productId: string; qty: number }) => addToCart(productId, qty),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['cart'] });
+    mutationFn: async ({ productId, qty }: { productId: string; qty: number }) => {
+      await hydrateSession();
+      return addToCart(productId, qty);
+    },
+    onSuccess: (cart) => {
+      qc.setQueryData(['cart'], cart);
     },
     onError: (err: any) => {
       // Surface SHCErrorCode for callers (e.g. one-cook, min-qty, allergen)
@@ -47,7 +62,17 @@ export function useAddToCart() {
 }
 
 export function useCart() {
-  return useQuery({ queryKey: ['cart'], queryFn: getCart, staleTime: 5000 });
+  const { user, loading } = useAuth();
+  return useQuery({
+    queryKey: ['cart'],
+    queryFn: async () => {
+      await hydrateSession();
+      return getCart();
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    enabled: (!!user || isAuthenticated()) && !loading,
+  });
 }
 
 export function useClearCart() {
@@ -60,22 +85,30 @@ export function useClearCart() {
 
 // Phase 7-9 hooks (appended to existing per ownership/no-new-file + TanStack): useCredits (wallet/earn/redeem), useAICalorieEstimate for wizard, photo tips. Growth features delightful & SG-specific (Raya credits, HDB feasts).
 export function useCredits() {
-  return useQuery({ queryKey: ['credits'], queryFn: async () => { const { getCredits } = await import('../lib/api-client.js'); return getCredits(); }, staleTime: 10000 });
+  const { user, loading } = useAuth();
+  return useQuery({
+    queryKey: ['credits'],
+    queryFn: async () => {
+      const { getCredits } = await import('../lib/api-client');
+      return getCredits();
+    },
+    staleTime: 10000,
+    enabled: (!!user || isAuthenticated()) && !loading,
+    placeholderData: { balance: 0, tier: 'Bronze' },
+  });
 }
 export function useRedeemCredits() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (amount: number) => { const { redeemCredits } = await import('../lib/api-client.js'); return redeemCredits(amount); },
+    mutationFn: async (amount: number) => { const { redeemCredits } = await import('../lib/api-client'); return redeemCredits(amount); },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['credits'] }); qc.invalidateQueries({ queryKey: ['cart'] }); },
   });
 }
 export function useAICalorieEstimate() {
   return useMutation({
-    mutationFn: async (ingredients: any[]) => { const { estimateCaloriesAI } = await import('../lib/api-client.js'); return estimateCaloriesAI(ingredients); },
+    mutationFn: async (ingredients: any[]) => { const { estimateCaloriesAI } = await import('../lib/api-client'); return estimateCaloriesAI(ingredients); },
   });
 }
-export async function getPhotoTips() { const { getPhotoTips } = await import('../lib/api-client.js'); return getPhotoTips(); }
+export async function getPhotoTips() { const { getPhotoTips } = await import('../lib/api-client'); return getPhotoTips(); }
 
-// Additional stubs for profile (prevents TS import error for growth hooks not yet in api-client; mock safe)
-export function useCreateRequest() { const qc = useQueryClient(); return useMutation({ mutationFn: async (d: any) => d, onSuccess: () => qc.invalidateQueries({ queryKey: ['requests'] }) }); }
-export function useNotifications() { return useQuery({ queryKey: ['notifs'], queryFn: async () => [] }); }
+// Growth hooks live in hooks/useOrder.ts — import from there to avoid stub regressions.

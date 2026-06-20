@@ -69,6 +69,7 @@ export const login = (email: string, password: string) => client.loginCustomer(e
 export const register = (email: string, password: string, first_name?: string, last_name?: string) =>
   client.registerCustomer(email, password, first_name, last_name);
 export const getCurrentUser = () => client.getCurrentUser();
+export const isAuthenticated = () => Boolean(readToken());
 export const logout = () => clearSession();
 
 export const getCooks = () => client.getCooks();
@@ -105,6 +106,9 @@ export const createBid = (requestId: string, priceCents: number, message?: strin
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
+export const getReview = (orderId: string) => client.getReview(orderId);
+export const submitReview = (orderId: string, rating: number, body?: string) =>
+  client.submitReview(orderId, rating, body);
 
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

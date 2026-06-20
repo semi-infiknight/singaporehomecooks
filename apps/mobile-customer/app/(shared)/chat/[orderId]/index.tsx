@@ -23,7 +23,7 @@ export default function OrderChatScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: shcColors.background }}>
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 100 }}>
-        <Text style={{ fontSize: 18, fontWeight: '600', color: shcColors.text }}>Chat for Order {orderId}</Text>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: shcColors.text }} testID="chat-order-title">Chat for Order {orderId}</Text>
         <Text style={{ fontSize: 12, color: shcColors.textLight }}>Secure order-scoped • Polling every ~4s (demo) • HDB notes visible here post-pay</Text>
 
         <SHCCard style={{ marginVertical: 12, minHeight: 220, backgroundColor: '#fff' }}>
@@ -38,6 +38,7 @@ export default function OrderChatScreen() {
 
       <View style={{ padding: 12, backgroundColor: shcColors.surface, flexDirection: 'row', gap: 8 }}>
         <TextInput
+          testID="chat-message-input"
           style={{ flex: 1, borderWidth: 1, borderColor: '#E8D5B7', borderRadius: 8, padding: 10, backgroundColor: '#fff' }}
           placeholder="Message the other party (collection instructions, thanks...)"
           value={draft}

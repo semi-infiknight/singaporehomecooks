@@ -65,12 +65,14 @@ export const transitionOrder = (orderId: string, to: string) => client.transitio
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>
   client.sendMessage(orderId, body, from);
+export const getCookListings = () => client.getCookListings();
 export const createCookListing = (input: Record<string, unknown>) => client.createCookListing(input);
 export const getEarnings = () => client.getEarnings();
 export const getNotifications = () => client.getNotifications();
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
-export const registerPushToken = (cookId: string, token: string) => client.registerPushToken(cookId, token);
+export const registerPushToken = (cookId: string, token: string) =>
+  client.registerPushToken(token, { cookId, role: 'cook' });
 export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
 export const addHeritageEntry = (cookId: string, entry: Record<string, unknown>) =>
   client.addHeritageEntry(cookId, entry);

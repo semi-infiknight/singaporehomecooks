@@ -1,121 +1,383 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, SHCBadge, shcColors } from '@shc/ui';
-import { useProducts } from '../../hooks/useProducts';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlashList } from '@shopify/flash-list';
+import {
+  GourmeatHomeHeader,
+  GourmeatSearchBar,
+  GourmeatCategoryRow,
+  GourmeatDishCard,
+  GourmeatSectionTitle,
+  gourmeatColors,
+  type GourmeatCategoryItem,
+  type SHCDishCardData,
+  shcSpacing,
+  SHCFadeIn,
+  SHCFoodImage,
+  SHCSearchResultsPanel,
+  SHCGuestBrowseBar,
+  SHCActiveOrderBanner,
+  SHCZomatoDishRowRail,
+  SHCHeritageStoryBanner,
+  SHCFilterChipRow,
+  SHCPromoRail,
+} from '@shc/ui';
+import {
+  getOccasionImageUrl,
+  BENTO_ACTION_IMAGES,
+  PROMO_BANNER_IMAGES,
+  getDishImageUrl,
+  getCookAvatarUrl,
+  MIND_CUISINE_CATEGORIES,
+  getCollectionSlotLabel,
+  extractReorderDishes,
+  productMatchesOccasion,
+  getActiveOrders,
+  getOrderStatusLabel,
+  favoritesToReorderDishes,
+} from '@shc/utils';
+import { useProducts, useAddToCart } from '../../hooks/useProducts';
+import { useOrders } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
+import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
+import { useFavorites } from '../../hooks/useFavorites';
+import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 
-// (customer)/index.tsx per 10-mobile.md route map — full discovery with more filters (occasion + calorie traffic light + maxCal).
-// Wired to shcApi / mock-service (enforces rules). Rich seeds from Content.
+const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
+
+function filterDiscoverProducts(
+  products: Record<string, unknown>[],
+  opts: {
+    query?: string;
+    occasion?: string;
+    cuisine?: string;
+    halalOnly?: boolean;
+    maxCal?: number;
+  }
+) {
+  let list = products;
+  const q = opts.query?.trim().toLowerCase();
+  if (q) {
+    list = list.filter((p) => {
+      const name = String(p.name || '').toLowerCase();
+      const cook = String(p.cook_name || '').toLowerCase();
+      const cuisine = String(p.cuisine || '').toLowerCase();
+      const tags = (Array.isArray(p.occasion_tags) ? p.occasion_tags : []).map((t) => String(t).toLowerCase());
+      return (
+        name.includes(q) ||
+        cook.includes(q) ||
+        cuisine.includes(q) ||
+        String(p.id || '').toLowerCase().includes(q) ||
+        tags.some((t) => t.includes(q) || q.includes(t.replace(/-/g, ' ')))
+      );
+    });
+  }
+  if (opts.cuisine) list = list.filter((p) => String(p.cuisine || '') === opts.cuisine);
+  if (opts.occasion) {
+    list = list.filter((p) =>
+      productMatchesOccasion(
+        Array.isArray(p.occasion_tags) ? (p.occasion_tags as string[]) : [],
+        opts.occasion
+      )
+    );
+  }
+  if (opts.halalOnly) list = list.filter((p) => Boolean(p.halal));
+  if (opts.maxCal != null) list = list.filter((p) => ((p.calories as number) || 999) <= opts.maxCal!);
+  return list;
+}
+
+function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
+  const id = String(product.id);
+  return {
+    id,
+    name: String(product.name),
+    cook_name: String(product.cook_name),
+    price: Number(product.price),
+    cuisine: product.cuisine ? String(product.cuisine) : undefined,
+    rating: product.rating ? Number(product.rating) : 4.8,
+    halal: Boolean(product.halal),
+    collection_slot: getCollectionSlotLabel(id),
+    image_url: getDishImageUrl({
+      id,
+      cuisine: product.cuisine ? String(product.cuisine) : undefined,
+      name: String(product.name),
+    }),
+  };
+}
+
 export default function CustomerDiscover() {
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [occasionFilter, setOccasionFilter] = useState('');
-  const [maxCal, setMaxCal] = useState<number | undefined>(undefined);
+  const [cuisineFilter, setCuisineFilter] = useState('');
+  const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const { user } = useAuth();
-  const { data: products = [], isLoading } = useProducts(query, { occasion: occasionFilter || undefined, maxCal });
+  const { isGuest, requireAuth } = useGuestAuthGate();
+  const addMut = useAddToCart();
+  const { data: orders = [] } = useOrders('customer');
+  const { favorites, toggle, isFavorite } = useFavorites();
+  const { data: products = [], isLoading } = useProducts('');
   const router = useRouter();
 
-  const occasions = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
+  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
-  const goToCook = (slug: string) => router.push(`/(customer)/cook/${slug}` as any);
+  const savedDishes = useMemo(() => {
+    if (query.trim()) return [];
+    return favoritesToReorderDishes(favorites).map((d) => ({
+      ...toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine }),
+      image_url: getDishImageUrl({ id: d.id, name: d.name, cuisine: d.cuisine }),
+    }));
+  }, [favorites, query]);
+
   const goToProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
 
-  const calFilterOptions = [
-    { label: 'All cals', val: undefined },
-    { label: '<400 green', val: 400 },
-    { label: '<550 amber', val: 550 },
+  const handleAddToCart = useCallback(
+    (productId: string, qty = 1) => {
+      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
+      addMut.mutate({ productId, qty });
+    },
+    [requireAuth, addMut]
+  );
+
+  const occasionCategories: GourmeatCategoryItem[] = [
+    { id: '', label: 'All', iconKey: 'restaurant' },
+    ...OCCASIONS.map((o) => ({
+      id: o,
+      label:
+        o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.length > 12 ? o.split(' ')[0] : o,
+      iconKey: 'people' as const,
+      imageUrl: getOccasionImageUrl(o),
+    })),
   ];
 
-  return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background }} contentContainerStyle={{ padding: 16 }}>
-      <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 26, fontWeight: '700', color: shcColors.text }}>Singapore Home Cooks</Text>
-        <Text style={{ fontSize: 14, color: shcColors.textLight, fontStyle: 'italic' }}>Heritage recipes • HDB kitchens • Planned occasions only • One cook per order</Text>
-        <Text style={{ marginTop: 4, fontSize: 11 }}>Welcome, {user?.name || 'guest'}.</Text>
-      </View>
+  const cuisineCategories: GourmeatCategoryItem[] = MIND_CUISINE_CATEGORIES.map((c) => ({
+    id: c.id,
+    label: c.label,
+    iconKey: 'restaurant' as const,
+    imageUrl: c.imageUrl,
+  }));
 
-      <TextInput
-        placeholder="Search dishes, cooks, heritage (e.g. Nasi Lemak, Katong, Hari Raya)"
+  const filteredProducts = useMemo(
+    () =>
+      filterDiscoverProducts(products as Record<string, unknown>[], {
+        query,
+        occasion: occasionFilter || undefined,
+        cuisine: cuisineFilter || undefined,
+        halalOnly: halalOnly || undefined,
+        maxCal,
+      }),
+    [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal]
+  );
+
+  const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
+
+  const searchDishes = useMemo(() => (query.trim() ? dishList : []), [dishList, query]);
+
+  const reorderDishes = useMemo(() => {
+    if (query.trim()) return [];
+    return extractReorderDishes(orders as Record<string, unknown>[]).map((d) => ({
+      ...toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine }),
+      image_url: getDishImageUrl({ id: d.id, name: d.name, cuisine: d.cuisine }),
+    }));
+  }, [orders, query]);
+
+  const colWidth = (Dimensions.get('window').width - shcSpacing.md * 2 - shcSpacing.sm) / 2;
+
+  const gridProducts = useMemo(() => (query.trim() ? [] : filteredProducts), [filteredProducts, query]);
+
+  const handleFavorite = useCallback(
+    (item: Record<string, unknown>) => {
+      const id = String(item.id);
+      toggle({
+        id,
+        name: String(item.name),
+        cook_name: String(item.cook_name || ''),
+        price: Number(item.price || 0),
+        cuisine: item.cuisine ? String(item.cuisine) : undefined,
+      });
+    },
+    [toggle]
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: Record<string, unknown> }) => (
+      <View style={{ width: colWidth, paddingBottom: shcSpacing.md }}>
+        <GourmeatDishCard
+          dish={toDishCardData(item)}
+          onPress={() => goToProduct(String(item.id))}
+          onAddPress={() => handleAddToCart(String(item.id), 1)}
+          isFavorite={isFavorite(String(item.id))}
+          onFavoritePress={() => handleFavorite(item)}
+        />
+      </View>
+    ),
+    [colWidth, handleAddToCart, handleFavorite, isFavorite]
+  );
+
+  const locationLabel = user?.name ? `${user.name.split(' ')[0]}'s area · SG` : 'Katong, Singapore';
+
+  const ListHeader = (
+    <>
+      <GourmeatHomeHeader
+        headline="Hungry? Order & Eat."
+        locationLabel={locationLabel}
+        locationHint="Collect from"
+        avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+        onProfilePress={() => router.push('/(customer)/profile' as any)}
+        onLocationPress={() => router.push('/(customer)/search' as any)}
+      />
+
+      <GourmeatSearchBar
         value={query}
         onChangeText={setQuery}
-        style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8D5B7', borderRadius: 10, padding: 12, marginBottom: 12 }}
+        placeholder="Search dishes, cooks, occasions…"
+        onFilterPress={() => router.push('/(customer)/search' as any)}
         testID="search-input"
       />
 
-      <Text style={{ fontSize: 12, color: shcColors.textLight, marginBottom: 4 }}>Occasion filters (from seed content):</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-        <Pressable onPress={() => setOccasionFilter('')} style={{ padding: 8, backgroundColor: !occasionFilter ? shcColors.primary : shcColors.surface, borderRadius: 999, marginRight: 8 }}>
-          <Text style={{ color: !occasionFilter ? '#fff' : shcColors.text, fontSize: 12 }}>All</Text>
-        </Pressable>
-        {occasions.map((o: string) => (
-          <Pressable key={o} onPress={() => setOccasionFilter(o)} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: occasionFilter === o ? shcColors.primary : shcColors.surface, borderRadius: 999, marginRight: 6 }}>
-            <Text style={{ color: occasionFilter === o ? '#fff' : shcColors.text, fontSize: 12 }}>{o}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      {query.trim().length > 0 && (
+        <View style={[styles.searchOverlay, { paddingHorizontal: shcSpacing.md }]}>
+          <SHCSearchResultsPanel
+            query={query}
+            dishes={searchDishes}
+            onDishPress={goToProduct}
+            onAddPress={(id) => handleAddToCart(id, 1)}
+            onClose={() => setQuery('')}
+          />
+        </View>
+      )}
 
-      {/* More discovery filters per 10-mobile + phase-4: calorie traffic light + maxCal */}
-      <Text style={{ fontSize: 12, color: shcColors.textLight, marginBottom: 4 }}>Calorie filter (traffic light badge below uses green/amber/red):</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-        {calFilterOptions.map((opt, i) => (
-          <Pressable key={i} onPress={() => setMaxCal(opt.val)} style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: maxCal === opt.val ? shcColors.primary : shcColors.surface, borderRadius: 999, marginRight: 6 }}>
-            <Text style={{ color: maxCal === opt.val ? '#fff' : shcColors.text, fontSize: 11 }}>{opt.label}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      {isGuest && (
+        <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
+      )}
 
-      <Text style={{ fontSize: 16, fontWeight: '600', color: shcColors.primary, marginBottom: 8 }}>Heritage Dishes {occasionFilter ? `for ${occasionFilter}` : ''} {maxCal ? `(≤${maxCal} cal)` : ''}</Text>
+      {!query && (
+        <View style={{ paddingHorizontal: shcSpacing.md }}>
+          <SHCHeritageStoryBanner
+            imageUri={BENTO_ACTION_IMAGES.compliance}
+            onPress={() => router.push('/(shared)/onboarding' as any)}
+          />
+        </View>
+      )}
 
-      {isLoading && <Text>Loading heritage dishes from HDB kitchens...</Text>}
-      {products.length === 0 && <Text style={{ color: shcColors.textLight }}>No matches. Try another occasion, clear calorie filter or search.</Text>}
+      {!query && (
+        <View style={{ paddingHorizontal: shcSpacing.md }}>
+          <SHCPromoRail
+            promos={[
+              { id: 'hari-raya', title: 'Hari Raya specials', subtitle: 'Order 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Festive', iconKey: 'people' },
+              { id: 'credits', title: 'Earn credits', subtitle: '4 credits ≈ S$1 off', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Wallet', iconKey: 'profile' },
+              { id: 'paynow', title: 'PayNow collection', subtitle: 'HDB pickup · no delivery', imageUrl: PROMO_BANNER_IMAGES.paynow, iconKey: 'cart' },
+            ]}
+            onPromoPress={(id) => {
+              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
+              else if (id === 'credits') router.push('/(customer)/profile' as any);
+              else router.push('/(shared)/onboarding' as any);
+            }}
+          />
+        </View>
+      )}
 
-      {products.map((p: any, idx: number) => {
-        const cal = p.calories || 400;
-        const traffic = cal < 400 ? 'trafficGreen' : cal < 550 ? 'trafficYellow' : 'trafficRed';
-        const trafficLabel = cal < 400 ? 'GREEN' : cal < 550 ? 'AMBER' : 'RED';
-        return (
-          <SHCCard key={p.id} style={{ marginBottom: 12 }}>
-            <Pressable onPress={() => goToProduct(p.id)}>
-              <Text style={{ fontSize: 17, fontWeight: '600', color: shcColors.text }}>{p.name}</Text>
-              <Text style={{ color: shcColors.accent }}>{p.cook_name} • S${p.price}/portion • {p.area || p.cook_id}</Text>
-              <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }}>{p.heritage_note}</Text>
-              <View style={{ flexDirection: 'row', marginTop: 6, alignItems: 'center', gap: 8 }}>
-                <SHCBadge variant="heritage">{p.cuisine}</SHCBadge>
-                {/* Calorie traffic-light badge (blueprint-aligned detail) */}
-                <View style={{ backgroundColor: shcColors[traffic as keyof typeof shcColors], paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                  <Text style={{ fontSize: 10, color: '#fff', fontWeight: '600' }}>🔥 {trafficLabel} ~{cal} cal</Text>
-                </View>
-                <Text style={{ fontSize: 11 }}>min {p.min_qty}</Text>
-              </View>
-              {p.occasion_tags?.length > 0 && <Text style={{ fontSize: 11, color: shcColors.primary, marginTop: 4 }}>Perfect for: {p.occasion_tags.join(', ')}</Text>}
-            </Pressable>
-
-            <View style={{ flexDirection: 'row', marginTop: 10, gap: 8 }}>
-              <SHCButton size="sm" onPress={() => goToCook(p.cook_id.replace('cook_', '') || p.cook_id)}>
-                <SHCButtonText>View Cook</SHCButtonText>
-              </SHCButton>
-              <SHCButton size="sm" variant="outline" onPress={() => goToProduct(p.id)}>
-                <SHCButtonText>Details &amp; Add (ack + qty)</SHCButtonText>
-              </SHCButton>
-            </View>
-          </SHCCard>
-        );
-      })}
-
-      <View style={{ marginTop: 16 }}>
-        <SHCButton onPress={() => router.push('/(customer)/cart' as any)}>
-          <SHCButtonText>View Cart (one-cook enforced)</SHCButtonText>
-        </SHCButton>
+      <View style={{ paddingHorizontal: shcSpacing.md }}>
+        <SHCFilterChipRow
+          chips={[
+            { id: 'halal', label: 'Halal', active: halalOnly },
+            { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+          ]}
+          onChipPress={(id) => {
+            if (id === 'halal') toggleHalalOnly();
+            if (id === 'light') toggleLight();
+          }}
+          testID="discover-filter-chips"
+        />
       </View>
 
-      <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: shcColors.textLight }}>127 cooks • 4,892 meals • HDB kitchens islandwide • Address privacy protected until paid. Full contracts + mock rules active.</Text>
+      {activeOrder && (
+        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
+          <SHCActiveOrderBanner
+            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
+            dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
+            collectionLabel={
+              activeOrder.collection_date
+                ? `${activeOrder.collection_date} ${activeOrder.collection_slot || ''}`
+                : undefined
+            }
+            onPress={() => router.push(`/(customer)/orders/${activeOrder.id}` as any)}
+          />
+        </View>
+      )}
 
-      <SHCCard style={{ marginTop: 24, backgroundColor: shcColors.surface }}>
-        <Text style={{ fontWeight: '600', color: shcColors.primary, marginBottom: 8 }}>How Singapore Home Cooks Works</Text>
-        <Text style={{ color: shcColors.textLight, fontSize: 13, lineHeight: 18 }}>Browse by occasion → choose cook & dish → add (min qty + one cook + allergen ack) → checkout with slot + PayNow ref capture → order track + chat → cook accept/prepare/ready/collected → review. Earnings preview 85% everywhere.</Text>
-      </SHCCard>
+      <GourmeatSectionTitle title="Categories" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
+      <GourmeatCategoryRow
+        categories={occasionCategories}
+        selectedId={occasionFilter}
+        onSelect={setOccasionFilter}
+      />
 
-      <View style={{ height: 80 }} />
-    </ScrollView>
+      {!query && reorderDishes.length > 0 && (
+        <SHCFadeIn delay={80}>
+          <View style={{ marginBottom: shcSpacing.section }}>
+            <GourmeatSectionTitle title="Order again" />
+            <SHCZomatoDishRowRail title="" dishes={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
+          </View>
+        </SHCFadeIn>
+      )}
+
+      {!query && savedDishes.length > 0 && (
+        <SHCFadeIn delay={100}>
+          <View style={{ marginBottom: shcSpacing.section }}>
+            <GourmeatSectionTitle title="Saved for you" />
+            <SHCZomatoDishRowRail title="" dishes={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
+          </View>
+        </SHCFadeIn>
+      )}
+
+      <GourmeatSectionTitle title="Explore cuisines" />
+      <GourmeatCategoryRow
+        categories={cuisineCategories}
+        selectedId={cuisineFilter}
+        onSelect={setCuisineFilter}
+        testID="cuisine-gourmeat-row"
+      />
+
+      <GourmeatSectionTitle
+        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        testID="all-dishes-header"
+      />
+
+      {isLoading && <Text style={styles.loading}>···</Text>}
+      {gridProducts.length === 0 && !isLoading && (
+        <View style={styles.empty}>
+          <SHCFoodImage uri={BENTO_ACTION_IMAGES.cart} height={80} rounded={16} />
+          <Text style={styles.emptyText}>No dishes match — try another category</Text>
+        </View>
+      )}
+    </>
+  );
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top }]} testID="customer-discover-screen">
+      <FlashList
+        data={gridProducts}
+        renderItem={renderItem}
+        keyExtractor={(item) => String(item.id)}
+        numColumns={2}
+        estimatedItemSize={220}
+        ListHeaderComponent={ListHeader}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        testID="dish-list-container"
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
+  list: { flex: 1 },
+  searchOverlay: { zIndex: 20, elevation: 12 },
+  listContent: { paddingHorizontal: shcSpacing.md, paddingBottom: 120 },
+  loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
+  empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
+  emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
+});

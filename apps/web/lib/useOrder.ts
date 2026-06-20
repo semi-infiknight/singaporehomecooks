@@ -1,10 +1,34 @@
 'use client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { checkout, transitionOrder, getOrder, getMyOrders, getMessages, sendMessage, checkoutWithCredits, createSHCError } from './api-client';
+import {
+  checkout,
+  transitionOrder,
+  getOrder,
+  getMyOrders,
+  getMessages,
+  sendMessage,
+  checkoutWithCredits,
+  getReview,
+  submitReview,
+  createSHCError,
+  isAuthenticated,
+} from './api-client';
 import type { SHCErrorCode } from '@shc/types';
 import { SHCOrderStatus } from '@shc/types';
+import { isActiveOrderStatus } from '@shc/utils';
 
-export function useOrders() { return useQuery({queryKey:['orders','customer'], queryFn:()=>getMyOrders()}); }
+export function useOrders() {
+  return useQuery({
+    queryKey: ['orders', 'customer'],
+    queryFn: () => getMyOrders(),
+    enabled: isAuthenticated(),
+    placeholderData: [],
+    refetchInterval: (query) => {
+      const list = (query.state.data as Array<{ shc_status?: string }>) || [];
+      return list.some((o) => isActiveOrderStatus(String(o.shc_status || ''))) ? 8000 : false;
+    },
+  });
+}
 export const useMyOrders = useOrders;
 
 export function useCheckout() {
@@ -23,7 +47,17 @@ export function useTransitionOrder() {
     onError:(e:any)=>{if(e?.code) throw createSHCError(e.code as SHCErrorCode,e.message||'Transition blocked');}
   });
 }
-export function useOrder(id:string) { return useQuery({queryKey:['order',id], queryFn:()=>getOrder(id), enabled:!!id}); }
+export function useOrder(id: string) {
+  return useQuery({
+    queryKey: ['order', id],
+    queryFn: () => getOrder(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      const status = String((query.state.data as { shc_status?: string })?.shc_status || '');
+      return isActiveOrderStatus(status) ? 5000 : false;
+    },
+  });
+}
 
 export function useChat(orderId:string) {
   const qc=useQueryClient();
@@ -39,4 +73,18 @@ export function useBids(reqId?:string) { return useQuery({queryKey:['bids',reqId
 export function useCreateBid() { const qc=useQueryClient(); return useMutation({mutationFn: async (d:any)=>{const {createBid}=await import('./api-client'); return createBid(d.requestId,d.priceCents,d.message);}, onSuccess:()=>qc.invalidateQueries({queryKey:['bids']})}); }
 export function useAcceptBid() { const qc=useQueryClient(); return useMutation({mutationFn: async (bidId:string)=>{const {acceptBid}=await import('./api-client'); return acceptBid(bidId);}, onSuccess:()=> {qc.invalidateQueries({queryKey:['bids']}); qc.invalidateQueries({queryKey:['orders']}); }}); }
 export function useNotifications() { return useQuery({queryKey:['notifs'], queryFn: async () => { const {getNotifications}=await import('./api-client'); return getNotifications(); }}); }
+
+export function useReview(orderId: string) {
+  const qc = useQueryClient();
+  const reviewQ = useQuery({
+    queryKey: ['review', orderId],
+    queryFn: () => getReview(orderId),
+    enabled: !!orderId,
+  });
+  const submit = useMutation({
+    mutationFn: ({ rating, body }: { rating: number; body?: string }) => submitReview(orderId, rating, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['review', orderId] }),
+  });
+  return { review: reviewQ.data, submit, isLoading: reviewQ.isLoading };
+}
 

@@ -1,35 +1,66 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, CollectionSlotPicker, PayNowPanel, AllergenAckCheckbox, SHCErrorBanner, shcColors, SHCSectionTitle, CreditBadge, WalletCard } from '@shc/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SHCCard,
+  CollectionSlotPicker,
+  PayNowPanel,
+  AllergenAckCheckbox,
+  SHCErrorBanner,
+  SHCSectionTitle,
+  CreditBadge,
+  shcSpacing,
+  shcBorders,
+  shcRadii,
+  SHCFadeIn,
+  GourmeatPayButton,
+  GourmeatOrderSummaryCard,
+  GourmeatPaymentMethodRow,
+  gourmeatColors,
+  SHCCartPageHero,
+} from '@shc/ui';
+import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
-import { useCheckout, useOrderChat } from '../../hooks/useOrder';
 import { useCollectionSlots } from '../../hooks/useProducts';
 import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
-// ErrorBoundary provided at root layout (production-hardening). No local import needed (components/ empty to obey file rules).
+import { useAuth } from '../../hooks/useAuth';
 
-// Complete checkout: slot picker (enforce avail), allergen ack gate (business rule), PayNowPanel, live earnings, SHCError display. Full E2E flow.
 export default function Checkout() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/(shared)/auth' as any);
+    }
+  }, [authLoading, user, router]);
   const { data: cart = { items: [] } } = useCart();
-  const checkoutMut = useCheckout();
   const [allergenAck, setAllergenAck] = useState(false);
-  const [pdpaConsent, setPdpaConsent] = useState(false); // explicit PDPA consent checkbox per compliance-pdpa.md + production hardening
+  const [pdpaConsent, setPdpaConsent] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: string } | null>(null);
   const [error, setError] = useState<null | { code?: SHCErrorCode; message: string }>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
-  // Phase 9/8: credits redeem + corporate stub in checkout
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: creditsData } = useCredits();
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [isCorporate, setIsCorporate] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('paynow');
   const creditBal = creditsData?.balance || 0;
 
-  const firstProdId = (cart.items || [])[0]?.productId;
-  const { data: slots = [] } = useCollectionSlots(firstProdId || 'prod_nasi_lemak');
-
+  const firstProdId = getFirstCartProductId(cart.items || []);
+  const { data: slots = [] } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
   const total = (cart.items || []).reduce((s: number, i: any) => s + i.price * i.qty, 0);
-  const cookId = (cart.items || [])[0]?.cookId;
+  const amountDue = Math.max(0, total - Math.floor(creditsToApply / 4));
+  const cookId = (cart as { cookId?: string; cook_id?: string }).cookId ?? (cart as { cook_id?: string }).cook_id;
+  const handlePaymentSelect = (method: string) => {
+    setPaymentMethod(method);
+    if (method === 'credits' && creditBal > 0) setCreditsToApply(Math.min(80, creditBal));
+    else if (method === 'paynow') setCreditsToApply(0);
+  };
+  const itemCount = (cart.items || []).reduce((s: number, i: any) => s + i.qty, 0);
 
   const handleSlot = (date: string, slot: string) => setSelectedSlot({ date, slot });
 
@@ -47,8 +78,8 @@ export default function Checkout() {
       setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection date + slot from available (enforced)' });
       return;
     }
+    setIsSubmitting(true);
     try {
-      // Use enhanced with credits + corporate (Phase 9/8 growth/diff). PDPA already in base.
       const res = await checkoutWithCredits(allergenAck, selectedSlot, creditsToApply, isCorporate);
       setCompletedOrderId((res as { order?: { id?: string } }).order?.id || '');
       if (isCorporate) {
@@ -56,79 +87,247 @@ export default function Checkout() {
       }
     } catch (e: any) {
       setError({ code: e.code, message: e.message || SHCErrorCode });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const confirmPay = async (ref: string) => {
     if (!completedOrderId) return;
-    // PayNow ref capture: store ref + call transition (per task 6). Marks paid (already set in checkout), then nav to track where address note reveals post-paid.
-    // This exercises the transitionOrder + SHCErrorCode path + collection address release logic.
     try {
-      await transitionOrder(completedOrderId, 'paid'); // idempotent demo; ref could be stored on order in real. Exercises transition + rules.
-      // In full: update paynow_reference on order via api
+      await transitionOrder(completedOrderId, 'paid');
       console.log('[PayNow] ref captured:', ref, 'for', completedOrderId);
-    } catch (e) { /* non fatal for demo */ }
+    } catch (e) { /* non fatal */ }
     router.push(`/(customer)/orders/${completedOrderId}` as any);
   };
 
-  if (!cart.items?.length) return <Text style={{ padding: 16 }}>Cart empty. Add dishes from discovery first.</Text>;
+  if (!cart.items?.length) {
+    return (
+      <View style={styles.empty}>
+        <Text>Cart empty. Add dishes from discovery first.</Text>
+      </View>
+    );
+  }
+
+  const canPlace = !!selectedSlot && allergenAck && pdpaConsent && !isSubmitting;
+  const creditDiscount = Math.floor(creditsToApply / 4);
+  const cartItems = (cart.items || []).map((i: any) => ({
+    name: String(i.name || 'Dish'),
+    qty: Number(i.qty || 1),
+    price: Number(i.price || 0),
+  }));
+
+  if (completedOrderId) {
+    return (
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md }]}
+        testID="checkout-screen"
+      >
+        <SHCCartPageHero
+          title="Order placed"
+          subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
+          imageUri={BENTO_ACTION_IMAGES.checkout}
+        />
+        <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
+        <Text style={styles.paynowHint}>Address released 2h before slot. Chat opens on payment confirm.</Text>
+        <SHCCard variant="bento-yellow" style={styles.footerCard}>
+          <Text style={styles.footerText}>
+            Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+          </Text>
+        </SHCCard>
+      </ScrollView>
+    );
+  }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: '700', color: shcColors.text }}>Checkout • S${total}</Text>
-      <Text style={{ color: shcColors.textLight }}>Cook: {cookId} • One-cook rule active • HDB collection</Text>
+    <View style={styles.screen}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 }]}
+        testID="checkout-screen"
+      >
+        <Text style={styles.checkoutTitle}>Checkout</Text>
+        <Text style={styles.checkoutSubtitle}>{itemCount} portion{itemCount !== 1 ? 's' : ''} · HDB collection</Text>
 
-      <SHCSectionTitle style={{ marginTop: 12 }}>1. Collection Slot (availability enforced)</SHCSectionTitle>
-      <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
-
-      <SHCSectionTitle>2. Allergen Acknowledgment Gate</SHCSectionTitle>
-      <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} allergens={(cart.items[0] as any)?.allergens} tier1={['Shellfish / Nuts (typical)']} />
-
-      <SHCSectionTitle>3. PDPA Consent (Singapore Data Protection - required)</SHCSectionTitle>
-      <Pressable onPress={() => setPdpaConsent(!pdpaConsent)} style={{ flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: shcColors.surface, borderRadius: 6, marginBottom: 8 }}>
-        <Text style={{ fontSize: 18, marginRight: 8, color: pdpaConsent ? shcColors.success : shcColors.textLight }}>{pdpaConsent ? '☑' : '☐'}</Text>
-        <Text style={{ flex: 1, fontSize: 13 }}>I consent to the collection and use of my personal data (contact, address, order history) solely for order fulfilment and platform operations, in line with PDPA. Data retained per policy (orders 7yrs, personal 3yrs or on request). See DATA_RETENTION_MATRIX.</Text>
-      </Pressable>
-      <Text style={{ fontSize: 10, color: shcColors.textLight }}>Consent timestamp will be recorded on order for audit.</Text>
-
-      {/* Phase 9/8: Credits redeem + corporate/group stub (delightful SG: apply to Raya orders; corporate invoice note) */}
-      {creditBal > 0 && (
-        <View style={{ marginVertical: 8 }} testID="credits-apply-section">
-          <CreditBadge balance={creditBal} tier={creditsData?.tier} />
-          <Text style={{ fontSize: 12, marginTop: 4 }}>Credits available: {creditBal} (4 = ~S$1 value). Redeem to reduce total for family occasions.</Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-            {[0, 20, 40, Math.min(80, creditBal)].map((v, idx) => (
-              <Pressable key={idx} onPress={() => setCreditsToApply(v)} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: creditsToApply === v ? shcColors.primary : shcColors.surface, borderRadius: 4 }} testID={`credit-preset-${v}`}>
-                <Text style={{ fontSize: 11, color: creditsToApply === v ? '#fff' : shcColors.text }}>{v}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {creditsToApply > 0 && <Text style={{ color: shcColors.success, fontSize: 12 }}>Applying {creditsToApply} credits (~S${(creditsToApply / 4).toFixed(0)})</Text>}
+        <View style={{ marginBottom: shcSpacing.md }}>
+          <GourmeatOrderSummaryCard
+            items={cartItems}
+            subtotal={total}
+            discount={creditDiscount > 0 ? creditDiscount : undefined}
+            total={amountDue}
+          />
         </View>
-      )}
-      <Pressable onPress={() => setIsCorporate(!isCorporate)} style={{ flexDirection: 'row', alignItems: 'center', padding: 6, marginVertical: 4 }} testID="corporate-flag-toggle" accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub">
-        <View style={{ width: 18, height: 18, borderWidth: 2, borderColor: shcColors.primary, marginRight: 6, backgroundColor: isCorporate ? shcColors.primary : 'white', borderRadius: 3 }} />
-        <Text style={{ fontSize: 12 }}>Corporate/Group Order (multi-dish note + invoice stub)</Text>
-      </Pressable>
 
-      {error && <SHCErrorBanner code={error.code} message={error.message} />}
+        <Text style={styles.sectionLabel}>Payment method</Text>
+        <GourmeatPaymentMethodRow
+          id="paynow"
+          label="PayNow"
+          subtitle="Singapore's preferred instant payment"
+          selected={paymentMethod === 'paynow'}
+          onSelect={handlePaymentSelect}
+          testID="payment-paynow"
+        />
+        {creditBal > 0 && (
+          <GourmeatPaymentMethodRow
+            id="credits"
+            label={`Credits (${creditBal} available)`}
+            subtitle="4 credits ≈ S$1 off your order"
+            selected={paymentMethod === 'credits'}
+            onSelect={handlePaymentSelect}
+            testID="payment-credits"
+          />
+        )}
 
-      <SHCButton onPress={handleCheckout as any} disabled={checkoutMut.isPending} testID="do-checkout">
-        <SHCButtonText>{checkoutMut.isPending ? 'Creating order...' : 'Create Order & Proceed to PayNow'}</SHCButtonText>
-      </SHCButton>
+        <SHCFadeIn>
+          <SHCCard style={styles.sectionCard}>
+            <SHCSectionTitle style={styles.sectionTitle}>1. Collection Slot (availability enforced)</SHCSectionTitle>
+            <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
+          </SHCCard>
 
-      {completedOrderId && (
-        <View style={{ marginTop: 16 }}>
-          <PayNowPanel orderId={completedOrderId} total={total} onConfirmPay={confirmPay} />
-          <Text style={{ marginTop: 8, fontSize: 12, color: shcColors.success }}>Address released 2h before slot. Chat opens on payment confirm.</Text>
-        </View>
-      )}
+          <SHCCard style={styles.sectionCard}>
+            <SHCSectionTitle style={styles.sectionTitle}>2. Allergen Acknowledgment Gate</SHCSectionTitle>
+            <AllergenAckCheckbox
+              checked={allergenAck}
+              onChange={setAllergenAck}
+              allergens={(cart.items[0] as any)?.allergens}
+              tier1={['Shellfish / Nuts (typical)']}
+            />
+          </SHCCard>
 
-      <Text style={{ fontSize: 11, marginTop: 16, color: shcColors.textLight }}>Earnings for cook live: S${Math.floor(total * 0.85)}. PayNow ref captured, order status transitions validated with 09-order-state machine.</Text>
+          <SHCCard style={styles.sectionCard}>
+            <SHCSectionTitle style={styles.sectionTitle}>3. PDPA Consent (Singapore Data Protection)</SHCSectionTitle>
+            <Pressable
+              onPress={() => setPdpaConsent(!pdpaConsent)}
+              testID="pdpa-consent"
+              style={[styles.pdpaRow, pdpaConsent && styles.pdpaRowChecked]}
+            >
+              <View style={[styles.pdpaBox, pdpaConsent && styles.pdpaBoxChecked]}>
+                {pdpaConsent && <Text style={styles.pdpaCheck}>✓</Text>}
+              </View>
+              <Text style={styles.pdpaText}>
+                I consent to the collection and use of my personal data (contact, address, order history) solely for order fulfilment and platform operations, in line with PDPA.
+              </Text>
+            </Pressable>
+            <Text style={styles.pdpaHint}>Consent timestamp will be recorded on order for audit.</Text>
+          </SHCCard>
 
-      <View style={{ marginTop: 12, padding: 10, backgroundColor: shcColors.surface, borderRadius: 8 }}>
-        <Text style={{ fontSize: 11, color: shcColors.textLight }}>PayNow manual: Customer transfers exact to platform UEN (ref = order ID). Enter ref → ops confirms in Admin (see content/paynow-flow.md for exact steps). Trust layers + cancellation + collection policy: content/trust-and-safety.md. Heritage in every verified transaction.</Text>
+          {creditBal > 0 && (
+            <SHCCard variant="bento-mint" style={styles.sectionCard} testID="credits-apply-section">
+              <CreditBadge balance={creditBal} tier={creditsData?.tier} />
+              <Text style={styles.creditsHint}>
+                Credits available: {creditBal} (4 = ~S$1 value). Redeem for family occasions.
+              </Text>
+              <View style={styles.creditPresets}>
+                {[0, 20, 40, Math.min(80, creditBal)].map((v, idx) => (
+                  <Pressable
+                    key={idx}
+                    onPress={() => setCreditsToApply(v)}
+                    style={[styles.creditChip, creditsToApply === v && styles.creditChipActive]}
+                    testID={`credit-preset-${v}`}
+                  >
+                    <Text style={[styles.creditChipText, creditsToApply === v && styles.creditChipTextActive]}>{v}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </SHCCard>
+          )}
+
+          <Pressable
+            onPress={() => setIsCorporate(!isCorporate)}
+            style={styles.corporateRow}
+            testID="corporate-flag-toggle"
+            accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub"
+          >
+            <View style={[styles.corporateBox, isCorporate && styles.corporateBoxChecked]} />
+            <Text style={styles.corporateText}>Corporate/Group Order (multi-dish note + invoice stub)</Text>
+          </Pressable>
+
+          {error && <SHCErrorBanner code={error.code} message={error.message} />}
+
+          <SHCCard variant="bento-yellow" style={styles.footerCard}>
+            <Text style={styles.footerText}>
+              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+            </Text>
+          </SHCCard>
+        </SHCFadeIn>
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: shcSpacing.md, paddingBottom: Math.max(insets.bottom, shcSpacing.md) }}>
+        <GourmeatPayButton
+          label="Pay Now"
+          amount={`S$${amountDue.toFixed(2)}`}
+          onPress={handleCheckout as any}
+          disabled={!canPlace}
+          loading={isSubmitting}
+          testID="do-checkout"
+        />
       </View>
-    </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
+  empty: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background },
+  content: { paddingHorizontal: shcSpacing.md },
+  checkoutTitle: { fontSize: 24, fontWeight: '800', color: gourmeatColors.text, marginBottom: 4 },
+  checkoutSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.md },
+  sectionLabel: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
+  sectionCard: { marginBottom: shcSpacing.md },
+  sectionTitle: { marginTop: 0 },
+  pdpaRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: shcSpacing.sm,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: gourmeatColors.border,
+    backgroundColor: gourmeatColors.surface,
+  },
+  pdpaRowChecked: { backgroundColor: gourmeatColors.primaryLight },
+  pdpaBox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    marginRight: shcSpacing.sm,
+    borderRadius: shcRadii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: gourmeatColors.surface,
+  },
+  pdpaBoxChecked: { backgroundColor: gourmeatColors.primary },
+  pdpaCheck: { color: '#fff', fontWeight: '800' },
+  pdpaText: { flex: 1, fontSize: 13, color: gourmeatColors.text },
+  pdpaHint: { fontSize: 10, color: gourmeatColors.textLight, marginTop: 6 },
+  creditsHint: { fontSize: 12, marginTop: shcSpacing.sm },
+  creditPresets: { flexDirection: 'row', gap: shcSpacing.sm, marginTop: shcSpacing.sm, flexWrap: 'wrap' },
+  creditChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: shcRadii.sm,
+    borderWidth: shcBorders.brutal,
+    borderColor: gourmeatColors.border,
+    backgroundColor: gourmeatColors.surface,
+  },
+  creditChipActive: { backgroundColor: gourmeatColors.primary },
+  creditChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
+  creditChipTextActive: { color: '#fff' },
+  creditsApplied: { color: gourmeatColors.success, fontSize: 12, marginTop: 6, fontWeight: '600' },
+  corporateRow: { flexDirection: 'row', alignItems: 'center', padding: shcSpacing.sm, marginBottom: shcSpacing.md },
+  corporateBox: {
+    width: 20,
+    height: 20,
+    borderWidth: shcBorders.brutal,
+    borderColor: gourmeatColors.border,
+    marginRight: shcSpacing.sm,
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: shcRadii.sm,
+  },
+  corporateBoxChecked: { backgroundColor: gourmeatColors.primary },
+  corporateText: { fontSize: 12, fontWeight: '600' },
+  paynowHint: { marginTop: shcSpacing.sm, fontSize: 12, color: gourmeatColors.success, fontWeight: '600' },
+  footerCard: { marginTop: shcSpacing.md },
+  footerText: { fontSize: 11, color: gourmeatColors.textLight, lineHeight: 16 },
+});

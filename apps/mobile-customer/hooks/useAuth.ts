@@ -28,6 +28,7 @@ export function useAuth() {
     const { token, user: u } = await apiLogin(email, password);
     await persistSession(token, u);
     setUser(u);
+    import('../lib/push').then(({ registerCustomerPushToken }) => registerCustomerPushToken().catch(() => null));
     return u;
   }, []);
 

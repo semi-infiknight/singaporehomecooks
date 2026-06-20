@@ -8,6 +8,8 @@ import ShcRequestModule from "./shc-request";
 import ShcBidModule from "./shc-bid";
 import ShcCreditWalletModule from "./shc-credit-wallet";
 import ShcHeritageModule from "./shc-heritage";
+import ShcReviewModule from "./shc-review";
+import ShcCartModule from "./shc-cart";
 
 // Register custom SHC modules. Links are defined separately in src/links/*
 // Phase 6: added shc-ledger (double-entry) + shc-payout-batch (weekly)
@@ -23,6 +25,8 @@ export const modules = [
   { resolve: "./src/modules/shc-bid" },
   { resolve: "./src/modules/shc-credit-wallet" },
   { resolve: "./src/modules/shc-heritage" },
+  { resolve: "./src/modules/shc-review" },
+  { resolve: "./src/modules/shc-cart" },
 ];
 
 export {
@@ -36,4 +40,6 @@ export {
   ShcBidModule,
   ShcCreditWalletModule,
   ShcHeritageModule,
+  ShcReviewModule,
+  ShcCartModule,
 };

@@ -11,12 +11,16 @@
     "typecheck": "tsc --noEmit || true"
   },
   "peerDependencies": {
+    "@expo/vector-icons": "*",
+    "moti": "*",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-reanimated": ">=3.0.0"
   },
   "dependencies": {
     "@gluestack-ui/themed": "^1.1.73",
-    "@shc/types": "workspace:*"
+    "@shc/types": "workspace:*",
+    "@shc/utils": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

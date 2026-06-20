@@ -2,260 +2,226 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Settings2 } from 'lucide-react';
 import { useProducts } from '../lib/useProducts';
-import { SHCButton, SHCCard, SHCBadge, CalorieBadge, SHCSkeletonGrid, SHCEmptyState, TrustStrip } from './components/SHCWebComponents';
+import { useOrders } from '../lib/useOrder';
+import { useAuth } from '../lib/useAuth';
+import { useDiscoverSearch } from './providers';
+import {
+  extractReorderDishes,
+  getActiveOrders,
+  getOrderStatusLabel,
+  favoritesToReorderDishes,
+  getOccasionImageUrl,
+  getCookAvatarUrl,
+  MIND_CUISINE_CATEGORIES,
+} from '@shc/utils';
+import { useFavorites } from '../lib/useFavorites';
+import {
+  SHCButton,
+  SHCSkeletonGrid,
+  SHCEmptyState,
+  GuestBrowseBar,
+  ActiveOrderBanner,
+  DishRowRail,
+  GourmeatHomeHeader,
+  GourmeatCategoryRow,
+  GourmeatDishCard,
+  HeritageStoryBanner,
+  PromoRail,
+  type DishCardProduct,
+} from './components/SHCWebComponents';
 
 const occasions = [
-  'Hari Raya',
-  'Deepavali',
-  'Chinese New Year',
-  'Family Gathering',
-  'Birthday',
-  'Christmas',
-  'Full Moon / Baby Full Month',
-];
-
-const calOpts = [
-  { label: 'All portions', val: undefined as number | undefined },
-  { label: 'Light · ≤400 cal', val: 400 },
-  { label: 'Moderate · ≤550 cal', val: 550 },
+  { id: '', label: 'All' },
+  ...['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Christmas'].map((o) => ({
+    id: o,
+    label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
+    imageUrl: getOccasionImageUrl(o),
+  })),
 ];
 
 export default function DiscoverHome() {
-  const [query, setQuery] = useState('');
+  const router = useRouter();
+  const { user } = useAuth();
+  const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
-  const [maxCal, setMaxCal] = useState<number | undefined>(undefined);
+  const [cuisineFilter, setCuisineFilter] = useState('');
   const { data: products = [], isLoading } = useProducts(query, {
     occasion: occasionFilter || undefined,
-    maxCal,
   });
+  const { data: orders = [] } = useOrders();
+  const { favorites } = useFavorites();
+  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
-  const featuredCooks = useMemo(() => {
-    const seen = new Set<string>();
-    const cooks: Array<{ id: string; name: string; area: string; cuisine: string }> = [];
-    for (const p of products as Array<{ cook_id?: string; cook_name?: string; cuisine?: string }>) {
-      const id = p.cook_id || p.cook_name || '';
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      cooks.push({
-        id: id.replace('cook_', ''),
-        name: p.cook_name || 'Home cook',
-        area: 'Singapore',
-        cuisine: p.cuisine || 'Heritage',
-      });
-      if (cooks.length >= 4) break;
-    }
-    return cooks;
-  }, [products]);
+  const savedDishes = useMemo(() => {
+    if (query) return [];
+    return favoritesToReorderDishes(favorites).map((d) => ({
+      id: d.id,
+      name: d.name,
+      cook_name: d.cook_name || '',
+      price: d.price,
+      cuisine: d.cuisine,
+    })) as DishCardProduct[];
+  }, [favorites, query]);
+
+  const productList = products as DishCardProduct[];
+
+  const filteredList = useMemo(() => {
+    if (!cuisineFilter) return productList;
+    return productList.filter((p) => p.cuisine === cuisineFilter);
+  }, [productList, cuisineFilter]);
+
+  const reorderDishes = useMemo(() => {
+    if (query) return [];
+    const items = extractReorderDishes(orders as Record<string, unknown>[]);
+    return items.map((d) => ({
+      id: d.id,
+      name: d.name,
+      cook_name: d.cook_name || '',
+      price: d.price,
+      cuisine: d.cuisine,
+    })) as DishCardProduct[];
+  }, [orders, query]);
+
+  const cuisineItems = MIND_CUISINE_CATEGORIES.map((c) => ({
+    id: c.id,
+    label: c.label,
+    imageUrl: c.imageUrl,
+  }));
+
+  const locationLabel = user?.name ? `${user.name.split(' ')[0]}'s area · SG` : 'Katong, Singapore';
 
   return (
-    <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-brand-bg border-b border-border/50">
-        <div className="max-w-6xl mx-auto px-4 py-14 md:py-20">
-          <div className="max-w-2xl">
-            <p className="text-sm font-medium text-primary uppercase tracking-wider mb-3">
-              Heritage in every dish
-            </p>
-            <h1 className="shc-display text-4xl md:text-5xl font-semibold tracking-tight text-foreground leading-[1.1]">
-              Home-cooked Singapore food for your next occasion
-            </h1>
-            <p className="text-lg text-muted-foreground mt-4 leading-relaxed">
-              Peranakan, Malay, Eurasian and more — from verified cooks in Tampines, Katong and across the island.
-              Order ahead, collect from HDB, pay with PayNow.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="#discover">
-                <SHCButton size="lg">Browse dishes</SHCButton>
-              </a>
-              <Link href="/content/trust">
-                <SHCButton size="lg" variant="outline">
-                  How we keep you safe
-                </SHCButton>
-              </Link>
-            </div>
-          </div>
-          <div className="mt-10">
-            <TrustStrip />
-          </div>
-        </div>
-      </section>
+    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8">
+      {!user && <GuestBrowseBar onSignInClick={() => router.push('/login')} />}
 
-      {/* Discover */}
-      <section id="discover" className="max-w-6xl mx-auto px-4 py-10 md:py-14">
-        <div className="mb-8">
-          <h2 className="shc-display text-2xl md:text-3xl font-semibold text-[#2C2416]">Find your occasion meal</h2>
-          <p className="text-[#5C5144] mt-1">Search by dish, cuisine, or occasion — one cook per order</p>
-        </div>
+      <GourmeatHomeHeader
+        headline="Hungry? Order & Eat."
+        locationLabel={locationLabel}
+        locationHint="Collect from"
+        avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+      />
 
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#5C5144]" aria-hidden />
+      <div className="flex gap-2 mb-5">
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Try nasi lemak, buah keluak, Hari Raya spread…"
-            className="shc-input pl-12 text-base"
-            data-testid="search-input-web"
-            aria-label="Search heritage dishes and cooks"
+            placeholder="Search dishes, cooks, occasions…"
+            className="w-full pl-11 pr-4 py-3 rounded-full bg-card border border-border shadow-[var(--shc-shadow-soft)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+            data-testid="search-input"
           />
         </div>
+        <Link
+          href="/search"
+          className="w-11 h-11 shrink-0 rounded-xl bg-card border border-border shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
+          aria-label="Advanced search"
+        >
+          <Settings2 className="w-5 h-5 text-foreground" />
+        </Link>
+      </div>
 
-        <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#5C5144] mb-2">Occasion</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setOccasionFilter('')}
-              className={`shc-chip ${!occasionFilter ? 'shc-chip-active' : 'shc-chip-inactive'}`}
-            >
-              All
-            </button>
-            {occasions.map((o) => (
-              <button
-                key={o}
-                type="button"
-                onClick={() => setOccasionFilter(o)}
-                className={`shc-chip ${occasionFilter === o ? 'shc-chip-active' : 'shc-chip-inactive'}`}
-              >
-                {o}
-              </button>
-            ))}
-          </div>
+      {!query && (
+        <div className="mb-4">
+          <HeritageStoryBanner href="/content/trust" />
         </div>
+      )}
 
-        <div className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#5C5144] mb-2">Portion size</p>
-          <div className="flex flex-wrap gap-2">
-            {calOpts.map((opt, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setMaxCal(opt.val)}
-                className={`shc-chip ${maxCal === opt.val ? 'shc-chip-active' : 'shc-chip-inactive'}`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+      {!query && (
+        <div className="shc-section-gap mb-4">
+          <PromoRail
+            onPromoClick={(id) => {
+              if (id === 'promo-raya') setOccasionFilter('Hari Raya');
+              else if (id === 'promo-credits') router.push('/profile');
+              else if (id === 'promo-paynow') router.push('/content/trust');
+            }}
+          />
         </div>
+      )}
 
-        {featuredCooks.length > 0 && !query && !occasionFilter && (
-          <div className="mb-10">
-            <h3 className="text-sm font-semibold text-[#5C5144] uppercase tracking-wider mb-3">Featured cooks</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
-              {featuredCooks.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/cook/${c.id}`}
-                  className="shrink-0 w-44 p-4 bg-white border border-[#E8D5B7] rounded-xl hover:shadow-md transition-shadow"
-                >
-                  <div className="w-10 h-10 rounded-full bg-[#F5F0E6] flex items-center justify-center text-[#8B5E3C] font-semibold text-sm mb-2">
-                    {c.name.charAt(0)}
-                  </div>
-                  <div className="font-medium text-sm text-[#2C2416] line-clamp-1">{c.name}</div>
-                  <div className="text-xs text-[#5C5144] mt-0.5">{c.cuisine}</div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <h3 className="text-lg font-semibold text-[#2C2416] mb-4">
-          {occasionFilter ? `Dishes for ${occasionFilter}` : 'Heritage dishes'}
-          {maxCal ? ` · up to ${maxCal} cal` : ''}
-        </h3>
-
-        {isLoading && <SHCSkeletonGrid />}
-        {!isLoading && products.length === 0 && (
-          <SHCEmptyState
-            title="No dishes match your search"
-            description="Try a different occasion, clear your filters, or search for a classic like nasi lemak or chap chye."
-            action={
-              <SHCButton
-                variant="outline"
-                onClick={() => {
-                  setQuery('');
-                  setOccasionFilter('');
-                  setMaxCal(undefined);
-                }}
-              >
-                Clear filters
-              </SHCButton>
+      {activeOrder && (
+        <div className="mb-4">
+          <ActiveOrderBanner
+            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
+            dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
+            collectionLabel={
+              activeOrder.collection_date
+                ? `${activeOrder.collection_date} ${activeOrder.collection_slot || ''}`
+                : undefined
             }
+            href={`/orders/${activeOrder.id}`}
           />
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {(products as Array<Record<string, unknown>>).map((p) => {
-            const cal = (p.calories as number) || 450;
-            const cookSlug = String(p.cook_id || '').replace('cook_', '');
-            return (
-              <SHCCard key={String(p.id)} hover className="flex flex-col">
-                <Link href={`/product/${p.id}`} className="block flex-1">
-                  <div className="font-semibold text-lg text-[#2C2416] leading-snug">{String(p.name)}</div>
-                  <div className="text-sm text-[#B85C38] mt-1">
-                    {String(p.cook_name)} · S${String(p.price)} / portion
-                  </div>
-                  <p className="text-sm text-[#5C5144] mt-2 line-clamp-2 leading-relaxed">{String(p.heritage_note)}</p>
-                </Link>
-                <div className="flex items-center gap-2 mt-4 flex-wrap">
-                  <SHCBadge variant="heritage">{String(p.cuisine)}</SHCBadge>
-                  <CalorieBadge calories={cal} />
-                  {Boolean(p.halal) && <SHCBadge variant="success">Halal</SHCBadge>}
-                  <span className="text-xs text-[#5C5144]">Min {String(p.min_qty)} portions</span>
-                </div>
-                {(p.occasion_tags as string[] | undefined)?.length ? (
-                  <p className="text-xs text-[#1D9E75] mt-2">
-                    Great for {(p.occasion_tags as string[]).join(', ')}
-                  </p>
-                ) : null}
-                <div className="flex gap-2 mt-4 pt-4 border-t border-[#E8D5B7]/60">
-                  {cookSlug && (
-                    <Link href={`/cook/${cookSlug}`}>
-                      <SHCButton size="sm" variant="ghost">
-                        Meet the cook
-                      </SHCButton>
-                    </Link>
-                  )}
-                  <Link href={`/product/${p.id}`} className="ml-auto">
-                    <SHCButton size="sm">View & order</SHCButton>
-                  </Link>
-                </div>
-              </SHCCard>
-            );
-          })}
         </div>
-      </section>
+      )}
 
-      {/* How it works */}
-      <section className="bg-secondary border-y border-border/50">
-        <div className="max-w-6xl mx-auto px-4 py-14">
-          <h2 className="shc-display text-2xl font-semibold text-[#2C2416] mb-8">How it works</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { step: '1', title: 'Discover', desc: 'Browse by occasion or search heritage dishes from verified home cooks.' },
-              { step: '2', title: 'Order safely', desc: 'Acknowledge allergens, pick a collection slot — one cook per cart.' },
-              { step: '3', title: 'Pay with PayNow', desc: 'Transfer to our UEN with your order reference. Chat opens right away.' },
-              { step: '4', title: 'Collect & enjoy', desc: 'Address shared 2h before your slot. Earn 5% Home Credits after collection.' },
-            ].map((item) => (
-              <div key={item.step}>
-                <div className="w-8 h-8 rounded-full bg-[#1D9E75] text-white flex items-center justify-center text-sm font-bold mb-3">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-[#2C2416]">{item.title}</h3>
-                <p className="text-sm text-[#5C5144] mt-1 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-8">
-            <Link href="/content/trust" className="text-sm text-[#1D9E75] font-medium hover:underline">
-              Read our full Trust & Safety policy →
-            </Link>
-          </div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-extrabold text-foreground">Categories</h2>
+        <Link href="/search" className="text-sm font-semibold text-primary">See all</Link>
+      </div>
+      <div className="shc-section-gap">
+        <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
+      </div>
+
+      {!query && reorderDishes.length > 0 && (
+        <div className="shc-section-gap">
+          <h2 className="text-lg font-extrabold text-foreground mb-3">Order again</h2>
+          <DishRowRail title="" products={reorderDishes} />
         </div>
-      </section>
-    </>
+      )}
+
+      {!query && savedDishes.length > 0 && (
+        <div className="shc-section-gap">
+          <h2 className="text-lg font-extrabold text-foreground mb-3">Saved for you</h2>
+          <DishRowRail title="" products={savedDishes} />
+        </div>
+      )}
+
+      <h2 className="text-lg font-extrabold text-foreground mb-3 mt-2">Explore cuisines</h2>
+      <div className="shc-section-gap">
+        <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
+      </div>
+
+      <h2 className="text-lg font-extrabold text-foreground mb-3" data-testid="all-dishes-header">
+        {occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+      </h2>
+
+      {isLoading && <SHCSkeletonGrid />}
+      {!isLoading && filteredList.length === 0 && (
+        <SHCEmptyState
+          title="No dishes match your search"
+          description="Try a different category or clear your filters."
+          action={
+            <SHCButton
+              variant="outline"
+              onClick={() => {
+                setQuery('');
+                setOccasionFilter('');
+                setCuisineFilter('');
+              }}
+            >
+              Clear filters
+            </SHCButton>
+          }
+        />
+      )}
+
+      {!isLoading && filteredList.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 md:gap-4" data-testid="dish-list-container">
+          {filteredList.map((p) => (
+            <GourmeatDishCard key={p.id} product={p} />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-8 text-center">
+        <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline">
+          Trust &amp; Safety →
+        </Link>
+      </div>
+    </section>
   );
 }

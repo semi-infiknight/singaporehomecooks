@@ -31,8 +31,11 @@
     "eas:cook:preview": "pnpm --filter mobile-cook eas:build:preview",
     "tunnel:medusa": "cloudflared tunnel --url http://localhost:9000",
     "start:full": "echo 'See LOCAL_TESTING.md and the instructions below. Run in separate terminals.'",
-    "customer:dev": "pnpm --filter mobile-customer dev",
-    "cook:dev": "pnpm --filter mobile-cook dev",
+    "customer:dev": "pnpm --filter mobile-customer start",
+    "cook:dev": "pnpm --filter mobile-cook start",
+    "customer:metro": "cd apps/mobile-customer && npx expo start --port 8081",
+    "cook:metro": "cd apps/mobile-cook && RCT_METRO_PORT=8082 npx expo start --port 8082",
+    "maestro:full-tour": "bash scripts/run-maestro-full-tour.sh",
     "web:dev": "turbo dev --filter=web",
     "web:build": "turbo build --filter=web",
     "web:typecheck": "turbo typecheck --filter=web",
@@ -41,6 +44,8 @@
     "railway:configure-web": "node scripts/railway-configure-web.mjs"
   },
   "devDependencies": {
+    "nativewind": "^4.2.5",
+    "tailwindcss": "^3.4.19",
     "@types/node": "^20.14.0",
     "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^9.5.0",

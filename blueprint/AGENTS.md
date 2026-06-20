@@ -20,10 +20,17 @@ Do **not** rely on root `STATUS.md` alone for integration status — it predates
 5. When you need schema or route definitions, go to `05-data-model.md` or `06-api-surface.md`
 6. When you need production rules, go to `multi-agent/production-hardening.md` or the `production/` folder
 
-## Self-Updating Rules
-Strictly follow `multi-agent/self-updating-rules.md` after every task. This keeps the web as the single source of truth.
+## Self-Updating Rules (STRICT — WITH EVERY CHANGE)
 
-When integration state changes (new Medusa routes, client wiring, env/bootstrap, admin fixes), update **`CURRENT_STATE.md`** + `INDEX.md` (Last Updated line) — not only `STATUS.md` or phase files.
+**MANDATORY:** Follow `multi-agent/self-updating-rules.md` **for every single code change**.
+
+- If your change touches a route, module, column, contract (types/business-rules), screen, flow, or config → you **must** patch the corresponding blueprint doc(s) + CURRENT_STATE.md + INDEX "Last Updated" **in the same commit**.
+- Never ship code-only deltas that make blueprint stale.
+- Primary places: 05-data-model, 06-api-surface, 07/08/09, 10/11/12, CURRENT_STATE, INDEX.
+
+See the full protocol + commit checklist in multi-agent/self-updating-rules.md.
+
+When integration state changes, update **`CURRENT_STATE.md`** + `INDEX.md` (Last Updated line) + primary section. Do not only update `STATUS.md` or phase files.
 
 ## No Divergence Allowed
 - The old `Singapore_Home_Cooks_Builder_Blueprint.md` has been removed.

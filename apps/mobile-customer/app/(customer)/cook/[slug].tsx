@@ -1,13 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, CookCard, SHCSectionTitle, shcColors } from '@shc/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SHCCard,
+  SHCButton,
+  SHCButtonText,
+  SHCCookStoreHero,
+  SHCZomatoDishRowRail,
+  SHCDishCard,
+  SHCSectionTitle,
+  SHCFoodImage,
+  type SHCDishCardData,
+  shcColors,
+  shcRadii,
+  shcSpacing,
+} from '@shc/ui';
+import { getDishImageUrl, getCookAvatarUrl, BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useCook, useDiscovery } from '../../../hooks/useProducts';
 import { getHeritageArchive } from '../../../lib/api-client';
 
-// Dedicated cook/[slug] enhancements: full story (HDB/heritage), listings grid, availability, ratings. Typed from contracts.
 export default function CookProfile() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const insets = useSafeAreaInsets();
   const { data: cook } = useCook(slug || '');
   const { data: allProducts = [] } = useDiscovery('', {});
   const router = useRouter();
@@ -21,52 +36,95 @@ export default function CookProfile() {
     }
   }, [cook?.id]);
 
-  if (!cook) return <Text style={{ padding: 16 }}>Loading cook profile from HDB kitchen...</Text>;
+  if (!cook) {
+    return (
+      <View style={styles.loading}>
+        <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.lg} />
+        <Text style={{ marginTop: shcSpacing.sm }}>Loading cook…</Text>
+      </View>
+    );
+  }
+
+  const toDish = (l: any): SHCDishCardData => ({
+    id: l.id,
+    name: l.name,
+    cook_name: cook.display_name,
+    price: l.price,
+    cuisine: l.cuisine,
+    rating: cook.rating,
+    image_url: getDishImageUrl({ id: l.id, cuisine: l.cuisine, name: l.name }),
+  });
+
+  const dishRows = listings.map(toDish);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: shcColors.background, padding: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: '700', color: shcColors.text }}>{cook.display_name}</Text>
-      <Text style={{ color: shcColors.accent, marginBottom: 4 }}>{cook.area} • Verified home cook • HDB collection only</Text>
-      {cook.rating && <Text style={{ color: shcColors.textLight }}>{cook.rating}★ ({cook.orders || 300}+ orders served)</Text>}
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 80 }]}
+    >
+      <SHCCookStoreHero
+        name={cook.display_name}
+        area={cook.area}
+        rating={cook.rating}
+        orders={cook.orders}
+        avatarUri={getCookAvatarUrl(cook.id, cook.display_name)}
+      />
 
-      <SHCCard style={{ marginVertical: 12 }}>
-        <Text style={{ fontStyle: 'italic', color: shcColors.heritage }}>{cook.story}</Text>
-        <Text style={{ marginTop: 8, fontSize: 12 }}>Collection: {cook.collection_instructions || 'Details released after payment confirmation.'}</Text>
-      </SHCCard>
+      {dishRows.length > 0 && (
+        <SHCZomatoDishRowRail title="Menu highlights" dishes={dishRows} onDishPress={(id) => router.push(`/(customer)/product/${id}` as any)} />
+      )}
 
-      <SHCSectionTitle>Heritage Listings (available slots checked at checkout)</SHCSectionTitle>
-      {listings.length === 0 && <Text>No active listings. Check back or request custom.</Text>}
-      {listings.map((l: any) => (
-        <Pressable key={l.id} onPress={() => router.push(`/(customer)/product/${l.id}` as any)}>
-          <SHCCard style={{ marginBottom: 10 }}>
-            <Text style={{ fontWeight: '600' }}>{l.name} • S${l.price}</Text>
-            <Text style={{ fontSize: 12, color: shcColors.textLight }}>{l.occasion_tags?.join(' • ')} • min {l.min_qty} • ~{l.calories} cal</Text>
-            <Text style={{ fontSize: 11, color: shcColors.heritage, marginTop: 2 }}>{l.heritage_note}</Text>
-          </SHCCard>
-        </Pressable>
-      ))}
-
-      {/* Phase 8: Heritage Recipe Archive — permanent section (even if cook inactive). Seed + new entries from cook dashboard. */}
-      <SHCSectionTitle>Heritage Recipe Archive (Permanent — SG History)</SHCSectionTitle>
-      <SHCCard style={{ backgroundColor: shcColors.surface }}>
-        {archive.length === 0 && <Text style={{ fontSize: 12 }}>No archive entries yet. Cooks can publish family stories + photos from their dashboard (visible forever).</Text>}
-        {archive.map((a: any, i: number) => (
-          <View key={i} style={{ marginBottom: 8 }}>
-            <Text style={{ fontWeight: '600', color: shcColors.heritage }}>{a.title} {a.published ? '✓ Published' : ''}</Text>
-            <Text style={{ fontSize: 12 }}>{a.story}</Text>
-            {a.photo_stub && <Text style={{ fontSize: 10, color: shcColors.textLight }}>📷 {a.photo_stub}</Text>}
+      <SHCSectionTitle>All listings</SHCSectionTitle>
+      {listings.length === 0 && (
+        <SHCCard variant="bento-yellow" style={styles.emptyCard}>
+          <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={72} rounded={shcRadii.md} />
+          <Text style={styles.emptyText}>No active listings</Text>
+        </SHCCard>
+      )}
+      <View style={styles.grid}>
+        {listings.map((l: any) => (
+          <View key={l.id} style={styles.gridItem}>
+            <SHCDishCard dish={toDish(l)} compact onPress={() => router.push(`/(customer)/product/${l.id}` as any)} />
           </View>
         ))}
-      </SHCCard>
+      </View>
 
-      <SHCButton onPress={() => router.push('/(customer)/cart' as any)} style={{ marginTop: 12 }}>
-        <SHCButtonText>Browse cart &amp; proceed to checkout</SHCButtonText>
+      {archive.length > 0 && (
+        <>
+          <SHCSectionTitle>Heritage archive</SHCSectionTitle>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.archiveRail}>
+            {archive.map((a: any, i: number) => (
+              <SHCCard key={i} variant="bento-peach" style={styles.archiveCard}>
+                <Text style={styles.archiveIcon}>📜</Text>
+                <Text style={styles.archiveTitle} numberOfLines={2}>{a.title}</Text>
+                <Text style={styles.archiveStory} numberOfLines={3}>{a.story}</Text>
+              </SHCCard>
+            ))}
+          </ScrollView>
+        </>
+      )}
+
+      <SHCButton onPress={() => router.push('/(customer)/cart' as any)} style={styles.cartBtn}>
+        <SHCButtonText>View Cart</SHCButtonText>
       </SHCButton>
-      <Text style={{ marginTop: 8, fontSize: 11, color: shcColors.textLight }}>All listings enforce one-cook cart rule + portions availability.</Text>
-
-      <SHCCard style={{ marginTop: 16, backgroundColor: shcColors.surface }}>
-        <Text style={{ fontSize: 12, color: shcColors.textLight }}>Cook profile: HDB collection transparency + heritage story live. Full trust: content/trust-and-safety.md</Text>
-      </SHCCard>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: shcColors.background },
+  content: { paddingHorizontal: shcSpacing.md },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: shcSpacing.xl },
+  loadingEmoji: { fontSize: 48, marginBottom: shcSpacing.sm },
+  emptyCard: { alignItems: 'center', padding: shcSpacing.lg },
+  emptyEmoji: { fontSize: 36 },
+  emptyText: { fontWeight: '700', color: shcColors.textLight, marginTop: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
+  gridItem: { width: '48%' },
+  archiveRail: { gap: shcSpacing.sm, paddingBottom: shcSpacing.sm },
+  archiveCard: { width: 200, minHeight: 120 },
+  archiveIcon: { fontSize: 24 },
+  archiveTitle: { fontWeight: '800', color: shcColors.heritage, marginTop: 4 },
+  archiveStory: { fontSize: 11, color: shcColors.textLight, marginTop: 4 },
+  cartBtn: { marginTop: shcSpacing.lg },
+});

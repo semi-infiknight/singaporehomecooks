@@ -3,70 +3,187 @@
 **Related Files:**
 - [../INDEX.md](../INDEX.md)
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
+- [../13-design-system/WIREFRAMES.md](../13-design-system/WIREFRAMES.md)
+- [../../brand.md](../../brand.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
-- [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
+- `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-14 by Mobile + Growth/Differentiation Subagent (extracted & implemented: SHCButton, SHCCard, SHCBadge, SHCSectionTitle, OrderStatusBadge, CookCard, OrderCard, PayNowPanel, CollectionSlotPicker, ListingWizardStep, AllergenAckCheckbox, IngredientTierEditor, OccasionTagPicker, PriceEarningsCalc, SHCErrorBanner + full theme tokens; replaced inline in all mobile screens. **Phases 7-9:** CreditBadge, WalletCard (credits/tier/redeem), AICalorieBadge, PhotoTipsModalContent, RequestDishForm — with testIDs, a11y, SG heritage. See 10-mobile update.)
-**Owner:** Mobile Track
+**Last Updated:** 2026-06-20 (Blueprint Sync) — @shc/ui v3 (zomato, food-ux, visuals, icons) + tri-platform sync skill + web + mobile-customer + mobile-cook using SHCZomato* / SHCHeritage etc. Confirmed in use.
+**Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
 
-The `shc-ui` package provides a cohesive design system and reusable component library used across the entire Expo mobile application. It ensures visual and behavioral consistency between customer and cook experiences while accelerating development for both tracks.
+The `shc-ui` package provides a cohesive design system and reusable component library used across **mobile-customer**, **mobile-cook**, and **web** (via mirrored components in `apps/web/app/components/SHCWebComponents.tsx`). Visual and behavioral consistency is enforced by the tri-platform sync rule in `brand.md` and `.agents/skills/tri-platform-ui-sync/`.
+
+Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../13-design-system/WIREFRAMES.md)
+
+## Package layout (`packages/shc-ui/src/`)
+
+| File | Purpose |
+|---|---|
+| `theme.ts` | Colors, spacing, borders, shadows, typography, motion tokens |
+| `native.ts` | NativeWind theme bridge (`nativewind-theme.cjs`) |
+| `primitives.tsx` | Buttons, cards, badges, inputs, bento grid/cells, sticky header, tab bar |
+| `zomato.tsx` | Zomato-style layout: promo rail, filter chips, dish rows, sticky header, cuisine rail |
+| `visuals.tsx` | `SHCFoodImage`, `SHCVisualBentoTile`, `SHCBentoStatCell`, `SHCZomatoAddButton`, rating pill |
+| `icons.tsx` | `SHCIcon`, `SHCTabIcon`, `SHCBentoIconBadge` (Ionicons on mobile; web uses Lucide mirrors) |
+| `motion.tsx` | `SHCFadeIn`, `SHCStaggerIn`, `SHCWizardPane` (Moti + Reanimated) |
+| `food-ux.tsx` | Toptal principles: `SHCCheckoutStepper`, `SHCSearchResultRow`, `SHCSearchResultsPanel`, `SHCHeritageStoryBanner` |
+| `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
+| `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
+
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`).
 
 ## Component Categories
 
-### Core Primitives (gluestack-ui + custom)
-- `SHCButton`, `SHCInput`, `SHCCard`, `SHCBadge`, `SHCModal`, `SHCTabs`
-- Theme tokens: colors (Singapore-inspired palette), typography, spacing, radii, shadows
+### Theme tokens (`theme.ts`)
 
-### Domain Components
-- `CookCard` — listing preview with rating, cuisine tags, availability indicator
-- `OrderCard` — status-aware card with collection details and action buttons
-- `AllergenBadge` / `AllergenList` — visual + textual allergen display with acknowledgment flow
-- `PayNowPanel` — QR code generator, reference input, payment confirmation UI
-- `CollectionSlotPicker` — calendar + time slot selector with real-time availability
-- `OrderChat` — real-time messaging component with push integration
-- `ListingWizard` — multi-step form for cooks to create/edit products
-- `PerformanceDashboard` — cook earnings, ratings, completion rate visuals
+| Export | Contents |
+|---|---|
+| `shcColors` | Coral primary `#D96C4A`, accent yellow, brutal border `#241812`, bento surfaces |
+| `shcSpacing` | xs–xl + `tabBarHeight`, `stickyHeaderPadding`, `section` (Toptal white-space gap) |
+| `shcRadii` | sm–xl + `pill` |
+| `shcBorders` | thin / brutal (2px) / thick |
+| `shcShadows` | `brutal`, `brutalSm`, `brutalPressed` |
+| `shcTypography` | display, h1–h3, body, caption, mono |
+| `shcMotion` | Reanimated spring configs, Moti fade duration |
 
-### Form & Validation Components
-- Integrated with Zod schemas from `shc-types`
-- Real-time validation + error messaging
-- Accessibility-first (labels, hints, keyboard navigation)
+**Tri-platform rule:** any token change must update `brand.md`, `theme.ts`, `apps/web/app/globals.css`, and `SHCWebComponents.tsx` together.
+
+### Zomato layout (`zomato.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `SHCZomatoStickyHeader` | Location + search sticky zone |
+| `SHCZomatoLocationBar` | Location row with delivery/collection label |
+| `SHCPromoRail` | Horizontal promo cards with food photos |
+| `SHCFilterChipRow` | Halal, light, occasion filter chips |
+| `SHCZomatoDishRow` / `SHCZomatoDishRowRail` | List/rail dish rows with image, price, ADD |
+| `SHCZomatoSectionHeader` / `SHCMindSectionTitle` | Section titles with optional action |
+
+### Visuals & icons (`visuals.tsx`, `icons.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `SHCFoodImage` | Consistent food photo with fallback gradient |
+| `SHCVisualBentoTile` | Photo-background bento tile + icon badge + label |
+| `SHCBentoStatCell` | Stat cell with icon (earnings, orders count) |
+| `SHCZomatoAddButton` | Compact ADD CTA for search results |
+| `SHCIcon` / `SHCTabIcon` | Vector icons (`SHCIconKey` type union) |
+| `SHCBentoIconBadge` | Icon overlay on bento photo tiles |
+
+**Visual-first rule:** photos lead on every list/grid; emoji-only placeholders are not permitted on primary screens.
+
+### Toptal food-UX (`food-ux.tsx`)
+
+| Component | Principle |
+|---|---|
+| `SHCCheckoutStepper` | Short journey — Collection → Safety → PayNow (3 steps) |
+| `SHCSearchResultsPanel` / `SHCSearchResultRow` | Search + ADD without visiting PDP |
+| `SHCHeritageStoryBanner` | Memorable local HDB cook story + trust link |
+
+Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner` in `SHCWebComponents.tsx`.
+
+### Core Primitives (`primitives.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `SHCButton` / `SHCButtonText` | Primary, outline, accent, ghost variants with brutal shadow press |
+| `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow` variants |
+| `SHCBadge` | Status chips (success, warning, error, heritage) |
+| `SHCInput` | Brutal-bordered input shell |
+| `SHCSearchBar` | Full-width search with icon |
+| `SHCSectionTitle` | H2 section headers |
+| `SHCErrorBanner` | Inline error with optional code |
+| `SHCBentoGrid` / `SHCBentoCell` | Configurable columns (2/3/4) + gap |
+| `SHCStickyHeader` | Location row + search (legacy; prefer `SHCZomatoStickyHeader`) |
+| `SHCBottomTabBar` | 4-tab bar with `SHCTabIcon` + Maestro testIDs |
+| `SHCCategoryRail` | Horizontal scroll occasion chips with circular food photos |
+| `SHCQtyStepper` | PDP quantity control |
+| `SHCStickyActionBar` | Bottom sticky CTA shell (add-to-cart, PayNow) |
+
+### Domain Components (`domain.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `SHCDishCard` | Zomato-style: ~70% image, name, cook, price, rating, collection slot |
+| `SHCZomatoOrderRow` | Order list row with status + thumbnail |
+| `SHCCartPageHero` / `SHCCartLineItem` | Cart page header + line items |
+| `SHCCookPageHero` | Cook dashboard/orders/earnings hero |
+| `SHCWizardProgress` | Listing wizard step indicator |
+| `CookCard` | Cook profile preview with heritage snippet |
+| `OrderCard` / `OrderStatusBadge` | Status-aware order cards |
+| `PayNowPanel` | UEN, amount, ref input, confirm CTA |
+| `CollectionSlotPicker` | HDB collection date/slot selector |
+| `AllergenAckCheckbox` | Mandatory tier-1 allergen acknowledgment |
+| `ListingWizardStep` | Cook listing wizard step shell |
+| `CreditBadge` / `WalletCard` | Home Credits wallet |
+| `AICalorieBadge` | Traffic-light calorie estimate |
+| `RequestDishForm` | Custom dish request bidding form |
+
+### Form Components (`forms.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `IngredientTierEditor` | JSON-like ingredient tier editor |
+| `OccasionTagPicker` | Multi-select occasion chips |
+| `PriceEarningsCalc` | Live cook earnings preview |
 
 ## Usage Patterns
 
 ```tsx
-import { SHCButton, OrderCard, useOrderChat } from '@shc/ui';
+import {
+  SHCZomatoStickyHeader,
+  SHCPromoRail,
+  SHCFilterChipRow,
+  SHCVisualBentoTile,
+  SHCTabIcon,
+  SHCDishCard,
+  SHCSearchResultsPanel,
+  SHCHeritageStoryBanner,
+  SHCCheckoutStepper,
+  SHCBottomTabBar,
+  shcColors,
+} from '@shc/ui';
+import { extractReorderDishes } from '@shc/utils';
 
-<OrderCard 
-  order={order} 
-  onAccept={handleAccept} 
-  onChatPress={openChat}
-/>
+// Discover (mobile-customer index.tsx pattern)
+<SHCZomatoStickyHeader locationLabel="Katong" searchValue={q} onSearchChange={setQ} />
+<SHCPromoRail items={promos} />
+<SHCVisualBentoTile iconKey="cart" label="Cart" imageUri={...} onPress={goCart} testID="bento-cart" />
+<SHCFilterChipRow chips={filters} selectedIds={sel} onToggle={toggle} />
+<SHCHeritageStoryBanner onTrustPress={goTrust} />
+<SHCDishCard dish={dish} onPress={() => openPDP(dish.id)} />
+<SHCBottomTabBar tabs={TABS} activeKey="discover" onTabPress={navigate} />
+
+// Checkout stepper (Toptal short journey)
+<SHCCheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
+
+// Order again rail
+const reorder = extractReorderDishes(orders);
 ```
 
-All components accept `testID` props for Maestro E2E tests.
+All interactive components accept `testID` props for Maestro E2E. See [WIREFRAMES.md](../13-design-system/WIREFRAMES.md).
 
 ## Design System Governance
 
-- Tokens live in a single `theme.ts` file.
-- Component variants are documented in Storybook (or in-app dev menu).
-- Any new component or token change requires Mobile Track review and update to this document.
+- Tokens live in `theme.ts` — **no hardcoded hex in screens** (especially not legacy `#1D9E75`).
+- Any new component or token change requires updates to this document, `brand.md`, `WIREFRAMES.md`, and web mirrors.
+- Use `.agents/skills/tri-platform-ui-sync/` when editing colors, layouts, or brand-facing UI.
 
 ## Production Notes
 
-- Components are optimized for performance (memo, virtualization where needed).
-- Dark mode support via Expo.
-- All interactive components include loading, error, and empty states.
-- Analytics events are emitted on key interactions (configurable via feature flags).
+- Components use press-state shadow reduction (`brutalPressed`) for tactile feedback.
+- Motion via Moti/Reanimated (`shcMotion` constants); lists via FlashList at screen level.
+- Food imagery from `@shc/utils/food-visuals` — single source for bento action photos.
+- All interactive components include loading, error, and empty states at screen level.
 
 ## Multi-Agent Notes
 
-- **Mobile Track** owns `shc-ui` package and all component implementations.
-- Contracts Track owns the data shapes passed to components.
+- **Mobile Track** owns `shc-ui` implementations; **Web** mirrors in `SHCWebComponents.tsx`.
+- **Screen agents** wire components in `apps/mobile-*` and `apps/web` — do not duplicate primitives.
+- Contracts Track owns data shapes (`SHCDishCardData`, `ReorderDish`, etc.).
 - Content Track provides copy strings and illustration assets.
-- After Phase 0, component APIs are stable; breaking changes require joint review.
 
-**Mobile Track Rule:** All shared UI must live in `packages/shc-ui`. Inline styles or duplicated components inside `apps/mobile` are not permitted.
+**Rule:** All shared UI must live in `packages/shc-ui`. Inline styles or duplicated components inside app folders are not permitted.

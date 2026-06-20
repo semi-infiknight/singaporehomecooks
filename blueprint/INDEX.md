@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-15 by Infra — Railway staging live (Medusa + web), `railway:configure-web`, blueprint `03-railway` refresh. See [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-06-20 (Full Blueprint Sync) — reconciled code reality (shc-cart, shc-review, cook scrypt + login_email, real @shc/api-client everywhere, search/review live, 48+ custom routes), contracts, data model, api surface, gaps, modules. All clients real-Medusa. See CURRENT_STATE.md + self-updating-rules (now mandatory per change).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
@@ -39,7 +39,7 @@ Start here → follow links. Each file contains:
 - [16-references.md](./16-references/16-references.md)
 
 **Decision Trees & Edge Cases (Critical for Production Logic):**
-- [GAP_ANALYSIS.md](./GAP_ANALYSIS.md) — Full gap audit vs source documents
+- CURRENT_STATE.md §8 "What's NOT Done" + code audits (no separate GAP_ANALYSIS.md; live gaps are in CURRENT_STATE) — historical source gap audit was folded in.
 - [DECISION_TREES/cook-cancellation-after-payment.md](./DECISION_TREES/cook-cancellation-after-payment.md)
 - [ERROR_CODES.md](./ERROR_CODES.md) — Centralized error catalog with ops actions
 - [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md)
@@ -83,6 +83,39 @@ Every table, decision, route, task, acceptance criterion, and production require
 - `.hermes/plans/2026-06-13_SingaporeHomeCooks_MultiAgent_Production_Plan.md` — content merged here
 
 **Next Step for Agents:** Read `./multi-agent/README.md` then the section matching your current task.
+
+## Progress Update (2026-06-20 — Blueprint Full Sync + Cook Auth + Cart/Review Reality)
+
+**Mandatory sync rule activated:** Any future code change touching architecture, contracts, routes, modules, or UI must also patch the blueprint web in the same commit (see self-updating-rules.md + CURRENT_STATE §10). This pass reconciled all major drift.
+
+- Updated @shc/types shcCookSchema (login_email + password_hash internal)
+- 05-data-model: added shc_cart row + cook auth fields + date
+- 06-api-surface: status table now accurate (auth ✅, reviews ✅, search ✅, cart full ✅)
+- CURRENT_STATE + INDEX + 11-medusa + 07-auth + others: dates + facts aligned to actual modules (shc-cart, shc-review registered), routes (full list in medusa/src/api/store/shc + admin), web review impl, real api-client usage
+- Strengthened "update with each change" rule
+- Verified against live code (modules/index, cart route using module, review routes + client methods, seed hashes, shc-auth with scrypt + fallback, web orders/[id] review form, all mobile + web api-clients)
+
+
+**Design system wave (this agent):**
+- `@shc/ui` v3: new modules `zomato.tsx`, `visuals.tsx`, `icons.tsx`, `motion.tsx`, `food-ux.tsx`; expanded `domain.tsx` (Zomato order rows, cart/cook heroes, checkout stepper data).
+- `@shc/utils`: `food-visuals.ts` (bento action images), `reorder.ts` (`extractReorderDishes` for “Order again” rails).
+- `brand.md`: Toptal food-app UX principles (white space, search+ADD, short checkout journey, personalize, heritage story).
+- Tri-platform sync skill: `.agents/skills/tri-platform-ui-sync/SKILL.md`.
+
+**Mobile customer:** Zomato discover (promo rail, filter chips, photo bento tiles with `SHCIcon`, cuisine rail); `SHCSearchResultsPanel` with ADD; `SHCHeritageStoryBanner`; “Order again” rail; `SHCCheckoutStepper` on checkout; vector tab icons via `SHCTabIcon`.
+
+**Mobile cook:** Dashboard, orders, earnings, compliance, listings polished — photo bento + vector icons (no emoji placeholders).
+
+**Web:** Discover reordered; `AppMobileTabBar`; `SearchResultsDropdown` in `AppHeader`; `HeritageStoryBanner`; Lucide icons on bento; `CheckoutStepper`; `--shc-section-gap` in `globals.css`.
+
+**iOS + E2E:**
+- Fixed `RNGestureHandlerModule` crash via `pod install` + `expo run:ios`; script `scripts/rebuild-ios-apps.sh`.
+- Metro isolation: `scripts/start-mobile-dev.sh` (:8081 customer, :8082 cook).
+- Android Maestro full tours PASS (`customer-full-tour.yaml`, `cook-full-tour.yaml`); iOS Maestro re-verify pending.
+
+**Still open:** web review UI on `/orders/[id]`, cook auth hardening, credits redeem E2E, iOS Maestro tours, real PayNow.
+
+---
 
 ## Progress Update (2026-06-15 by Integration Agent — MEDUSA FULL WIRING + CURRENT STATE DOC)
 

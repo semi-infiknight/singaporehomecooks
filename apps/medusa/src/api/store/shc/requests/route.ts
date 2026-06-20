@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcRequestModuleService from "../../../../modules/shc-request/service";
+import { getAuthContext, getCustomerId, unauthorized } from "../../../../lib/shc-actors";
 
 /**
  * GET /store/shc/requests
@@ -45,8 +46,14 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid request payload", parse.error.format() as any) });
   }
+  getAuthContext(req);
   const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
-  const actor = (req as any).auth?.actor_id || "customer-unknown"; // auth per 07
+  let actor: string;
+  try {
+    actor = getCustomerId(req);
+  } catch {
+    return unauthorized(res, "Customer login required");
+  }
   try {
     const before = {};
     const created = await reqService.createRequest({

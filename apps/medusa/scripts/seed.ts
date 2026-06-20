@@ -20,6 +20,10 @@ import {
 } from "@shc/types";
 // @ts-ignore workspace dep for script
 import { validateMinQty, calculateCookEarnings, calculatePlatformFee } from "@shc/business-rules";
+import { hashCookPassword } from "../src/lib/shc-password";
+
+const COOK_DEV_PASSWORD = process.env.SEED_COOK_PASS || "cooksecret";
+const COOK_PASSWORD_HASH = hashCookPassword(COOK_DEV_PASSWORD);
 
 async function seed() {
   console.log("[SEED] Starting SHC seed from mobile mocks...");
@@ -137,15 +141,20 @@ async function seed() {
       status: "active",
     },
   ];
+  const cookLogins: Record<string, string> = {
+    cook_rose_tampines_001: "rose@shc.local",
+    cook_doris_katong_002: "doris@shc.local",
+  };
   for (const c of cooksFromAssets) {
     shcCookSchema.partial().parse(c);
+    const loginEmail = cookLogins[c.id];
     await pg.query(
-      `INSERT INTO shc_cook (id, auth_identity_id, slug, display_name, story, area, status, availability_paused, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,false,now(),now())
-       ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, story=EXCLUDED.story, status=EXCLUDED.status, updated_at=now()`,
-      [c.id, c.auth_identity_id, c.slug, c.display_name, c.story, c.area, c.status]
+      `INSERT INTO shc_cook (id, auth_identity_id, slug, display_name, story, area, status, availability_paused, login_email, password_hash, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,false,$8,$9,now(),now())
+       ON CONFLICT (id) DO UPDATE SET display_name=EXCLUDED.display_name, story=EXCLUDED.story, status=EXCLUDED.status, login_email=EXCLUDED.login_email, password_hash=EXCLUDED.password_hash, updated_at=now()`,
+      [c.id, c.auth_identity_id, c.slug, c.display_name, c.story, c.area, c.status, loginEmail, COOK_PASSWORD_HASH]
     );
-    console.log(`  ✓ shc_cook seeded: ${c.slug}`);
+    console.log(`  ✓ shc_cook seeded: ${c.slug} (${loginEmail}, hashed password)`);
   }
 
   // Product meta + availability for /store/shc/products
