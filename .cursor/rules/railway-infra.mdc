@@ -1,0 +1,49 @@
+---
+description: Railway infra work must wire references and cleanup orphans before finishing
+globs:
+  - railway*.toml
+  - .railway/**
+  - scripts/railway-*.mjs
+  - RAILWAY_DEPLOY.md
+  - blueprint/03-railway/**
+alwaysApply: false
+---
+
+# Railway Infra — Wire + Cleanup (mandatory)
+
+When creating, changing, or deploying Railway services for this project, **always finish with cleanup** — never leave orphans for the user to find.
+
+## Before finishing any Railway infra task
+
+1. **Wire references** — use `${{Service.VAR}}` syntax (not hardcoded `*.railway.internal` URLs) so the canvas shows dependency lines:
+   ```bash
+   pnpm railway:wire
+   ```
+
+2. **Cleanup orphans** — remove detached volumes, duplicate databases, and abandoned services:
+   ```bash
+   pnpm railway:cleanup
+   ```
+
+3. **Verify** — confirm expected services are online and the wired dependency is correct:
+   ```bash
+   railway service list --json
+   curl https://<medusa-domain>/health
+   ```
+
+## What counts as cleanup
+
+| Left behind | Action |
+|-------------|--------|
+| Detached volumes (`serviceName: null`) | Delete immediately |
+| Duplicate Redis/Postgres when only one is referenced | Delete the unwired one |
+| Empty offline services (no source, no deployment) | Delete immediately |
+| Failed recreate attempts (extra minio volumes) | Delete orphans after successful deploy |
+
+## Do not
+
+- Leave duplicate databases "for later" — check which service `medusa` references and remove the rest
+- Use literal internal URLs when `${{Redis.REDIS_URL}}` / `${{Postgres.DATABASE_URL}}` works
+- End an infra session without running `pnpm railway:cleanup`
+
+The user should never need to ask "clean up duplicates" — that is part of every Railway change.

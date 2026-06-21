@@ -66,3 +66,6 @@ console.log("\nDone. Refresh the Railway canvas — you should see:");
 console.log("  medusa ── Postgres, Redis, minio");
 console.log("  worker ── Postgres, medusa");
 console.log("  web    ── medusa");
+
+console.log("\nRunning cleanup audit…");
+execSync("node scripts/railway-cleanup.mjs", { cwd: ROOT, stdio: "inherit" });

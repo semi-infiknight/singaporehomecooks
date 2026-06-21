@@ -44,7 +44,8 @@
     "railway:configure-web": "node scripts/railway-configure-web.mjs",
     "railway:configure-worker": "node scripts/railway-configure-service.mjs --service worker --config railway.worker.toml --dockerfile apps/worker/Dockerfile --health /health",
     "railway:configure-minio": "node scripts/railway-configure-service.mjs --service minio --config railway.minio.toml --dockerfile apps/minio/Dockerfile --no-redeploy",
-    "railway:wire": "node scripts/railway-wire-references.mjs"
+    "railway:wire": "node scripts/railway-wire-references.mjs",
+    "railway:cleanup": "node scripts/railway-cleanup.mjs"
   },
   "devDependencies": {
     "nativewind": "^4.2.5",
