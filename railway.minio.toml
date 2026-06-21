@@ -1,0 +1,10 @@
+# Railway config for MinIO object storage (private — medusa connects via minio.railway.internal:9000)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/minio/Dockerfile"
+
+[deploy]
+# No HTTP healthcheck — MinIO listens on :9000 (private networking), not Railway's default probe port
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

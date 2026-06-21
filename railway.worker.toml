@@ -1,0 +1,17 @@
+# Railway config for the SHC worker service (cron / background jobs)
+# Create a service in Railway dashboard, then set Config file = railway.worker.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/worker/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Required env vars (set in Railway dashboard):
+# DATABASE_URL=${{Postgres.DATABASE_URL}}
+# MEDUSA_URL=https://<medusa-domain>.up.railway.app
+# WORKER_API_KEY=<random 32+ char string>  (also set on medusa when internal routes land)
