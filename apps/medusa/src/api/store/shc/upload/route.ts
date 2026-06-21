@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { getCookId, requireCustomerId } from "../../../../lib/shc-actors";
+import { getCookId, getCustomerId } from "../../../../lib/shc-actors";
 import { 
   getPresignedUploadUrl, 
   validateUploadActor, 
@@ -38,7 +38,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     actorType = "cook";
   } catch {
     try {
-      actorId = requireCustomerId(req);
+      actorId = getCustomerId(req);
       actorType = "customer";
     } catch {
       return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Auth required for uploads") });
