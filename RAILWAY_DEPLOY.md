@@ -5,19 +5,36 @@ Step-by-step guide to run **Medusa API + Postgres + Redis + Next.js web** on Rai
 ## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐
-│  web        │────▶│  medusa     │
-│  (Next.js)  │     │  (API :9000)│
-└─────────────┘     └──────┬──────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  web        │────▶│  medusa     │────▶│   minio     │
+│  (Next.js)  │     │  (API)      │     │  (storage)  │
+└─────────────┘     └──────┬──────┘     └─────────────┘
                            │
-                    ┌──────┴──────┐
-                    │             │
-               ┌────▼────┐   ┌────▼────┐
-               │ Postgres│   │  Redis  │
-               └─────────┘   └─────────┘
+              ┌────────────┼────────────┐
+              │            │            │
+         ┌────▼────┐  ┌────▼────┐  ┌────▼────┐
+         │ Postgres│  │  Redis  │  │ worker  │
+         └─────────┘  └─────────┘  └─────────┘
 ```
 
 Mobile apps (Expo) talk directly to the Medusa public URL — they are **not** hosted on Railway.
+
+### Why services don't show on the Railway canvas
+
+Railway only draws dependency lines when variables use **reference syntax**:
+
+```bash
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+```
+
+Hardcoded URLs like `redis://...@redis.railway.internal:6379` work at runtime but leave **Redis** (and other deps) visually disconnected on the dashboard. After any manual env edit, re-run:
+
+```bash
+pnpm railway:wire
+```
+
+This sets `${{Service.VAR}}` references on medusa, worker, and web so Postgres, **Redis**, and minio all appear linked.
 
 ---
 
