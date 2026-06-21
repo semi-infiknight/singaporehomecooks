@@ -64,9 +64,18 @@ async function weeklyPayout(): Promise<JobResult> {
   return result;
 }
 
+function internalRoutePending(result: JobResult): boolean {
+  return (
+    !result.ok &&
+    (result.detail.includes("not set") ||
+      result.detail.includes("Unauthorized") ||
+      result.detail.includes("Cannot POST"))
+  );
+}
+
 async function orderEscalation(): Promise<JobResult> {
   const result = await callMedusaInternal("/admin/shc/internal/order-escalation");
-  if (!result.ok && result.detail.includes("not set")) {
+  if (internalRoutePending(result)) {
     log("order-escalation", "skipped (internal route not wired yet)");
     return { ok: true, detail: "skipped" };
   }
@@ -76,7 +85,7 @@ async function orderEscalation(): Promise<JobResult> {
 
 async function notificationRetry(): Promise<JobResult> {
   const result = await callMedusaInternal("/admin/shc/internal/notification-retry");
-  if (!result.ok && result.detail.includes("not set")) {
+  if (internalRoutePending(result)) {
     log("notification-retry", "skipped (internal route not wired yet)");
     return { ok: true, detail: "skipped" };
   }
