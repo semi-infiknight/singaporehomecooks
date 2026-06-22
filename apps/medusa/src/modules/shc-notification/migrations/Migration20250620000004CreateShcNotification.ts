@@ -11,6 +11,7 @@ export class Migration20250620000004CreateShcNotification extends Migration {
         "read" boolean NOT NULL DEFAULT false,
         "created_at" timestamptz NOT NULL DEFAULT now(),
         "updated_at" timestamptz NOT NULL DEFAULT now(),
+        "deleted_at" timestamptz,
         CONSTRAINT "shc_notification_pkey" PRIMARY KEY ("id")
       );
     `);
