@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import { createOrderWithMetaWorkflow } from "../../../../../../workflows/create-order-with-meta";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
+import { emitShcEvent } from "../../../../../lib/shc-event-bus";
 
 /**
  * POST /store/shc/carts/:id/complete
@@ -104,8 +105,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     } as any);
 
     // Emit custom for subscriber (growth + credits earn later on complete)
-    const eventBus = req.scope.resolve("eventBusService") as any;
-    await eventBus.emit("shc.order.state_changed", { orderId: order.id, from: "cart", to: "paid", creditsApplied, isCorporate, origin_request_id });
+    await emitShcEvent(req.scope, "shc.order.state_changed", { orderId: order.id, from: "cart", to: "paid", creditsApplied, isCorporate, origin_request_id });
 
     res.json({ order, shc_meta: await metaService.getOrderMetaWithMessages(order.id), credits_applied: creditsApplied, corporate: !!isCorporate });
   } catch (err: any) {

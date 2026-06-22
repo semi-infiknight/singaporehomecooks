@@ -5,6 +5,7 @@ import ShcBidModuleService from "../../../../../../modules/shc-bid/service";
 import ShcRequestModuleService from "../../../../../../modules/shc-request/service";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-state-transition";
+import { emitShcEvent } from "../../../../../../lib/shc-event-bus";
 
 /**
  * POST /store/shc/bids/:id/accept
@@ -63,8 +64,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       after: { bid: accepted, order_id: orderId, request_id: bid.request_id },
     };
     logger.info?.(`[SHC-AUDIT] ${JSON.stringify(audit)}`);
-    const eventBus = req.scope.resolve("eventBusService") as any;
-    await eventBus.emit("shc.bid.accepted", { bidId, orderId, requestId: bid.request_id, cookId: bid.cook_id });
+    await emitShcEvent(req.scope, "shc.bid.accepted", { bidId, orderId, requestId: bid.request_id, cookId: bid.cook_id });
     res.json({ ok: true, bid: accepted, order_id: orderId, shc_meta: { origin_request_id: bid.request_id } });
   } catch (e: any) {
     res.status(400).json({ error: createSHCError("SHC-REQ-001", e.message || "Accept bid failed") });

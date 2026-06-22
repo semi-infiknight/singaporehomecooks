@@ -4,6 +4,7 @@ import { createSHCError } from "@shc/types";
 import ShcBidModuleService from "../../../../modules/shc-bid/service";
 import ShcRequestModuleService from "../../../../modules/shc-request/service";
 import { getAuthContext, getCookId } from "../../../../lib/shc-actors";
+import { emitShcEvent } from "../../../../lib/shc-event-bus";
 
 /**
  * GET /store/shc/bids?cook_id=... or ?request_id=...
@@ -64,8 +65,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const logger = (req.scope as any).resolve?.("logger") || console;
     const audit = { ts: new Date().toISOString(), actor, action: "bid.create", before, after: bid };
     logger.info?.(`[SHC-AUDIT] ${JSON.stringify(audit)}`);
-    const eventBus = req.scope.resolve("eventBusService") as any;
-    await eventBus.emit("shc.bid.created", { bidId: bid.id, requestId: parse.data.request_id, cookId: actor });
+    await emitShcEvent(req.scope, "shc.bid.created", { bidId: bid.id, requestId: parse.data.request_id, cookId: actor });
     res.status(201).json({ bid });
   } catch (e: any) {
     res.status(400).json({ error: createSHCError("SHC-REQ-001", e.message || "Create bid failed") });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcRequestModuleService from "../../../../modules/shc-request/service";
 import { getAuthContext, getCustomerId, unauthorized } from "../../../../lib/shc-actors";
+import { emitShcEvent } from "../../../../lib/shc-event-bus";
 
 /**
  * GET /store/shc/requests
@@ -72,9 +73,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       meta: { corporate: !!parse.data.corporate },
     };
     logger.info?.(`[SHC-AUDIT] ${JSON.stringify(audit)}`);
-    // Emit for subscribers/notifs (tie corporate, growth)
-    const eventBus = req.scope.resolve("eventBusService") as any;
-    await eventBus.emit("shc.request.created", { requestId: created.id, customerId: actor, corporate: parse.data.corporate });
+    await emitShcEvent(req.scope, "shc.request.created", { requestId: created.id, customerId: actor, corporate: parse.data.corporate });
     res.status(201).json({ request: created });
   } catch (e: any) {
     const code = e.code || "SHC-REQ-001";
