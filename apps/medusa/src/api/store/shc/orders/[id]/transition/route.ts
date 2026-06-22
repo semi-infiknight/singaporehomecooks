@@ -6,6 +6,8 @@ import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/
 import { getCookId, unauthorized } from "../../../../../../lib/shc-actors";
 import ShcNotificationModuleService from "../../../../../../modules/shc-notification/service";
 import { notifyOrderStatusPush } from "../../../../../../lib/shc-order-push";
+import { resolveOrderMoney } from "../../../../../../lib/shc-order-money";
+import ShcCreditWalletModuleService from "../../../../../../modules/shc-credit-wallet/service";
 
 const BodySchema = z.object({
   to: z.string(),
@@ -40,6 +42,18 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   await orderStateTransitionWorkflow.run({
     input: { orderId: id, to, container: req.scope },
   } as any).catch(() => null);
+
+  if (to === "completed") {
+    try {
+      const { totalCents, customerId: awardCustomerId } = await resolveOrderMoney(req.scope, id);
+      if (awardCustomerId && totalCents > 0) {
+        const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
+        await credService.awardCreditsOnComplete(awardCustomerId, totalCents, id, req.scope);
+      }
+    } catch {
+      // Non-fatal; workflow/subscriber may still award
+    }
+  }
 
   const updated = await metaService.getOrderMetaWithMessages(id);
   const customerId = String((current as any).customer_id || (updated.meta as any)?.customer_id || "");
