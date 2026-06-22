@@ -14,15 +14,13 @@ class ShcCreditWalletModuleService extends MedusaService({ CreditWallet }) {
   }
 
   async getOrCreateWallet(customerId: string): Promise<CreditWallet> {
-    const list = await this.listCreditWallets({ filters: { customer_id: customerId } } as any);
-    if (list.length) return list[0] as unknown as CreditWallet;
+    const [rows] = await this.listAndCountCreditWallets({ customer_id: customerId } as any, { take: 1 }).catch(() => [[]]);
+    if ((rows as CreditWallet[])?.length) return (rows as CreditWallet[])[0];
     const [created] = await this.createCreditWallets([{
       customer_id: customerId,
       balance_cents: 0,
       lifetime_spend_cents: 0,
       tier: "Bronze",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     } as any]);
     return created as unknown as CreditWallet;
   }
