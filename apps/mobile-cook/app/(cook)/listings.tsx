@@ -302,7 +302,7 @@ export default function CookListings() {
           <SHCButton onPress={publish} testID="listing-wizard-publish">
             <SHCButtonText>Publish</SHCButtonText>
           </SHCButton>
-          <SHCButton variant="outline" onPress={() => setStep(3)} style={{ marginTop: 8 }}>
+          <SHCButton variant="outline" onPress={() => goToStep(3)} style={{ marginTop: 8 }}>
             <SHCButtonText>←</SHCButtonText>
           </SHCButton>
           {published && (

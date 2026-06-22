@@ -52,6 +52,8 @@ apps/mobile/.env.local
 .expo-shared/
 web-build/
 dist/
+.metro-cache/
+.railway-config-pull-*/
 
 # Medusa
 medusa/medusa-config.js

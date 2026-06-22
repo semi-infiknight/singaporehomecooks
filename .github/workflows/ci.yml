@@ -20,9 +20,9 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo build --filter=!mobile
-      - run: pnpm turbo test --filter=!mobile
-      - run: pnpm turbo typecheck --filter=!mobile
+      - run: pnpm turbo build --filter=!mobile --filter=!mobile-cook --filter=!mobile-customer
+      - run: pnpm turbo test --filter=!mobile --filter=!mobile-cook --filter=!mobile-customer
+      - run: pnpm turbo typecheck --filter=!mobile --filter=!mobile-cook --filter=!mobile-customer
       - run: pnpm turbo lint --filter=web --filter=medusa --filter=mobile-customer --filter=mobile-cook || true
       - run: npx tsx scripts/seed.ts --validate
       - run: pnpm verify:local

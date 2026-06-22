@@ -19,7 +19,7 @@ export default function CustomerLayout() {
           borderTopWidth: 0,
           elevation: 0,
         },
-        sceneContainerStyle: { paddingBottom: 100 },
+        sceneStyle: { paddingBottom: 100 },
       }}
       tabBar={(props) => <CustomerTabBar {...props} />}
     >

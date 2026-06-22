@@ -19,7 +19,7 @@ export default function CookLayout() {
           borderTopWidth: 0,
           elevation: 0,
         },
-        sceneContainerStyle: { paddingBottom: 88 },
+        sceneStyle: { paddingBottom: 88 },
       }}
       tabBar={(props) => <CookTabBar {...props} />}
     >

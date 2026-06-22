@@ -90,7 +90,6 @@ export default function OrdersList() {
               total={String(o.total)}
               href={`/orders/${o.id}`}
             />
-            {/* Web review UI completed: see /orders/[id] for post-collection review form (stars, body, submit) */}
           );
         })}
       </div>

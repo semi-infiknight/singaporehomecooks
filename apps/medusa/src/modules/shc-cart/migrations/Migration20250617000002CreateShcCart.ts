@@ -9,7 +9,8 @@ export class Migration20250617000002CreateShcCart extends Migration {
         "cook_id" text,
         "items_json" text NOT NULL DEFAULT '[]',
         "created_at" timestamptz NOT NULL DEFAULT now(),
-        "updated_at" timestamptz NOT NULL DEFAULT now()
+        "updated_at" timestamptz NOT NULL DEFAULT now(),
+        "deleted_at" timestamptz
       );
     `);
     this.addSql(`CREATE INDEX IF NOT EXISTS "IDX_shc_cart_customer" ON "shc_cart" ("customer_id");`);
