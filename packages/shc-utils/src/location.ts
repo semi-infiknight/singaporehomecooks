@@ -219,6 +219,37 @@ export function buildOsmStaticMapUrl(
 
 export type MapNudgeDirection = 'n' | 's' | 'e' | 'w';
 
+const TILE_PX = 256;
+
+/** Meters per pixel for 256px Web Mercator tiles at a given latitude. */
+export function metersPerPixelAt(lat: number, zoom: number): number {
+  return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+}
+
+/** Convert finger drag (px) on a tile-grid map preview to new lat/lng. */
+export function dragOffsetToCoordinates(
+  lat: number,
+  lng: number,
+  dx: number,
+  dy: number,
+  viewWidth: number,
+  viewHeight: number,
+  zoom = 17,
+  tileCount = 3,
+): { lat: number; lng: number } {
+  const mpp = metersPerPixelAt(lat, zoom);
+  const geoWidthM = tileCount * TILE_PX * mpp;
+  const geoHeightM = tileCount * TILE_PX * mpp;
+  const metersX = (dx / viewWidth) * geoWidthM;
+  const metersY = (dy / viewHeight) * geoHeightM;
+  const dLng = metersX / (111320 * Math.cos((lat * Math.PI) / 180));
+  const dLat = -metersY / 110540;
+  return {
+    lat: Math.min(SG_BOUNDS.maxLat, Math.max(SG_BOUNDS.minLat, lat + dLat)),
+    lng: Math.min(SG_BOUNDS.maxLng, Math.max(SG_BOUNDS.minLng, lng + dLng)),
+  };
+}
+
 /** Move map pin by ~15–20 m per step at zoom 16. */
 export function nudgeCoordinates(
   lat: number,

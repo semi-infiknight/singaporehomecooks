@@ -5,6 +5,7 @@ import {
   formatLocationShort,
   distanceToCookAreaKm,
   nudgeCoordinates,
+  dragOffsetToCoordinates,
   buildOsmStaticMapUrl,
   buildOsmTileUrl,
   getOsmTileGrid,
@@ -35,6 +36,12 @@ describe('location utils', () => {
   it('nudges coordinates by direction', () => {
     expect(nudgeCoordinates(1.35, 103.82, 'n').lat).toBeGreaterThan(1.35);
     expect(nudgeCoordinates(1.35, 103.82, 'e').lng).toBeGreaterThan(103.82);
+  });
+
+  it('converts drag offset to coordinates', () => {
+    const next = dragOffsetToCoordinates(1.3521, 103.8198, 40, -30, 360, 240, 17);
+    expect(next.lat).toBeGreaterThan(1.3521);
+    expect(next.lng).toBeGreaterThan(103.8198);
   });
 
   it('builds static map url', () => {

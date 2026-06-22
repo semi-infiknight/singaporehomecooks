@@ -1,13 +1,14 @@
 // Native draggable map — Apple Maps on iOS; OSM tile picker on Android (no Google API key required).
 // @ts-nocheck
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Image, PanResponder, Pressable, Text } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
-import { getOsmTileGrid, nudgeCoordinates } from '@shc/utils';
+import MapView, { Marker } from 'react-native-maps';
+import { dragOffsetToCoordinates, getOsmTileGrid, nudgeCoordinates } from '@shc/utils';
 import { shcColors, shcBorders, shcRadii } from './theme';
 
 const MAP_HEIGHT = 240;
 const TILE_ROWS = 3;
+const TILE_ZOOM = 17;
 
 function regionFor(lat: number, lng: number) {
   return {
@@ -29,34 +30,43 @@ function AndroidOsmPinMap({
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
 }) {
-  const tiles = useMemo(() => getOsmTileGrid(lat, lng, 17), [lat, lng]);
+  const tiles = useMemo(() => getOsmTileGrid(lat, lng, TILE_ZOOM), [lat, lng]);
   const tileHeight = MAP_HEIGHT / TILE_ROWS;
-  const start = useRef({ lat, lng });
+  const [frameSize, setFrameSize] = useState({ width: 360, height: MAP_HEIGHT });
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const dragStart = useRef({ lat, lng });
 
   useEffect(() => {
-    start.current = { lat, lng };
+    dragStart.current = { lat, lng };
+    setDrag({ x: 0, y: 0 });
   }, [lat, lng]);
 
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        start.current = { lat, lng };
+        dragStart.current = { lat, lng };
+      },
+      onPanResponderMove: (_, g) => {
+        setDrag({ x: g.dx, y: g.dy });
       },
       onPanResponderRelease: (_, g) => {
-        const dx = g.dx;
-        const dy = g.dy;
-        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-        let nextLat = start.current.lat;
-        let nextLng = start.current.lng;
-        const step = 0.00012;
-        if (dy < -8) nextLat += step;
-        if (dy > 8) nextLat -= step;
-        if (dx > 8) nextLng += step;
-        if (dx < -8) nextLng -= step;
-        onPinChange({ lat: nextLat, lng: nextLng });
+        setDrag({ x: 0, y: 0 });
+        if (Math.abs(g.dx) < 2 && Math.abs(g.dy) < 2) return;
+        const next = dragOffsetToCoordinates(
+          dragStart.current.lat,
+          dragStart.current.lng,
+          g.dx,
+          g.dy,
+          frameSize.width,
+          frameSize.height,
+          TILE_ZOOM,
+        );
+        onPinChange(next);
       },
-    })
+      onPanResponderTerminate: () => setDrag({ x: 0, y: 0 }),
+    }),
   ).current;
 
   const nudge = (dir: 'n' | 's' | 'e' | 'w') => {
@@ -65,18 +75,31 @@ function AndroidOsmPinMap({
   };
 
   return (
-    <View style={styles.frame} testID={testID}>
+    <View
+      style={styles.frame}
+      testID={testID}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        if (width > 0 && height > 0) setFrameSize({ width, height });
+      }}
+    >
       <View style={styles.tileGrid}>
         {tiles.map((uri, i) => (
           <Image key={`${uri}-${i}`} source={{ uri }} style={{ width: '33.333%', height: tileHeight }} resizeMode="cover" />
         ))}
       </View>
-      <View style={styles.pinOverlay} {...pan.panHandlers}>
+      <View
+        style={[
+          styles.pinOverlay,
+          { transform: [{ translateX: drag.x }, { translateY: drag.y }] },
+        ]}
+        {...pan.panHandlers}
+      >
         <View style={styles.pinHead} />
         <View style={styles.pinTail} />
       </View>
       <View style={styles.androidHint}>
-        <Text style={styles.androidHintText}>Drag pin · tap arrows to nudge</Text>
+        <Text style={styles.androidHintText}>Drag the pin · arrows to nudge</Text>
         <View style={styles.androidNudgeRow}>
           <Pressable onPress={() => nudge('w')} style={styles.nudgeBtn} testID="location-map-w">
             <Text style={styles.nudgeText}>←</Text>
