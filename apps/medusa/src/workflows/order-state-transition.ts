@@ -3,6 +3,7 @@ import { SHCOrderStatus, validateOrderTransition, createSHCError } from "@shc/ty
 import { canTransition } from "@shc/business-rules";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcLedgerModuleService from "../modules/shc-ledger/service";
+import { resolveOrderMoney } from "../lib/shc-order-money";
 
 // Step: validate transition using contracts + business rules
 export const validateTransitionStep = createStep(
@@ -44,16 +45,7 @@ export const postCommissionOnCompleteStep = createStep(
     let creditsAwarded = 0;
     try {
       const ledgerService: ShcLedgerModuleService = input.container.resolve("shcLedger");
-      const orderService = input.container.resolve("order") as any;
-      let totalCents = 0;
-      let customerId: string | undefined;
-      try {
-        const order = await orderService.retrieveOrder(input.orderId, { relations: ["items", "customer"] });
-        if (order?.items?.length) {
-          totalCents = order.items.reduce((sum: number, item: any) => sum + ((item.unit_price || 0) * (item.quantity || 1)), 0);
-        } else if (order?.total) totalCents = Math.floor(order.total);
-        customerId = order?.customer?.id || order?.customer_id || "cust_demo";
-      } catch {}
+      const { totalCents, customerId } = await resolveOrderMoney(input.container, input.orderId);
       if (totalCents > 0) {
         await ledgerService.postCommission({ orderId: input.orderId, totalCents, actor: "order-complete-workflow", container: input.container });
       }
@@ -77,6 +69,7 @@ type OrderStateTransitionInput = {
   orderId: string;
   to: SHCOrderStatus;
   actor?: string;
+  container?: any;
 };
 
 export const orderStateTransitionWorkflow = createWorkflow(
@@ -90,14 +83,14 @@ export const orderStateTransitionWorkflow = createWorkflow(
     const updatedMeta = transitionStateStep({
       orderId: input.orderId,
       to: input.to,
-      container: input as any, // container injected by runner
+      container: input.container,
     } as any);
 
     // Phase 6: auto post commission ledger on completed (in workflow + subscriber for redundancy + hardening)
     postCommissionOnCompleteStep({
       orderId: input.orderId,
       to: input.to,
-      container: input as any,
+      container: input.container,
     } as any);
 
     return new WorkflowResponse(updatedMeta);

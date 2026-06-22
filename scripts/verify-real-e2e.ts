@@ -220,7 +220,7 @@ async function main() {
   let balance = creditsBefore.body?.balance ?? 0;
   console.log(`✅ /store/shc/credits (balance=${balance})`);
   if (balance <= 0) {
-    balance = 1000; // simulate award for E2E
+    throw new Error('Expected credits balance > 0 after completed order (check awardCreditsOnComplete + order meta total_cents)');
   }
 
   await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);

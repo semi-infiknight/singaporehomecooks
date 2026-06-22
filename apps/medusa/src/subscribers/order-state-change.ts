@@ -2,6 +2,7 @@ import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { SHCOrderStatus, createSHCError } from "@shc/types";
 import ShcLedgerModuleService from "../modules/shc-ledger/service";
 import { notifyOrderStatusPush } from "../lib/shc-order-push";
+import { resolveOrderMoney } from "../lib/shc-order-money";
 
 /**
  * Subscriber for SHC order state changes.
@@ -42,22 +43,7 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
   if (to === "completed" && orderId) {
     try {
       const ledgerService: ShcLedgerModuleService = (container as any).resolve("shcLedger");
-      // Derive total from order (items or total)
-      let totalCents = 0;
-      let custId: string | undefined;
-      try {
-        const orderService = (container as any).resolve("order");
-        const order = await orderService.retrieveOrder(orderId, { relations: ["items", "customer"] });
-        if (order?.items?.length) {
-          totalCents = order.items.reduce((sum: number, item: any) => {
-            const price = item.unit_price || (item.raw_unit_price && item.raw_unit_price.value) || 0;
-            return sum + (Number(price) * (item.quantity || 1));
-          }, 0);
-        } else if (order?.total) {
-          totalCents = Math.floor(Number(order.total));
-        }
-        custId = order?.customer?.id || order?.customer_id || "cust_demo";
-      } catch {}
+      const { totalCents, customerId: custId } = await resolveOrderMoney(container, orderId);
 
       if (totalCents > 0) {
         await ledgerService.postCommission({
