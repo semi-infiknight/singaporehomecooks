@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import { createOrderWithMetaWorkflow } from "../../../../../../workflows/create-order-with-meta";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
-import { emitShcEvent } from "../../../../../lib/shc-event-bus";
+import { emitShcEvent } from "../../../../../../lib/shc-event-bus";
 
 /**
  * POST /store/shc/carts/:id/complete
