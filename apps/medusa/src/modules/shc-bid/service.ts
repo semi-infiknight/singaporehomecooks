@@ -23,18 +23,12 @@ class ShcBidModuleService extends MedusaService({ Bid }) {
   }
 
   async listBidsForRequest(requestId: string): Promise<SHCBid[]> {
-    const [bids] = await (this as any).listAndCountBids({
-      filters: { request_id: requestId },
-      order: { created_at: "ASC" },
-    } as any);
+    const [bids] = await this.listAndCountBids({ request_id: requestId } as any, { take: 50, order: { created_at: "ASC" } }).catch(() => [[]]);
     return bids as unknown as SHCBid[];
   }
 
   async listBidsForCook(cookId: string): Promise<SHCBid[]> {
-    const [bids] = await (this as any).listAndCountBids({
-      filters: { cook_id: cookId },
-      order: { created_at: "DESC" },
-    } as any);
+    const [bids] = await this.listAndCountBids({ cook_id: cookId } as any, { take: 50, order: { created_at: "DESC" } }).catch(() => [[]]);
     return bids as unknown as SHCBid[];
   }
 
@@ -47,8 +41,8 @@ class ShcBidModuleService extends MedusaService({ Bid }) {
   }
 
   async getBid(id: string): Promise<SHCBid | null> {
-    const [bid] = await this.listBids({ filters: { id } } as any);
-    return (bid as unknown as SHCBid) || null;
+    const [rows] = await this.listAndCountBids({ id } as any, { take: 1 }).catch(() => [[]]);
+    return ((rows as SHCBid[])?.[0] as SHCBid) || null;
   }
 }
 

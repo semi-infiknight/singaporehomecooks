@@ -23,17 +23,16 @@ class ShcRequestModuleService extends MedusaService({ Request }) {
   }
 
   async listOpenRequests(filters: { limit?: number } = {}): Promise<SHCRequest[]> {
-    const [reqs] = await (this as any).listAndCountRequests({
-      filters: { status: ["open", "bidding"] },
+    const [reqs] = await this.listAndCountRequests({ status: ["open", "bidding"] } as any, {
       take: filters.limit || 50,
       order: { created_at: "DESC" },
-    } as any);
+    }).catch(() => [[]]);
     return reqs as unknown as SHCRequest[];
   }
 
   async getRequest(id: string): Promise<SHCRequest | null> {
-    const [req] = await this.listRequests({ filters: { id } } as any);
-    return (req as unknown as SHCRequest) || null;
+    const [rows] = await this.listAndCountRequests({ id } as any, { take: 1 }).catch(() => [[]]);
+    return ((rows as SHCRequest[])?.[0] as SHCRequest) || null;
   }
 
   async updateRequestStatus(id: string, status: SHCRequest["status"]): Promise<SHCRequest> {
