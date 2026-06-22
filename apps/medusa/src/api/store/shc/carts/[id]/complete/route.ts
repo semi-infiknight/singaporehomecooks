@@ -99,6 +99,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       credits_applied_cents: creditsApplied || undefined,
       is_corporate: !!isCorporate,
       corporate_note: corporate_note || (isCorporate ? 'Corporate/group order from checkout per Phase 8.' : undefined),
+      items: cart.items,
+      total_cents: cart.items.reduce((s: number, i: any) => s + (i.price || 0) * (i.qty || i.quantity || 1), 0) * 100,
     } as any);
 
     // Emit custom for subscriber (growth + credits earn later on complete)

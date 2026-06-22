@@ -137,7 +137,8 @@ export function useAcceptBid() {
   });
 }
 export function useNotifications() {
-  return useQuery({
+  const qc = useQueryClient();
+  const query = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const { getNotifications } = await import('../lib/api-client');
@@ -147,4 +148,14 @@ export function useNotifications() {
     placeholderData: [],
     refetchInterval: isAuthenticated() ? 8000 : false,
   });
+
+  const markRead = useMutation({
+    mutationFn: async (opts: { ids?: string[]; all?: boolean } = {}) => {
+      const { markNotificationsRead } = await import('../lib/api-client');
+      await markNotificationsRead(opts.ids, !!opts.all);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  return { ...query, markRead: markRead.mutate, markReadAsync: markRead.mutateAsync };
 }

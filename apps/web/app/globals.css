@@ -189,6 +189,20 @@ a {
   box-shadow: var(--shc-shadow-brutal-sm);
 }
 
+/* Primary CTA — explicit vars (Tailwind bg-primary can fail to paint in some builds) */
+.shc-btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.shc-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.shc-btn-primary:disabled {
+  opacity: 0.55;
+}
+
 .shc-chip-inactive {
   background: var(--card);
   color: var(--foreground);

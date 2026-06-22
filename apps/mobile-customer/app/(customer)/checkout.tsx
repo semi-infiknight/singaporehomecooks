@@ -19,6 +19,8 @@ import {
   GourmeatPaymentMethodRow,
   gourmeatColors,
   SHCCartPageHero,
+  SHCButton,
+  SHCButtonText,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
@@ -26,11 +28,14 @@ import { useCollectionSlots } from '../../hooks/useProducts';
 import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
+import { useCustomerLocation } from '../../hooks/useCustomerLocation';
+import { formatLocationLabel } from '@shc/utils';
 
 export default function Checkout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { active: collectionLocation } = useCustomerLocation();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -149,6 +154,18 @@ export default function Checkout() {
       >
         <Text style={styles.checkoutTitle}>Checkout</Text>
         <Text style={styles.checkoutSubtitle}>{itemCount} portion{itemCount !== 1 ? 's' : ''} · HDB collection</Text>
+
+        <SHCCard variant="bento-mint" style={styles.sectionCard}>
+          <SHCSectionTitle style={styles.sectionTitle}>Your collection point</SHCSectionTitle>
+          {collectionLocation ? (
+            <Text style={styles.locationBody}>{formatLocationLabel(collectionLocation)}</Text>
+          ) : (
+            <Text style={styles.locationBody}>No location set — cooks sorted by default.</Text>
+          )}
+          <SHCButton variant="outline" size="sm" onPress={() => router.push('/(customer)/location' as any)} testID="checkout-change-location">
+            <SHCButtonText variant="outline">Change location</SHCButtonText>
+          </SHCButton>
+        </SHCCard>
 
         <View style={{ marginBottom: shcSpacing.md }}>
           <GourmeatOrderSummaryCard
@@ -276,6 +293,7 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
   sectionCard: { marginBottom: shcSpacing.md },
   sectionTitle: { marginTop: 0 },
+  locationBody: { fontSize: 13, color: gourmeatColors.text, marginBottom: shcSpacing.sm, lineHeight: 18 },
   pdpaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

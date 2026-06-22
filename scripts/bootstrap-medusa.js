@@ -197,6 +197,22 @@ async function ensureDemoCustomer(publishableKey) {
       console.log('  · Demo customer auth setup skipped:', JSON.stringify(reg.body || login.body));
       return;
     }
+
+  // Cook auth production hardening: hashed password + custom SHC JWT (Medusa auth_identity linked in seed)
+  console.log('  · Ensuring demo cook auth (rose@shc.local / cooksecret) - hashed + auth_identity_id');
+  try {
+    const cookLogin = await httpJson('POST', '/store/shc/auth/cook/login', {
+      email: 'rose@shc.local',
+      password: 'cooksecret',
+    });
+    if (cookLogin.status >= 200 && cookLogin.status < 300 && cookLogin.body?.token) {
+      console.log('  ✓ Demo cook SHC JWT login ready (production: use hashed, no plaintext fallback in prod)');
+    } else {
+      console.log('  · Demo cook will be ready after seed (provides password_hash + auth_identity_id)');
+    }
+  } catch (e) {
+    console.log('  · Cook auth (seed provides; bootstrap verifies post-seed)');
+  }
   }
 
   const authHeaders = {

@@ -2,30 +2,19 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Bell, UtensilsCrossed, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, Wallet } from 'lucide-react';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
-import { useCredits, useRedeemCredits, useCreateRequest } from '../../lib/useProducts';
+import { useCredits, useRedeemCredits } from '../../lib/useProducts';
 import { useNotifications } from '../../lib/useOrder';
-import { SHCCard, SHCButton, WalletCard, SHCSectionTitle, SHCPageHeader } from '../components/SHCWebComponents';
+import { SHCCard, SHCButton, WalletCard, SHCSectionTitle, SHCPageHeader, HeritageStoryBanner } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 
 export default function Profile() {
   const { user } = useAuth();
   const { data: credits } = useCredits();
   const redeem = useRedeemCredits();
-  const createReq = useCreateRequest();
   const { data: notifs = [] } = useNotifications();
-  const [reqBody, setReqBody] = useState('Nasi lemak sambal for Hari Raya open house, 6 guests');
-  const [party, setParty] = useState(6);
-
-  const handleRequest = async () => {
-    await createReq.mutateAsync({
-      body: reqBody,
-      party_size: party,
-      budget_cents: 14000,
-      date: '2026-06-25',
-    });
-  };
 
   const balance = credits?.balance || 0;
   const tier = credits?.tier || 'Silver';
@@ -44,7 +33,6 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Visual wallet hero */}
       <div className="relative overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4 h-28">
         <Image src={BENTO_ACTION_IMAGES.credits} alt="" fill className="object-cover opacity-70" sizes="100vw" />
         <div className="relative z-10 flex items-center justify-between h-full px-5">
@@ -59,6 +47,11 @@ export default function Profile() {
       </div>
 
       <WalletCard balance={balance} tier={tier} />
+
+      <div className="mt-4 mb-2">
+        <HeritageStoryBanner href="/content/trust" />
+      </div>
+
       <div className="mt-3">
         <SHCButton
           size="sm"
@@ -68,38 +61,6 @@ export default function Profile() {
         >
           Redeem 20 credits
         </SHCButton>
-      </div>
-
-      <SHCSectionTitle>Request a dish</SHCSectionTitle>
-      <div className="relative min-h-[200px] overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)]">
-        <Image src={BENTO_ACTION_IMAGES.request} alt="" fill className="object-cover opacity-30" sizes="100vw" />
-        <SHCCard className="relative z-10 bg-card/95 backdrop-blur-sm border-0 shadow-none">
-          <div className="flex items-center gap-2 mb-3">
-            <UtensilsCrossed className="w-5 h-5 text-primary" aria-hidden />
-            <span className="font-bold text-sm">Custom dish request</span>
-          </div>
-          <textarea
-            value={reqBody}
-            onChange={(e) => setReqBody(e.target.value)}
-            className="shc-input min-h-[80px] resize-y"
-            placeholder="Occasion, cuisine, dietary needs…"
-          />
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              👥
-              <input
-                value={party}
-                onChange={(e) => setParty(parseInt(e.target.value) || 4)}
-                type="number"
-                min={2}
-                className="shc-input w-20 py-1.5"
-              />
-            </label>
-            <SHCButton onClick={handleRequest} testID="request-dish-web">
-              Post request
-            </SHCButton>
-          </div>
-        </SHCCard>
       </div>
 
       <SHCSectionTitle>Notifications</SHCSectionTitle>

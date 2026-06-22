@@ -1,0 +1,46 @@
+# Android location map smoke — OSM tile picker (no Google Maps API key)
+appId: com.singaporehomecooks.customer
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- tapOn:
+    id: "gourmeat-location-chip"
+- extendedWaitUntil:
+    visible:
+      id: "location-picker"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "location-step-find"
+    timeout: 30000
+- tapOn:
+    id: "location-search-input"
+- inputText: "520456"
+- tapOn:
+    id: "location-search-btn"
+- extendedWaitUntil:
+    visible:
+      id: "location-result-.*"
+    timeout: 30000
+- tapOn:
+    id: "location-result-.*"
+- extendedWaitUntil:
+    visible:
+      id: "location-step-confirm"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "location-map"
+    timeout: 30000
+- tapOn:
+    id: "location-map-n"
+- tapOn:
+    id: "location-map-e"
+- scrollUntilVisible:
+    element:
+      id: "location-confirm-btn"
+    direction: DOWN
+    timeout: 15000

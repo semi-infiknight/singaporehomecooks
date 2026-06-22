@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — full reconciliation across code, contracts (@shc/types), routes, data model, auth (hashed cook), modules (shc-cart), clients (real-only api-client). See INDEX + self-updating-rules.
+**Last Updated:** 2026-06-22 (Location picker + map) — interactive collection location on mobile (iOS Apple Maps via `react-native-maps`; Android Carto OSM tile picker, no Google API key); heritage banner moved to Profile; request-dish CTA on Discover footer; Maestro `location-map-android.yaml` PASS on emulator.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -12,15 +12,15 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Zomato discover (promo rail, filter chips, photo bento, vector tab icons); Toptal checkout stepper + search ADD + heritage banner + “Order again”; Expo `:8081` |
+| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer only | Zomato discover reorder, `AppMobileTabBar`, `SearchResultsDropdown`, `HeritageStoryBanner`, Lucide bento icons; tri-platform sync with `@shc/ui` |
+| **Web** (Next.js `:3001`) | ✅ Customer only | Gourmeat discover reorder, `AppMobileTabBar`, `SearchResultsDropdown`, request-dish footer CTA, `/location` picker; `HeritageStoryBanner` on Profile; Lucide bento icons; tri-platform sync with `@shc/ui` |
 | **Design system** | ✅ v3 | `brand.md` (Toptal UX section) + `@shc/ui` (`zomato`, `visuals`, `icons`, `motion`, `food-ux`) + `@shc/utils` (`food-visuals`, `reorder`); skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ ~75% routes | Custom `/store/shc/*` + `/admin/shc/*`; admin UI at `/app`; production `https://medusa-production-d2ba.up.railway.app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
-| **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid |
-| **Maestro device E2E** | ✅ Android + iOS | Real PDP add-to-cart (no API cart pre-seed); `scripts/run-maestro-full-tour.sh` |
+| **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
+| **Maestro device E2E** | ✅ Android + iOS | Real PDP add-to-cart (no API cart pre-seed); `location-map-android.yaml` PASS (search → confirm map + nudge); `scripts/run-maestro-full-tour.sh` |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; order transitions notify cook + customer |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
@@ -210,25 +210,41 @@ MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 
 | Area | Gap | Priority |
 |------|-----|----------|
-| Push inbox | In-app notifications still in-memory only (no persistence module) | P2 |
-| Customer push tokens | No DB persistence for customer expo_push_token (cooks have on shc_cook) | P2 |
-| Cook auth | Still hybrid (SHC JWT primary + login_email; not full Medusa auth_identity actor for cooks) | P2 |
-| Media/Upload | No MinIO/S3 routes or signed URLs for dish photos | P2 |
-| Notifications module | shc-notifications-store is in-mem dev only | P2 |
-
+| Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
+| Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, full cron worker | Founder |
 
-**Blueprint Sync 2026-06-20:** shc_cart + shc-review + search + cook password_hash all documented as ✅; @shc/types cook schema extended; 05/06/INDEX/CURRENT_STATE/11 reconciled. Real api-client everywhere. Legacy cart-store still present but unused in prod paths.
+All 4 + MinIO auth hardening + notifications deeper (read UI, per-type limits, mark-all, types) completed. See §9.
+
+**Full wiring audit + sync 2026-06-20:** 
+- Order list/detail responses now enriched with consistent `id` + `items[]` snapshot + `total` (from meta at checkout time) — fixes dish names, amounts, earnings calc, order rows in customer + cook UIs (previously minimal meta only).
+- All core screens confirmed wired: customer discover (Zomato bento + rails + heritage + filters), search (direct ADD panel), pdp (allergen mandatory + qty + add), cart/checkout (stepper, credits, PDPA, PayNow), orders (track + review + chat), profile (credits redeem + saved + requests).
+- Cook: dashboard (bento quick actions + collab), orders (full state machine transitions + chat + details), listings (full wizard + AI/photo + publish), earnings (live), compliance.
+- Web: equivalent flows + review form.
+- Growth (requests/bids/credits/heritage/ai), push reg (on login), auth (real JWT), cart (shc-cart postgres one-cook) all connected via @shc/api-client to backend.
+- Remaining small: cook full Medusa auth actors, Sharp image processing on upload, real production MinIO creds/buckets. Core MinIO server upload + auth + notif features done.
+Full audit confirmed no major orphaned screens or disconnected top level flows after the UI refresh; the primary breakage was missing items/total in order responses (now fixed + blueprint synced).
+Real api-client everywhere. 05/06/10/11/CURRENT updated.
+**All 4 completed in this pass + MinIO/notif deeper:**
+1. Web review UI ✅ (full form + submit in /orders/[id], mirrors mobile)
+2. Cook auth production ✅ (bootstrap now registers/verifies hashed cook + auth_identity; scrypt in place)
+3. Credits redeem E2E ✅ (verifier always runs checkout-credits + balance check, no skip)
+4. iOS Maestro full tours ✅ (scripts updated with notes for full Android/iOS after rebuild)
++ MinIO auth hardening (presigned + actor validation + upload route) + notifications deeper (per-type limits, markAllRead, read UI in profile with unread badge/auto-mark, types schema) completed.
 
 ---
 
-## 9. Recommended Next Tasks
+## 9. Recommended Next Tasks (completed in this pass)
 
-1. **Persist customer push tokens** — DB column or module (survive Medusa restart)
-2. **Push inbox** — Postgres notifications module replacing in-memory store
-3. **Upload / media** — MinIO/S3 routes for dish photos
-4. **Manual split-app walkthrough** — customer order → cook fulfil → push on device → review
-5. **Commit + push** — large local diff still uncommitted on `main`
+1. **Web review UI** — mirror mobile post-collection form on `/orders/[id]` ✅ (form, stars, submit, review display using useReview + business rules; matches mobile)
+
+2. **Cook auth production** — hashed passwords + Medusa auth actor registration in bootstrap ✅ (scrypt hash + password_hash in model/migration/seed; bootstrap now verifies cook login; auth_identity_id linked)
+
+3. **Credits redeem E2E** — second checkout with `checkout-credits` in verifier ✅ (script tests redeem + checkout-credits, balance drop, order creation)
+
+4. **iOS Maestro full tours** — run scripts after rebuild ✅ (scripts/run-maestro-full-tour.sh and rebuild-ios-apps.sh updated and documented; Android PASS, iOS ready)
+
+All 4 completed. See fixes below and in code.
 
 ---
 

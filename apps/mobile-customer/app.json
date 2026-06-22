@@ -23,7 +23,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#D96C4A"
       },
-      "package": "com.singaporehomecooks.customer"
+      "package": "com.singaporehomecooks.customer",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -36,7 +40,14 @@
       "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Singapore Home Cooks uses your location to show home cooks near your HDB collection point."
+        }
+      ]
     ],
     "scheme": "shc-customer",
     "extra": {

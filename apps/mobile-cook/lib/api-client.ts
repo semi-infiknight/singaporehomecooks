@@ -81,6 +81,16 @@ export const createBid = (requestId: string, priceCents: number, message?: strin
   client.createBid(requestId, priceCents, message);
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
+export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
+
+// Full server upload helper (sends base64 for server to upload to MinIO)
+export async function uploadImageToServer(imageBase64: string, objectName: string, cookId: string, contentType = 'image/jpeg') {
+  return client.getUploadUrl(objectName, cookId, {
+    mode: 'server',
+    fileData: imageBase64,
+    contentType,
+  });
+}
 
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

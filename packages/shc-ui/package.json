@@ -15,6 +15,7 @@
     "moti": "*",
     "react": "*",
     "react-native": "*",
+    "react-native-maps": ">=1.14.0",
     "react-native-reanimated": ">=3.0.0"
   },
   "dependencies": {

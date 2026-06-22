@@ -44,6 +44,8 @@ class ShcOrderMetaModuleService extends MedusaService({
       credits_applied_cents: (data as any).credits_applied_cents,
       is_corporate: (data as any).is_corporate,
       corporate_note: (data as any).corporate_note,
+      items: (data as any).items || (data as any).items_json || null,
+      total_cents: (data as any).total_cents || (data as any).total || null,
     };
     const payload = { ...validated, ...extra, updated_at: new Date() } as any;
     const [existing] = await this.listAndCountOrderMetas(

@@ -33,5 +33,6 @@ export async function shapeProduct(
     shc_availability: avail,
     heritage_note: meta.heritage_note || "",
     description: meta.description || "",
+    image_url: meta.image_url || null,
   };
 }

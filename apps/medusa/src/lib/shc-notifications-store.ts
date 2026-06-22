@@ -6,6 +6,7 @@ export type ShcNotification = {
   read?: boolean;
 };
 
+/** Legacy in-mem (kept for backward / tests). Persistent via shc-notification module. */
 const store = new Map<string, ShcNotification[]>();
 
 export function listNotifications(actorId: string): ShcNotification[] {

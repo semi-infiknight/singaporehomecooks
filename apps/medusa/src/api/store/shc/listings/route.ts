@@ -14,6 +14,7 @@ const CreateSchema = z.object({
   calories: z.number().optional(),
   ingredients: z.array(z.object({ name: z.string(), quantity: z.number(), unit: z.string() })).optional(),
   occasion_tags: z.array(z.string()).optional(),
+  image_url: z.string().url().optional(), // support dish photo (media gap fix)
 }).strict();
 
 /** GET /store/shc/listings — cook's published product metas */
@@ -37,6 +38,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid listing", parse.error.format() as any) });
   }
   const cookId = getCookId(req);
+  // MinIO auth hardening + full server upload support: if image provided as url from our /upload (presigned or server mode)
   const productId = `prod_${parse.data.name.toLowerCase().replace(/\s+/g, "_")}_${Date.now().toString().slice(-4)}`;
   const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
@@ -51,6 +53,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     calories_confidence: "category",
     ingredients: parse.data.ingredients || [],
     min_qty: parse.data.min_qty,
+    image_url: parse.data.image_url,
   } as any);
   await availService.upsertAvailability({
     product_id: productId,

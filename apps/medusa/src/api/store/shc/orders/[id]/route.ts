@@ -14,6 +14,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   res.json({
     order: {
       id: m.order_id,
+      order_id: m.order_id,
       cook_id: m.cook_id,
       shc_status: m.shc_status,
       collection_date: m.collection_date,
@@ -21,9 +22,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       paynow_reference: m.paynow_reference,
       allergen_acked_at: m.allergen_acked_at,
       pdpa_consent_at: m.pdpa_consent_at,
+      address_released_at: m.address_released_at,
       customer_id: m.customer_id || "cust_demo",
       credits_applied: m.credits_applied_cents || 0,
       is_corporate: !!m.is_corporate,
+      items: m.items && m.items.length ? m.items : [{ name: 'Order item', qty: 1, product_id: '' }],
+      total: m.total_cents ? Math.round(m.total_cents / 100) : 0,
     },
     messages: data.messages || [],
   });

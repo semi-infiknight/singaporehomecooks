@@ -110,5 +110,8 @@ export const getReview = (orderId: string) => client.getReview(orderId);
 export const submitReview = (orderId: string, rating: number, body?: string) =>
   client.submitReview(orderId, rating, body);
 
+export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) =>
+  client.getUploadUrl(objectName, resourceOwner, options);
+
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

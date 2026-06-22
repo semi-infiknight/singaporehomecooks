@@ -23,14 +23,22 @@ export default function RootLayout() {
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: shcColors.primary },
-                headerTintColor: shcColors.background,
-                headerTitleStyle: { fontWeight: '600' },
+                headerTintColor: shcColors.onPrimary,
+                headerTitleStyle: { fontWeight: '700', color: shcColors.onPrimary },
                 headerTitle: 'SHC — Customer',
               }}
             >
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-              <Stack.Screen name="(shared)/auth/index" options={{ title: 'Sign in' }} />
+              <Stack.Screen
+                name="(shared)/auth/index"
+                options={{
+                  title: 'Sign in',
+                  headerStyle: { backgroundColor: shcColors.primary },
+                  headerTintColor: shcColors.onPrimary,
+                  headerTitleStyle: { fontWeight: '800', color: shcColors.onPrimary },
+                }}
+              />
               <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Trust & Safety' }} />
               <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
             </Stack>

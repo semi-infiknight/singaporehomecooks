@@ -29,6 +29,17 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
     if (effectiveRole === "customer" && auth?.actor_type === "customer") {
       registerCustomerPushToken(auth.actor_id, expo_push_token);
+      // Persist to Medusa customer metadata for restart survival (small gap fix)
+      try {
+        const customerModule: any = req.scope.resolve("customer");
+        if (customerModule?.updateCustomers) {
+          // simple metadata merge
+          await customerModule.updateCustomers([{
+            id: auth.actor_id,
+            metadata: { expo_push_token }
+          } as any]);
+        }
+      } catch { /* non-fatal for dev */ }
       logger.info?.(`[SHC-STORE] push-token registered for customer ${auth.actor_id}`);
       return res.json({ success: true, role: "customer", actor_id: auth.actor_id });
     }

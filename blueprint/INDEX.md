@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-20 (Full Blueprint Sync) — reconciled code reality (shc-cart, shc-review, cook scrypt + login_email, real @shc/api-client everywhere, search/review live, 48+ custom routes), contracts, data model, api surface, gaps, modules. All clients real-Medusa. See CURRENT_STATE.md + self-updating-rules (now mandatory per change).
+**Last Updated:** 2026-06-22 (Location picker + map) — Mobile collection location with draggable map (iOS Apple Maps, Android Carto OSM tiles); heritage banner → Profile; request-dish CTA → Discover footer; Maestro `location-map-android.yaml` PASS.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 

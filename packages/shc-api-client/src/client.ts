@@ -265,6 +265,24 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).notifications || [];
     },
 
+    async markNotificationsRead(ids?: string[], all = false) {
+      return request("/store/shc/notifications", {
+        method: "POST",
+        body: JSON.stringify({ ids, all }),
+      });
+    },
+
+    async getUploadUrl(objectName: string, resourceOwner?: string, options?: { mode?: 'presigned' | 'server'; fileData?: string; contentType?: string }) {
+      const body: any = { object_name: objectName, resource_owner: resourceOwner };
+      if (options?.mode) body.mode = options.mode;
+      if (options?.fileData) body.fileData = options.fileData;
+      if (options?.contentType) body.content_type = options.contentType;
+      return request("/store/shc/upload", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    },
+
     async estimateCaloriesAI(ingredients: unknown[]) {
       return request("/store/shc/ai", { method: "POST", body: JSON.stringify({ ingredients }) });
     },

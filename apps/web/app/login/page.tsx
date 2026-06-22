@@ -38,7 +38,7 @@ export default function LoginPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
+            className="shc-input"
             placeholder="Email"
             required
           />
@@ -46,12 +46,12 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2"
+            className="shc-input"
             placeholder="Password"
             required
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <SHCButton type="submit" disabled={busy} className="w-full">
+          <SHCButton type="submit" disabled={busy} size="lg" className="w-full min-h-[52px]">
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </SHCButton>
         </form>

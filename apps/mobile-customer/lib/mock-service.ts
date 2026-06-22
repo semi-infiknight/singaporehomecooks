@@ -104,13 +104,15 @@ function seed() {
     };
     try { shcProductMetaSchema.parse(meta); } catch (e) { console.warn('Seed meta validation note:', e); }
 
-    const cookName = d.cook_display_name || cooks.find(c => c.id === d.cook_id)?.display_name;
+    const cook = cooks.find((c) => c.id === d.cook_id);
+    const cookName = d.cook_display_name || cook?.display_name;
     // NOTE: NO explicit 'cook_id:' key in this literal (provided cleanly by ...meta below to satisfy TS no-dupe)
     return {
       id: d.id,
       name: d.name,
       price: d.price,
       cook_name: cookName,
+      cook_area: cook?.area,
       ...meta,
       heritage_note: d.heritage_note || d.description?.slice(0, 120),
       description: d.description,

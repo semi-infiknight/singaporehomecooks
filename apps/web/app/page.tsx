@@ -16,8 +16,10 @@ import {
   getOccasionImageUrl,
   getCookAvatarUrl,
   MIND_CUISINE_CATEGORIES,
+  sortByCookProximity,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
+import { useCustomerLocation } from '../lib/useCustomerLocation';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -28,8 +30,9 @@ import {
   GourmeatHomeHeader,
   GourmeatCategoryRow,
   GourmeatDishCard,
-  HeritageStoryBanner,
+
   PromoRail,
+  RequestDishHomeCTA,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 
@@ -53,6 +56,7 @@ export default function DiscoverHome() {
   });
   const { data: orders = [] } = useOrders();
   const { favorites } = useFavorites();
+  const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
   const savedDishes = useMemo(() => {
@@ -69,9 +73,13 @@ export default function DiscoverHome() {
   const productList = products as DishCardProduct[];
 
   const filteredList = useMemo(() => {
-    if (!cuisineFilter) return productList;
-    return productList.filter((p) => p.cuisine === cuisineFilter);
-  }, [productList, cuisineFilter]);
+    let list = productList;
+    if (cuisineFilter) list = list.filter((p) => p.cuisine === cuisineFilter);
+    return sortByCookProximity(
+      list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
+      collectionLocation
+    ) as DishCardProduct[];
+  }, [productList, cuisineFilter, collectionLocation]);
 
   const reorderDishes = useMemo(() => {
     if (query) return [];
@@ -91,7 +99,7 @@ export default function DiscoverHome() {
     imageUrl: c.imageUrl,
   }));
 
-  const locationLabel = user?.name ? `${user.name.split(' ')[0]}'s area · SG` : 'Katong, Singapore';
+  const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
 
   return (
     <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8">
@@ -99,9 +107,10 @@ export default function DiscoverHome() {
 
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
-        locationLabel={locationLabel}
+        locationLabel={headerLocation}
         locationHint="Collect from"
         avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+        locationHref="/location"
       />
 
       <div className="flex gap-2 mb-5">
@@ -124,12 +133,6 @@ export default function DiscoverHome() {
           <Settings2 className="w-5 h-5 text-foreground" />
         </Link>
       </div>
-
-      {!query && (
-        <div className="mb-4">
-          <HeritageStoryBanner href="/content/trust" />
-        </div>
-      )}
 
       {!query && (
         <div className="shc-section-gap mb-4">
@@ -216,6 +219,8 @@ export default function DiscoverHome() {
           ))}
         </div>
       )}
+
+      {!query && <RequestDishHomeCTA />}
 
       <div className="mt-8 text-center">
         <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline">

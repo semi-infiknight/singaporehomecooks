@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +25,7 @@ import { useFavorites } from '../../../hooks/useFavorites';
 
 export default function ProductDetail() {
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, allergenAck: allergenAckParam } = useLocalSearchParams<{ id: string; allergenAck?: string }>();
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id || '');
   const qc = useQueryClient();
@@ -36,6 +36,11 @@ export default function ProductDetail() {
   const [allergenAck, setAllergenAck] = useState(false);
   const [qty, setQty] = useState(5);
   const [error, setError] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    if (allergenAckParam === '1') setAllergenAck(true);
+  }, [allergenAckParam]);
 
   if (authLoading || isLoading || !product) {
     return (
@@ -64,7 +69,9 @@ export default function ProductDetail() {
         setError('Cart did not update — try again.');
         return;
       }
-      router.push('/(customer)/cart' as any);
+      setAdded(true);
+      // Brief beat so E2E can observe add-to-cart-success before tab navigation
+      setTimeout(() => router.replace('/(customer)/cart' as any), 600);
     } catch (e: any) {
       setError(e?.message || 'Failed to add to cart');
     }
@@ -156,7 +163,9 @@ export default function ProductDetail() {
           onAdd={handleAdd}
           disabled={!allergenAck || addMut.isPending}
           loading={addMut.isPending}
-          testID={allergenAck && !addMut.isPending ? 'pdp-sticky-ready' : 'pdp-sticky-bar'}
+          testID={
+            added ? 'add-to-cart-success' : allergenAck && !addMut.isPending ? 'pdp-sticky-ready' : 'pdp-sticky-bar'
+          }
         />
       </View>
     </View>

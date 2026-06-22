@@ -36,7 +36,8 @@
       "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-notifications"
     ],
     "scheme": "shc-cook",
     "extra": {

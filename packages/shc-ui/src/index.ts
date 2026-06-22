@@ -12,5 +12,8 @@ export * from './zomato';
 export * from './food-ux';
 export * from './delivery-ux';
 export * from './gourmeat';
+export * from './request-ux';
+export * from './location-ux';
+export * from './location-map';
 export * from './domain';
 export * from './forms';

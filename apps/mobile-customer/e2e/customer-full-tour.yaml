@@ -1,0 +1,267 @@
+# Customer app — full screen tour (Railway backend, all major routes)
+# Run: maestro test --device <id> apps/mobile-customer/e2e/customer-full-tour.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+# Guest browse first (Weavers Web 2025 principle 5)
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 60000
+# Sign in for cart/checkout flows
+- tapOn:
+    id: "guest-browse-bar"
+    optional: true
+# guest-browse-bar already navigates to auth — do not tap "Sign in" again (would submit early)
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      text: "Hari Raya"
+    direction: DOWN
+    timeout: 30000
+    optional: true
+
+# Discover — visual category rail + scroll
+- tapOn: "Hari Raya"
+- tapOn: "All"
+- scroll
+
+# Product detail via deep link (dish cards are tap-to-open; no View Cook button)
+- openLink: shc-customer:///(customer)/product/dish_nasi_lemak_prawn_001?allergenAck=1
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Nasi Lemak Sambal Prawn"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "pdp-sticky-ready"
+    timeout: 30000
+- tapOn:
+    id: "add-to-cart-btn"
+- extendedWaitUntil:
+    visible:
+      id: "add-to-cart-success"
+    timeout: 120000
+- openLink: shc-customer:///(customer)/cart
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cart-screen"
+    timeout: 90000
+- extendedWaitUntil:
+    visible:
+      id: "cart-item-0"
+    timeout: 90000
+- extendedWaitUntil:
+    visible:
+      id: "proceed-checkout"
+    timeout: 30000
+- tapOn:
+    id: "proceed-checkout"
+    optional: true
+- extendedWaitUntil:
+    visible: "Collection Slot"
+    timeout: 20000
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "allergen-ack"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    id: "allergen-ack"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "pdpa-consent"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    id: "pdpa-consent"
+    optional: true
+- tapOn:
+    id: "corporate-flag-toggle"
+    optional: true
+- tapOn:
+    id: "credit-preset-0"
+    optional: true
+- scroll
+- tapOn:
+    id: "do-checkout"
+    optional: true
+
+# Reset to tab root, then open profile (avoids checkout stack blocking deep link)
+- openLink: shc-customer:///(customer)
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "bottom-tab-bar"
+    timeout: 30000
+- tapOn:
+    id: "profile-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-profile-screen"
+    timeout: 45000
+- tapOn:
+    id: "notif-bell"
+- tapOn:
+    id: "notif-bell"
+# Immersive request dish page
+- openLink: shc-customer:///(customer)/request
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "request-dish-screen"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "request-desc"
+    timeout: 20000
+- tapOn:
+    id: "request-desc"
+- inputText: "Demo nasi lemak for Hari Raya family gathering"
+- hideKeyboard
+- tapOn:
+    id: "submit-request-btn"
+- tapOn:
+    id: "submit-request-btn"
+- tapOn:
+    id: "submit-request-btn"
+- tapOn:
+    id: "submit-request-btn"
+    optional: true
+- openLink: shc-customer:///(customer)/profile
+- tapOn:
+    text: "Open"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "advanced-search-link"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "advanced-search-link"
+
+# Advanced search
+- extendedWaitUntil:
+    visible: "Advanced Search"
+    timeout: 20000
+- tapOn:
+    id: "halal-filter"
+- tapOn:
+    id: "halal-filter"
+- scroll
+- back
+
+# Orders — deep link
+- openLink: shc-customer:///(customer)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-orders-screen"
+    timeout: 20000
+- scroll
+- openLink: shc-customer:///(customer)
+- tapOn:
+    text: "Open"
+    optional: true
+
+# Onboarding
+- openLink: shc-customer:///(shared)/onboarding
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Trust & Safety"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "trust-browse-cta"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "trust-browse-cta"
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 60000
+
+# Cook profile + chat
+- openLink: shc-customer:///(customer)/cook/auntie-rose-tampines
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Auntie Rose (Tampines)"
+    timeout: 60000
+- scroll
+- back
+
+- openLink: shc-customer:///(shared)/chat/SHC-2026-00001
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "chat-order-title"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "chat-message-input"
+    direction: DOWN
+    timeout: 15000
+    optional: true
+- tapOn:
+    id: "chat-message-input"
+    optional: true
+- inputText: "What time for collection?"
+- tapOn:
+    text: "Send"
+    optional: true
+- back
+
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- repeat:
+    times: 6
+    commands:
+      - tapOn:
+          text: "Dismiss"
+          optional: true
+- openLink: shc-customer:///(customer)
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Hari Raya"
+    timeout: 60000
+- assertVisible: "Hari Raya"

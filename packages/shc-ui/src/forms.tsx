@@ -6,6 +6,7 @@ import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
 
 // Re-export improved AllergenAckCheckbox from domain for forms consumers
 export { AllergenAckCheckbox } from './domain';
+export { OccasionTagPicker } from './occasion-picker';
 
 export function IngredientTierEditor({ value, onChange, label = '3-Tier Ingredients (JSON-like array)' }: { value: Array<{name: string; quantity: number; unit: string}>; onChange: (v: any[]) => void; label?: string }) {
   const [text, setText] = React.useState(JSON.stringify(value || [], null, 2));
@@ -23,21 +24,6 @@ export function IngredientTierEditor({ value, onChange, label = '3-Tier Ingredie
         placeholder='[{"name":"Coconut milk","quantity":200,"unit":"ml"}, ...]'
       />
       <Text style={{ fontSize: 10, color: colors.textLight }}>Tier1 (mandatory allergens) disclosed to customer. Use for product-meta.ingredients</Text>
-    </View>
-  );
-}
-
-export function OccasionTagPicker({ selected, onToggle, options = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'] }: { selected: string[]; onToggle: (t: string) => void; options?: string[] }) {
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-      {options.map(tag => {
-        const sel = selected.includes(tag);
-        return (
-          <Pressable key={tag} onPress={() => onToggle(tag)} style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: shcRadii.pill, borderWidth: shcBorders.brutal, borderColor: colors.border, backgroundColor: sel ? colors.primary : colors.surfaceAlt }}>
-            <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{tag}</Text>
-          </Pressable>
-        );
-      })}
     </View>
   );
 }

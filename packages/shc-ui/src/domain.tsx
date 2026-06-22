@@ -16,6 +16,7 @@ import {
 import { SHCFoodImage } from './visuals';
 import { SHCFavoriteButton } from './delivery-ux';
 import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography } from './theme';
+import { RequestDishExperience } from './request-ux';
 
 export type SHCDishCardData = {
   id: string;
@@ -566,35 +567,24 @@ export function ListingWizardStep({ step, title, children }: { step: number; tit
 
 export function AllergenAckCheckbox({ checked, onChange, allergens, tier1 }: { checked: boolean; onChange: (v: boolean) => void; allergens?: string[]; tier1?: string[] }) {
   const list = (tier1 || allergens || []).join(', ');
-  const toggle = () => onChange(!checked);
   return (
-    <Pressable onPress={toggle} style={{ flexDirection: 'row', alignItems: 'flex-start', padding: shcSpacing.sm, backgroundColor: colors.surfaceWarning, borderRadius: shcRadii.md, borderWidth: shcBorders.brutal, borderColor: colors.border }} testID="allergen-ack" accessibilityRole="checkbox" accessibilityState={{ checked }}>
-      <Pressable
-        onPress={toggle}
-        testID="allergen-ack-switch"
-        hitSlop={8}
-        style={{ marginRight: shcSpacing.sm, alignItems: 'center', padding: 4 }}
-        accessibilityRole="switch"
-        accessibilityState={{ checked }}
-      >
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', padding: shcSpacing.sm, backgroundColor: colors.surfaceWarning, borderRadius: shcRadii.md, borderWidth: shcBorders.brutal, borderColor: colors.border }} testID="allergen-ack">
+      <View testID="allergen-ack-switch" style={{ marginRight: shcSpacing.sm, padding: 4 }}>
         <Switch
           value={checked}
           onValueChange={onChange}
           trackColor={{ false: colors.border, true: colors.accent }}
           thumbColor={colors.surface}
           accessibilityLabel="Acknowledge allergens"
+          accessibilityRole="switch"
         />
-        <View
-          testID={checked ? 'allergen-ack-checked' : 'allergen-ack-unchecked'}
-          style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        />
+      </View>
+      <Pressable onPress={() => onChange(!checked)} style={{ flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked }}>
+        <Text style={{ color: colors.text, fontSize: 13 }}>
+          ⚠️ MANDATORY ALLERGEN ACKNOWLEDGMENT (per 08-marketplace-rules): I confirm no one in my party has undisclosed allergies to: {list || 'listed ingredients'}. This protects our home cooks.
+        </Text>
       </Pressable>
-      <Text style={{ flex: 1, color: colors.text, fontSize: 13 }}>
-        ⚠️ MANDATORY ALLERGEN ACKNOWLEDGMENT (per 08-marketplace-rules): I confirm no one in my party has undisclosed allergies to: {list || 'listed ingredients'}. This protects our home cooks.
-      </Text>
-    </Pressable>
+    </View>
   );
 }
 
@@ -654,29 +644,19 @@ export function PhotoTipsModalContent({ onClose }: { onClose?: () => void }) {
   );
 }
 
-export function RequestDishForm({ onSubmit, onClose }: { onSubmit: (data: { description: string; youtube_url?: string; party_size?: number; budget?: number; date?: string }) => void; onClose?: () => void }) {
-  // Stub form for Phase 8 Request Custom Dish (customer) — posts to shc_request. SG terms.
-  const [desc, setDesc] = React.useState('Nasi lemak for 8 people, spicy, for Hari Raya open house this weekend');
-  const [yt, setYt] = React.useState('');
-  const [size, setSize] = React.useState(8);
-  const [budget, setBudget] = React.useState(120);
-  const [date, setDate] = React.useState('2026-06-28');
+/** @deprecated Use RequestDishExperience on /request route. Thin wrapper for legacy callers. */
+export function RequestDishForm({
+  onSubmit,
+  onClose,
+}: {
+  onSubmit: (data: { body: string; youtube_url?: string; party_size?: number; budget_cents?: number; date?: string }) => void;
+  onClose?: () => void;
+}) {
   return (
-    <SHCCard testID="request-dish-form">
-      <SHCSectionTitle>Request Custom Dish (Recipe Bidding)</SHCSectionTitle>
-      <Text style={{ fontSize: 12, color: colors.textLight }}>Tell cooks your family story or YouTube inspo. They bid — accept to match.</Text>
-      <TextInput value={desc} onChangeText={setDesc} multiline placeholder="Describe the dish, occasion (e.g. nasi lemak for Hari Raya...)" style={{ borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, marginVertical: 6, backgroundColor: colors.surface, minHeight: 60, color: colors.text }} testID="request-desc" />
-      <TextInput value={yt} onChangeText={setYt} placeholder="Optional YouTube recipe URL (e.g. for cook interpretation)" style={{ borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, marginBottom: 6, backgroundColor: colors.surface, color: colors.text }} testID="request-yt" />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <TextInput value={String(size)} onChangeText={t => setSize(parseInt(t)||4)} keyboardType="numeric" placeholder="Party size" style={{ flex: 1, borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, backgroundColor: colors.surface, color: colors.text }} />
-        <TextInput value={String(budget)} onChangeText={t => setBudget(parseInt(t)||50)} keyboardType="numeric" placeholder="Budget S$" style={{ flex: 1, borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, backgroundColor: colors.surface, color: colors.text }} />
-        <TextInput value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" style={{ flex: 1, borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, backgroundColor: colors.surface, color: colors.text }} />
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
-        <SHCButton onPress={() => onSubmit({ description: desc, youtube_url: yt || undefined, party_size: size, budget: Math.round(budget * 100), date })} testID="submit-request-btn"><SHCButtonText>Post Request (cooks will bid)</SHCButtonText></SHCButton>
-        {onClose && <SHCButton variant="outline" onPress={onClose}><SHCButtonText>Cancel</SHCButtonText></SHCButton>}
-      </View>
-      <Text style={{ fontSize: 10, color: colors.textLight, marginTop: 6 }}>Mock: creates shc_request. On cook side see Collaboration Board. Matches Phase 8 differentiation.</Text>
-    </SHCCard>
+    <RequestDishExperience
+      onSubmit={onSubmit}
+      onBack={onClose}
+      testID="request-dish-form"
+    />
   );
 }

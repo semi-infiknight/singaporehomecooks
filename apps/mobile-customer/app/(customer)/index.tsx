@@ -19,9 +19,9 @@ import {
   SHCGuestBrowseBar,
   SHCActiveOrderBanner,
   SHCZomatoDishRowRail,
-  SHCHeritageStoryBanner,
   SHCFilterChipRow,
   SHCPromoRail,
+  SHCRequestDishHomeCTA,
 } from '@shc/ui';
 import {
   getOccasionImageUrl,
@@ -36,8 +36,10 @@ import {
   getActiveOrders,
   getOrderStatusLabel,
   favoritesToReorderDishes,
+  sortByCookProximity,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
+import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { useOrders } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
@@ -118,6 +120,7 @@ export default function CustomerDiscover() {
   const { data: orders = [] } = useOrders('customer');
   const { favorites, toggle, isFavorite } = useFavorites();
   const { data: products = [], isLoading } = useProducts('');
+  const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
 
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
@@ -158,17 +161,16 @@ export default function CustomerDiscover() {
     imageUrl: c.imageUrl,
   }));
 
-  const filteredProducts = useMemo(
-    () =>
-      filterDiscoverProducts(products as Record<string, unknown>[], {
-        query,
-        occasion: occasionFilter || undefined,
-        cuisine: cuisineFilter || undefined,
-        halalOnly: halalOnly || undefined,
-        maxCal,
-      }),
-    [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal]
-  );
+  const filteredProducts = useMemo(() => {
+    const list = filterDiscoverProducts(products as Record<string, unknown>[], {
+      query,
+      occasion: occasionFilter || undefined,
+      cuisine: cuisineFilter || undefined,
+      halalOnly: halalOnly || undefined,
+      maxCal,
+    });
+    return sortByCookProximity(list, collectionLocation);
+  }, [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
 
   const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
 
@@ -215,17 +217,21 @@ export default function CustomerDiscover() {
     [colWidth, handleAddToCart, handleFavorite, isFavorite]
   );
 
-  const locationLabel = user?.name ? `${user.name.split(' ')[0]}'s area · SG` : 'Katong, Singapore';
+  const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
+
+  const ListFooter = !query.trim() ? (
+    <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
+  ) : null;
 
   const ListHeader = (
     <>
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
-        locationLabel={locationLabel}
+        locationLabel={headerLocationLabel}
         locationHint="Collect from"
         avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
         onProfilePress={() => router.push('/(customer)/profile' as any)}
-        onLocationPress={() => router.push('/(customer)/search' as any)}
+        onLocationPress={() => router.push('/(customer)/location' as any)}
       />
 
       <GourmeatSearchBar
@@ -250,15 +256,6 @@ export default function CustomerDiscover() {
 
       {isGuest && (
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
-      )}
-
-      {!query && (
-        <View style={{ paddingHorizontal: shcSpacing.md }}>
-          <SHCHeritageStoryBanner
-            imageUri={BENTO_ACTION_IMAGES.compliance}
-            onPress={() => router.push('/(shared)/onboarding' as any)}
-          />
-        </View>
       )}
 
       {!query && (
@@ -307,6 +304,11 @@ export default function CustomerDiscover() {
         </View>
       )}
 
+      {collectionLocation && (
+        <Text style={{ paddingHorizontal: shcSpacing.md, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginBottom: shcSpacing.xs }}>
+          Showing cooks near your collection point first
+        </Text>
+      )}
       <GourmeatSectionTitle title="Categories" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
       <GourmeatCategoryRow
         categories={occasionCategories}
@@ -357,17 +359,19 @@ export default function CustomerDiscover() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]} testID="customer-discover-screen">
-      <FlashList
-        data={gridProducts}
-        renderItem={renderItem}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        estimatedItemSize={220}
-        ListHeaderComponent={ListHeader}
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        testID="dish-list-container"
-      />
+      <View style={styles.list}>
+        <FlashList
+          data={gridProducts}
+          renderItem={renderItem}
+          keyExtractor={(item) => String(item.id)}
+          numColumns={2}
+          estimatedItemSize={220}
+          ListHeaderComponent={ListHeader}
+          ListFooterComponent={ListFooter}
+          contentContainerStyle={styles.listContent}
+          testID="dish-list-container"
+        />
+      </View>
     </View>
   );
 }

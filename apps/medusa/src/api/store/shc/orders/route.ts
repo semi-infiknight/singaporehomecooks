@@ -71,8 +71,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
     // Basic shape + growth metadata (credits/earnings/requests) for Phase 8-9 parity with mock. Additive only.
     const orders = (metas || []).map((m: any) => ({
+      id: m.order_id,
       order_id: m.order_id,
       cook_id: m.cook_id,
+      customer_id: m.customer_id,
       shc_status: m.shc_status,
       collection_date: m.collection_date,
       collection_slot: m.collection_slot,
@@ -81,6 +83,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       credits_applied_cents: m.credits_applied_cents || 0,
       is_corporate: !!m.is_corporate,
       corporate_note: m.corporate_note || null,
+      items: m.items && m.items.length ? m.items : [{ name: 'Order item', qty: 1, product_id: '' }],
+      total: m.total_cents ? Math.round(m.total_cents / 100) : (m.total || 0),
+      address_released_at: m.address_released_at,
       // request/earnings joined via prior
     }));
 

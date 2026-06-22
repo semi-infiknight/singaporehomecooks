@@ -24,7 +24,7 @@ These are fixed for this build. Do not re-decide during implementation.
 | Commission default | 15% platform fee, rule versioned from Phase 6 | Static preview until ledger ships | Contracts Track owns commission schema |
 | Collection model | Customer picks date/slot; cook address released 2h before collection | `shc_order_meta.address_released_at` | Defined in data model + order state |
 | Ops UI (Phase 1–6) | Medusa Admin extensions | Custom `/ops` web only where Admin is insufficient | Backend Track |
-| Image storage | MinIO + Sharp derivatives | WebP 1200px + 400px thumb on upload | Infra + Backend |
+| Image storage | MinIO (full server upload + presigned) + Sharp derivatives planned | Server receives (base64/form), validates/auths, putObject; client gets signed URL | Infra + Backend |
 
 ## Builder Prerequisites (Before Phase 1)
 

@@ -18,13 +18,13 @@
 |------|--------|-------|
 | Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots`, search |
 | Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` + `checkout-credits` + complete route (PDPA, credits, corporate) |
-| Orders + messages + transitions + review | ✅ Implemented | Full per-order: list/detail/transition/messages/review |
+| Orders + messages + transitions + review | ✅ Implemented | Full per-order list (enriched with id + items snapshot + total for UI) /detail/transition/messages/review. Items+total snapshotted at checkout. |
 | Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
-| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications dev in-mem; push registration + dispatch wired |
+| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications now via shc-notification module (DB persisted); push registration + dispatch wired |
 | Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
 | Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook (SHC JWT + scrypt hash on shc_cook) + /me |
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
-| Media upload (MinIO/S3) | ❌ Not implemented | Deferred |
+| Media upload (MinIO/S3) | ✅ Full server upload (base64 -> backend putObject to MinIO with full auth) + presigned mode. POST /store/shc/upload supports mode=server or presigned. Integrated with listings. | done (core) |
 | Reviews | ✅ Implemented | GET/POST /orders/:id/review (customer post-collection only) |
 
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.

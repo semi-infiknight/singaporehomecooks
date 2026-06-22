@@ -15,10 +15,23 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [monorepoRoot];
 config.resolver.nodeModulesPaths = [appModules, rootModules];
 
+function resolvePackageRoot(name) {
+  for (const modulesDir of [appModules, rootModules]) {
+    try {
+      return path.dirname(require.resolve(`${name}/package.json`, { paths: [modulesDir] }));
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
+
 // Prefer each app's node_modules to prevent duplicate React / react-native-svg native registrations.
-const pinnedModules = ['react', 'react-dom', '@tanstack/react-query'];
+const pinnedModules = ['react', 'react-dom', '@tanstack/react-query', 'expo-location'];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
+    const resolved = resolvePackageRoot(name);
+    if (resolved) return [name, resolved];
     const local = path.join(appModules, name);
     return [name, fs.existsSync(local) ? local : path.join(rootModules, name)];
   })
@@ -42,7 +55,12 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer';
+config.cacheVersion = 'mobile-customer-v8';
+
+const expoLocationRoot = resolvePackageRoot('expo-location');
+const expoLocationEntry = expoLocationRoot
+  ? path.join(expoLocationRoot, 'build/Location.js')
+  : null;
 
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
@@ -51,6 +69,9 @@ config.resolver.resolveRequest = (context, realModuleName, platform, moduleName)
     (realModuleName.includes('expo-router/entry') || realModuleName.includes('expo-router@'))
   ) {
     return context.resolveRequest(context, 'expo-router/entry', platform, moduleName);
+  }
+  if (realModuleName === 'expo-location' && expoLocationEntry && fs.existsSync(expoLocationEntry)) {
+    return { type: 'sourceFile', filePath: expoLocationEntry };
   }
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, realModuleName, platform, moduleName);

@@ -33,6 +33,8 @@ export default function CustomerLayout() {
       <Tabs.Screen name="product/[id]" options={{ href: null, title: 'Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="checkout" options={{ href: null, title: 'Checkout (PayNow)', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Your Order', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="request" options={{ href: null, title: 'Request a Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="location" options={{ href: null, title: 'Collection location', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
   );
 }

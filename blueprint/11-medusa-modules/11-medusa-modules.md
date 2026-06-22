@@ -51,6 +51,7 @@ Links: src/links/shc-*-*.ts using defineLink to Medusa product/order.
 | shc-ledger              | Double-entry accounting for commissions/payouts | shc_ledger_entry (order_id/batch_id), shc_payout_batch | postCommission/postPayout, invariant, 15% via business-rules; immutable |
 | shc-payout-batch        | Weekly batches (Mon cron-sim), approve flow  | shc_payout_batch (status, transfer_ref) | Idempotent weekly sim script, sim transfer_ref on approve |
 | **shc-cart**            | Customer cart (one-cook enforced)            | shc_cart (JSON items + cook_id)  | Postgres module; used by /store/shc/cart; legacy store deprecated |
+| **shc-notification**    | Persistent in-app + push inbox               | shc_notification                 | actor-scoped list/push/markRead; replaces pure in-mem |
 | shc-feature-flag        | Growth experiment toggles                    | shc_feature_flag                 | Cohort-based rollout |
 
 ## Workflows (src/workflows)

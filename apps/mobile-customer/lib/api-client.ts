@@ -89,6 +89,18 @@ export const redeemCredits = (amount: number) => client.redeemCredits(amount);
 export const createRequest = (input: Record<string, unknown>) => client.createRequest(input);
 export const listOpenRequests = () => client.listOpenRequests();
 export const getNotifications = () => client.getNotifications();
+export const markNotificationsRead = (ids?: string[], all = false) =>
+  client.markNotificationsRead?.(ids, all) || Promise.resolve({ success: true });
+export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
+
+// Server upload helper (full MinIO server path)
+export async function uploadImageToServer(imageBase64: string, objectName: string, ownerId: string, contentType = 'image/jpeg') {
+  return client.getUploadUrl(objectName, ownerId, {
+    mode: 'server',
+    fileData: imageBase64,
+    contentType,
+  });
+}
 export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);

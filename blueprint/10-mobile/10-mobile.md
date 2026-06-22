@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — Zomato/Toptal UI + real Medusa wiring confirmed; all clients use @shc/api-client; review + cart flows live. See 12-shared + CURRENT_STATE.
+**Last Updated:** 2026-06-22 (Location picker + map) — `/(customer)/location` with GPS, OneMap search, saved addresses; iOS draggable Apple Maps (`react-native-maps`); Android Carto OSM tile picker (avoids Google Maps API key crash); heritage banner on Profile; request-dish CTA on Discover footer; Maestro `location-map-android.yaml` PASS.
 **Owner:** Mobile Track
 
 ## Overview
@@ -32,12 +32,12 @@ Two separate Expo apps deliver the primary customer and cook interfaces. Built w
 
 | Tab | Route | Screen |
 |---|---|---|
-| Discover | `index` | `SHCZomatoStickyHeader`, promo rail, photo bento tiles (`SHCVisualBentoTile`), filter chips, heritage banner, “Order again” rail, dish list |
+| Discover | `index` | `GourmeatHomeHeader` + location chip → `location`, promo rail, photo bento tiles (`SHCVisualBentoTile`), filter chips, “Order again” rail, dish list, `SHCRequestDishHomeCTA` footer |
 | Orders | `orders/index` | `SHCZomatoOrderRow` + track/chat |
 | Cart | `cart` | `SHCCartPageHero` + line items + sticky checkout CTA |
-| Profile | `profile/index` | Wallet bento hero, credits, request dish |
+| Profile | `profile/index` | Wallet bento hero, credits, `SHCHeritageStoryBanner` |
 
-**Hidden from tab bar** (`href: null`): `search` (with `SHCSearchResultsPanel` ADD), `cook/[slug]`, `product/[id]` (sticky add-to-cart), `checkout` (`SHCCheckoutStepper`), `orders/[id]` (review form post-collection).
+**Hidden from tab bar** (`href: null`): `search` (with `SHCSearchResultsPanel` ADD), `location` (`LocationPickerExperience` + `SHCLocationDraggableMap`), `request` (custom dish wizard), `cook/[slug]`, `product/[id]` (sticky add-to-cart), `checkout` (`SHCCheckoutStepper`), `orders/[id]` (review form post-collection).
 
 ```
 apps/mobile-customer/app/
@@ -87,7 +87,8 @@ apps/mobile-cook/app/
 ## Core Screens & Contracts
 
 ### Customer Flow
-- **Discover:** Zomato layout — promo rail, photo bento, filter chips (halal/light/occasion), cuisine rail, featured grid, dish list with `SHCFoodImage`.
+- **Collection location:** `/(customer)/location` — 2-step picker (`LocationPickerExperience`): GPS or OneMap search → confirm with draggable map (`SHCLocationDraggableMap`). iOS uses `react-native-maps` Marker; Android uses Carto OSM 3×3 tile grid + pan/nudge (no Google Maps API key). Saved addresses in SecureStore via `useCustomerLocation`.
+- **Discover:** Gourmeat layout — promo rail, photo bento, filter chips (halal/light/occasion), cuisine rail, featured grid, dish list with `SHCFoodImage`, request-dish CTA at list footer.
 - **Search:** `SHCSearchResultsPanel` — thumbnail + price + ADD without PDP visit (Toptal).
 - **Cook Profile:** Heritage story, ratings, product grid.
 - **Product Detail:** Full-bleed hero image, allergens (ack required), calorie badge, sticky add-to-cart.
@@ -124,6 +125,7 @@ apps/mobile-cook/app/
 | Customer auth | `e2e/customer-auth.yaml` | ✅ |
 | Cook auth | `e2e/cook-auth.yaml` | ✅ |
 | Customer full tour | `e2e/customer-full-tour.yaml` | ✅ Android PASS (2026-06-19) |
+| Location map (Android) | `e2e/location-map-android.yaml` | ✅ Android PASS (2026-06-22) |
 | Cook full tour | `e2e/cook-full-tour.yaml` | ✅ Android PASS (2026-06-19) |
 | Full order fulfil | `e2e/full-order-fulfil.yaml` | ✅ |
 
@@ -143,16 +145,18 @@ apps/mobile-cook/app/
 ## Multi-Agent Notes
 
 - **Mobile Track** owns `apps/mobile-customer`, `apps/mobile-cook`, and `packages/shc-ui`.
-- **Web parity** maintained via tri-platform sync skill — same discover layout, checkout stepper, search ADD, heritage banner.
+- **Web parity** maintained via tri-platform sync skill — same discover layout, checkout stepper, search ADD, location picker (`/location`), heritage banner on profile, request-dish footer CTA.
 - No direct HTTP in screens; all data via hooks + `@shc/api-client`.
 
-## Gaps (mobile-specific)
+## Gaps (mobile-specific) — post full audit 2026-06-20
 
 | Gap | Notes |
 |---|---|
-| Web review UI | Mobile has post-collection review on `orders/[id]`; web `/orders/[id]` lacks form |
-| iOS Maestro | Android PASS; iOS full tours pending re-verify after native rebuild |
-| Saved dietary prefs | Halal/light filters not persisted across sessions |
-| Real push inbox | Notifications in-memory on backend |
+| Web review UI | Mobile has it; web has form now (audit confirmed) |
+| iOS Maestro full tours | Android PASS; re-verify after rebuilds |
+| Saved dietary prefs | Persisted via SecureStore in useDiscoverPrefs (halal/light/maxCal) |
+| In-app notifications persistence | DB module + per-type limits + read state (mark all on open, unread badge/UI) | done |
+| Order items snapshot | Fixed (persisted + fallback for legacy) |
+| Media for listings | image_url support added to create + meta + shape |
 
 **Web Parity (2026-06-19):** `apps/web` mirrors Zomato discover, `AppMobileTabBar`, `SearchResultsDropdown`, `HeritageStoryBanner`, `CheckoutStepper`, Lucide bento icons. Gap: review form on order detail.

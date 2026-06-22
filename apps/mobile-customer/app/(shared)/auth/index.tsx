@@ -11,7 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows } from '@shc/ui';
+import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 
 export default function AuthScreen() {
@@ -82,17 +82,15 @@ export default function AuthScreen() {
           testID="auth-password-input"
         />
 
-        <Pressable
+        <SHCButton
           onPress={submit}
           disabled={busy}
-          style={({ pressed }) => [styles.submitBtn, pressed && !busy && styles.submitBtnPressed, busy && styles.submitBtnDisabled]}
+          size="lg"
           testID="auth-submit-btn"
-          accessibilityRole="button"
+          style={styles.submitBtn}
         >
-          <Text style={styles.submitBtnText}>
-            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
-          </Text>
-        </Pressable>
+          {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+        </SHCButton>
 
         <Pressable onPress={() => setMode(mode === 'login' ? 'register' : 'login')} style={styles.modeToggle} testID="auth-mode-toggle">
           <Text style={styles.modeToggleText}>
@@ -133,20 +131,7 @@ const styles = StyleSheet.create({
   submitBtn: {
     alignSelf: 'stretch',
     marginTop: shcSpacing.xs,
-    backgroundColor: shcColors.primary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    paddingVertical: shcSpacing.md,
-    paddingHorizontal: shcSpacing.lg,
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shcShadows.brutalSm,
   },
-  submitBtnPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
   modeToggle: { marginTop: shcSpacing.md, paddingVertical: shcSpacing.sm },
   modeToggleText: { textAlign: 'center', color: shcColors.primary, fontWeight: '700', fontSize: 15 },
   browseBtn: {

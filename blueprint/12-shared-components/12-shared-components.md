@@ -9,7 +9,7 @@
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — @shc/ui v3 (zomato, food-ux, visuals, icons) + tri-platform sync skill + web + mobile-customer + mobile-cook using SHCZomato* / SHCHeritage etc. Confirmed in use.
+**Last Updated:** 2026-06-22 (Location + request CTA) — `location-ux.tsx`, `location-map(.native).tsx`, `request-ux.tsx` (`SHCRequestDishHomeCTA`); heritage banner placement on Profile; tri-platform sync confirmed.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -30,6 +30,9 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `icons.tsx` | `SHCIcon`, `SHCTabIcon`, `SHCBentoIconBadge` (Ionicons on mobile; web uses Lucide mirrors) |
 | `motion.tsx` | `SHCFadeIn`, `SHCStaggerIn`, `SHCWizardPane` (Moti + Reanimated) |
 | `food-ux.tsx` | Toptal principles: `SHCCheckoutStepper`, `SHCSearchResultRow`, `SHCSearchResultsPanel`, `SHCHeritageStoryBanner` |
+| `location-ux.tsx` | `LocationPickerExperience` — 2-step collection point (search/GPS → map confirm) |
+| `location-map.tsx` / `location-map.native.tsx` | `SHCLocationDraggableMap` — web tile fallback; iOS `react-native-maps`; Android Carto OSM tiles + pan/nudge |
+| `request-ux.tsx` | Custom dish wizard + `SHCRequestDishHomeCTA` discover footer |
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 
@@ -81,9 +84,12 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 |---|---|
 | `SHCCheckoutStepper` | Short journey — Collection → Safety → PayNow (3 steps) |
 | `SHCSearchResultsPanel` / `SHCSearchResultRow` | Search + ADD without visiting PDP |
-| `SHCHeritageStoryBanner` | Memorable local HDB cook story + trust link |
+| `SHCHeritageStoryBanner` | Memorable local HDB cook story + trust link (Profile, not Discover) |
+| `LocationPickerExperience` | Collection location 2-step flow with saved addresses + map confirm |
+| `SHCLocationDraggableMap` | Draggable pin map (iOS native; Android OSM tiles) |
+| `SHCRequestDishHomeCTA` | “Request a custom dish” footer CTA on Discover |
 
-Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner` in `SHCWebComponents.tsx`.
+Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, location picker in `SHCWebComponents.tsx` + `/location`.
 
 ### Core Primitives (`primitives.tsx`)
 

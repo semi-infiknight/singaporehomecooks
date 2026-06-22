@@ -12,6 +12,12 @@ import {
 
 type CurrentUser = ReturnType<typeof getCurrentUser>;
 
+function scheduleCustomerPushRegistration() {
+  void import('../lib/push')
+    .then(({ registerCustomerPushToken }) => registerCustomerPushToken())
+    .catch(() => null);
+}
+
 export function useAuth() {
   const [user, setUser] = useState<CurrentUser>(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +34,7 @@ export function useAuth() {
     const { token, user: u } = await apiLogin(email, password);
     await persistSession(token, u);
     setUser(u);
-    import('../lib/push').then(({ registerCustomerPushToken }) => registerCustomerPushToken().catch(() => null));
+    scheduleCustomerPushRegistration();
     return u;
   }, []);
 
@@ -36,6 +42,7 @@ export function useAuth() {
     const { token, user: u } = await apiRegister(email, password, firstName, lastName);
     await persistSession(token, u);
     setUser(u);
+    scheduleCustomerPushRegistration();
     return u;
   }, []);
 

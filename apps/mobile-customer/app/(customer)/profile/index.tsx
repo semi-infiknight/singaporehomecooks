@@ -7,15 +7,13 @@ import {
   SHCButton,
   SHCButtonText,
   WalletCard,
-  RequestDishForm,
-  SHCProfileHero,
   SHCVisualBentoTile,
   SHCIcon,
   shcSpacing,
   shcBorders,
   shcRadii,
   GourmeatScreenHeader,
-  gourmeatColors,
+  SHCHeritageStoryBanner,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, favoritesToReorderDishes } from '@shc/utils';
 import { useFavorites } from '../../../hooks/useFavorites';
@@ -23,7 +21,7 @@ import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
-import { useCreateRequest, useNotifications } from '../../../hooks/useOrder';
+import { useNotifications } from '../../../hooks/useOrder';
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
@@ -37,16 +35,16 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const { data: credits } = useCredits();
   const redeemMut = useRedeemCredits();
-  const createReqMut = useCreateRequest();
-  const { data: notifs = [] } = useNotifications();
+  const { data: notifs = [], markRead } = useNotifications();
   const { favorites } = useFavorites();
   const savedDishes = favoritesToReorderDishes(favorites);
-  const [showRequestModal, setShowRequestModal] = useState(showRequest === '1');
-  useEffect(() => {
-    if (showRequest === '1') setShowRequestModal(true);
-  }, [showRequest]);
-  const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
   const [showNotifs, setShowNotifs] = useState(false);
+
+  useEffect(() => {
+    if (showRequest === '1') {
+      router.replace('/(customer)/request' as any);
+    }
+  }, [showRequest, router]);
 
   const bal = credits?.balance ?? 0;
   const spend = credits?.lifetimeSpend ?? 0;
@@ -55,17 +53,6 @@ export default function Profile() {
   const handleLogout = async () => {
     await logout();
     router.replace('/(shared)/auth');
-  };
-
-  const handleRequestSubmit = async (data: any) => {
-    try {
-      const req = await createReqMut.mutateAsync(data);
-      setRequestSuccess(`Request ${req.id} posted!`);
-      setShowRequestModal(false);
-      setTimeout(() => setRequestSuccess(null), 4000);
-    } catch (e: any) {
-      setRequestSuccess('Request failed (demo). ' + (e?.message || ''));
-    }
   };
 
   return (
@@ -82,15 +69,21 @@ export default function Profile() {
           />
         </View>
         <Pressable
-          onPress={() => setShowNotifs(!showNotifs)}
+          onPress={() => {
+            const next = !showNotifs;
+            setShowNotifs(next);
+            if (next && notifs.some((n: any) => !n.read)) {
+              markRead({ all: true });
+            }
+          }}
           testID="notif-bell"
           accessibilityLabel="Notifications"
           style={styles.bellBtn}
         >
           <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
-          {notifs.length > 0 && (
+          {notifs.filter((n: any) => !n.read).length > 0 && (
             <View style={styles.bellBadge}>
-              <Text style={styles.bellCount}>{notifs.length}</Text>
+              <Text style={styles.bellCount}>{notifs.filter((n: any) => !n.read).length}</Text>
             </View>
           )}
         </Pressable>
@@ -121,6 +114,11 @@ export default function Profile() {
         </View>
       </View>
 
+      <SHCHeritageStoryBanner
+        imageUri={BENTO_ACTION_IMAGES.compliance}
+        onPress={() => router.push('/(shared)/onboarding' as any)}
+      />
+
       <WalletCard
         balance={bal}
         lifetimeSpend={spend}
@@ -147,15 +145,6 @@ export default function Profile() {
         </View>
       )}
 
-      {requestSuccess && (
-        <SHCCard variant="bento-mint" style={styles.successCard}>
-          <View style={styles.successRow}>
-            <SHCIcon name="checkmark" size={16} color={shcColors.success} active />
-            <Text style={styles.successText}>{requestSuccess}</Text>
-          </View>
-        </SHCCard>
-      )}
-
       <SHCCard variant="bento-peach" style={styles.trustCard}>
         <SHCIcon name="compliance" size={28} color={shcColors.primary} active />
         <Text style={styles.trustTitle}>5-Layer Trust</Text>
@@ -179,15 +168,6 @@ export default function Profile() {
       </Link>
 
       <Pressable
-        onPress={() => setShowRequestModal(true)}
-        testID="open-request-modal-btn"
-        accessibilityRole="button"
-        style={[styles.actionBtn, styles.requestBtn]}
-      >
-        <Text style={styles.requestBtnText}>Request Custom Dish</Text>
-      </Pressable>
-
-      <Pressable
         onPress={handleLogout}
         style={styles.logoutBtn}
         testID="logout-btn"
@@ -205,17 +185,11 @@ export default function Profile() {
           </View>
           {notifs.length === 0 && <Text style={styles.notifsEmpty}>No events yet</Text>}
           {notifs.map((n: any, i: number) => (
-            <Text key={i} style={styles.notifItem}>
-              {n.body}
+            <Text key={i} style={[styles.notifItem, !n.read && styles.notifUnread]}>
+              {!n.read ? '● ' : ''}{n.body}
             </Text>
           ))}
         </SHCCard>
-      )}
-
-      {showRequestModal && (
-        <View testID="request-modal" style={styles.requestPanel}>
-          <RequestDishForm onSubmit={handleRequestSubmit} onClose={() => setShowRequestModal(false)} />
-        </View>
       )}
     </ScrollView>
     </View>
@@ -235,7 +209,6 @@ const styles = StyleSheet.create({
     backgroundColor: shcColors.surface,
     marginTop: shcSpacing.md,
   },
-  bellIcon: { fontSize: 20 },
   bellBadge: {
     position: 'absolute',
     top: 2,
@@ -250,25 +223,12 @@ const styles = StyleSheet.create({
   bellCount: { fontSize: 9, color: '#fff', fontWeight: '800' },
   tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   tileCol: { flex: 1 },
-  successCard: { marginTop: shcSpacing.sm },
-  successRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  successText: { color: shcColors.success, fontWeight: '600', flex: 1 },
   trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },
   savedTitle: { fontSize: 16, fontWeight: '900', color: shcColors.text },
   savedSub: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
   trustTitle: { fontWeight: '800', color: shcColors.primary, marginTop: 4 },
   trustBody: { fontSize: 12, color: shcColors.textLight, textAlign: 'center', marginTop: 4 },
   actionBtn: { marginTop: shcSpacing.sm },
-  requestBtn: {
-    backgroundColor: shcColors.primary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    paddingVertical: shcSpacing.md,
-    paddingHorizontal: shcSpacing.lg,
-    alignItems: 'center',
-  },
-  requestBtnText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15 },
   logoutBtn: {
     marginTop: shcSpacing.lg,
     paddingVertical: shcSpacing.md,
@@ -285,5 +245,5 @@ const styles = StyleSheet.create({
   notifsTitle: { fontWeight: '800' },
   notifsEmpty: { color: shcColors.textLight, fontSize: 12 },
   notifItem: { fontSize: 12, marginTop: 4 },
-  requestPanel: { marginTop: shcSpacing.md },
+  notifUnread: { fontWeight: '700', color: shcColors.primary },
 });

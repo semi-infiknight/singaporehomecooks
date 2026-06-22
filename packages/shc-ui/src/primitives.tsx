@@ -69,6 +69,7 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
       {({ pressed }) => (
         <View
           style={[
+            variantStyle,
             {
               paddingHorizontal: sz.paddingH,
               paddingVertical: sz.paddingV,
@@ -80,7 +81,6 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
               transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
               ...(pressed && !disabled ? shcShadows.brutalPressed : shcShadows.brutalSm),
             },
-            variantStyle,
             style,
           ]}
         >

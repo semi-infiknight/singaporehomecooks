@@ -1,0 +1,255 @@
+# Cook app — full screen tour (Railway backend, all major routes)
+# Run: maestro test --device <id> apps/mobile-cook/e2e/cook-full-tour.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    text: "Open"
+    optional: true
+- tapOn:
+    text: "Wait"
+    optional: true
+- tapOn:
+    text: "Close app"
+    optional: true
+# Wait for bundle load (auth title)
+- extendedWaitUntil:
+    visible: "SHC Cook Portal"
+    timeout: 120000
+    optional: true
+# iOS clearState may retain session — only sign in when auth screen is shown
+- runFlow:
+    when:
+      visible: "Sign in as cook"
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "auth-submit-btn"
+          timeout: 30000
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+# First login may show cook onboarding once
+- runFlow:
+    when:
+      visible: "Welcome, home cook"
+    commands:
+      - tapOn:
+          id: "cook-onboarding-finish-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 120000
+
+# Listings wizard — all steps + AI/photo stubs (deep link — heritage alert blocks dashboard taps)
+- openLink: shc-cook:///(cook)/listings
+- tapOn:
+    text: "Open"
+    optional: true
+# Android emulator stylus promo can steal "Next" taps
+- tapOn:
+    text: "Cancel"
+    optional: true
+- tapOn:
+    text: "Reset"
+    optional: true
+- extendedWaitUntil:
+    visible: "Dish Basics"
+    timeout: 30000
+# Deep-link wizard steps — Next taps unreliable on Android emulator
+- openLink: shc-cook:///(cook)/listings?wizardStep=2
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "listing-wizard-step-2"
+    timeout: 30000
+- tapOn: "Hari Raya"
+- openLink: shc-cook:///(cook)/listings?wizardStep=3
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Ingredients & Heritage"
+    timeout: 15000
+- tapOn:
+    id: "ai-cal-est-btn"
+    optional: true
+- tapOn:
+    text: "Cancel"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "listing-wizard-next-step3"
+    direction: DOWN
+    timeout: 20000
+- openLink: shc-cook:///(cook)/listings?wizardStep=4
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Review & Publish"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "listing-wizard-publish"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "listing-wizard-publish"
+- scroll
+- back
+
+# Heritage stub (dismiss alert before continuing)
+- openLink: shc-cook:///(cook)/dashboard
+- tapOn:
+    text: "Open"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "add-heritage-btn"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "add-heritage-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- scroll
+
+# Orders management
+- openLink: shc-cook:///(cook)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-orders-screen"
+    timeout: 90000
+- scroll
+- back
+
+# Earnings
+- openLink: shc-cook:///(cook)/earnings
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-earnings-screen"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "create-listings-btn"
+    direction: DOWN
+    timeout: 15000
+    optional: true
+- back
+
+# Compliance uploads
+- openLink: shc-cook:///(cook)/compliance
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-compliance-screen"
+    timeout: 30000
+- tapOn:
+    id: "compliance-type-sfa"
+- tapOn:
+    id: "compliance-type-wsq"
+- tapOn:
+    id: "compliance-file-input"
+- inputText: "wsq-cert-demo.pdf"
+- scrollUntilVisible:
+    element:
+      id: "compliance-submit-btn"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "compliance-submit-btn"
+- scroll
+- back
+
+# Demo chat — reset stack after compliance (Android can land on wrong screen)
+- openLink: shc-cook:///(cook)/dashboard
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 60000
+    optional: true
+- openLink: shc-cook:///(shared)/chat/SHC-2026-00001
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "chat-order-title"
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "chat-order-title"
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "chat-message-input"
+          direction: DOWN
+          timeout: 15000
+      - tapOn:
+          id: "chat-message-input"
+      - inputText: "Your dish is ready for collection at 6pm."
+      - tapOn:
+          text: "Send"
+          optional: true
+      - back
+- tapOn:
+    text: "Dismiss"
+    optional: true
+
+# Cook onboarding (optional assert — dev console overlay can block on some builds)
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- openLink: shc-cook:///(shared)/onboarding
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Welcome, home cook"
+    timeout: 20000
+    optional: true
+- back
+- tapOn:
+    text: "Dismiss"
+    optional: true
+
+# Dismiss dev console overlays (route warnings block dashboard)
+- repeat:
+    times: 8
+    commands:
+      - tapOn:
+          text: "Dismiss"
+          optional: true
+
+# Return to dashboard (deep link — back stack unreliable after onboarding)
+- openLink: shc-cook:///(cook)/dashboard
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 90000
+- assertVisible:
+    id: "cook-dashboard"

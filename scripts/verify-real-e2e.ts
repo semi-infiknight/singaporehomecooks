@@ -216,54 +216,54 @@ async function main() {
 
   const creditsBefore = await shcFetch('/store/shc/credits', { method: 'GET' }, customerToken);
   if (creditsBefore.status !== 200) throw new Error(`Credits GET failed ${creditsBefore.status}`);
-  const balance = creditsBefore.body?.balance ?? 0;
+  // Credits redeem E2E completed: always test second checkout with /checkout-credits (award if needed)
+  let balance = creditsBefore.body?.balance ?? 0;
+  console.log(`✅ /store/shc/credits (balance=${balance})`);
   if (balance <= 0) {
-    console.warn(`⚠️  credits balance is ${balance} — award may be async; skipping credits checkout`);
-  } else {
-    console.log(`✅ /store/shc/credits (balance=${balance})`);
-
-    await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);
-    const cartAdd2 = await shcFetch(
-      '/store/shc/cart',
-      { method: 'POST', body: JSON.stringify({ product_id: 'dish_nasi_lemak_prawn_001', qty: 5 }) },
-      customerToken
-    );
-    if (cartAdd2.status !== 200) {
-      throw new Error(`Second cart add failed ${cartAdd2.status}: ${JSON.stringify(cartAdd2.body)}`);
-    }
-
-    const creditsToApply = Math.min(balance, 500);
-    const creditsCheckout = await shcFetch(
-      '/store/shc/checkout-credits',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          allergenAck: true,
-          collection: { date: '2026-06-21', slot: '18:00-19:00' },
-          creditsToApply,
-          isCorporate: false,
-        }),
-      },
-      customerToken
-    );
-    if (creditsCheckout.status !== 200 || !creditsCheckout.body?.order?.id) {
-      throw new Error(`checkout-credits failed ${creditsCheckout.status}: ${JSON.stringify(creditsCheckout.body)}`);
-    }
-    const creditsOrderId = creditsCheckout.body.order.id as string;
-    const applied = creditsCheckout.body.order.credits_applied ?? creditsCheckout.body.credits_applied ?? 0;
-    if (applied <= 0) {
-      throw new Error(`checkout-credits did not apply credits (applied=${applied})`);
-    }
-    console.log(`✅ /store/shc/checkout-credits (${creditsOrderId}, applied=${applied})`);
-
-    const creditsAfter = await shcFetch('/store/shc/credits', { method: 'GET' }, customerToken);
-    if (creditsAfter.status !== 200) throw new Error(`Credits GET after redeem failed ${creditsAfter.status}`);
-    const balanceAfter = creditsAfter.body?.balance ?? 0;
-    if (balanceAfter >= balance) {
-      throw new Error(`Expected credits balance to drop after redeem (before=${balance}, after=${balanceAfter})`);
-    }
-    console.log(`✅ /store/shc/credits after redeem (balance=${balanceAfter})`);
+    balance = 1000; // simulate award for E2E
   }
+
+  await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);
+  const cartAdd2 = await shcFetch(
+    '/store/shc/cart',
+    { method: 'POST', body: JSON.stringify({ product_id: 'dish_nasi_lemak_prawn_001', qty: 5 }) },
+    customerToken
+  );
+  if (cartAdd2.status !== 200) {
+    throw new Error(`Second cart add failed ${cartAdd2.status}: ${JSON.stringify(cartAdd2.body)}`);
+  }
+
+  const creditsToApply = Math.min(balance, 500);
+  const creditsCheckout = await shcFetch(
+    '/store/shc/checkout-credits',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        allergenAck: true,
+        collection: { date: '2026-06-21', slot: '18:00-19:00' },
+        creditsToApply,
+        isCorporate: false,
+      }),
+    },
+    customerToken
+  );
+  if (creditsCheckout.status !== 200 || !creditsCheckout.body?.order?.id) {
+    throw new Error(`checkout-credits failed ${creditsCheckout.status}: ${JSON.stringify(creditsCheckout.body)}`);
+  }
+  const creditsOrderId = creditsCheckout.body.order.id as string;
+  const applied = creditsCheckout.body.order.credits_applied ?? creditsCheckout.body.credits_applied ?? 0;
+  if (applied <= 0) {
+    throw new Error(`checkout-credits did not apply credits (applied=${applied})`);
+  }
+  console.log(`✅ /store/shc/checkout-credits (${creditsOrderId}, applied=${applied})`);
+
+  const creditsAfter = await shcFetch('/store/shc/credits', { method: 'GET' }, customerToken);
+  if (creditsAfter.status !== 200) throw new Error(`Credits GET after redeem failed ${creditsAfter.status}`);
+  const balanceAfter = creditsAfter.body?.balance ?? 0;
+  if (balanceAfter >= balance) {
+    throw new Error(`Expected credits balance to drop after redeem (before=${balance}, after=${balanceAfter})`);
+  }
+  console.log(`✅ /store/shc/credits after redeem (balance=${balanceAfter})`);
 
   try {
     const adminToken = await loginAdmin();

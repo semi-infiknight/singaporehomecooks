@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Menu, X, Search } from 'lucide-react';
 import { useAuth } from '../../lib/useAuth';
+import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useCart, useProducts, useAddToCart } from '../../lib/useProducts';
 import { useDiscoverSearch } from '../providers';
 import { ZomatoLocationBar, SearchResultsDropdown, type DishCardProduct } from './SHCWebComponents';
@@ -16,6 +17,7 @@ const navLinks = [
 
 export function AppHeader() {
   const { user } = useAuth();
+  const { locationLabel, active: collectionLocation } = useCustomerLocation();
   const { data: cart } = useCart();
   const { query, setQuery } = useDiscoverSearch();
   const { data: searchHits = [] } = useProducts(query);
@@ -83,9 +85,9 @@ export function AppHeader() {
           <div className="flex items-center gap-1 sm:gap-2">
             <Link
               href={user ? '/profile' : '/login'}
-              className="hidden sm:inline-flex px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+              className="shc-btn-primary inline-flex items-center px-3 py-2 sm:px-4 text-xs sm:text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0"
             >
-              {user ? 'Account' : 'Sign in to order'}
+              {user ? 'Account' : 'Sign in'}
             </Link>
 
             <Link
@@ -116,9 +118,10 @@ export function AppHeader() {
         {/* Zomato-style location bar (mobile + desktop discover context) */}
         <div className="pb-2">
           <ZomatoLocationBar
-            areaLabel={user?.name ? `Hi, ${user.name.split(' ')[0]} · SG` : 'Katong, Singapore'}
+            areaLabel={collectionLocation ? locationLabel : 'Set collection location'}
             avatarName={user?.name}
             onProfileHref={user ? '/profile' : '/login'}
+            onLocationHref="/location"
           />
         </div>
 

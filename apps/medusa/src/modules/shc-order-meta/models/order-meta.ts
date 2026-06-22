@@ -30,6 +30,9 @@ export const OrderMeta = model.define("shc_order_meta", {
   credits_applied_cents: model.number().nullable(),
   is_corporate: model.boolean().default(false),
   corporate_note: model.text().nullable(),
+  // Snapshot for UI wiring (items + total so list/detail can render dish names, qty, totals without extra fetches)
+  items: model.json().nullable(),
+  total_cents: model.number().nullable(),
 });
 
 export type OrderMeta = any;

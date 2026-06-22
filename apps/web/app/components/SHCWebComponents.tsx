@@ -71,7 +71,7 @@ export function SHCButton({
     lg: 'px-6 py-3.5 text-base',
   };
   const variants: Record<ButtonVariant, string> = {
-    primary: 'bg-primary hover:opacity-90 text-primary-foreground',
+    primary: 'shc-btn-primary',
     outline: 'border-2 border-[var(--shc-border-brutal)] text-primary hover:bg-secondary bg-card',
     accent: 'bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)]',
     ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
@@ -708,28 +708,54 @@ export function HeritageStoryBanner({
   );
 }
 
+export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
+  return (
+    <Link href={href} className="block group mt-8" data-testid="open-request-page-btn">
+      <div className="relative min-h-[180px] overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-transform group-hover:-translate-y-0.5">
+        <Image src={BENTO_ACTION_IMAGES.request} alt="" fill className="object-cover opacity-40 group-hover:opacity-50 transition-opacity" sizes="100vw" />
+        <SHCCard className="relative z-10 m-4 bg-card/95 backdrop-blur-sm border-0 shadow-none">
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 rounded-full bg-primary/10 border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+              <ChefHat className="w-6 h-6 text-primary" aria-hidden />
+            </span>
+            <div className="flex-1">
+              <span className="font-black text-base block">Request a custom dish</span>
+              <span className="text-sm text-muted-foreground font-medium">
+                4-step wizard — occasion, inspiration, gathering, review
+              </span>
+            </div>
+            <span className="text-primary font-black text-lg">→</span>
+          </div>
+        </SHCCard>
+      </div>
+    </Link>
+  );
+}
+
 export function ZomatoLocationBar({
   areaLabel,
   areaHint = 'COLLECT FROM',
   avatarName,
   onProfileHref = '/profile',
+  onLocationHref = '/location',
 }: {
   areaLabel: string;
   areaHint?: string;
   avatarName?: string;
   onProfileHref?: string;
+  onLocationHref?: string;
 }) {
   const avatarUri = avatarName ? getCookAvatarUrl(undefined, avatarName) : undefined;
   return (
     <div className="flex items-center justify-between gap-3 mb-3" data-testid="zomato-location-bar">
-      <div className="flex-1 min-w-0">
+      <Link href={onLocationHref} className="flex-1 min-w-0 group" data-testid="open-location-page-btn">
         <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">{areaHint}</p>
         <div className="flex items-center gap-1 mt-0.5">
           <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
-          <span className="font-bold text-foreground truncate" data-testid="sticky-header-location">{areaLabel}</span>
+          <span className="font-bold text-foreground truncate group-hover:text-primary transition-colors" data-testid="sticky-header-location">{areaLabel}</span>
           <span className="text-xs text-muted-foreground">▼</span>
         </div>
-      </div>
+      </Link>
       <Link
         href={onProfileHref}
         className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] shrink-0"
@@ -1146,26 +1172,27 @@ export function StickyCartBar({
     <Link
       href={href}
       data-testid={testID}
-      className="flex items-center justify-between gap-3 w-full bg-primary text-primary-foreground rounded-full px-4 py-3 min-h-[48px] shadow-[var(--shc-shadow-card)] hover:opacity-95 transition-opacity"
+      className="shc-btn-primary flex items-center justify-between gap-3 w-full rounded-xl border-[3px] border-[var(--shc-border-brutal)] px-4 py-3.5 min-h-[58px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:brightness-105 active:translate-x-px active:translate-y-px transition-all"
       aria-label={`View cart, ${countLabel}, ${totalLabel}`}
     >
       <span className="flex items-center gap-3 min-w-0 flex-1">
-        <span className="w-9 h-9 shrink-0 rounded-full bg-white/20 flex items-center justify-center">
-          <ShoppingBag className="w-[18px] h-[18px] text-primary-foreground" aria-hidden />
+        <span className="w-10 h-10 shrink-0 rounded-full bg-primary-foreground border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+          <ShoppingBag className="w-5 h-5 text-primary" aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="block font-extrabold text-sm leading-tight truncate">{countLabel}</span>
+          <span className="block font-black text-[15px] leading-tight truncate">{countLabel}</span>
+          <span className="block text-xs font-bold opacity-95 truncate">View cart · PayNow →</span>
           {previewName ? (
-            <span className="block text-[11px] font-medium opacity-90 truncate">{previewName}</span>
+            <span className="block text-[11px] font-semibold opacity-85 truncate">{previewName}</span>
           ) : null}
         </span>
       </span>
       <span className="flex items-center gap-2 shrink-0">
-        <span className="min-w-[22px] h-[22px] flex items-center justify-center rounded-full bg-primary-foreground text-[10px] font-black text-primary px-1">
+        <span className="min-w-[26px] h-[26px] flex items-center justify-center rounded-full bg-[var(--shc-accent)] text-[11px] font-black text-foreground border-2 border-[var(--shc-border-brutal)] px-1.5">
           {badge}
         </span>
-        <span className="font-extrabold text-base tabular-nums">{totalLabel}</span>
-        <span className="text-lg opacity-90" aria-hidden>›</span>
+        <span className="font-black text-[17px] tabular-nums">{totalLabel}</span>
+        <span className="text-xl font-black" aria-hidden>›</span>
       </span>
     </Link>
   );
@@ -1198,20 +1225,26 @@ export function GuestBrowseBar({
   onSignInClick?: () => void;
   testID?: string;
 }) {
+  const ctaClass =
+    'shc-btn-primary inline-flex items-center justify-center min-w-[96px] px-4 py-2.5 text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0';
+
   return (
     <div
       data-testid={testID}
-      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] border-2 border-[var(--shc-border-brutal)] rounded-lg px-4 py-3 mb-[var(--shc-section-gap)] shadow-[var(--shc-shadow-brutal-sm)]"
+      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] border-2 border-[var(--shc-border-brutal)] rounded-xl px-4 py-4 mb-[var(--shc-section-gap)] min-h-[60px] shadow-[var(--shc-shadow-brutal)]"
     >
-      <p className="text-xs font-bold text-foreground flex-1">
-        Browse free · Sign in only to checkout &amp; track orders
-      </p>
+      <div className="flex-1 min-w-0 pr-2">
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Guest browsing</p>
+        <p className="text-sm font-extrabold text-foreground leading-snug mt-0.5">
+          Sign in to checkout &amp; track orders
+        </p>
+      </div>
       {onSignInClick ? (
-        <button type="button" onClick={onSignInClick} className="text-xs font-black text-primary shrink-0">
+        <button type="button" onClick={onSignInClick} className={ctaClass}>
           Sign in
         </button>
       ) : (
-        <Link href="/login" className="text-xs font-black text-primary shrink-0">
+        <Link href="/login" className={ctaClass}>
           Sign in
         </Link>
       )}
@@ -1383,12 +1416,15 @@ export function GourmeatHomeHeader({
   locationHint = 'Collect from',
   avatarUri,
   profileHref = '/profile',
+  locationHref = '/location',
 }: {
   headline?: string;
   locationLabel?: string;
   locationHint?: string;
   avatarUri?: string;
   profileHref?: string;
+  locationHref?: string;
+  onLocationPress?: () => void;
 }) {
   return (
     <div className="mb-4" data-testid="gourmeat-home-header">
@@ -1408,12 +1444,16 @@ export function GourmeatHomeHeader({
           )}
         </Link>
       </div>
-      <div className="inline-flex items-center gap-1.5 bg-card rounded-full px-3 py-1.5 shadow-[var(--shc-shadow-soft)]" data-testid="gourmeat-location-chip">
+      <Link
+        href={locationHref}
+        className="inline-flex items-center gap-1.5 bg-card rounded-full px-3 py-1.5 shadow-[var(--shc-shadow-soft)] hover:ring-2 hover:ring-primary/20 transition-shadow"
+        data-testid="gourmeat-location-chip"
+      >
         <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden />
         <span className="text-[11px] font-semibold text-muted-foreground">{locationHint}</span>
         <span className="text-xs font-bold text-foreground">{locationLabel}</span>
         <span className="text-[10px] text-muted-foreground">▼</span>
-      </div>
+      </Link>
     </div>
   );
 }
