@@ -325,7 +325,7 @@ async function main() {
   if (!bidId) throw new Error('Bid id missing');
   console.log(`✅ /store/shc/bids POST (${bidId})`);
 
-  const bidAccept = await shcFetch(`/store/shc/bids/${bidId}/accept`, { method: 'POST', body: '{}' }, cookToken);
+  const bidAccept = await shcFetch(`/store/shc/bids/${bidId}/accept`, { method: 'POST', body: '{}' }, customerToken);
   if (bidAccept.status !== 200) {
     throw new Error(`Bid accept failed ${bidAccept.status}: ${JSON.stringify(bidAccept.body)}`);
   }

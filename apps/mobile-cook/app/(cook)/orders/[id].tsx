@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Text, TextInput, View, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   GourmeatScreenHeader,
   GourmeatCard,
@@ -13,6 +14,7 @@ import {
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
+import { getOrderDisputes, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
@@ -26,9 +28,28 @@ export default function CookManageOrder() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
   const { data: order } = useOrder(id || '');
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
+  const [disputeNotes, setDisputeNotes] = React.useState('');
+
+  const { data: disputes = [] } = useQuery({
+    queryKey: ['order-disputes', id],
+    queryFn: () => getOrderDisputes(id || ''),
+    enabled: !!id,
+    placeholderData: [],
+  });
+
+  const disputeMut = useMutation({
+    mutationFn: () => submitOrderDispute(id || '', { type: 'other', notes: disputeNotes.trim() }),
+    onSuccess: () => {
+      setDisputeNotes('');
+      qc.invalidateQueries({ queryKey: ['order-disputes', id] });
+      Alert.alert('Issue reported', 'Ops will review this order and follow up.');
+    },
+    onError: (e: any) => Alert.alert('Could not report issue', e?.message || 'Please try again.'),
+  });
 
   const doTransition = async (to: SHCOrderStatus) => {
     if (!id) return;
@@ -104,6 +125,39 @@ export default function CookManageOrder() {
         testID="cook-order-chat-btn"
       />
 
+      <GourmeatCard>
+        <Text style={styles.cardTitle}>Report an issue</Text>
+        <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
+        {disputes.length > 0 ? (
+          <View style={styles.disputeStatus}>
+            <Text style={styles.disputeTitle}>Issue already reported</Text>
+            <Text style={styles.cardMeta}>
+              {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            </Text>
+            {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
+          </View>
+        ) : (
+          <>
+            <TextInput
+              value={disputeNotes}
+              onChangeText={setDisputeNotes}
+              placeholder="Tell ops what happened"
+              placeholderTextColor={gourmeatColors.textMuted}
+              multiline
+              style={styles.disputeInput}
+              testID="cook-dispute-notes-input"
+            />
+            <GourmeatPrimaryButton
+              label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+              onPress={() => disputeMut.mutate()}
+              disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+              testID="cook-submit-dispute-btn"
+              style={{ marginTop: 10 }}
+            />
+          </>
+        )}
+      </GourmeatCard>
+
       <Text style={styles.footer}>Valid transitions only — invalid moves show SHC-ORDER-001.</Text>
     </ScrollView>
   );
@@ -118,5 +172,24 @@ const styles = StyleSheet.create({
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   hint: { marginTop: shcSpacing.sm, fontSize: 12, color: gourmeatColors.textLight, lineHeight: 18 },
   actions: { gap: 8, marginTop: shcSpacing.md, marginBottom: shcSpacing.sm },
+  disputeInput: {
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    padding: 10,
+    marginTop: shcSpacing.sm,
+    minHeight: 76,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    color: gourmeatColors.text,
+  },
+  disputeStatus: {
+    marginTop: shcSpacing.sm,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    padding: shcSpacing.sm,
+  },
+  disputeTitle: { fontSize: 13, fontWeight: '800', color: gourmeatColors.text },
   footer: { fontSize: 11, marginTop: shcSpacing.md, color: gourmeatColors.textMuted },
 });

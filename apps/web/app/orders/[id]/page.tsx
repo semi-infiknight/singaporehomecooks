@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useOrder, useChat, useReview } from '../../../lib/useOrder';
+import { useOrder, useChat, useOrderDisputes, useReview } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
 import { SHCCard, SHCButton, SHCSectionTitle, GourmeatScreenHeader, SHCLoading, OrderTimeline } from '../../components/SHCWebComponents';
 import { getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
@@ -27,9 +27,11 @@ export default function TrackOrder() {
   const { messages, send } = useChat(id);
   const { user } = useAuth();
   const { review: existingReview, submit: reviewMut } = useReview(id);
+  const { disputes, submit: disputeMut } = useOrderDisputes(id);
   const [msg, setMsg] = useState('');
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const [disputeNotes, setDisputeNotes] = useState('');
 
   if (isLoading || !order) {
     return (
@@ -174,6 +176,43 @@ export default function TrackOrder() {
           </SHCButton>
         </SHCCard>
       )}
+
+      <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-panel">
+        <SHCSectionTitle subtitle="Use this if food quality, collection, or safety needs ops review.">Report an issue</SHCSectionTitle>
+        {disputes.length > 0 ? (
+          <div className="mt-3 rounded-xl border border-[#E8D5B7] bg-[#FAF7F2] p-3">
+            <p className="text-sm font-bold text-foreground">Issue already reported</p>
+            <p className="mt-1 text-xs font-semibold text-[#5C5144]">
+              {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            </p>
+            {disputes[0].notes && <p className="mt-2 text-sm text-[#5C5144]">{disputes[0].notes}</p>}
+          </div>
+        ) : (
+          <>
+            <textarea
+              value={disputeNotes}
+              onChange={(e) => setDisputeNotes(e.target.value)}
+              placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
+              className="shc-input w-full mt-3 min-h-[88px] py-2"
+              data-testid="dispute-notes-input"
+            />
+            <SHCButton
+              className="mt-3"
+              variant="outline"
+              disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+              onClick={() =>
+                disputeMut.mutate(
+                  { type: 'other', notes: disputeNotes.trim() },
+                  { onSuccess: () => setDisputeNotes('') },
+                )
+              }
+              data-testid="submit-dispute-btn"
+            >
+              {disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+            </SHCButton>
+          </>
+        )}
+      </SHCCard>
     </div>
   );
 }

@@ -27,7 +27,7 @@ function resolvePackageRoot(name) {
 }
 
 // Prefer each app's node_modules to prevent duplicate React / react-native-svg native registrations.
-const pinnedModules = ['react', 'react-dom', '@tanstack/react-query', 'expo-location'];
+const pinnedModules = ['react', 'react-dom', '@tanstack/react-query', 'expo-location', 'expo-asset', '@react-native/assets-registry'];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
     const resolved = resolvePackageRoot(name);
@@ -55,7 +55,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v8';
+config.cacheVersion = 'mobile-customer-v9-sdk54';
 
 const expoLocationRoot = resolvePackageRoot('expo-location');
 const expoLocationEntry = expoLocationRoot

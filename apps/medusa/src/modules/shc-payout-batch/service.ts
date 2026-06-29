@@ -22,7 +22,7 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     shcPayoutBatchSchema.partial().parse({ week_start: weekStart, status: "pending", total_cents: totalCents });
 
     // Idempotent: unique on week_start via index, use list check
-    const existing = await this.listPayoutBatches({ filters: { week_start: weekStart } });
+    const existing = await this.listPayoutBatches({ week_start: weekStart });
     if (existing.length) {
       logger.info?.({ event: "payout.batch.exists", week_start: weekStart });
       return existing[0] as unknown as SHCPayoutBatch;
@@ -50,7 +50,7 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
 
   async approvePayoutBatch(batchId: string, actor = "ops", container?: any): Promise<SHCPayoutBatch> {
     const logger = this.getLogger(container);
-    const batches = await this.listPayoutBatches({ filters: { id: batchId } });
+    const batches = await this.listPayoutBatches({ id: batchId });
     if (!batches.length) {
       throw createSHCError("SHC-PAYOUT-001", "Payout batch not found");
     }
@@ -84,8 +84,9 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     return updated as unknown as SHCPayoutBatch;
   }
 
-  async listPayoutBatches(filters: { status?: string; week_start?: string; limit?: number } = {}): Promise<any[]> {
+  async listPayoutBatches(filters: { id?: string; status?: string; week_start?: string; limit?: number } = {}): Promise<any[]> {
     const where: any = {};
+    if (filters.id) where.id = filters.id;
     if (filters.status) where.status = filters.status;
     if (filters.week_start) where.week_start = filters.week_start;
     const take = filters.limit || 50;

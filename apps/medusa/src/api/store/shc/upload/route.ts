@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
+import sharp from "sharp";
 import { createSHCError } from "@shc/types";
 import { getCookId, getCustomerId } from "../../../../lib/shc-actors";
 import { 
@@ -63,12 +64,24 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       const buffer = Buffer.from(base64Data, 'base64');
       const ct = content_type || 'image/jpeg';
       const result = await uploadBufferToMinIO(object_name, buffer, ct);
+      let derivative: { key: string; bucket: string; url?: string } | null = null;
+      if (ct.startsWith("image/")) {
+        const webpKey = object_name.replace(/\.[^.]+$/, "") + "-400.webp";
+        const webp = await sharp(buffer)
+          .rotate()
+          .resize({ width: 400, withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+        derivative = await uploadBufferToMinIO(webpKey, webp, "image/webp");
+      }
       return res.json({
         success: true,
         mode: 'server',
         key: result.key,
         bucket: result.bucket,
         url: result.url, // signed get URL
+        webp_key: derivative?.key,
+        webp_url: derivative?.url,
         // In production, you might store the key and generate signed on demand
       });
     } catch (e: any) {

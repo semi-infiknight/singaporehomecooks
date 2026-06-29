@@ -9,6 +9,16 @@ class ShcReviewModuleService extends MedusaService({ Review }) {
     return (rows as any[])?.[0] || null;
   }
 
+  async getCookRatingSummary(cookId: string): Promise<{ rating: number | null; review_count: number }> {
+    const [rows] = await this.listAndCountReviews({ cook_id: cookId } as any, { take: 500 }).catch(() => [[]]);
+    const reviews = (rows as any[]) || [];
+    if (!reviews.length) {
+      return { rating: null, review_count: 0 };
+    }
+    const average = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length;
+    return { rating: Math.round(average * 10) / 10, review_count: reviews.length };
+  }
+
   async createReview(input: {
     order_id: string;
     cook_id: string;

@@ -173,6 +173,13 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).order;
     },
 
+    async flagCorporateOrder(orderId: string, note: string) {
+      return request(`/store/shc/orders/${encodeURIComponent(orderId)}/corporate`, {
+        method: "POST",
+        body: JSON.stringify({ note }),
+      });
+    },
+
     async getOrder(id: string) {
       const r = await request(`/store/shc/orders/${encodeURIComponent(id)}`, { method: "GET" });
       return (r as any).order;
@@ -207,6 +214,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).listing || (r as any).product;
     },
 
+    async getComplianceDocs() {
+      const r = await request("/store/shc/compliance", { method: "GET" });
+      return (r as any).docs || [];
+    },
+
+    async submitComplianceDoc(input: { type: "sfa" | "wsq"; file_key: string; expiry_date?: string }) {
+      const r = await request("/store/shc/compliance", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      return (r as any).doc;
+    },
+
     async getEarnings() {
       return request("/store/shc/earnings", { method: "GET" });
     },
@@ -226,6 +246,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
 
     async listOpenRequests() {
       const r = await request("/store/shc/requests", { method: "GET" });
+      return (r as any).requests || [];
+    },
+
+    async listMyRequests() {
+      const r = await request("/store/shc/requests?mine=true", { method: "GET" });
       return (r as any).requests || [];
     },
 
@@ -265,6 +290,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).notifications || [];
     },
 
+    async isFeatureEnabled(key: string) {
+      const r = await request(`/store/shc/feature-flags?key=${encodeURIComponent(key)}`, { method: "GET" });
+      return Boolean((r as any).enabled);
+    },
+
     async markNotificationsRead(ids?: string[], all = false) {
       return request("/store/shc/notifications", {
         method: "POST",
@@ -281,6 +311,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         method: "POST",
         body: JSON.stringify(body),
       });
+    },
+
+    async listCookExpenses() {
+      const r = await request("/store/shc/cook-expenses", { method: "GET" });
+      return r as { expenses: any[]; count: number; total_cents: number };
+    },
+
+    async createCookExpense(input: { amount_cents: number; category: string; receipt_key?: string; date: string }) {
+      const r = await request("/store/shc/cook-expenses", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      return (r as any).expense;
     },
 
     async estimateCaloriesAI(ingredients: unknown[]) {
@@ -306,6 +349,16 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
     },
 
+    async registerWebPushSubscription(subscription: Record<string, unknown>) {
+      return request("/store/shc/push-token", {
+        method: "POST",
+        body: JSON.stringify({
+          web_push_subscription: subscription,
+          role: "customer",
+        }),
+      });
+    },
+
     async getReview(orderId: string) {
       const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/review`, { method: "GET" });
       return (r as any).review;
@@ -317,6 +370,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         body: JSON.stringify({ rating, body }),
       });
       return (r as any).review;
+    },
+
+    async getOrderDisputes(orderId: string) {
+      const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/dispute`, { method: "GET" });
+      return (r as any).disputes || [];
+    },
+
+    async submitOrderDispute(orderId: string, input: { type?: string; notes: string }) {
+      const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/dispute`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      return (r as any).dispute;
     },
   };
 

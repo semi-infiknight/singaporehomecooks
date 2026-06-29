@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-22 (Location picker + map) — Mobile collection location with draggable map (iOS Apple Maps, Android Carto OSM tiles); heritage banner → Profile; request-dish CTA → Discover footer; Maestro `location-map-android.yaml` PASS.
+**Last Updated:** 2026-06-29 (Launch-readiness wiring) — cook listing publish now persists real dish name/price/description/heritage for customer discovery; 7 missing SHC DB modules added; compliance upload route + cook screen wired; customer My Requests bid acceptance added; web cook/ops portal + PWA service worker; Sharp WebP upload derivative; auth rate-limit/production hardening; Medusa route coverage gate.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 

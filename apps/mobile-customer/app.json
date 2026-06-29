@@ -16,7 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.singaporehomecooks.customer"
+      "bundleIdentifier": "com.singaporehomecooks.customer",
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -26,7 +29,9 @@
       "package": "com.singaporehomecooks.customer",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -47,13 +52,20 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Singapore Home Cooks uses your location to show home cooks near your HDB collection point."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
     ],
     "scheme": "shc-customer",
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "placeholder-project-id"
+        "projectId": "5c1f4300-5851-4288-9416-bd968589001a"
       }
-    }
+    },
+    "owner": "darksend"
   }
 }

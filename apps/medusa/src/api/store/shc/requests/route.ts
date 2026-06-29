@@ -24,6 +24,7 @@ const CreateSchema = z.object({
 
 const QuerySchema = z.object({
   limit: z.coerce.number().default(20),
+  mine: z.coerce.boolean().optional(),
 }).strict();
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -33,7 +34,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;
   try {
-    const requests = await reqService.listOpenRequests({ limit: parse.data.limit });
+    let requests;
+    if (parse.data.mine) {
+      const customerId = getCustomerId(req);
+      requests = await reqService.listRequestsForCustomer(customerId, { limit: parse.data.limit });
+    } else {
+      requests = await reqService.listOpenRequests({ limit: parse.data.limit });
+    }
     const logger = (req.scope as any).resolve?.("logger") || console;
     (logger as any).info?.({ event: "store.requests.list", count: requests.length });
     res.json({ requests, count: requests.length });
@@ -46,6 +53,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const parse = CreateSchema.safeParse(req.body || {});
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid request payload", parse.error.format() as any) });
+  }
+  const flagService: any = req.scope.resolve("shcFeatureFlag");
+  const requestDishEnabled = await flagService.isEnabled("request_dish", true);
+  if (!requestDishEnabled) {
+    return res.status(403).json({
+      error: createSHCError("SHC-GENERIC-001", "Request a dish is temporarily unavailable. Browse existing listings instead."),
+    });
   }
   getAuthContext(req);
   const reqService: ShcRequestModuleService = req.scope.resolve("shcRequest") as any;

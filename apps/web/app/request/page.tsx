@@ -36,10 +36,30 @@ export default function RequestDishPage() {
   const [partySize, setPartySize] = useState(8);
   const [budget, setBudget] = useState(120);
   const [date, setDate] = useState(defaultDate);
+  const [featureLoading, setFeatureLoading] = useState(true);
+  const [requestDishEnabled, setRequestDishEnabled] = useState(true);
 
   useEffect(() => {
     if (!user) router.replace('/login?next=/request');
   }, [user, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { isFeatureEnabled } = await import('../../lib/api-client');
+        const enabled = await isFeatureEnabled('request_dish');
+        if (!cancelled) setRequestDishEnabled(enabled);
+      } catch {
+        if (!cancelled) setRequestDishEnabled(true);
+      } finally {
+        if (!cancelled) setFeatureLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const heroUri = getOccasionImageUrl(occasion);
   const body = [occasion ? `${occasion}:` : '', story.trim()].filter(Boolean).join(' ').trim();
@@ -65,6 +85,20 @@ export default function RequestDishPage() {
   };
 
   if (!user) return null;
+
+  if (!featureLoading && !requestDishEnabled) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-black">Request a dish is paused</h1>
+        <p className="mt-3 text-muted-foreground font-medium">
+          Browse existing home-cooked listings for now — we&apos;ll reopen custom requests soon.
+        </p>
+        <SHCButton className="mt-6" onClick={() => router.push('/')}>
+          Browse dishes
+        </SHCButton>
+      </div>
+    );
+  }
 
   if (done) {
     return (

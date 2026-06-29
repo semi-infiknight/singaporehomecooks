@@ -1064,11 +1064,21 @@ export function PayNowPanel({
   amount,
   reference,
   onRefChange,
+  onConfirmPay,
+  confirmLabel = "I've paid — confirm order",
 }: {
   amount: number;
   reference: string;
   onRefChange?: (r: string) => void;
+  onConfirmPay?: (ref: string) => void | Promise<void>;
+  confirmLabel?: string;
 }) {
+  const [refValue, setRefValue] = React.useState(reference);
+  const [confirming, setConfirming] = React.useState(false);
+
+  React.useEffect(() => {
+    setRefValue(reference);
+  }, [reference]);
   return (
     <SHCCard className="shc-bento-yellow">
       <div className="flex items-center gap-2 mb-3">
@@ -1095,10 +1105,31 @@ export function PayNowPanel({
       <input
         placeholder="Enter the reference from your banking app"
         className="shc-input mt-1.5"
-        defaultValue={reference}
-        onChange={(e) => onRefChange?.(e.target.value)}
+        value={refValue}
+        onChange={(e) => {
+          setRefValue(e.target.value);
+          onRefChange?.(e.target.value);
+        }}
         data-testid="paynow-ref-input"
       />
+      {onConfirmPay && (
+        <SHCButton
+          className="mt-4 w-full"
+          size="lg"
+          disabled={confirming || !refValue.trim()}
+          onClick={async () => {
+            setConfirming(true);
+            try {
+              await onConfirmPay(refValue.trim());
+            } finally {
+              setConfirming(false);
+            }
+          }}
+          data-testid="paynow-confirm"
+        >
+          {confirming ? 'Confirming…' : confirmLabel}
+        </SHCButton>
+      )}
       <p className="text-xs text-muted-foreground mt-2 font-medium">
         Your collection address is shared 2 hours before your slot, after payment is confirmed.
       </p>

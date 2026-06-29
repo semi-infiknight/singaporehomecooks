@@ -7,22 +7,46 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": { "simulator": true },
-      "android": { "buildType": "apk" }
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_MEDUSA_BASE": "https://shc-medusa-staging.up.railway.app"
+        "EXPO_PUBLIC_MEDUSA_BASE": "https://medusa-production-d2ba.up.railway.app",
+        "EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY": "pk_0c98d5a5c7ba76cad2ea42501361d8e29825876bcedb8425a627f35a2c12b9b2"
       }
     },
     "production": {
       "distribution": "store",
-      "channel": "production"
+      "node": "22.16.0",
+      "pnpm": "11.1.3",
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
+        "autoIncrement": true
+      },
+      "env": {
+        "EXPO_PUBLIC_MEDUSA_BASE": "https://medusa-production-d2ba.up.railway.app",
+        "EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY": "pk_0c98d5a5c7ba76cad2ea42501361d8e29825876bcedb8425a627f35a2c12b9b2",
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "ZDDUJWZV46",
+        "ascAppId": "6785112476",
+        "bundleIdentifier": "com.singaporehomecooks.cook",
+        "sku": "shc-cook",
+        "language": "en-US",
+        "appName": "SHC Cook"
+      }
+    }
   }
 }

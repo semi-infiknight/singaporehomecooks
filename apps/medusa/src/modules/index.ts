@@ -11,6 +11,13 @@ import ShcHeritageModule from "./shc-heritage";
 import ShcReviewModule from "./shc-review";
 import ShcCartModule from "./shc-cart";
 import ShcNotificationModule from "./shc-notification";
+import ShcComplianceDocModule from "./shc-compliance-doc";
+import ShcDisputeModule from "./shc-dispute";
+import ShcCommissionRuleModule from "./shc-commission-rule";
+import ShcCookExpenseModule from "./shc-cook-expense";
+import ShcFeatureFlagModule from "./shc-feature-flag";
+import ShcSearchSynonymModule from "./shc-search-synonym";
+import ShcPlatformStatModule from "./shc-platform-stat";
 
 // Register custom SHC modules. Links are defined separately in src/links/*
 // Phase 6: added shc-ledger (double-entry) + shc-payout-batch (weekly)
@@ -29,6 +36,13 @@ export const modules = [
   { resolve: "./src/modules/shc-review" },
   { resolve: "./src/modules/shc-cart" },
   { resolve: "./src/modules/shc-notification" },
+  { resolve: "./src/modules/shc-compliance-doc" },
+  { resolve: "./src/modules/shc-dispute" },
+  { resolve: "./src/modules/shc-commission-rule" },
+  { resolve: "./src/modules/shc-cook-expense" },
+  { resolve: "./src/modules/shc-feature-flag" },
+  { resolve: "./src/modules/shc-search-synonym" },
+  { resolve: "./src/modules/shc-platform-stat" },
 ];
 
 export {
@@ -45,4 +59,11 @@ export {
   ShcReviewModule,
   ShcCartModule,
   ShcNotificationModule,
+  ShcComplianceDocModule,
+  ShcDisputeModule,
+  ShcCommissionRuleModule,
+  ShcCookExpenseModule,
+  ShcFeatureFlagModule,
+  ShcSearchSynonymModule,
+  ShcPlatformStatModule,
 };

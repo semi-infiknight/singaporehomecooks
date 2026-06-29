@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-22 (Location picker + map) — `/(customer)/location` with GPS, OneMap search, saved addresses; iOS draggable Apple Maps (`react-native-maps`); Android Carto OSM tile picker (avoids Google Maps API key crash); heritage banner on Profile; request-dish CTA on Discover footer; Maestro `location-map-android.yaml` PASS.
+**Last Updated:** 2026-06-29 (launch-readiness wiring) — cook compliance screen now persists SFA/WSQ docs through `/store/shc/compliance`; customer Profile has My Requests with bid acceptance; cook-created listings persist real dish fields and show in customer discovery.
 **Owner:** Mobile Track
 
 ## Overview
@@ -35,7 +35,7 @@ Two separate Expo apps deliver the primary customer and cook interfaces. Built w
 | Discover | `index` | `GourmeatHomeHeader` + location chip → `location`, promo rail, photo bento tiles (`SHCVisualBentoTile`), filter chips, “Order again” rail, dish list, `SHCRequestDishHomeCTA` footer |
 | Orders | `orders/index` | `SHCZomatoOrderRow` + track/chat |
 | Cart | `cart` | `SHCCartPageHero` + line items + sticky checkout CTA |
-| Profile | `profile/index` | Wallet bento hero, credits, `SHCHeritageStoryBanner` |
+| Profile | `profile/index` | Wallet bento hero, credits, `SHCHeritageStoryBanner`, My Requests → accept cook bids |
 
 **Hidden from tab bar** (`href: null`): `search` (with `SHCSearchResultsPanel` ADD), `location` (`LocationPickerExperience` + `SHCLocationDraggableMap`), `request` (custom dish wizard), `cook/[slug]`, `product/[id]` (sticky add-to-cart), `checkout` (`SHCCheckoutStepper`), `orders/[id]` (review form post-collection).
 
@@ -99,7 +99,7 @@ apps/mobile-cook/app/
 - **Dashboard:** Earnings hero, photo bento quick actions (vector icons), collaboration board.
 - **Orders / Earnings:** `SHCCookPageHero` + order cards with state-machine actions.
 - **Listings:** Multi-step wizard with photo tips, AI calorie stub.
-- **Compliance:** Document upload cards with expiry tracking.
+- **Compliance:** Document upload cards persist SFA/WSQ references through Medusa `shc_compliance_doc` for admin review.
 
 ### Shared Experiences
 - **OrderChat:** Messaging scoped to order (customer ↔ cook).

@@ -14,11 +14,14 @@ export async function shapeProduct(
   const avail = await availSvc.getAvailability(meta.product_id).catch(() => null);
   const [cooks] = await cookSvc.listAndCountCooks({ id: meta.cook_id } as any, { take: 1 }).catch(() => [[]]);
   const cook = (cooks as any[])?.[0];
-  const title = productTitleFromId(meta.product_id);
+  const title = meta.name || productTitleFromId(meta.product_id);
+  const priceCents = typeof meta.price_cents === "number" && meta.price_cents > 0 ? meta.price_cents : null;
   return {
     id: meta.product_id,
     name: title,
-    price: meta.min_qty ? meta.min_qty * 12 : 12,
+    title,
+    price: priceCents ? priceCents / 100 : meta.min_qty ? meta.min_qty * 12 : 12,
+    price_cents: priceCents ?? (meta.min_qty ? meta.min_qty * 1200 : 1200),
     cook_id: meta.cook_id,
     cook_slug: cook?.slug || null,
     cook_name: cook?.display_name || "Home Cook",

@@ -86,9 +86,10 @@ export default function Checkout() {
     setIsSubmitting(true);
     try {
       const res = await checkoutWithCredits(allergenAck, selectedSlot, creditsToApply, isCorporate);
-      setCompletedOrderId((res as { order?: { id?: string } }).order?.id || '');
-      if (isCorporate) {
-        await flagCorporateOrder(`Group order for ${cookId} — multi dish note + invoice stub generated.`);
+      const orderId = (res as { order?: { id?: string } }).order?.id || '';
+      setCompletedOrderId(orderId);
+      if (isCorporate && orderId) {
+        await flagCorporateOrder(orderId, `Group order for ${cookId} — multi dish note + invoice stub generated.`);
       }
     } catch (e: any) {
       setError({ code: e.code, message: e.message || SHCErrorCode });

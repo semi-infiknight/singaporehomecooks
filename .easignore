@@ -1,0 +1,3 @@
+# Stale local prebuild (SDK 51). EAS generates fresh native projects from app.json.
+apps/mobile-cook/ios/
+apps/mobile-cook/android/

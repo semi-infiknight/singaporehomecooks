@@ -88,7 +88,9 @@ export const getCredits = () => client.getCredits();
 export const redeemCredits = (amount: number) => client.redeemCredits(amount);
 export const createRequest = (input: Record<string, unknown>) => client.createRequest(input);
 export const listOpenRequests = () => client.listOpenRequests();
+export const listMyRequests = () => client.listMyRequests();
 export const getNotifications = () => client.getNotifications();
+export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
 export const markNotificationsRead = (ids?: string[], all = false) =>
   client.markNotificationsRead?.(ids, all) || Promise.resolve({ success: true });
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
@@ -108,10 +110,13 @@ export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
-export const flagCorporateOrder = async (_note: string) => ({ ok: true });
+export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);
 export const getReview = (orderId: string) => client.getReview(orderId);
 export const submitReview = (orderId: string, rating: number, body?: string) =>
   client.submitReview(orderId, rating, body);
+export const getOrderDisputes = (orderId: string) => client.getOrderDisputes(orderId);
+export const submitOrderDispute = (orderId: string, input: { type?: string; notes: string }) =>
+  client.submitOrderDispute(orderId, input);
 export const registerPushToken = (token: string, opts?: { cookId?: string; role?: 'cook' | 'customer' }) =>
   client.registerPushToken(token, opts);
 

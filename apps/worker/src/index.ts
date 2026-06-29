@@ -14,6 +14,7 @@ const MEDUSA_URL = process.env.MEDUSA_URL || process.env.MEDUSA_PUBLIC_URL;
 const WORKER_API_KEY = process.env.WORKER_API_KEY;
 
 type JobResult = { ok: boolean; detail: string };
+type StoredJobResult = JobResult & { finished_at: string };
 
 function log(job: string, msg: string) {
   console.log(`[shc-worker] ${new Date().toISOString()} ${job}: ${msg}`);
@@ -100,16 +101,22 @@ const jobs: Record<string, () => Promise<JobResult>> = {
 };
 
 let running = false;
+const lastResults: Record<string, StoredJobResult> = {};
 
-async function runJob(name: string) {
+async function runJob(name: string): Promise<JobResult> {
+  const fn = jobs[name];
+  if (!fn) {
+    return { ok: false, detail: `unknown job: ${name}` };
+  }
   if (running) {
     log(name, "skipped — previous job still running");
-    return;
+    return { ok: false, detail: "previous job still running" };
   }
   running = true;
   try {
-    const fn = jobs[name];
-    if (fn) await fn();
+    const result = await fn();
+    lastResults[name] = { ...result, finished_at: new Date().toISOString() };
+    return result;
   } finally {
     running = false;
   }
@@ -123,9 +130,30 @@ cron.schedule("*/5 * * * *", () => runJob("notification-retry"));
 const server = createServer((req, res) => {
   if (req.url === "/health" || req.url === "/") {
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", service: "shc-worker", jobs: Object.keys(jobs) }));
+    res.end(JSON.stringify({ status: "ok", service: "shc-worker", jobs: Object.keys(jobs), running, lastResults }));
     return;
   }
+
+  const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+  if (req.method === "POST" && url.pathname.startsWith("/run/")) {
+    if (!WORKER_API_KEY) {
+      res.writeHead(503, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "WORKER_API_KEY not configured" }));
+      return;
+    }
+    if (req.headers["x-worker-api-key"] !== WORKER_API_KEY) {
+      res.writeHead(401, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "unauthorized" }));
+      return;
+    }
+    const jobName = decodeURIComponent(url.pathname.replace(/^\/run\//, ""));
+    runJob(jobName).then((result) => {
+      res.writeHead(result.ok ? 200 : 400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ job: jobName, ...result }));
+    });
+    return;
+  }
+
   res.writeHead(404);
   res.end();
 });

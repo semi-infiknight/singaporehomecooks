@@ -51,7 +51,7 @@ class ShcCreditWalletModuleService extends MedusaService({ CreditWallet }) {
     // Tie to ledger for money flow (redemption = credit liability reduction)
     let ledgerPosted = false;
     try {
-      const ledgerService = (container as any)?.resolve?.("shcLedgerService");
+      const ledgerService = (container as any)?.resolve?.("shcLedger");
       if (ledgerService) {
         // post redemption as special ledger (non-order)
         await ledgerService.postCreditRedemption?.({
@@ -94,7 +94,7 @@ class ShcCreditWalletModuleService extends MedusaService({ CreditWallet }) {
 
     // Post issuance to ledger for audit/money (earnings side)
     try {
-      const ledger = (container as any)?.resolve?.("shcLedgerService");
+      const ledger = (container as any)?.resolve?.("shcLedger");
       if (ledger && ledger.postCreditIssuance) {
         await ledger.postCreditIssuance({ customerId, orderId, amountCents: earned, actor: "order-complete-credit", container });
       }
@@ -108,7 +108,7 @@ class ShcCreditWalletModuleService extends MedusaService({ CreditWallet }) {
     // History via ledger if available (redemptions + issuances), else stub
     const logger = this.getLogger(container);
     try {
-      const ledger = (container as any)?.resolve?.("shcLedgerService");
+      const ledger = (container as any)?.resolve?.("shcLedger");
       if (ledger) {
         // In full query ledger for Credit* accounts
         return await ledger.listLedgerEntries({ /* filter credit related */ } as any) || [];

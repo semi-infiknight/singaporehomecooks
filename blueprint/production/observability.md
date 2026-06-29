@@ -7,7 +7,7 @@
 - [ERROR_CODES.md](../ERROR_CODES.md)
 - [OPERATIONS_RUNBOOK.md](../OPERATIONS_RUNBOOK.md)
 
-**Last Updated:** 2026-06-13 (Infra Track owns)
+**Last Updated:** 2026-06-29 (loop observability pass) — Medusa `/store/shc/*` and `/admin/shc/*` now emit request-id + trace-id headers, pino JSON request logs, and PagerDuty Events API alerts on 5xx when `PAGERDUTY_ROUTING_KEY` is configured.
 **Owner:** Infra Track
 
 ## Observability Stack
@@ -36,6 +36,12 @@
 - MinIO bucket quota warning
 
 All alerts must include runbook links and actionable remediation steps.
+
+## Current Implementation
+
+- `apps/medusa/src/lib/shc-observability.ts` owns pino logging, trace IDs, and PagerDuty Events API delivery.
+- `apps/medusa/src/api/middlewares.ts` attaches `x-request-id` + `x-trace-id`, records duration/status/method/path, logs structured `http.request` / `http.admin_request` events, and triggers PagerDuty alerts on 5xx.
+- Launch env requirement: set `PAGERDUTY_ROUTING_KEY` to enable alert delivery; without it, alerts are logged as skipped.
 
 ## Multi-Agent Notes
 

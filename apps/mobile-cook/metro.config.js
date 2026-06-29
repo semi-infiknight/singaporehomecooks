@@ -15,10 +15,22 @@ const config = getDefaultConfig(projectRoot);
 config.watchFolders = [monorepoRoot];
 config.resolver.nodeModulesPaths = [appModules, rootModules];
 
-// Prefer each app's node_modules to prevent duplicate React / react-native-svg native registrations.
-const pinnedModules = ['react', 'react-dom', '@tanstack/react-query'];
+function resolvePackageRoot(name) {
+  for (const modulesDir of [appModules, rootModules]) {
+    try {
+      return path.dirname(require.resolve(`${name}/package.json`, { paths: [modulesDir] }));
+    } catch {
+      /* try next */
+    }
+  }
+  return null;
+}
+
+const pinnedModules = ['react', 'react-dom', '@tanstack/react-query', 'expo-asset', '@react-native/assets-registry'];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
+    const resolved = resolvePackageRoot(name);
+    if (resolved) return [name, resolved];
     const local = path.join(appModules, name);
     return [name, fs.existsSync(local) ? local : path.join(rootModules, name)];
   })
@@ -38,11 +50,10 @@ config.resolver.extraNodeModules = new Proxy(
 
 config.server.unstable_serverRoot = projectRoot;
 
-// Isolate from customer Metro (default cache is shared under os.tmpdir()/metro-cache).
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook';
+config.cacheVersion = 'mobile-cook-v2-sdk54';
 
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {

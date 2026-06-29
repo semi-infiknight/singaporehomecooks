@@ -9,6 +9,7 @@ import {
   WalletCard,
   SHCVisualBentoTile,
   SHCIcon,
+  SHCBadge,
   shcSpacing,
   shcBorders,
   shcRadii,
@@ -21,12 +22,47 @@ import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
-import { useNotifications } from '../../../hooks/useOrder';
+import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../../hooks/useOrder';
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
   { iconKey: 'search' as const, label: 'Search', image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
 ];
+
+function MyRequestCard({ request }: { request: any }) {
+  const { data: bids = [] } = useBids(request.id);
+  const acceptBid = useAcceptBid();
+  const pendingBids = bids.filter((bid: any) => bid.status === 'pending');
+
+  return (
+    <SHCCard style={styles.requestCard}>
+      <View style={styles.requestHeader}>
+        <Text style={styles.requestTitle} numberOfLines={2}>{request.body}</Text>
+        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>{request.status}</SHCBadge>
+      </View>
+      <Text style={styles.requestMeta}>
+        {request.party_size ? `${request.party_size} pax · ` : ''}{request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : 'Open budget'}
+      </Text>
+      {pendingBids.length === 0 && <Text style={styles.requestEmpty}>No pending bids yet. Cooks will respond from their dashboard.</Text>}
+      {pendingBids.map((bid: any) => (
+        <View key={bid.id} style={styles.bidRow}>
+          <View style={styles.bidInfo}>
+            <Text style={styles.bidPrice}>S${Math.round((bid.price_cents || 0) / 100)}</Text>
+            {!!bid.message && <Text style={styles.bidMessage} numberOfLines={2}>{bid.message}</Text>}
+          </View>
+          <SHCButton
+            onPress={() => acceptBid.mutate(bid.id)}
+            disabled={acceptBid.isPending}
+            style={styles.acceptBidBtn}
+            testID={`accept-bid-${bid.id}`}
+          >
+            <SHCButtonText>Accept</SHCButtonText>
+          </SHCButton>
+        </View>
+      ))}
+    </SHCCard>
+  );
+}
 
 export default function Profile() {
   const insets = useSafeAreaInsets();
@@ -36,6 +72,7 @@ export default function Profile() {
   const { data: credits } = useCredits();
   const redeemMut = useRedeemCredits();
   const { data: notifs = [], markRead } = useNotifications();
+  const { data: myRequests = [] } = useMyRequests();
   const { favorites } = useFavorites();
   const savedDishes = favoritesToReorderDishes(favorites);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -125,6 +162,16 @@ export default function Profile() {
         redeemable={Math.min(80, bal)}
         onRedeem={(amt) => redeemMut.mutate(amt)}
       />
+
+      {myRequests.length > 0 && (
+        <View style={styles.requestsSection} testID="my-requests-panel">
+          <Text style={styles.savedTitle}>My requests</Text>
+          <Text style={styles.savedSub}>Review cook bids and accept one to create your order.</Text>
+          {myRequests.map((request: any) => (
+            <MyRequestCard key={request.id} request={request} />
+          ))}
+        </View>
+      )}
 
       {savedDishes.length > 0 && (
         <View style={{ marginTop: shcSpacing.md }}>
@@ -224,6 +271,25 @@ const styles = StyleSheet.create({
   tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   tileCol: { flex: 1 },
   trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },
+  requestsSection: { marginTop: shcSpacing.md },
+  requestCard: { marginTop: shcSpacing.sm },
+  requestHeader: { flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'flex-start' },
+  requestTitle: { flex: 1, fontSize: 14, fontWeight: '800', color: shcColors.text },
+  requestMeta: { marginTop: 4, fontSize: 12, color: shcColors.textLight, fontWeight: '600' },
+  requestEmpty: { marginTop: shcSpacing.sm, fontSize: 12, color: shcColors.textLight },
+  bidRow: {
+    marginTop: shcSpacing.sm,
+    paddingTop: shcSpacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: shcColors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: shcSpacing.sm,
+  },
+  bidInfo: { flex: 1 },
+  bidPrice: { fontSize: 14, fontWeight: '900', color: shcColors.primary },
+  bidMessage: { marginTop: 2, fontSize: 12, color: shcColors.textLight },
+  acceptBidBtn: { paddingHorizontal: shcSpacing.sm },
   savedTitle: { fontSize: 16, fontWeight: '900', color: shcColors.text },
   savedSub: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
   trustTitle: { fontWeight: '800', color: shcColors.primary, marginTop: 4 },

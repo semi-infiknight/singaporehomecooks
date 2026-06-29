@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — full modules list now includes shc-cart (Postgres) + shc-review. shc-cook has password_hash support + login_email. shc-types synced. All 12 custom modules registered. See modules/index.ts + 05-data-model + CURRENT_STATE.
+**Last Updated:** 2026-06-29 (launch-readiness wiring) — all blueprint custom tables now have registered Medusa modules/migrations; compliance docs wired; product-meta stores cook-created listing display fields; credit ledger resolve bug fixed.
 **Owner:** Backend Track
 
 ## Overview
@@ -24,6 +24,8 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 - shc-request, shc-bid, shc-credit-wallet, shc-heritage (growth)
 - **shc-review** (full review lifecycle)
 - **shc-cart** (Postgres one-cook cart)
+- **shc-notification** (DB-backed in-app inbox)
+- **shc-compliance-doc, shc-dispute, shc-commission-rule, shc-cook-expense, shc-feature-flag, shc-search-synonym, shc-platform-stat** (previously paper-only blueprint tables now registered with models/services/migrations)
 
 **Phase 6 Backend-Money (2026-06-14):** 
 - shc-ledger: models/ledger-entry, migration, service (postCommission using 15% business-rules calc + double-entry legs e.g. Cook-Earnings-Payable/Order-Sales + Platform-Commission; postPayout clearing leg; list + summary + verifyInvariant; audit logs).
@@ -47,12 +49,17 @@ Links: src/links/shc-*-*.ts using defineLink to Medusa product/order.
 | shc-availability        | Time-slot and portion management             | shc_availability                 | Real-time stock for collection days |
 | shc-order-meta          | Order state, collection details, PayNow ref  | shc_order_meta, shc_order_message| State machine driver |
 | shc-review              | Post-collection ratings and feedback         | shc_review                       | One-per-order (customer only post-collected), GET/POST via api-client |
-| shc-dispute             | Dispute lifecycle and resolution             | shc_dispute                      | Ops workflow integration (not fully module-ized yet) |
+| shc-compliance-doc      | SFA/WSQ document references                  | shc_compliance_doc               | Cook upload route + admin review foundation |
+| shc-dispute             | Dispute lifecycle and resolution             | shc_dispute                      | Ops workflow foundation |
 | shc-ledger              | Double-entry accounting for commissions/payouts | shc_ledger_entry (order_id/batch_id), shc_payout_batch | postCommission/postPayout, invariant, 15% via business-rules; immutable |
 | shc-payout-batch        | Weekly batches (Mon cron-sim), approve flow  | shc_payout_batch (status, transfer_ref) | Idempotent weekly sim script, sim transfer_ref on approve |
 | **shc-cart**            | Customer cart (one-cook enforced)            | shc_cart (JSON items + cook_id)  | Postgres module; used by /store/shc/cart; legacy store deprecated |
 | **shc-notification**    | Persistent in-app + push inbox               | shc_notification                 | actor-scoped list/push/markRead; replaces pure in-mem |
-| shc-feature-flag        | Growth experiment toggles                    | shc_feature_flag                 | Cohort-based rollout |
+| shc-commission-rule     | Versioned commission settings                | shc_commission_rule              | 15% default can become data-driven |
+| shc-cook-expense        | Cook expense receipts                        | shc_cook_expense                 | Tax/earnings expense foundation |
+| shc-feature-flag        | Growth experiment toggles                    | shc_feature_flag                 | DB-backed rollout flags |
+| shc-search-synonym      | Search expansion dictionary                  | shc_search_synonym               | Foundation for no-dead-end search |
+| shc-platform-stat       | Aggregated platform counters                 | shc_platform_stat                | Ops/marketing dashboard counters |
 
 ## Workflows (src/workflows)
 

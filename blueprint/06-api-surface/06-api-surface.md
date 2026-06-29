@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-06-20 (full sync) — all listed areas now ✅ except noted production items. See CURRENT_STATE for live file map + client wiring. Auth, cart (Postgres), reviews, search live.
+**Last Updated:** 2026-06-29 (launch-readiness wiring) — listing publish/display fields fixed, compliance route added, request/bid accept UI supported, Sharp WebP upload derivative, auth rate-limit and request-id logging middleware added.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -20,11 +20,11 @@
 | Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` + `checkout-credits` + complete route (PDPA, credits, corporate) |
 | Orders + messages + transitions + review | ✅ Implemented | Full per-order list (enriched with id + items snapshot + total for UI) /detail/transition/messages/review. Items+total snapshotted at checkout. |
 | Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
-| Earnings, listings, notifications, push-token | ✅ Implemented | Notifications now via shc-notification module (DB persisted); push registration + dispatch wired |
+| Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings persist real name/price/description/heritage; compliance docs are DB-backed; notifications now via shc-notification module (DB persisted); push registration + dispatch wired |
 | Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
 | Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook (SHC JWT + scrypt hash on shc_cook) + /me |
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
-| Media upload (MinIO/S3) | ✅ Full server upload (base64 -> backend putObject to MinIO with full auth) + presigned mode. POST /store/shc/upload supports mode=server or presigned. Integrated with listings. | done (core) |
+| Media upload (MinIO/S3) | ✅ Full server upload (base64 -> backend putObject to MinIO with auth) + presigned mode + 400px WebP derivative via Sharp. POST /store/shc/upload supports mode=server or presigned. Integrated with listings. | done (core) |
 | Reviews | ✅ Implemented | GET/POST /orders/:id/review (customer post-collection only) |
 
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
@@ -42,6 +42,8 @@ Cook login uses SHC JWT (issueCookToken) verifying against `shc_cook.login_email
 All routes require Authorization except public ones. Full table of 30+ routes preserved (upload, cooks, products/search, profile, compliance, orders, messages, review, push-token, etc.).
 
 **Push token route (added final wave):** POST /store/shc/push-token { cook_id, expo_push_token } — registers for targeted pushes on order events (paid, ready_for_collection, completed). See subscriber + 03-railway.md. Real Expo service (expo-server-sdk) required in prod.
+
+**Compliance route (2026-06-29 launch pass):** GET/POST `/store/shc/compliance` — cook JWT required; persists SFA/WSQ document references in `shc_compliance_doc` for admin review.
 
 ## SHC Admin API (`/admin/shc/*`)
 

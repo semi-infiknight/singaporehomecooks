@@ -14,7 +14,7 @@
     "start": "pnpm exec medusa start",
     "start:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa start",
     "predev": "pnpm build",
-    "test": "echo 'Tests in packages/ for now' && exit 0",
+    "test": "vitest run --coverage",
     "lint": "eslint src --ext .ts,.js",
     "typecheck": "tsc --noEmit",
     "db:generate": "pnpm exec medusa db:generate || echo 'generate after DB ready'",
@@ -35,7 +35,10 @@
     "ioredis": "^5.11.1",
     "minio": "^8.0.7",
     "pg": "^8.13.1",
+    "pino": "^10.3.1",
+    "sharp": "^0.35.2",
     "tsx": "^4.15.7",
+    "web-push": "^3.6.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {

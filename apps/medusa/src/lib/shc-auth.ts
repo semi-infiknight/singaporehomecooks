@@ -65,6 +65,7 @@ export function issueCookToken(email: string, cookId: string, name: string) {
 
 /** Dev-only plaintext fallback — disable in prod via SHC_COOK_ALLOW_DEV_PLAINTEXT=false */
 export function verifyCookLoginDevFallback(email: string, password: string) {
+  if (process.env.NODE_ENV === "production") return null;
   if (process.env.SHC_COOK_ALLOW_DEV_PLAINTEXT === "false") return null;
   const cred = DEV_COOK_CREDENTIALS[email.toLowerCase().trim()];
   if (!cred || cred.password !== password) return null;

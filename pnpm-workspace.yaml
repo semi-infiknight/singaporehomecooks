@@ -6,9 +6,17 @@ overrides:
   react-dom: 18.2.0
   react-native: 0.74.0
   react-native-svg: 15.2.0
-  metro-cache: 0.80.12
-  metro: 0.80.12
-  metro-config: 0.80.12
+  metro-cache: 0.83.3
+  metro: 0.83.3
+  metro-config: 0.83.3
+  mobile-customer>react: 19.1.0
+  mobile-customer>react-dom: 19.1.0
+  mobile-customer>react-native: 0.81.5
+  mobile-customer>react-native-svg: 15.12.1
+  mobile-cook>react: 19.1.0
+  mobile-cook>react-dom: 19.1.0
+  mobile-cook>react-native: 0.81.5
+  mobile-cook>react-native-svg: 15.12.1
 allowBuilds:
   '@medusajs/telemetry': true
   esbuild: true

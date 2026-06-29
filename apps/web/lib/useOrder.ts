@@ -9,7 +9,9 @@ import {
   sendMessage,
   checkoutWithCredits,
   getReview,
+  getOrderDisputes,
   submitReview,
+  submitOrderDispute,
   createSHCError,
   isAuthenticated,
 } from './api-client';
@@ -67,12 +69,82 @@ export function useChat(orderId:string) {
 }
 export const useOrderChat = useChat;
 
-// Stubs for collab/requests (parity with mobile hooks)
-export function useRequests() { return useQuery({queryKey:['requests'], queryFn: async () => { const {listOpenRequests} = await import('./api-client'); return listOpenRequests(); }}); }
-export function useBids(reqId?:string) { return useQuery({queryKey:['bids',reqId], queryFn: async () => { const {getBids} = await import('./api-client'); return getBids(reqId); }}); }
-export function useCreateBid() { const qc=useQueryClient(); return useMutation({mutationFn: async (d:any)=>{const {createBid}=await import('./api-client'); return createBid(d.requestId,d.priceCents,d.message);}, onSuccess:()=>qc.invalidateQueries({queryKey:['bids']})}); }
-export function useAcceptBid() { const qc=useQueryClient(); return useMutation({mutationFn: async (bidId:string)=>{const {acceptBid}=await import('./api-client'); return acceptBid(bidId);}, onSuccess:()=> {qc.invalidateQueries({queryKey:['bids']}); qc.invalidateQueries({queryKey:['orders']}); }}); }
-export function useNotifications() { return useQuery({queryKey:['notifs'], queryFn: async () => { const {getNotifications}=await import('./api-client'); return getNotifications(); }}); }
+// Collab / requests (parity with mobile hooks)
+export function useRequests() {
+  return useQuery({
+    queryKey: ['requests'],
+    queryFn: async () => {
+      const { listOpenRequests } = await import('./api-client');
+      return listOpenRequests();
+    },
+  });
+}
+export function useMyRequests() {
+  return useQuery({
+    queryKey: ['my-requests'],
+    queryFn: async () => {
+      const { listMyRequests } = await import('./api-client');
+      return listMyRequests();
+    },
+    enabled: isAuthenticated(),
+    placeholderData: [],
+  });
+}
+export function useBids(reqId?: string) {
+  return useQuery({
+    queryKey: ['bids', reqId],
+    queryFn: async () => {
+      const { getBids } = await import('./api-client');
+      return getBids(reqId);
+    },
+    enabled: Boolean(reqId),
+  });
+}
+export function useCreateBid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (d: { requestId: string; priceCents: number; message?: string }) => {
+      const { createBid } = await import('./api-client');
+      return createBid(d.requestId, d.priceCents, d.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['bids'] }),
+  });
+}
+export function useAcceptBid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (bidId: string) => {
+      const { acceptBid } = await import('./api-client');
+      return acceptBid(bidId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bids'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['my-requests'] });
+    },
+  });
+}
+export function useNotifications() {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const { getNotifications } = await import('./api-client');
+      return getNotifications();
+    },
+    enabled: isAuthenticated(),
+    placeholderData: [],
+    refetchInterval: isAuthenticated() ? 8000 : false,
+  });
+  const markRead = useMutation({
+    mutationFn: async (opts: { ids?: string[]; all?: boolean } = {}) => {
+      const { markNotificationsRead } = await import('./api-client');
+      await markNotificationsRead(opts.ids, !!opts.all);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+  return { ...query, markRead: markRead.mutate, markReadAsync: markRead.mutateAsync };
+}
 
 export function useReview(orderId: string) {
   const qc = useQueryClient();
@@ -86,5 +158,21 @@ export function useReview(orderId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['review', orderId] }),
   });
   return { review: reviewQ.data, submit, isLoading: reviewQ.isLoading };
+}
+
+export function useOrderDisputes(orderId: string) {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['order-disputes', orderId],
+    queryFn: () => getOrderDisputes(orderId),
+    enabled: !!orderId && isAuthenticated(),
+    placeholderData: [],
+  });
+  const submit = useMutation({
+    mutationFn: ({ type = 'other', notes }: { type?: string; notes: string }) =>
+      submitOrderDispute(orderId, { type, notes }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['order-disputes', orderId] }),
+  });
+  return { disputes: query.data || [], submit, isLoading: query.isLoading };
 }
 

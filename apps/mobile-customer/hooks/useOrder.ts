@@ -112,11 +112,14 @@ export function useClearCart() {
 export function useRequests() {
   return useQuery({ queryKey: ['requests'], queryFn: async () => { const { listOpenRequests } = await import('../lib/api-client'); return listOpenRequests(); } });
 }
+export function useMyRequests() {
+  return useQuery({ queryKey: ['my-requests'], queryFn: async () => { const { listMyRequests } = await import('../lib/api-client'); return listMyRequests(); } });
+}
 export function useCreateRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: any) => { const { createRequest } = await import('../lib/api-client'); return createRequest(input); },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['requests'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['requests'] }); qc.invalidateQueries({ queryKey: ['my-requests'] }); },
   });
 }
 export function useBids(requestId?: string) {

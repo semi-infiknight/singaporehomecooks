@@ -7,6 +7,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppHeader } from "./components/AppHeader";
 import { AppFooter } from "./components/AppFooter";
 import { AppMobileTabBar } from "./components/AppMobileTabBar";
+import { PWARegistration } from "./components/PWARegistration";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -62,6 +63,7 @@ export default function RootLayout({
               <AppFooter />
             </div>
             <AppMobileTabBar />
+            <PWARegistration />
           </ErrorBoundary>
         </QueryClientProvider>
       </body>

@@ -16,7 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.singaporehomecooks.cook"
+      "bundleIdentifier": "com.singaporehomecooks.cook",
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -31,19 +34,26 @@
       "display": "standalone",
       "themeColor": "#D96C4A",
       "backgroundColor": "#FFF8F0",
-      "name": "Singapore Home Cooks",
-      "shortName": "SHC Home Cooks",
-      "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."
+      "name": "Singapore Home Cooks Cook",
+      "shortName": "SHC Cook",
+      "description": "Cook dashboard for Singapore Home Cooks — orders, listings, and compliance."
     },
     "plugins": [
       "expo-router",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
     ],
     "scheme": "shc-cook",
     "extra": {
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "placeholder-project-id"
+        "projectId": "bb1c9052-df53-48fd-89e2-94ee51159bd9"
       }
-    }
+    },
+    "owner": "darksend"
   }
 }

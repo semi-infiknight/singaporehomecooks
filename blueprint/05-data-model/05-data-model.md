@@ -7,7 +7,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-06-20 (synced with code + contracts) — added shc_cart table + shc_cook login_email + password_hash (scrypt); aligned to current modules (incl. shc-cart, shc-review); shcCookSchema extended. See CURRENT_STATE, 06-api-surface.
+**Last Updated:** 2026-06-29 (launch-readiness wiring) — `shc_product_meta` now persists cook-provided name/description/price_cents/heritage_note; all previously paper-only custom tables now have Medusa modules/migrations; compliance docs route wired.
 
 ## Medusa Native Tables (Configured, Not Custom)
 
@@ -24,7 +24,7 @@
 | Table | Full Columns (exact) | Types / Notes | Multi-Agent Notes |
 | --- | --- | --- | --- |
 | `shc_cook` | id, auth_identity_id, slug, display_name, story, area, collection_address, collection_instructions, status, availability_paused, expo_push_token, sfa_reg_number, wsq_cert_expiry, **login_email**, **password_hash** (scrypt), pdpa_consent_at, pdpa_consent_version, created_at, updated_at | status: enum pending\|active\|paused\|suspended; login_email for cook auth; password_hash never exposed; PDPA required (07-auth) | Linked to auth_identity; cook login now supports real hashed + dev fallback; status machine + compliance |
-| `shc_product_meta` | product_id, cook_id, cuisine, occasion_tags, allergen_tiers (JSON...), halal, calories, calories_confidence, ingredients (JSON...), min_qty, last_minute_premium_pct, **image_url**, created_at, updated_at | image_url for listings/photos | One cook per product enforced (business-rules + cart) |
+| `shc_product_meta` | product_id, cook_id, **name**, **description**, cuisine, occasion_tags, allergen_tiers (JSON...), halal, calories, calories_confidence, ingredients (JSON...), min_qty, **price_cents**, last_minute_premium_pct, **heritage_note**, **image_url**, created_at, updated_at | name/price/description/heritage are persisted for cook-created listings; image_url prefers server-generated WebP derivative | One cook per product enforced (business-rules + cart) |
 | `shc_availability` | product_id, portions_per_day, collection_days (int[] 0-6), time_slots (JSON array of slot strings or objects), paused, created_at, updated_at | portions_per_day >0; used for portions check | Checked at checkout + availability rule |
 | `shc_compliance_doc` | id, cook_id, type (sfa\|wsq), file_key, expiry_date, verified_at, created_at, updated_at | MinIO cook-certs bucket; verified_at set by ops | Compliance gates for accept/payout |
 | `shc_order_meta` | order_id, cook_id, collection_date (YYYY-MM-DD), collection_slot (e.g. "18:00-19:00"), allergen_acked_at, address_released_at, paynow_reference, shc_status, **items** (json snapshot), **total_cents**, origin_request_id, credits_applied_cents, is_corporate, corporate_note, created_at, updated_at | shc_status from 09-order-state enum; items+total snapshot for UI list/detail (dish names, amounts) | Core state machine — see 09-order-state.md; one-cook, allergen rules |

@@ -67,7 +67,7 @@ This sets `${{Service.VAR}}` references on medusa, worker, and web so Postgres, 
 | `REDIS_URL` | `${{Redis.REDIS_URL}}` |
 | `JWT_SECRET` | random 32+ char string |
 | `COOKIE_SECRET` | random 32+ char string |
-| `MEDUSA_DISABLE_ADMIN` | `true` |
+| `MEDUSA_DISABLE_ADMIN` | `false` (admin dashboard at `/app`) |
 | `MEDUSA_PUBLIC_URL` | `https://<your-medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<your-medusa-domain>.up.railway.app` (no `https://`) |
 | `RAILWAY_RUN_SEED` | `true` (first deploy only — remove after seed succeeds) |
@@ -181,7 +181,7 @@ Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). N
 ## 10. Production checklist (later)
 
 - [ ] Rotate `JWT_SECRET` / `COOKIE_SECRET`
-- [ ] Enable Medusa admin (`MEDUSA_DISABLE_ADMIN=false`) for ops
+- [x] Enable Medusa admin (`MEDUSA_DISABLE_ADMIN=false`) for ops — `/app` on medusa service
 - [ ] Custom domains + HTTPS
 - [ ] PayU / PayNow KYC keys
 - [ ] Expo push credentials (`expo-server-sdk`)

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
-import { useCheckout } from '../../lib/useOrder';
+import { useCheckout, useTransitionOrder } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
 import {
   SHCCard,
@@ -25,6 +25,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { data: cart = { items: [] } } = useCart();
   const checkoutMut = useCheckout();
+  const transitionMut = useTransitionOrder();
   const { data: creditsData } = useCredits();
 
   const [allergenAck, setAllergenAck] = useState(false);
@@ -66,10 +67,29 @@ export default function CheckoutPage() {
       });
       const oid = res?.order?.id || res?.id || 'SHC-' + Date.now();
       setOrderId(oid);
+      if (isCorp && oid) {
+        try {
+          const { flagCorporateOrder } = await import('../../lib/api-client');
+          await flagCorporateOrder(oid, 'Corporate/group order from web checkout — invoice stub for ops.');
+        } catch {
+          /* non-fatal */
+        }
+      }
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       setError({ code: err?.code, message: err?.message || 'Unable to place order. Please try again.' });
     }
+  };
+
+  const confirmPay = async (ref: string) => {
+    if (!orderId) return;
+    try {
+      await transitionMut.mutateAsync({ orderId, to: 'paid' as never });
+      console.log('[PayNow] ref captured:', ref, 'for', orderId);
+    } catch {
+      /* non-fatal — ops can reconcile manually */
+    }
+    router.push(`/orders/${orderId}`);
   };
 
   if (orderId) {
@@ -82,10 +102,15 @@ export default function CheckoutPage() {
             <p className="text-xs font-semibold text-white/90">Ref {orderId} — complete PayNow to confirm</p>
           </div>
         </div>
-        <PayNowPanel amount={amountDue} reference={paynowRef || orderId} onRefChange={setPaynowRef} />
-        <SHCButton className="mt-6 w-full" size="lg" onClick={() => router.push(`/orders/${orderId}`)}>
-          Track your order
-        </SHCButton>
+        <PayNowPanel
+          amount={amountDue}
+          reference={paynowRef || orderId}
+          onRefChange={setPaynowRef}
+          onConfirmPay={confirmPay}
+        />
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          Address released 2h before slot. Chat opens after payment confirm.
+        </p>
       </div>
     );
   }

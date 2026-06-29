@@ -1,5 +1,6 @@
 import { sendExpoPush } from "./shc-expo-push";
-import { getCustomerPushToken, getCustomerPushTokenAsync } from "./shc-push-tokens";
+import { sendWebPush } from "./shc-web-push";
+import { getCustomerPushToken, getCustomerPushTokenAsync, getCustomerWebPushSubscriptionAsync } from "./shc-push-tokens";
 import ShcCookModuleService from "../modules/shc-cook/service";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import type { SHCOrderStatus } from "@shc/types";
@@ -58,11 +59,16 @@ export async function notifyOrderStatusPush(
   if (!customerToken && customerId) {
     customerToken = await getCustomerPushTokenAsync(customerId, container).catch(() => undefined);
   }
+  const webPushSub = customerId
+    ? await getCustomerWebPushSubscriptionAsync(customerId, container).catch(() => undefined)
+    : undefined;
 
   if (copy.cook) {
     await sendExpoPush(cookToken, { ...copy.cook, data: { orderId, status: to } }, logger);
   }
   if (copy.customer) {
-    await sendExpoPush(customerToken, { ...copy.customer, data: { orderId, status: to } }, logger);
+    const customerPayload = { ...copy.customer, data: { orderId, status: to } };
+    await sendExpoPush(customerToken, customerPayload, logger);
+    await sendWebPush(webPushSub as any, customerPayload, logger);
   }
 }

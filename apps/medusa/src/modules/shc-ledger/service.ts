@@ -19,6 +19,30 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     }
   }
 
+  private async resolveCommissionRate(container?: any): Promise<{ rate: number; source: string; version?: number }> {
+    if (!container?.resolve) {
+      return { rate: DEFAULT_COMMISSION_RATE, source: "default" };
+    }
+    try {
+      const ruleService = container.resolve("shcCommissionRule");
+      const [rules] = await ruleService.listAndCountCommissionRules({}, { take: 50, order: { version: "DESC" } });
+      const now = Date.now();
+      const active = (rules || [])
+        .filter((rule: any) => !rule.effective_from || new Date(rule.effective_from).getTime() <= now)
+        .sort((a: any, b: any) => {
+          const at = new Date(a.effective_from || 0).getTime();
+          const bt = new Date(b.effective_from || 0).getTime();
+          return bt - at || Number(b.version || 0) - Number(a.version || 0);
+        })[0];
+      if (active && typeof active.rate_pct === "number") {
+        return { rate: active.rate_pct / 100, source: "commission_rule", version: active.version };
+      }
+    } catch {
+      /* commission rules are optional; default is launch-safe */
+    }
+    return { rate: DEFAULT_COMMISSION_RATE, source: "default" };
+  }
+
   async postCommission(input: {
     orderId: string;
     totalCents: number;
@@ -35,14 +59,15 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     }
 
     // Idempotency: skip if commission entries already exist for this order (check any with order_id)
-    const existing = await this.listLedgerEntries({ filters: { order_id: orderId } });
+    const existing = await this.listLedgerEntries({ order_id: orderId });
     if (existing.length > 0) {
       logger.info?.({ event: "ledger.commission.skip", orderId, actor, reason: "idempotent" });
       return existing as unknown as SHCLedgerEntry[];
     }
 
-    const platformFee = calculatePlatformFee(totalCents);
-    const cookEarnings = calculateCookEarnings(totalCents);
+    const commission = await this.resolveCommissionRate(input.container);
+    const platformFee = calculatePlatformFee(totalCents, commission.rate);
+    const cookEarnings = calculateCookEarnings(totalCents, commission.rate);
 
     // Double-entry: create two balancing legs against "Order-Sales" clearing.
     // 1. Platform commission revenue side
@@ -51,7 +76,7 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
       debit_account: "Platform-Commission-Revenue",
       credit_account: "Order-Sales",
       amount_cents: platformFee,
-      batch_id: batchId || null,
+      batch_id: batchId || undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -63,7 +88,7 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
       debit_account: "Cook-Earnings-Payable",
       credit_account: "Order-Sales",
       amount_cents: cookEarnings,
-      batch_id: batchId || null,
+      batch_id: batchId || undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -82,7 +107,9 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
       total_cents: totalCents,
       platform_fee_cents: platformFee,
       cook_earnings_cents: cookEarnings,
-      rate: DEFAULT_COMMISSION_RATE,
+      rate: commission.rate,
+      rate_source: commission.source,
+      rate_version: commission.version,
       batch_id: batchId,
       entries: created.length,
     });
@@ -107,7 +134,7 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     }
 
     // Idempotency: if payout leg already for batch
-    const existing = await this.listLedgerEntries({ filters: { batch_id: batchId } });
+    const existing = await this.listLedgerEntries({ batch_id: batchId });
     const hasPayoutLeg = existing.some((e: any) => e.debit_account === "Cook-Earnings-Payable" && e.credit_account === "Payout-Bank-Clearing");
     if (hasPayoutLeg) {
       logger.info?.({ event: "ledger.payout.skip", batchId, actor });
@@ -115,7 +142,7 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     }
 
     const payoutData = {
-      order_id: null,
+      order_id: undefined,
       debit_account: "Cook-Earnings-Payable",
       credit_account: "Payout-Bank-Clearing",
       amount_cents: totalCents,
@@ -195,11 +222,11 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     const { customerId, orderId, amountCents, actor = "system" } = input;
     if (!customerId || amountCents <= 0) return null;
     const entryData = {
-      order_id: orderId || null,
+      order_id: orderId || undefined,
       debit_account: "Credit-Issuance-Expense",
       credit_account: "Home-Credit-Liability",
       amount_cents: amountCents,
-      batch_id: null,
+      batch_id: undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -214,11 +241,11 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     const { customerId, amountCents, actor = "credit-redeem" } = input;
     if (!customerId || amountCents <= 0) throw createSHCError("SHC-LEDGER-001", "Invalid credit redemption");
     const entryData = {
-      order_id: null,
+      order_id: undefined,
       debit_account: "Home-Credit-Liability",
       credit_account: "Credit-Redemption-Clearing",
       amount_cents: amountCents,
-      batch_id: null,
+      batch_id: undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

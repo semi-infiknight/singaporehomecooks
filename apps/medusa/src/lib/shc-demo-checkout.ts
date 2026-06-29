@@ -50,6 +50,7 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     pdpa_consent_version: pdpa_consent ? "v1.0-pdpa-2025" : undefined,
     credits_applied_cents: creditsApplied || 0,
     is_corporate: !!isCorporate,
+    corporate_note: isCorporate ? `Corporate/group order — invoice stub queued for ops.` : undefined,
     items: cart.items,
     total_cents: total,
   } as any);

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-22 (Location picker + map) — interactive collection location on mobile (iOS Apple Maps via `react-native-maps`; Android Carto OSM tile picker, no Google API key); heritage banner moved to Profile; request-dish CTA on Discover footer; Maestro `location-map-android.yaml` PASS on emulator.
+**Last Updated:** 2026-06-29 (Launch-readiness loop) — web push subscription + PayNow→paid parity + My Requests accept-bid on web; feature-flag gating (`request_dish`, `corporate_orders`) with admin API and `/ops` toggles; `/ops` surfaces disputes, commission rules, cook expenses, search synonyms, platform stats, and payout batches; `/ops` can resolve disputes and approve pending payout batches; worker health reports last job results and supports protected manual `POST /run/:job`; worker internal Medusa routes wired for order escalation and notification retry; customer/cook order dispute reporting API added and wired into web, mobile customer, and mobile cook order tracking; opening disputes marks orders `disputed`, ops resolution marks them `resolved`; product search now applies `shc_search_synonym` expansions; cook-authenticated expense tracker API and mobile cook earnings UI added for IRAS records; ledger commission posting now uses active `shc_commission_rule` rates and fixed idempotency filters; payout batch lookup/approval filters fixed; server web-push on order transitions; bid accept creates full `shc_order_meta` (customer_id, total, items, notifications); corporate/group order notes persist to order meta; route coverage gate expanded (store + admin launch routes).
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -14,14 +14,14 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer only | Gourmeat discover reorder, `AppMobileTabBar`, `SearchResultsDropdown`, request-dish footer CTA, `/location` picker; `HeritageStoryBanner` on Profile; Lucide bento icons; tri-platform sync with `@shc/ui` |
+| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus lightweight `/cook-portal` (cook login/order list) and `/ops` (health/ledger/payouts); PWA service worker + manifest |
 | **Design system** | ✅ v3 | `brand.md` (Toptal UX section) + `@shc/ui` (`zomato`, `visuals`, `icons`, `motion`, `food-ux`) + `@shc/utils` (`food-visuals`, `reorder`); skill `.agents/skills/tri-platform-ui-sync/` |
-| **Medusa API** (`:9000`) | ✅ ~75% routes | Custom `/store/shc/*` + `/admin/shc/*`; admin UI at `/app`; production `https://medusa-production-d2ba.up.railway.app` |
+| **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
 | **Maestro device E2E** | ✅ Android + iOS | Real PDP add-to-cart (no API cart pre-seed); `location-map-android.yaml` PASS (search → confirm map + nudge); `scripts/run-maestro-full-tour.sh` |
-| **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; order transitions notify cook + customer |
+| **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: Medusa + web online; see `RAILWAY_DEPLOY.md` |

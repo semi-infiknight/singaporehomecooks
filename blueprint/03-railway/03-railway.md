@@ -73,7 +73,7 @@ If the **web** service uses root `railway.toml`, it will:
 | `REDIS_URL` | `${{Redis.REDIS_URL}}` |
 | `JWT_SECRET` | random 32+ chars |
 | `COOKIE_SECRET` | random 32+ chars |
-| `MEDUSA_DISABLE_ADMIN` | `true` |
+| `MEDUSA_DISABLE_ADMIN` | `false` (admin UI at `/app`; Dockerfile uses `build:admin`) |
 | `MEDUSA_PUBLIC_URL` | `https://<medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<medusa-domain>.up.railway.app` |
 | `RAILWAY_RUN_SEED` | `true` once, then remove |
@@ -145,7 +145,7 @@ MEDUSA_URL=https://<medusa-domain>.up.railway.app pnpm verify:real-e2e
 |---------|-------|
 | worker | Cron / payouts / push — Phase 7+ |
 | minio | Object storage — local/dev or S3 later |
-| dedicated admin UI | Optional split; currently `MEDUSA_DISABLE_ADMIN=true` |
+| dedicated admin UI | Served on medusa at `/app` (`MEDUSA_DISABLE_ADMIN=false`) |
 
 ## Environment groups
 

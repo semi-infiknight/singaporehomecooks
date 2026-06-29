@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -7,6 +7,7 @@ import {
   SHCButtonText,
   SHCVisualBentoTile,
   GourmeatCookHeader,
+  SHCSectionTitle,
   SHCBadge,
   SHCIcon,
   SHCFadeIn,
@@ -19,17 +20,38 @@ import {
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
 
 export default function ComplianceUpload() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
+  const [docs, setDocs] = useState<any[]>([]);
   const [result, setResult] = useState<{ status: string; type: string; fileName: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const upload = () => {
+  useEffect(() => {
+    getComplianceDocs()
+      .then(setDocs)
+      .catch(() => setDocs([]));
+  }, []);
+
+  const upload = async () => {
     if (!fileName) return;
-    setResult({ status: 'pending_review', type, fileName });
+    setSubmitting(true);
+    try {
+      const safeName = fileName.replace(/[^a-zA-Z0-9._-]+/g, '-');
+      const doc = await submitComplianceDoc({
+        type,
+        file_key: `compliance/${user?.id || 'cook'}/${Date.now()}-${safeName}`,
+      });
+      setDocs((prev) => [doc, ...prev]);
+      setResult({ status: 'pending_review', type, fileName });
+      setFileName('');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -39,9 +61,9 @@ export default function ComplianceUpload() {
       testID="cook-compliance-screen"
     >
       <View style={styles.phaseBanner} testID="compliance-phase-banner">
-        <Text style={styles.phaseBannerTitle}>Phase 6 — upload API coming</Text>
+        <Text style={styles.phaseBannerTitle}>Compliance documents are saved for admin review</Text>
         <Text style={styles.phaseBannerBody}>
-          Certificate upload is a local stub for now. Submissions are not sent to the server until the MinIO/S3 upload API ships.
+          Submit your SFA registration or WSQ certificate reference. Admin verification controls launch readiness and payout safety.
         </Text>
       </View>
 
@@ -98,8 +120,8 @@ export default function ComplianceUpload() {
             testID="compliance-file-input"
           />
 
-          <SHCButton onPress={upload} disabled={!fileName} style={styles.uploadBtn} testID="compliance-submit-btn">
-            <SHCButtonText>Submit</SHCButtonText>
+          <SHCButton onPress={upload} disabled={!fileName || submitting} style={styles.uploadBtn} testID="compliance-submit-btn">
+            <SHCButtonText>{submitting ? 'Submitting…' : 'Submit'}</SHCButtonText>
           </SHCButton>
         </SHCCard>
       </SHCFadeIn>
@@ -116,6 +138,26 @@ export default function ComplianceUpload() {
               <SHCBadge variant="warning">{result.status.replace(/_/g, ' ')}</SHCBadge>
             </View>
           </SHCCard>
+        </SHCFadeIn>
+      )}
+
+      {docs.length > 0 && (
+        <SHCFadeIn>
+          <SHCSectionTitle>Submitted documents</SHCSectionTitle>
+          {docs.map((doc: any) => (
+            <SHCCard key={doc.id || doc.file_key} style={styles.resultCard}>
+              <View style={styles.resultRow}>
+                <SHCIcon name="compliance" size={24} color={doc.verified_at ? shcColors.success : shcColors.warning} active />
+                <View style={styles.resultInfo}>
+                  <SHCBadge variant="default">{String(doc.type).toUpperCase()}</SHCBadge>
+                  <Text style={styles.resultFile} numberOfLines={1}>{doc.file_key}</Text>
+                </View>
+                <SHCBadge variant={doc.verified_at ? 'success' : 'warning'}>
+                  {doc.verified_at ? 'verified' : 'pending review'}
+                </SHCBadge>
+              </View>
+            </SHCCard>
+          ))}
         </SHCFadeIn>
       )}
 

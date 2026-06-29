@@ -62,11 +62,17 @@ export const logout = () => clearSession();
 export const getMyOrders = () => client.getMyOrders('cook');
 export const getOrder = (id: string) => client.getOrder(id);
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
+export const getOrderDisputes = (orderId: string) => client.getOrderDisputes(orderId);
+export const submitOrderDispute = (orderId: string, input: { type?: string; notes: string }) =>
+  client.submitOrderDispute(orderId, input);
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>
   client.sendMessage(orderId, body, from);
 export const getCookListings = () => client.getCookListings();
 export const createCookListing = (input: Record<string, unknown>) => client.createCookListing(input);
+export const getComplianceDocs = () => client.getComplianceDocs();
+export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
+  client.submitComplianceDoc(input);
 export const getEarnings = () => client.getEarnings();
 export const getNotifications = () => client.getNotifications();
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
@@ -82,6 +88,9 @@ export const createBid = (requestId: string, priceCents: number, message?: strin
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
+export const listCookExpenses = () => client.listCookExpenses();
+export const createCookExpense = (input: { amount_cents: number; category: string; receipt_key?: string; date: string }) =>
+  client.createCookExpense(input);
 
 // Full server upload helper (sends base64 for server to upload to MinIO)
 export async function uploadImageToServer(imageBase64: string, objectName: string, cookId: string, contentType = 'image/jpeg') {

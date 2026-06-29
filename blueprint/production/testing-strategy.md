@@ -7,7 +7,7 @@
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — CI (build-test + medusa-real-e2e + optional maestro), scripts/run-maestro-full-tour, verify:real-e2e cover review/credits/push. Matches current.
+**Last Updated:** 2026-06-29 (launch-readiness loop) — Medusa Vitest route integration tests added for listing publish, product detail display fields, and compliance docs with 80%+ line/function/statement coverage gate on covered launch-critical routes.
 **Owners:** Infra Track (backend & CI), Mobile Track (E2E & Maestro)
 
 ## Testing Pyramid
@@ -34,6 +34,7 @@
 - Typecheck (`turbo typecheck`) is blocking.
 - E2E Maestro suite runs on `integrate/phase-N` branches before merge.
 - Coverage thresholds enforced (core contracts > 90%).
+- Medusa route coverage gate: `pnpm --filter medusa test` runs handler-level integration tests with coverage thresholds (80%+ line/function/statement for the initially covered launch-critical route surface).
 
 ## Full CI + Maestro (Final Polish)
 

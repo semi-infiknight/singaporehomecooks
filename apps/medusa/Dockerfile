@@ -13,14 +13,14 @@ FROM deps AS build
 RUN rm -f apps/medusa/medusa-config.js
 RUN pnpm --filter @shc/types build
 RUN pnpm --filter @shc/business-rules build
-ENV MEDUSA_DISABLE_ADMIN=true
-RUN pnpm --filter medusa build
+ENV MEDUSA_DISABLE_ADMIN=false
+RUN pnpm --filter medusa build:admin
 
 FROM node:22-alpine AS runner
 RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 WORKDIR /app
 ENV NODE_ENV=production
-ENV MEDUSA_DISABLE_ADMIN=true
+ENV MEDUSA_DISABLE_ADMIN=false
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages

@@ -16,7 +16,7 @@ import { getDishImageUrl, getOrderStatusLabel, isActiveOrderStatus } from '@shc/
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getReview, submitReview } from '../../../lib/api-client';
+import { getOrderDisputes, getReview, submitOrderDispute, submitReview } from '../../../lib/api-client';
 import { canSubmitReview } from '@shc/business-rules';
 import type { SHCOrderStatus } from '@shc/types';
 
@@ -29,6 +29,7 @@ export default function OrderTracking() {
   const qc = useQueryClient();
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const [disputeNotes, setDisputeNotes] = useState('');
 
   const { data: existingReview } = useQuery({
     queryKey: ['review', id],
@@ -43,6 +44,23 @@ export default function OrderTracking() {
       Alert.alert('Thank you', 'Your review helps other families find trusted home cooks.');
     },
     onError: (e: any) => Alert.alert('Review failed', e?.message || 'Could not submit review'),
+  });
+
+  const { data: disputes = [] } = useQuery({
+    queryKey: ['order-disputes', id],
+    queryFn: () => getOrderDisputes(id || ''),
+    enabled: !!id,
+    placeholderData: [],
+  });
+
+  const disputeMut = useMutation({
+    mutationFn: () => submitOrderDispute(id || '', { type: 'other', notes: disputeNotes.trim() }),
+    onSuccess: () => {
+      setDisputeNotes('');
+      qc.invalidateQueries({ queryKey: ['order-disputes', id] });
+      Alert.alert('Issue reported', 'Ops will review this order and follow up.');
+    },
+    onError: (e: any) => Alert.alert('Could not report issue', e?.message || 'Please try again.'),
   });
 
   if (!order) {
@@ -144,6 +162,39 @@ export default function OrderTracking() {
           />
         </GourmeatCard>
       )}
+
+      <GourmeatCard testID="order-dispute-panel">
+        <Text style={styles.cardTitle}>Report an issue</Text>
+        <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
+        {disputes.length > 0 ? (
+          <View style={styles.disputeStatus}>
+            <Text style={styles.disputeTitle}>Issue already reported</Text>
+            <Text style={styles.cardMeta}>
+              {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            </Text>
+            {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
+          </View>
+        ) : (
+          <>
+            <TextInput
+              placeholder="Tell ops what happened"
+              value={disputeNotes}
+              onChangeText={setDisputeNotes}
+              multiline
+              style={styles.reviewInput}
+              testID="dispute-notes-input"
+              placeholderTextColor={gourmeatColors.textMuted}
+            />
+            <GourmeatPrimaryButton
+              label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+              onPress={() => disputeMut.mutate()}
+              disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+              testID="submit-dispute-btn"
+              style={{ marginTop: 10 }}
+            />
+          </>
+        )}
+      </GourmeatCard>
     </ScrollView>
   );
 }
@@ -161,6 +212,15 @@ const styles = StyleSheet.create({
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   addressLine: { marginTop: shcSpacing.sm, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   hintLine: { marginTop: shcSpacing.sm, fontSize: 11, color: gourmeatColors.textLight },
+  disputeStatus: {
+    marginTop: shcSpacing.sm,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    borderRadius: gourmeatRadii.md,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    padding: shcSpacing.sm,
+  },
+  disputeTitle: { fontSize: 13, fontWeight: '800', color: gourmeatColors.text },
   reviewInput: {
     borderWidth: 1,
     borderColor: gourmeatColors.border,

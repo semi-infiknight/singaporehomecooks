@@ -108,8 +108,8 @@ export default function CookListings() {
       const { uploadImageToServer } = await import('../../lib/api-client');
       const tinyJpegBase64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/ALQ'; // tiny placeholder
       const uploadRes = await uploadImageToServer(tinyJpegBase64, `dish-${name.toLowerCase().replace(/\s+/g,'-')}.jpg`, user?.id || 'demo-cook');
-      if (uploadRes?.url) {
-        input.image_url = uploadRes.url; // server uploaded and returned signed URL
+      if (uploadRes?.webp_url || uploadRes?.url) {
+        input.image_url = uploadRes.webp_url || uploadRes.url; // prefer optimized WebP derivative
       } else {
         input.image_url = `https://picsum.photos/seed/${name.replace(/\s+/g,'')}/400/300`;
       }

@@ -27,3 +27,19 @@ export async function getCustomerPushTokenAsync(customerId: string, container?: 
   } catch {}
   return undefined;
 }
+
+export async function getCustomerWebPushSubscriptionAsync(
+  customerId: string,
+  container?: any
+): Promise<Record<string, unknown> | undefined> {
+  if (!container || !customerId) return undefined;
+  try {
+    const customerModule: any = container.resolve?.("customer");
+    if (customerModule?.retrieveCustomer) {
+      const cust = await customerModule.retrieveCustomer(customerId).catch(() => null);
+      const sub = cust?.metadata?.web_push_subscription;
+      if (sub && typeof sub === "object") return sub as Record<string, unknown>;
+    }
+  } catch {}
+  return undefined;
+}
