@@ -85,3 +85,4 @@ Thumbs.db
 secrets/
 *.key
 *.crt
+.backup-ios/
