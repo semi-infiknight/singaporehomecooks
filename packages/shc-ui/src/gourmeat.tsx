@@ -330,51 +330,51 @@ export function GourmeatDishCard({
         ...gourmeatShadows.card,
       }}
     >
-      <SharedDishNavSurface dishId={dish.id} onNavigate={onPress} style={{ flex: 1 }}>
-        {({ measureRef }) => (
-          <>
-            <View style={{ position: 'relative' }}>
-              <SHCSharedDishImage
-                dishId={dish.id}
-                uri={imageUri}
-                style={{ width: '100%', height: 140 }}
-                measureRef={measureRef}
-                testID={`${cardTestID}-image`}
-              />
-              <View
-                pointerEvents="box-none"
-                style={{
-                  position: 'absolute',
-                  top: shcSpacing.sm,
-                  left: shcSpacing.sm,
-                  right: shcSpacing.sm,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
-                {onFavoritePress ? (
-                  <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 16 }} pointerEvents="box-none">
-                    <SHCFavoriteButton active={!!isFavorite} onPress={onFavoritePress} testID={`${cardTestID}-favorite`} />
-                  </View>
-                ) : null}
+      <View style={{ flex: 1, position: 'relative' }}>
+        <SharedDishNavSurface dishId={dish.id} onNavigate={onPress} style={{ flex: 1, paddingBottom: shcSpacing.sm }}>
+          {({ measureRef }) => (
+            <>
+              <View style={{ position: 'relative' }}>
+                <SHCSharedDishImage
+                  dishId={dish.id}
+                  uri={imageUri}
+                  style={{ width: '100%', height: 140 }}
+                  measureRef={measureRef}
+                  testID={`${cardTestID}-image`}
+                />
+                <View
+                  pointerEvents="box-none"
+                  style={{
+                    position: 'absolute',
+                    top: shcSpacing.sm,
+                    left: shcSpacing.sm,
+                    right: shcSpacing.sm,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
+                  {onFavoritePress ? (
+                    <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 16 }} pointerEvents="box-none">
+                      <SHCFavoriteButton active={!!isFavorite} onPress={onFavoritePress} testID={`${cardTestID}-favorite`} />
+                    </View>
+                  ) : null}
+                </View>
               </View>
-            </View>
 
-            <View style={{ padding: shcSpacing.sm }}>
-              <Text
-                style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.text, marginBottom: 2 }}
-                numberOfLines={1}
-                testID={`${cardTestID}-name`}
-              >
-                {dish.name}
-              </Text>
-              <Text style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
-                {dish.cook_name}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
+              <View style={{ padding: shcSpacing.sm, paddingRight: 44 }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.text, marginBottom: 2 }}
+                  numberOfLines={1}
+                  testID={`${cardTestID}-name`}
+                >
+                  {dish.name}
+                </Text>
+                <Text style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
+                  {dish.cook_name}
+                </Text>
+                <View>
                   <Text style={{ fontSize: 15, fontWeight: '800', color: gourmeatColors.primary }} testID={`${cardTestID}-price`}>
                     S${dish.price}
                   </Text>
@@ -383,14 +383,14 @@ export function GourmeatDishCard({
                     <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
                   </View>
                 </View>
-                <View onStartShouldSetResponder={() => true}>
-                  <GourmeatAddButton onPress={onAddPress ?? onPress} testID={`${cardTestID}-add`} />
-                </View>
               </View>
-            </View>
-          </>
-        )}
-      </SharedDishNavSurface>
+            </>
+          )}
+        </SharedDishNavSurface>
+        <View style={{ position: 'absolute', bottom: shcSpacing.sm, right: shcSpacing.sm }}>
+          <GourmeatAddButton onPress={onAddPress ?? onPress} testID={`${cardTestID}-add`} />
+        </View>
+      </View>
     </View>
   );
 }

@@ -7,8 +7,9 @@ const outDir = resolve(process.argv[2] || 'screenshots');
 const base = process.argv[3] || 'http://localhost:3001';
 
 const shots = [
-  { name: 'discover-home', path: '/' },
-  { name: 'product-pdp', path: '/product/dish-1' },
+  { name: 'fv-fixture', path: '/dev/family-values-fixture', waitFor: '[data-testid="fv-fixture-page"]' },
+  { name: 'discover-home', path: '/', waitFor: '[data-testid="discover-home"], body' },
+  { name: 'product-pdp', path: '/product/dish-1', waitFor: 'body' },
 ];
 
 await mkdir(outDir, { recursive: true });
@@ -21,7 +22,14 @@ for (const s of shots) {
   const file = resolve(outDir, `${s.name}.png`);
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(2000);
+    if (s.waitFor) {
+      try {
+        await page.waitForSelector(s.waitFor.split(',')[0].trim(), { timeout: 15000 });
+      } catch {
+        /* fixture may still render partial UI */
+      }
+    }
+    await page.waitForTimeout(1500);
     await page.screenshot({ path: file, fullPage: false });
     const measure = async (sel) => {
       const el = page.locator(sel).first();
@@ -43,7 +51,8 @@ for (const s of shots) {
       elements: {
         dishCard: await measure('[data-testid^="dish-card-"]'),
         dishImage: await measure('[data-testid$="-image"]'),
-        heroImage: await measure('[data-testid^="shared-dish-"]'),
+        heroImage: await measure('[data-testid^="shared-dish-"], [data-testid*="shared-dish"][data-testid$="-hero"]'),
+        wizardMorph: await measure('[data-testid$="-morph"]'),
         trayWeb: await measure('[data-testid="shc-tray-web"]'),
       },
     });

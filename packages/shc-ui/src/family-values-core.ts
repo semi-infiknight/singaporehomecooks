@@ -263,6 +263,52 @@ export function getSyncHeroTransformForDish(
   return { ...getSyncHeroTransform(origin, hero), hasOrigin: true };
 }
 
+/** Mirrors measured press → navigate sequence (testable without RN). */
+export function runMeasuredSharedDishPress(
+  dishId: string,
+  measure: DishLayoutMeasurer,
+  onNavigate?: () => void
+): { layoutAtNavigate: SharedDishLayout | undefined; navigated: boolean } {
+  let layoutAtNavigate: SharedDishLayout | undefined;
+  let navigated = false;
+  measure((x, y, w, h) => {
+    navigateSharedDishPress(dishId, { x, y, w, h }, () => {
+      layoutAtNavigate = getSharedDishLayout(dishId);
+      navigated = true;
+      onNavigate?.();
+    });
+  });
+  return { layoutAtNavigate, navigated };
+}
+
+/** Scaled thumbnail bounds at hero morph start (for continuity checks). */
+export function scaledOriginBoundsAtMorphStart(
+  origin: SharedDishLayout,
+  hero: SharedDishLayout = HERO_RECT_MOBILE
+): SharedDishLayout {
+  const t = computeSharedHeroTransform(origin, hero);
+  const w = origin.w * t.initialScale;
+  const h = origin.h * t.initialScale;
+  const cx = origin.x + origin.w / 2 + t.translateX;
+  const cy = origin.y + origin.h / 2 + t.translateY;
+  return { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
+/** True when morph start transform keeps thumbnail center aligned with card origin (discover→PDP continuity). */
+export function morphCentersAlign(
+  origin: SharedDishLayout,
+  hero: SharedDishLayout = HERO_RECT_MOBILE
+): boolean {
+  const t = computeSharedHeroTransform(origin, hero);
+  const originCx = origin.x + origin.w / 2;
+  const originCy = origin.y + origin.h / 2;
+  const heroCx = hero.x + hero.w / 2;
+  const heroCy = hero.y + hero.h / 2;
+  const visualCx = heroCx + t.translateX;
+  const visualCy = heroCy + t.translateY;
+  return Math.abs(visualCx - originCx) < 0.5 && Math.abs(visualCy - originCy) < 0.5;
+}
+
 /** Compute hero entry transform from a captured card thumbnail layout. */
 export function computeSharedHeroTransform(
   origin: SharedDishLayout,
