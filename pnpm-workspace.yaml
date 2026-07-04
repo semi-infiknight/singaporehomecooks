@@ -2,13 +2,17 @@ packages:
   - 'apps/*'
   - 'packages/*'
 overrides:
-  react: 18.2.0
-  react-dom: 18.2.0
-  react-native: 0.74.0
-  react-native-svg: 15.2.0
+  '@expo/metro-runtime': ~6.1.2
+  expo-modules-core: ~3.0.30
+  moti: ^0.30.0
   metro-cache: 0.83.3
   metro: 0.83.3
   metro-config: 0.83.3
+  # Legacy Expo 51 app only — do not force RN 0.74 globally (breaks SDK 54 bridgeless).
+  mobile>react: 18.2.0
+  mobile>react-dom: 18.2.0
+  mobile>react-native: 0.74.0
+  mobile>react-native-svg: 15.2.0
   mobile-customer>react: 19.1.0
   mobile-customer>react-dom: 19.1.0
   mobile-customer>react-native: 0.81.5

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LocationPickerExperience, type PinNudgeDirection } from '@shc/ui';
+import { LocationPickerExperience, type PinNudgeDirection } from '@shc/ui/location-ux';
 import type { SHCSavedAddress } from '@shc/types';
 import {
   nudgeCoordinates,

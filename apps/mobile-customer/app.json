@@ -44,6 +44,7 @@
       "shortName": "SHC Home Cooks",
       "description": "Heritage home-cooked SG dishes for occasions. HDB kitchens, trust-first."
     },
+    "newArchEnabled": true,
     "plugins": [
       "expo-router",
       "expo-notifications",

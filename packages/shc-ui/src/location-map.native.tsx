@@ -2,9 +2,25 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Platform, Image, PanResponder, Pressable, Text } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import { dragOffsetToCoordinates, getOsmTileGrid, nudgeCoordinates } from '@shc/utils';
 import { shcColors, shcBorders, shcRadii } from './theme';
+
+type MapsModule = {
+  default: React.ComponentType<any>;
+  Marker: React.ComponentType<any>;
+};
+
+function loadMapsModule(): MapsModule | null {
+  try {
+    const { TurboModuleRegistry } = require('react-native');
+    if (!TurboModuleRegistry.get('RNMapsAirModule')) return null;
+    return require('react-native-maps');
+  } catch {
+    return null;
+  }
+}
+
+const mapsModule = loadMapsModule();
 
 const MAP_HEIGHT = 240;
 const TILE_ROWS = 3;
@@ -130,7 +146,13 @@ function IosDraggableMap({
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
 }) {
-  const mapRef = useRef<MapView>(null);
+  const MapView = mapsModule?.default;
+  const Marker = mapsModule?.Marker;
+  const mapRef = useRef<any>(null);
+
+  if (!MapView || !Marker) {
+    return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;
+  }
 
   useEffect(() => {
     mapRef.current?.animateToRegion(regionFor(lat, lng), 220);
@@ -176,7 +198,7 @@ export function SHCLocationDraggableMap({
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
 }) {
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' || !mapsModule) {
     return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;
   }
   return <IosDraggableMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;

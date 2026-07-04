@@ -13,7 +13,6 @@ export * from './food-ux';
 export * from './delivery-ux';
 export * from './gourmeat';
 export * from './request-ux';
-export * from './location-ux';
-export * from './location-map';
+// Location map UX is exported via @shc/ui/location-ux (pulls react-native-maps; keep off barrel).
 export * from './domain';
 export * from './forms';

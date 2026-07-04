@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { gourmeatColors } from '@shc/ui';
+import { gourmeatColors } from '@shc/ui/theme';
 import { CookTabBar } from '../../components/CookTabBar';
 
 export default function CookLayout() {

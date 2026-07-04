@@ -38,6 +38,7 @@
       "shortName": "SHC Cook",
       "description": "Cook dashboard for Singapore Home Cooks — orders, listings, and compliance."
     },
+    "newArchEnabled": true,
     "plugins": [
       "expo-router",
       "expo-notifications",

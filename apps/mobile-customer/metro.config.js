@@ -27,7 +27,23 @@ function resolvePackageRoot(name) {
 }
 
 // Prefer each app's node_modules to prevent duplicate React / react-native-svg native registrations.
-const pinnedModules = ['react', 'react-dom', '@tanstack/react-query', 'expo-location', 'expo-asset', '@react-native/assets-registry'];
+const pinnedModules = [
+  'react',
+  'react-dom',
+  'react-native',
+  '@expo/vector-icons',
+  'expo',
+  'expo-modules-core',
+  '@expo/metro-runtime',
+  '@tanstack/react-query',
+  'expo-location',
+  'expo-asset',
+  '@react-native/assets-registry',
+  'react-native-reanimated',
+  'react-native-gesture-handler',
+  'react-native-safe-area-context',
+  'react-native-screens',
+];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
     const resolved = resolvePackageRoot(name);
@@ -55,20 +71,46 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v9-sdk54';
+config.cacheVersion = 'mobile-customer-v15-single-react';
 
 const expoLocationRoot = resolvePackageRoot('expo-location');
 const expoLocationEntry = expoLocationRoot
   ? path.join(expoLocationRoot, 'build/Location.js')
   : null;
 
+function isExpoRouterEntryRequest(name) {
+  if (typeof name !== 'string') return false;
+  if (name === 'expo-router/entry') return true;
+  // pnpm emits hashed paths like expo-router@6.0.24_.../node_modules/expo-router/entry.js
+  // Must NOT match entry-classic (substring "expo-router/entry" is a false positive there).
+  return /(?:^|\/)expo-router\/entry(?:\.js)?$/.test(name) || /expo-router@[^/]+\/node_modules\/expo-router\/entry(?:\.js)?$/.test(name);
+}
+
+const expoRouterEntry = (() => {
+  try {
+    return require.resolve('expo-router/entry', { paths: [projectRoot] });
+  } catch {
+    return null;
+  }
+})();
+
+function resolveFromApp(name) {
+  try {
+    const filePath = require.resolve(name, { paths: [appModules] });
+    return { type: 'sourceFile', filePath };
+  } catch {
+    return null;
+  }
+}
+
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
-  if (
-    typeof realModuleName === 'string' &&
-    (realModuleName.includes('expo-router/entry') || realModuleName.includes('expo-router@'))
-  ) {
-    return context.resolveRequest(context, 'expo-router/entry', platform, moduleName);
+  if (realModuleName === 'react' || realModuleName.startsWith('react/')) {
+    const resolved = resolveFromApp(realModuleName);
+    if (resolved) return resolved;
+  }
+  if (isExpoRouterEntryRequest(realModuleName) && expoRouterEntry) {
+    return { type: 'sourceFile', filePath: expoRouterEntry };
   }
   if (realModuleName === 'expo-location' && expoLocationEntry && fs.existsSync(expoLocationEntry)) {
     return { type: 'sourceFile', filePath: expoLocationEntry };

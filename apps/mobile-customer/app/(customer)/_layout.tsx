@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { gourmeatColors } from '@shc/ui';
+import { gourmeatColors } from '@shc/ui/theme';
 import { CustomerTabBar } from '../../components/CustomerTabBar';
 
 export default function CustomerLayout() {
