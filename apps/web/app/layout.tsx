@@ -66,7 +66,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <QueryClientProvider>
           <ErrorBoundary>
-            <AppHeader />
+            <div className="hidden md:block">
+              <AppHeader />
+            </div>
             <main className="flex-1 w-full pb-[110px] md:pb-0">{children}</main>
             <div className="hidden md:block">
               <AppFooter />

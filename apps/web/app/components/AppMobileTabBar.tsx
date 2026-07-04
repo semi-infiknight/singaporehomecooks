@@ -61,7 +61,7 @@ export function AppMobileTabBar() {
                   aria-current={active ? 'page' : undefined}
                 >
                   <span className="relative">
-                    <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
+                    <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
                     {badge ? (
                       <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-black bg-primary text-primary-foreground rounded-full px-1">
                         {badge}

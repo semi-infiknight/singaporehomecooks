@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Settings2 } from 'lucide-react';
-import { useProducts } from '../lib/useProducts';
+import { useProducts, useAddToCart } from '../lib/useProducts';
 import { useOrders } from '../lib/useOrder';
 import { useAuth } from '../lib/useAuth';
 import { useDiscoverSearch } from './providers';
@@ -30,9 +29,12 @@ import {
   ActiveOrderBanner,
   DishRowRail,
   GourmeatHomeHeader,
+  GourmeatSearchBar,
   GourmeatCategoryRow,
   GourmeatDishCard,
+  GourmeatSectionTitle,
   FilterChipRow,
+  SearchResultsPanel,
   PromoRail,
   RequestDishHomeCTA,
   type DishCardProduct,
@@ -47,35 +49,30 @@ const occasions = [
   })),
 ];
 
+function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number } {
+  return {
+    ...product,
+    rating: product.rating != null ? Number(product.rating) : 4.8,
+  };
+}
+
 export default function DiscoverHome() {
   const router = useRouter();
   const { user } = useAuth();
   const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
-  const { data: products = [], isLoading } = useProducts(query, {
-    occasion: occasionFilter || undefined,
-  });
+  const { data: products = [], isLoading } = useProducts('');
   const { data: orders = [] } = useOrders();
-  const { favorites } = useFavorites();
+  const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
+  const addMut = useAddToCart();
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
-
-  const savedDishes = useMemo(() => {
-    if (query) return [];
-    return favoritesToReorderDishes(favorites).map((d) => ({
-      id: d.id,
-      name: d.name,
-      cook_name: d.cook_name || '',
-      price: d.price,
-      cuisine: d.cuisine,
-    })) as DishCardProduct[];
-  }, [favorites, query]);
 
   const productList = products as DishCardProduct[];
 
-  const filteredList = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
       query,
       occasion: occasionFilter || undefined,
@@ -89,10 +86,28 @@ export default function DiscoverHome() {
     ) as DishCardProduct[];
   }, [productList, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
 
+  const gridProducts = useMemo(() => (query.trim() ? [] : filteredProducts), [filteredProducts, query]);
+
+  const searchDishes = useMemo(() => {
+    if (!query.trim()) return [];
+    return filteredProducts.map((p) => toDishCard(p));
+  }, [filteredProducts, query]);
+
+  const savedDishes = useMemo(() => {
+    if (query.trim()) return [];
+    return favoritesToReorderDishes(favorites).map((d) => toDishCard({
+      id: d.id,
+      name: d.name,
+      cook_name: d.cook_name || '',
+      price: d.price,
+      cuisine: d.cuisine,
+    })) as DishCardProduct[];
+  }, [favorites, query]);
+
   const reorderDishes = useMemo(() => {
-    if (query) return [];
+    if (query.trim()) return [];
     const items = extractReorderDishes(orders as Record<string, unknown>[]);
-    return items.map((d) => ({
+    return items.map((d) => toDishCard({
       id: d.id,
       name: d.name,
       cook_name: d.cook_name || '',
@@ -108,11 +123,36 @@ export default function DiscoverHome() {
   }));
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
+  const isGuest = !user;
+
+  const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
+
+  const handleAddToCart = useCallback(
+    (productId: string, qty = 1) => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      addMut.mutate({ productId, qty });
+    },
+    [addMut, router, user]
+  );
+
+  const handleFavorite = useCallback(
+    (item: DishCardProduct) => {
+      toggle({
+        id: item.id,
+        name: item.name,
+        cook_name: item.cook_name || '',
+        price: Number(item.price || 0),
+        cuisine: item.cuisine,
+      });
+    },
+    [toggle]
+  );
 
   return (
-    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8">
-      {!user && <GuestBrowseBar onSignInClick={() => router.push('/login')} />}
-
+    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8" data-testid="customer-discover-screen">
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
         locationLabel={headerLocation}
@@ -121,41 +161,26 @@ export default function DiscoverHome() {
         locationHref="/location"
       />
 
-      <div className="flex gap-2 mb-5">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search dishes, cooks, occasions…"
-            className="w-full pl-11 pr-4 py-3 rounded-full bg-card border border-border shadow-[var(--shc-shadow-soft)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
-            data-testid="search-input"
-          />
-        </div>
-        <Link
-          href="/search"
-          className="w-11 h-11 shrink-0 rounded-xl bg-card border border-border shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
-          aria-label="Advanced search"
-        >
-          <Settings2 className="w-5 h-5 text-foreground" />
-        </Link>
-      </div>
+      <GourmeatSearchBar
+        value={query}
+        onChange={setQuery}
+        placeholder="Search dishes, cooks, occasions…"
+        onFilterPress={() => router.push('/search')}
+      />
 
-      <div className="mb-4">
-        <FilterChipRow
-          chips={[
-            { id: 'halal', label: 'Halal', iconKey: 'halal', active: halalOnly },
-            { id: 'light', label: 'Light (<500 cal)', iconKey: 'light', active: maxCal === 500 },
-          ]}
-          onChipClick={(id) => {
-            if (id === 'halal') toggleHalalOnly();
-            if (id === 'light') toggleLight();
-          }}
+      {query.trim().length > 0 && (
+        <SearchResultsPanel
+          query={query}
+          dishes={searchDishes}
+          onDishPress={goToProduct}
+          onAddPress={(id) => handleAddToCart(id, 1)}
+          onClose={() => setQuery('')}
         />
-      </div>
+      )}
 
-      {!query && (
+      {isGuest && <GuestBrowseBar onSignInClick={() => router.push('/login')} />}
+
+      {!query.trim() && (
         <div className="shc-section-gap mb-4">
           <PromoRail
             onPromoClick={(id) => {
@@ -167,8 +192,20 @@ export default function DiscoverHome() {
         </div>
       )}
 
+      <FilterChipRow
+        chips={[
+          { id: 'halal', label: 'Halal', active: halalOnly },
+          { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+        ]}
+        onChipClick={(id) => {
+          if (id === 'halal') toggleHalalOnly();
+          if (id === 'light') toggleLight();
+        }}
+        testID="discover-filter-chips"
+      />
+
       {activeOrder && (
-        <div className="mb-4">
+        <div className="mb-3">
           <ActiveOrderBanner
             statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
             dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
@@ -188,39 +225,37 @@ export default function DiscoverHome() {
         </p>
       )}
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-extrabold text-foreground">Categories</h2>
-        <Link href="/search" className="text-sm font-semibold text-primary">See all</Link>
-      </div>
+      <GourmeatSectionTitle title="Categories" actionLabel="See all" actionHref="/search" />
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
       </div>
 
-      {!query && reorderDishes.length > 0 && (
+      {!query.trim() && reorderDishes.length > 0 && (
         <div className="shc-section-gap">
-          <h2 className="text-lg font-extrabold text-foreground mb-3">Order again</h2>
+          <GourmeatSectionTitle title="Order again" />
           <DishRowRail title="" products={reorderDishes} />
         </div>
       )}
 
-      {!query && savedDishes.length > 0 && (
+      {!query.trim() && savedDishes.length > 0 && (
         <div className="shc-section-gap">
-          <h2 className="text-lg font-extrabold text-foreground mb-3">Saved for you</h2>
+          <GourmeatSectionTitle title="Saved for you" />
           <DishRowRail title="" products={savedDishes} />
         </div>
       )}
 
-      <h2 className="text-lg font-extrabold text-foreground mb-3 mt-2">Explore cuisines</h2>
+      <GourmeatSectionTitle title="Explore cuisines" />
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
       </div>
 
-      <h2 className="text-lg font-extrabold text-foreground mb-3" data-testid="all-dishes-header">
-        {occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
-      </h2>
+      <GourmeatSectionTitle
+        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        testID="all-dishes-header"
+      />
 
       {isLoading && <SHCSkeletonGrid />}
-      {!isLoading && filteredList.length === 0 && (
+      {!isLoading && gridProducts.length === 0 && !query.trim() && (
         <SHCEmptyState
           title="No dishes match your search"
           description="Try a different category or clear your filters."
@@ -239,17 +274,23 @@ export default function DiscoverHome() {
         />
       )}
 
-      {!isLoading && filteredList.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 md:gap-4" data-testid="dish-list-container">
-          {filteredList.map((p) => (
-            <GourmeatDishCard key={p.id} product={p} />
+      {!isLoading && gridProducts.length > 0 && (
+        <div className="grid grid-cols-2 gap-3" data-testid="dish-list-container">
+          {gridProducts.map((p) => (
+            <GourmeatDishCard
+              key={p.id}
+              product={p}
+              isFavorite={isFavorite(p.id)}
+              onFavoritePress={() => handleFavorite(p)}
+              onAddPress={() => handleAddToCart(p.id, 1)}
+            />
           ))}
         </div>
       )}
 
-      {!query && <RequestDishHomeCTA />}
+      {!query.trim() && <RequestDishHomeCTA />}
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 text-center md:block hidden">
         <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline">
           Trust &amp; Safety →
         </Link>

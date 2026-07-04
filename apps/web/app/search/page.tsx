@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProducts, useAddToCart } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
-import { productMatchesOccasion } from '@shc/utils';
+import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
+import { useFavorites } from '../../lib/useFavorites';
+import { filterDiscoverProducts } from '@shc/utils';
 import {
   SHCButton,
   SHCPageHeader,
@@ -19,26 +21,21 @@ export default function SearchPage() {
   const { user } = useAuth();
   const [q, setQ] = useState('');
   const [occ, setOcc] = useState('');
-  const [halalOnly, setHalalOnly] = useState(false);
-  const [maxCal, setMaxCal] = useState<number | undefined>(700);
+  const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const { data: products = [], isLoading } = useProducts('');
   const addMut = useAddToCart();
+  const { toggle, isFavorite } = useFavorites();
 
-  const results = useMemo(() => {
-    let list = products as DishCardProduct[];
-    const ql = q.trim().toLowerCase();
-    if (ql) {
-      list = list.filter((p) => {
-        const name = String(p.name || '').toLowerCase();
-        const cook = String(p.cook_name || '').toLowerCase();
-        return name.includes(ql) || cook.includes(ql) || String(p.id || '').toLowerCase().includes(ql);
-      });
-    }
-    if (occ) list = list.filter((p) => productMatchesOccasion((p as { occasion_tags?: string[] }).occasion_tags, occ));
-    if (halalOnly) list = list.filter((p) => Boolean((p as { halal?: boolean }).halal));
-    if (maxCal != null) list = list.filter((p) => ((p as { calories?: number }).calories || 999) <= maxCal);
-    return list;
-  }, [products, q, occ, halalOnly, maxCal]);
+  const results = useMemo(
+    () =>
+      filterDiscoverProducts(products as Record<string, unknown>[], {
+        query: q,
+        occasion: occ || undefined,
+        halalOnly: halalOnly || undefined,
+        maxCal,
+      }) as DishCardProduct[],
+    [products, q, occ, halalOnly, maxCal]
+  );
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-28">
@@ -76,7 +73,7 @@ export default function SearchPage() {
         ))}
         <button
           type="button"
-          onClick={() => setHalalOnly((v) => !v)}
+          onClick={toggleHalalOnly}
           className={`px-3 py-1.5 rounded-full text-xs font-bold border ${halalOnly ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
           data-testid="halal-filter"
         >
@@ -84,7 +81,7 @@ export default function SearchPage() {
         </button>
         <button
           type="button"
-          onClick={() => setMaxCal((v) => (v === 500 ? undefined : 500))}
+          onClick={toggleLight}
           className={`px-3 py-1.5 rounded-full text-xs font-bold border ${maxCal === 500 ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
         >
           Light (&lt;500 cal)
@@ -95,7 +92,24 @@ export default function SearchPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {results.map((p) => (
-          <GourmeatDishCard key={p.id} product={p} />
+          <GourmeatDishCard
+            key={p.id}
+            product={p}
+            isFavorite={isFavorite(p.id)}
+            onFavoritePress={() =>
+              toggle({
+                id: p.id,
+                name: p.name,
+                cook_name: p.cook_name || '',
+                price: Number(p.price || 0),
+                cuisine: p.cuisine,
+              })
+            }
+            onAddPress={() => {
+              if (!user) router.push('/login');
+              else addMut.mutate({ productId: p.id, qty: 1 });
+            }}
+          />
         ))}
       </div>
 

@@ -365,6 +365,7 @@ const WEB_FILTER_ICONS: Record<string, LucideIcon> = {
 export function FilterChipRow({
   chips,
   onChipClick,
+  testID = 'filter-chip-row',
 }: {
   chips: Array<{
     id: string;
@@ -376,21 +377,24 @@ export function FilterChipRow({
     testID?: string;
   }>;
   onChipClick: (id: string) => void;
+  testID?: string;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid="filter-chip-row">
+    <div className="flex gap-2 overflow-x-auto py-2 -mx-1 px-1 scrollbar-hide" data-testid={testID}>
       {chips.map((chip) => (
         <button
           key={chip.id}
           type="button"
           onClick={() => onChipClick(chip.id)}
           data-testid={chip.testID ?? `filter-chip-${chip.id}`}
-          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full border-2 border-[var(--shc-border-brutal)] text-xs font-bold shadow-[var(--shc-shadow-brutal-sm)] transition-colors ${
-            chip.active ? 'bg-[var(--shc-bento-peach)] text-primary' : 'bg-card text-foreground hover:bg-secondary'
+          className={`shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full border-2 text-xs shadow-[var(--shc-shadow-brutal-sm)] transition-colors ${
+            chip.active
+              ? 'border-primary bg-[var(--shc-bento-peach)] text-primary font-extrabold'
+              : 'border-border bg-card text-foreground font-semibold hover:bg-secondary'
           }`}
         >
           {chip.imageUrl ? (
-            <Image src={chip.imageUrl} alt="" width={20} height={20} className="rounded-full border border-[var(--shc-border-brutal)] object-cover" />
+            <Image src={chip.imageUrl} alt="" width={20} height={20} className="rounded-full border border-border object-cover" />
           ) : chip.iconKey && WEB_FILTER_ICONS[chip.iconKey] ? (
             (() => {
               const ChipIcon = WEB_FILTER_ICONS[chip.iconKey!];
@@ -648,16 +652,21 @@ export function SearchResultsDropdown({
   products,
   onAdd,
   onClear,
+  inline = false,
 }: {
   query: string;
   products: DishCardProduct[];
   onAdd?: (productId: string) => void;
   onClear?: () => void;
+  /** Inline panel below search (discover) vs absolute dropdown (header) */
+  inline?: boolean;
 }) {
   if (!query.trim()) return null;
   return (
     <div
-      className="absolute left-0 right-0 top-full mt-1 z-50 bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] max-h-80 overflow-y-auto"
+      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] max-h-80 overflow-y-auto ${
+        inline ? 'mt-2 mb-2' : 'absolute left-0 right-0 top-full mt-1 z-50'
+      }`}
       data-testid="search-results-panel"
     >
       <div className="flex justify-between items-center px-3 py-2 bg-[var(--shc-bento-mint)] border-b-2 border-[var(--shc-border-brutal)] text-xs font-bold">
@@ -669,13 +678,38 @@ export function SearchResultsDropdown({
         )}
       </div>
       {products.length === 0 ? (
-        <p className="p-4 text-sm text-muted-foreground text-center">No dishes match — try another search</p>
+        <p className="p-4 text-sm text-muted-foreground text-center">No dishes match — try another occasion or filter</p>
       ) : (
         products.slice(0, 8).map((p) => (
           <SearchResultRow key={p.id} product={p} href={`/product/${p.id}`} onAdd={onAdd ? () => onAdd(p.id) : undefined} />
         ))
       )}
     </div>
+  );
+}
+
+/** Discover inline search panel — parity with mobile SHCSearchResultsPanel */
+export function SearchResultsPanel({
+  query,
+  dishes,
+  onDishPress,
+  onAddPress,
+  onClose,
+}: {
+  query: string;
+  dishes: DishCardProduct[];
+  onDishPress?: (id: string) => void;
+  onAddPress?: (id: string) => void;
+  onClose?: () => void;
+}) {
+  return (
+    <SearchResultsDropdown
+      query={query}
+      products={dishes}
+      onAdd={onAddPress}
+      onClear={onClose}
+      inline
+    />
   );
 }
 
@@ -841,6 +875,7 @@ export type DishCardProduct = {
   halal?: boolean;
   min_qty?: number;
   occasion_tags?: string[];
+  rating?: number;
 };
 
 export function DishCard({
@@ -1458,9 +1493,9 @@ export function GourmeatHomeHeader({
   onLocationPress?: () => void;
 }) {
   return (
-    <div className="mb-4" data-testid="gourmeat-home-header">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-tight flex-1">
+    <div className="mb-3" data-testid="gourmeat-home-header">
+      <div className="flex items-start justify-between gap-2 mb-4">
+        <h1 className="text-[26px] md:text-3xl font-extrabold text-foreground tracking-[-0.5px] leading-8 flex-1">
           {headline}
         </h1>
         <Link
@@ -1471,21 +1506,113 @@ export function GourmeatHomeHeader({
           {avatarUri ? (
             <Image src={avatarUri} alt="" width={44} height={44} className="object-cover w-full h-full" />
           ) : (
-            <span className="flex items-center justify-center w-full h-full text-primary font-bold">SG</span>
+            <span className="flex items-center justify-center w-full h-full text-primary font-bold text-lg">👤</span>
           )}
         </Link>
       </div>
       <Link
         href={locationHref}
-        className="inline-flex items-center gap-1.5 bg-card rounded-full px-3 py-1.5 shadow-[var(--shc-shadow-soft)] hover:ring-2 hover:ring-primary/20 transition-shadow"
+        className="inline-flex items-center gap-1 bg-card rounded-full px-3 py-1.5 shadow-[var(--shc-shadow-soft)]"
         data-testid="gourmeat-location-chip"
       >
-        <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden />
+        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
         <span className="text-[11px] font-semibold text-muted-foreground">{locationHint}</span>
-        <span className="text-xs font-bold text-foreground">{locationLabel}</span>
-        <span className="text-[10px] text-muted-foreground">▼</span>
+        <span className="text-xs font-bold text-foreground ml-1 truncate max-w-[200px]">{locationLabel}</span>
+        <span className="text-[10px] text-[#B0B0B0] ml-1">▼</span>
       </Link>
     </div>
+  );
+}
+
+export function GourmeatSearchBar({
+  value,
+  onChange,
+  placeholder = 'Search dishes, cooks, occasions…',
+  onFilterPress,
+  testID = 'search-input',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  onFilterPress?: () => void;
+  testID?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-4">
+      <div className="flex-1 flex items-center bg-card rounded-full px-4 py-3 shadow-[var(--shc-shadow-soft)] min-w-0">
+        <Search className="w-[18px] h-[18px] text-[#B0B0B0] shrink-0" aria-hidden />
+        <input
+          type="search"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          data-testid={testID}
+          className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-[#B0B0B0] min-w-0"
+        />
+      </div>
+      {onFilterPress ? (
+        <button
+          type="button"
+          onClick={onFilterPress}
+          className="w-11 h-11 shrink-0 rounded-xl bg-card shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
+          data-testid="gourmeat-filter-btn"
+          aria-label="Advanced search"
+        >
+          <Settings2 className="w-5 h-5 text-foreground" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function GourmeatSectionTitle({
+  title,
+  actionLabel,
+  onAction,
+  actionHref,
+  testID,
+}: {
+  title: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  actionHref?: string;
+  testID?: string;
+}) {
+  const action =
+    actionLabel && actionHref ? (
+      <Link href={actionHref} className="text-[13px] font-semibold text-primary">
+        {actionLabel}
+      </Link>
+    ) : actionLabel && onAction ? (
+      <button type="button" onClick={onAction} className="text-[13px] font-semibold text-primary">
+        {actionLabel}
+      </button>
+    ) : null;
+
+  return (
+    <div className="flex items-center justify-between mb-2 mt-4" data-testid={testID}>
+      <h2 className="text-lg font-extrabold text-foreground tracking-[-0.3px]">{title}</h2>
+      {action}
+    </div>
+  );
+}
+
+export function GourmeatAddButton({
+  onClick,
+  testID,
+}: {
+  onClick?: () => void;
+  testID?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testID}
+      className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-bold leading-5 hover:bg-[var(--shc-primary-dark)] active:scale-95 transition-transform"
+    >
+      +
+    </button>
   );
 }
 
@@ -1514,7 +1641,7 @@ export function GourmeatCategoryRow({
           >
             <span
               className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center shadow-[var(--shc-shadow-soft)] ${
-                selected ? 'ring-2 ring-primary bg-secondary' : 'bg-[var(--shc-surface-alt)]'
+                selected ? 'border-2 border-primary bg-secondary' : 'bg-[var(--shc-surface-alt)]'
               }`}
             >
               {item.imageUrl ? (
@@ -1533,44 +1660,84 @@ export function GourmeatCategoryRow({
   );
 }
 
-export function GourmeatDishCard({ product }: { product: DishCardProduct }) {
+export function GourmeatDishCard({
+  product,
+  onAddPress,
+  isFavorite,
+  onFavoritePress,
+  rating,
+}: {
+  product: DishCardProduct;
+  onAddPress?: () => void;
+  isFavorite?: boolean;
+  onFavoritePress?: () => void;
+  rating?: number;
+}) {
   const imageUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   const discount = gourmeatDiscountPercent(product.id);
+  const displayRating = rating ?? (product.rating != null ? Number(product.rating) : 4.8);
+  const cardTestID = `dish-card-${product.id}`;
+
   return (
-    <div className="block" data-testid={`dish-card-${product.id}`}>
-      <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)]">
-        <div className="relative h-36">
-          <Link href={`/product/${product.id}`} className="block absolute inset-0">
-            <Image src={imageUrl} alt={product.name} fill className="object-cover" sizes="50vw" data-testid={`dish-card-${product.id}-image`} />
+    <div className="flex flex-col min-w-0" data-testid={cardTestID}>
+      <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col">
+        <div className="relative">
+          <Link href={`/product/${product.id}`} className="block">
+            <div className="relative h-[140px] w-full">
+              <Image
+                src={imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="50vw"
+                data-testid={`${cardTestID}-image`}
+              />
+            </div>
           </Link>
-          <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-md">
-            {discount}% OFF
-          </span>
+          <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
+            <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg pointer-events-auto" data-testid={`${cardTestID}-discount`}>
+              {discount}% OFF
+            </span>
+            {onFavoritePress ? (
+              <div className="bg-white/90 rounded-2xl pointer-events-auto">
+                <FavoriteButton
+                  active={!!isFavorite}
+                  onClick={onFavoritePress}
+                  testID={`${cardTestID}-favorite`}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
-        <div className="p-3">
+        <div className="p-3 flex-1 flex flex-col">
           <Link href={`/product/${product.id}`}>
-            <div className="font-bold text-sm text-foreground truncate" data-testid={`dish-card-${product.id}-name`}>{product.name}</div>
+            <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
+              {product.name}
+            </div>
           </Link>
-          {product.cook_name && (
-            <div className="text-[11px] text-muted-foreground truncate mt-0.5">{product.cook_name}</div>
-          )}
-          <div className="flex items-center justify-between mt-2">
+          {product.cook_name ? (
+            <div className="text-[11px] text-[#8A8A8A] truncate mb-1.5" data-testid={`${cardTestID}-cook`}>
+              {product.cook_name}
+            </div>
+          ) : null}
+          <div className="flex items-center justify-between mt-auto">
             <div>
               {product.price !== undefined && (
-                <span className="text-primary font-extrabold text-sm" data-testid={`dish-card-${product.id}-price`}>S${product.price}</span>
+                <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
+                  S${product.price}
+                </div>
               )}
               <div className="flex items-center gap-0.5 mt-0.5">
-                <Star className="w-3 h-3 text-accent fill-accent" aria-hidden />
-                <span className="text-[10px] font-semibold text-muted-foreground">4.8</span>
+                <span className="text-[10px] text-accent" aria-hidden>
+                  ★
+                </span>
+                <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
               </div>
             </div>
-            <Link
-              href={`/product/${product.id}`}
-              className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg leading-none hover:opacity-90"
-              data-testid={`dish-card-${product.id}-add`}
-            >
-              +
-            </Link>
+            <GourmeatAddButton
+              onClick={onAddPress}
+              testID={`${cardTestID}-add`}
+            />
           </div>
         </div>
       </div>
