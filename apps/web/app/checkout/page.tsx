@@ -46,7 +46,7 @@ export default function CheckoutPage() {
     show: showFirstOrderCelebration,
     triggerIfFirst: triggerFirstOrder,
     dismiss: dismissFirstOrderCelebration,
-  } = useMilestoneCelebrationWeb('first_order', user?.id || '');
+  } = useMilestoneCelebrationWeb('first_order', user?.id || user?.name || 'anon');
 
   const firstPid = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');

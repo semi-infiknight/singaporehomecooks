@@ -11,6 +11,7 @@ import {
   SHCBadge,
   VisualBentoTile,
   SHCCelebrationWeb,
+  useMilestoneCelebrationWeb,
 } from '../../components/SHCWebComponents';
 
 export default function CookCompliancePage() {
@@ -20,20 +21,18 @@ export default function CookCompliancePage() {
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
   const [result, setResult] = useState<string | null>(null);
-  const [showApprovedCelebration, setShowApprovedCelebration] = useState(false);
+  const {
+    show: showApprovedCelebration,
+    triggerIfFirst: triggerComplianceApproved,
+    dismiss: dismissApprovedCelebration,
+  } = useMilestoneCelebrationWeb('compliance_approved', user?.id || user?.name || 'anon');
 
   useEffect(() => {
     const approved = (docs as { status?: string; verified_at?: string }[]).some(
       (d) => d.status === 'approved' || d.verified_at
     );
-    if (approved && typeof window !== 'undefined') {
-      const key = `shc:milestone:compliance_approved:${user?.id || 'anon'}`;
-      if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, '1');
-        setShowApprovedCelebration(true);
-      }
-    }
-  }, [docs, user?.id]);
+    if (approved) void triggerComplianceApproved();
+  }, [docs, triggerComplianceApproved]);
 
   const upload = async () => {
     if (!fileName.trim()) return;
@@ -114,7 +113,7 @@ export default function CookCompliancePage() {
       <SHCCelebrationWeb
         visible={showApprovedCelebration}
         message="Compliance approved — you're cleared to accept orders!"
-        onDone={() => setShowApprovedCelebration(false)}
+        onDone={dismissApprovedCelebration}
         testID="compliance-approved-celebration"
       />
     </div>

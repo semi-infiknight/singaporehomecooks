@@ -41,6 +41,11 @@ const pinnedModules = [
   'react-native-gesture-handler',
   'react-native-safe-area-context',
   'react-native-screens',
+  'react-native-svg',
+  'react-native-maps',
+  'react-native-worklets',
+  'moti',
+  '@shopify/react-native-skia',
 ];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
@@ -68,7 +73,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook-v8-single-react';
+config.cacheVersion = 'mobile-cook-v11-fusebox-shim2';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;
@@ -93,9 +98,22 @@ function resolveFromApp(name) {
   }
 }
 
+const fuseboxShim = path.join(projectRoot, 'fusebox-shim.js');
+
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
-  if (realModuleName === 'react' || realModuleName.startsWith('react/')) {
+  if (
+    typeof realModuleName === 'string' &&
+    realModuleName.includes('setUpFuseboxReactDevToolsDispatcher')
+  ) {
+    return { type: 'sourceFile', filePath: fuseboxShim };
+  }
+  if (
+    realModuleName === 'react' ||
+    realModuleName.startsWith('react/') ||
+    realModuleName === 'react-native' ||
+    realModuleName.startsWith('react-native/')
+  ) {
     const resolved = resolveFromApp(realModuleName);
     if (resolved) return resolved;
   }

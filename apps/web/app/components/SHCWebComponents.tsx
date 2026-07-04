@@ -2495,6 +2495,52 @@ export function SHCCelebrationWeb({
   );
 }
 
+type TabDirectionWebContextValue = {
+  tabIndex: number;
+  prevIndex: number;
+  notifyTabChange: (routeKey: string) => void;
+};
+
+const TabDirectionWebContext = React.createContext<TabDirectionWebContextValue | null>(null);
+
+export function TabDirectionProviderWeb({
+  children,
+  routeOrder,
+}: {
+  children: React.ReactNode;
+  routeOrder: string[];
+}) {
+  const [tabIndex, setTabIndex] = React.useState(0);
+  const [prevIndex, setPrevIndex] = React.useState(0);
+
+  const notifyTabChange = React.useCallback(
+    (routeKey: string) => {
+      const next = routeOrder.indexOf(routeKey);
+      if (next < 0) return;
+      setTabIndex((current) => {
+        setPrevIndex(current);
+        return next;
+      });
+    },
+    [routeOrder]
+  );
+
+  const value = React.useMemo(
+    () => ({ tabIndex, prevIndex, notifyTabChange }),
+    [tabIndex, prevIndex, notifyTabChange]
+  );
+
+  return <TabDirectionWebContext.Provider value={value}>{children}</TabDirectionWebContext.Provider>;
+}
+
+export function useTabDirectionWeb(): TabDirectionWebContextValue {
+  const ctx = React.useContext(TabDirectionWebContext);
+  if (!ctx) {
+    return { tabIndex: 0, prevIndex: 0, notifyTabChange: () => {} };
+  }
+  return ctx;
+}
+
 export function SHCDirectionalTabSceneWeb({
   tabIndex,
   prevIndex,

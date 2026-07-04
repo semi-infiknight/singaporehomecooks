@@ -4,13 +4,9 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, View, Easing } from 'react-native';
 import { shouldReduceMotion } from './family-values-core';
 
-let MotiView: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  MotiView = require('moti').MotiView;
-} catch {
-  MotiView = null;
-}
+// Moti breaks when @shc/ui loads from the monorepo (TypeError: default of undefined).
+// Use Animated fallbacks everywhere — apps still get fluidity via family-values-ui.
+const MotiView: null = null;
 
 export function SHCFadeIn({
   children,
