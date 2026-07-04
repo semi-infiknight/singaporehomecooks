@@ -1,8 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { CUISINE_IMAGE, getDishImageUrl } from '@shc/utils';
+import {
+  CUISINE_IMAGE,
+  filterCookListings,
+  getDishImageUrl,
+  uniqueListingCuisines,
+  type CookListingStatusFilter,
+} from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
   useCookListings,
@@ -12,6 +18,8 @@ import {
 } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
+  GourmeatSearchBar,
+  FilterChipRow,
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCBadge,
@@ -53,6 +61,44 @@ export default function CookListingsPage() {
   const [heritage, setHeritage] = useState(DEFAULT_FORM.heritage);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
+  const [cuisineFilter, setCuisineFilter] = useState('all');
+
+  const filteredListings = useMemo(
+    () => filterCookListings(myListings as ListingRow[], { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
+    [myListings, searchQuery, statusFilter, cuisineFilter]
+  );
+
+  const filterChips = useMemo(() => {
+    const chips = [
+      { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
+      { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
+      { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
+      ...uniqueListingCuisines(myListings as ListingRow[]).map((cuisineName) => ({
+        id: `cuisine:${cuisineName}`,
+        label: cuisineName,
+        active: cuisineFilter === cuisineName,
+      })),
+    ];
+    return chips;
+  }, [myListings, statusFilter, cuisineFilter]);
+
+  const handleFilterChip = (chipId: string) => {
+    if (chipId === 'status:all') {
+      setStatusFilter('all');
+      setCuisineFilter('all');
+      return;
+    }
+    if (chipId.startsWith('status:')) {
+      setStatusFilter(chipId.replace('status:', '') as CookListingStatusFilter);
+      return;
+    }
+    if (chipId.startsWith('cuisine:')) {
+      const cuisineName = chipId.replace('cuisine:', '');
+      setCuisineFilter((prev) => (prev === cuisineName ? 'all' : cuisineName));
+    }
+  };
 
   const previewImage = getDishImageUrl({ name, cuisine });
   const saving = createListing.isPending || updateListing.isPending;
@@ -117,18 +163,29 @@ export default function CookListingsPage() {
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-listings-screen">
       <GourmeatCookHeader
         title="My Listings"
-        subtitle={user?.name}
-        testID="listings-hero"
-        badges={
-          <div className="flex flex-wrap gap-2">
-            <SHCBadge variant="warning">⏸ Paused = hidden</SHCBadge>
-            <SHCBadge variant="heritage">{cuisine}</SHCBadge>
-            <SHCBadge variant="default">S${price}</SHCBadge>
-          </div>
+        subtitle={
+          myListings.length
+            ? `${filteredListings.length} of ${myListings.length} dishes`
+            : user?.name
         }
+        testID="listings-hero"
       />
 
-      <SHCSectionTitle>Published</SHCSectionTitle>
+      <GourmeatSearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search your dishes…"
+        testID="cook-listings-search"
+      />
+
+      {myListings.length > 0 ? (
+        <FilterChipRow
+          chips={filterChips}
+          onChipClick={handleFilterChip}
+          testID="cook-listings-filter-chips"
+        />
+      ) : null}
+
       {myListings.length === 0 ? (
         <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
           <div className="relative h-20 rounded-xl overflow-hidden mb-2">
@@ -136,8 +193,12 @@ export default function CookListingsPage() {
           </div>
           <SHCBadge variant="default">No listings yet</SHCBadge>
         </GourmeatCard>
+      ) : filteredListings.length === 0 ? (
+        <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
+          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+        </GourmeatCard>
       ) : (
-        myListings.map((p: ListingRow) => (
+        filteredListings.map((p: ListingRow) => (
           <GourmeatCard key={String(p.id)} className="mb-3">
             <div className="flex gap-3">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">

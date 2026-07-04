@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, TextInput, Pressable, Modal, StyleSheet, Keyboard, Alert, ActivityIndicator } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +14,9 @@ import {
   SHCFoodImage,
   SHCBadge,
   GourmeatCookHeader,
+  GourmeatSearchBar,
+  SHCFilterChipRow,
   SHCWizardProgress,
-
   SHCFadeIn,
   SHCIcon,
   gourmeatColors,
@@ -27,7 +28,14 @@ import {
   shcRadii,
   shcShadows,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getDishImageUrl, CUISINE_IMAGE } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  CUISINE_IMAGE,
+  filterCookListings,
+  getDishImageUrl,
+  uniqueListingCuisines,
+  type CookListingStatusFilter,
+} from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAICalorieEstimate, useCookListings } from '../../hooks/useProducts';
@@ -85,6 +93,44 @@ export default function CookListings() {
   const [photoTips, setPhotoTips] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
+  const [cuisineFilter, setCuisineFilter] = useState('all');
+
+  const filteredListings = useMemo(
+    () => filterCookListings(myListings, { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
+    [myListings, searchQuery, statusFilter, cuisineFilter]
+  );
+
+  const filterChips = useMemo(() => {
+    const chips = [
+      { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
+      { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
+      { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
+      ...uniqueListingCuisines(myListings).map((cuisine) => ({
+        id: `cuisine:${cuisine}`,
+        label: cuisine,
+        active: cuisineFilter === cuisine,
+      })),
+    ];
+    return chips;
+  }, [myListings, statusFilter, cuisineFilter]);
+
+  const handleFilterChip = (chipId: string) => {
+    if (chipId === 'status:all') {
+      setStatusFilter('all');
+      setCuisineFilter('all');
+      return;
+    }
+    if (chipId.startsWith('status:')) {
+      setStatusFilter(chipId.replace('status:', '') as CookListingStatusFilter);
+      return;
+    }
+    if (chipId.startsWith('cuisine:')) {
+      const cuisine = chipId.replace('cuisine:', '');
+      setCuisineFilter((prev) => (prev === cuisine ? 'all' : cuisine));
+    }
+  };
 
   const previewImage = getDishImageUrl({ name, cuisine });
 
@@ -216,28 +262,43 @@ export default function CookListings() {
     >
       <GourmeatCookHeader
         title="My Listings"
-        subtitle={user?.name}
-        testID="listings-hero"
-        badges={
-          <View style={styles.heroBadges}>
-            <Text style={styles.heroDishName} numberOfLines={1}>{name}</Text>
-            <View style={styles.heroBadgeRow}>
-              <SHCBadge variant="warning">⏸ Paused = hidden</SHCBadge>
-              <SHCBadge variant="heritage">{cuisine}</SHCBadge>
-              <SHCBadge variant="default">S${price}</SHCBadge>
-            </View>
-          </View>
+        subtitle={
+          myListings.length
+            ? `${filteredListings.length} of ${myListings.length} dishes`
+            : user?.name
         }
+        testID="listings-hero"
       />
 
-      <SHCSectionTitle>Published</SHCSectionTitle>
+      <View style={styles.searchWrap}>
+        <GourmeatSearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search your dishes…"
+          testID="cook-listings-search"
+        />
+      </View>
+
+      {myListings.length > 0 ? (
+        <SHCFilterChipRow
+          chips={filterChips}
+          onChipPress={handleFilterChip}
+          testID="cook-listings-filter-chips"
+        />
+      ) : null}
+
       {myListings.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCFoodImage uri={CUISINE_IMAGE.Peranakan} height={80} rounded={shcRadii.md} />
           <SHCBadge variant="default">No listings yet</SHCBadge>
         </SHCCard>
       )}
-      {myListings.map((p: any) => (
+      {myListings.length > 0 && filteredListings.length === 0 && (
+        <SHCCard variant="bento-mint" style={styles.emptyListings}>
+          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+        </SHCCard>
+      )}
+      {filteredListings.map((p: any) => (
         <SHCCard key={p.id} style={styles.listingCard}>
           <View style={styles.listingRow}>
             <SHCFoodImage
@@ -423,9 +484,7 @@ export default function CookListings() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
-  heroBadges: { gap: 6 },
-  heroDishName: { color: gourmeatColors.text, fontWeight: '900', fontSize: 18 },
-  heroBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  searchWrap: { marginHorizontal: -shcSpacing.md },
   emptyListings: { alignItems: 'center', gap: shcSpacing.sm, paddingVertical: shcSpacing.md },
   listingCard: { marginBottom: shcSpacing.sm },
   listingRow: { flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'center' },
