@@ -15,24 +15,45 @@ await mkdir(outDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 
-const log = [];
+const captures = [];
 for (const s of shots) {
   const url = `${base}${s.path}`;
+  const file = resolve(outDir, `${s.name}.png`);
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(1500);
-    const file = resolve(outDir, `${s.name}.png`);
+    await page.waitForTimeout(2000);
     await page.screenshot({ path: file, fullPage: false });
-    const card = page.locator('[data-testid^="dish-card-"]').first();
-    const box = (await card.count()) > 0 ? await card.boundingBox() : null;
-    const trayHeader = page.locator('[data-testid="shc-tray-web"]').first();
-    log.push(
-      `${s.name}: saved ${file} | cardBox=${box ? `${Math.round(box.width)}x${Math.round(box.height)}@${Math.round(box.x)},${Math.round(box.y)}` : 'n/a'}`
-    );
+    const measure = async (sel) => {
+      const el = page.locator(sel).first();
+      if ((await el.count()) === 0) return null;
+      const box = await el.boundingBox();
+      if (!box) return null;
+      return {
+        x: Math.round(box.x),
+        y: Math.round(box.y),
+        w: Math.round(box.width),
+        h: Math.round(box.height),
+      };
+    };
+    captures.push({
+      name: s.name,
+      url,
+      file,
+      viewport: { w: 390, h: 844 },
+      elements: {
+        dishCard: await measure('[data-testid^="dish-card-"]'),
+        dishImage: await measure('[data-testid$="-image"]'),
+        heroImage: await measure('[data-testid^="shared-dish-"]'),
+        trayWeb: await measure('[data-testid="shc-tray-web"]'),
+      },
+    });
   } catch (e) {
-    log.push(`${s.name}: FAIL ${e.message}`);
+    captures.push({ name: s.name, url, file, error: e.message });
   }
 }
 
 await browser.close();
-console.log(log.join('\n'));
+const bboxPath = resolve(outDir, 'playwright-bboxes.json');
+await import('node:fs/promises').then((fs) => fs.writeFile(bboxPath, JSON.stringify(captures, null, 2)));
+console.log(JSON.stringify(captures, null, 2));
+console.log(`Wrote ${bboxPath}`);

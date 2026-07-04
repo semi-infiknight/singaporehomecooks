@@ -70,4 +70,12 @@ log "--- pixel measurements ---"
 FAMILY_VALUES_SCRATCH="$OUT" "$ROOT/scripts/family-values-pixel-evidence.sh" 2>&1 | tee -a "$OUT/build.log"
 
 log ""
+log "--- PNG pixel analysis ---"
+if ls "$OUT/screenshots/"*.png >/dev/null 2>&1; then
+  PIXEL_ANALYSIS_OUT="$OUT/pixel-analysis.json" node "$ROOT/scripts/analyze-png-pixels.mjs" "$OUT/screenshots/"*.png 2>&1 | tee -a "$OUT/build.log" "$OUT/pixel-analysis.log"
+else
+  echo "SKIP: no screenshots in $OUT/screenshots" | tee -a "$OUT/build.log"
+fi
+
+log ""
 log "=== Audit complete ==="

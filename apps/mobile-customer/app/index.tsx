@@ -1,17 +1,17 @@
-// @ts-nocheck — RN View types vs @types/react mismatch in typecheck-only config
+import { createElement, type ReactElement } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
 import { shcColors } from '@shc/ui/theme';
 
-export default function RootIndex() {
+export default function RootIndex(): ReactElement {
   const { loading } = useAuth();
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: shcColors.background }}>
-        <ActivityIndicator color={shcColors.primary} />
-      </View>
+    return createElement(
+      View,
+      { style: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: shcColors.background } },
+      createElement(ActivityIndicator, { color: shcColors.primary })
     );
   }
 

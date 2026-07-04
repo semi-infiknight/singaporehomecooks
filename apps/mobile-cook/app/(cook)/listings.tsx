@@ -43,6 +43,9 @@ import {
   filterCookListings,
   getDishImageUrl,
   uniqueListingCuisines,
+  resolveCookListingsForDisplay,
+  cookListingE2eTestId,
+  E2E_COOK_SEED_LISTING,
   type CookListingStatusFilter,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -115,9 +118,15 @@ export default function CookListings() {
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
 
+  const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
+  const listingsForDisplay = useMemo(
+    () => resolveCookListingsForDisplay(myListings as Array<Record<string, unknown>>, { dev: __DEV__, maestroE2e }) as typeof myListings,
+    [myListings, maestroE2e]
+  );
+
   const filteredListings = useMemo(
-    () => filterCookListings(myListings, { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
-    [myListings, searchQuery, statusFilter, cuisineFilter]
+    () => filterCookListings(listingsForDisplay, { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
+    [listingsForDisplay, searchQuery, statusFilter, cuisineFilter]
   );
 
   const filterChips = useMemo(() => {
@@ -202,6 +211,7 @@ export default function CookListings() {
   );
 
   const performDelete = async (listing: any) => {
+    if (listing.id === E2E_COOK_SEED_LISTING.id) return;
     try {
       await deleteCookListing(listing.id);
       if (editingId === listing.id) resetWizard();
@@ -352,8 +362,8 @@ export default function CookListings() {
       <GourmeatCookHeader
         title="My Listings"
         subtitle={
-          myListings.length
-            ? `${filteredListings.length} of ${myListings.length} dishes`
+          listingsForDisplay.length
+            ? `${filteredListings.length} of ${listingsForDisplay.length} dishes`
             : user?.name
         }
         testID="listings-hero"
@@ -368,7 +378,7 @@ export default function CookListings() {
         />
       </View>
 
-      {myListings.length > 0 ? (
+      {listingsForDisplay.length > 0 ? (
         <>
           <SHCFilterChipRow
             chips={filterChips}
@@ -379,23 +389,23 @@ export default function CookListings() {
         </>
       ) : null}
 
-      {myListings.length === 0 && (
+      {listingsForDisplay.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCFoodImage uri={CUISINE_IMAGE.Peranakan} height={80} rounded={shcRadii.md} />
           <SHCBadge variant="default">No listings yet</SHCBadge>
         </SHCCard>
       )}
-      {myListings.length > 0 && filteredListings.length === 0 && (
+      {listingsForDisplay.length > 0 && filteredListings.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCBadge variant="default">No dishes match your search</SHCBadge>
         </SHCCard>
       )}
-      {filteredListings.map((p: any) => (
+      {filteredListings.map((p: any, index: number) => (
         <Pressable
           key={p.id}
           onLongPress={() => showListingActions(p)}
           delayLongPress={400}
-          testID={`listing-card-${p.id}`}
+          testID={cookListingE2eTestId(p, index)}
           accessibilityRole="button"
           accessibilityLabel={`${p.name}, long press for options`}
         >

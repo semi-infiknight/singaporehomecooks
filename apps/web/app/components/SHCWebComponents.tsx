@@ -2425,7 +2425,7 @@ export function SHCSharedDishImageWeb({
       if (cancelled) return;
       const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_WEB);
       if (!sync.hasOrigin) {
-        if (attempt < 4) requestAnimationFrame(() => tryMorph(attempt + 1));
+        if (attempt < 12) requestAnimationFrame(() => tryMorph(attempt + 1));
         return;
       }
       setMorphStyle({
@@ -2447,6 +2447,12 @@ export function SHCSharedDishImageWeb({
     };
   }, [dishId, hero, reduce]);
 
+  const cacheCardLayout = (el: HTMLImageElement) => {
+    if (hero) return;
+    const r = el.getBoundingClientRect();
+    registerSharedDishLayout(dishId, { x: r.left, y: r.top, w: r.width, h: r.height });
+  };
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -2454,6 +2460,7 @@ export function SHCSharedDishImageWeb({
       alt={alt}
       data-testid={testID || `shared-dish-${dishId}`}
       style={hero ? morphStyle : undefined}
+      onLoad={(e) => cacheCardLayout(e.currentTarget)}
       className={`object-cover w-full h-full ${hero && !morphStyle.transform ? 'shc-hero-image-scale' : ''} ${className}`}
     />
   );

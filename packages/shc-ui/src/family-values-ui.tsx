@@ -18,6 +18,8 @@ import {
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
   applySharedDishPress,
+  applySharedDishPressStrict,
+  cacheSharedDishLayoutFromRef,
   wizardCtaMorphOnStepEnter,
   wizardCtaMorphFromTransition,
 } from './family-values-core';
@@ -34,22 +36,40 @@ export {
   HERO_RECT_WEB,
 } from './family-values-core';
 
-/** Single press path: measure thumbnail → register layout → navigate. */
+/** Keep thumbnail layout warm so PDP hero morph has origin before async measure returns. */
+export function useSharedDishLayoutCache(dishId: string, imageRef: React.RefObject<View | null>) {
+  const refreshCache = useCallback(() => {
+    const node = imageRef.current;
+    if (!node) return;
+    cacheSharedDishLayoutFromRef(dishId, (cb) => node.measureInWindow(cb));
+  }, [dishId, imageRef]);
+
+  useEffect(() => {
+    refreshCache();
+  }, [refreshCache]);
+
+  return refreshCache;
+}
+
+/** Single press path: measure thumbnail → register layout → navigate (strict: needs layout). */
 export function useSharedDishPress(
   dishId: string,
   imageRef: React.RefObject<View | null>,
   onNavigate?: () => void
 ) {
+  const refreshCache = useSharedDishLayoutCache(dishId, imageRef);
+
   return useCallback(() => {
     const node = imageRef.current;
     if (!node) {
-      applySharedDishPress(dishId, null, onNavigate);
+      applySharedDishPressStrict(dishId, getSharedDishLayout(dishId) ?? null, onNavigate);
       return;
     }
     node.measureInWindow((x, y, w, h) => {
-      applySharedDishPress(dishId, { x, y, w, h }, onNavigate);
+      const ok = applySharedDishPressStrict(dishId, { x, y, w, h }, onNavigate);
+      if (!ok) refreshCache();
     });
-  }, [dishId, imageRef, onNavigate]);
+  }, [dishId, imageRef, onNavigate, refreshCache]);
 }
 
 export function SHCMorphingLabel({
@@ -203,7 +223,7 @@ export function SHCSharedDishImage({
       if (!hero || reduce || morphStarted.current) return;
       const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_MOBILE);
       if (!sync.hasOrigin) {
-        if (attempt < 4) requestAnimationFrame(() => runHeroMorph(attempt + 1));
+        if (attempt < 12) requestAnimationFrame(() => runHeroMorph(attempt + 1));
         return;
       }
       morphStarted.current = true;
@@ -233,9 +253,17 @@ export function SHCSharedDishImage({
     [measureRef]
   );
 
+  const cacheLayout = useCallback(() => {
+    if (hero) return;
+    const node = containerRef.current;
+    if (!node) return;
+    cacheSharedDishLayoutFromRef(dishId, (cb) => node.measureInWindow(cb));
+  }, [dishId, hero]);
+
   return (
     <Animated.View
       ref={setRefs}
+      onLayout={cacheLayout}
       style={{ transform: [{ scale }, { translateX }, { translateY }] }}
       testID={`shared-dish-wrap-${dishId}`}
     >
@@ -263,15 +291,20 @@ export function ListingWizardMorphCta({
   showChevron?: boolean;
 }) {
   const prevStepRef = useRef(step);
+  const prevEditingRef = useRef(editing);
   const [morph, setMorph] = useState(() => wizardCtaMorphOnStepEnter(step, total, editing));
 
   useEffect(() => {
     if (prevStepRef.current !== step) {
       setMorph(wizardCtaMorphFromTransition(prevStepRef.current, step, total, editing));
       prevStepRef.current = step;
+      prevEditingRef.current = editing;
       return;
     }
-    setMorph(wizardCtaMorphOnStepEnter(step, total, editing));
+    if (step >= total && prevEditingRef.current !== editing) {
+      setMorph({ from: 'Review', to: editing ? 'Save changes' : 'Publish' });
+      prevEditingRef.current = editing;
+    }
   }, [step, total, editing]);
 
   const { from, to } = morph;

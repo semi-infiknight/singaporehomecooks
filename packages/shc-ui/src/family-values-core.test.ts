@@ -21,6 +21,10 @@ import {
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
   applySharedDishPress,
+  applySharedDishPressStrict,
+  morphingLabelInitialText,
+  morphingLabelFinalText,
+  hasSharedDishLayout,
 } from './family-values-core';
 
 describe('tray stack', () => {
@@ -45,10 +49,12 @@ describe('tray stack', () => {
 });
 
 describe('computeMorphingLabelSegments', () => {
-  it('Start to Continue keeps out/in segments for live morph', () => {
+  it('Start to Continue uses full out/in segments and text phases', () => {
     const segs = computeMorphingLabelSegments('Start', 'Continue');
     expect(segs.find((s) => s.kind === 'out')?.text).toBe('Start');
     expect(segs.find((s) => s.kind === 'in')?.text).toBe('Continue');
+    expect(morphingLabelInitialText('Start', 'Continue')).toBe('Start');
+    expect(morphingLabelFinalText('Start', 'Continue')).toBe('Continue');
   });
 
   it('shares prefix between Continue and Confirm', () => {

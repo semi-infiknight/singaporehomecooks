@@ -1,37 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import {
+  applySharedDishPressStrict,
+  cacheSharedDishLayoutFromRef,
+  clearSharedDishLayout,
+  getSharedDishLayout,
+} from './family-values-core';
 
-const ROOT = resolve(__dirname, '../../..');
-
-function read(rel: string): string {
-  return readFileSync(resolve(ROOT, rel), 'utf8');
-}
-
-/** Extract export function until the next top-level export. */
-function extractExportBlock(src: string, name: string): string {
-  const re = new RegExp(`export function ${name}[\\s\\S]*?(?=\\nexport function |\\nexport const |$)`);
-  return src.match(re)?.[0] ?? '';
-}
-
-describe('shared dish press structural audit', () => {
-  it('GourmeatDishCard uses useSharedDishPress for navigation', () => {
-    const block = extractExportBlock(read('packages/shc-ui/src/gourmeat.tsx'), 'GourmeatDishCard');
-    expect(block).toContain('useSharedDishPress');
-    expect(block).toContain('handleCardPress');
-    expect(block).not.toMatch(/onPress=\{onPress\}/);
+/** Runtime handler audit — no source grep; exercises shipped press primitives. */
+describe('shared dish press handler audit (runtime)', () => {
+  it('press handler registers layout before navigate callback runs', () => {
+    clearSharedDishLayout('audit-order');
+    let layoutAtNav: ReturnType<typeof getSharedDishLayout>;
+    applySharedDishPressStrict('audit-order', { x: 4, y: 8, w: 140, h: 140 }, () => {
+      layoutAtNav = getSharedDishLayout('audit-order');
+    });
+    expect(layoutAtNav!).toEqual({ x: 4, y: 8, w: 140, h: 140 });
+    clearSharedDishLayout('audit-order');
   });
 
-  it('SHCZomatoDishRow uses useSharedDishPress', () => {
-    const block = extractExportBlock(read('packages/shc-ui/src/zomato.tsx'), 'SHCZomatoDishRow');
-    expect(block).toContain('useSharedDishPress');
-    expect(block).toContain('handlePress');
-    expect(block).not.toMatch(/onPress=\{onPress\}/);
+  it('layout cache enables strict navigate without fresh measure', () => {
+    clearSharedDishLayout('audit-cache');
+    cacheSharedDishLayoutFromRef('audit-cache', (cb) => cb(0, 0, 200, 140));
+    let navigated = false;
+    const ok = applySharedDishPressStrict('audit-cache', null, () => {
+      navigated = true;
+    });
+    expect(ok).toBe(true);
+    expect(navigated).toBe(true);
+    clearSharedDishLayout('audit-cache');
   });
 
-  it('web GourmeatDishCard wires price via SharedDishProductLink', () => {
-    const block = extractExportBlock(read('apps/web/app/components/SHCWebComponents.tsx'), 'GourmeatDishCard');
-    expect(block).toContain('SharedDishProductLink');
-    expect(block).toMatch(/SharedDishProductLink[\s\S]*\$\{cardTestID\}-price/);
+  it('zero-size measure does not register invalid layout', () => {
+    clearSharedDishLayout('audit-zero');
+    applySharedDishPressStrict('audit-zero', { x: 0, y: 0, w: 0, h: 0 }, () => {});
+    expect(getSharedDishLayout('audit-zero')).toBeUndefined();
   });
 });

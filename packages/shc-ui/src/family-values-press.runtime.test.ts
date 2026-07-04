@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   applySharedDishPress,
+  applySharedDishPressStrict,
+  cacheSharedDishLayoutFromRef,
   clearSharedDishLayout,
   computeMorphingLabelSegments,
   getSharedDishLayout,
-  registerSharedDishLayout,
+  hasSharedDishLayout,
+  morphingLabelFinalText,
+  morphingLabelInitialText,
   wizardCtaMorphOnStepEnter,
 } from './family-values-core';
 
@@ -18,27 +22,43 @@ describe('applySharedDishPress (runtime)', () => {
     clearSharedDishLayout('dish-rt-1');
   });
 
-  it('skips register for zero-size measure but still navigates', () => {
-    clearSharedDishLayout('dish-rt-2');
+  it('strict mode skips navigate when no layout and no cache', () => {
+    clearSharedDishLayout('dish-strict-none');
     const onNavigate = vi.fn();
-    applySharedDishPress('dish-rt-2', { x: 0, y: 0, w: 0, h: 0 }, onNavigate);
-    expect(getSharedDishLayout('dish-rt-2')).toBeUndefined();
-    expect(onNavigate).toHaveBeenCalledTimes(1);
+    const ok = applySharedDishPressStrict('dish-strict-none', null, onNavigate);
+    expect(ok).toBe(false);
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 
-  it('navigates when measure is null (no ref)', () => {
+  it('strict mode navigates with cached layout when measure null', () => {
+    clearSharedDishLayout('dish-strict-cache');
+    cacheSharedDishLayoutFromRef('dish-strict-cache', (cb) => cb(5, 10, 120, 100));
     const onNavigate = vi.fn();
-    applySharedDishPress('dish-rt-3', null, onNavigate);
+    const ok = applySharedDishPressStrict('dish-strict-cache', null, onNavigate);
+    expect(ok).toBe(true);
     expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(hasSharedDishLayout('dish-strict-cache')).toBe(true);
+    clearSharedDishLayout('dish-strict-cache');
+  });
+
+  it('cacheSharedDishLayoutFromRef warms registry before press', () => {
+    clearSharedDishLayout('dish-cache');
+    cacheSharedDishLayoutFromRef('dish-cache', (cb) => cb(20, 30, 88, 88));
+    expect(getSharedDishLayout('dish-cache')).toEqual({ x: 20, y: 30, w: 88, h: 88 });
+    clearSharedDishLayout('dish-cache');
   });
 });
 
-describe('wizard step1 morph data', () => {
+describe('wizard step1 morph phases', () => {
   it('step1 enter morphs Start to Continue with visible out segment', () => {
     const morph = wizardCtaMorphOnStepEnter(1, 4, false);
     expect(morph).toEqual({ from: 'Start', to: 'Continue' });
+    expect(morphingLabelInitialText(morph.from, morph.to)).toBe('Start');
+    expect(morphingLabelFinalText(morph.from, morph.to)).toBe('Continue');
     const segs = computeMorphingLabelSegments(morph.from, morph.to);
     expect(segs.find((s) => s.kind === 'out')?.text).toBe('Start');
     expect(segs.find((s) => s.kind === 'in')?.text).toBe('Continue');
+    expect(morphingLabelInitialText(morph.from, morph.to)).toBe('Start');
+    expect(morphingLabelFinalText(morph.from, morph.to)).toBe('Continue');
   });
 });

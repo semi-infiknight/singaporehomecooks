@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filterCookListings, uniqueListingCuisines } from './cook-listings';
+import {
+  cookListingE2eTestId,
+  E2E_COOK_SEED_LISTING,
+  filterCookListings,
+  resolveCookListingsForDisplay,
+  uniqueListingCuisines,
+} from './cook-listings';
 
 const sample = [
   { id: '1', name: 'Nyonya Laksa', cuisine: 'Peranakan', shc_availability: { paused: false } },
@@ -27,5 +33,22 @@ describe('filterCookListings', () => {
 describe('uniqueListingCuisines', () => {
   it('returns sorted unique cuisines', () => {
     expect(uniqueListingCuisines(sample)).toEqual(['Hainanese', 'Peranakan']);
+  });
+});
+
+describe('resolveCookListingsForDisplay (Maestro seed)', () => {
+  it('injects E2E seed when empty and maestro flag set', () => {
+    const rows = resolveCookListingsForDisplay([], { maestroE2e: true });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual(E2E_COOK_SEED_LISTING);
+  });
+
+  it('keeps API listings when present', () => {
+    expect(resolveCookListingsForDisplay(sample as any)).toEqual(sample);
+  });
+
+  it('assigns listing-card-e2e testID to seed row', () => {
+    expect(cookListingE2eTestId(E2E_COOK_SEED_LISTING, 0)).toBe('listing-card-e2e');
+    expect(cookListingE2eTestId({ id: 'abc' }, 1)).toBe('listing-card-abc');
   });
 });

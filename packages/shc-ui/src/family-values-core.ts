@@ -176,12 +176,62 @@ export function applySharedDishPress(
   onNavigate?.();
 }
 
+/** Returns true when a dish has a registrable layout (fresh measure or cache). */
+export function hasSharedDishLayout(dishId: string, measure?: SharedDishLayout | null): boolean {
+  if (measure && measure.w > 0 && measure.h > 0) return true;
+  const cached = getSharedDishLayout(dishId);
+  return !!cached && cached.w > 0 && cached.h > 0;
+}
+
+/** Navigate only after layout is registered — uses cache if measure missing. */
+export function applySharedDishPressStrict(
+  dishId: string,
+  measure: SharedDishLayout | null | undefined,
+  onNavigate?: () => void
+): boolean {
+  if (measure && measure.w > 0 && measure.h > 0) {
+    registerSharedDishLayout(dishId, measure);
+    onNavigate?.();
+    return true;
+  }
+  if (hasSharedDishLayout(dishId)) {
+    onNavigate?.();
+    return true;
+  }
+  return false;
+}
+
+/** Morph label visible text phases (testable without RN). */
+export function morphingLabelInitialText(from: string, to: string): string {
+  return from.trim() === to.trim() ? to.trim() : from.trim();
+}
+
+export function morphingLabelFinalText(from: string, to: string): string {
+  return morphingLabelTarget(computeMorphingLabelSegments(from, to));
+}
+
 export function getSharedDishLayout(id: string): SharedDishLayout | undefined {
   return sharedDishLayouts.get(id);
 }
 
 export function clearSharedDishLayout(id: string): void {
   sharedDishLayouts.delete(id);
+}
+
+/** Measure callback shape for layout cache (RN measureInWindow / web getBoundingClientRect). */
+export type DishLayoutMeasurer = (
+  cb: (x: number, y: number, w: number, h: number) => void
+) => void;
+
+/** Proactively cache dish thumbnail layout (call onLayout / mount). */
+export function cacheSharedDishLayoutFromRef(
+  dishId: string,
+  measure: DishLayoutMeasurer | null | undefined
+): void {
+  if (!measure) return;
+  measure((x, y, w, h) => {
+    registerSharedDishLayout(dishId, { x, y, w, h });
+  });
 }
 
 /** Fixed PDP hero rect for synchronous morph (matches mobile product/[id] hero). */
