@@ -4,9 +4,7 @@ import "./globals.css";
 import { QueryClientProvider } from "./providers";
 
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { AppHeader } from "./components/AppHeader";
-import { AppFooter } from "./components/AppFooter";
-import { AppMobileTabBar } from "./components/AppMobileTabBar";
+import { AppChrome } from "./components/AppChrome";
 import { PWARegistration } from "./components/PWARegistration";
 import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
@@ -66,14 +64,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <QueryClientProvider>
           <ErrorBoundary>
-            <div className="hidden md:block">
-              <AppHeader />
-            </div>
-            <main className="flex-1 w-full pb-[110px] md:pb-0">{children}</main>
-            <div className="hidden md:block">
-              <AppFooter />
-            </div>
-            <AppMobileTabBar />
+            <AppChrome>{children}</AppChrome>
             <PWAInstallBanner />
             <PWARegistration />
           </ErrorBoundary>

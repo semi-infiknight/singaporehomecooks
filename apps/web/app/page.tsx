@@ -14,6 +14,7 @@ import {
   favoritesToReorderDishes,
   getOccasionImageUrl,
   getCookAvatarUrl,
+  getDishImageUrl,
   MIND_CUISINE_CATEGORIES,
   sortByCookProximity,
   filterDiscoverProducts,
@@ -27,7 +28,7 @@ import {
   SHCEmptyState,
   GuestBrowseBar,
   ActiveOrderBanner,
-  DishRowRail,
+  ZomatoDishRowRail,
   GourmeatHomeHeader,
   GourmeatSearchBar,
   GourmeatCategoryRow,
@@ -49,10 +50,11 @@ const occasions = [
   })),
 ];
 
-function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number } {
+function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
   return {
     ...product,
     rating: product.rating != null ? Number(product.rating) : 4.8,
+    image_url: getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name }),
   };
 }
 
@@ -233,14 +235,14 @@ export default function DiscoverHome() {
       {!query.trim() && reorderDishes.length > 0 && (
         <div className="shc-section-gap">
           <GourmeatSectionTitle title="Order again" />
-          <DishRowRail title="" products={reorderDishes} />
+          <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
         </div>
       )}
 
       {!query.trim() && savedDishes.length > 0 && (
         <div className="shc-section-gap">
           <GourmeatSectionTitle title="Saved for you" />
-          <DishRowRail title="" products={savedDishes} />
+          <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </div>
       )}
 

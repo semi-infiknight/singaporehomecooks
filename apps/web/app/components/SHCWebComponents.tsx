@@ -490,19 +490,23 @@ export function DishRowCard({
   product,
   offerLabel,
   offerText,
+  href,
+  onPress,
 }: {
   product: DishCardProduct;
   offerLabel?: string;
   offerText?: string;
+  href?: string;
+  onPress?: () => void;
 }) {
-  const imageUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
+  const imageUrl =
+    (product as { image_url?: string }).image_url ||
+    getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   const slot = getCollectionSlotLabel(product.id);
-  return (
-    <Link
-      href={`/product/${product.id}`}
-      className="shrink-0 w-[300px] flex flex-col border-2 border-[var(--shc-border-brutal)] rounded-xl overflow-hidden bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow"
-      data-testid={`dish-row-${product.id}`}
-    >
+  const className =
+    'shrink-0 w-[300px] flex flex-col border-2 border-[var(--shc-border-brutal)] rounded-xl overflow-hidden bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow text-left';
+  const inner = (
+    <>
       <div className="flex">
         <div className="relative w-[110px] h-[118px] shrink-0">
           <Image src={imageUrl} alt={product.name} fill className="object-cover" sizes="110px" />
@@ -539,6 +543,18 @@ export function DishRowCard({
           <p className="text-[10px] font-extrabold text-primary truncate">{offerText || `Heritage offer · ${offerLabel}`}</p>
         </div>
       )}
+    </>
+  );
+  if (onPress) {
+    return (
+      <button type="button" onClick={onPress} className={className} data-testid={`dish-row-${product.id}`}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <Link href={href || `/product/${product.id}`} className={className} data-testid={`dish-row-${product.id}`}>
+      {inner}
     </Link>
   );
 }
@@ -546,19 +562,25 @@ export function DishRowCard({
 export function DishRowRail({
   title = 'Top picks for you',
   products,
+  onDishPress,
+  testID = 'dish-row-rail',
 }: {
   title?: string;
   products: DishCardProduct[];
+  onDishPress?: (id: string) => void;
+  testID?: string;
 }) {
   if (products.length === 0) return null;
   return (
-    <div data-testid="dish-row-rail">
-      {title ? <h2 className="shc-display text-base font-black mb-3">{title}</h2> : null}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+    <div data-testid={testID}>
+      {title ? <h2 className="text-base font-black text-foreground mb-2">{title}</h2> : null}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
         {products.map((p, i) => (
           <DishRowCard
             key={p.id}
             product={p}
+            href={onDishPress ? undefined : `/product/${p.id}`}
+            onPress={onDishPress ? () => onDishPress(p.id) : undefined}
             offerLabel={i === 0 ? 'POPULAR' : i === 1 ? '20% OFF' : undefined}
             offerText={i === 0 ? '★ Top rated home cook this week' : i === 1 ? '20% off on orders above S$80' : undefined}
           />
@@ -567,6 +589,9 @@ export function DishRowRail({
     </div>
   );
 }
+
+/** Parity alias for mobile SHCZomatoDishRowRail */
+export const ZomatoDishRowRail = DishRowRail;
 
 /* ── Toptal food-app UX: stepper, search+ADD, heritage story ── */
 
@@ -876,6 +901,7 @@ export type DishCardProduct = {
   min_qty?: number;
   occasion_tags?: string[];
   rating?: number;
+  image_url?: string;
 };
 
 export function DishCard({
@@ -1778,6 +1804,8 @@ export function GourmeatOrderRow({
   collectionSlot,
   total,
   href,
+  onPress,
+  actions,
   testID,
 }: {
   orderId: string;
@@ -1787,16 +1815,14 @@ export function GourmeatOrderRow({
   collectionDate?: string;
   collectionSlot?: string;
   total?: number | string;
-  href: string;
+  href?: string;
+  onPress?: () => void;
+  actions?: React.ReactNode;
   testID?: string;
 }) {
   const imageUrl = getDishImageUrl({ id: productId, name: dishName });
-  return (
-    <Link
-      href={href}
-      data-testid={testID ?? `order-row-${orderId}`}
-      className="block bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden hover:opacity-95 transition-opacity"
-    >
+  const card = (
+    <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden">
       <div className="flex gap-3 p-3">
         <div className="relative w-[72px] h-[72px] shrink-0 rounded-xl overflow-hidden">
           <Image src={imageUrl} alt={dishName || 'Order'} fill className="object-cover" sizes="72px" />
@@ -1817,8 +1843,27 @@ export function GourmeatOrderRow({
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
+
+  const row = (
+    <div data-testid={testID ?? `order-row-${orderId}`} className="mb-2">
+      {href ? (
+        <Link href={href} className="block hover:opacity-95 transition-opacity">
+          {card}
+        </Link>
+      ) : onPress ? (
+        <button type="button" onClick={onPress} className="block w-full text-left hover:opacity-95 transition-opacity">
+          {card}
+        </button>
+      ) : (
+        card
+      )}
+      {actions ? <div className="px-3 pb-3 -mt-1 flex flex-wrap gap-2">{actions}</div> : null}
+    </div>
+  );
+
+  return row;
 }
 
 export function GourmeatPayButton({
@@ -1846,6 +1891,158 @@ export function GourmeatPayButton({
     >
       {loading ? 'Processing…' : label}
       {amount && !loading ? <span>{amount}</span> : null}
+    </button>
+  );
+}
+
+/* ── Cook app (Gourmeat) web parity ── */
+
+export function GourmeatCookHeader({
+  title,
+  subtitle,
+  badges,
+  testID,
+}: {
+  title: string;
+  subtitle?: string;
+  badges?: React.ReactNode;
+  testID?: string;
+}) {
+  return (
+    <div className="mb-4" data-testid={testID}>
+      <h1 className="text-[28px] font-extrabold text-foreground tracking-[-0.5px]">{title}</h1>
+      {subtitle ? <p className="text-[13px] text-[#8A8A8A] mt-1">{subtitle}</p> : null}
+      {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}
+    </div>
+  );
+}
+
+export function GourmeatPrimaryButton({
+  label,
+  onClick,
+  disabled,
+  loading,
+  variant = 'primary',
+  testID,
+  className = '',
+}: {
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  variant?: 'primary' | 'outline';
+  testID?: string;
+  className?: string;
+}) {
+  const outline = variant === 'outline';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      data-testid={testID}
+      className={`inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-extrabold transition-opacity disabled:opacity-50 ${
+        outline
+          ? 'bg-card border border-border text-foreground'
+          : 'bg-primary text-primary-foreground hover:bg-[var(--shc-primary-dark)]'
+      } ${className}`}
+    >
+      {loading ? '…' : label}
+    </button>
+  );
+}
+
+export function GourmeatCard({
+  children,
+  className = '',
+  testID,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className={`bg-card rounded-2xl p-4 shadow-[var(--shc-shadow-card)] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function GourmeatEmptyState({
+  title,
+  body,
+  ctaLabel,
+  onCta,
+  testID,
+}: {
+  title: string;
+  body?: string;
+  ctaLabel?: string;
+  onCta?: () => void;
+  testID?: string;
+}) {
+  return (
+    <div className="text-center py-6" data-testid={testID}>
+      <p className="font-extrabold text-foreground">{title}</p>
+      {body ? <p className="text-sm text-muted-foreground mt-1">{body}</p> : null}
+      {ctaLabel && onCta ? (
+        <GourmeatPrimaryButton label={ctaLabel} onClick={onCta} className="mt-4" />
+      ) : null}
+    </div>
+  );
+}
+
+export function VisualBentoTile({
+  imageUrl,
+  label,
+  badge,
+  href,
+  onClick,
+  variant = 'default',
+  testID,
+}: {
+  imageUrl: string;
+  label: string;
+  badge?: string | number;
+  href?: string;
+  onClick?: () => void;
+  variant?: 'default' | 'bento-mint' | 'bento-peach' | 'bento-yellow';
+  testID?: string;
+}) {
+  const bg =
+    variant === 'bento-mint'
+      ? 'bg-[var(--shc-bento-mint)]'
+      : variant === 'bento-peach'
+        ? 'bg-[var(--shc-bento-peach)]'
+        : variant === 'bento-yellow'
+          ? 'bg-[var(--shc-bento-yellow)]'
+          : 'bg-card';
+  const inner = (
+    <div className={`relative h-28 rounded-2xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] ${bg}`}>
+      <Image src={imageUrl} alt="" fill className="object-cover opacity-80" sizes="50vw" />
+      <div className="absolute inset-0 bg-[rgba(36,24,18,0.35)] flex flex-col justify-end p-3">
+        {badge != null && (
+          <span className="self-start text-[10px] font-black bg-primary text-primary-foreground px-2 py-0.5 rounded mb-1">
+            {badge}
+          </span>
+        )}
+        <span className="text-sm font-extrabold text-white">{label}</span>
+      </div>
+    </div>
+  );
+  if (href) {
+    return (
+      <Link href={href} data-testid={testID} className="block">
+        {inner}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} data-testid={testID} className="block w-full text-left">
+      {inner}
     </button>
   );
 }
