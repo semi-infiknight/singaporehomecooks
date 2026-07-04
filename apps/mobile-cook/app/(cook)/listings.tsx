@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, Modal, StyleSheet, Keyboard } from 'react-native';
+import { View, Text, ScrollView, TextInput, Pressable, Modal, StyleSheet, Keyboard, Alert, ActivityIndicator } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -83,6 +83,7 @@ export default function CookListings() {
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
   const [photoTips, setPhotoTips] = useState<string[]>([]);
+  const [publishing, setPublishing] = useState(false);
 
   const previewImage = getDishImageUrl({ name, cuisine });
 
@@ -90,6 +91,12 @@ export default function CookListings() {
     setOccasionTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
   const publish = async () => {
+    if (publishing) return;
+    if (!user?.id) {
+      Alert.alert('Sign in required', 'Please log in as a cook before publishing a listing.');
+      return;
+    }
+    setPublishing(true);
     const input: any = {
       name,
       price,
@@ -128,7 +135,10 @@ export default function CookListings() {
       goToStep(1);
       setAiCal(null);
     } catch (e: any) {
-      console.warn('Publish failed (demo):', e.message || e.code);
+      const message = e?.message || e?.code || 'Could not publish listing. Check your connection and try again.';
+      Alert.alert('Publish failed', message);
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -299,8 +309,12 @@ export default function CookListings() {
               <SHCBadge key={t} variant="heritage">{t}</SHCBadge>
             ))}
           </View>
-          <SHCButton onPress={publish} testID="listing-wizard-publish">
-            <SHCButtonText>Publish</SHCButtonText>
+          <SHCButton onPress={publish} disabled={publishing} testID="listing-wizard-publish">
+            {publishing ? (
+              <ActivityIndicator color={gourmeatColors.onPrimary} />
+            ) : (
+              <SHCButtonText>Publish</SHCButtonText>
+            )}
           </SHCButton>
           <SHCButton variant="outline" onPress={() => goToStep(3)} style={{ marginTop: 8 }}>
             <SHCButtonText>←</SHCButtonText>

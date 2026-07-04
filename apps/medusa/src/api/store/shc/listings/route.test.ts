@@ -19,6 +19,13 @@ function makeRes() {
 }
 
 describe("POST /store/shc/listings", () => {
+  it("returns 401 when cook is not authenticated", async () => {
+    const req: any = { headers: {}, body: { name: "No Auth Dish", price: 10 }, scope: { resolve: () => { throw new Error("should not resolve"); } } };
+    const res = makeRes();
+    await POST(req, res);
+    expect(res.statusCode).toBe(401);
+  });
+
   it("persists cook-provided listing display fields for customer discovery", async () => {
     const token = signShcToken({ actor_type: "cook", actor_id: "cook_1", shc: true });
     let savedMeta: any;
@@ -33,6 +40,9 @@ describe("POST /store/shc/listings", () => {
         heritage_note: "Katong weekend special",
         occasion_tags: ["Birthday"],
         ingredients: [{ name: "Prawn", quantity: 6, unit: "pcs" }],
+        allergen_tiers: { tier1: ["Shellfish"], tier2: [], tier3: [] },
+        heritage_note: "Katong weekend special",
+        image_url: "https://picsum.photos/seed/laksa/400/300",
       },
       scope: {
         resolve(name: string) {

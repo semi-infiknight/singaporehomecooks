@@ -24,7 +24,7 @@ const CreateSchema = z.object({
   }).optional(),
   halal: z.boolean().optional(),
   heritage_note: z.string().optional(),
-  image_url: z.string().url().optional(), // support dish photo (media gap fix)
+  image_url: z.string().min(1).optional(), // presigned MinIO URLs or https placeholders
 }).strict();
 
 /** GET /store/shc/listings — cook's published product metas */
@@ -47,40 +47,50 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid listing", parse.error.format() as any) });
   }
-  const cookId = getCookId(req);
-  // MinIO auth hardening + full server upload support: if image provided as url from our /upload (presigned or server mode)
-  const productId = `dish_${parse.data.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 48)}_${Date.now()}`;
-  const priceCents = parse.data.price_cents ?? Math.round((parse.data.price ?? 12) * 100);
-  const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
-  const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
-  const meta = await metaService.upsertProductMeta({
-    product_id: productId,
-    cook_id: cookId,
-    name: parse.data.name,
-    description: parse.data.description,
-    cuisine: parse.data.cuisine || "Singapore",
-    occasion_tags: parse.data.occasion_tags || [],
-    allergen_tiers: parse.data.allergen_tiers || { tier1: [], tier2: [], tier3: [] },
-    halal: parse.data.halal ?? false,
-    calories: parse.data.calories || 400,
-    calories_confidence: parse.data.calories_confidence || "category",
-    ingredients: parse.data.ingredients || [],
-    min_qty: parse.data.min_qty,
-    price_cents: priceCents,
-    heritage_note: parse.data.heritage_note,
-    image_url: parse.data.image_url,
-  } as any);
-  await availService.upsertAvailability({
-    product_id: productId,
-    portions_per_day: 18,
-    collection_days: [0, 1, 2, 3, 4, 5, 6],
-    time_slots: ["17:00-19:00", "18:00-20:00"],
-    paused: false,
-  } as any);
-  const product = await shapeProduct(meta, req.scope);
-  res.status(201).json({ product, listing: product });
+  let cookId: string;
+  try {
+    cookId = getCookId(req);
+  } catch {
+    return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
+  }
+  try {
+    const productId = `dish_${parse.data.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 48)}_${Date.now()}`;
+    const priceCents = parse.data.price_cents ?? Math.round((parse.data.price ?? 12) * 100);
+    const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
+    const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
+    const meta = await metaService.upsertProductMeta({
+      product_id: productId,
+      cook_id: cookId,
+      name: parse.data.name,
+      description: parse.data.description,
+      cuisine: parse.data.cuisine || "Singapore",
+      occasion_tags: parse.data.occasion_tags || [],
+      allergen_tiers: parse.data.allergen_tiers || { tier1: [], tier2: [], tier3: [] },
+      halal: parse.data.halal ?? false,
+      calories: parse.data.calories || 400,
+      calories_confidence: parse.data.calories_confidence || "category",
+      ingredients: parse.data.ingredients || [],
+      min_qty: parse.data.min_qty,
+      price_cents: priceCents,
+      heritage_note: parse.data.heritage_note,
+      image_url: parse.data.image_url,
+    } as any);
+    await availService.upsertAvailability({
+      product_id: productId,
+      portions_per_day: 18,
+      collection_days: [0, 1, 2, 3, 4, 5, 6],
+      time_slots: ["17:00-19:00", "18:00-20:00"],
+      paused: false,
+    } as any);
+    const product = await shapeProduct(meta, req.scope);
+    return res.status(201).json({ product, listing: product });
+  } catch (e: any) {
+    return res.status(500).json({
+      error: createSHCError("SHC-GENERIC-001", e?.message || "Failed to publish listing"),
+    });
+  }
 }

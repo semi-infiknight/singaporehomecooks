@@ -5,8 +5,11 @@ import { SHCAvailability, shcAvailabilitySchema } from "@shc/types";
 class ShcAvailabilityModuleService extends MedusaService({ Availability }) {
   async upsertAvailability(data: Partial<SHCAvailability>): Promise<SHCAvailability> {
     const validated = shcAvailabilitySchema.partial().parse(data);
-    const existing = await this.listAvailabilities({ filters: { product_id: validated.product_id } });
-    if (existing.length) {
+    const [existing] = await this.listAndCountAvailabilities(
+      { product_id: validated.product_id } as any,
+      { take: 1 }
+    ).catch(() => [[]]);
+    if ((existing as any[])?.length) {
       const [updated] = await this.updateAvailabilities({
         selector: { product_id: validated.product_id },
         data: { ...validated, updated_at: new Date() } as any,
