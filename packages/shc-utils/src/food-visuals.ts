@@ -93,7 +93,9 @@ export function getDishImageUrl(opts: {
   id?: string;
   cuisine?: string;
   name?: string;
+  image_url?: string | null;
 }): string {
+  if (opts.image_url) return opts.image_url;
   if (opts.id && DISH_IMAGE_BY_ID[opts.id]) return DISH_IMAGE_BY_ID[opts.id];
   const lower = (opts.name || '').toLowerCase();
   if (lower.includes('nasi') || lower.includes('lemak')) return DISH_IMAGE_BY_ID.dish_nasi_lemak_sambal_prawn_001;
