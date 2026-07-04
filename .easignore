@@ -1,3 +1,28 @@
-# Stale local prebuild (SDK 51). EAS generates fresh native projects from app.json.
-apps/mobile-cook/ios/
-apps/mobile-cook/android/
+# EAS upload exclusions — keep archives small; deps install on build servers.
+node_modules/
+**/node_modules/
+**/Pods/
+**/.metro-cache/
+**/ios/build/
+**/android/build/
+**/DerivedData/
+**/*.jsbundle
+
+# Monorepo apps not needed for mobile-customer / mobile-cook iOS builds
+apps/medusa/
+apps/web/
+apps/worker/
+apps/mobile/
+data/
+minio-data/
+postgres-data/
+redis-data/
+.backup-ios/
+blueprint/
+.brand-preview/
+.railway/
+.turbo/
+coverage/
+.next/
+dist/
+.expo/
