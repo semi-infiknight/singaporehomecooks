@@ -52,7 +52,8 @@ import {
   registerSharedDishLayout,
   getSharedDishLayout,
   clearSharedDishLayout,
-  computeSharedHeroTransform,
+  getSyncHeroTransformForDish,
+  HERO_RECT_WEB,
   tabSlideDirection,
   type MorphSegment,
   type TrayFrame,
@@ -565,17 +566,27 @@ export function DishRowCard({
       )}
     </>
   );
+  const cardTestID = `dish-row-${product.id}`;
+  const productHref = href || `/product/${product.id}`;
   if (onPress) {
     return (
-      <button type="button" onClick={onPress} className={className} data-testid={`dish-row-${product.id}`}>
+      <button
+        type="button"
+        onClick={(e) => {
+          captureSharedDishLayout(product.id, cardTestID, e);
+          onPress();
+        }}
+        className={className}
+        data-testid={cardTestID}
+      >
         {inner}
       </button>
     );
   }
   return (
-    <Link href={href || `/product/${product.id}`} className={className} data-testid={`dish-row-${product.id}`}>
-      {inner}
-    </Link>
+    <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className={className}>
+      <div data-testid={cardTestID}>{inner}</div>
+    </SharedDishProductLink>
   );
 }
 
@@ -1706,6 +1717,39 @@ export function GourmeatCategoryRow({
   );
 }
 
+function captureSharedDishLayout(dishId: string, cardTestID: string, e: React.MouseEvent<HTMLElement>) {
+  const card = (e.currentTarget as HTMLElement).closest(`[data-testid="${cardTestID}"]`);
+  const img = card?.querySelector('img');
+  if (img) {
+    const r = img.getBoundingClientRect();
+    registerSharedDishLayout(dishId, { x: r.left, y: r.top, w: r.width, h: r.height });
+  }
+}
+
+export function SharedDishProductLink({
+  dishId,
+  cardTestID,
+  href,
+  children,
+  className,
+}: {
+  dishId: string;
+  cardTestID: string;
+  href: string;
+  children: Parameters<typeof Link>[0]['children'];
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={className}
+      onClick={(e) => captureSharedDishLayout(dishId, cardTestID, e)}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function GourmeatDishCard({
   product,
   onAddPress,
@@ -1723,25 +1767,13 @@ export function GourmeatDishCard({
   const discount = gourmeatDiscountPercent(product.id);
   const displayRating = rating ?? (product.rating != null ? Number(product.rating) : 4.8);
   const cardTestID = `dish-card-${product.id}`;
-
-  const captureDishLayout = (e: React.MouseEvent<HTMLElement>) => {
-    const card = (e.currentTarget as HTMLElement).closest(`[data-testid="${cardTestID}"]`);
-    const img = card?.querySelector('img');
-    if (img) {
-      const r = img.getBoundingClientRect();
-      registerSharedDishLayout(product.id, { x: r.left, y: r.top, w: r.width, h: r.height });
-    }
-  };
+  const productHref = `/product/${product.id}`;
 
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
       <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col">
         <div className="relative">
-          <Link
-            href={`/product/${product.id}`}
-            className="block"
-            onClick={captureDishLayout}
-          >
+          <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="block">
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
                 dishId={product.id}
@@ -1751,7 +1783,7 @@ export function GourmeatDishCard({
                 testID={`${cardTestID}-image`}
               />
             </div>
-          </Link>
+          </SharedDishProductLink>
           <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
             <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg pointer-events-auto" data-testid={`${cardTestID}-discount`}>
               {discount}% OFF
@@ -1768,18 +1800,18 @@ export function GourmeatDishCard({
           </div>
         </div>
         <div className="p-3 flex-1 flex flex-col">
-          <Link href={`/product/${product.id}`} onClick={captureDishLayout}>
+          <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref}>
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>
-          </Link>
+          </SharedDishProductLink>
           {product.cook_name ? (
             <div className="text-[11px] text-[#8A8A8A] truncate mb-1.5" data-testid={`${cardTestID}-cook`}>
               {product.cook_name}
             </div>
           ) : null}
           <div className="flex items-center justify-between mt-auto">
-            <div>
+            <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="flex-1 min-w-0">
               {product.price !== undefined && (
                 <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
                   S${product.price}
@@ -1791,7 +1823,7 @@ export function GourmeatDishCard({
                 </span>
                 <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
               </div>
-            </div>
+            </SharedDishProductLink>
             <GourmeatAddButton
               onClick={onAddPress}
               testID={`${cardTestID}-add`}
@@ -2144,7 +2176,7 @@ export function SHCTrayWeb() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-10 h-1 rounded-full bg-muted-foreground/40 mx-auto mt-2 mb-1 shrink-0" aria-hidden />
-        <div className="flex items-center gap-2 px-4 pb-3 border-b border-[var(--shc-border)] shrink-0">
+        <div className="flex items-center gap-2 px-4 pb-2 border-b border-[var(--shc-border)] shrink-0">
           <button
             type="button"
             onClick={onNav}
@@ -2380,19 +2412,17 @@ export function SHCSharedDishImageWeb({
   testID?: string;
 }) {
   const reduce = shouldReduceMotion();
-  const imgRef = React.useRef<HTMLImageElement>(null);
-  const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>({});
+  const syncHero = hero && !reduce ? getSyncHeroTransformForDish(dishId, HERO_RECT_WEB) : null;
+  const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>(() => {
+    if (!syncHero?.hasOrigin) return {};
+    return {
+      transform: `translate(${syncHero.translateX}px, ${syncHero.translateY}px) scale(${syncHero.initialScale})`,
+      transition: 'none',
+    };
+  });
 
   React.useEffect(() => {
-    if (!hero || reduce || !imgRef.current) return;
-    const origin = getSharedDishLayout(dishId);
-    if (!origin) return;
-    const r = imgRef.current.getBoundingClientRect();
-    const t = computeSharedHeroTransform(origin, { x: r.left, y: r.top, w: r.width, h: r.height });
-    setMorphStyle({
-      transform: `translate(${t.translateX}px, ${t.translateY}px) scale(${t.initialScale})`,
-      transition: 'none',
-    });
+    if (!hero || reduce || !syncHero?.hasOrigin) return;
     requestAnimationFrame(() => {
       setMorphStyle({
         transform: 'translate(0px, 0px) scale(1)',
@@ -2400,17 +2430,16 @@ export function SHCSharedDishImageWeb({
       });
       clearSharedDishLayout(dishId);
     });
-  }, [dishId, hero, reduce]);
+  }, [dishId, hero, reduce, syncHero?.hasOrigin]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      ref={imgRef}
       src={src}
       alt={alt}
       data-testid={testID || `shared-dish-${dishId}`}
       style={hero ? morphStyle : undefined}
-      className={`object-cover w-full h-full ${hero && !morphStyle.transform ? 'shc-hero-image-scale' : ''} ${className}`}
+      className={`object-cover w-full h-full ${hero && !syncHero?.hasOrigin ? 'shc-hero-image-scale' : ''} ${className}`}
     />
   );
 }

@@ -12,10 +12,14 @@ import {
   trayStackDepth,
   wizardCtaLabel,
   wizardCtaMorphFrom,
+  wizardCtaMorphOnStepEnter,
+  wizardCtaMorphFromTransition,
   registerSharedDishLayout,
   getSharedDishLayout,
   clearSharedDishLayout,
   computeSharedHeroTransform,
+  getSyncHeroTransformForDish,
+  HERO_RECT_MOBILE,
 } from './family-values-core';
 
 describe('tray stack', () => {
@@ -96,11 +100,20 @@ describe('wizardCtaLabel', () => {
     expect(wizardCtaMorphFrom(4, 4, true).to).toBe('Save changes');
   });
 
-  it('intermediate steps morph Continue to Next to Review', () => {
-    expect(wizardCtaMorphFrom(1, 4, false)).toEqual({ from: 'Continue', to: 'Continue' });
-    expect(wizardCtaMorphFrom(2, 4, false)).toEqual({ from: 'Continue', to: 'Next' });
-    expect(wizardCtaMorphFrom(3, 4, false)).toEqual({ from: 'Next', to: 'Review' });
-    expect(wizardCtaMorphFrom(4, 4, false)).toEqual({ from: 'Review', to: 'Publish' });
+  it('step 1 enters with Start to Continue morph', () => {
+    expect(wizardCtaMorphOnStepEnter(1, 4, false)).toEqual({ from: 'Start', to: 'Continue' });
+  });
+
+  it('intermediate steps morph on enter and transition', () => {
+    expect(wizardCtaMorphOnStepEnter(2, 4, false)).toEqual({ from: 'Continue', to: 'Next' });
+    expect(wizardCtaMorphOnStepEnter(3, 4, false)).toEqual({ from: 'Next', to: 'Review' });
+    expect(wizardCtaMorphFromTransition(1, 2, 4, false)).toEqual({ from: 'Continue', to: 'Next' });
+    expect(wizardCtaMorphFromTransition(2, 3, 4, false)).toEqual({ from: 'Next', to: 'Review' });
+    expect(wizardCtaMorphFromTransition(3, 4, 4, false)).toEqual({ from: 'Review', to: 'Publish' });
+  });
+
+  it('wizardCtaMorphFrom aliases step enter morph', () => {
+    expect(wizardCtaMorphFrom(1, 4, false)).toEqual({ from: 'Start', to: 'Continue' });
   });
 });
 
@@ -121,5 +134,16 @@ describe('shared dish layout', () => {
     expect(t.initialScale).toBeLessThan(1);
     expect(typeof t.translateX).toBe('number');
     expect(typeof t.translateY).toBe('number');
+  });
+
+  it('sync hero transform matches compute without async measure', () => {
+    registerSharedDishLayout('sync-dish', card);
+    const sync = getSyncHeroTransformForDish('sync-dish', HERO_RECT_MOBILE);
+    const direct = computeSharedHeroTransform(card, HERO_RECT_MOBILE);
+    expect(sync.hasOrigin).toBe(true);
+    expect(sync.initialScale).toBe(direct.initialScale);
+    expect(sync.translateX).toBe(direct.translateX);
+    expect(sync.translateY).toBe(direct.translateY);
+    clearSharedDishLayout('sync-dish');
   });
 });

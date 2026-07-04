@@ -1,7 +1,7 @@
 // Domain components per 12-shared-components.md: CookCard, OrderCard, OrderStatusBadge, PayNowPanel, CollectionSlotPicker, ListingWizardStep etc.
 // Singapore taste: HDB, heritage, occasions. All components use SHC tokens + testID for Maestro.
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, Switch } from 'react-native';
 import { getDishImageUrl, getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
 import { SHCZomatoAddButton, SHCZomatoRatingPill } from './visuals';
@@ -14,6 +14,7 @@ import {
   SHCSectionTitle,
 } from './primitives';
 import { SHCFoodImage } from './visuals';
+import { useSharedDishPress } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography } from './theme';
 import { RequestDishExperience } from './request-ux';
@@ -55,10 +56,12 @@ export function SHCDishCard({
     dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const imageHeight = compact ? 128 : 168;
   const rating = dish.rating ?? 4.8;
-  const handleAdd = onAddPress ?? onPress;
+  const imageMeasureRef = useRef<View>(null);
+  const handlePress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
+  const handleAdd = onAddPress ?? handlePress;
 
   return (
-    <Pressable onPress={onPress} testID={cardTestID} style={{ marginBottom: shcSpacing.sm, flex: compact ? 1 : undefined }}>
+    <Pressable onPress={handlePress} testID={cardTestID} style={{ marginBottom: shcSpacing.sm, flex: compact ? 1 : undefined }}>
       <View
         style={{
           borderRadius: shcRadii.lg,
@@ -69,7 +72,7 @@ export function SHCDishCard({
           ...shcShadows.brutalSm,
         }}
       >
-        <View style={{ position: 'relative' }}>
+        <View style={{ position: 'relative' }} ref={imageMeasureRef}>
           <SHCFoodImage
             uri={imageUri}
             height={imageHeight}

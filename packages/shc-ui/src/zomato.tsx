@@ -1,13 +1,13 @@
 // Zomato/Swiggy layout primitives — location bar, promo rail, filter row, horizontal dish rows.
 // @ts-nocheck
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
 import { SHCStaggerIn } from './motion';
-import { SHCSharedDishImage, registerSharedDishLayout } from './family-values-ui';
+import { SHCSharedDishImage, useSharedDishPress } from './family-values-ui';
 import { getDishImageUrl, getCollectionSlotLabel } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 
@@ -370,13 +370,7 @@ export function SHCZomatoDishRow({
   const slot = dish.collection_slot || getCollectionSlotLabel(dish.id);
   const rating = dish.rating ?? 4.8;
   const imageMeasureRef = useRef<View>(null);
-
-  const handlePress = useCallback(() => {
-    imageMeasureRef.current?.measureInWindow((x, y, w, h) => {
-      registerSharedDishLayout(dish.id, { x, y, w, h });
-      onPress?.();
-    });
-  }, [dish.id, onPress]);
+  const handlePress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
 
   return (
     <Pressable

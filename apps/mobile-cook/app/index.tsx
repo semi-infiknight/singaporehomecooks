@@ -1,3 +1,4 @@
+// @ts-nocheck — RN View types vs @types/react mismatch in typecheck-only config
 import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';

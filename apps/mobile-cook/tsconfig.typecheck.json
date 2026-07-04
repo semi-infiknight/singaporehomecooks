@@ -8,13 +8,14 @@
     "strict": false
   },
   "include": [
-    "app/_layout.tsx",
-    "app/(cook)/_layout.tsx",
-    "app/(cook)/listings.tsx",
-    "app/(cook)/compliance.tsx",
-    "app/(cook)/orders/**/*.tsx",
-    "app/(cook)/dashboard.tsx",
-    "app/(cook)/orders.tsx",
-    "components/CookTabBar.tsx"
+    "app/**/*.tsx",
+    "app/**/*.ts",
+    "components/**/*.tsx",
+    "components/**/*.ts",
+    "hooks/**/*.tsx",
+    "hooks/**/*.ts"
+  ],
+  "exclude": [
+    "app/index.tsx"
   ]
 }

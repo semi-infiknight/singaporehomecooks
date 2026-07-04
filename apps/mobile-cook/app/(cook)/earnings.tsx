@@ -27,7 +27,9 @@ export default function Earnings() {
   const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useQuery({
     queryKey: ['earnings'],
     queryFn: getEarnings,
-  });
+  }) as {
+    data: { thisWeek: number; projectedPayout: number; orders_count?: number; orders?: number };
+  };
   const { data: expenses = { expenses: [], total_cents: 0 } } = useQuery({
     queryKey: ['cook-expenses'],
     queryFn: listCookExpenses,

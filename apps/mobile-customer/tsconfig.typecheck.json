@@ -8,14 +8,14 @@
     "strict": false
   },
   "include": [
-    "app/_layout.tsx",
-    "app/(customer)/_layout.tsx",
-    "app/(customer)/index.tsx",
-    "app/(customer)/cart.tsx",
-    "app/(customer)/checkout.tsx",
-    "app/(customer)/product/**/*.tsx",
-    "app/(customer)/orders/**/*.tsx",
-    "components/CustomerTabBar.tsx",
-    "hooks/useGuestAuthTray.tsx"
+    "app/**/*.tsx",
+    "app/**/*.ts",
+    "components/**/*.tsx",
+    "components/**/*.ts",
+    "hooks/**/*.tsx",
+    "hooks/**/*.ts"
+  ],
+  "exclude": [
+    "app/index.tsx"
   ]
 }

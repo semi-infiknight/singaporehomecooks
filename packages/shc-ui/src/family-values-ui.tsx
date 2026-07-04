@@ -16,7 +16,10 @@ import {
   getSharedDishLayout,
   clearSharedDishLayout,
   computeSharedHeroTransform,
-  wizardCtaMorphFrom,
+  getSyncHeroTransformForDish,
+  HERO_RECT_MOBILE,
+  wizardCtaMorphOnStepEnter,
+  wizardCtaMorphFromTransition,
 } from './family-values-core';
 import { gourmeatColors, shcSpacing, shcRadii } from './theme';
 import { SHCButton, SHCButtonText } from './primitives';
@@ -26,7 +29,24 @@ export {
   getSharedDishLayout,
   clearSharedDishLayout,
   computeSharedHeroTransform,
+  getSyncHeroTransformForDish,
+  HERO_RECT_MOBILE,
+  HERO_RECT_WEB,
 } from './family-values-core';
+
+/** Single press path: measure thumbnail → register layout → navigate. */
+export function useSharedDishPress(
+  dishId: string,
+  imageRef: React.RefObject<View | null>,
+  onNavigate?: () => void
+) {
+  return useCallback(() => {
+    imageRef.current?.measureInWindow((x, y, w, h) => {
+      registerSharedDishLayout(dishId, { x, y, w, h });
+      onNavigate?.();
+    });
+  }, [dishId, imageRef, onNavigate]);
+}
 
 export function SHCMorphingLabel({
   from,
@@ -132,40 +152,19 @@ export function SHCSharedDishImage({
 }) {
   const reduce = shouldReduceMotion();
   const containerRef = useRef<View>(null);
-  const pendingOrigin = hero && !reduce ? getSharedDishLayout(dishId) : undefined;
-  const scale = useRef(new Animated.Value(pendingOrigin ? 0.55 : 1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const [ready, setReady] = useState(!hero || reduce || !pendingOrigin);
-
-  const runHeroMorph = useCallback(() => {
-    const origin = getSharedDishLayout(dishId);
-    if (!origin || reduce) {
-      scale.setValue(1);
-      translateX.setValue(0);
-      translateY.setValue(0);
-      setReady(true);
-      return;
-    }
-    containerRef.current?.measureInWindow((x, y, w, h) => {
-      const t = computeSharedHeroTransform(origin, { x, y, w, h });
-      scale.setValue(t.initialScale);
-      translateX.setValue(t.translateX);
-      translateY.setValue(t.translateY);
-      setReady(true);
-      Animated.parallel([
-        Animated.spring(scale, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }),
-        Animated.spring(translateX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
-        Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
-      ]).start(() => clearSharedDishLayout(dishId));
-    });
-  }, [dishId, reduce, scale, translateX, translateY]);
+  const syncHero = hero && !reduce ? getSyncHeroTransformForDish(dishId, HERO_RECT_MOBILE) : null;
+  const scale = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.initialScale : 1)).current;
+  const translateX = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.translateX : 0)).current;
+  const translateY = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.translateY : 0)).current;
 
   useEffect(() => {
-    if (hero && !reduce) {
-      requestAnimationFrame(runHeroMorph);
-    }
-  }, [hero, reduce, runHeroMorph]);
+    if (!hero || reduce || !syncHero?.hasOrigin) return;
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }),
+      Animated.spring(translateX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+    ]).start(() => clearSharedDishLayout(dishId));
+  }, [dishId, hero, reduce, scale, syncHero?.hasOrigin, translateX, translateY]);
 
   const setRefs = useCallback(
     (node: View | null) => {
@@ -179,8 +178,7 @@ export function SHCSharedDishImage({
   return (
     <Animated.View
       ref={setRefs}
-      style={{ opacity: ready ? 1 : 0.01, transform: [{ scale }, { translateX }, { translateY }] }}
-      onLayout={hero && !reduce ? runHeroMorph : undefined}
+      style={{ transform: [{ scale }, { translateX }, { translateY }] }}
       testID={`shared-dish-wrap-${dishId}`}
     >
       <Image source={{ uri }} style={style} testID={testID || `shared-dish-${dishId}`} resizeMode="cover" />
@@ -206,7 +204,19 @@ export function ListingWizardMorphCta({
   testID?: string;
   showChevron?: boolean;
 }) {
-  const { from, to } = wizardCtaMorphFrom(step, total, editing);
+  const prevStepRef = useRef(step);
+  const [morph, setMorph] = useState(() => wizardCtaMorphOnStepEnter(step, total, editing));
+
+  useEffect(() => {
+    if (prevStepRef.current !== step) {
+      setMorph(wizardCtaMorphFromTransition(prevStepRef.current, step, total, editing));
+      prevStepRef.current = step;
+      return;
+    }
+    setMorph(wizardCtaMorphOnStepEnter(step, total, editing));
+  }, [step, total, editing]);
+
+  const { from, to } = morph;
   return (
     <SHCButton onPress={onPress} disabled={disabled} testID={testID} style={styles.wizardCta}>
       <View style={styles.wizardCtaInner}>

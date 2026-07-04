@@ -70,7 +70,9 @@ export default function Profile() {
   const router = useRouter();
   const { showRequest } = useLocalSearchParams<{ showRequest?: string }>();
   const { user, logout } = useAuth();
-  const { data: credits } = useCredits();
+  const { data: credits } = useCredits() as {
+    data?: { balance?: number; lifetimeSpend?: number; tier?: string };
+  };
   const redeemMut = useRedeemCredits();
   const { data: notifs = [], markRead } = useNotifications();
   const { data: myRequests = [] } = useMyRequests();

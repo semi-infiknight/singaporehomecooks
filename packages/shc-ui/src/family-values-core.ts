@@ -125,12 +125,33 @@ export function wizardCtaLabel(step: number, total: number, editing: boolean): s
   return wizardStepActionLabel(step, total);
 }
 
-export function wizardCtaMorphFrom(step: number, total: number, editing: boolean): { from: string; to: string } {
+/** Morph labels when a wizard step's CTA first appears (step 1: Start→Continue). */
+export function wizardCtaMorphOnStepEnter(step: number, total: number, editing: boolean): { from: string; to: string } {
   if (step >= total) {
     return { from: 'Review', to: editing ? 'Save changes' : 'Publish' };
   }
   const to = wizardStepActionLabel(step, total);
-  const from = step <= 1 ? 'Continue' : wizardStepActionLabel(step - 1, total);
+  const from = step === 1 ? 'Start' : wizardStepActionLabel(step - 1, total);
+  return { from, to };
+}
+
+/** @deprecated Use wizardCtaMorphOnStepEnter */
+export function wizardCtaMorphFrom(step: number, total: number, editing: boolean): { from: string; to: string } {
+  return wizardCtaMorphOnStepEnter(step, total, editing);
+}
+
+/** Morph when advancing from prevStep to nextStep on a persistent CTA. */
+export function wizardCtaMorphFromTransition(
+  prevStep: number,
+  nextStep: number,
+  total: number,
+  editing: boolean
+): { from: string; to: string } {
+  if (nextStep >= total) {
+    return { from: wizardStepActionLabel(prevStep, total), to: editing ? 'Save changes' : 'Publish' };
+  }
+  const from = prevStep === 0 ? 'Start' : wizardStepActionLabel(prevStep, total);
+  const to = wizardStepActionLabel(nextStep, total);
   return { from, to };
 }
 
@@ -149,6 +170,31 @@ export function getSharedDishLayout(id: string): SharedDishLayout | undefined {
 
 export function clearSharedDishLayout(id: string): void {
   sharedDishLayouts.delete(id);
+}
+
+/** Fixed PDP hero rect for synchronous morph (matches mobile product/[id] hero). */
+export const HERO_RECT_MOBILE: SharedDishLayout = { x: 0, y: 0, w: 390, h: 280 };
+
+/** Fixed PDP hero rect for web product page hero. */
+export const HERO_RECT_WEB: SharedDishLayout = { x: 0, y: 0, w: 768, h: 320 };
+
+/** Synchronous hero initial transform — no async measure required. */
+export function getSyncHeroTransform(
+  origin: SharedDishLayout,
+  hero: SharedDishLayout = HERO_RECT_MOBILE
+): { initialScale: number; translateX: number; translateY: number } {
+  return computeSharedHeroTransform(origin, hero);
+}
+
+export function getSyncHeroTransformForDish(
+  dishId: string,
+  hero: SharedDishLayout = HERO_RECT_MOBILE
+): { initialScale: number; translateX: number; translateY: number; hasOrigin: boolean } {
+  const origin = getSharedDishLayout(dishId);
+  if (!origin) {
+    return { initialScale: 1, translateX: 0, translateY: 0, hasOrigin: false };
+  }
+  return { ...getSyncHeroTransform(origin, hero), hasOrigin: true };
 }
 
 /** Compute hero entry transform from a captured card thumbnail layout. */

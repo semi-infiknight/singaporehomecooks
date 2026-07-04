@@ -1,11 +1,11 @@
 // Gourmeat food-app UI (Orbix Studio / Behance) — customer discover, cart, checkout.
 // @ts-nocheck
-import React, { useRef, useCallback } from 'react';
+import React, { useRef } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
 import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
-import { SHCSharedDishImage, registerSharedDishLayout } from './family-values-ui';
+import { SHCSharedDishImage, useSharedDishPress } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -319,13 +319,7 @@ export function GourmeatDishCard({
   const discount = discountPercent ?? gourmeatDiscountPercent(dish.id);
   const rating = dish.rating ?? 4.8;
   const imageMeasureRef = useRef<View>(null);
-
-  const handleCardPress = useCallback(() => {
-    imageMeasureRef.current?.measureInWindow((x, y, w, h) => {
-      registerSharedDishLayout(dish.id, { x, y, w, h });
-      onPress?.();
-    });
-  }, [dish.id, onPress]);
+  const handleCardPress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
 
   return (
     <View
@@ -392,7 +386,7 @@ export function GourmeatDishCard({
               <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
             </View>
           </Pressable>
-          <GourmeatAddButton onPress={onAddPress ?? onPress} testID={`${cardTestID}-add`} />
+          <GourmeatAddButton onPress={onAddPress ?? handleCardPress} testID={`${cardTestID}-add`} />
         </View>
       </View>
     </View>

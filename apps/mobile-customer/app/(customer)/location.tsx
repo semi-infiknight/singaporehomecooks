@@ -91,7 +91,7 @@ export default function LocationScreen() {
     setLocating(true);
     try {
       const result = await getCurrentGpsCoords();
-      if (!result.ok) {
+      if (result.ok === false) {
         if (result.reason === 'unavailable') {
           Alert.alert(
             'GPS not available in this build',
