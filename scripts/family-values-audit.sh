@@ -66,4 +66,8 @@ else
 fi
 
 log ""
+log "--- pixel measurements ---"
+FAMILY_VALUES_SCRATCH="$OUT" "$ROOT/scripts/family-values-pixel-evidence.sh" 2>&1 | tee -a "$OUT/build.log"
+
+log ""
 log "=== Audit complete ==="

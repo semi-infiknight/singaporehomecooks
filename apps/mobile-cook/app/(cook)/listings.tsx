@@ -450,7 +450,6 @@ export default function CookListings() {
             placeholder="Min Qty"
             style={inputStyle}
           />
-          <ListingWizardMorphCta step={1} editing={!!editingId} onPress={() => goToStep(2)} testID="listing-wizard-next-step1" />
         </ListingWizardStep>
       )}
 
@@ -459,12 +458,6 @@ export default function CookListings() {
           <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
           <TextInput value={cuisine} onChangeText={setCuisine} style={inputStyle} />
           <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
-          <View style={styles.navRow}>
-            <SHCButton onPress={() => goToStep(1)}>
-              <SHCButtonText>←</SHCButtonText>
-            </SHCButton>
-            <ListingWizardMorphCta step={2} editing={!!editingId} onPress={() => goToStep(3)} testID="listing-wizard-next-step2" />
-          </View>
         </ListingWizardStep>
       )}
 
@@ -504,12 +497,6 @@ export default function CookListings() {
             <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
           </Pressable>
           <TextInput value={heritage} onChangeText={setHeritage} multiline style={[inputStyle, { height: 60 }]} />
-          <View style={styles.navRow}>
-            <SHCButton onPress={() => goToStep(2)}>
-              <SHCButtonText>←</SHCButtonText>
-            </SHCButton>
-            <ListingWizardMorphCta step={3} editing={!!editingId} onPress={() => goToStep(4)} testID="listing-wizard-next-step3" />
-          </View>
         </ListingWizardStep>
       )}
 
@@ -533,14 +520,6 @@ export default function CookListings() {
               <SHCBadge key={t} variant="heritage">{t}</SHCBadge>
             ))}
           </View>
-          <ListingWizardMorphCta
-            step={4}
-            editing={!!editingId}
-            onPress={publish}
-            disabled={publishing}
-            testID="listing-wizard-publish"
-            showChevron={false}
-          />
           {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
           {editingId ? (
             <SHCButton variant="outline" onPress={resetWizard} style={{ marginTop: 8 }}>
@@ -560,6 +539,24 @@ export default function CookListings() {
         </View>
       )}
       </SHCWizardPane>
+
+      <View style={[styles.navRow, step === 1 && { marginTop: 12 }]}>
+        {step > 1 && step <= 4 ? (
+          <SHCButton onPress={() => goToStep(step - 1)} testID={`listing-wizard-back-step${step}`}>
+            <SHCButtonText>←</SHCButtonText>
+          </SHCButton>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <ListingWizardMorphCta
+            step={step}
+            editing={!!editingId}
+            onPress={step >= 4 ? publish : () => goToStep(step + 1)}
+            disabled={step >= 4 && publishing}
+            testID={step >= 4 ? 'listing-wizard-publish' : `listing-wizard-next-step${step}`}
+            showChevron={step < 4}
+          />
+        </View>
+      </View>
 
       <SHCCelebration
         visible={showCelebration}

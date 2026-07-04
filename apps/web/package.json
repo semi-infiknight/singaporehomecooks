@@ -10,17 +10,17 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@shc/api-client": "workspace:*",
+    "@shc/business-rules": "workspace:*",
+    "@shc/types": "workspace:*",
+    "@shc/ui": "workspace:*",
+    "@shc/utils": "workspace:*",
+    "@tanstack/react-query": "^5.45.0",
+    "lucide-react": "^0.390.0",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "@tanstack/react-query": "^5.45.0",
-    "@shc/api-client": "workspace:*",
-    "@shc/types": "workspace:*",
-    "@shc/ui": "workspace:*",
-    "@shc/business-rules": "workspace:*",
-    "@shc/utils": "workspace:*",
-    "zod": "^3.23.8",
-    "lucide-react": "^0.390.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -29,6 +29,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "playwright": "^1.61.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

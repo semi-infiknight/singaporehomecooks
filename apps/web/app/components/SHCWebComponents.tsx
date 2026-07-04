@@ -1658,7 +1658,7 @@ export function GourmeatAddButton({
   onClick,
   testID,
 }: {
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   testID?: string;
 }) {
   return (
@@ -1768,6 +1768,10 @@ export function GourmeatDishCard({
   const displayRating = rating ?? (product.rating != null ? Number(product.rating) : 4.8);
   const cardTestID = `dish-card-${product.id}`;
   const productHref = `/product/${product.id}`;
+  const handleAddClick = (e: React.MouseEvent<HTMLElement>) => {
+    captureSharedDishLayout(product.id, cardTestID, e);
+    onAddPress?.();
+  };
 
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
@@ -1825,7 +1829,7 @@ export function GourmeatDishCard({
               </div>
             </SharedDishProductLink>
             <GourmeatAddButton
-              onClick={onAddPress}
+              onClick={handleAddClick}
               testID={`${cardTestID}-add`}
             />
           </div>
@@ -2412,25 +2416,36 @@ export function SHCSharedDishImageWeb({
   testID?: string;
 }) {
   const reduce = shouldReduceMotion();
-  const syncHero = hero && !reduce ? getSyncHeroTransformForDish(dishId, HERO_RECT_WEB) : null;
-  const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>(() => {
-    if (!syncHero?.hasOrigin) return {};
-    return {
-      transform: `translate(${syncHero.translateX}px, ${syncHero.translateY}px) scale(${syncHero.initialScale})`,
-      transition: 'none',
-    };
-  });
+  const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>({});
 
   React.useEffect(() => {
-    if (!hero || reduce || !syncHero?.hasOrigin) return;
-    requestAnimationFrame(() => {
+    if (!hero || reduce) return;
+    let cancelled = false;
+    const tryMorph = (attempt: number) => {
+      if (cancelled) return;
+      const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_WEB);
+      if (!sync.hasOrigin) {
+        if (attempt < 4) requestAnimationFrame(() => tryMorph(attempt + 1));
+        return;
+      }
       setMorphStyle({
-        transform: 'translate(0px, 0px) scale(1)',
-        transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+        transform: `translate(${sync.translateX}px, ${sync.translateY}px) scale(${sync.initialScale})`,
+        transition: 'none',
       });
-      clearSharedDishLayout(dishId);
-    });
-  }, [dishId, hero, reduce, syncHero?.hasOrigin]);
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        setMorphStyle({
+          transform: 'translate(0px, 0px) scale(1)',
+          transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+        });
+        clearSharedDishLayout(dishId);
+      });
+    };
+    tryMorph(0);
+    return () => {
+      cancelled = true;
+    };
+  }, [dishId, hero, reduce]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -2439,7 +2454,7 @@ export function SHCSharedDishImageWeb({
       alt={alt}
       data-testid={testID || `shared-dish-${dishId}`}
       style={hero ? morphStyle : undefined}
-      className={`object-cover w-full h-full ${hero && !syncHero?.hasOrigin ? 'shc-hero-image-scale' : ''} ${className}`}
+      className={`object-cover w-full h-full ${hero && !morphStyle.transform ? 'shc-hero-image-scale' : ''} ${className}`}
     />
   );
 }

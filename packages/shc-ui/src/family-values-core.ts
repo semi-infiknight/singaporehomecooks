@@ -164,6 +164,18 @@ export function registerSharedDishLayout(id: string, layout: SharedDishLayout): 
   sharedDishLayouts.set(id, layout);
 }
 
+/** Pure press handler — register measured rect then navigate (testable without RN). */
+export function applySharedDishPress(
+  dishId: string,
+  measure: SharedDishLayout | null | undefined,
+  onNavigate?: () => void
+): void {
+  if (measure && measure.w > 0 && measure.h > 0) {
+    registerSharedDishLayout(dishId, measure);
+  }
+  onNavigate?.();
+}
+
 export function getSharedDishLayout(id: string): SharedDishLayout | undefined {
   return sharedDishLayouts.get(id);
 }

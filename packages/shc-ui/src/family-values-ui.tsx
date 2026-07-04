@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Easing, Text, View, StyleSheet, Image, type ImageStyle, type StyleProp } from 'react-native';
 import {
   computeMorphingLabelSegments,
-  morphingLabelTarget,
   shouldReduceMotion,
   tabSlideDirection,
   TAB_SLIDE_OFFSET,
@@ -18,6 +17,7 @@ import {
   computeSharedHeroTransform,
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
+  applySharedDishPress,
   wizardCtaMorphOnStepEnter,
   wizardCtaMorphFromTransition,
 } from './family-values-core';
@@ -41,9 +41,13 @@ export function useSharedDishPress(
   onNavigate?: () => void
 ) {
   return useCallback(() => {
-    imageRef.current?.measureInWindow((x, y, w, h) => {
-      registerSharedDishLayout(dishId, { x, y, w, h });
-      onNavigate?.();
+    const node = imageRef.current;
+    if (!node) {
+      applySharedDishPress(dishId, null, onNavigate);
+      return;
+    }
+    node.measureInWindow((x, y, w, h) => {
+      applySharedDishPress(dishId, { x, y, w, h }, onNavigate);
     });
   }, [dishId, imageRef, onNavigate]);
 }
@@ -61,18 +65,55 @@ export function SHCMorphingLabel({
 }) {
   const reduce = shouldReduceMotion();
   const segments = useMemo(() => computeMorphingLabelSegments(from, to), [from, to]);
-  const target = morphingLabelTarget(segments);
-  const opacity = useRef(new Animated.Value(reduce ? 1 : 0.6)).current;
+  const sharedText = segments
+    .filter((s) => s.kind === 'shared')
+    .map((s) => s.text)
+    .join('');
+  const outText = segments
+    .filter((s) => s.kind === 'out')
+    .map((s) => s.text)
+    .join('');
+  const inText = segments
+    .filter((s) => s.kind === 'in')
+    .map((s) => s.text)
+    .join('');
+  const outOpacity = useRef(new Animated.Value(1)).current;
+  const inOpacity = useRef(new Animated.Value(from === to ? 1 : 0)).current;
+  const containerOpacity = useRef(new Animated.Value(reduce ? 1 : 0.9)).current;
 
   useEffect(() => {
-    if (reduce) return;
-    opacity.setValue(0.6);
-    Animated.timing(opacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [to, opacity, reduce]);
+    if (from === to || reduce) {
+      outOpacity.setValue(0);
+      inOpacity.setValue(1);
+      containerOpacity.setValue(1);
+      return;
+    }
+    outOpacity.setValue(1);
+    inOpacity.setValue(0);
+    containerOpacity.setValue(0.9);
+    Animated.parallel([
+      Animated.timing(containerOpacity, { toValue: 1, duration: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.sequence([
+        Animated.delay(100),
+        Animated.timing(outOpacity, { toValue: 0, duration: 160, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(inOpacity, { toValue: 1, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, [from, to, reduce, outOpacity, inOpacity, containerOpacity]);
+
+  if (from === to) {
+    return (
+      <Animated.Text style={[styles.morphLabel, style, { opacity: containerOpacity }]} testID={testID}>
+        {to}
+      </Animated.Text>
+    );
+  }
 
   return (
-    <Animated.Text style={[styles.morphLabel, style, { opacity }]} testID={testID}>
-      {target}
+    <Animated.Text style={[styles.morphLabel, style, { opacity: containerOpacity }]} testID={testID}>
+      {sharedText}
+      {outText ? <Animated.Text style={{ opacity: outOpacity }}>{outText}</Animated.Text> : null}
+      {inText ? <Animated.Text style={{ opacity: inOpacity }}>{inText}</Animated.Text> : null}
     </Animated.Text>
   );
 }
@@ -152,19 +193,36 @@ export function SHCSharedDishImage({
 }) {
   const reduce = shouldReduceMotion();
   const containerRef = useRef<View>(null);
-  const syncHero = hero && !reduce ? getSyncHeroTransformForDish(dishId, HERO_RECT_MOBILE) : null;
-  const scale = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.initialScale : 1)).current;
-  const translateX = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.translateX : 0)).current;
-  const translateY = useRef(new Animated.Value(syncHero?.hasOrigin ? syncHero.translateY : 0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const morphStarted = useRef(false);
+
+  const runHeroMorph = useCallback(
+    (attempt = 0) => {
+      if (!hero || reduce || morphStarted.current) return;
+      const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_MOBILE);
+      if (!sync.hasOrigin) {
+        if (attempt < 4) requestAnimationFrame(() => runHeroMorph(attempt + 1));
+        return;
+      }
+      morphStarted.current = true;
+      scale.setValue(sync.initialScale);
+      translateX.setValue(sync.translateX);
+      translateY.setValue(sync.translateY);
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }),
+        Animated.spring(translateX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+        Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+      ]).start(() => clearSharedDishLayout(dishId));
+    },
+    [dishId, hero, reduce, scale, translateX, translateY]
+  );
 
   useEffect(() => {
-    if (!hero || reduce || !syncHero?.hasOrigin) return;
-    Animated.parallel([
-      Animated.spring(scale, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }),
-      Animated.spring(translateX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
-    ]).start(() => clearSharedDishLayout(dishId));
-  }, [dishId, hero, reduce, scale, syncHero?.hasOrigin, translateX, translateY]);
+    morphStarted.current = false;
+    if (hero && !reduce) runHeroMorph(0);
+  }, [dishId, hero, reduce, runHeroMorph]);
 
   const setRefs = useCallback(
     (node: View | null) => {

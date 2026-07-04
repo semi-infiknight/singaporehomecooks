@@ -20,6 +20,7 @@ import {
   computeSharedHeroTransform,
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
+  applySharedDishPress,
 } from './family-values-core';
 
 describe('tray stack', () => {
@@ -44,6 +45,12 @@ describe('tray stack', () => {
 });
 
 describe('computeMorphingLabelSegments', () => {
+  it('Start to Continue keeps out/in segments for live morph', () => {
+    const segs = computeMorphingLabelSegments('Start', 'Continue');
+    expect(segs.find((s) => s.kind === 'out')?.text).toBe('Start');
+    expect(segs.find((s) => s.kind === 'in')?.text).toBe('Continue');
+  });
+
   it('shares prefix between Continue and Confirm', () => {
     const segs = computeMorphingLabelSegments('Continue', 'Confirm order');
     expect(segs[0]).toEqual({ text: 'Con', kind: 'shared' });
@@ -134,6 +141,16 @@ describe('shared dish layout', () => {
     expect(t.initialScale).toBeLessThan(1);
     expect(typeof t.translateX).toBe('number');
     expect(typeof t.translateY).toBe('number');
+  });
+
+  it('applySharedDishPress registers before navigate callback', () => {
+    clearSharedDishLayout('press-order');
+    let layoutAtNav: ReturnType<typeof getSharedDishLayout>;
+    applySharedDishPress('press-order', { x: 1, y: 2, w: 50, h: 50 }, () => {
+      layoutAtNav = getSharedDishLayout('press-order');
+    });
+    expect(layoutAtNav!).toEqual({ x: 1, y: 2, w: 50, h: 50 });
+    clearSharedDishLayout('press-order');
   });
 
   it('sync hero transform matches compute without async measure', () => {
