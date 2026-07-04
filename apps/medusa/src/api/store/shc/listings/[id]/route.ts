@@ -6,27 +6,25 @@ import { getCookId } from "../../../../../lib/shc-actors";
 import { shapeProduct } from "../../../../../lib/shc-product-shape";
 import { ListingUpdateSchema, listingPriceCents } from "../../../../../lib/shc-listing-schema";
 
-async function requireOwnedListing(req: MedusaRequest, productId: string) {
+import type { SHCProductMeta } from "@shc/types";
+
+type OwnedListing =
+  | { cookId: string; meta: SHCProductMeta; metaService: ShcProductMetaModuleService }
+  | { status: number; body: ReturnType<typeof createSHCError> };
+
+async function requireOwnedListing(req: MedusaRequest, productId: string): Promise<OwnedListing> {
   let cookId: string;
   try {
     cookId = getCookId(req);
   } catch {
-    return { error: res401("Cook login required") as const };
+    return { status: 401, body: createSHCError("SHC-GENERIC-001", "Cook login required") };
   }
   const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
   const meta = await metaService.getMetaForCook(cookId, productId);
   if (!meta) {
-    return { error: res404("Listing not found") as const };
+    return { status: 404, body: createSHCError("SHC-GENERIC-001", "Listing not found") };
   }
   return { cookId, meta, metaService };
-}
-
-function res401(message: string) {
-  return { status: 401 as const, body: createSHCError("SHC-GENERIC-001", message) };
-}
-
-function res404(message: string) {
-  return { status: 404 as const, body: createSHCError("SHC-GENERIC-001", message) };
 }
 
 /** PATCH /store/shc/listings/:id — cook updates an existing listing */
@@ -38,16 +36,16 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const owned = await requireOwnedListing(req, id);
-  if ("error" in owned) {
-    return res.status(owned.error.status).json({ error: owned.error.body });
+  if ("status" in owned) {
+    return res.status(owned.status).json({ error: owned.body });
   }
 
-  const { meta, metaService } = owned;
+  const { cookId, meta, metaService } = owned;
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
   const { paused, price, price_cents, ...rest } = parse.data;
 
   try {
-    const patch: Record<string, unknown> = { product_id: id, cook_id: meta.cook_id };
+    const patch: Record<string, unknown> = { product_id: id, cook_id: cookId };
     if (rest.name !== undefined) patch.name = rest.name;
     if (rest.description !== undefined) patch.description = rest.description;
     if (rest.cuisine !== undefined) patch.cuisine = rest.cuisine;
@@ -81,8 +79,8 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params as { id: string };
   const owned = await requireOwnedListing(req, id);
-  if ("error" in owned) {
-    return res.status(owned.error.status).json({ error: owned.error.body });
+  if ("status" in owned) {
+    return res.status(owned.status).json({ error: owned.body });
   }
 
   const { metaService } = owned;
