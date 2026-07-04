@@ -14,7 +14,7 @@ import {
   SHCSectionTitle,
 } from './primitives';
 import { SHCFoodImage } from './visuals';
-import { useSharedDishPress } from './family-values-ui';
+import { SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography } from './theme';
 import { RequestDishExperience } from './request-ux';
@@ -56,12 +56,16 @@ export function SHCDishCard({
     dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const imageHeight = compact ? 128 : 168;
   const rating = dish.rating ?? 4.8;
-  const imageMeasureRef = useRef<View>(null);
-  const handlePress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
-  const handleAdd = onAddPress ?? handlePress;
+  const handleAdd = onAddPress ?? onPress;
 
   return (
-    <Pressable onPress={handlePress} testID={cardTestID} style={{ marginBottom: shcSpacing.sm, flex: compact ? 1 : undefined }}>
+    <SharedDishNavSurface
+      dishId={dish.id}
+      onNavigate={onPress}
+      testID={cardTestID}
+      style={{ marginBottom: shcSpacing.sm, flex: compact ? 1 : undefined }}
+    >
+      {({ measureRef }) => (
       <View
         style={{
           borderRadius: shcRadii.lg,
@@ -72,7 +76,7 @@ export function SHCDishCard({
           ...shcShadows.brutalSm,
         }}
       >
-        <View style={{ position: 'relative' }} ref={imageMeasureRef}>
+        <View style={{ position: 'relative' }} ref={measureRef} collapsable={false}>
           <SHCFoodImage
             uri={imageUri}
             height={imageHeight}
@@ -117,7 +121,8 @@ export function SHCDishCard({
           {dish.cuisine && <SHCBadge variant="heritage">{dish.cuisine}</SHCBadge>}
         </View>
       </View>
-    </Pressable>
+      )}
+    </SharedDishNavSurface>
   );
 }
 

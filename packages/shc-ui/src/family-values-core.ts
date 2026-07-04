@@ -183,22 +183,26 @@ export function hasSharedDishLayout(dishId: string, measure?: SharedDishLayout |
   return !!cached && cached.w > 0 && cached.h > 0;
 }
 
-/** Navigate only after layout is registered — uses cache if measure missing. */
+/** Always navigate; register layout when measure is valid (hero morph is best-effort). */
+export function navigateSharedDishPress(
+  dishId: string,
+  measure: SharedDishLayout | null | undefined,
+  onNavigate?: () => void
+): void {
+  if (measure && measure.w > 0 && measure.h > 0) {
+    registerSharedDishLayout(dishId, measure);
+  }
+  onNavigate?.();
+}
+
+/** @deprecated Use navigateSharedDishPress — strict mode blocked navigation when layout was missing. */
 export function applySharedDishPressStrict(
   dishId: string,
   measure: SharedDishLayout | null | undefined,
   onNavigate?: () => void
 ): boolean {
-  if (measure && measure.w > 0 && measure.h > 0) {
-    registerSharedDishLayout(dishId, measure);
-    onNavigate?.();
-    return true;
-  }
-  if (hasSharedDishLayout(dishId)) {
-    onNavigate?.();
-    return true;
-  }
-  return false;
+  navigateSharedDishPress(dishId, measure, onNavigate);
+  return hasSharedDishLayout(dishId);
 }
 
 /** Morph label visible text phases (testable without RN). */

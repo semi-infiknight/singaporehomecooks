@@ -1,7 +1,18 @@
 // Family Values UI helpers — morphing labels, chevrons, tabs, shared image, celebration.
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Text, View, StyleSheet, Image, type ImageStyle, type StyleProp } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Text,
+  View,
+  Pressable,
+  StyleSheet,
+  Image,
+  type ImageStyle,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import {
   computeMorphingLabelSegments,
   shouldReduceMotion,
@@ -18,7 +29,7 @@ import {
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
   applySharedDishPress,
-  applySharedDishPressStrict,
+  navigateSharedDishPress,
   cacheSharedDishLayoutFromRef,
   wizardCtaMorphOnStepEnter,
   wizardCtaMorphFromTransition,
@@ -51,25 +62,48 @@ export function useSharedDishLayoutCache(dishId: string, imageRef: React.RefObje
   return refreshCache;
 }
 
-/** Single press path: measure thumbnail → register layout → navigate (strict: needs layout). */
+/** Single press path: measure thumbnail → register layout → always navigate. */
 export function useSharedDishPress(
   dishId: string,
   imageRef: React.RefObject<View | null>,
   onNavigate?: () => void
 ) {
-  const refreshCache = useSharedDishLayoutCache(dishId, imageRef);
+  useSharedDishLayoutCache(dishId, imageRef);
 
   return useCallback(() => {
     const node = imageRef.current;
     if (!node) {
-      applySharedDishPressStrict(dishId, getSharedDishLayout(dishId) ?? null, onNavigate);
+      navigateSharedDishPress(dishId, getSharedDishLayout(dishId) ?? null, onNavigate);
       return;
     }
     node.measureInWindow((x, y, w, h) => {
-      const ok = applySharedDishPressStrict(dishId, { x, y, w, h }, onNavigate);
-      if (!ok) refreshCache();
+      navigateSharedDishPress(dishId, { x, y, w, h }, onNavigate);
     });
-  }, [dishId, imageRef, onNavigate, refreshCache]);
+  }, [dishId, imageRef, onNavigate]);
+}
+
+/** One outer Pressable per dish card — children receive measureRef for SHCSharedDishImage. */
+export function SharedDishNavSurface({
+  dishId,
+  onNavigate,
+  testID,
+  style,
+  children,
+}: {
+  dishId: string;
+  onNavigate?: () => void;
+  testID?: string;
+  style?: StyleProp<ViewStyle> | ((state: { pressed: boolean }) => StyleProp<ViewStyle>);
+  children: (api: { measureRef: React.RefObject<View | null> }) => React.ReactNode;
+}) {
+  const measureRef = useRef<View | null>(null);
+  const handlePress = useSharedDishPress(dishId, measureRef, onNavigate);
+
+  return (
+    <Pressable onPress={handlePress} testID={testID} style={style} accessibilityRole="button">
+      {children({ measureRef })}
+    </Pressable>
+  );
 }
 
 export function SHCMorphingLabel({

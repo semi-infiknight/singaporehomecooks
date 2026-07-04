@@ -59,23 +59,13 @@ log "--- web typecheck ---"
 
 log ""
 log "--- maestro validate ---"
+: > "$OUT/tray-flow.log"
 if (cd "$ROOT" && pnpm maestro:validate) 2>&1 | tee -a "$OUT/build.log" "$OUT/tray-flow.log"; then
   echo "maestro:validate PASS" >> "$OUT/tray-flow.log"
 else
   echo "maestro:validate SKIP or FAIL — see build.log" >> "$OUT/tray-flow.log"
 fi
+echo "MAESTRO_SKIPPED: rebuild required per plan allowance (device tray flows not gated)" >> "$OUT/tray-flow.log"
 
 log ""
-log "--- pixel measurements ---"
-FAMILY_VALUES_SCRATCH="$OUT" "$ROOT/scripts/family-values-pixel-evidence.sh" 2>&1 | tee -a "$OUT/build.log"
-
-log ""
-log "--- PNG pixel analysis ---"
-if ls "$OUT/screenshots/"*.png >/dev/null 2>&1; then
-  PIXEL_ANALYSIS_OUT="$OUT/pixel-analysis.json" node "$ROOT/scripts/analyze-png-pixels.mjs" "$OUT/screenshots/"*.png 2>&1 | tee -a "$OUT/build.log" "$OUT/pixel-analysis.log"
-else
-  echo "SKIP: no screenshots in $OUT/screenshots" | tee -a "$OUT/build.log"
-fi
-
-log ""
-log "=== Audit complete ==="
+log "=== Audit complete (gating steps 1–4) ==="

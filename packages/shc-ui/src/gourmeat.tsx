@@ -1,11 +1,11 @@
 // Gourmeat food-app UI (Orbix Studio / Behance) — customer discover, cart, checkout.
 // @ts-nocheck
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
 import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
-import { SHCSharedDishImage, useSharedDishPress } from './family-values-ui';
+import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -318,8 +318,6 @@ export function GourmeatDishCard({
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const discount = discountPercent ?? gourmeatDiscountPercent(dish.id);
   const rating = dish.rating ?? 4.8;
-  const imageMeasureRef = useRef<View>(null);
-  const handleCardPress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
 
   return (
     <View
@@ -332,63 +330,67 @@ export function GourmeatDishCard({
         ...gourmeatShadows.card,
       }}
     >
-      <View style={{ position: 'relative' }}>
-        <Pressable onPress={handleCardPress} accessibilityRole="button">
-          <SHCSharedDishImage
-            dishId={dish.id}
-            uri={imageUri}
-            style={{ width: '100%', height: 140 }}
-            measureRef={imageMeasureRef}
-            testID={`${cardTestID}-image`}
-          />
-        </Pressable>
-        <View
-          pointerEvents="box-none"
-          style={{
-            position: 'absolute',
-            top: shcSpacing.sm,
-            left: shcSpacing.sm,
-            right: shcSpacing.sm,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-          }}
-        >
-          <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
-          {onFavoritePress ? (
-            <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 16 }}>
-              <SHCFavoriteButton active={!!isFavorite} onPress={onFavoritePress} testID={`${cardTestID}-favorite`} />
+      <SharedDishNavSurface dishId={dish.id} onNavigate={onPress} style={{ flex: 1 }}>
+        {({ measureRef }) => (
+          <>
+            <View style={{ position: 'relative' }}>
+              <SHCSharedDishImage
+                dishId={dish.id}
+                uri={imageUri}
+                style={{ width: '100%', height: 140 }}
+                measureRef={measureRef}
+                testID={`${cardTestID}-image`}
+              />
+              <View
+                pointerEvents="box-none"
+                style={{
+                  position: 'absolute',
+                  top: shcSpacing.sm,
+                  left: shcSpacing.sm,
+                  right: shcSpacing.sm,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
+                {onFavoritePress ? (
+                  <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 16 }} pointerEvents="box-none">
+                    <SHCFavoriteButton active={!!isFavorite} onPress={onFavoritePress} testID={`${cardTestID}-favorite`} />
+                  </View>
+                ) : null}
+              </View>
             </View>
-          ) : null}
-        </View>
-      </View>
 
-      <View style={{ padding: shcSpacing.sm }}>
-        <Pressable onPress={handleCardPress} accessibilityRole="button">
-          <Text
-            style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.text, marginBottom: 2 }}
-            numberOfLines={1}
-            testID={`${cardTestID}-name`}
-          >
-            {dish.name}
-          </Text>
-          <Text style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
-            {dish.cook_name}
-          </Text>
-        </Pressable>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pressable onPress={handleCardPress} accessibilityRole="button" style={{ flex: 1 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: gourmeatColors.primary }} testID={`${cardTestID}-price`}>
-              S${dish.price}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 }}>
-              <Text style={{ fontSize: 10, color: gourmeatColors.accent }}>★</Text>
-              <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
+            <View style={{ padding: shcSpacing.sm }}>
+              <Text
+                style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.text, marginBottom: 2 }}
+                numberOfLines={1}
+                testID={`${cardTestID}-name`}
+              >
+                {dish.name}
+              </Text>
+              <Text style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
+                {dish.cook_name}
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: gourmeatColors.primary }} testID={`${cardTestID}-price`}>
+                    S${dish.price}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 }}>
+                    <Text style={{ fontSize: 10, color: gourmeatColors.accent }}>★</Text>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
+                  </View>
+                </View>
+                <View onStartShouldSetResponder={() => true}>
+                  <GourmeatAddButton onPress={onAddPress ?? onPress} testID={`${cardTestID}-add`} />
+                </View>
+              </View>
             </View>
-          </Pressable>
-          <GourmeatAddButton onPress={onAddPress ?? handleCardPress} testID={`${cardTestID}-add`} />
-        </View>
-      </View>
+          </>
+        )}
+      </SharedDishNavSurface>
     </View>
   );
 }

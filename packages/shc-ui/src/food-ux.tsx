@@ -1,10 +1,10 @@
 // Toptal food-app UX patterns: white space, search+ADD, checkout stepper, brand story.
 // @ts-nocheck
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
 import { SHCFoodImage, SHCZomatoAddButton } from './visuals';
-import { useSharedDishPress } from './family-values-ui';
+import { SharedDishNavSurface } from './family-values-ui';
 import { SHCIcon } from './icons';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -92,11 +92,10 @@ export function SHCSearchResultRow({
   testID?: string;
 }) {
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
-  const imageMeasureRef = useRef<View>(null);
-  const handlePress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
   return (
-    <Pressable
-      onPress={handlePress}
+    <SharedDishNavSurface
+      dishId={dish.id}
+      onNavigate={onPress}
       testID={testID ?? `search-result-${dish.id}`}
       style={{
         flexDirection: 'row',
@@ -108,7 +107,9 @@ export function SHCSearchResultRow({
         borderBottomColor: shcColors.borderLight,
       }}
     >
-      <View ref={imageMeasureRef}>
+      {({ measureRef }) => (
+      <>
+      <View ref={measureRef} collapsable={false}>
         <SHCFoodImage uri={imageUri} width={52} height={52} rounded={shcRadii.md} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -124,9 +125,13 @@ export function SHCSearchResultRow({
         </Text>
       </View>
       {onAddPress && (
-        <SHCZomatoAddButton onPress={onAddPress} testID={testID ? `${testID}-add` : `search-add-${dish.id}`} />
+        <View onStartShouldSetResponder={() => true}>
+          <SHCZomatoAddButton onPress={onAddPress} testID={testID ? `${testID}-add` : `search-add-${dish.id}`} />
+        </View>
       )}
-    </Pressable>
+      </>
+      )}
+    </SharedDishNavSurface>
   );
 }
 

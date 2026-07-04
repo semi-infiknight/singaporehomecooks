@@ -1,44 +1,46 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  applySharedDishPress,
-  applySharedDishPressStrict,
   cacheSharedDishLayoutFromRef,
   clearSharedDishLayout,
   computeMorphingLabelSegments,
   getSharedDishLayout,
-  hasSharedDishLayout,
+  getSyncHeroTransformForDish,
+  HERO_RECT_MOBILE,
   morphingLabelFinalText,
   morphingLabelInitialText,
+  navigateSharedDishPress,
   wizardCtaMorphOnStepEnter,
 } from './family-values-core';
 
-describe('applySharedDishPress (runtime)', () => {
+describe('navigateSharedDishPress (runtime)', () => {
   it('registers valid measure then calls onNavigate', () => {
     clearSharedDishLayout('dish-rt-1');
     const onNavigate = vi.fn();
-    applySharedDishPress('dish-rt-1', { x: 12, y: 88, w: 160, h: 140 }, onNavigate);
+    navigateSharedDishPress('dish-rt-1', { x: 12, y: 88, w: 160, h: 140 }, onNavigate);
     expect(getSharedDishLayout('dish-rt-1')).toEqual({ x: 12, y: 88, w: 160, h: 140 });
     expect(onNavigate).toHaveBeenCalledTimes(1);
+    const sync = getSyncHeroTransformForDish('dish-rt-1', HERO_RECT_MOBILE);
+    expect(sync.hasOrigin).toBe(true);
     clearSharedDishLayout('dish-rt-1');
   });
 
-  it('strict mode skips navigate when no layout and no cache', () => {
-    clearSharedDishLayout('dish-strict-none');
+  it('always navigates when no layout and no cache', () => {
+    clearSharedDishLayout('dish-nav-none');
     const onNavigate = vi.fn();
-    const ok = applySharedDishPressStrict('dish-strict-none', null, onNavigate);
-    expect(ok).toBe(false);
-    expect(onNavigate).not.toHaveBeenCalled();
+    navigateSharedDishPress('dish-nav-none', null, onNavigate);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(getSharedDishLayout('dish-nav-none')).toBeUndefined();
+    clearSharedDishLayout('dish-nav-none');
   });
 
-  it('strict mode navigates with cached layout when measure null', () => {
-    clearSharedDishLayout('dish-strict-cache');
-    cacheSharedDishLayoutFromRef('dish-strict-cache', (cb) => cb(5, 10, 120, 100));
+  it('navigates with cached layout when measure null', () => {
+    clearSharedDishLayout('dish-nav-cache');
+    cacheSharedDishLayoutFromRef('dish-nav-cache', (cb) => cb(5, 10, 120, 100));
     const onNavigate = vi.fn();
-    const ok = applySharedDishPressStrict('dish-strict-cache', null, onNavigate);
-    expect(ok).toBe(true);
+    navigateSharedDishPress('dish-nav-cache', null, onNavigate);
     expect(onNavigate).toHaveBeenCalledTimes(1);
-    expect(hasSharedDishLayout('dish-strict-cache')).toBe(true);
-    clearSharedDishLayout('dish-strict-cache');
+    expect(getSyncHeroTransformForDish('dish-nav-cache', HERO_RECT_MOBILE).hasOrigin).toBe(true);
+    clearSharedDishLayout('dish-nav-cache');
   });
 
   it('cacheSharedDishLayoutFromRef warms registry before press', () => {

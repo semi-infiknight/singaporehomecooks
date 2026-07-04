@@ -1,13 +1,13 @@
 // Zomato/Swiggy layout primitives — location bar, promo rail, filter row, horizontal dish rows.
 // @ts-nocheck
-import React, { useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
 import { SHCStaggerIn } from './motion';
-import { SHCSharedDishImage, useSharedDishPress } from './family-values-ui';
+import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
 import { getDishImageUrl, getCollectionSlotLabel } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 
@@ -369,12 +369,10 @@ export function SHCZomatoDishRow({
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const slot = dish.collection_slot || getCollectionSlotLabel(dish.id);
   const rating = dish.rating ?? 4.8;
-  const imageMeasureRef = useRef<View>(null);
-  const handlePress = useSharedDishPress(dish.id, imageMeasureRef, onPress);
-
   return (
-    <Pressable
-      onPress={handlePress}
+    <SharedDishNavSurface
+      dishId={dish.id}
+      onNavigate={onPress}
       testID={cardTestID}
       style={{
         width: 300,
@@ -387,13 +385,15 @@ export function SHCZomatoDishRow({
         marginRight: shcSpacing.sm,
       }}
     >
+      {({ measureRef }) => (
+      <>
       <View style={{ flexDirection: 'row' }}>
         <View style={{ width: 110, height: 118 }}>
           <SHCSharedDishImage
             dishId={dish.id}
             uri={imageUri}
             style={{ width: 110, height: 118 }}
-            measureRef={imageMeasureRef}
+            measureRef={measureRef}
             testID={`${cardTestID}-image`}
           />
           {offerLabel && (
@@ -457,7 +457,9 @@ export function SHCZomatoDishRow({
           </Text>
         </View>
       )}
-    </Pressable>
+      </>
+      )}
+    </SharedDishNavSurface>
   );
 }
 

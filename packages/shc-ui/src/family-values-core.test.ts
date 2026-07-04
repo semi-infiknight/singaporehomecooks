@@ -21,7 +21,7 @@ import {
   getSyncHeroTransformForDish,
   HERO_RECT_MOBILE,
   applySharedDishPress,
-  applySharedDishPressStrict,
+  navigateSharedDishPress,
   morphingLabelInitialText,
   morphingLabelFinalText,
   hasSharedDishLayout,

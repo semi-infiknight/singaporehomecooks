@@ -1775,9 +1775,9 @@ export function GourmeatDishCard({
 
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
-      <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col">
-        <div className="relative">
-          <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="block">
+      <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col relative">
+        <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="flex flex-col flex-1 min-h-0">
+          <div className="relative">
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
                 dishId={product.id}
@@ -1787,35 +1787,35 @@ export function GourmeatDishCard({
                 testID={`${cardTestID}-image`}
               />
             </div>
-          </SharedDishProductLink>
-          <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
-            <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg pointer-events-auto" data-testid={`${cardTestID}-discount`}>
-              {discount}% OFF
-            </span>
-            {onFavoritePress ? (
-              <div className="bg-white/90 rounded-2xl pointer-events-auto">
-                <FavoriteButton
-                  active={!!isFavorite}
-                  onClick={onFavoritePress}
-                  testID={`${cardTestID}-favorite`}
-                />
-              </div>
-            ) : null}
+            <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
+              <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg pointer-events-auto" data-testid={`${cardTestID}-discount`}>
+                {discount}% OFF
+              </span>
+              {onFavoritePress ? (
+                <div
+                  className="bg-white/90 rounded-2xl pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <FavoriteButton
+                    active={!!isFavorite}
+                    onClick={onFavoritePress}
+                    testID={`${cardTestID}-favorite`}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
-        <div className="p-3 flex-1 flex flex-col">
-          <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref}>
+          <div className="p-3 flex-1 flex flex-col pr-12">
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>
-          </SharedDishProductLink>
-          {product.cook_name ? (
-            <div className="text-[11px] text-[#8A8A8A] truncate mb-1.5" data-testid={`${cardTestID}-cook`}>
-              {product.cook_name}
-            </div>
-          ) : null}
-          <div className="flex items-center justify-between mt-auto">
-            <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="flex-1 min-w-0">
+            {product.cook_name ? (
+              <div className="text-[11px] text-[#8A8A8A] truncate mb-1.5" data-testid={`${cardTestID}-cook`}>
+                {product.cook_name}
+              </div>
+            ) : null}
+            <div className="mt-auto">
               {product.price !== undefined && (
                 <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
                   S${product.price}
@@ -1827,12 +1827,11 @@ export function GourmeatDishCard({
                 </span>
                 <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
               </div>
-            </SharedDishProductLink>
-            <GourmeatAddButton
-              onClick={handleAddClick}
-              testID={`${cardTestID}-add`}
-            />
+            </div>
           </div>
+        </SharedDishProductLink>
+        <div className="absolute bottom-3 right-3 z-10">
+          <GourmeatAddButton onClick={handleAddClick} testID={`${cardTestID}-add`} />
         </div>
       </div>
     </div>
