@@ -368,6 +368,18 @@ a {
   animation: shc-tab-from-right 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Family Values — listing wizard pane */
+@keyframes shcWizardEnter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Family Values — shared dish hero image */
 @keyframes shc-hero-scale-in {
   from { transform: scale(1.02); }
@@ -385,7 +397,8 @@ a {
   .shc-celebration-exit,
   .shc-tab-slide-from-left,
   .shc-tab-slide-from-right,
-  .shc-hero-image-scale {
+  .shc-hero-image-scale,
+  .shc-wizard-pane {
     animation: none;
   }
 }

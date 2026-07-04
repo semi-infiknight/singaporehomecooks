@@ -55,9 +55,14 @@ import {
   getSyncHeroTransformForDish,
   HERO_RECT_WEB,
   tabSlideDirection,
+  wizardCtaMorphOnStepEnter,
+  wizardCtaMorphFromTransition,
+  milestoneStorageKey,
+  shouldShowMilestone,
   type MorphSegment,
   type TrayFrame,
   type TrayHeight,
+  type MilestoneId,
 } from '@shc/ui/family-values-core';
 
 export type { TrayFrame, TrayHeight };
@@ -1776,7 +1781,7 @@ export function GourmeatDishCard({
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
       <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col relative">
-        <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="flex flex-col flex-1 min-h-0">
+        <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="block">
           <div className="relative">
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
@@ -1806,30 +1811,32 @@ export function GourmeatDishCard({
               ) : null}
             </div>
           </div>
-          <div className="p-3 flex-1 flex flex-col pr-12">
+          <div className="p-3 pb-1">
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>
             {product.cook_name ? (
-              <div className="text-[11px] text-[#8A8A8A] truncate mb-1.5" data-testid={`${cardTestID}-cook`}>
+              <div className="text-[11px] text-[#8A8A8A] truncate" data-testid={`${cardTestID}-cook`}>
                 {product.cook_name}
               </div>
             ) : null}
-            <div className="mt-auto">
-              {product.price !== undefined && (
-                <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
-                  S${product.price}
-                </div>
-              )}
-              <div className="flex items-center gap-0.5 mt-0.5">
-                <span className="text-[10px] text-accent" aria-hidden>
-                  ★
-                </span>
-                <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
-              </div>
-            </div>
           </div>
         </SharedDishProductLink>
+        <div className="px-3 pb-3 pr-12 flex items-end justify-between">
+          <div>
+            {product.price !== undefined && (
+              <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
+                S${product.price}
+              </div>
+            )}
+            <div className="flex items-center gap-0.5 mt-0.5">
+              <span className="text-[10px] text-accent" aria-hidden>
+                ★
+              </span>
+              <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
         <div className="absolute bottom-3 right-3 z-10">
           <GourmeatAddButton onClick={handleAddClick} testID={`${cardTestID}-add`} />
         </div>
@@ -2280,6 +2287,122 @@ export function SHCTrayActionWeb({
           {secondaryLabel}
         </button>
       ) : null}
+    </div>
+  );
+}
+
+/** Wizard step pane with enter transition (web parity with SHCWizardPane). */
+export function SHCWizardPaneWeb({
+  stepKey,
+  children,
+}: {
+  stepKey: string | number;
+  children: React.ReactNode;
+}) {
+  const reduce = shouldReduceMotion();
+  if (reduce) {
+    return <div data-step={stepKey}>{children}</div>;
+  }
+  return (
+    <div
+      key={String(stepKey)}
+      className="shc-wizard-pane"
+      data-step={stepKey}
+      style={{ animation: 'shcWizardEnter 280ms cubic-bezier(0.33, 1, 0.68, 1) both' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function SHCWizardProgressWeb({ step, total = 4 }: { step: number; total?: number }) {
+  return (
+    <div className="flex gap-1.5 mb-4" data-testid="wizard-progress" aria-label={`Step ${step} of ${total}`}>
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-1 flex-1 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-border'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function ListingWizardMorphCtaWeb({
+  step,
+  total = 4,
+  editing = false,
+  onPress,
+  disabled,
+  testID,
+  showChevron = true,
+}: {
+  step: number;
+  total?: number;
+  editing?: boolean;
+  onPress: () => void;
+  disabled?: boolean;
+  testID?: string;
+  showChevron?: boolean;
+}) {
+  const prevStepRef = React.useRef(step);
+  const prevEditingRef = React.useRef(editing);
+  const [morph, setMorph] = React.useState(() => wizardCtaMorphOnStepEnter(step, total, editing));
+
+  React.useEffect(() => {
+    if (prevStepRef.current !== step) {
+      setMorph(wizardCtaMorphFromTransition(prevStepRef.current, step, total, editing));
+      prevStepRef.current = step;
+      prevEditingRef.current = editing;
+      return;
+    }
+    if (step >= total && prevEditingRef.current !== editing) {
+      setMorph({ from: 'Review', to: editing ? 'Save changes' : 'Publish' });
+      prevEditingRef.current = editing;
+    }
+  }, [step, total, editing]);
+
+  const { from, to } = morph;
+  return (
+    <SHCButton onClick={onPress} disabled={disabled} testID={testID} className="w-full">
+      <span className="inline-flex items-center justify-center gap-1.5">
+        <SHCMorphingLabelWeb from={from} to={to} testID={`${testID}-morph`} />
+        {showChevron && step < total ? <span className="font-extrabold" aria-hidden>›</span> : null}
+      </span>
+    </SHCButton>
+  );
+}
+
+export function useMilestoneCelebrationWeb(id: MilestoneId, userId: string) {
+  const [show, setShow] = React.useState(false);
+  const key = milestoneStorageKey(id, userId);
+
+  const triggerIfFirst = React.useCallback(async () => {
+    if (typeof window === 'undefined' || !userId) return false;
+    const alreadySeen = localStorage.getItem(key) === '1';
+    if (!shouldShowMilestone(id, userId, alreadySeen ? { [key]: true } : {})) return false;
+    localStorage.setItem(key, '1');
+    setShow(true);
+    return true;
+  }, [id, key, userId]);
+
+  const dismiss = React.useCallback(() => setShow(false), []);
+
+  return { show, triggerIfFirst, dismiss };
+}
+
+export function PhotoTipsTrayContentWeb({ tips }: { tips: string[] }) {
+  return (
+    <div className="space-y-3" data-testid="photo-tips-tray">
+      <p className="text-sm font-medium text-muted-foreground">3 SG-specific tips for better dish photos:</p>
+      <ul className="space-y-2 text-sm">
+        {tips.map((t, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="text-primary font-bold">•</span>
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

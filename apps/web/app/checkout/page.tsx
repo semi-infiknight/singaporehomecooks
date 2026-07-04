@@ -20,10 +20,14 @@ import {
   BottomStickyBar,
   CheckoutStepper,
   useSHCTrayWeb,
+  SHCCelebrationWeb,
+  useMilestoneCelebrationWeb,
 } from '../components/SHCWebComponents';
+import { useAuth } from '../../lib/useAuth';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { data: cart = { items: [] } } = useCart();
   const checkoutMut = useCheckout();
   const transitionMut = useTransitionOrder();
@@ -38,6 +42,11 @@ export default function CheckoutPage() {
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
   const { openTray, dismiss } = useSHCTrayWeb();
+  const {
+    show: showFirstOrderCelebration,
+    triggerIfFirst: triggerFirstOrder,
+    dismiss: dismissFirstOrderCelebration,
+  } = useMilestoneCelebrationWeb('first_order', user?.id || '');
 
   const firstPid = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
@@ -104,7 +113,8 @@ export default function CheckoutPage() {
     } catch {
       /* non-fatal — ops can reconcile manually */
     }
-    router.push(`/orders/${orderId}`);
+    const celebrated = await triggerFirstOrder();
+    if (!celebrated) router.push(`/orders/${orderId}`);
   };
 
   if (orderId) {
@@ -126,6 +136,15 @@ export default function CheckoutPage() {
         <p className="mt-3 text-xs font-medium text-muted-foreground">
           Address released 2h before slot. Chat opens after payment confirm.
         </p>
+        <SHCCelebrationWeb
+          visible={showFirstOrderCelebration}
+          message="Your first heritage order — thank you for supporting local home cooks!"
+          onDone={() => {
+            dismissFirstOrderCelebration();
+            router.push(`/orders/${orderId}`);
+          }}
+          testID="first-order-celebration"
+        />
       </div>
     );
   }

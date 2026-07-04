@@ -26,16 +26,16 @@ appId: com.singaporehomecooks.cook
     timeout: 120000
 - tapOn:
     id: "tab-cook-listings"
+- extendedWaitUntil:
+    visible:
+      id: "listing-card-e2e"
+    timeout: 90000
 - scrollUntilVisible:
     element:
       id: "listing-card-e2e"
     direction: DOWN
-    timeout: 60000
+    timeout: 30000
     optional: true
-- extendedWaitUntil:
-    visible:
-      id: "listing-card-e2e"
-    timeout: 60000
 - longPressOn:
     id: "listing-card-e2e"
 - extendedWaitUntil:

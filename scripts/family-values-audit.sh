@@ -42,8 +42,13 @@ log "--- Shared dish press structural grep ---"
 } | tee -a "$OUT/exports-audit.txt" "$OUT/build.log"
 
 log ""
-log "--- @shc/ui build (vitest + tsc) ---"
-(cd "$ROOT" && pnpm --filter @shc/ui build) 2>&1 | tee -a "$OUT/build.log" "$OUT/unit-tests.log"
+log "--- @shc/ui vitest ---"
+: > "$OUT/unit-tests.log"
+(cd "$ROOT" && pnpm --filter @shc/ui test) 2>&1 | tee -a "$OUT/unit-tests.log" "$OUT/build.log"
+
+log ""
+log "--- @shc/ui tsc ---"
+(cd "$ROOT/packages/shc-ui" && pnpm typecheck) 2>&1 | tee -a "$OUT/build.log"
 
 log ""
 log "--- mobile-customer typecheck ---"

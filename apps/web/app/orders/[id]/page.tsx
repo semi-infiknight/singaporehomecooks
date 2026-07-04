@@ -5,7 +5,16 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrder, useChat, useOrderDisputes, useReview } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
-import { SHCCard, SHCButton, SHCSectionTitle, GourmeatScreenHeader, SHCLoading, OrderTimeline } from '../../components/SHCWebComponents';
+import {
+  SHCCard,
+  SHCButton,
+  SHCSectionTitle,
+  GourmeatScreenHeader,
+  SHCLoading,
+  OrderTimeline,
+  useSHCTrayWeb,
+  SHCTrayActionWeb,
+} from '../../components/SHCWebComponents';
 import { getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { canSubmitReview } from '@shc/business-rules';
 import type { SHCOrderStatus } from '@shc/types';
@@ -28,6 +37,7 @@ export default function TrackOrder() {
   const { user } = useAuth();
   const { review: existingReview, submit: reviewMut } = useReview(id);
   const { disputes, submit: disputeMut } = useOrderDisputes(id);
+  const { openTray, dismiss } = useSHCTrayWeb();
   const [msg, setMsg] = useState('');
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
@@ -169,7 +179,35 @@ export default function TrackOrder() {
           <SHCButton
             className="mt-3"
             disabled={reviewMut.isPending}
-            onClick={() => reviewMut.mutate({ rating, body: reviewBody || undefined })}
+            onClick={() =>
+              reviewMut.mutate(
+                { rating, body: reviewBody || undefined },
+                {
+                  onSuccess: () => {
+                    openTray(
+                      { id: 'review-success', title: 'Thank you', height: 'compact' },
+                      <SHCTrayActionWeb
+                        message="Your review helps other families find trusted home cooks."
+                        primaryLabel="Done"
+                        onPrimary={dismiss}
+                        testID="review-success-tray"
+                      />
+                    );
+                  },
+                  onError: (e: Error) => {
+                    openTray(
+                      { id: 'review-error', title: 'Review failed', height: 'compact' },
+                      <SHCTrayActionWeb
+                        message={e?.message || 'Could not submit review'}
+                        primaryLabel="OK"
+                        onPrimary={dismiss}
+                        testID="review-error-tray"
+                      />
+                    );
+                  },
+                }
+              )
+            }
             data-testid="submit-review-btn"
           >
             {reviewMut.isPending ? 'Submitting…' : 'Submit review'}
@@ -203,7 +241,31 @@ export default function TrackOrder() {
               onClick={() =>
                 disputeMut.mutate(
                   { type: 'other', notes: disputeNotes.trim() },
-                  { onSuccess: () => setDisputeNotes('') },
+                  {
+                    onSuccess: () => {
+                      setDisputeNotes('');
+                      openTray(
+                        { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
+                        <SHCTrayActionWeb
+                          message="Ops will review this order and follow up with you."
+                          primaryLabel="Done"
+                          onPrimary={dismiss}
+                          testID="dispute-success-tray"
+                        />
+                      );
+                    },
+                    onError: (e: Error) => {
+                      openTray(
+                        { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
+                        <SHCTrayActionWeb
+                          message={e?.message || 'Please try again'}
+                          primaryLabel="OK"
+                          onPrimary={dismiss}
+                          testID="dispute-error-tray"
+                        />
+                      );
+                    },
+                  }
                 )
               }
               data-testid="submit-dispute-btn"
