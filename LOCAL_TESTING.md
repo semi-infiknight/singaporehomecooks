@@ -1,5 +1,51 @@
 # Singapore Home Cooks — Local Testing Guide (Mock-Driven Full Experience)
 
+## Quick Start — New Device (2026-07-04, TestFlight-verified)
+
+Clone from GitHub and run guards before any iOS ship or web deploy.
+
+### iOS (Customer + Cook) — macOS + Xcode
+
+```bash
+git clone <repo-url> && cd SingaporeHomeCooks
+pnpm setup:ios-dev                    # pnpm install + guards + pod rebuild
+bash scripts/start-mobile-dev.sh      # Metro :8081 + :8082
+bash scripts/verify-ios-apps.sh       # simulator smoke both apps
+pnpm verify:mobile-deps               # RN 0.81.5, no global override, easignore OK
+pnpm verify:mobile-bundles            # bundle > 5MB (catches Metro entry regressions)
+```
+
+**TestFlight (after `pnpm dlx eas-cli login`):**
+
+```bash
+bash scripts/eas-customer-testflight.sh   # ASC 6783204699
+bash scripts/eas-cook-testflight.sh       # ASC 6785112476
+```
+
+Both scripts run dependency + bundle guards before EAS upload.
+
+### Web PWA (production parity with mobile discover)
+
+```bash
+pnpm install
+pnpm verify:web-pwa          # manifest, icons, sw.js, next build
+pnpm web:dev                 # http://localhost:3001
+```
+
+PWA features: standalone manifest, service worker v2, install banner, halal/light filter chips (`useDiscoverPrefs`), proximity sort hint, mobile tab bar. Add to Home Screen on iOS Safari or Chrome Android.
+
+### All-platform verify (no simulator)
+
+```bash
+pnpm verify:mobile-deps
+pnpm verify:web-pwa
+pnpm verify:local
+```
+
+See `blueprint/10-mobile/10-mobile.md` for full iOS invariants table.
+
+---
+
 **Status (2026-06-14 Final Polish + Stitch Wave):** Core + growth (credits/requests/heritage/AI/photo/search) + money (ledger/payouts) + hardening (PDPA/audits/boundaries/rate/obs) + launch items (EAS, real push stubs + registration, Maestro CI, deploy notes, cart/checkout parity via wiring) **fully delivered**. All previous "not 100% done" items closed. Project Status: Ready for user to host on tunnel and share. Local experience production-like for all Phases 0-9 core + foundation for 10/web.
 
 Real Medusa backend (modules, workflows, API surface) is under active construction by agents (custom shc-* modules already exist and consume the contracts). Use the mock for immediate full testing; real integration is the next wave.

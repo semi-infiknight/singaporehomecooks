@@ -81,6 +81,36 @@ jobs:
           pnpm verify:real-e2e
           kill $SERVER_PID || true
 
+  mobile-ios-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: bash scripts/verify-mobile-deps.sh
+      - run: bash scripts/verify-mobile-bundles.sh
+
+  web-pwa-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @shc/utils build
+      - run: bash scripts/verify-web-pwa.sh
+
   maestro-e2e:
     runs-on: macos-latest
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/integrate/')

@@ -10,12 +10,12 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-29 (launch-readiness wiring) — cook compliance screen now persists SFA/WSQ docs through `/store/shc/compliance`; customer Profile has My Requests with bid acceptance; cook-created listings persist real dish fields and show in customer discovery.
+**Last Updated:** 2026-07-04 — iOS TestFlight production verified (Customer #18, Cook #10); guard scripts + CI gates lock dependency/bundle invariants; new-device setup documented.
 **Owner:** Mobile Track
 
 ## Overview
 
-Two separate Expo apps deliver the primary customer and cook interfaces. Built with Expo SDK 51 and Expo Router v3, they share `@shc/ui` v3 (Zomato layout + Toptal food-UX + vector icons/photos). Web mirrors the same patterns via `SHCWebComponents.tsx`.
+Two separate Expo apps deliver the primary customer and cook interfaces. Built with **Expo SDK 54** (RN **0.81.5**) and Expo Router, they share `@shc/ui` v3 (Zomato layout + Toptal food-UX + vector icons/photos). Web mirrors the same patterns via `SHCWebComponents.tsx` and ships as a production PWA.
 
 **Production API:** `https://medusa-production-d2ba.up.railway.app` (set in `.env.local` via bootstrap).
 
@@ -111,12 +111,46 @@ apps/mobile-cook/app/
 - **API Client:** `@shc/api-client` → Medusa only (no mock at runtime). TanStack Query hooks in `hooks/`.
 - **Auth:** SecureStore for tokens; demo accounts `customer@shc.local` / `rose@shc.local`.
 - **Styling:** NativeWind 4 + `@shc/ui` tokens; Reanimated + Moti + Gesture Handler; FlashList for feeds.
-- **Metro isolation:** customer `:8081`, cook `:8082`; per-app `cacheStores` in `metro.config.js`.
-- **iOS native:** `scripts/rebuild-ios-apps.sh` after adding native deps (gesture-handler, reanimated, moti). Cook `AppDelegate` rewrites `:8081` → `:8082` deep links.
-- **Dev scripts:**
+- **Metro isolation:** customer `:8081`, cook `:8082`; per-app `cacheStores` in `metro.config.js`. Metro entry regex must match `expo-router/entry` only — **not** `entry-classic` (broken ~125KB bundle → instant TestFlight crash).
+- **pnpm overrides:** `react-native: 0.74.x` scoped to `mobile>` only in `pnpm-workspace.yaml`. **Never** add a global `react-native:` override — SDK 54 apps require RN **0.81.5** + `expo-modules-core` **3.0.30**.
+- **@shc/ui barrel:** `location-map` / `location-ux` are subpath imports (`@shc/ui/location-ux`), not barrel exports — avoids `RNMapsAirModule` crash when maps unused. `motion.tsx` uses static `View` fallbacks (no Moti/Reanimated at barrel import).
+- **Babel:** `@babel/plugin-transform-react-jsx` pinned to **^7.x** (v8 breaks worklets release bundling).
+- **iOS native:** `scripts/rebuild-ios-apps.sh` after adding native deps. Each app `AppDelegate` hardcodes its Metro port (Customer **8081**, Cook **8082**).
+- **EAS:** `.easignore` must **keep** `apps/*/ios/` (bare workflow). Exclude `node_modules`, `Pods`, `.git` only.
+- **Dev / ship scripts:**
+  - `scripts/setup-ios-dev.sh` — fresh clone → `pnpm install` → guards → pod rebuild (macOS + Xcode)
   - `scripts/start-mobile-dev.sh` — both Metro servers + adb reverse
   - `scripts/rebuild-ios-apps.sh` — pod install + `expo run:ios` both apps
+  - `scripts/verify-ios-apps.sh` — simulator smoke (both apps load, no Unmatched Route)
+  - `scripts/eas-customer-testflight.sh` / `scripts/eas-cook-testflight.sh` — guards → EAS build → TestFlight submit
   - `scripts/run-maestro-full-tour.sh` — Android + iOS Maestro full tours
+
+## iOS TestFlight — Verified Invariants (2026-07-04)
+
+| Invariant | Value / rule | Guard |
+|---|---|---|
+| RN version (SDK 54 apps) | `0.81.5` | `pnpm verify:mobile-deps` |
+| expo-modules-core | `3.0.30` | `pnpm verify:mobile-deps` |
+| Global RN override | **Forbidden** in `pnpm-workspace.yaml` | `pnpm verify:mobile-deps` |
+| iOS JS bundle size | > 5 MB per app | `pnpm verify:mobile-bundles` |
+| `.easignore` excludes `ios/` | **Forbidden** | `pnpm verify:mobile-deps` |
+| Metro ports | Customer 8081, Cook 8082 | `AppDelegate.swift` + `start-mobile-dev.sh` |
+| Babel JSX plugin | `^7.x` only | `pnpm verify:mobile-deps` |
+
+**ASC apps:** Customer `6783204699`, Cook `6785112476`.
+
+## New Device Setup (macOS)
+
+```bash
+git clone <repo-url> && cd SingaporeHomeCooks
+pnpm setup:ios-dev          # install + dependency/bundle guards + pod rebuild
+bash scripts/start-mobile-dev.sh
+bash scripts/verify-ios-apps.sh
+bash scripts/eas-customer-testflight.sh   # requires eas-cli login
+bash scripts/eas-cook-testflight.sh
+```
+
+Prereqs: Node 22+, pnpm 11, Xcode, CocoaPods, EAS account (`pnpm dlx eas-cli login`).
 
 ## E2E Testing (Maestro)
 
@@ -145,7 +179,7 @@ apps/mobile-cook/app/
 ## Multi-Agent Notes
 
 - **Mobile Track** owns `apps/mobile-customer`, `apps/mobile-cook`, and `packages/shc-ui`.
-- **Web parity** maintained via tri-platform sync skill — same discover layout, checkout stepper, search ADD, location picker (`/location`), heritage banner on profile, request-dish footer CTA.
+- **Web parity** maintained via tri-platform sync skill — same discover layout (halal/light filter chips, proximity sort hint, promo rail), checkout stepper, search ADD, location picker (`/location`), heritage banner on profile, request-dish footer CTA, PWA install banner + service worker.
 - No direct HTTP in screens; all data via hooks + `@shc/api-client`.
 
 ## Gaps (mobile-specific) — post full audit 2026-06-20
@@ -154,7 +188,8 @@ apps/mobile-cook/app/
 |---|---|
 | Web review UI | Mobile has it; web has form now (audit confirmed) |
 | iOS Maestro full tours | Android PASS; re-verify after rebuilds |
-| Saved dietary prefs | Persisted via SecureStore in useDiscoverPrefs (halal/light/maxCal) |
+| Saved dietary prefs | Persisted via SecureStore (mobile) / localStorage (web PWA) in `useDiscoverPrefs` (halal/light/maxCal) |
+| Web PWA icons | Branded assets from iOS app icon; run `pnpm verify:web-pwa` before deploy |
 | In-app notifications persistence | DB module + per-type limits + read state (mark all on open, unread badge/UI) | done |
 | Order items snapshot | Fixed (persisted + fallback for legacy) |
 | Media for listings | image_url support added to create + meta + shape |

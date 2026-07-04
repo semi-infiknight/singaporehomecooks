@@ -17,9 +17,11 @@ import {
   getCookAvatarUrl,
   MIND_CUISINE_CATEGORIES,
   sortByCookProximity,
+  filterDiscoverProducts,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
+import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -30,7 +32,7 @@ import {
   GourmeatHomeHeader,
   GourmeatCategoryRow,
   GourmeatDishCard,
-
+  FilterChipRow,
   PromoRail,
   RequestDishHomeCTA,
   type DishCardProduct,
@@ -57,6 +59,7 @@ export default function DiscoverHome() {
   const { data: orders = [] } = useOrders();
   const { favorites } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
+  const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
   const savedDishes = useMemo(() => {
@@ -73,13 +76,18 @@ export default function DiscoverHome() {
   const productList = products as DishCardProduct[];
 
   const filteredList = useMemo(() => {
-    let list = productList;
-    if (cuisineFilter) list = list.filter((p) => p.cuisine === cuisineFilter);
+    const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
+      query,
+      occasion: occasionFilter || undefined,
+      cuisine: cuisineFilter || undefined,
+      halalOnly: halalOnly || undefined,
+      maxCal,
+    });
     return sortByCookProximity(
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
       collectionLocation
     ) as DishCardProduct[];
-  }, [productList, cuisineFilter, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
 
   const reorderDishes = useMemo(() => {
     if (query) return [];
@@ -134,6 +142,19 @@ export default function DiscoverHome() {
         </Link>
       </div>
 
+      <div className="mb-4">
+        <FilterChipRow
+          chips={[
+            { id: 'halal', label: 'Halal', iconKey: 'halal', active: halalOnly },
+            { id: 'light', label: 'Light (<500 cal)', iconKey: 'light', active: maxCal === 500 },
+          ]}
+          onChipClick={(id) => {
+            if (id === 'halal') toggleHalalOnly();
+            if (id === 'light') toggleLight();
+          }}
+        />
+      </div>
+
       {!query && (
         <div className="shc-section-gap mb-4">
           <PromoRail
@@ -159,6 +180,12 @@ export default function DiscoverHome() {
             href={`/orders/${activeOrder.id}`}
           />
         </div>
+      )}
+
+      {collectionLocation && (
+        <p className="text-xs font-bold text-primary mb-2">
+          Showing cooks near your collection point first
+        </p>
       )}
 
       <div className="flex items-center justify-between mb-3">

@@ -7,7 +7,7 @@
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-06-29 (launch-readiness loop) — Medusa Vitest route integration tests added for listing publish, product detail display fields, and compliance docs with 80%+ line/function/statement coverage gate on covered launch-critical routes.
+**Last Updated:** 2026-07-04 — iOS TestFlight guard jobs (`mobile-ios-guard`) and web PWA guard (`web-pwa-guard`) added to CI; local verify scripts for fresh-clone parity.
 **Owners:** Infra Track (backend & CI), Mobile Track (E2E & Maestro)
 
 ## Testing Pyramid
@@ -35,6 +35,24 @@
 - E2E Maestro suite runs on `integrate/phase-N` branches before merge.
 - Coverage thresholds enforced (core contracts > 90%).
 - Medusa route coverage gate: `pnpm --filter medusa test` runs handler-level integration tests with coverage thresholds (80%+ line/function/statement for the initially covered launch-critical route surface).
+
+### Platform guard jobs (blocking on `main`)
+
+| Job | Script | Catches |
+|---|---|---|
+| `mobile-ios-guard` | `verify-mobile-deps.sh` + `verify-mobile-bundles.sh` | Wrong RN/expo-modules-core, global RN override, tiny Metro bundle, `.easignore` excluding `ios/` |
+| `web-pwa-guard` | `verify-web-pwa.sh` | Missing manifest/icons/sw, failed `next build` |
+
+### Local verify commands (fresh clone)
+
+```bash
+pnpm verify:mobile-deps      # dependency invariants
+pnpm verify:mobile-bundles   # expo export bundle > 5MB
+pnpm verify:web-pwa          # PWA assets + production build
+pnpm setup:ios-dev           # macOS: install + all mobile guards + pod rebuild
+```
+
+EAS TestFlight scripts run mobile guards automatically before upload.
 
 ## Full CI + Maestro (Final Polish)
 

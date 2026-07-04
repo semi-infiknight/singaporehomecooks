@@ -10,3 +10,4 @@ export * from './order-tracking';
 export * from './favorites';
 export * from './sg-areas';
 export * from './location';
+export * from './discover';

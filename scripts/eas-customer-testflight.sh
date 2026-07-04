@@ -9,6 +9,10 @@ if ! pnpm dlx eas-cli whoami >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "=== Pre-flight guards ==="
+bash "$ROOT/scripts/verify-mobile-deps.sh"
+bash "$ROOT/scripts/verify-mobile-bundles.sh"
+
 echo "=== Customer iOS production build ==="
 CI=1 pnpm dlx eas-cli build --profile production --platform ios --non-interactive --wait
 

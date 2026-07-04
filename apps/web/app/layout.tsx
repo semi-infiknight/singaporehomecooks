@@ -8,6 +8,7 @@ import { AppHeader } from "./components/AppHeader";
 import { AppFooter } from "./components/AppFooter";
 import { AppMobileTabBar } from "./components/AppMobileTabBar";
 import { PWARegistration } from "./components/PWARegistration";
+import { PWAInstallBanner } from "./components/PWAInstallBanner";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -39,6 +40,14 @@ export const metadata: Metadata = {
     images: [{ url: "/og-image.png" }],
   },
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SG Home Cooks",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
@@ -63,6 +72,7 @@ export default function RootLayout({
               <AppFooter />
             </div>
             <AppMobileTabBar />
+            <PWAInstallBanner />
             <PWARegistration />
           </ErrorBoundary>
         </QueryClientProvider>
