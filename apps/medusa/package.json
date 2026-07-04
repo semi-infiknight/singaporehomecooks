@@ -8,7 +8,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "MEDUSA_DISABLE_ADMIN=true pnpm exec medusa build",
-    "build:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa build && rm -rf public/admin && cp -R dist/public/admin public/admin",
+    "build:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa build && mkdir -p public && rm -rf public/admin && cp -R dist/public/admin public/admin",
     "dev": "pnpm exec medusa develop",
     "dev:admin": "MEDUSA_DISABLE_ADMIN=false pnpm exec medusa develop",
     "start": "pnpm exec medusa start",
