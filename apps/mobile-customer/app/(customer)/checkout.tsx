@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
 import {
   SHCCard,
   CollectionSlotPicker,
@@ -17,10 +18,14 @@ import {
   GourmeatPayButton,
   GourmeatOrderSummaryCard,
   GourmeatPaymentMethodRow,
+  GourmeatPrimaryButton,
   gourmeatColors,
   SHCCartPageHero,
   SHCButton,
   SHCButtonText,
+  useSHCTray,
+  SHCCelebration,
+  useMilestoneCelebration,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
@@ -31,11 +36,48 @@ import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { formatLocationLabel } from '@shc/utils';
 
+function AllergenGateTrayContent({
+  allergens,
+  tier1,
+  onConfirm,
+}: {
+  allergens?: string[];
+  tier1?: string[];
+  onConfirm: () => void;
+}) {
+  const [localAck, setLocalAck] = useState(false);
+
+  return (
+    <View>
+      <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 18 }}>
+        Please review and acknowledge allergens before placing your order.
+      </Text>
+      <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} allergens={allergens} tier1={tier1} />
+      <GourmeatPrimaryButton
+        label="I understand — continue"
+        onPress={onConfirm}
+        disabled={!localAck}
+        style={{ marginTop: shcSpacing.md }}
+        testID="allergen-tray-confirm"
+      />
+    </View>
+  );
+}
+
 export default function Checkout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { active: collectionLocation } = useCustomerLocation();
+  const { openTray, dismiss } = useSHCTray();
+  const milestoneStorage = useMemo(
+    () => ({
+      get: SecureStore.getItemAsync,
+      set: SecureStore.setItemAsync,
+    }),
+    []
+  );
+  const firstOrderMilestone = useMilestoneCelebration('first_order', user?.id || user?.name || 'anon', milestoneStorage);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -69,9 +111,24 @@ export default function Checkout() {
 
   const handleSlot = (date: string, slot: string) => setSelectedSlot({ date, slot });
 
+  const openAllergenTray = useCallback(() => {
+    openTray(
+      { id: 'allergen-gate', title: 'Allergen acknowledgment', height: 'medium' },
+      <AllergenGateTrayContent
+        allergens={(cart.items[0] as any)?.allergens}
+        tier1={['Shellfish / Nuts (typical)']}
+        onConfirm={() => {
+          setAllergenAck(true);
+          dismiss();
+        }}
+      />
+    );
+  }, [cart.items, dismiss, openTray]);
+
   const handleCheckout = async () => {
     setError(null);
     if (!allergenAck) {
+      openAllergenTray();
       setError({ code: 'SHC-CART-003', message: 'Allergen acknowledgment is mandatory (08-marketplace-rules)' });
       return;
     }
@@ -98,13 +155,19 @@ export default function Checkout() {
     }
   };
 
+  const navigateToOrder = useCallback(() => {
+    if (!completedOrderId) return;
+    router.push(`/(customer)/orders/${completedOrderId}` as any);
+  }, [completedOrderId, router]);
+
   const confirmPay = async (ref: string) => {
     if (!completedOrderId) return;
     try {
       await transitionOrder(completedOrderId, 'paid');
       console.log('[PayNow] ref captured:', ref, 'for', completedOrderId);
     } catch (e) { /* non fatal */ }
-    router.push(`/(customer)/orders/${completedOrderId}` as any);
+    const celebrated = await firstOrderMilestone.triggerIfFirst();
+    if (!celebrated) navigateToOrder();
   };
 
   if (!cart.items?.length) {
@@ -123,26 +186,51 @@ export default function Checkout() {
     price: Number(i.price || 0),
   }));
 
+  const orderSummaryCard = (
+    <SHCFadeIn>
+      <View style={{ marginBottom: shcSpacing.md }}>
+        <GourmeatOrderSummaryCard
+          items={cartItems}
+          subtotal={total}
+          discount={creditDiscount > 0 ? creditDiscount : undefined}
+          total={amountDue}
+        />
+      </View>
+    </SHCFadeIn>
+  );
+
   if (completedOrderId) {
     return (
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md }]}
-        testID="checkout-screen"
-      >
-        <SHCCartPageHero
-          title="Order placed"
-          subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
-          imageUri={BENTO_ACTION_IMAGES.checkout}
+      <View style={styles.screen}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 }]}
+          testID="checkout-screen"
+        >
+          <SHCCartPageHero
+            title="Order placed"
+            subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
+            imageUri={BENTO_ACTION_IMAGES.checkout}
+          />
+          {orderSummaryCard}
+          <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
+          <Text style={styles.paynowHint}>Address released 2h before slot. Chat opens on payment confirm.</Text>
+          <SHCCard variant="bento-yellow" style={styles.footerCard}>
+            <Text style={styles.footerText}>
+              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+            </Text>
+          </SHCCard>
+        </ScrollView>
+        <SHCCelebration
+          visible={firstOrderMilestone.show}
+          message="Your first heritage order — thank you for supporting local home cooks!"
+          onDone={() => {
+            firstOrderMilestone.dismiss();
+            navigateToOrder();
+          }}
+          testID="first-order-celebration"
         />
-        <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
-        <Text style={styles.paynowHint}>Address released 2h before slot. Chat opens on payment confirm.</Text>
-        <SHCCard variant="bento-yellow" style={styles.footerCard}>
-          <Text style={styles.footerText}>
-            Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
-          </Text>
-        </SHCCard>
-      </ScrollView>
+      </View>
     );
   }
 
@@ -168,14 +256,7 @@ export default function Checkout() {
           </SHCButton>
         </SHCCard>
 
-        <View style={{ marginBottom: shcSpacing.md }}>
-          <GourmeatOrderSummaryCard
-            items={cartItems}
-            subtotal={total}
-            discount={creditDiscount > 0 ? creditDiscount : undefined}
-            total={amountDue}
-          />
-        </View>
+        {orderSummaryCard}
 
         <Text style={styles.sectionLabel}>Payment method</Text>
         <GourmeatPaymentMethodRow

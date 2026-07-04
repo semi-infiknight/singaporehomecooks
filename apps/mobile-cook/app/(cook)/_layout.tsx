@@ -1,10 +1,25 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, usePathname } from 'expo-router';
 import { gourmeatColors } from '@shc/ui/theme';
+import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CookTabBar } from '../../components/CookTabBar';
+
+const COOK_TAB_ORDER = ['dashboard', 'orders', 'listings', 'compliance'];
+
+function CookTabIndexSync({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { notifyTabChange } = useTabDirection();
+  useEffect(() => {
+    const key = COOK_TAB_ORDER.find((k) => pathname?.includes(`/${k}`) || pathname?.endsWith(k));
+    if (key) notifyTabChange(key);
+  }, [pathname, notifyTabChange]);
+  return <>{children}</>;
+}
 
 export default function CookLayout() {
   return (
+    <TabDirectionProvider routeOrder={COOK_TAB_ORDER}>
+    <CookTabIndexSync>
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: gourmeatColors.background },
@@ -31,5 +46,7 @@ export default function CookLayout() {
       <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Manage Order', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="earnings" options={{ href: null, title: 'Earnings', tabBarStyle: { display: 'none' } }} />
     </Tabs>
+    </CookTabIndexSync>
+    </TabDirectionProvider>
   );
 }

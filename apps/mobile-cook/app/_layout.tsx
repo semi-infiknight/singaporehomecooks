@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SHCTrayProvider } from '@shc/ui';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -20,6 +21,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <ErrorBoundary>
+            <SHCTrayProvider>
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: shcColors.primary },
@@ -34,6 +36,7 @@ export default function RootLayout() {
               <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
               <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
             </Stack>
+            </SHCTrayProvider>
           </ErrorBoundary>
         </SafeAreaProvider>
       </QueryClientProvider>

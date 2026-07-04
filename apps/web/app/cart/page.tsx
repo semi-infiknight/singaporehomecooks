@@ -1,12 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { getDishImageUrl } from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
-import { GourmeatScreenHeader, GourmeatPayButton, SHCEmptyState } from '../components/SHCWebComponents';
+import { isAuthenticated } from '../../lib/api-client';
+import { useAuth } from '../../lib/useAuth';
+import {
+  GourmeatScreenHeader,
+  GourmeatPayButton,
+  SHCEmptyState,
+  useSHCTrayWeb,
+  SHCTrayActionWeb,
+} from '../components/SHCWebComponents';
 
 type CartItem = {
   name: string;
@@ -17,10 +26,30 @@ type CartItem = {
 };
 
 export default function CartPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { openTray, dismiss } = useSHCTrayWeb();
   const { data: cart = { items: [] }, isLoading } = useCart();
   const clear = useClearCart();
   const total = (cart.items || []).reduce((s: number, i: CartItem) => s + i.price * i.qty, 0);
   const itemCount = (cart.items || []).reduce((s: number, i: CartItem) => s + i.qty, 0);
+
+  const showGuestAuthTray = useCallback(() => {
+    openTray(
+      { id: 'guest-auth', title: 'Sign in to checkout', height: 'compact' },
+      <SHCTrayActionWeb
+        message="Create an account or sign in to complete your order and track collection."
+        primaryLabel="Sign in"
+        onPrimary={() => {
+          dismiss();
+          router.push('/login');
+        }}
+        secondaryLabel="Keep browsing"
+        onSecondary={dismiss}
+        testID="guest-auth-tray-web"
+      />
+    );
+  }, [dismiss, openTray, router]);
 
   if (isLoading) {
     return (
@@ -105,7 +134,13 @@ export default function CartPage() {
             label="Checkout"
             amount={`S$${total.toFixed(2)}`}
             testID="proceed-checkout-web"
-            onClick={() => { window.location.href = '/checkout'; }}
+            onClick={() => {
+              if (!user && !isAuthenticated()) {
+                showGuestAuthTray();
+                return;
+              }
+              router.push('/checkout');
+            }}
           />
         </>
       )}

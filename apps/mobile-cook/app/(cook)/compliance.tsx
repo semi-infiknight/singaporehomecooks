@@ -17,10 +17,19 @@ import {
   shcBorders,
   shcRadii,
   shcShadows,
+  DirectionalTabScreen,
+  SHCCelebration,
+  useMilestoneCelebration,
 } from '@shc/ui';
+import * as SecureStore from 'expo-secure-store';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
+
+const milestoneStorage = {
+  get: (k: string) => SecureStore.getItemAsync(k),
+  set: (k: string, v: string) => SecureStore.setItemAsync(k, v),
+};
 
 export default function ComplianceUpload() {
   const insets = useSafeAreaInsets();
@@ -30,12 +39,21 @@ export default function ComplianceUpload() {
   const [docs, setDocs] = useState<any[]>([]);
   const [result, setResult] = useState<{ status: string; type: string; fileName: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { show: showApprovedCelebration, triggerIfFirst, dismiss } = useMilestoneCelebration(
+    'compliance_approved',
+    user?.id || '',
+    milestoneStorage
+  );
 
   useEffect(() => {
     getComplianceDocs()
-      .then(setDocs)
+      .then((loaded) => {
+        setDocs(loaded);
+        const approved = (loaded as { status?: string }[]).some((d) => d.status === 'approved');
+        if (approved) void triggerIfFirst();
+      })
       .catch(() => setDocs([]));
-  }, []);
+  }, [triggerIfFirst]);
 
   const upload = async () => {
     if (!fileName) return;
@@ -55,6 +73,8 @@ export default function ComplianceUpload() {
   };
 
   return (
+    <DirectionalTabScreen testID="cook-compliance-tab-scene">
+
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
@@ -166,6 +186,13 @@ export default function ComplianceUpload() {
         <SHCBadge variant="success">DEV switcher</SHCBadge>
       </View>
     </ScrollView>
+      <SHCCelebration
+        visible={showApprovedCelebration}
+        message="Compliance approved — you're cleared to accept orders!"
+        onDone={dismiss}
+        testID="compliance-approved-celebration"
+      />
+    </DirectionalTabScreen>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
@@ -19,6 +19,7 @@ import {
   SHCPageHeader,
   BottomStickyBar,
   CheckoutStepper,
+  useSHCTrayWeb,
 } from '../components/SHCWebComponents';
 
 export default function CheckoutPage() {
@@ -36,6 +37,7 @@ export default function CheckoutPage() {
   const [paynowRef, setPaynowRef] = useState('');
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
+  const { openTray, dismiss } = useSHCTrayWeb();
 
   const firstPid = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
@@ -43,9 +45,22 @@ export default function CheckoutPage() {
   const creditBal = creditsData?.balance || 0;
   const amountDue = Math.max(0, total - Math.floor(creditsApply / 4));
 
+  const openAllergenTray = useCallback(() => {
+    openTray(
+      { id: 'allergen-gate', title: 'Allergen acknowledgment', height: 'medium' },
+      <AllergenGateTrayContentWeb
+        onConfirm={() => {
+          setAllergenAck(true);
+          dismiss();
+        }}
+      />
+    );
+  }, [dismiss, openTray]);
+
   const doCheckout = async () => {
     setError(null);
     if (!allergenAck) {
+      openAllergenTray();
       setError({ code: 'SHC-CART-003', message: 'Please acknowledge allergens before placing your order.' });
       return;
     }
@@ -243,6 +258,28 @@ export default function CheckoutPage() {
           </SHCButton>
         </div>
       </BottomStickyBar>
+    </div>
+  );
+}
+
+function AllergenGateTrayContentWeb({ onConfirm }: { onConfirm: () => void }) {
+  const [localAck, setLocalAck] = useState(false);
+
+  return (
+    <div className="space-y-4" data-testid="allergen-gate-tray-web">
+      <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+        Please review and acknowledge allergens before placing your order.
+      </p>
+      <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} testID="allergen-tray-ack-web" />
+      <SHCButton
+        className="w-full"
+        size="lg"
+        disabled={!localAck}
+        onClick={onConfirm}
+        testID="allergen-tray-confirm-web"
+      >
+        I understand — continue
+      </SHCButton>
     </div>
   );
 }

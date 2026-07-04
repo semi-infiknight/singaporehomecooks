@@ -8,6 +8,7 @@ import {
   Banknote,
   CheckCircle2,
   ChefHat,
+  ChevronLeft,
   Clock,
   Flame,
   Home,
@@ -24,6 +25,7 @@ import {
   UtensilsCrossed,
   Wallet,
   CreditCard,
+  X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -39,7 +41,21 @@ import {
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
 } from '@shc/utils';
+import {
+  pushTray,
+  popTray,
+  currentTray,
+  TRAY_HEIGHT_PX,
+  computeMorphingLabelSegments,
+  morphingLabelTarget,
+  shouldReduceMotion,
+  tabSlideDirection,
+  type MorphSegment,
+  type TrayFrame,
+  type TrayHeight,
+} from '@shc/ui/family-values-core';
 
+export type { TrayFrame, TrayHeight };
 
 type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -1710,13 +1726,12 @@ export function GourmeatDishCard({
         <div className="relative">
           <Link href={`/product/${product.id}`} className="block">
             <div className="relative h-[140px] w-full">
-              <Image
+              <SHCSharedDishImageWeb
+                dishId={product.id}
                 src={imageUrl}
                 alt={product.name}
-                fill
-                className="object-cover"
-                sizes="50vw"
-                data-testid={`${cardTestID}-image`}
+                className="absolute inset-0"
+                testID={`${cardTestID}-image`}
               />
             </div>
           </Link>
@@ -2044,5 +2059,319 @@ export function VisualBentoTile({
     <button type="button" onClick={onClick} data-testid={testID} className="block w-full text-left">
       {inner}
     </button>
+  );
+}
+
+/* ── Family Values web parity (@shc/ui tray + motion) ── */
+
+type TrayContextValueWeb = {
+  stack: TrayFrame[];
+  openTray: (frame: TrayFrame, content: React.ReactNode) => void;
+  pushTrayContent: (frame: TrayFrame, content: React.ReactNode) => void;
+  popTray: () => void;
+  dismiss: () => void;
+  contentMap: Record<string, React.ReactNode>;
+};
+
+const TrayContextWeb = React.createContext<TrayContextValueWeb | null>(null);
+
+export function useSHCTrayWeb(): TrayContextValueWeb {
+  const ctx = React.useContext(TrayContextWeb);
+  if (!ctx) throw new Error('useSHCTrayWeb must be used within SHCTrayProviderWeb');
+  return ctx;
+}
+
+function trayHeightStyle(height: TrayHeight): React.CSSProperties {
+  const px = TRAY_HEIGHT_PX[height];
+  return { height: `min(${px}px, 92vh)` };
+}
+
+export function SHCTrayWeb() {
+  const { stack, popTray: pop, dismiss, contentMap } = useSHCTrayWeb();
+  const frame = currentTray(stack);
+  const depth = stack.length;
+  const reduce = shouldReduceMotion();
+
+  React.useEffect(() => {
+    if (!frame) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [frame]);
+
+  if (!frame) return null;
+
+  const content = contentMap[frame.id];
+  const onNav = depth > 1 ? pop : dismiss;
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex flex-col justify-end"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`shc-tray-title-${frame.id}`}
+    >
+      <button
+        type="button"
+        className={`absolute inset-0 bg-[rgba(0,0,0,0.45)] ${reduce ? '' : 'shc-tray-backdrop'}`}
+        onClick={dismiss}
+        aria-label="Dismiss tray"
+        data-testid="shc-tray-backdrop"
+      />
+      <div
+        className={`relative bg-card border-2 border-[var(--shc-border-brutal)] border-b-0 rounded-t-2xl shadow-[var(--shc-shadow-brutal)] flex flex-col overflow-hidden ${reduce ? '' : 'shc-tray-sheet'}`}
+        style={trayHeightStyle(frame.height)}
+        data-testid={`shc-tray-${frame.id}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 rounded-full bg-muted-foreground/40 mx-auto mt-2 mb-1 shrink-0" aria-hidden />
+        <div className="flex items-center gap-2 px-4 pb-3 border-b border-[var(--shc-border)] shrink-0">
+          <button
+            type="button"
+            onClick={onNav}
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors shrink-0"
+            aria-label={depth > 1 ? 'Back' : 'Close'}
+            data-testid="shc-tray-nav"
+          >
+            {depth > 1 ? (
+              <ChevronLeft className="w-5 h-5 text-foreground" aria-hidden />
+            ) : (
+              <X className="w-5 h-5 text-foreground" aria-hidden />
+            )}
+          </button>
+          <h2
+            id={`shc-tray-title-${frame.id}`}
+            className="flex-1 text-center text-base font-extrabold text-foreground truncate"
+          >
+            {frame.title}
+          </h2>
+          <span className="w-9 shrink-0" aria-hidden />
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-4">{content}</div>
+      </div>
+    </div>
+  );
+}
+
+export function SHCTrayProviderWeb({ children }: { children: React.ReactNode }) {
+  const [stack, setStack] = React.useState<TrayFrame[]>([]);
+  const [contentMap, setContentMap] = React.useState<Record<string, React.ReactNode>>({});
+
+  const openTray = React.useCallback((frame: TrayFrame, content: React.ReactNode) => {
+    setContentMap((m) => ({ ...m, [frame.id]: content }));
+    setStack([frame]);
+  }, []);
+
+  const pushTrayContent = React.useCallback((frame: TrayFrame, content: React.ReactNode) => {
+    setContentMap((m) => ({ ...m, [frame.id]: content }));
+    setStack((s) => pushTray(s, frame));
+  }, []);
+
+  const pop = React.useCallback(() => setStack((s) => popTray(s)), []);
+
+  const dismiss = React.useCallback(() => {
+    setStack([]);
+    setContentMap({});
+  }, []);
+
+  const value = React.useMemo(
+    () => ({ stack, openTray, pushTrayContent, popTray: pop, dismiss, contentMap }),
+    [stack, openTray, pushTrayContent, pop, dismiss, contentMap]
+  );
+
+  return (
+    <TrayContextWeb.Provider value={value}>
+      {children}
+      <SHCTrayWeb />
+    </TrayContextWeb.Provider>
+  );
+}
+
+export function SHCTrayActionWeb({
+  message,
+  primaryLabel,
+  onPrimary,
+  secondaryLabel,
+  onSecondary,
+  destructive,
+  testID = 'shc-tray-action',
+}: {
+  message: string;
+  primaryLabel: string;
+  onPrimary: () => void;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  destructive?: boolean;
+  testID?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-4" data-testid={testID}>
+      <p className="text-[15px] font-medium text-foreground leading-relaxed">{message}</p>
+      <SHCButton
+        className="w-full"
+        size="lg"
+        variant={destructive ? 'outline' : 'primary'}
+        onClick={onPrimary}
+        testID={`${testID}-primary`}
+      >
+        <span className={destructive ? 'text-[var(--shc-error)]' : undefined}>{primaryLabel}</span>
+      </SHCButton>
+      {secondaryLabel && onSecondary ? (
+        <button
+          type="button"
+          onClick={onSecondary}
+          className="text-sm font-semibold text-muted-foreground hover:text-foreground py-2 transition-colors"
+          data-testid={`${testID}-secondary`}
+        >
+          {secondaryLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+export function SHCMorphingLabelWeb({
+  from,
+  to,
+  className = '',
+  testID = 'shc-morph-label',
+}: {
+  from: string;
+  to: string;
+  className?: string;
+  testID?: string;
+}) {
+  const reduce = shouldReduceMotion();
+  const segments = React.useMemo(() => computeMorphingLabelSegments(from, to), [from, to]);
+  const morphKey = `${from}→${to}`;
+
+  if (reduce) {
+    return (
+      <span className={`font-extrabold ${className}`} data-testid={testID}>
+        {morphingLabelTarget(segments)}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`shc-morph-label text-primary-foreground ${className}`} data-testid={testID} key={morphKey}>
+      {segments.map((seg: MorphSegment, i: number) => (
+        <span
+          key={`${seg.kind}-${seg.text}-${i}`}
+          className={seg.kind === 'out' ? 'shc-morph-out' : seg.kind === 'in' ? 'shc-morph-in' : undefined}
+        >
+          {seg.text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+export function SHCCelebrationWeb({
+  visible,
+  message,
+  onDone,
+  testID = 'shc-celebration',
+}: {
+  visible: boolean;
+  message: string;
+  onDone?: () => void;
+  testID?: string;
+}) {
+  const reduce = shouldReduceMotion();
+  const [exiting, setExiting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!visible) {
+      setExiting(false);
+      return;
+    }
+    const holdMs = reduce ? 1200 : 2200;
+    const fadeMs = reduce ? 0 : 400;
+    const t = window.setTimeout(() => {
+      if (reduce) {
+        onDone?.();
+        return;
+      }
+      setExiting(true);
+      window.setTimeout(() => onDone?.(), fadeMs);
+    }, holdMs);
+    return () => window.clearTimeout(t);
+  }, [visible, onDone, reduce]);
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className={`fixed left-4 right-4 top-[30%] z-[300] pointer-events-none flex flex-col items-center bg-card/95 backdrop-blur-sm border-2 border-[var(--shc-border-brutal)] rounded-2xl p-6 shadow-[var(--shc-shadow-brutal)] ${
+        exiting ? 'shc-celebration-exit' : reduce ? '' : 'shc-celebration-enter'
+      }`}
+      data-testid={testID}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="text-4xl mb-2" aria-hidden>
+        🎉
+      </span>
+      <p className="text-[17px] font-extrabold text-center text-foreground">{message}</p>
+    </div>
+  );
+}
+
+export function SHCDirectionalTabSceneWeb({
+  tabIndex,
+  prevIndex,
+  children,
+  testID,
+}: {
+  tabIndex: number;
+  prevIndex: number;
+  children: React.ReactNode;
+  testID?: string;
+}) {
+  const reduce = shouldReduceMotion();
+  const direction = tabSlideDirection(prevIndex, tabIndex);
+  const animClass =
+    reduce || direction === 'none'
+      ? ''
+      : direction === 'left'
+        ? 'shc-tab-slide-from-right'
+        : 'shc-tab-slide-from-left';
+
+  return (
+    <div className={`shc-tab-scene flex-1 min-h-0 ${animClass}`} key={tabIndex} data-testid={testID}>
+      {children}
+    </div>
+  );
+}
+
+export function SHCSharedDishImageWeb({
+  dishId,
+  src,
+  alt = '',
+  hero = false,
+  className = '',
+  testID,
+}: {
+  dishId: string;
+  src: string;
+  alt?: string;
+  hero?: boolean;
+  className?: string;
+  testID?: string;
+}) {
+  const reduce = shouldReduceMotion();
+  const heroAnim = hero && !reduce ? 'shc-hero-image-scale' : '';
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      data-testid={testID || `shared-dish-${dishId}`}
+      className={`object-cover w-full h-full ${heroAnim} ${className}`}
+    />
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, Alert, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -11,6 +11,8 @@ import {
   gourmeatColors,
   gourmeatRadii,
   shcSpacing,
+  useSHCTray,
+  SHCTrayAction,
 } from '@shc/ui';
 import { getDishImageUrl, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
@@ -26,6 +28,7 @@ export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: order, isFetching } = useOrder(id || '');
   const { user } = useAuth();
+  const { openTray, dismiss } = useSHCTray();
   const qc = useQueryClient();
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
@@ -41,9 +44,22 @@ export default function OrderTracking() {
     mutationFn: () => submitReview(id || '', rating, reviewBody || undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['review', id] });
-      Alert.alert('Thank you', 'Your review helps other families find trusted home cooks.');
+      openTray(
+        { id: 'review-success', title: 'Thank you', height: 'compact' },
+        <SHCTrayAction
+          message="Your review helps other families find trusted home cooks."
+          primaryLabel="Done"
+          onPrimary={dismiss}
+          testID="review-success-tray"
+        />
+      );
     },
-    onError: (e: any) => Alert.alert('Review failed', e?.message || 'Could not submit review'),
+    onError: (e: any) => {
+      openTray(
+        { id: 'review-error', title: 'Review failed', height: 'compact' },
+        <SHCTrayAction message={e?.message || 'Could not submit review'} primaryLabel="OK" onPrimary={dismiss} />
+      );
+    },
   });
 
   const { data: disputes = [] } = useQuery({
@@ -58,9 +74,27 @@ export default function OrderTracking() {
     onSuccess: () => {
       setDisputeNotes('');
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
-      Alert.alert('Issue reported', 'Ops will review this order and follow up.');
+      openTray(
+        { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
+        <SHCTrayAction
+          message="Ops will review this order and follow up with you."
+          primaryLabel="Got it"
+          onPrimary={dismiss}
+          secondaryLabel="Message your cook"
+          onSecondary={() => {
+            dismiss();
+            router.push(`/(shared)/chat/${id}` as any);
+          }}
+          testID="dispute-success-tray"
+        />
+      );
     },
-    onError: (e: any) => Alert.alert('Could not report issue', e?.message || 'Please try again.'),
+    onError: (e: any) => {
+      openTray(
+        { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
+        <SHCTrayAction message={e?.message || 'Please try again.'} primaryLabel="OK" onPrimary={dismiss} />
+      );
+    },
   });
 
   if (!order) {

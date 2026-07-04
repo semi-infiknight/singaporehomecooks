@@ -24,6 +24,8 @@ import {
   GourmeatPrimaryButton,
   SHCBadge,
   SHCSectionTitle,
+  useSHCTrayWeb,
+  SHCTrayActionWeb,
 } from '../../components/SHCWebComponents';
 
 type ListingRow = Record<string, unknown> & {
@@ -53,6 +55,7 @@ export default function CookListingsPage() {
   const createListing = useCreateCookListing();
   const updateListing = useUpdateCookListing();
   const deleteListing = useDeleteCookListing();
+  const { openTray, pushTrayContent, popTray, dismiss } = useSHCTrayWeb();
 
   const [name, setName] = useState(DEFAULT_FORM.name);
   const [price, setPrice] = useState(DEFAULT_FORM.price);
@@ -64,24 +67,17 @@ export default function CookListingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
-  const [actionListing, setActionListing] = useState<ListingRow | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const bindListingLongPress = useCallback((listing: ListingRow) => ({
-    onContextMenu: (e: React.MouseEvent) => {
-      e.preventDefault();
-      setActionListing(listing);
+  const showErrorTray = useCallback(
+    (title: string, message: string) => {
+      openTray(
+        { id: 'listing-error', title, height: 'compact' },
+        <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="listing-error-tray" />
+      );
     },
-    onTouchStart: () => {
-      longPressTimer.current = setTimeout(() => setActionListing(listing), 500);
-    },
-    onTouchEnd: () => {
-      if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    },
-    onTouchMove: () => {
-      if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    },
-  }), []);
+    [dismiss, openTray]
+  );
 
   const filteredListings = useMemo(
     () => filterCookListings(myListings as ListingRow[], { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
@@ -131,7 +127,7 @@ export default function CookListingsPage() {
     setPublished(null);
   };
 
-  const startEdit = (listing: ListingRow) => {
+  const startEdit = useCallback((listing: ListingRow) => {
     setEditingId(String(listing.id));
     setName(String(listing.name || 'Dish'));
     setPrice(Number(listing.price) || 12);
@@ -140,7 +136,7 @@ export default function CookListingsPage() {
     setHeritage(String(listing.heritage_note || ''));
     setPublished(null);
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  };
+  }, []);
 
   const buildPayload = () => ({
     name,
@@ -163,19 +159,121 @@ export default function CookListingsPage() {
       setPublished(prod as Record<string, unknown>);
       if (editingId) setEditingId(null);
     } catch (e) {
-      alert((e as Error).message || (editingId ? 'Update failed' : 'Publish failed'));
+      showErrorTray(
+        editingId ? 'Update failed' : 'Publish failed',
+        (e as Error).message || (editingId ? 'Update failed' : 'Publish failed')
+      );
     }
   };
 
-  const removeListing = async (listing: ListingRow) => {
-    if (!window.confirm(`Delete "${listing.name}"? This cannot be undone.`)) return;
-    try {
-      await deleteListing.mutateAsync(String(listing.id));
-      if (editingId === listing.id) resetForm();
-    } catch (e) {
-      alert((e as Error).message || 'Delete failed');
-    }
-  };
+  const performDelete = useCallback(
+    async (listing: ListingRow) => {
+      try {
+        await deleteListing.mutateAsync(String(listing.id));
+        if (editingId === listing.id) resetForm();
+      } catch (e) {
+        showErrorTray('Delete failed', (e as Error).message || 'Delete failed');
+      }
+    },
+    [deleteListing, editingId, showErrorTray]
+  );
+
+  const togglePause = useCallback(
+    async (listing: ListingRow) => {
+      const paused = !listing.shc_availability?.paused;
+      try {
+        await updateListing.mutateAsync({ id: String(listing.id), input: { paused } });
+      } catch (e) {
+        showErrorTray(
+          paused ? 'Pause failed' : 'Unpause failed',
+          (e as Error).message || 'Could not update listing.'
+        );
+      }
+    },
+    [showErrorTray, updateListing]
+  );
+
+  const pushDeleteConfirm = useCallback(
+    (listing: ListingRow) => {
+      pushTrayContent(
+        { id: 'listing-delete-confirm', title: 'Delete listing?', height: 'medium' },
+        <SHCTrayActionWeb
+          message={`Delete "${listing.name}"? This cannot be undone.`}
+          primaryLabel="Delete listing"
+          onPrimary={() => {
+            dismiss();
+            void performDelete(listing);
+          }}
+          secondaryLabel="Cancel"
+          onSecondary={popTray}
+          destructive
+          testID="listing-delete-confirm-tray"
+        />
+      );
+    },
+    [dismiss, performDelete, popTray, pushTrayContent]
+  );
+
+  const showListingActions = useCallback(
+    (listing: ListingRow) => {
+      const isPaused = !!listing.shc_availability?.paused;
+      openTray(
+        { id: 'listing-actions', title: String(listing.name), height: 'compact' },
+        <div className="flex flex-col gap-2" data-testid="listing-actions-tray">
+          <button
+            type="button"
+            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold"
+            data-testid={`edit-listing-${listing.id}`}
+            onClick={() => {
+              dismiss();
+              startEdit(listing);
+            }}
+          >
+            Edit listing
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold"
+            data-testid={`pause-listing-${listing.id}`}
+            onClick={() => {
+              dismiss();
+              void togglePause(listing);
+            }}
+          >
+            {isPaused ? 'Unpause listing' : 'Pause listing'}
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold text-red-700"
+            data-testid={`delete-listing-${listing.id}`}
+            onClick={() => pushDeleteConfirm(listing)}
+          >
+            Delete listing
+          </button>
+        </div>
+      );
+    },
+    [dismiss, openTray, pushDeleteConfirm, startEdit, togglePause]
+  );
+
+  const bindListingLongPress = useCallback(
+    (listing: ListingRow) => ({
+      onContextMenu: (e: React.MouseEvent) => {
+        e.preventDefault();
+        showListingActions(listing);
+      },
+      onTouchStart: () => {
+        longPressTimer.current = setTimeout(() => showListingActions(listing), 500);
+      },
+      onTouchEnd: () => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      },
+      onTouchMove: () => {
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      },
+    }),
+    [showListingActions]
+  );
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-listings-screen">
@@ -203,7 +301,7 @@ export default function CookListingsPage() {
             onChipClick={handleFilterChip}
             testID="cook-listings-filter-chips"
           />
-          <p className="text-xs text-[var(--shc-text-light)] mb-3">Press and hold a dish for edit or delete</p>
+          <p className="text-xs text-[var(--shc-text-light)] mb-3">Press and hold a dish for edit, pause, or delete</p>
         </>
       ) : null}
 
@@ -317,51 +415,6 @@ export default function CookListingsPage() {
           ) : null}
         </div>
       </GourmeatCard>
-
-      {actionListing ? (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center"
-          onClick={() => setActionListing(null)}
-          data-testid="listing-action-sheet"
-        >
-          <div
-            className="w-full max-w-lg bg-card rounded-t-2xl p-4 pb-8 shadow-[var(--shc-shadow-brutal)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-extrabold text-base mb-3 truncate">{String(actionListing.name)}</p>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold mb-2"
-              data-testid={`edit-listing-${actionListing.id}`}
-              onClick={() => {
-                startEdit(actionListing);
-                setActionListing(null);
-              }}
-            >
-              Edit listing
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold text-red-700 mb-2"
-              data-testid={`delete-listing-${actionListing.id}`}
-              onClick={() => {
-                const listing = actionListing;
-                setActionListing(null);
-                void removeListing(listing);
-              }}
-            >
-              Delete listing
-            </button>
-            <button
-              type="button"
-              className="w-full rounded-xl px-4 py-3 text-sm font-semibold text-[var(--shc-text-light)]"
-              onClick={() => setActionListing(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
   SHCFilterChipRow,
   SHCPromoRail,
   SHCRequestDishHomeCTA,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import {
   getOccasionImageUrl,
@@ -317,6 +318,8 @@ export default function CustomerDiscover() {
   );
 
   return (
+    <DirectionalTabScreen testID="discover-tab-scene">
+
     <View style={[styles.screen, { paddingTop: insets.top }]} testID="customer-discover-screen">
       <View style={styles.list}>
         <FlashList
@@ -332,6 +335,8 @@ export default function CustomerDiscover() {
         />
       </View>
     </View>
+  
+    </DirectionalTabScreen>
   );
 }
 

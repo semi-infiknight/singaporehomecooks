@@ -148,6 +148,20 @@ References:
 
 **Rule:** motion is snappy and physical — springs, never ease-in-out fades on primary CTAs.
 
+### Family Values (simplicity · fluidity · delight)
+
+Inspired by [Family Values](https://benji.org/family-values) — patterns adapted to Gourmeat, not Family chrome.
+
+| Principle | SHC implementation |
+|---|---|
+| **Simplicity** | `SHCTray` / `SHCTrayStack` — one primary action per tray; height varies between steps (`compact` / `medium` / `tall`); context preserved over discover, listings, cart |
+| **Fluidity** | `DirectionalTabScreen` + `tabSlideDirection`; `SHCSharedDishImage` discover→PDP; `SHCMorphingLabel` wizard CTAs; `SHCWizardPane` step transitions |
+| **Delight** | `SHCCelebration` + `useMilestoneCelebration` — first listing publish, first order, compliance approved; **no** confetti on add-to-cart |
+
+**Tray rules:** user-initiated; title + back/close icon; destructive actions use stacked confirm tray; `prefers-reduced-motion` disables nonessential animation while trays remain usable.
+
+**Exports:** `packages/shc-ui/src/tray.tsx`, `family-values-core.ts`, `family-values-ui.tsx`, `tab-direction.tsx`; web parity in `SHCWebComponents.tsx` (`SHCTrayWeb`, `SHCMorphingLabelWeb`, etc.).
+
 ---
 
 ## Component naming conventions

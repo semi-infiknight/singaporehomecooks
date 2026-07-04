@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TextInput, Pressable, Modal, StyleSheet, Keyboard, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, TextInput, Pressable, StyleSheet, Keyboard, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -23,10 +24,17 @@ import {
   shcColors,
   AICalorieBadge,
   PhotoTipsModalContent,
+  useSHCTray,
+  SHCTrayAction,
+  SHCWizardPane,
+  SHCMorphingLabel,
+  SHCCelebration,
+  useMilestoneCelebration,
   shcSpacing,
   shcBorders,
   shcRadii,
   shcShadows,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -52,6 +60,11 @@ const inputStyle = {
   ...shcShadows.brutalSm,
 };
 
+const milestoneStorage = {
+  get: (k: string) => SecureStore.getItemAsync(k),
+  set: (k: string, v: string) => SecureStore.setItemAsync(k, v),
+};
+
 export default function CookListings() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -59,6 +72,12 @@ export default function CookListings() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: myListings = [] } = useCookListings();
+  const { openTray, pushTrayContent, popTray, dismiss } = useSHCTray();
+  const {
+    show: showCelebration,
+    triggerIfFirst,
+    dismiss: dismissCelebration,
+  } = useMilestoneCelebration('first_listing_publish', user?.id || '', milestoneStorage);
 
   const scrollRef = useRef<ScrollView>(null);
   const wizardY = useRef(0);
@@ -87,10 +106,8 @@ export default function CookListings() {
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [heritage, setHeritage] = useState('Family recipe from our HDB kitchen since 1978.');
   const [published, setPublished] = useState<any>(null);
-  const [showPhotoTips, setShowPhotoTips] = useState(false);
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
-  const [photoTips, setPhotoTips] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -173,31 +190,88 @@ export default function CookListings() {
     });
   };
 
-  const showListingActions = (listing: any) => {
-    Alert.alert(String(listing.name), 'What would you like to do?', [
-      { text: 'Edit', onPress: () => startEdit(listing) },
-      { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(listing) },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  const showErrorTray = useCallback(
+    (title: string, message: string) => {
+      openTray(
+        { id: 'listing-error', title, height: 'compact' },
+        <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} testID="listing-error-tray" />
+      );
+    },
+    [dismiss, openTray]
+  );
+
+  const performDelete = async (listing: any) => {
+    try {
+      await deleteCookListing(listing.id);
+      if (editingId === listing.id) resetWizard();
+      await qc.invalidateQueries({ queryKey: ['cook-listings'] });
+    } catch (e: any) {
+      showErrorTray('Delete failed', e?.message || 'Could not delete listing.');
+    }
   };
 
-  const confirmDelete = (listing: any) => {
-    Alert.alert('Delete listing?', `Remove "${listing.name}" from your menu? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteCookListing(listing.id);
-            if (editingId === listing.id) resetWizard();
-            await qc.invalidateQueries({ queryKey: ['cook-listings'] });
-          } catch (e: any) {
-            Alert.alert('Delete failed', e?.message || 'Could not delete listing.');
-          }
-        },
-      },
-    ]);
+  const togglePause = async (listing: any) => {
+    const paused = !listing.shc_availability?.paused;
+    try {
+      await updateCookListing(listing.id, { paused });
+      await qc.invalidateQueries({ queryKey: ['cook-listings'] });
+    } catch (e: any) {
+      showErrorTray(paused ? 'Pause failed' : 'Unpause failed', e?.message || 'Could not update listing.');
+    }
+  };
+
+  const pushDeleteConfirm = (listing: any) => {
+    pushTrayContent(
+      { id: 'listing-delete-confirm', title: 'Delete listing?', height: 'medium' },
+      <SHCTrayAction
+        message={`Remove "${listing.name}" from your menu? This cannot be undone.`}
+        primaryLabel="Delete"
+        onPrimary={() => {
+          dismiss();
+          void performDelete(listing);
+        }}
+        secondaryLabel="Cancel"
+        onSecondary={popTray}
+        destructive
+        testID="listing-delete-confirm-tray"
+      />
+    );
+  };
+
+  const showListingActions = (listing: any) => {
+    const isPaused = !!listing.shc_availability?.paused;
+    openTray(
+      { id: 'listing-actions', title: String(listing.name), height: 'compact' },
+      <View style={styles.trayActions} testID="listing-actions-tray">
+        <Pressable
+          style={styles.trayActionBtn}
+          onPress={() => {
+            dismiss();
+            startEdit(listing);
+          }}
+          testID={`edit-listing-${listing.id}`}
+        >
+          <Text style={styles.trayActionText}>Edit listing</Text>
+        </Pressable>
+        <Pressable
+          style={styles.trayActionBtn}
+          onPress={() => {
+            dismiss();
+            void togglePause(listing);
+          }}
+          testID={`pause-listing-${listing.id}`}
+        >
+          <Text style={styles.trayActionText}>{isPaused ? 'Unpause listing' : 'Pause listing'}</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.trayActionBtn, styles.trayActionDestructive]}
+          onPress={() => pushDeleteConfirm(listing)}
+          testID={`delete-listing-${listing.id}`}
+        >
+          <Text style={styles.trayActionDestructiveText}>Delete listing</Text>
+        </Pressable>
+      </View>
+    );
   };
 
   const toggleTag = (t: string) =>
@@ -206,7 +280,7 @@ export default function CookListings() {
   const publish = async () => {
     if (publishing) return;
     if (!user?.id) {
-      Alert.alert('Sign in required', 'Please log in as a cook before publishing a listing.');
+      showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
     }
     setPublishing(true);
@@ -247,6 +321,9 @@ export default function CookListings() {
         : await createCookListing(input);
       setPublished(prod);
       await qc.invalidateQueries({ queryKey: ['cook-listings'] });
+      if (!editingId) {
+        await triggerIfFirst();
+      }
       if (editingId) {
         setEditingId(null);
       }
@@ -254,13 +331,15 @@ export default function CookListings() {
       setAiCal(null);
     } catch (e: any) {
       const message = e?.message || e?.code || 'Could not save listing. Check your connection and try again.';
-      Alert.alert(editingId ? 'Update failed' : 'Publish failed', message);
+      showErrorTray(editingId ? 'Update failed' : 'Publish failed', message);
     } finally {
       setPublishing(false);
     }
   };
 
   return (
+    <DirectionalTabScreen testID="cook-listings-tab-scene">
+
     <ScrollView
       ref={scrollRef}
       style={styles.screen}
@@ -294,7 +373,7 @@ export default function CookListings() {
             onChipPress={handleFilterChip}
             testID="cook-listings-filter-chips"
           />
-          <Text style={styles.holdHint}>Press and hold a dish for edit or delete</Text>
+          <Text style={styles.holdHint}>Press and hold a dish for edit, pause, or delete</Text>
         </>
       ) : null}
 
@@ -350,6 +429,7 @@ export default function CookListings() {
       </SHCFadeIn>
       </View>
 
+      <SHCWizardPane stepKey={step}>
       {step === 1 && (
         <ListingWizardStep step={1} title="Dish Basics">
           <SHCFoodImage uri={previewImage} height={100} rounded={shcRadii.md} />
@@ -414,8 +494,16 @@ export default function CookListings() {
           <Pressable
             onPress={async () => {
               const tips = await getPhotoTips();
-              setPhotoTips((tips as { tips?: string[] }).tips || []);
-              setShowPhotoTips(true);
+              const tipList = (tips as { tips?: string[] }).tips || [];
+              openTray(
+                { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
+                <ScrollView>
+                  <PhotoTipsModalContent onClose={dismiss} />
+                  {tipList.map((t: string, i: number) => (
+                    <Text key={i} style={styles.tipItem}>• {t}</Text>
+                  ))}
+                </ScrollView>
+              );
             }}
             testID="photo-tips-btn"
             style={styles.photoTipsBtn}
@@ -459,7 +547,7 @@ export default function CookListings() {
             {publishing ? (
               <ActivityIndicator color={gourmeatColors.onPrimary} />
             ) : (
-              <SHCButtonText>{editingId ? 'Save changes' : 'Publish'}</SHCButtonText>
+              <SHCMorphingLabel from="Continue" to={editingId ? 'Save changes' : 'Publish'} />
             )}
           </SHCButton>
           {editingId ? (
@@ -479,17 +567,17 @@ export default function CookListings() {
         </ListingWizardStep>
         </View>
       )}
+      </SHCWizardPane>
 
-
-      <Modal visible={showPhotoTips} animationType="fade" onRequestClose={() => setShowPhotoTips(false)}>
-        <ScrollView style={styles.modalScroll}>
-          <PhotoTipsModalContent onClose={() => setShowPhotoTips(false)} />
-          {photoTips.map((t: string, i: number) => (
-            <Text key={i} style={styles.tipItem}>• {t}</Text>
-          ))}
-        </ScrollView>
-      </Modal>
+      <SHCCelebration
+        visible={showCelebration}
+        message="Your first dish is live! Families can now discover your heritage cooking."
+        onDone={dismissCelebration}
+        testID="first-listing-celebration"
+      />
     </ScrollView>
+  
+    </DirectionalTabScreen>
   );
 }
 
@@ -518,7 +606,18 @@ const styles = StyleSheet.create({
   reviewName: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15, flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 8 },
   publishedCard: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm },
-
-  modalScroll: { flex: 1, backgroundColor: gourmeatColors.background, padding: shcSpacing.md },
+  trayActions: { gap: shcSpacing.sm },
+  trayActionBtn: {
+    paddingVertical: shcSpacing.md,
+    paddingHorizontal: shcSpacing.md,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: shcColors.surface,
+    ...shcShadows.brutalSm,
+  },
+  trayActionText: { fontWeight: '800', fontSize: 15, color: gourmeatColors.text, textAlign: 'center' },
+  trayActionDestructive: { backgroundColor: '#FEE2E2' },
+  trayActionDestructiveText: { fontWeight: '800', fontSize: 15, color: '#B91C1C', textAlign: 'center' },
   tipItem: { marginTop: 4, fontSize: 13 },
 });

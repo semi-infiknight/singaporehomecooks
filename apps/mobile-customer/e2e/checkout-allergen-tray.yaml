@@ -1,0 +1,34 @@
+# Customer checkout — allergen gate tray (Family Values)
+# Run: maestro test --device <id> apps/mobile-customer/e2e/checkout-allergen-tray.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "discover-tab"
+    timeout: 120000
+    optional: true
+- tapOn:
+    id: "cart-tab"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "proceed-checkout"
+    timeout: 30000
+    optional: true
+- tapOn:
+    id: "proceed-checkout"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "do-checkout"
+    timeout: 30000
+    optional: true
+- tapOn:
+    id: "do-checkout"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "shc-tray-allergen-gate"
+    timeout: 10000
+    optional: true

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -13,10 +13,12 @@ import {
   gourmeatColors,
   shcSpacing,
   SHCFadeIn,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import { getDishImageUrl, summarizeCart } from '@shc/utils';
 import { useCart, useClearCart } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
+import { useGuestAuthTray } from '../../hooks/useGuestAuthTray';
 
 export default function Cart() {
   const insets = useSafeAreaInsets();
@@ -25,13 +27,14 @@ export default function Cart() {
   const clearMut = useClearCart();
   const router = useRouter();
   const { user } = useAuth();
+  const { showGuestAuthTray } = useGuestAuthTray();
 
   const goCheckout = () => {
     if (!user) {
-      Alert.alert('Sign in to checkout', 'Create an account or sign in to complete your order.', [
-        { text: 'Keep browsing', style: 'cancel' },
-        { text: 'Sign in', onPress: () => router.push('/(shared)/auth' as any) },
-      ]);
+      showGuestAuthTray(
+        'Sign in to checkout',
+        'Create an account or sign in to complete your order.'
+      );
       return;
     }
     router.push('/(customer)/checkout' as any);
@@ -44,6 +47,8 @@ export default function Cart() {
   const hasItems = cartData.items && cartData.items.length > 0;
 
   return (
+    <DirectionalTabScreen testID="cart-tab-scene">
+
     <View style={styles.screen} testID="cart-screen">
       <ScrollView
         style={{ flex: 1 }}
@@ -106,6 +111,8 @@ export default function Cart() {
         </View>
       )}
     </View>
+  
+    </DirectionalTabScreen>
   );
 }
 

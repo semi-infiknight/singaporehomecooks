@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react';
-import { View, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab } from '@shc/ui';
+import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
 import { summarizeCart } from '@shc/utils';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
+import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
 
 const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
   index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
@@ -21,8 +21,9 @@ const HIDE_TAB_BAR = new Set(['request', 'location', 'checkout', 'product/[id]',
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { user } = useAuth();
+  const { notifyTabChange } = useTabDirection();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart } = useCart();
 
   const items = (cart?.items || []) as Parameters<typeof summarizeCart>[0];
@@ -47,14 +48,14 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
 
   const openCart = useCallback(() => {
     if (!user) {
-      Alert.alert('Sign in to view cart', 'Browse freely — sign in to checkout and track orders.', [
-        { text: 'Keep browsing', style: 'cancel' },
-        { text: 'Sign in', onPress: () => router.push('/(shared)/auth' as any) },
-      ]);
+      showGuestAuthTray(
+        'Sign in to view cart',
+        'Browse freely — sign in to checkout and track orders.'
+      );
       return;
     }
     navigation.navigate('cart');
-  }, [navigation, router, user]);
+  }, [navigation, showGuestAuthTray, user]);
 
   if (hideTabBar) {
     return showCartBar ? (
@@ -104,7 +105,10 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
       <GourmeatFloatingTabBar
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
-        onTabPress={(key) => navigation.navigate(key)}
+        onTabPress={(key) => {
+          notifyTabChange(key);
+          navigation.navigate(key);
+        }}
         testID="bottom-tab-bar"
       />
     </View>

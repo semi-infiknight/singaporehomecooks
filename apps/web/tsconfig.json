@@ -21,6 +21,7 @@
     "paths": {
       "@/*": ["./*"],
       "@shc/ui": ["../packages/shc-ui/src"],
+      "@shc/ui/*": ["../packages/shc-ui/src/*"],
       "@shc/types": ["../packages/shc-types/src"],
       "@shc/business-rules": ["../packages/business-rules/src"],
       "@shc/utils": ["../packages/shc-utils/src"]

@@ -23,6 +23,7 @@ import {
   shcBorders,
   shcRadii,
   shcShadows,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
 import { useMyOrders, useRequests, useCreateBid } from '../../hooks/useOrder';
@@ -61,6 +62,8 @@ export default function CookDashboard() {
   };
 
   return (
+    <DirectionalTabScreen testID="cook-dashboard-tab-scene">
+
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
@@ -273,6 +276,8 @@ export default function CookDashboard() {
         <SHCBadge variant="success">SFA/WSQ verified</SHCBadge>
       </View>
     </ScrollView>
+  
+    </DirectionalTabScreen>
   );
 }
 

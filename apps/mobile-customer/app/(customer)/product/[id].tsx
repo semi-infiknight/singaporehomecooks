@@ -6,6 +6,7 @@ import {
   GourmeatDiscountBadge,
   GourmeatProductStickyBar,
   GourmeatCard,
+  SHCSharedDishImage,
   gourmeatColors,
   gourmeatRadii,
   gourmeatShadows,
@@ -85,10 +86,11 @@ export default function ProductDetail() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroWrap}>
-          <Image
-            source={{ uri: getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name }) }}
+          <SHCSharedDishImage
+            dishId={product.id}
+            uri={getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name })}
             style={styles.heroImage}
-            resizeMode="cover"
+            hero
             testID="pdp-hero-image"
           />
           <View style={[styles.heroOverlay, { paddingTop: insets.top + shcSpacing.sm }]}>

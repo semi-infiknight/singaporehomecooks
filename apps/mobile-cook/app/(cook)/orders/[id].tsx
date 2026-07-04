@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Text, TextInput, View, ScrollView, StyleSheet } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import {
   SHCErrorBanner,
   gourmeatColors,
   shcSpacing,
+  useSHCTray,
+  SHCTrayAction,
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
@@ -33,6 +35,7 @@ export default function CookManageOrder() {
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
   const [disputeNotes, setDisputeNotes] = React.useState('');
+  const { openTray, dismiss } = useSHCTray();
 
   const { data: disputes = [] } = useQuery({
     queryKey: ['order-disputes', id],
@@ -46,9 +49,22 @@ export default function CookManageOrder() {
     onSuccess: () => {
       setDisputeNotes('');
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
-      Alert.alert('Issue reported', 'Ops will review this order and follow up.');
+      openTray(
+        { id: 'issue-reported', title: 'Issue reported', height: 'compact' },
+        <SHCTrayAction
+          message="Ops will review this order and follow up."
+          primaryLabel="Got it"
+          onPrimary={dismiss}
+          testID="cook-issue-reported-tray"
+        />
+      );
     },
-    onError: (e: any) => Alert.alert('Could not report issue', e?.message || 'Please try again.'),
+    onError: (e: any) => {
+      openTray(
+        { id: 'issue-error', title: 'Could not report issue', height: 'compact' },
+        <SHCTrayAction message={e?.message || 'Please try again.'} primaryLabel="OK" onPrimary={dismiss} />
+      );
+    },
   });
 
   const doTransition = async (to: SHCOrderStatus) => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { GourmeatFloatingTabBar, type SHCBottomTab } from '@shc/ui';
+import { GourmeatFloatingTabBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
 
 const TAB_META: Record<string, { label: string; iconKey: 'dashboard' | 'orders' | 'listings' | 'compliance'; testID: string }> = {
   dashboard: { label: 'Home', iconKey: 'dashboard', testID: 'tab-cook-dashboard' },
@@ -15,6 +15,7 @@ const VISIBLE_TABS = new Set(Object.keys(TAB_META));
 
 export function CookTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { notifyTabChange } = useTabDirection();
   const visibleRoutes = state.routes.filter((route) => VISIBLE_TABS.has(route.name));
   const activeRoute = state.routes[state.index];
 
@@ -43,7 +44,10 @@ export function CookTabBar({ state, navigation }: BottomTabBarProps) {
       <GourmeatFloatingTabBar
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'dashboard'}
-        onTabPress={(key) => navigation.navigate(key)}
+        onTabPress={(key) => {
+          notifyTabChange(key);
+          navigation.navigate(key);
+        }}
         testID="cook-bottom-tab-bar"
       />
     </View>

@@ -10,6 +10,7 @@ import {
   GourmeatPrimaryButton,
   gourmeatColors,
   shcSpacing,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import { getActiveOrders, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
@@ -33,6 +34,8 @@ export default function MyOrdersList() {
   );
 
   return (
+    <DirectionalTabScreen testID="orders-tab-scene">
+
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
@@ -97,6 +100,8 @@ export default function MyOrdersList() {
         />
       ))}
     </ScrollView>
+  
+    </DirectionalTabScreen>
   );
 }
 

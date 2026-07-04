@@ -5,6 +5,7 @@ import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-nativ
 import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
+import { SHCSharedDishImage } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -331,7 +332,12 @@ export function GourmeatDishCard({
     >
       <View style={{ position: 'relative' }}>
         <Pressable onPress={onPress} accessibilityRole="button">
-          <SHCFoodImage uri={imageUri} height={140} rounded={0} testID={`${cardTestID}-image`} />
+          <SHCSharedDishImage
+            dishId={dish.id}
+            uri={imageUri}
+            style={{ width: '100%', height: 140 }}
+            testID={`${cardTestID}-image`}
+          />
         </Pressable>
         <View
           pointerEvents="box-none"

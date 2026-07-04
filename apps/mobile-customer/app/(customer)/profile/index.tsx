@@ -15,6 +15,7 @@ import {
   shcRadii,
   GourmeatScreenHeader,
   SHCHeritageStoryBanner,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, favoritesToReorderDishes } from '@shc/utils';
 import { useFavorites } from '../../../hooks/useFavorites';
@@ -93,6 +94,8 @@ export default function Profile() {
   };
 
   return (
+    <DirectionalTabScreen testID="profile-tab-scene">
+
     <View style={styles.screen} testID="customer-profile-screen">
     <ScrollView
       style={{ flex: 1 }}
@@ -240,6 +243,8 @@ export default function Profile() {
       )}
     </ScrollView>
     </View>
+  
+    </DirectionalTabScreen>
   );
 }
 

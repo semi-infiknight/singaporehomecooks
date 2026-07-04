@@ -12,6 +12,7 @@ import {
   SHCFadeIn,
   gourmeatColors,
   shcSpacing,
+  DirectionalTabScreen,
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 
@@ -76,6 +77,8 @@ export default function CookOrders() {
         const actions = NEXT_ACTIONS[o.shc_status] || [];
         const dishName = o.items?.[0]?.name;
         return (
+    <DirectionalTabScreen testID="cook-orders-tab-scene">
+
           <GourmeatOrderRow
             key={o.id}
             orderId={o.id}
@@ -102,7 +105,9 @@ export default function CookOrders() {
               </View>
             }
           />
-        );
+        
+    </DirectionalTabScreen>
+  );
       })}
       </SHCFadeIn>
 

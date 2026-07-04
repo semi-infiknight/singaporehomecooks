@@ -7,11 +7,12 @@
   "exports": {
     ".": "./src/index.ts",
     "./theme": "./src/theme.ts",
+    "./family-values-core": "./src/family-values-core.ts",
     "./location-ux": "./src/location-ux.tsx"
   },
   "scripts": {
     "build": "echo 'UI is source-only for now (Expo)' && exit 0",
-    "test": "echo 'no tests yet' && exit 0",
+    "test": "vitest run",
     "lint": "eslint src || true",
     "typecheck": "tsc --noEmit || true"
   },
@@ -29,6 +30,7 @@
     "@shc/utils": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
   }
 }

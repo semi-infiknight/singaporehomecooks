@@ -25,6 +25,7 @@ import {
   GourmeatPayButton,
   gourmeatDiscountPercent,
   FavoriteButton,
+  SHCSharedDishImageWeb,
 } from '../../components/SHCWebComponents';
 import { useFavorites } from '../../../lib/useFavorites';
 
@@ -91,14 +92,13 @@ export default function ProductDetail() {
     <>
       {/* Full-width hero food image */}
       <div className="relative w-full h-56 sm:h-64 md:h-80">
-        <Image
+        <SHCSharedDishImageWeb
+          dishId={product.id}
           src={heroImage}
           alt={product.name}
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-          data-testid="product-hero-image"
+          hero
+          className="absolute inset-0 w-full h-full"
+          testID="product-hero-image"
         />
         <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center gap-2">
           <Link

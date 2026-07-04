@@ -1,10 +1,25 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Tabs, usePathname } from 'expo-router';
 import { gourmeatColors } from '@shc/ui/theme';
+import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CustomerTabBar } from '../../components/CustomerTabBar';
+
+const CUSTOMER_TAB_ORDER = ['index', 'orders/index', 'cart', 'profile/index'];
+
+function CustomerTabIndexSync({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { notifyTabChange } = useTabDirection();
+  useEffect(() => {
+    const key = CUSTOMER_TAB_ORDER.find((k) => pathname?.includes(k.replace('/index', '')) || pathname?.endsWith(k));
+    if (key) notifyTabChange(key);
+  }, [pathname, notifyTabChange]);
+  return <>{children}</>;
+}
 
 export default function CustomerLayout() {
   return (
+    <TabDirectionProvider routeOrder={CUSTOMER_TAB_ORDER}>
+    <CustomerTabIndexSync>
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: gourmeatColors.background },
@@ -36,5 +51,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="request" options={{ href: null, title: 'Request a Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="location" options={{ href: null, title: 'Collection location', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
+    </CustomerTabIndexSync>
+    </TabDirectionProvider>
   );
 }

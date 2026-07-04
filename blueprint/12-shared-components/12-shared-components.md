@@ -9,7 +9,7 @@
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-06-22 (Location + request CTA) — `location-ux.tsx`, `location-map(.native).tsx`, `request-ux.tsx` (`SHCRequestDishHomeCTA`); heritage banner placement on Profile; tri-platform sync confirmed.
+**Last Updated:** 2026-07-04 (Family Values UI) — `family-values-core.ts`, `tray.tsx`, `family-values-ui.tsx`, `tab-direction.tsx`; web mirrors `SHCTrayWeb`, `SHCMorphingLabelWeb`, `SHCCelebrationWeb`; Maestro tray flows in `apps/mobile-*/e2e/`.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -28,7 +28,11 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `zomato.tsx` | Zomato-style layout: promo rail, filter chips, dish rows, sticky header, cuisine rail |
 | `visuals.tsx` | `SHCFoodImage`, `SHCVisualBentoTile`, `SHCBentoStatCell`, `SHCZomatoAddButton`, rating pill |
 | `icons.tsx` | `SHCIcon`, `SHCTabIcon`, `SHCBentoIconBadge` (Ionicons on mobile; web uses Lucide mirrors) |
-| `motion.tsx` | `SHCFadeIn`, `SHCStaggerIn`, `SHCWizardPane` (Moti + Reanimated) |
+| `motion.tsx` | `SHCFadeIn`, `SHCStaggerIn`, `SHCWizardPane` (Moti + Animated fallback) |
+| `family-values-core.ts` | Tray stack reducer, morphing label segments, milestone keys, tab slide direction (unit-tested) |
+| `tray.tsx` | `SHCTrayProvider`, `useSHCTray`, `SHCTrayAction` — bottom-sheet overlays |
+| `family-values-ui.tsx` | `SHCMorphingLabel`, `SHCChevronNav`, `SHCDirectionalTabScene`, `SHCSharedDishImage`, `SHCCelebration`, `useMilestoneCelebration` |
+| `tab-direction.tsx` | `TabDirectionProvider`, `DirectionalTabScreen` |
 | `food-ux.tsx` | Toptal principles: `SHCCheckoutStepper`, `SHCSearchResultRow`, `SHCSearchResultsPanel`, `SHCHeritageStoryBanner` |
 | `location-ux.tsx` | `LocationPickerExperience` — 2-step collection point (search/GPS → map confirm) |
 | `location-map.tsx` / `location-map.native.tsx` | `SHCLocationDraggableMap` — web tile fallback; iOS `react-native-maps`; Android Carto OSM tiles + pan/nudge |
