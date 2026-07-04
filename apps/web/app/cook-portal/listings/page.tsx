@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   CUISINE_IMAGE,
@@ -64,6 +64,24 @@ export default function CookListingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
+  const [actionListing, setActionListing] = useState<ListingRow | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const bindListingLongPress = useCallback((listing: ListingRow) => ({
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault();
+      setActionListing(listing);
+    },
+    onTouchStart: () => {
+      longPressTimer.current = setTimeout(() => setActionListing(listing), 500);
+    },
+    onTouchEnd: () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    },
+    onTouchMove: () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    },
+  }), []);
 
   const filteredListings = useMemo(
     () => filterCookListings(myListings as ListingRow[], { q: searchQuery, status: statusFilter, cuisine: cuisineFilter }),
@@ -179,11 +197,14 @@ export default function CookListingsPage() {
       />
 
       {myListings.length > 0 ? (
-        <FilterChipRow
-          chips={filterChips}
-          onChipClick={handleFilterChip}
-          testID="cook-listings-filter-chips"
-        />
+        <>
+          <FilterChipRow
+            chips={filterChips}
+            onChipClick={handleFilterChip}
+            testID="cook-listings-filter-chips"
+          />
+          <p className="text-xs text-[var(--shc-text-light)] mb-3">Press and hold a dish for edit or delete</p>
+        </>
       ) : null}
 
       {myListings.length === 0 ? (
@@ -199,7 +220,13 @@ export default function CookListingsPage() {
         </GourmeatCard>
       ) : (
         filteredListings.map((p: ListingRow) => (
-          <GourmeatCard key={String(p.id)} className="mb-3">
+          <div
+            key={String(p.id)}
+            className="mb-3 select-none touch-manipulation"
+            data-testid={`listing-card-${p.id}`}
+            {...bindListingLongPress(p)}
+          >
+          <GourmeatCard className="mb-0">
             <div className="flex gap-3">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
                 <Image
@@ -221,27 +248,10 @@ export default function CookListingsPage() {
                   <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
                   {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
                 </div>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-xl border border-border px-3 py-1.5 text-xs font-bold"
-                    onClick={() => startEdit(p)}
-                    data-testid={`edit-listing-${p.id}`}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 rounded-xl border border-border px-3 py-1.5 text-xs font-bold text-red-700"
-                    onClick={() => removeListing(p)}
-                    data-testid={`delete-listing-${p.id}`}
-                  >
-                    Delete
-                  </button>
-                </div>
               </div>
             </div>
           </GourmeatCard>
+          </div>
         ))
       )}
 
@@ -307,6 +317,51 @@ export default function CookListingsPage() {
           ) : null}
         </div>
       </GourmeatCard>
+
+      {actionListing ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center"
+          onClick={() => setActionListing(null)}
+          data-testid="listing-action-sheet"
+        >
+          <div
+            className="w-full max-w-lg bg-card rounded-t-2xl p-4 pb-8 shadow-[var(--shc-shadow-brutal)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="font-extrabold text-base mb-3 truncate">{String(actionListing.name)}</p>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold mb-2"
+              data-testid={`edit-listing-${actionListing.id}`}
+              onClick={() => {
+                startEdit(actionListing);
+                setActionListing(null);
+              }}
+            >
+              Edit listing
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold text-red-700 mb-2"
+              data-testid={`delete-listing-${actionListing.id}`}
+              onClick={() => {
+                const listing = actionListing;
+                setActionListing(null);
+                void removeListing(listing);
+              }}
+            >
+              Delete listing
+            </button>
+            <button
+              type="button"
+              className="w-full rounded-xl px-4 py-3 text-sm font-semibold text-[var(--shc-text-light)]"
+              onClick={() => setActionListing(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

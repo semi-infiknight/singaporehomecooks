@@ -173,6 +173,14 @@ export default function CookListings() {
     });
   };
 
+  const showListingActions = (listing: any) => {
+    Alert.alert(String(listing.name), 'What would you like to do?', [
+      { text: 'Edit', onPress: () => startEdit(listing) },
+      { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(listing) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   const confirmDelete = (listing: any) => {
     Alert.alert('Delete listing?', `Remove "${listing.name}" from your menu? This cannot be undone.`, [
       { text: 'Cancel', style: 'cancel' },
@@ -280,11 +288,14 @@ export default function CookListings() {
       </View>
 
       {myListings.length > 0 ? (
-        <SHCFilterChipRow
-          chips={filterChips}
-          onChipPress={handleFilterChip}
-          testID="cook-listings-filter-chips"
-        />
+        <>
+          <SHCFilterChipRow
+            chips={filterChips}
+            onChipPress={handleFilterChip}
+            testID="cook-listings-filter-chips"
+          />
+          <Text style={styles.holdHint}>Press and hold a dish for edit or delete</Text>
+        </>
       ) : null}
 
       {myListings.length === 0 && (
@@ -299,32 +310,33 @@ export default function CookListings() {
         </SHCCard>
       )}
       {filteredListings.map((p: any) => (
-        <SHCCard key={p.id} style={styles.listingCard}>
-          <View style={styles.listingRow}>
-            <SHCFoodImage
-              uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine, image_url: p.image_url })}
-              width={64}
-              height={64}
-              rounded={shcRadii.md}
-            />
-            <View style={styles.listingInfo}>
-              <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
-              <View style={styles.listingBadges}>
-                <SHCBadge variant="default">S${p.price}</SHCBadge>
-                <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
-                {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
-              </View>
-              <View style={styles.listingActions}>
-                <SHCButton variant="outline" onPress={() => startEdit(p)} testID={`edit-listing-${p.id}`} style={styles.listingActionBtn}>
-                  <SHCButtonText>Edit</SHCButtonText>
-                </SHCButton>
-                <SHCButton variant="outline" onPress={() => confirmDelete(p)} testID={`delete-listing-${p.id}`} style={styles.listingActionBtn}>
-                  <SHCButtonText>Delete</SHCButtonText>
-                </SHCButton>
+        <Pressable
+          key={p.id}
+          onLongPress={() => showListingActions(p)}
+          delayLongPress={400}
+          testID={`listing-card-${p.id}`}
+          accessibilityRole="button"
+          accessibilityLabel={`${p.name}, long press for options`}
+        >
+          <SHCCard style={styles.listingCard}>
+            <View style={styles.listingRow}>
+              <SHCFoodImage
+                uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine, image_url: p.image_url })}
+                width={64}
+                height={64}
+                rounded={shcRadii.md}
+              />
+              <View style={styles.listingInfo}>
+                <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
+                <View style={styles.listingBadges}>
+                  <SHCBadge variant="default">S${p.price}</SHCBadge>
+                  <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
+                  {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                </View>
               </View>
             </View>
-          </View>
-        </SHCCard>
+          </SHCCard>
+        </Pressable>
       ))}
 
       <View
@@ -491,8 +503,7 @@ const styles = StyleSheet.create({
   listingInfo: { flex: 1, gap: 4 },
   listingName: { fontWeight: '700', fontSize: 15 },
   listingBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  listingActions: { flexDirection: 'row', gap: 6, marginTop: 8 },
-  listingActionBtn: { flex: 1, paddingVertical: 6 },
+  holdHint: { fontSize: 12, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
   wizardTitle: { marginTop: shcSpacing.md },
   navRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
   photoTipsBtn: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginTop: shcSpacing.sm },
