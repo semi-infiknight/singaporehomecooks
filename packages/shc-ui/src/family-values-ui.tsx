@@ -132,14 +132,18 @@ export function SHCSharedDishImage({
 }) {
   const reduce = shouldReduceMotion();
   const containerRef = useRef<View>(null);
-  const scale = useRef(new Animated.Value(1)).current;
+  const pendingOrigin = hero && !reduce ? getSharedDishLayout(dishId) : undefined;
+  const scale = useRef(new Animated.Value(pendingOrigin ? 0.55 : 1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
-  const [ready, setReady] = useState(!hero || reduce);
+  const [ready, setReady] = useState(!hero || reduce || !pendingOrigin);
 
   const runHeroMorph = useCallback(() => {
     const origin = getSharedDishLayout(dishId);
     if (!origin || reduce) {
+      scale.setValue(1);
+      translateX.setValue(0);
+      translateY.setValue(0);
       setReady(true);
       return;
     }

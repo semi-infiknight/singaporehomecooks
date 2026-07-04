@@ -383,7 +383,7 @@ export function GourmeatDishCard({
           </Text>
         </Pressable>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Pressable onPress={onPress} accessibilityRole="button" style={{ flex: 1 }}>
+          <Pressable onPress={handleCardPress} accessibilityRole="button" style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: '800', color: gourmeatColors.primary }} testID={`${cardTestID}-price`}>
               S${dish.price}
             </Text>

@@ -91,7 +91,7 @@ export default function Checkout() {
   const [error, setError] = useState<null | { code?: SHCErrorCode; message: string }>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: creditsData } = useCredits();
+  const { data: creditsData } = useCredits() as { data?: { balance?: number; tier?: string } };
   const [creditsToApply, setCreditsToApply] = useState(0);
   const [isCorporate, setIsCorporate] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('paynow');
@@ -313,7 +313,7 @@ export default function Checkout() {
 
           {creditBal > 0 && (
             <SHCCard variant="bento-mint" style={styles.sectionCard} testID="credits-apply-section">
-              <CreditBadge balance={creditBal} tier={creditsData?.tier} />
+              <CreditBadge balance={creditBal} tier={creditsData?.tier as 'Bronze' | 'Silver' | 'Gold' | undefined} />
               <Text style={styles.creditsHint}>
                 Credits available: {creditBal} (4 = ~S$1 value). Redeem for family occasions.
               </Text>

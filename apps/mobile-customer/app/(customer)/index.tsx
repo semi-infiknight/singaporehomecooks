@@ -129,7 +129,9 @@ export default function CustomerDiscover() {
       halalOnly: halalOnly || undefined,
       maxCal,
     });
-    return sortByCookProximity(list, collectionLocation);
+    return collectionLocation?.lat != null && collectionLocation?.lng != null
+      ? sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng })
+      : list;
   }, [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
 
   const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
@@ -327,7 +329,7 @@ export default function CustomerDiscover() {
           renderItem={renderItem}
           keyExtractor={(item) => String(item.id)}
           numColumns={2}
-          estimatedItemSize={220}
+
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
           contentContainerStyle={styles.listContent}

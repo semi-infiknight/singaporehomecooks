@@ -1724,6 +1724,15 @@ export function GourmeatDishCard({
   const displayRating = rating ?? (product.rating != null ? Number(product.rating) : 4.8);
   const cardTestID = `dish-card-${product.id}`;
 
+  const captureDishLayout = (e: React.MouseEvent<HTMLElement>) => {
+    const card = (e.currentTarget as HTMLElement).closest(`[data-testid="${cardTestID}"]`);
+    const img = card?.querySelector('img');
+    if (img) {
+      const r = img.getBoundingClientRect();
+      registerSharedDishLayout(product.id, { x: r.left, y: r.top, w: r.width, h: r.height });
+    }
+  };
+
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
       <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col">
@@ -1731,13 +1740,7 @@ export function GourmeatDishCard({
           <Link
             href={`/product/${product.id}`}
             className="block"
-            onClick={(e) => {
-              const img = (e.currentTarget as HTMLElement).querySelector('img');
-              if (img) {
-                const r = img.getBoundingClientRect();
-                registerSharedDishLayout(product.id, { x: r.left, y: r.top, w: r.width, h: r.height });
-              }
-            }}
+            onClick={captureDishLayout}
           >
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
@@ -1765,7 +1768,7 @@ export function GourmeatDishCard({
           </div>
         </div>
         <div className="p-3 flex-1 flex flex-col">
-          <Link href={`/product/${product.id}`}>
+          <Link href={`/product/${product.id}`} onClick={captureDishLayout}>
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>

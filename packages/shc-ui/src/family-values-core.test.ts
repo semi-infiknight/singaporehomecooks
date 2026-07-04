@@ -88,7 +88,7 @@ describe('tabSlideDirection', () => {
 describe('wizardCtaLabel', () => {
   it('morphs on final step', () => {
     expect(wizardCtaLabel(4, 4, false)).toBe('Publish');
-    expect(wizardCtaMorphFrom(4, 4, false)).toEqual({ from: 'Continue', to: 'Publish' });
+    expect(wizardCtaMorphFrom(4, 4, false)).toEqual({ from: 'Review', to: 'Publish' });
   });
 
   it('save when editing', () => {
@@ -96,8 +96,11 @@ describe('wizardCtaLabel', () => {
     expect(wizardCtaMorphFrom(4, 4, true).to).toBe('Save changes');
   });
 
-  it('intermediate steps stay Continue', () => {
-    expect(wizardCtaMorphFrom(2, 4, false)).toEqual({ from: 'Continue', to: 'Continue' });
+  it('intermediate steps morph Continue to Next to Review', () => {
+    expect(wizardCtaMorphFrom(1, 4, false)).toEqual({ from: 'Continue', to: 'Continue' });
+    expect(wizardCtaMorphFrom(2, 4, false)).toEqual({ from: 'Continue', to: 'Next' });
+    expect(wizardCtaMorphFrom(3, 4, false)).toEqual({ from: 'Next', to: 'Review' });
+    expect(wizardCtaMorphFrom(4, 4, false)).toEqual({ from: 'Review', to: 'Publish' });
   });
 });
 

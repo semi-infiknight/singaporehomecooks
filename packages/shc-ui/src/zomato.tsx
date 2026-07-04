@@ -1,12 +1,13 @@
 // Zomato/Swiggy layout primitives — location bar, promo rail, filter row, horizontal dish rows.
 // @ts-nocheck
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
 import { SHCStaggerIn } from './motion';
+import { SHCSharedDishImage, registerSharedDishLayout } from './family-values-ui';
 import { getDishImageUrl, getCollectionSlotLabel } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 
@@ -368,10 +369,18 @@ export function SHCZomatoDishRow({
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const slot = dish.collection_slot || getCollectionSlotLabel(dish.id);
   const rating = dish.rating ?? 4.8;
+  const imageMeasureRef = useRef<View>(null);
+
+  const handlePress = useCallback(() => {
+    imageMeasureRef.current?.measureInWindow((x, y, w, h) => {
+      registerSharedDishLayout(dish.id, { x, y, w, h });
+      onPress?.();
+    });
+  }, [dish.id, onPress]);
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       testID={cardTestID}
       style={{
         width: 300,
@@ -386,7 +395,13 @@ export function SHCZomatoDishRow({
     >
       <View style={{ flexDirection: 'row' }}>
         <View style={{ width: 110, height: 118 }}>
-          <SHCFoodImage uri={imageUri} height={118} width={110} rounded={0} testID={`${cardTestID}-image`} />
+          <SHCSharedDishImage
+            dishId={dish.id}
+            uri={imageUri}
+            style={{ width: 110, height: 118 }}
+            measureRef={imageMeasureRef}
+            testID={`${cardTestID}-image`}
+          />
           {offerLabel && (
             <View
               style={{

@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": [
+    "app/_layout.tsx",
+    "app/(cook)/_layout.tsx",
+    "app/(cook)/listings.tsx",
+    "app/(cook)/compliance.tsx",
+    "app/(cook)/orders/**/*.tsx",
+    "app/(cook)/dashboard.tsx",
+    "app/(cook)/orders.tsx",
+    "components/CookTabBar.tsx"
+  ]
+}

@@ -111,15 +111,27 @@ export function tabSlideDirection(prevIndex: number, nextIndex: number): 'left' 
 
 export const TAB_SLIDE_OFFSET = 24;
 
-export function wizardCtaLabel(step: number, total: number, editing: boolean): string {
-  if (step >= total) return editing ? 'Save changes' : 'Publish';
+/** Per-step advance label — morphs as user progresses (Family Continue→Confirm pattern). */
+export function wizardStepActionLabel(step: number, total: number): string {
+  if (step >= total) return 'Publish';
+  if (step === 1) return 'Continue';
+  if (step === 2) return 'Next';
+  if (step === 3) return 'Review';
   return 'Continue';
 }
 
+export function wizardCtaLabel(step: number, total: number, editing: boolean): string {
+  if (step >= total) return editing ? 'Save changes' : 'Publish';
+  return wizardStepActionLabel(step, total);
+}
+
 export function wizardCtaMorphFrom(step: number, total: number, editing: boolean): { from: string; to: string } {
-  const next = wizardCtaLabel(step, total, editing);
-  if (step >= total) return { from: 'Continue', to: next };
-  return { from: 'Continue', to: 'Continue' };
+  if (step >= total) {
+    return { from: 'Review', to: editing ? 'Save changes' : 'Publish' };
+  }
+  const to = wizardStepActionLabel(step, total);
+  const from = step <= 1 ? 'Continue' : wizardStepActionLabel(step - 1, total);
+  return { from, to };
 }
 
 export type SharedDishLayout = { x: number; y: number; w: number; h: number };

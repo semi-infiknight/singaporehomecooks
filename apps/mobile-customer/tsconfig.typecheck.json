@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": [
+    "app/_layout.tsx",
+    "app/(customer)/_layout.tsx",
+    "app/(customer)/index.tsx",
+    "app/(customer)/cart.tsx",
+    "app/(customer)/checkout.tsx",
+    "app/(customer)/product/**/*.tsx",
+    "app/(customer)/orders/**/*.tsx",
+    "components/CustomerTabBar.tsx",
+    "hooks/useGuestAuthTray.tsx"
+  ]
+}
