@@ -1,6 +1,6 @@
 // Family Values UI helpers — morphing labels, chevrons, tabs, shared image, celebration.
 // @ts-nocheck
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, View, StyleSheet, Image, type ImageStyle, type StyleProp } from 'react-native';
 import {
   computeMorphingLabelSegments,
@@ -12,8 +12,21 @@ import {
   milestoneStorageKey,
   shouldShowMilestone,
   markMilestoneSeen,
+  registerSharedDishLayout,
+  getSharedDishLayout,
+  clearSharedDishLayout,
+  computeSharedHeroTransform,
+  wizardCtaMorphFrom,
 } from './family-values-core';
-import { gourmeatColors, shcSpacing } from './theme';
+import { gourmeatColors, shcSpacing, shcRadii } from './theme';
+import { SHCButton, SHCButtonText } from './primitives';
+
+export {
+  registerSharedDishLayout,
+  getSharedDishLayout,
+  clearSharedDishLayout,
+  computeSharedHeroTransform,
+} from './family-values-core';
 
 export function SHCMorphingLabel({
   from,
@@ -101,38 +114,102 @@ export function SHCDirectionalTabScene({
   );
 }
 
-const sharedImageRegistry = new Map<string, { x: number; y: number; w: number; h: number }>();
-
-export function registerSharedDishLayout(id: string, layout: { x: number; y: number; w: number; h: number }) {
-  sharedImageRegistry.set(id, layout);
-}
-
 export function SHCSharedDishImage({
   dishId,
   uri,
   style,
   hero = false,
+  measureRef,
   testID,
 }: {
   dishId: string;
   uri: string;
   style?: StyleProp<ImageStyle>;
   hero?: boolean;
+  /** Attach ref for parent to measureInWindow before navigation. */
+  measureRef?: React.Ref<View>;
   testID?: string;
 }) {
   const reduce = shouldReduceMotion();
-  const scale = useRef(new Animated.Value(hero && !reduce ? 1.02 : 1)).current;
+  const containerRef = useRef<View>(null);
+  const scale = useRef(new Animated.Value(1)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const [ready, setReady] = useState(!hero || reduce);
+
+  const runHeroMorph = useCallback(() => {
+    const origin = getSharedDishLayout(dishId);
+    if (!origin || reduce) {
+      setReady(true);
+      return;
+    }
+    containerRef.current?.measureInWindow((x, y, w, h) => {
+      const t = computeSharedHeroTransform(origin, { x, y, w, h });
+      scale.setValue(t.initialScale);
+      translateX.setValue(t.translateX);
+      translateY.setValue(t.translateY);
+      setReady(true);
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, friction: 8, tension: 70, useNativeDriver: true }),
+        Animated.spring(translateX, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+        Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
+      ]).start(() => clearSharedDishLayout(dishId));
+    });
+  }, [dishId, reduce, scale, translateX, translateY]);
 
   useEffect(() => {
-    if (reduce || !hero) return;
-    scale.setValue(1.02);
-    Animated.spring(scale, { toValue: 1, friction: 8, tension: 80, useNativeDriver: true }).start();
-  }, [dishId, hero, reduce, scale]);
+    if (hero && !reduce) {
+      requestAnimationFrame(runHeroMorph);
+    }
+  }, [hero, reduce, runHeroMorph]);
+
+  const setRefs = useCallback(
+    (node: View | null) => {
+      (containerRef as React.MutableRefObject<View | null>).current = node;
+      if (typeof measureRef === 'function') measureRef(node);
+      else if (measureRef && 'current' in measureRef) (measureRef as React.MutableRefObject<View | null>).current = node;
+    },
+    [measureRef]
+  );
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View
+      ref={setRefs}
+      style={{ opacity: ready ? 1 : 0.01, transform: [{ scale }, { translateX }, { translateY }] }}
+      onLayout={hero && !reduce ? runHeroMorph : undefined}
+      testID={`shared-dish-wrap-${dishId}`}
+    >
       <Image source={{ uri }} style={style} testID={testID || `shared-dish-${dishId}`} resizeMode="cover" />
     </Animated.View>
+  );
+}
+
+/** Listing wizard primary CTA with morphing label + chevron on all steps. */
+export function ListingWizardMorphCta({
+  step,
+  total = 4,
+  editing = false,
+  onPress,
+  disabled,
+  testID,
+  showChevron = true,
+}: {
+  step: number;
+  total?: number;
+  editing?: boolean;
+  onPress: () => void;
+  disabled?: boolean;
+  testID?: string;
+  showChevron?: boolean;
+}) {
+  const { from, to } = wizardCtaMorphFrom(step, total, editing);
+  return (
+    <SHCButton onPress={onPress} disabled={disabled} testID={testID} style={styles.wizardCta}>
+      <View style={styles.wizardCtaInner}>
+        <SHCMorphingLabel from={from} to={to} testID={`${testID}-morph`} />
+        {showChevron && step < total ? <SHCChevronNav color={gourmeatColors.onPrimary} /> : null}
+      </View>
+    </SHCButton>
   );
 }
 
@@ -179,7 +256,6 @@ export function SHCCelebration({
   );
 }
 
-/** In-memory milestone guard — apps persist via SecureStore/AsyncStorage wrapper. */
 export function useMilestoneCelebration(
   id: MilestoneId,
   userId: string,
@@ -211,6 +287,8 @@ export function useMilestoneCelebration(
 
 const styles = StyleSheet.create({
   morphLabel: { fontWeight: '800', fontSize: 15, color: gourmeatColors.onPrimary },
+  wizardCta: { marginTop: shcSpacing.sm },
+  wizardCtaInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   celebration: {
     position: 'absolute',
     left: shcSpacing.md,
@@ -218,7 +296,7 @@ const styles = StyleSheet.create({
     top: '30%',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.96)',
-    borderRadius: 16,
+    borderRadius: shcRadii.lg,
     padding: shcSpacing.lg,
     zIndex: 9999,
     borderWidth: 2,

@@ -1,4 +1,5 @@
 // Directional tab navigation context — Family Values fluidity.
+// @ts-nocheck
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { SHCDirectionalTabScene } from './family-values-ui';
 

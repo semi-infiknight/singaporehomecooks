@@ -117,8 +117,41 @@ export function wizardCtaLabel(step: number, total: number, editing: boolean): s
 }
 
 export function wizardCtaMorphFrom(step: number, total: number, editing: boolean): { from: string; to: string } {
-  const prev = step > 1 ? 'Continue' : (editing ? 'Continue' : 'Continue');
   const next = wizardCtaLabel(step, total, editing);
-  if (step === total && step > 1) return { from: 'Continue', to: next };
-  return { from: prev, to: next };
+  if (step >= total) return { from: 'Continue', to: next };
+  return { from: 'Continue', to: 'Continue' };
+}
+
+export type SharedDishLayout = { x: number; y: number; w: number; h: number };
+
+const sharedDishLayouts = new Map<string, SharedDishLayout>();
+
+export function registerSharedDishLayout(id: string, layout: SharedDishLayout): void {
+  if (!id || layout.w <= 0 || layout.h <= 0) return;
+  sharedDishLayouts.set(id, layout);
+}
+
+export function getSharedDishLayout(id: string): SharedDishLayout | undefined {
+  return sharedDishLayouts.get(id);
+}
+
+export function clearSharedDishLayout(id: string): void {
+  sharedDishLayouts.delete(id);
+}
+
+/** Compute hero entry transform from a captured card thumbnail layout. */
+export function computeSharedHeroTransform(
+  origin: SharedDishLayout,
+  hero: SharedDishLayout
+): { initialScale: number; translateX: number; translateY: number } {
+  const initialScale = Math.max(origin.w / hero.w, origin.h / hero.h);
+  const originCx = origin.x + origin.w / 2;
+  const originCy = origin.y + origin.h / 2;
+  const heroCx = hero.x + hero.w / 2;
+  const heroCy = hero.y + hero.h / 2;
+  return {
+    initialScale,
+    translateX: originCx - heroCx,
+    translateY: originCy - heroCy,
+  };
 }

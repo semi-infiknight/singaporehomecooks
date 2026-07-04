@@ -1,11 +1,11 @@
 // Gourmeat food-app UI (Orbix Studio / Behance) — customer discover, cart, checkout.
 // @ts-nocheck
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
 import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
-import { SHCSharedDishImage } from './family-values-ui';
+import { SHCSharedDishImage, registerSharedDishLayout } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -318,6 +318,14 @@ export function GourmeatDishCard({
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const discount = discountPercent ?? gourmeatDiscountPercent(dish.id);
   const rating = dish.rating ?? 4.8;
+  const imageMeasureRef = useRef<View>(null);
+
+  const handleCardPress = useCallback(() => {
+    imageMeasureRef.current?.measureInWindow((x, y, w, h) => {
+      registerSharedDishLayout(dish.id, { x, y, w, h });
+      onPress?.();
+    });
+  }, [dish.id, onPress]);
 
   return (
     <View
@@ -331,11 +339,12 @@ export function GourmeatDishCard({
       }}
     >
       <View style={{ position: 'relative' }}>
-        <Pressable onPress={onPress} accessibilityRole="button">
+        <Pressable onPress={handleCardPress} accessibilityRole="button">
           <SHCSharedDishImage
             dishId={dish.id}
             uri={imageUri}
             style={{ width: '100%', height: 140 }}
+            measureRef={imageMeasureRef}
             testID={`${cardTestID}-image`}
           />
         </Pressable>
@@ -361,7 +370,7 @@ export function GourmeatDishCard({
       </View>
 
       <View style={{ padding: shcSpacing.sm }}>
-        <Pressable onPress={onPress} accessibilityRole="button">
+        <Pressable onPress={handleCardPress} accessibilityRole="button">
           <Text
             style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.text, marginBottom: 2 }}
             numberOfLines={1}

@@ -49,6 +49,10 @@ import {
   computeMorphingLabelSegments,
   morphingLabelTarget,
   shouldReduceMotion,
+  registerSharedDishLayout,
+  getSharedDishLayout,
+  clearSharedDishLayout,
+  computeSharedHeroTransform,
   tabSlideDirection,
   type MorphSegment,
   type TrayFrame,
@@ -1724,7 +1728,17 @@ export function GourmeatDishCard({
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
       <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col">
         <div className="relative">
-          <Link href={`/product/${product.id}`} className="block">
+          <Link
+            href={`/product/${product.id}`}
+            className="block"
+            onClick={(e) => {
+              const img = (e.currentTarget as HTMLElement).querySelector('img');
+              if (img) {
+                const r = img.getBoundingClientRect();
+                registerSharedDishLayout(product.id, { x: r.left, y: r.top, w: r.width, h: r.height });
+              }
+            }}
+          >
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
                 dishId={product.id}
@@ -2363,15 +2377,37 @@ export function SHCSharedDishImageWeb({
   testID?: string;
 }) {
   const reduce = shouldReduceMotion();
-  const heroAnim = hero && !reduce ? 'shc-hero-image-scale' : '';
+  const imgRef = React.useRef<HTMLImageElement>(null);
+  const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>({});
+
+  React.useEffect(() => {
+    if (!hero || reduce || !imgRef.current) return;
+    const origin = getSharedDishLayout(dishId);
+    if (!origin) return;
+    const r = imgRef.current.getBoundingClientRect();
+    const t = computeSharedHeroTransform(origin, { x: r.left, y: r.top, w: r.width, h: r.height });
+    setMorphStyle({
+      transform: `translate(${t.translateX}px, ${t.translateY}px) scale(${t.initialScale})`,
+      transition: 'none',
+    });
+    requestAnimationFrame(() => {
+      setMorphStyle({
+        transform: 'translate(0px, 0px) scale(1)',
+        transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+      });
+      clearSharedDishLayout(dishId);
+    });
+  }, [dishId, hero, reduce]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      ref={imgRef}
       src={src}
       alt={alt}
       data-testid={testID || `shared-dish-${dishId}`}
-      className={`object-cover w-full h-full ${heroAnim} ${className}`}
+      style={hero ? morphStyle : undefined}
+      className={`object-cover w-full h-full ${hero && !morphStyle.transform ? 'shc-hero-image-scale' : ''} ${className}`}
     />
   );
 }

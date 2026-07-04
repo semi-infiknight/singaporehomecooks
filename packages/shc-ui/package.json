@@ -11,10 +11,10 @@
     "./location-ux": "./src/location-ux.tsx"
   },
   "scripts": {
-    "build": "echo 'UI is source-only for now (Expo)' && exit 0",
+    "build": "pnpm test && pnpm typecheck",
     "test": "vitest run",
     "lint": "eslint src || true",
-    "typecheck": "tsc --noEmit || true"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
     "@expo/vector-icons": "*",

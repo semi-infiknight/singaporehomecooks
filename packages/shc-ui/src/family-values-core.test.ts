@@ -12,6 +12,10 @@ import {
   trayStackDepth,
   wizardCtaLabel,
   wizardCtaMorphFrom,
+  registerSharedDishLayout,
+  getSharedDishLayout,
+  clearSharedDishLayout,
+  computeSharedHeroTransform,
 } from './family-values-core';
 
 describe('tray stack', () => {
@@ -84,10 +88,35 @@ describe('tabSlideDirection', () => {
 describe('wizardCtaLabel', () => {
   it('morphs on final step', () => {
     expect(wizardCtaLabel(4, 4, false)).toBe('Publish');
-    expect(wizardCtaMorphFrom(4, 4, false).to).toBe('Publish');
+    expect(wizardCtaMorphFrom(4, 4, false)).toEqual({ from: 'Continue', to: 'Publish' });
   });
 
   it('save when editing', () => {
     expect(wizardCtaLabel(4, 4, true)).toBe('Save changes');
+    expect(wizardCtaMorphFrom(4, 4, true).to).toBe('Save changes');
+  });
+
+  it('intermediate steps stay Continue', () => {
+    expect(wizardCtaMorphFrom(2, 4, false)).toEqual({ from: 'Continue', to: 'Continue' });
+  });
+});
+
+describe('shared dish layout', () => {
+  const card = { x: 16, y: 200, w: 160, h: 140 };
+  const hero = { x: 0, y: 0, w: 390, h: 280 };
+
+  it('registers and retrieves layout by dish id', () => {
+    registerSharedDishLayout('dish-1', card);
+    expect(getSharedDishLayout('dish-1')).toEqual(card);
+    clearSharedDishLayout('dish-1');
+    expect(getSharedDishLayout('dish-1')).toBeUndefined();
+  });
+
+  it('computes hero transform from card origin', () => {
+    const t = computeSharedHeroTransform(card, hero);
+    expect(t.initialScale).toBeGreaterThan(0);
+    expect(t.initialScale).toBeLessThan(1);
+    expect(typeof t.translateX).toBe('number');
+    expect(typeof t.translateY).toBe('number');
   });
 });

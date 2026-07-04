@@ -28,6 +28,7 @@ import {
   SHCTrayAction,
   SHCWizardPane,
   SHCMorphingLabel,
+  ListingWizardMorphCta,
   SHCCelebration,
   useMilestoneCelebration,
   shcSpacing,
@@ -448,15 +449,7 @@ export default function CookListings() {
             placeholder="Min Qty"
             style={inputStyle}
           />
-          <TouchableOpacity
-            onPress={() => goToStep(2)}
-            testID="listing-wizard-next-step1"
-            accessibilityRole="button"
-            activeOpacity={0.85}
-            style={{ marginTop: shcSpacing.sm, backgroundColor: gourmeatColors.primary, padding: 14, borderRadius: shcRadii.md, alignItems: 'center' }}
-          >
-            <Text style={{ color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 15 }}>Next →</Text>
-          </TouchableOpacity>
+          <ListingWizardMorphCta step={1} editing={!!editingId} onPress={() => goToStep(2)} testID="listing-wizard-next-step1" />
         </ListingWizardStep>
       )}
 
@@ -469,9 +462,7 @@ export default function CookListings() {
             <SHCButton onPress={() => goToStep(1)}>
               <SHCButtonText>←</SHCButtonText>
             </SHCButton>
-            <SHCButton onPress={() => goToStep(3)} testID="listing-wizard-next-step2">
-              <SHCButtonText>Next →</SHCButtonText>
-            </SHCButton>
+            <ListingWizardMorphCta step={2} editing={!!editingId} onPress={() => goToStep(3)} testID="listing-wizard-next-step2" />
           </View>
         </ListingWizardStep>
       )}
@@ -516,9 +507,7 @@ export default function CookListings() {
             <SHCButton onPress={() => goToStep(2)}>
               <SHCButtonText>←</SHCButtonText>
             </SHCButton>
-            <SHCButton onPress={() => goToStep(4)} testID="listing-wizard-next-step3">
-              <SHCButtonText>Next →</SHCButtonText>
-            </SHCButton>
+            <ListingWizardMorphCta step={3} editing={!!editingId} onPress={() => goToStep(4)} testID="listing-wizard-next-step3" />
           </View>
         </ListingWizardStep>
       )}
@@ -543,13 +532,15 @@ export default function CookListings() {
               <SHCBadge key={t} variant="heritage">{t}</SHCBadge>
             ))}
           </View>
-          <SHCButton onPress={publish} disabled={publishing} testID="listing-wizard-publish">
-            {publishing ? (
-              <ActivityIndicator color={gourmeatColors.onPrimary} />
-            ) : (
-              <SHCMorphingLabel from="Continue" to={editingId ? 'Save changes' : 'Publish'} />
-            )}
-          </SHCButton>
+          <ListingWizardMorphCta
+            step={4}
+            editing={!!editingId}
+            onPress={publish}
+            disabled={publishing}
+            testID="listing-wizard-publish"
+            showChevron={false}
+          />
+          {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
           {editingId ? (
             <SHCButton variant="outline" onPress={resetWizard} style={{ marginTop: 8 }}>
               <SHCButtonText>Cancel edit</SHCButtonText>
