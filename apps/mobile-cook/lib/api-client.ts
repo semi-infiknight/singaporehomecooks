@@ -70,6 +70,8 @@ export const sendMessage = (orderId: string, body: string, from: 'customer' | 'c
   client.sendMessage(orderId, body, from);
 export const getCookListings = () => client.getCookListings();
 export const createCookListing = (input: Record<string, unknown>) => client.createCookListing(input);
+export const updateCookListing = (id: string, input: Record<string, unknown>) => client.updateCookListing(id, input);
+export const deleteCookListing = (id: string) => client.deleteCookListing(id);
 export const getComplianceDocs = () => client.getComplianceDocs();
 export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
   client.submitComplianceDoc(input);

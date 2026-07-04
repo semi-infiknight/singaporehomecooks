@@ -6,6 +6,8 @@ import {
   createBid,
   createCookExpense,
   createCookListing,
+  updateCookListing,
+  deleteCookListing,
   getComplianceDocs,
   getCookEarnings,
   getCookListings,
@@ -65,6 +67,22 @@ export function useCreateCookListing() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createCookListing,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-listings'] }),
+  });
+}
+
+export function useUpdateCookListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Record<string, unknown> }) => updateCookListing(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-listings'] }),
+  });
+}
+
+export function useDeleteCookListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteCookListing(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-listings'] }),
   });
 }

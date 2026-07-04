@@ -25,6 +25,10 @@ class ShcAvailabilityModuleService extends MedusaService({ Availability }) {
     return ((list as any[])?.[0] as unknown as SHCAvailability) || null;
   }
 
+  async deleteAvailabilityForProduct(productId: string): Promise<void> {
+    await this.deleteAvailabilities({ product_id: productId } as any);
+  }
+
   async checkPortionsAvailable(productId: string, date: string, requestedQty: number): Promise<{ available: boolean; remaining?: number }> {
     const avail = await this.getAvailability(productId);
     if (!avail || avail.paused) return { available: false };

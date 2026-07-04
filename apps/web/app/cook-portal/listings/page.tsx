@@ -4,7 +4,12 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { CUISINE_IMAGE, getDishImageUrl } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import { useCookListings, useCreateCookListing } from '../../../lib/useCookPortal';
+import {
+  useCookListings,
+  useCreateCookListing,
+  useUpdateCookListing,
+  useDeleteCookListing,
+} from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
   GourmeatCard,
@@ -13,36 +18,98 @@ import {
   SHCSectionTitle,
 } from '../../components/SHCWebComponents';
 
+type ListingRow = Record<string, unknown> & {
+  id?: string;
+  name?: string;
+  price?: number;
+  min_qty?: number;
+  cuisine?: string;
+  heritage_note?: string;
+  occasion_tags?: string[];
+  ingredients?: Array<{ name: string; quantity: number; unit: string }>;
+  image_url?: string;
+  shc_availability?: { paused?: boolean };
+};
+
+const DEFAULT_FORM = {
+  name: 'New Nyonya Dish',
+  price: 14,
+  minQty: 4,
+  cuisine: 'Peranakan',
+  heritage: 'Family recipe from our HDB kitchen since 1978.',
+};
+
 export default function CookListingsPage() {
   const { user } = useCookAuth();
   const { data: myListings = [] } = useCookListings();
   const createListing = useCreateCookListing();
+  const updateListing = useUpdateCookListing();
+  const deleteListing = useDeleteCookListing();
 
-  const [name, setName] = useState('New Nyonya Dish');
-  const [price, setPrice] = useState(14);
-  const [minQty, setMinQty] = useState(4);
-  const [cuisine, setCuisine] = useState('Peranakan');
-  const [heritage, setHeritage] = useState('Family recipe from our HDB kitchen since 1978.');
+  const [name, setName] = useState(DEFAULT_FORM.name);
+  const [price, setPrice] = useState(DEFAULT_FORM.price);
+  const [minQty, setMinQty] = useState(DEFAULT_FORM.minQty);
+  const [cuisine, setCuisine] = useState(DEFAULT_FORM.cuisine);
+  const [heritage, setHeritage] = useState(DEFAULT_FORM.heritage);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
 
   const previewImage = getDishImageUrl({ name, cuisine });
+  const saving = createListing.isPending || updateListing.isPending;
 
-  const publish = async () => {
+  const resetForm = () => {
+    setEditingId(null);
+    setName(DEFAULT_FORM.name);
+    setPrice(DEFAULT_FORM.price);
+    setMinQty(DEFAULT_FORM.minQty);
+    setCuisine(DEFAULT_FORM.cuisine);
+    setHeritage(DEFAULT_FORM.heritage);
+    setPublished(null);
+  };
+
+  const startEdit = (listing: ListingRow) => {
+    setEditingId(String(listing.id));
+    setName(String(listing.name || 'Dish'));
+    setPrice(Number(listing.price) || 12);
+    setMinQty(Number(listing.min_qty) || 4);
+    setCuisine(String(listing.cuisine || 'Singapore'));
+    setHeritage(String(listing.heritage_note || ''));
+    setPublished(null);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
+  const buildPayload = () => ({
+    name,
+    price,
+    min_qty: minQty,
+    cuisine,
+    occasion_tags: ['Hari Raya'],
+    ingredients: [{ name: 'Chicken', quantity: 300, unit: 'g' }],
+    allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
+    heritage_note: heritage,
+    image_url: `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
+  });
+
+  const saveListing = async () => {
     try {
-      const prod = await createListing.mutateAsync({
-        name,
-        price,
-        min_qty: minQty,
-        cuisine,
-        occasion_tags: ['Hari Raya'],
-        ingredients: [{ name: 'Chicken', quantity: 300, unit: 'g' }],
-        allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
-        heritage_note: heritage,
-        image_url: `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
-      });
+      const payload = buildPayload();
+      const prod = editingId
+        ? await updateListing.mutateAsync({ id: editingId, input: payload })
+        : await createListing.mutateAsync(payload);
       setPublished(prod as Record<string, unknown>);
+      if (editingId) setEditingId(null);
     } catch (e) {
-      alert((e as Error).message || 'Publish failed');
+      alert((e as Error).message || (editingId ? 'Update failed' : 'Publish failed'));
+    }
+  };
+
+  const removeListing = async (listing: ListingRow) => {
+    if (!window.confirm(`Delete "${listing.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteListing.mutateAsync(String(listing.id));
+      if (editingId === listing.id) resetForm();
+    } catch (e) {
+      alert((e as Error).message || 'Delete failed');
     }
   };
 
@@ -70,23 +137,46 @@ export default function CookListingsPage() {
           <SHCBadge variant="default">No listings yet</SHCBadge>
         </GourmeatCard>
       ) : (
-        myListings.map((p: Record<string, unknown>) => (
+        myListings.map((p: ListingRow) => (
           <GourmeatCard key={String(p.id)} className="mb-3">
             <div className="flex gap-3">
               <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
                 <Image
-                  src={getDishImageUrl({ name: String(p.name), cuisine: String(p.cuisine || '') })}
+                  src={getDishImageUrl({
+                    name: String(p.name),
+                    cuisine: String(p.cuisine || ''),
+                    image_url: p.image_url as string | undefined,
+                  })}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="64px"
                 />
               </div>
-              <div>
-                <p className="font-extrabold text-sm">{String(p.name)}</p>
-                <div className="flex gap-1.5 mt-1">
+              <div className="flex-1 min-w-0">
+                <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
                   <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
+                  {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-xl border border-border px-3 py-1.5 text-xs font-bold"
+                    onClick={() => startEdit(p)}
+                    data-testid={`edit-listing-${p.id}`}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-xl border border-border px-3 py-1.5 text-xs font-bold text-red-700"
+                    onClick={() => removeListing(p)}
+                    data-testid={`delete-listing-${p.id}`}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -94,7 +184,7 @@ export default function CookListingsPage() {
         ))
       )}
 
-      <SHCSectionTitle>Create listing</SHCSectionTitle>
+      <SHCSectionTitle>{editingId ? 'Edit listing' : 'Create listing'}</SHCSectionTitle>
       <GourmeatCard>
         <div className="relative h-36 rounded-xl overflow-hidden mb-4">
           <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
@@ -135,13 +225,24 @@ export default function CookListingsPage() {
             placeholder="Heritage story"
           />
           <GourmeatPrimaryButton
-            label={createListing.isPending ? 'Publishing…' : 'Publish listing'}
-            disabled={createListing.isPending}
-            onClick={publish}
+            label={saving ? (editingId ? 'Saving…' : 'Publishing…') : editingId ? 'Save changes' : 'Publish listing'}
+            disabled={saving}
+            onClick={saveListing}
             testID="publish-listing-btn"
           />
+          {editingId ? (
+            <button
+              type="button"
+              className="w-full rounded-xl border border-border px-3 py-2 text-sm font-bold"
+              onClick={resetForm}
+            >
+              Cancel edit
+            </button>
+          ) : null}
           {published ? (
-            <p className="text-sm font-bold text-[var(--shc-success)]">Published: {String(published.name || name)}</p>
+            <p className="text-sm font-bold text-[var(--shc-success)]">
+              {editingId ? 'Updated' : 'Published'}: {String(published.name || name)}
+            </p>
           ) : null}
         </div>
       </GourmeatCard>

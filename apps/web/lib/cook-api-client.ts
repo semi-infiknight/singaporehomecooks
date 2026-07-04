@@ -75,6 +75,8 @@ export const transitionCookOrder = (orderId: string, to: SHCOrderStatus) =>
 export const getCookOrder = (id: string) => cookClient.getOrder(id);
 export const getCookListings = () => cookClient.getCookListings();
 export const createCookListing = (input: Record<string, unknown>) => cookClient.createCookListing(input);
+export const updateCookListing = (id: string, input: Record<string, unknown>) => cookClient.updateCookListing(id, input);
+export const deleteCookListing = (id: string) => cookClient.deleteCookListing(id);
 export const getComplianceDocs = () => cookClient.getComplianceDocs();
 export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
   cookClient.submitComplianceDoc(input);

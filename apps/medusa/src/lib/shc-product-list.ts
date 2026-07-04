@@ -71,7 +71,8 @@ export async function listShcProducts(scope: any, filters: ShcProductListFilters
 
   const total = filtered.length;
   const page = filtered.slice(offset, offset + limit);
-  const products = await Promise.all(page.map((meta) => shapeProduct(meta, scope)));
+  const shaped = await Promise.all(page.map((meta) => shapeProduct(meta, scope)));
+  const products = shaped.filter((p) => !p.shc_availability?.paused);
 
-  return { products, count: products.length, total };
+  return { products, count: products.length, total: products.length };
 }

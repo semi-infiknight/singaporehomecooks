@@ -31,7 +31,7 @@ import { BENTO_ACTION_IMAGES, getDishImageUrl, CUISINE_IMAGE } from '@shc/utils'
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAICalorieEstimate, useCookListings } from '../../hooks/useProducts';
-import { getPhotoTips, createCookListing } from '../../lib/api-client';
+import { getPhotoTips, createCookListing, updateCookListing, deleteCookListing } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
 
 const inputStyle = {
@@ -84,8 +84,67 @@ export default function CookListings() {
   const aiEstMut = useAICalorieEstimate();
   const [photoTips, setPhotoTips] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const previewImage = getDishImageUrl({ name, cuisine });
+
+  const resetWizard = () => {
+    setEditingId(null);
+    setName('New Nyonya Dish');
+    setPrice(14);
+    setMinQty(4);
+    setCuisine('Peranakan');
+    setOccasionTags(['Hari Raya']);
+    setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+    setHeritage('Family recipe from our HDB kitchen since 1978.');
+    setPublished(null);
+    setAiCal(null);
+    goToStep(1);
+  };
+
+  const startEdit = (listing: any) => {
+    setEditingId(listing.id);
+    setName(listing.name || 'Dish');
+    setPrice(Number(listing.price) || 12);
+    setMinQty(Number(listing.min_qty) || 4);
+    setCuisine(listing.cuisine || 'Singapore');
+    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
+    setIngredients(
+      listing.ingredients?.length
+        ? listing.ingredients
+        : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
+    );
+    setHeritage(listing.heritage_note || '');
+    setPublished(null);
+    setAiCal(
+      listing.calories
+        ? { calories: listing.calories, confidence: listing.calories_confidence || 'category', source: 'saved' }
+        : null
+    );
+    goToStep(1);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(0, wizardY.current - 16), animated: true });
+    });
+  };
+
+  const confirmDelete = (listing: any) => {
+    Alert.alert('Delete listing?', `Remove "${listing.name}" from your menu? This cannot be undone.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteCookListing(listing.id);
+            if (editingId === listing.id) resetWizard();
+            await qc.invalidateQueries({ queryKey: ['cook-listings'] });
+          } catch (e: any) {
+            Alert.alert('Delete failed', e?.message || 'Could not delete listing.');
+          }
+        },
+      },
+    ]);
+  };
 
   const toggleTag = (t: string) =>
     setOccasionTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
@@ -129,14 +188,19 @@ export default function CookListings() {
       input.calories_confidence = aiCal.confidence;
     }
     try {
-      const prod = await createCookListing(input);
+      const prod = editingId
+        ? await updateCookListing(editingId, input)
+        : await createCookListing(input);
       setPublished(prod);
       await qc.invalidateQueries({ queryKey: ['cook-listings'] });
+      if (editingId) {
+        setEditingId(null);
+      }
       goToStep(1);
       setAiCal(null);
     } catch (e: any) {
-      const message = e?.message || e?.code || 'Could not publish listing. Check your connection and try again.';
-      Alert.alert('Publish failed', message);
+      const message = e?.message || e?.code || 'Could not save listing. Check your connection and try again.';
+      Alert.alert(editingId ? 'Update failed' : 'Publish failed', message);
     } finally {
       setPublishing(false);
     }
@@ -177,7 +241,7 @@ export default function CookListings() {
         <SHCCard key={p.id} style={styles.listingCard}>
           <View style={styles.listingRow}>
             <SHCFoodImage
-              uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine })}
+              uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine, image_url: p.image_url })}
               width={64}
               height={64}
               rounded={shcRadii.md}
@@ -187,6 +251,15 @@ export default function CookListings() {
               <View style={styles.listingBadges}>
                 <SHCBadge variant="default">S${p.price}</SHCBadge>
                 <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
+                {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+              </View>
+              <View style={styles.listingActions}>
+                <SHCButton variant="outline" onPress={() => startEdit(p)} testID={`edit-listing-${p.id}`} style={styles.listingActionBtn}>
+                  <SHCButtonText>Edit</SHCButtonText>
+                </SHCButton>
+                <SHCButton variant="outline" onPress={() => confirmDelete(p)} testID={`delete-listing-${p.id}`} style={styles.listingActionBtn}>
+                  <SHCButtonText>Delete</SHCButtonText>
+                </SHCButton>
               </View>
             </View>
           </View>
@@ -199,7 +272,7 @@ export default function CookListings() {
         }}
       >
       <SHCFadeIn>
-        <SHCSectionTitle style={styles.wizardTitle}>New Listing</SHCSectionTitle>
+        <SHCSectionTitle style={styles.wizardTitle}>{editingId ? 'Edit Listing' : 'New Listing'}</SHCSectionTitle>
         <SHCWizardProgress step={step} />
       </SHCFadeIn>
       </View>
@@ -313,9 +386,14 @@ export default function CookListings() {
             {publishing ? (
               <ActivityIndicator color={gourmeatColors.onPrimary} />
             ) : (
-              <SHCButtonText>Publish</SHCButtonText>
+              <SHCButtonText>{editingId ? 'Save changes' : 'Publish'}</SHCButtonText>
             )}
           </SHCButton>
+          {editingId ? (
+            <SHCButton variant="outline" onPress={resetWizard} style={{ marginTop: 8 }}>
+              <SHCButtonText>Cancel edit</SHCButtonText>
+            </SHCButton>
+          ) : null}
           <SHCButton variant="outline" onPress={() => goToStep(3)} style={{ marginTop: 8 }}>
             <SHCButtonText>←</SHCButtonText>
           </SHCButton>
@@ -353,7 +431,9 @@ const styles = StyleSheet.create({
   listingRow: { flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'center' },
   listingInfo: { flex: 1, gap: 4 },
   listingName: { fontWeight: '700', fontSize: 15 },
-  listingBadges: { flexDirection: 'row', gap: 6 },
+  listingBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  listingActions: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  listingActionBtn: { flex: 1, paddingVertical: 6 },
   wizardTitle: { marginTop: shcSpacing.md },
   navRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
   photoTipsBtn: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginTop: shcSpacing.sm },

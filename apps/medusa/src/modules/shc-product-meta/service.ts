@@ -29,6 +29,16 @@ class ShcProductMetaModuleService extends MedusaService({ ProductMeta }) {
     }
     return (meta as unknown as SHCProductMeta) || null;
   }
+
+  async getMetaForCook(cookId: string, productId: string): Promise<SHCProductMeta | null> {
+    const meta = await this.getMetaForProduct(productId);
+    if (!meta || meta.cook_id !== cookId) return null;
+    return meta;
+  }
+
+  async deleteProductMeta(productId: string): Promise<void> {
+    await this.deleteProductMetas({ product_id: productId } as any);
+  }
 }
 
 export default ShcProductMetaModuleService;

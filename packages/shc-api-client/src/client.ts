@@ -214,6 +214,18 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).listing || (r as any).product;
     },
 
+    async updateCookListing(id: string, input: Record<string, unknown>) {
+      const r = await request(`/store/shc/listings/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
+      return (r as any).listing || (r as any).product;
+    },
+
+    async deleteCookListing(id: string) {
+      return request(`/store/shc/listings/${encodeURIComponent(id)}`, { method: "DELETE" });
+    },
+
     async getComplianceDocs() {
       const r = await request("/store/shc/compliance", { method: "GET" });
       return (r as any).docs || [];
