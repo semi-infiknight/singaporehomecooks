@@ -39,6 +39,7 @@
     "cook:dev": "pnpm --filter mobile-cook start",
     "customer:metro": "cd apps/mobile-customer && npx expo start --port 8081",
     "cook:metro": "cd apps/mobile-cook && RCT_METRO_PORT=8082 npx expo start --port 8082",
+    "cook:reload": "bash scripts/reload-cook-emulator.sh",
     "maestro:full-tour": "bash scripts/run-maestro-full-tour.sh",
     "web:dev": "turbo dev --filter=web",
     "web:build": "turbo build --filter=web",
