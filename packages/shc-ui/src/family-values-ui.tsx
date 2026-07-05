@@ -247,15 +247,25 @@ export function SHCSharedDishImage({
 }) {
   const reduce = shouldReduceMotion();
   const containerRef = useRef<View>(null);
+  const [heroRect, setHeroRect] = useState(HERO_RECT_MOBILE);
   const scale = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const morphStarted = useRef(false);
 
+  const measureHeroRect = useCallback(() => {
+    if (!hero) return;
+    const node = containerRef.current;
+    if (!node) return;
+    node.measureInWindow((x, y, w, h) => {
+      if (w > 0 && h > 0) setHeroRect({ x, y, w, h });
+    });
+  }, [hero]);
+
   const runHeroMorph = useCallback(
     (attempt = 0) => {
       if (!hero || reduce || morphStarted.current) return;
-      const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_MOBILE);
+      const sync = getSyncHeroTransformForDish(dishId, heroRect);
       if (!sync.hasOrigin) {
         if (attempt < 12) requestAnimationFrame(() => runHeroMorph(attempt + 1));
         return;
@@ -270,13 +280,16 @@ export function SHCSharedDishImage({
         Animated.spring(translateY, { toValue: 0, friction: 8, tension: 70, useNativeDriver: true }),
       ]).start(() => clearSharedDishLayout(dishId));
     },
-    [dishId, hero, reduce, scale, translateX, translateY]
+    [dishId, hero, heroRect, reduce, scale, translateX, translateY]
   );
 
   useEffect(() => {
     morphStarted.current = false;
-    if (hero && !reduce) runHeroMorph(0);
-  }, [dishId, hero, reduce, runHeroMorph]);
+    if (hero && !reduce) {
+      measureHeroRect();
+      runHeroMorph(0);
+    }
+  }, [dishId, hero, heroRect, reduce, runHeroMorph, measureHeroRect]);
 
   const setRefs = useCallback(
     (node: View | null) => {
@@ -297,7 +310,10 @@ export function SHCSharedDishImage({
   return (
     <Animated.View
       ref={setRefs}
-      onLayout={cacheLayout}
+      onLayout={() => {
+        cacheLayout();
+        measureHeroRect();
+      }}
       style={{ transform: [{ scale }, { translateX }, { translateY }] }}
       testID={`shared-dish-wrap-${dishId}`}
     >

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import {
   useSHCTray,
   SHCTrayAction,
 } from '@shc/ui';
-import { getDishImageUrl, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
+import { getDishImageUrl, getOrderStatusLabel, isActiveOrderStatus, E2E_ORDER_SEED } from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -63,6 +63,7 @@ function OrderReviewTrayContent({
         multiline
         style={styles.reviewInput}
         testID="review-body-input"
+        accessibilityLabel="review-body-input"
         placeholderTextColor={gourmeatColors.textMuted}
       />
       <GourmeatPrimaryButton
@@ -106,6 +107,7 @@ function OrderDisputeTrayContent({
         multiline
         style={styles.reviewInput}
         testID="dispute-notes-input"
+        accessibilityLabel="dispute-notes-input"
         placeholderTextColor={gourmeatColors.textMuted}
       />
       <GourmeatPrimaryButton
@@ -124,7 +126,13 @@ export default function OrderTracking() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = id || '';
-  const { data: order, isFetching } = useOrder(orderId);
+  const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' || __DEV__;
+  const useE2eOrder = maestroE2e && orderId === E2E_ORDER_SEED.id;
+  const { data: orderRaw, isFetching } = useOrder(useE2eOrder ? '' : orderId);
+  const order = useMemo(() => {
+    if (useE2eOrder) return E2E_ORDER_SEED as NonNullable<typeof orderRaw>;
+    return orderRaw;
+  }, [orderRaw, useE2eOrder]);
   const { user } = useAuth();
   const { openTray, dismiss } = useSHCTray();
   const qc = useQueryClient();
@@ -132,13 +140,13 @@ export default function OrderTracking() {
   const { data: existingReview } = useQuery({
     queryKey: ['review', orderId],
     queryFn: () => getReview(orderId),
-    enabled: !!orderId,
+    enabled: !!orderId && !useE2eOrder,
   });
 
   const { data: disputes = [] } = useQuery({
     queryKey: ['order-disputes', orderId],
     queryFn: () => getOrderDisputes(orderId),
-    enabled: !!orderId,
+    enabled: !!orderId && !useE2eOrder,
     placeholderData: [],
   });
 

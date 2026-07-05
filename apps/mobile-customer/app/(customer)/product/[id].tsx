@@ -174,7 +174,8 @@ export default function ProductDetail() {
   );
 }
 
-const heroHeight = Math.round(Dimensions.get('window').width * 0.65);
+/** Align with web PDP h-56 (224px) and HERO_RECT_MOBILE default. */
+const heroHeight = 224;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },

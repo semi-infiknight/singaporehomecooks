@@ -22,8 +22,15 @@ echo "=== Family Values evidence pipeline $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" | 
   rg -n "^-" "$ROOT/apps/mobile-customer/e2e/checkout-allergen-tray.yaml" 2>/dev/null | head -15 || echo "(flow file missing)"
   echo ""
   if [[ "${MAESTRO_RUN_DEVICE:-}" == "true" ]] && command -v maestro >/dev/null; then
-    echo "--- Device run: listing-tray ---"
-    (cd "$ROOT" && maestro test apps/mobile-cook/e2e/listing-tray.yaml) 2>&1 || echo "DEVICE_RUN_FAIL: see above"
+    DEVICE="${MAESTRO_DEVICE_ID:-}"
+    DEVICE_FLAG=()
+    [[ -n "$DEVICE" ]] && DEVICE_FLAG=(--device "$DEVICE")
+    echo "--- Device run: listing-tray $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
+    (cd "$ROOT" && maestro test "${DEVICE_FLAG[@]}" apps/mobile-cook/e2e/listing-tray.yaml) 2>&1 | tee -a "$OUT/tray-flow-maestro-listing.log" || echo "DEVICE_RUN_FAIL: listing-tray"
+    echo "--- Device run: checkout-allergen-tray $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
+    (cd "$ROOT" && maestro test "${DEVICE_FLAG[@]}" apps/mobile-customer/e2e/checkout-allergen-tray.yaml) 2>&1 | tee -a "$OUT/tray-flow-maestro-checkout.log" || echo "DEVICE_RUN_FAIL: checkout-allergen"
+    echo "--- Device run: order-tray $(date -u +%Y-%m-%dT%H:%M:%SZ) ---"
+    (cd "$ROOT" && maestro test "${DEVICE_FLAG[@]}" apps/mobile-customer/e2e/order-tray.yaml) 2>&1 | tee -a "$OUT/tray-flow-maestro-order.log" || echo "DEVICE_RUN_FAIL: order-tray"
   else
     echo "MAESTRO_DEVICE: skipped (set MAESTRO_RUN_DEVICE=true + simulator for full capture)"
     echo "MAESTRO_SKIPPED: rebuild required — npx expo run:ios with EXPO_PUBLIC_MAESTRO_E2E=1"
@@ -50,7 +57,7 @@ node "$ROOT/apps/web/scripts/family-values-screenshots.mjs" "$OUT/screenshots" h
 
 if ls "$OUT/screenshots/"*.png >/dev/null 2>&1; then
   PIXEL_ANALYSIS_OUT="$OUT/pixel-analysis.json" node "$ROOT/scripts/analyze-png-pixels.mjs" "$OUT/screenshots/"fv-fixture.png "$OUT/screenshots/"discover-home.png 2>/dev/null | tee -a "$OUT/pixel-analysis.log" "$OUT/evidence-pipeline.log" || true
-  FAMILY_VALUES_SCRATCH="$OUT" node "$ROOT/scripts/family-values-morph-diff.mjs" 2>&1 | tee -a "$OUT/evidence-pipeline.log" || true
+  FAMILY_VALUES_SCRATCH="$OUT" node "$ROOT/scripts/family-values-morph-diff.mjs" 2>&1 | tee -a "$OUT/evidence-pipeline.log" "$OUT/morph-diff-run.log"
 fi
 
 # pixel-review.md

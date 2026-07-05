@@ -73,11 +73,19 @@ const fixture = captures.find((c) => c.name === 'fv-fixture');
 const discover = captures.find((c) => c.name === 'discover-home');
 const pdp = captures.find((c) => c.name === 'product-pdp');
 
-const dishImage =
-  morphFlow?.clickDishImage ?? morphFlow?.discoverElements?.dishImage ?? discover?.elements?.dishImage ?? fixture?.elements?.dishImage;
-const heroImage = pdp?.elements?.heroImage ?? morphFlow?.elements?.heroImage ?? fixture?.elements?.heroImage;
+// Morph continuity MUST use click-time bbox from live flow — no cherry-picking discover-home fallback
+const dishImage = morphFlow?.clickDishImage;
+const heroImage = pdp?.elements?.heroImage ?? morphFlow?.elements?.heroImage;
+
+if (!morphFlow?.clickDishImage) {
+  console.error('Missing morphFlow.clickDishImage — run morph flow with scroll + click-time measure');
+  process.exit(1);
+}
 
 const continuity = validateMorphContinuity(dishImage, heroImage);
+const discoverHomeValidation = discover?.elements?.dishImage
+  ? validateMorphContinuity(discover.elements.dishImage, heroImage)
+  : { ok: false, reasons: ['discover-home missing dishImage'], cardOnScreen: false };
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -87,7 +95,10 @@ const report = {
   pdp: pdp?.name,
   dishImage,
   heroImage,
-  clickDishImage: morphFlow?.clickDishImage ?? null,
+  clickDishImage: morphFlow.clickDishImage,
+  discoverHomeDishImage: discover?.elements?.dishImage ?? null,
+  discoverHomeScrolled: discover?.scrolledIntoView ?? false,
+  discoverHomeValidation,
   morphFrames: morphFlow?.morphFrames ?? null,
   continuity,
   captures: captures.map((c) => ({
@@ -96,6 +107,7 @@ const report = {
     elements: c.elements,
     discoverElements: c.discoverElements,
     clickDishImage: c.clickDishImage,
+    scrolledIntoView: c.scrolledIntoView,
     error: c.error,
   })),
 };
@@ -103,4 +115,10 @@ const report = {
 writeFileSync(outPath, JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
 console.log(`Wrote ${outPath}`);
-process.exit(continuity.ok ? 0 : 1);
+
+const exitOk =
+  continuity.ok &&
+  discoverHomeValidation.cardOnScreen &&
+  (discover?.scrolledIntoView ?? false);
+
+process.exit(exitOk ? 0 : 1);

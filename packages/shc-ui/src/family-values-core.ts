@@ -238,10 +238,10 @@ export function cacheSharedDishLayoutFromRef(
   });
 }
 
-/** Fixed PDP hero rect for synchronous morph (matches mobile product/[id] hero). */
-export const HERO_RECT_MOBILE: SharedDishLayout = { x: 0, y: 0, w: 390, h: 280 };
+/** Default PDP hero rect (mobile viewport h-56 / 224px); prefer measured hero container at runtime. */
+export const HERO_RECT_MOBILE: SharedDishLayout = { x: 0, y: 0, w: 390, h: 224 };
 
-/** Default PDP hero rect for web (mobile viewport); prefer measured hero container at runtime. */
+/** Web PDP hero default — aligned with mobile; prefer measured hero container at runtime. */
 export const HERO_RECT_WEB: SharedDishLayout = { x: 0, y: 0, w: 390, h: 224 };
 
 /** Synchronous hero initial transform — no async measure required. */

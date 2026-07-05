@@ -2599,6 +2599,7 @@ export function SHCSharedDishImageWeb({
   const reduce = shouldReduceMotion();
   const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>({});
   const heroWrapRef = React.useRef<HTMLDivElement>(null);
+  const morphStarted = React.useRef(false);
   const [heroRect, setHeroRect] = React.useState(HERO_RECT_WEB);
 
   React.useLayoutEffect(() => {
@@ -2613,14 +2614,16 @@ export function SHCSharedDishImageWeb({
 
   React.useEffect(() => {
     if (!hero || reduce) return;
+    morphStarted.current = false;
     let cancelled = false;
     const tryMorph = (attempt: number) => {
-      if (cancelled) return;
+      if (cancelled || morphStarted.current) return;
       const sync = getSyncHeroTransformForDish(dishId, heroRect);
       if (!sync.hasOrigin) {
         if (attempt < 12) requestAnimationFrame(() => tryMorph(attempt + 1));
         return;
       }
+      morphStarted.current = true;
       setMorphStyle({
         transform: `translate(${sync.translateX}px, ${sync.translateY}px) scale(${sync.initialScale})`,
         transition: 'none',

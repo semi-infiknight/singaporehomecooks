@@ -31,11 +31,20 @@ async function measure(sel) {
   return { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) };
 }
 
-async function captureElements() {
+async function captureElements(seedDishId) {
+  const cardSel = seedDishId
+    ? `[data-testid="dish-card-${seedDishId}"], [data-testid^="dish-card-"]`
+    : '[data-testid^="dish-card-"]';
+  const imageSel = seedDishId
+    ? `[data-testid="dish-card-${seedDishId}-image"], [data-testid$="-image"]`
+    : '[data-testid$="-image"]';
+  const priceSel = seedDishId
+    ? `[data-testid="dish-card-${seedDishId}-price"], [data-testid$="-price"]`
+    : '[data-testid$="-price"]';
   return {
-    dishCard: await measure('[data-testid^="dish-card-"]'),
-    dishImage: await measure('[data-testid$="-image"]'),
-    dishPrice: await measure('[data-testid$="-price"]'),
+    dishCard: await measure(cardSel),
+    dishImage: await measure(imageSel),
+    dishPrice: await measure(priceSel),
     heroImage: await measure('[data-testid^="shared-dish-"][data-testid$="-hero"]'),
     wizardMorph: await measure('[data-testid$="-morph"]'),
     trayWeb: await measure('[data-testid="shc-tray-web"]'),
@@ -55,9 +64,25 @@ for (const s of shots) {
         /* partial render ok for diagnostics */
       }
     }
+    // discover-home: scroll first dish card into view before measuring (avoids y=833 off-screen)
+    if (s.name === 'discover-home') {
+      const cardSel = `[data-testid="dish-card-${seedId}"], [data-testid^="dish-card-"]`;
+      await page.locator(cardSel).first().scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+    }
     await page.waitForTimeout(1500);
     await page.screenshot({ path: file, fullPage: false });
-    captures.push({ name: s.name, url, file, viewport: { w: 390, h: 844 }, elements: await captureElements() });
+    const elements = await captureElements(s.name === 'discover-home' || s.name === 'fv-fixture' ? seedId : undefined);
+    const scrolledIntoView = s.name === 'discover-home';
+    captures.push({
+      name: s.name,
+      url,
+      file,
+      viewport: { w: 390, h: 844 },
+      elements,
+      scrolledIntoView,
+      preClickRegister: false,
+    });
   } catch (e) {
     captures.push({ name: s.name, url, file, error: e.message });
   }
@@ -72,7 +97,7 @@ try {
   const imageSel = `[data-testid="dish-card-${seedId}-image"]`;
   await page.locator(priceSel).scrollIntoViewIfNeeded();
   await page.waitForTimeout(400);
-  const discoverElements = await captureElements();
+  const discoverElements = await captureElements(seedId);
   const clickDishImage = await measure(imageSel);
   await page.click(priceSel);
   await page.waitForURL(`**/product/${seedId}**`, { timeout: 20000 });
@@ -89,7 +114,7 @@ try {
     });
   }
   await page.screenshot({ path: morphFile, fullPage: false });
-  const pdpElements = await captureElements();
+  const pdpElements = await captureElements(seedId);
   captures.push({
     name: 'discover-to-pdp-morph',
     url: `${base}/ → ${base}/product/${seedId}`,

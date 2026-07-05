@@ -29,7 +29,7 @@ export default function FamilyValuesFixturePage() {
         <GourmeatDishCard product={FIXTURE_DISH} />
       </section>
       <section className="border-t border-border" data-testid="fv-pdp-section">
-        <div className="relative h-[280px] w-full bg-muted">
+        <div className="relative h-56 w-full bg-muted">
           <SHCSharedDishImageWeb
             dishId={FIXTURE_DISH.id}
             src={`https://picsum.photos/seed/${FIXTURE_DISH.id}/800/600`}

@@ -132,7 +132,7 @@ describe('wizardCtaLabel', () => {
 
 describe('shared dish layout', () => {
   const card = { x: 16, y: 200, w: 160, h: 140 };
-  const hero = { x: 0, y: 0, w: 390, h: 280 };
+  const hero = { x: 0, y: 0, w: 390, h: 224 };
 
   it('registers and retrieves layout by dish id', () => {
     registerSharedDishLayout('dish-1', card);

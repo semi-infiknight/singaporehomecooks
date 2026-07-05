@@ -1,0 +1,92 @@
+# Customer order dispute tray typing (Family Values)
+# Uses mock order SHC-2026-00001 (always seeded in dev client)
+# Run: maestro test --device <id> apps/mobile-customer/e2e/order-tray.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    stopApp: true
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- openLink: shc-customer:///(shared)/auth
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- openLink: shc-customer:///(customer)/orders/SHC-2026-00001
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "order-tracking-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "open-dispute-tray-btn"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-dispute-tray-btn"
+- extendedWaitUntil:
+    visible:
+      id: "shc-tray-order-dispute"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "order-dispute-tray"
+    timeout: 10000
+- tapOn:
+    id: "order-dispute-tray"
+- inputText: "E2E dispute notes visible"
+- extendedWaitUntil:
+    visible: "E2E dispute notes visible"
+    timeout: 8000
+# Review tray on E2E collected order seed
+- tapOn:
+    id: "shc-tray-nav"
+    optional: true
+- openLink: shc-customer:///(customer)/orders/order-e2e-review
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "order-tracking-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "open-review-tray-btn"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "open-review-tray-btn"
+- extendedWaitUntil:
+    visible:
+      id: "shc-tray-order-review"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "order-review-tray"
+    timeout: 10000
+- tapOn:
+    id: "order-review-tray"
+- inputText: "Maestro review typing visible"
+- extendedWaitUntil:
+    visible: "Maestro review typing visible"
+    timeout: 8000
