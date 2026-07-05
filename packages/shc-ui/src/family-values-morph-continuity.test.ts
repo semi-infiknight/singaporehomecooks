@@ -9,6 +9,8 @@ import {
   navigateSharedDishPress,
   registerSharedDishLayout,
   scaledOriginBoundsAtMorphStart,
+  validateMorphContinuity,
+  isCardOnScreen,
   wizardCtaMorphOnStepEnter,
   morphingLabelInitialText,
   morphingLabelFinalText,
@@ -39,6 +41,21 @@ describe('discover→PDP morph continuity', () => {
     expect(sync.initialScale).toBeLessThan(1);
     expect(morphCentersAlign(webCard, HERO_RECT_WEB)).toBe(true);
     clearSharedDishLayout('fv-web-dish');
+  });
+
+  it('validateMorphContinuity rejects off-screen card (y=833 on 844h viewport)', () => {
+    const offScreen = { x: 16, y: 833, w: 173, h: 140 };
+    const hero = { x: 0, y: 0, w: 390, h: 224 };
+    expect(isCardOnScreen(offScreen)).toBe(false);
+    const result = validateMorphContinuity(offScreen, hero);
+    expect(result.ok).toBe(false);
+    expect(result.reasons).toContain('card off-screen');
+  });
+
+  it('validateMorphContinuity passes on-screen card with measured hero', () => {
+    const onScreen = { x: 16, y: 420, w: 173, h: 140 };
+    const hero = { x: 0, y: 0, w: 390, h: 224 };
+    expect(validateMorphContinuity(onScreen, hero).ok).toBe(true);
   });
 
   it('identity fallback when no origin (no silent morph failure)', () => {

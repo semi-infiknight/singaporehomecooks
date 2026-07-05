@@ -19,15 +19,105 @@ import { getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { canSubmitReview } from '@shc/business-rules';
 import type { SHCOrderStatus } from '@shc/types';
 
-const statusLabels: Record<string, string> = {
-  pending: 'Awaiting payment',
-  paid: 'Payment received',
-  accepted: 'Cook confirmed',
-  preparing: 'Being prepared',
-  ready: 'Ready for collection',
-  collected: 'Collected',
-  completed: 'Completed',
-};
+function OrderReviewTrayContentWeb({
+  orderId,
+  onSuccess,
+  onError,
+}: {
+  orderId: string;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) {
+  const [rating, setRating] = useState(5);
+  const [reviewBody, setReviewBody] = useState('');
+  const { submit: reviewMut } = useReview(orderId);
+
+  return (
+    <div data-testid="order-review-tray">
+      <div className="flex gap-1 mt-3">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRating(n)}
+            className={`text-2xl ${n <= rating ? 'text-amber-500' : 'text-muted-foreground/40'}`}
+            aria-label={`${n} stars`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={reviewBody}
+        onChange={(e) => setReviewBody(e.target.value)}
+        placeholder="Share your experience (optional)"
+        className="shc-input w-full mt-3 min-h-[72px] py-2"
+        data-testid="review-body-input"
+      />
+      <SHCButton
+        className="mt-3"
+        disabled={reviewMut.isPending}
+        onClick={() =>
+          reviewMut.mutate(
+            { rating, body: reviewBody || undefined },
+            {
+              onSuccess: () => onSuccess(),
+              onError: (e: Error) => onError(e?.message || 'Could not submit review'),
+            }
+          )
+        }
+        data-testid="submit-review-btn"
+      >
+        {reviewMut.isPending ? 'Submitting…' : 'Submit review'}
+      </SHCButton>
+    </div>
+  );
+}
+
+function OrderDisputeTrayContentWeb({
+  orderId,
+  onSuccess,
+  onError,
+}: {
+  orderId: string;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) {
+  const [disputeNotes, setDisputeNotes] = useState('');
+  const { submit: disputeMut } = useOrderDisputes(orderId);
+
+  return (
+    <div data-testid="order-dispute-tray">
+      <p className="text-sm text-muted-foreground mt-1">
+        Use this if food quality, collection, or safety needs ops review.
+      </p>
+      <textarea
+        value={disputeNotes}
+        onChange={(e) => setDisputeNotes(e.target.value)}
+        placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
+        className="shc-input w-full mt-3 min-h-[88px] py-2"
+        data-testid="dispute-notes-input"
+      />
+      <SHCButton
+        className="mt-3"
+        variant="outline"
+        disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+        onClick={() =>
+          disputeMut.mutate(
+            { type: 'other', notes: disputeNotes.trim() },
+            {
+              onSuccess: () => onSuccess(),
+              onError: (e: Error) => onError(e?.message || 'Please try again'),
+            }
+          )
+        }
+        data-testid="submit-dispute-btn"
+      >
+        {disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+      </SHCButton>
+    </div>
+  );
+}
 
 export default function TrackOrder() {
   const params = useParams<{ id: string }>();
@@ -35,13 +125,64 @@ export default function TrackOrder() {
   const { data: order, isLoading, isFetching } = useOrder(id);
   const { messages, send } = useChat(id);
   const { user } = useAuth();
-  const { review: existingReview, submit: reviewMut } = useReview(id);
-  const { disputes, submit: disputeMut } = useOrderDisputes(id);
+  const { review: existingReview } = useReview(id);
+  const { disputes } = useOrderDisputes(id);
   const { openTray, dismiss } = useSHCTrayWeb();
   const [msg, setMsg] = useState('');
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const [disputeNotes, setDisputeNotes] = useState('');
+
+  const openReviewTray = useCallback(() => {
+    if (!id) return;
+    openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
+      <OrderReviewTrayContentWeb
+        orderId={id}
+        onSuccess={() => {
+          dismiss();
+          openTray(
+            { id: 'review-success', title: 'Thank you', height: 'compact' },
+            <SHCTrayActionWeb
+              message="Your review helps other families find trusted home cooks."
+              primaryLabel="Done"
+              onPrimary={dismiss}
+              testID="review-success-tray"
+            />
+          );
+        }}
+        onError={(message) => {
+          openTray(
+            { id: 'review-error', title: 'Review failed', height: 'compact' },
+            <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="review-error-tray" />
+          );
+        }}
+      />
+    ));
+  }, [dismiss, id, openTray]);
+
+  const openDisputeTray = useCallback(() => {
+    if (!id) return;
+    openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
+      <OrderDisputeTrayContentWeb
+        orderId={id}
+        onSuccess={() => {
+          dismiss();
+          openTray(
+            { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
+            <SHCTrayActionWeb
+              message="Ops will review this order and follow up with you."
+              primaryLabel="Done"
+              onPrimary={dismiss}
+              testID="dispute-success-tray"
+            />
+          );
+        }}
+        onError={(message) => {
+          openTray(
+            { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
+            <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="dispute-error-tray" />
+          );
+        }}
+      />
+    ));
+  }, [dismiss, id, openTray]);
 
   if (isLoading || !order) {
     return (
@@ -53,128 +194,6 @@ export default function TrackOrder() {
 
   const status = (order.shc_status || 'pending') as SHCOrderStatus;
   const showReviewForm = canSubmitReview(status) && !existingReview;
-
-  const openReviewTray = useCallback(() => {
-    openTray(
-      { id: 'order-review', title: 'Leave a review', height: 'medium' },
-      <div data-testid="order-review-tray">
-        <div className="flex gap-1 mt-3">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => setRating(n)}
-              className={`text-2xl ${n <= rating ? 'text-amber-500' : 'text-muted-foreground/40'}`}
-              aria-label={`${n} stars`}
-            >
-              ★
-            </button>
-          ))}
-        </div>
-        <textarea
-          value={reviewBody}
-          onChange={(e) => setReviewBody(e.target.value)}
-          placeholder="Share your experience (optional)"
-          className="shc-input w-full mt-3 min-h-[72px] py-2"
-          data-testid="review-body-input"
-        />
-        <SHCButton
-          className="mt-3"
-          disabled={reviewMut.isPending}
-          onClick={() =>
-            reviewMut.mutate(
-              { rating, body: reviewBody || undefined },
-              {
-                onSuccess: () => {
-                  dismiss();
-                  openTray(
-                    { id: 'review-success', title: 'Thank you', height: 'compact' },
-                    <SHCTrayActionWeb
-                      message="Your review helps other families find trusted home cooks."
-                      primaryLabel="Done"
-                      onPrimary={dismiss}
-                      testID="review-success-tray"
-                    />
-                  );
-                },
-                onError: (e: Error) => {
-                  openTray(
-                    { id: 'review-error', title: 'Review failed', height: 'compact' },
-                    <SHCTrayActionWeb
-                      message={e?.message || 'Could not submit review'}
-                      primaryLabel="OK"
-                      onPrimary={dismiss}
-                      testID="review-error-tray"
-                    />
-                  );
-                },
-              }
-            )
-          }
-          data-testid="submit-review-btn"
-        >
-          {reviewMut.isPending ? 'Submitting…' : 'Submit review'}
-        </SHCButton>
-      </div>
-    );
-  }, [dismiss, openTray, rating, reviewBody, reviewMut]);
-
-  const openDisputeTray = useCallback(() => {
-    openTray(
-      { id: 'order-dispute', title: 'Report an issue', height: 'medium' },
-      <div data-testid="order-dispute-tray">
-        <p className="text-sm text-muted-foreground mt-1">
-          Use this if food quality, collection, or safety needs ops review.
-        </p>
-        <textarea
-          value={disputeNotes}
-          onChange={(e) => setDisputeNotes(e.target.value)}
-          placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
-          className="shc-input w-full mt-3 min-h-[88px] py-2"
-          data-testid="dispute-notes-input"
-        />
-        <SHCButton
-          className="mt-3"
-          variant="outline"
-          disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-          onClick={() =>
-            disputeMut.mutate(
-              { type: 'other', notes: disputeNotes.trim() },
-              {
-                onSuccess: () => {
-                  setDisputeNotes('');
-                  dismiss();
-                  openTray(
-                    { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
-                    <SHCTrayActionWeb
-                      message="Ops will review this order and follow up with you."
-                      primaryLabel="Done"
-                      onPrimary={dismiss}
-                      testID="dispute-success-tray"
-                    />
-                  );
-                },
-                onError: (e: Error) => {
-                  openTray(
-                    { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
-                    <SHCTrayActionWeb
-                      message={e?.message || 'Please try again'}
-                      primaryLabel="OK"
-                      onPrimary={dismiss}
-                      testID="dispute-error-tray"
-                    />
-                  );
-                },
-              }
-            )
-          }
-          data-testid="submit-dispute-btn"
-        >
-          {disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-        </SHCButton>
-      </div>
-    );
-  }, [disputeMut, disputeNotes, dismiss, openTray]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">

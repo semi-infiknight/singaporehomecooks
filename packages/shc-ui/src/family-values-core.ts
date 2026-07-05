@@ -241,8 +241,8 @@ export function cacheSharedDishLayoutFromRef(
 /** Fixed PDP hero rect for synchronous morph (matches mobile product/[id] hero). */
 export const HERO_RECT_MOBILE: SharedDishLayout = { x: 0, y: 0, w: 390, h: 280 };
 
-/** Fixed PDP hero rect for web product page hero. */
-export const HERO_RECT_WEB: SharedDishLayout = { x: 0, y: 0, w: 768, h: 320 };
+/** Default PDP hero rect for web (mobile viewport); prefer measured hero container at runtime. */
+export const HERO_RECT_WEB: SharedDishLayout = { x: 0, y: 0, w: 390, h: 224 };
 
 /** Synchronous hero initial transform — no async measure required. */
 export function getSyncHeroTransform(
@@ -310,6 +310,54 @@ export function morphCentersAlign(
 }
 
 /** Compute hero entry transform from a captured card thumbnail layout. */
+/** Whether card thumbnail is visible in viewport before morph (y within frame). */
+export function isCardOnScreen(
+  origin: SharedDishLayout,
+  viewport: { w: number; h: number } = { w: 390, h: 844 }
+): boolean {
+  const margin = 8;
+  const centerX = origin.x + origin.w / 2;
+  const centerY = origin.y + origin.h / 2;
+  return (
+    centerY > margin &&
+    centerY < viewport.h - margin &&
+    centerX > margin &&
+    centerX < viewport.w - margin
+  );
+}
+
+/** Validate discover→PDP morph evidence (uses real transform math, not tautological checks). */
+export function validateMorphContinuity(
+  origin: SharedDishLayout | null | undefined,
+  hero: SharedDishLayout | null | undefined,
+  viewport: { w: number; h: number } = { w: 390, h: 844 }
+): {
+  ok: boolean;
+  reasons: string[];
+  transform: ReturnType<typeof computeSharedHeroTransform> | null;
+  centersAlign: boolean;
+  cardOnScreen: boolean;
+} {
+  const reasons: string[] = [];
+  if (!origin || !hero) {
+    return { ok: false, reasons: ['missing bbox'], transform: null, centersAlign: false, cardOnScreen: false };
+  }
+  const transform = computeSharedHeroTransform(origin, hero);
+  const centersAlign = morphCentersAlign(origin, hero);
+  const cardOnScreen = isCardOnScreen(origin, viewport);
+  if (!cardOnScreen) reasons.push('card off-screen');
+  if (!centersAlign) reasons.push('centers misaligned');
+  if (transform.initialScale >= 1) reasons.push('scale not shrinking into hero');
+  if (origin.w <= 0 || origin.h <= 0 || hero.w <= 0 || hero.h <= 0) reasons.push('invalid dimensions');
+  return {
+    ok: reasons.length === 0,
+    reasons,
+    transform,
+    centersAlign,
+    cardOnScreen,
+  };
+}
+
 export function computeSharedHeroTransform(
   origin: SharedDishLayout,
   hero: SharedDishLayout

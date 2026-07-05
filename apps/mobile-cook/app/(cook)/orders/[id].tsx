@@ -19,6 +19,38 @@ import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
 import { getOrderDisputes, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
+function CookOrderDisputeTrayContent({
+  onSubmit,
+  isPending,
+}: {
+  onSubmit: (notes: string) => void;
+  isPending: boolean;
+}) {
+  const [disputeNotes, setDisputeNotes] = React.useState('');
+
+  return (
+    <View testID="cook-order-dispute-tray">
+      <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
+      <TextInput
+        value={disputeNotes}
+        onChangeText={setDisputeNotes}
+        placeholder="Tell ops what happened"
+        placeholderTextColor={gourmeatColors.textMuted}
+        multiline
+        style={styles.disputeInput}
+        testID="cook-dispute-notes-input"
+      />
+      <GourmeatPrimaryButton
+        label={isPending ? 'Reporting…' : 'Report issue'}
+        onPress={() => onSubmit(disputeNotes.trim())}
+        disabled={isPending || disputeNotes.trim().length < 5}
+        testID="cook-submit-dispute-btn"
+        style={{ marginTop: 10 }}
+      />
+    </View>
+  );
+}
+
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
   paid: [{ to: 'accepted', label: 'Accept' }],
   accepted: [{ to: 'preparing', label: 'Prepare' }],
@@ -34,7 +66,6 @@ export default function CookManageOrder() {
   const { data: order } = useOrder(id || '');
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
-  const [disputeNotes, setDisputeNotes] = React.useState('');
   const { openTray, dismiss } = useSHCTray();
 
   const { data: disputes = [] } = useQuery({
@@ -45,9 +76,8 @@ export default function CookManageOrder() {
   });
 
   const disputeMut = useMutation({
-    mutationFn: () => submitOrderDispute(id || '', { type: 'other', notes: disputeNotes.trim() }),
+    mutationFn: (notes: string) => submitOrderDispute(id || '', { type: 'other', notes }),
     onSuccess: () => {
-      setDisputeNotes('');
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
       dismiss();
       openTray(
@@ -96,28 +126,9 @@ export default function CookManageOrder() {
   };
 
   const openDisputeTray = () => {
-    openTray(
-      { id: 'cook-order-dispute', title: 'Report an issue', height: 'medium' },
-      <View testID="cook-order-dispute-tray">
-        <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
-        <TextInput
-          value={disputeNotes}
-          onChangeText={setDisputeNotes}
-          placeholder="Tell ops what happened"
-          placeholderTextColor={gourmeatColors.textMuted}
-          multiline
-          style={styles.disputeInput}
-          testID="cook-dispute-notes-input"
-        />
-        <GourmeatPrimaryButton
-          label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-          onPress={() => disputeMut.mutate()}
-          disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-          testID="cook-submit-dispute-btn"
-          style={{ marginTop: 10 }}
-        />
-      </View>
-    );
+    openTray({ id: 'cook-order-dispute', title: 'Report an issue', height: 'medium' }, () => (
+      <CookOrderDisputeTrayContent onSubmit={(notes) => disputeMut.mutate(notes)} isPending={disputeMut.isPending} />
+    ));
   };
 
   if (!order) {

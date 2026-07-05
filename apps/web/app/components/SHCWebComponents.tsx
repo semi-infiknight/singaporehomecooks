@@ -2122,13 +2122,15 @@ export function VisualBentoTile({
 
 /* ── Family Values web parity (@shc/ui tray + motion) ── */
 
+export type TrayContentInputWeb = React.ReactNode | (() => React.ReactNode);
+
 type TrayContextValueWeb = {
   stack: TrayFrame[];
-  openTray: (frame: TrayFrame, content: React.ReactNode) => void;
-  pushTrayContent: (frame: TrayFrame, content: React.ReactNode) => void;
+  openTray: (frame: TrayFrame, content: TrayContentInputWeb) => void;
+  pushTrayContent: (frame: TrayFrame, content: TrayContentInputWeb) => void;
   popTray: () => void;
   dismiss: () => void;
-  contentMap: Record<string, React.ReactNode>;
+  contentMap: Record<string, () => React.ReactNode>;
 };
 
 const TrayContextWeb = React.createContext<TrayContextValueWeb | null>(null);
@@ -2161,7 +2163,8 @@ export function SHCTrayWeb() {
 
   if (!frame) return null;
 
-  const content = contentMap[frame.id];
+  const renderContent = contentMap[frame.id];
+  const content = renderContent?.();
   const onNav = depth > 1 ? pop : dismiss;
 
   return (
@@ -2215,17 +2218,28 @@ export function SHCTrayWeb() {
 
 export function SHCTrayProviderWeb({ children }: { children: React.ReactNode }) {
   const [stack, setStack] = React.useState<TrayFrame[]>([]);
-  const [contentMap, setContentMap] = React.useState<Record<string, React.ReactNode>>({});
+  const [contentMap, setContentMap] = React.useState<Record<string, () => React.ReactNode>>({});
 
-  const openTray = React.useCallback((frame: TrayFrame, content: React.ReactNode) => {
-    setContentMap((m) => ({ ...m, [frame.id]: content }));
-    setStack([frame]);
+  const wrapTrayContent = React.useCallback((content: TrayContentInputWeb): (() => React.ReactNode) => {
+    if (typeof content === 'function') return content;
+    return () => content;
   }, []);
 
-  const pushTrayContent = React.useCallback((frame: TrayFrame, content: React.ReactNode) => {
-    setContentMap((m) => ({ ...m, [frame.id]: content }));
-    setStack((s) => pushTray(s, frame));
-  }, []);
+  const openTray = React.useCallback(
+    (frame: TrayFrame, content: TrayContentInputWeb) => {
+      setContentMap((m) => ({ ...m, [frame.id]: wrapTrayContent(content) }));
+      setStack([frame]);
+    },
+    [wrapTrayContent]
+  );
+
+  const pushTrayContent = React.useCallback(
+    (frame: TrayFrame, content: TrayContentInputWeb) => {
+      setContentMap((m) => ({ ...m, [frame.id]: wrapTrayContent(content) }));
+      setStack((s) => pushTray(s, frame));
+    },
+    [wrapTrayContent]
+  );
 
   const pop = React.useCallback(() => setStack((s) => popTray(s)), []);
 
@@ -2584,13 +2598,25 @@ export function SHCSharedDishImageWeb({
 }) {
   const reduce = shouldReduceMotion();
   const [morphStyle, setMorphStyle] = React.useState<React.CSSProperties>({});
+  const heroWrapRef = React.useRef<HTMLDivElement>(null);
+  const [heroRect, setHeroRect] = React.useState(HERO_RECT_WEB);
+
+  React.useLayoutEffect(() => {
+    if (!hero) return;
+    const el = heroWrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      setHeroRect({ x: r.left, y: r.top, w: r.width, h: r.height });
+    }
+  }, [hero]);
 
   React.useEffect(() => {
     if (!hero || reduce) return;
     let cancelled = false;
     const tryMorph = (attempt: number) => {
       if (cancelled) return;
-      const sync = getSyncHeroTransformForDish(dishId, HERO_RECT_WEB);
+      const sync = getSyncHeroTransformForDish(dishId, heroRect);
       if (!sync.hasOrigin) {
         if (attempt < 12) requestAnimationFrame(() => tryMorph(attempt + 1));
         return;
@@ -2612,7 +2638,7 @@ export function SHCSharedDishImageWeb({
     return () => {
       cancelled = true;
     };
-  }, [dishId, hero, reduce]);
+  }, [dishId, hero, heroRect, reduce]);
 
   const cacheCardLayout = (el: HTMLImageElement) => {
     if (hero) return;
@@ -2620,7 +2646,7 @@ export function SHCSharedDishImageWeb({
     registerSharedDishLayout(dishId, { x: r.left, y: r.top, w: r.width, h: r.height });
   };
 
-  return (
+  const img = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
@@ -2631,4 +2657,14 @@ export function SHCSharedDishImageWeb({
       className={`object-cover w-full h-full ${hero && !morphStyle.transform ? 'shc-hero-image-scale' : ''} ${className}`}
     />
   );
+
+  if (hero) {
+    return (
+      <div ref={heroWrapRef} className={`absolute inset-0 ${className}`}>
+        {img}
+      </div>
+    );
+  }
+
+  return img;
 }

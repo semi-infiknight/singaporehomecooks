@@ -24,13 +24,15 @@ import {
 import { gourmeatColors, shcBorders, shcRadii, shcShadows, shcSpacing } from './theme';
 import { SHCIcon } from './icons';
 
+export type TrayContentInput = React.ReactNode | (() => React.ReactNode);
+
 type TrayContextValue = {
   stack: TrayFrame[];
-  openTray: (frame: TrayFrame, content: React.ReactNode) => void;
-  pushTrayContent: (frame: TrayFrame, content: React.ReactNode) => void;
+  openTray: (frame: TrayFrame, content: TrayContentInput) => void;
+  pushTrayContent: (frame: TrayFrame, content: TrayContentInput) => void;
   popTray: () => void;
   dismiss: () => void;
-  contentMap: Record<string, React.ReactNode>;
+  contentMap: Record<string, () => React.ReactNode>;
 };
 
 const TrayContext = createContext<TrayContextValue | null>(null);
@@ -43,7 +45,7 @@ export function useSHCTray(): TrayContextValue {
 
 export function SHCTrayProvider({ children }: { children: React.ReactNode }) {
   const [stack, setStack] = useState<TrayFrame[]>([]);
-  const [contentMap, setContentMap] = useState<Record<string, React.ReactNode>>({});
+  const [contentMap, setContentMap] = useState<Record<string, () => React.ReactNode>>({});
   const [reduceMotion, setReduceMotion] = useState(false);
 
   React.useEffect(() => {
@@ -51,15 +53,26 @@ export function SHCTrayProvider({ children }: { children: React.ReactNode }) {
     AccessibilityInfo.isReduceMotionEnabled?.().then(setReduceMotion).catch(() => {});
   }, []);
 
-  const openTray = useCallback((frame: TrayFrame, content: React.ReactNode) => {
-    setContentMap((m) => ({ ...m, [frame.id]: content }));
-    setStack([frame]);
+  const wrapTrayContent = useCallback((content: TrayContentInput): (() => React.ReactNode) => {
+    if (typeof content === 'function') return content;
+    return () => content;
   }, []);
 
-  const pushTrayContent = useCallback((frame: TrayFrame, content: React.ReactNode) => {
-    setContentMap((m) => ({ ...m, [frame.id]: content }));
-    setStack((s) => pushTray(s, frame));
-  }, []);
+  const openTray = useCallback(
+    (frame: TrayFrame, content: TrayContentInput) => {
+      setContentMap((m) => ({ ...m, [frame.id]: wrapTrayContent(content) }));
+      setStack([frame]);
+    },
+    [wrapTrayContent]
+  );
+
+  const pushTrayContent = useCallback(
+    (frame: TrayFrame, content: TrayContentInput) => {
+      setContentMap((m) => ({ ...m, [frame.id]: wrapTrayContent(content) }));
+      setStack((s) => pushTray(s, frame));
+    },
+    [wrapTrayContent]
+  );
 
   const pop = useCallback(() => setStack((s) => popTray(s)), []);
   const dismiss = useCallback(() => {
@@ -95,7 +108,8 @@ function SHCTrayOverlay({ reduceMotion }: { reduceMotion: boolean }) {
 
   const trayH = trayHeightPx(frame.height, winH);
   const depth = stack.length;
-  const content = contentMap[frame.id];
+  const renderContent = contentMap[frame.id];
+  const content = renderContent?.();
 
   return (
     <Modal visible transparent animationType={noMotion ? 'none' : 'fade'} onRequestClose={depth > 1 ? pop : dismiss}>

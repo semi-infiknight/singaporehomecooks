@@ -19,6 +19,7 @@ import {
   sortByCookProximity,
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
+  OFFLINE_DISCOVER_PRODUCT,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -255,6 +256,18 @@ export default function DiscoverHome() {
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
       </div>
+
+      {evidenceMode && productList.length > 0 && (
+        <div className="mb-4" data-testid="evidence-dish-card">
+          <GourmeatSectionTitle title="Featured dish (evidence)" />
+          <GourmeatDishCard
+            product={productList.find((p) => p.id === OFFLINE_DISCOVER_PRODUCT.id) ?? productList[0]}
+            isFavorite={isFavorite(OFFLINE_DISCOVER_PRODUCT.id)}
+            onFavoritePress={() => handleFavorite(productList[0])}
+            onAddPress={() => handleAddToCart(OFFLINE_DISCOVER_PRODUCT.id, 1)}
+          />
+        </div>
+      )}
 
       <GourmeatSectionTitle
         title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}

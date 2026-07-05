@@ -63,16 +63,31 @@ for (const s of shots) {
   }
 }
 
-// Live morph: tap dish price on discover → PDP hero continuity
+// Live morph: scroll dish into view, capture click-time rect, tap price → PDP frames
 const morphFile = resolve(outDir, 'discover-to-pdp-morph.png');
 try {
   await page.goto(`${base}/`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await page.waitForSelector(`[data-testid="dish-card-${seedId}-price"]`, { timeout: 20000 });
+  await page.waitForSelector(`[data-testid="dish-card-${seedId}-price"], [data-testid="evidence-dish-card"]`, { timeout: 20000 });
+  const priceSel = `[data-testid="dish-card-${seedId}-price"]`;
+  const imageSel = `[data-testid="dish-card-${seedId}-image"]`;
+  await page.locator(priceSel).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(400);
   const discoverElements = await captureElements();
-  await page.click(`[data-testid="dish-card-${seedId}-price"]`);
+  const clickDishImage = await measure(imageSel);
+  await page.click(priceSel);
   await page.waitForURL(`**/product/${seedId}**`, { timeout: 20000 });
   await page.waitForSelector(`[data-testid="shared-dish-${seedId}-hero"]`, { timeout: 20000 });
-  await page.waitForTimeout(800);
+  const morphFrames = [];
+  for (const delay of [0, 80, 160, 320]) {
+    if (delay > 0) await page.waitForTimeout(80);
+    const framePath = resolve(outDir, `morph-frame-${delay}ms.png`);
+    await page.screenshot({ path: framePath, fullPage: false });
+    morphFrames.push({
+      delay,
+      file: framePath,
+      heroImage: await measure(`[data-testid="shared-dish-${seedId}-hero"]`),
+    });
+  }
   await page.screenshot({ path: morphFile, fullPage: false });
   const pdpElements = await captureElements();
   captures.push({
@@ -82,6 +97,8 @@ try {
     viewport: { w: 390, h: 844 },
     elements: pdpElements,
     discoverElements,
+    clickDishImage,
+    morphFrames,
     morphFlow: true,
   });
 } catch (e) {

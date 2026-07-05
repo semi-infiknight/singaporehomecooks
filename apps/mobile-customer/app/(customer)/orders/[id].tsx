@@ -22,82 +22,182 @@ import { getOrderDisputes, getReview, submitOrderDispute, submitReview } from '.
 import { canSubmitReview } from '@shc/business-rules';
 import type { SHCOrderStatus } from '@shc/types';
 
+function OrderReviewTrayContent({
+  orderId,
+  onSuccess,
+  onError,
+}: {
+  orderId: string;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) {
+  const [rating, setRating] = useState(5);
+  const [reviewBody, setReviewBody] = useState('');
+  const qc = useQueryClient();
+  const reviewMut = useMutation({
+    mutationFn: () => submitReview(orderId, rating, reviewBody || undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['review', orderId] });
+      onSuccess();
+    },
+    onError: (e: any) => onError(e?.message || 'Could not submit review'),
+  });
+
+  return (
+    <View testID="order-review-tray">
+      <View style={{ flexDirection: 'row', marginTop: 8, gap: 4 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <Text
+            key={n}
+            onPress={() => setRating(n)}
+            style={{ fontSize: 28, color: n <= rating ? gourmeatColors.accent : gourmeatColors.textMuted }}
+          >
+            ★
+          </Text>
+        ))}
+      </View>
+      <TextInput
+        placeholder="Share your experience (optional)"
+        value={reviewBody}
+        onChangeText={setReviewBody}
+        multiline
+        style={styles.reviewInput}
+        testID="review-body-input"
+        placeholderTextColor={gourmeatColors.textMuted}
+      />
+      <GourmeatPrimaryButton
+        label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
+        onPress={() => reviewMut.mutate()}
+        disabled={reviewMut.isPending}
+        testID="submit-review-btn"
+        style={{ marginTop: 10 }}
+      />
+    </View>
+  );
+}
+
+function OrderDisputeTrayContent({
+  orderId,
+  onSuccess,
+  onError,
+}: {
+  orderId: string;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) {
+  const [disputeNotes, setDisputeNotes] = useState('');
+  const qc = useQueryClient();
+  const disputeMut = useMutation({
+    mutationFn: () => submitOrderDispute(orderId, { type: 'other', notes: disputeNotes.trim() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['order-disputes', orderId] });
+      onSuccess();
+    },
+    onError: (e: any) => onError(e?.message || 'Please try again.'),
+  });
+
+  return (
+    <View testID="order-dispute-tray">
+      <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
+      <TextInput
+        placeholder="Tell ops what happened"
+        value={disputeNotes}
+        onChangeText={setDisputeNotes}
+        multiline
+        style={styles.reviewInput}
+        testID="dispute-notes-input"
+        placeholderTextColor={gourmeatColors.textMuted}
+      />
+      <GourmeatPrimaryButton
+        label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+        onPress={() => disputeMut.mutate()}
+        disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+        testID="submit-dispute-btn"
+        style={{ marginTop: 10 }}
+      />
+    </View>
+  );
+}
+
 export default function OrderTracking() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: order, isFetching } = useOrder(id || '');
+  const orderId = id || '';
+  const { data: order, isFetching } = useOrder(orderId);
   const { user } = useAuth();
   const { openTray, dismiss } = useSHCTray();
   const qc = useQueryClient();
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const [disputeNotes, setDisputeNotes] = useState('');
 
   const { data: existingReview } = useQuery({
-    queryKey: ['review', id],
-    queryFn: () => getReview(id || ''),
-    enabled: !!id,
-  });
-
-  const reviewMut = useMutation({
-    mutationFn: () => submitReview(id || '', rating, reviewBody || undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['review', id] });
-      dismiss();
-      openTray(
-        { id: 'review-success', title: 'Thank you', height: 'compact' },
-        <SHCTrayAction
-          message="Your review helps other families find trusted home cooks."
-          primaryLabel="Done"
-          onPrimary={dismiss}
-          testID="review-success-tray"
-        />
-      );
-    },
-    onError: (e: any) => {
-      openTray(
-        { id: 'review-error', title: 'Review failed', height: 'compact' },
-        <SHCTrayAction message={e?.message || 'Could not submit review'} primaryLabel="OK" onPrimary={dismiss} />
-      );
-    },
+    queryKey: ['review', orderId],
+    queryFn: () => getReview(orderId),
+    enabled: !!orderId,
   });
 
   const { data: disputes = [] } = useQuery({
-    queryKey: ['order-disputes', id],
-    queryFn: () => getOrderDisputes(id || ''),
-    enabled: !!id,
+    queryKey: ['order-disputes', orderId],
+    queryFn: () => getOrderDisputes(orderId),
+    enabled: !!orderId,
     placeholderData: [],
   });
 
-  const disputeMut = useMutation({
-    mutationFn: () => submitOrderDispute(id || '', { type: 'other', notes: disputeNotes.trim() }),
-    onSuccess: () => {
-      setDisputeNotes('');
-      qc.invalidateQueries({ queryKey: ['order-disputes', id] });
-      dismiss();
-      openTray(
-        { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
-        <SHCTrayAction
-          message="Ops will review this order and follow up with you."
-          primaryLabel="Got it"
-          onPrimary={dismiss}
-          secondaryLabel="Message your cook"
-          onSecondary={() => {
-            dismiss();
-            router.push(`/(shared)/chat/${id}` as any);
-          }}
-          testID="dispute-success-tray"
-        />
-      );
-    },
-    onError: (e: any) => {
-      openTray(
-        { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
-        <SHCTrayAction message={e?.message || 'Please try again.'} primaryLabel="OK" onPrimary={dismiss} />
-      );
-    },
-  });
+  const openReviewTray = useCallback(() => {
+    openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
+      <OrderReviewTrayContent
+        orderId={orderId}
+        onSuccess={() => {
+          dismiss();
+          openTray(
+            { id: 'review-success', title: 'Thank you', height: 'compact' },
+            <SHCTrayAction
+              message="Your review helps other families find trusted home cooks."
+              primaryLabel="Done"
+              onPrimary={dismiss}
+              testID="review-success-tray"
+            />
+          );
+        }}
+        onError={(message) => {
+          openTray(
+            { id: 'review-error', title: 'Review failed', height: 'compact' },
+            <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} />
+          );
+        }}
+      />
+    ));
+  }, [dismiss, openTray, orderId]);
+
+  const openDisputeTray = useCallback(() => {
+    openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
+      <OrderDisputeTrayContent
+        orderId={orderId}
+        onSuccess={() => {
+          dismiss();
+          openTray(
+            { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
+            <SHCTrayAction
+              message="Ops will review this order and follow up with you."
+              primaryLabel="Got it"
+              onPrimary={dismiss}
+              secondaryLabel="Message your cook"
+              onSecondary={() => {
+                dismiss();
+                router.push(`/(shared)/chat/${orderId}` as any);
+              }}
+              testID="dispute-success-tray"
+            />
+          );
+        }}
+        onError={(message) => {
+          openTray(
+            { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
+            <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} />
+          );
+        }}
+      />
+    ));
+  }, [dismiss, openTray, orderId, router]);
 
   if (!order) {
     return (
@@ -113,62 +213,6 @@ export default function OrderTracking() {
   const showReviewForm = canSubmitReview(status) && !existingReview;
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
-
-  const openReviewTray = useCallback(() => {
-    openTray(
-      { id: 'order-review', title: 'Leave a review', height: 'medium' },
-      <View testID="order-review-tray">
-        <View style={{ flexDirection: 'row', marginTop: 8, gap: 4 }}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <Text key={n} onPress={() => setRating(n)} style={{ fontSize: 28, color: n <= rating ? gourmeatColors.accent : gourmeatColors.textMuted }}>
-              ★
-            </Text>
-          ))}
-        </View>
-        <TextInput
-          placeholder="Share your experience (optional)"
-          value={reviewBody}
-          onChangeText={setReviewBody}
-          multiline
-          style={styles.reviewInput}
-          testID="review-body-input"
-          placeholderTextColor={gourmeatColors.textMuted}
-        />
-        <GourmeatPrimaryButton
-          label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
-          onPress={() => reviewMut.mutate()}
-          disabled={reviewMut.isPending}
-          testID="submit-review-btn"
-          style={{ marginTop: 10 }}
-        />
-      </View>
-    );
-  }, [openTray, rating, reviewBody, reviewMut]);
-
-  const openDisputeTray = useCallback(() => {
-    openTray(
-      { id: 'order-dispute', title: 'Report an issue', height: 'medium' },
-      <View testID="order-dispute-tray">
-        <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
-        <TextInput
-          placeholder="Tell ops what happened"
-          value={disputeNotes}
-          onChangeText={setDisputeNotes}
-          multiline
-          style={styles.reviewInput}
-          testID="dispute-notes-input"
-          placeholderTextColor={gourmeatColors.textMuted}
-        />
-        <GourmeatPrimaryButton
-          label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-          onPress={() => disputeMut.mutate()}
-          disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-          testID="submit-dispute-btn"
-          style={{ marginTop: 10 }}
-        />
-      </View>
-    );
-  }, [disputeMut, disputeNotes, openTray]);
 
   return (
     <ScrollView
@@ -268,15 +312,6 @@ const styles = StyleSheet.create({
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   addressLine: { marginTop: shcSpacing.sm, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   hintLine: { marginTop: shcSpacing.sm, fontSize: 11, color: gourmeatColors.textLight },
-  disputeStatus: {
-    marginTop: shcSpacing.sm,
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    borderRadius: gourmeatRadii.md,
-    backgroundColor: gourmeatColors.surfaceAlt,
-    padding: shcSpacing.sm,
-  },
-  disputeTitle: { fontSize: 13, fontWeight: '800', color: gourmeatColors.text },
   reviewInput: {
     borderWidth: 1,
     borderColor: gourmeatColors.border,
