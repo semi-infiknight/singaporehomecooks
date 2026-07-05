@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Per-cluster automated review — writes cluster-*-spawn.log (no hand-authored md).
+# Per-cluster automated review — writes cluster-*-spawn.log.
+# Subagent transcripts: spawn_subagent runs scripts/fv-subagent-run.sh <cluster> (shell tee → cluster-*-subagent-raw.txt).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${FAMILY_VALUES_SCRATCH:-$ROOT}"
