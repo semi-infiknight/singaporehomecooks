@@ -28,7 +28,7 @@ case "$CLUSTER" in
     ;;
   simplicity)
     run "FAMILY_VALUES_SCRATCH=$OUT node scripts/fv-e2e-preflight.mjs"
-    run "rg -n 'submitReviewFn|SHCOrderReviewTrayContent' 'apps/mobile-customer/app/(customer)/orders/[id].tsx'"
+    run "rg -n 'OrderTrackingTraySection|submitReview' 'apps/mobile-customer/app/(customer)/orders/[id].tsx' packages/shc-ui/src/order-tray-screen.tsx"
     ;;
   fluidity)
     run "FAMILY_VALUES_SCRATCH=$OUT pnpm --filter @shc/ui exec vitest run src/family-values-morph-evidence.test.ts"

@@ -36,14 +36,15 @@ const webOrders = resolve(root, 'apps/web/app/orders/[id]/page.tsx');
 
 run(`rg -n "resolveOrderForDisplay" "${mobileOrders}"`, 'mobile orders uses resolveOrderForDisplay');
 run(`rg -n "resolveOrderForDisplay" "${webOrders}"`, 'web orders uses resolveOrderForDisplay');
-run(`rg -n "orderTrayActions" "${mobileOrders}"`, 'mobile orders uses orderTrayActions');
+run(`rg -n "OrderTrackingTraySection" "${mobileOrders}"`, 'mobile orders uses OrderTrackingTraySection');
+run('rg -n "orderTrayActions|open-review-tray-btn" packages/shc-ui/src/order-tray-screen.tsx', 'shared order-tray-screen uses orderTrayActions + Maestro testIDs');
 run('pnpm --filter @shc/utils exec vitest run src/family-values-e2e-fixtures.test.ts', 'fixture unit test');
 run('pnpm --filter @shc/ui exec vitest run src/family-values-tray-integration.test.tsx', 'shipped tray integration test');
 run(`rg -n "orderTrayActions" "${webOrders}"`, 'web orders uses orderTrayActions');
 run('rg -n "order-e2e-review" apps/mobile-customer/e2e/order-tray.yaml', 'maestro deep link matches E2E_ORDER_SEED');
 run(
-  `rg -n "open-review-tray-btn|review-body-input" "${mobileOrders}"`,
-  'order screen Maestro testIDs'
+  `rg -n "open-review-tray-btn|OrderTrackingTraySection" "${mobileOrders}" packages/shc-ui/src/order-tray-screen.tsx packages/shc-ui/src/order-tray-forms.tsx`,
+  'order screen Maestro testIDs (screen + shared tray)'
 );
 
 lines.push(`\n=== preflight ${ok ? 'PASS' : 'FAIL'} ===`);

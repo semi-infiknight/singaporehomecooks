@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,10 +11,7 @@ import {
   gourmeatColors,
   gourmeatRadii,
   shcSpacing,
-  useSHCTray,
-  SHCTrayAction,
-  openOrderReviewTray,
-  openOrderDisputeTray,
+  OrderTrackingTraySection,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -23,11 +20,10 @@ import {
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
-  orderTrayActions,
 } from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getOrderDisputes, getReview, submitOrderDispute, submitReview } from '../../../lib/api-client';
 import type { SHCOrderStatus } from '@shc/types';
 
@@ -57,9 +53,6 @@ export default function OrderTracking() {
     [orderRaw, orderId, maestroE2e]
   );
   const { user } = useAuth();
-  const { openTray, dismiss } = useSHCTray();
-  const qc = useQueryClient();
-
   const { data: existingReviewRaw } = useQuery({
     queryKey: ['review', orderId],
     queryFn: () => getReview(orderId),
@@ -81,57 +74,6 @@ export default function OrderTracking() {
     [disputesRaw, orderId, maestroE2e]
   );
 
-  const trayFns = useMemo(
-    () => ({
-      openTray,
-      dismiss,
-      renderSuccess: ({
-        message,
-        primaryLabel,
-        testID,
-        secondaryLabel,
-        onSecondary,
-      }: {
-        message: string;
-        primaryLabel: string;
-        testID: string;
-        secondaryLabel?: string;
-        onSecondary?: () => void;
-      }) => (
-        <SHCTrayAction
-          message={message}
-          primaryLabel={primaryLabel}
-          onPrimary={dismiss}
-          secondaryLabel={secondaryLabel}
-          onSecondary={onSecondary}
-          testID={testID}
-        />
-      ),
-      renderError: ({ id, message }: { id: string; message: string }) => (
-        <SHCTrayAction
-          message={message}
-          primaryLabel="OK"
-          onPrimary={dismiss}
-          testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
-        />
-      ),
-    }),
-    [dismiss, openTray]
-  );
-
-  const openReviewTray = useCallback(() => {
-    openOrderReviewTray(orderId, submitReview, trayFns);
-  }, [orderId, trayFns]);
-
-  const openDisputeTray = useCallback(() => {
-    openOrderDisputeTray(orderId, submitOrderDispute, trayFns, {
-      onMessageCook: () => {
-        dismiss();
-        router.push(`/(shared)/chat/${orderId}` as any);
-      },
-    });
-  }, [dismiss, orderId, router, trayFns]);
-
   if (!order) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
@@ -143,11 +85,6 @@ export default function OrderTracking() {
   const status = order.shc_status as SHCOrderStatus;
   const live = isActiveOrderStatus(status);
   const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
-  const { showReviewBtn: showReviewForm, showDisputeBtn: showDisputeForm } = orderTrayActions({
-    order,
-    review: existingReview,
-    disputes,
-  });
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
 
@@ -207,16 +144,17 @@ export default function OrderTracking() {
         </GourmeatCard>
       )}
 
-      {showReviewForm && (
-        <GourmeatPrimaryButton
-          label="Leave a review"
-          onPress={openReviewTray}
-          testID="open-review-tray-btn"
-          style={{ marginBottom: shcSpacing.sm }}
-        />
-      )}
+      <OrderTrackingTraySection
+        orderId={orderId}
+        order={order}
+        existingReview={existingReview}
+        disputes={disputes}
+        submitReview={submitReview}
+        submitOrderDispute={submitOrderDispute}
+        onMessageCook={() => router.push(`/(shared)/chat/${orderId}` as any)}
+      />
 
-      {!showDisputeForm ? (
+      {disputes.length > 0 && (
         <GourmeatCard testID="order-dispute-submitted">
           <Text style={styles.cardTitle}>Issue reported</Text>
           <Text style={styles.cardMeta}>
@@ -224,13 +162,6 @@ export default function OrderTracking() {
           </Text>
           {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
         </GourmeatCard>
-      ) : (
-        <GourmeatPrimaryButton
-          label="Report an issue"
-          variant="outline"
-          onPress={openDisputeTray}
-          testID="open-dispute-tray-btn"
-        />
       )}
     </ScrollView>
   );

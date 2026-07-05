@@ -18,7 +18,8 @@ for c in "${clusters[@]}"; do
         pnpm --filter @shc/ui exec vitest run src/family-values-tray-ids.test.ts src/family-values-tray-live.test.ts src/family-values-tray-integration.test.tsx 2>&1
         ;;
       simplicity)
-        rg -n "resolveOrderForDisplay|orderTrayActions" "$ROOT/apps/mobile-customer/app/(customer)/orders/[id].tsx"
+        rg -n "resolveOrderForDisplay|OrderTrackingTraySection" "$ROOT/apps/mobile-customer/app/(customer)/orders/[id].tsx"
+        rg -n "orderTrayActions|open-review-tray-btn" "$ROOT/packages/shc-ui/src/order-tray-screen.tsx"
         pnpm --filter @shc/utils exec vitest run src/family-values-e2e-fixtures.test.ts 2>&1
         ;;
       fluidity)

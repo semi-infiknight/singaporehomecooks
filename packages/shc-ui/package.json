@@ -9,6 +9,7 @@
     "./theme": "./src/theme.ts",
     "./family-values-core": "./src/family-values-core.ts",
     "./order-tray-opener-core": "./src/order-tray-opener-core.tsx",
+    "./order-tray-mutations": "./src/order-tray-mutations.tsx",
     "./location-ux": "./src/location-ux.tsx"
   },
   "scripts": {

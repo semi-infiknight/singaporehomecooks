@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { SHCButton } from '../app/components/SHCWebComponents';
+import { useOrderReviewTrayMutation, useOrderDisputeTrayMutation } from '@shc/ui/order-tray-mutations';
 import type {
   OrderReviewTrayContentProps,
   OrderDisputeTrayContentProps,
@@ -14,17 +14,7 @@ export function SHCOrderReviewTrayContentWeb({
   onSuccess,
   onError,
 }: OrderReviewTrayContentProps) {
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const qc = useQueryClient();
-  const reviewMut = useMutation({
-    mutationFn: () => submitReviewFn(orderId, rating, reviewBody || undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['review', orderId] });
-      onSuccess();
-    },
-    onError: (e: Error) => onError(e?.message || 'Could not submit review'),
-  });
+  const tray = useOrderReviewTrayMutation({ orderId, submitReviewFn, onSuccess, onError });
 
   return (
     <div data-testid="order-review-tray">
@@ -33,8 +23,8 @@ export function SHCOrderReviewTrayContentWeb({
           <button
             key={n}
             type="button"
-            onClick={() => setRating(n)}
-            className={`text-[28px] leading-none ${n <= rating ? 'text-[#FFB800]' : 'text-muted-foreground/40'}`}
+            onClick={() => tray.setRating(n)}
+            className={`text-[28px] leading-none ${n <= tray.rating ? 'text-[#FFB800]' : 'text-muted-foreground/40'}`}
             aria-label={`${n} stars`}
           >
             ★
@@ -42,19 +32,19 @@ export function SHCOrderReviewTrayContentWeb({
         ))}
       </div>
       <textarea
-        value={reviewBody}
-        onChange={(e) => setReviewBody(e.target.value)}
+        value={tray.reviewBody}
+        onChange={(e) => tray.setReviewBody(e.target.value)}
         placeholder="Share your experience (optional)"
         className="shc-input w-full mt-2 min-h-[72px] py-2"
         data-testid="review-body-input"
       />
       <SHCButton
         className="mt-2.5"
-        disabled={reviewMut.isPending}
-        onClick={() => reviewMut.mutate()}
+        disabled={tray.isPending}
+        onClick={tray.submit}
         data-testid="submit-review-btn"
       >
-        {reviewMut.isPending ? 'Submitting…' : 'Submit review'}
+        {tray.isPending ? 'Submitting…' : 'Submit review'}
       </SHCButton>
     </div>
   );
@@ -66,16 +56,7 @@ export function SHCOrderDisputeTrayContentWeb({
   onSuccess,
   onError,
 }: OrderDisputeTrayContentProps) {
-  const [disputeNotes, setDisputeNotes] = useState('');
-  const qc = useQueryClient();
-  const disputeMut = useMutation({
-    mutationFn: () => submitDisputeFn(orderId, { type: 'other', notes: disputeNotes.trim() }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['order-disputes', orderId] });
-      onSuccess();
-    },
-    onError: (e: Error) => onError(e?.message || 'Please try again.'),
-  });
+  const tray = useOrderDisputeTrayMutation({ orderId, submitDisputeFn, onSuccess, onError });
 
   return (
     <div data-testid="order-dispute-tray">
@@ -83,19 +64,19 @@ export function SHCOrderDisputeTrayContentWeb({
         Use this for food quality, collection, or safety issues that need ops review.
       </p>
       <textarea
-        value={disputeNotes}
-        onChange={(e) => setDisputeNotes(e.target.value)}
+        value={tray.disputeNotes}
+        onChange={(e) => tray.setDisputeNotes(e.target.value)}
         placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
         className="shc-input w-full mt-2 min-h-[72px] py-2"
         data-testid="dispute-notes-input"
       />
       <SHCButton
         className="mt-2.5"
-        disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-        onClick={() => disputeMut.mutate()}
+        disabled={tray.isPending || !tray.canSubmit}
+        onClick={tray.submit}
         data-testid="submit-dispute-btn"
       >
-        {disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+        {tray.isPending ? 'Reporting…' : 'Report issue'}
       </SHCButton>
     </div>
   );

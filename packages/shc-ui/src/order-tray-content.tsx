@@ -1,9 +1,8 @@
-// Shipped order tray content — useState + useMutation + query invalidation (same path as mobile screen).
+// Shipped order tray content — delegates to shared order-tray-mutations hooks.
 // @ts-nocheck
-import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 import { SHCOrderReviewTrayForm, SHCOrderDisputeTrayForm } from './order-tray-forms';
-import { isMaestroE2eOrderId } from '@shc/utils';
+import { useOrderReviewTrayMutation, useOrderDisputeTrayMutation } from './order-tray-mutations';
 import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 
 export type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
@@ -19,26 +18,16 @@ export function SHCOrderReviewTrayContent({
   onSuccess: () => void;
   onError: (message: string) => void;
 }) {
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const qc = useQueryClient();
-  const reviewMut = useMutation({
-    mutationFn: () => submitReviewFn(orderId, rating, reviewBody || undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['review', orderId] });
-      onSuccess();
-    },
-    onError: (e: Error) => onError(e?.message || 'Could not submit review'),
-  });
+  const tray = useOrderReviewTrayMutation({ orderId, submitReviewFn, onSuccess, onError });
 
   return (
     <SHCOrderReviewTrayForm
-      rating={rating}
-      onRatingChange={setRating}
-      reviewBody={reviewBody}
-      onReviewBodyChange={setReviewBody}
-      onSubmit={() => reviewMut.mutate()}
-      isPending={reviewMut.isPending}
+      rating={tray.rating}
+      onRatingChange={tray.setRating}
+      reviewBody={tray.reviewBody}
+      onReviewBodyChange={tray.setReviewBody}
+      onSubmit={tray.submit}
+      isPending={tray.isPending}
     />
   );
 }
@@ -54,27 +43,14 @@ export function SHCOrderDisputeTrayContent({
   onSuccess: () => void;
   onError: (message: string) => void;
 }) {
-  const [disputeNotes, setDisputeNotes] = useState(
-    process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' && isMaestroE2eOrderId(orderId)
-      ? 'E2E dispute notes for ops'
-      : ''
-  );
-  const qc = useQueryClient();
-  const disputeMut = useMutation({
-    mutationFn: () => submitDisputeFn(orderId, { type: 'other', notes: disputeNotes.trim() }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['order-disputes', orderId] });
-      onSuccess();
-    },
-    onError: (e: Error) => onError(e?.message || 'Please try again.'),
-  });
+  const tray = useOrderDisputeTrayMutation({ orderId, submitDisputeFn, onSuccess, onError });
 
   return (
     <SHCOrderDisputeTrayForm
-      disputeNotes={disputeNotes}
-      onDisputeNotesChange={setDisputeNotes}
-      onSubmit={() => disputeMut.mutate()}
-      isPending={disputeMut.isPending}
+      disputeNotes={tray.disputeNotes}
+      onDisputeNotesChange={tray.setDisputeNotes}
+      onSubmit={tray.submit}
+      isPending={tray.isPending}
     />
   );
 }
