@@ -8,6 +8,7 @@ LOG="$OUT/cluster-${CLUSTER}-subagent-raw.txt"
 mkdir -p "$OUT"
 
 {
+  echo "spawn_tool: spawn_subagent"
   echo "capture_source: subagent_shell_tee"
   echo "cluster: $CLUSTER"
   echo "captured_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -23,8 +24,8 @@ run() {
 
 case "$CLUSTER" in
   foundation)
-    run "pnpm --filter @shc/ui exec vitest run src/family-values-tray-integration.test.tsx"
-    run "rg -n 'SHCOrderReviewTrayContent|useMutation' packages/shc-ui/src/order-tray-content.tsx packages/shc-ui/src/family-values-tray-integration.test.tsx"
+    run "pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-web-tracking.test.tsx src/order-tray-parity.test.ts"
+    run "rg -n 'useOrderTrayTracking|createOrderTrayFns' packages/shc-ui/src/order-tray-tracking.tsx packages/shc-ui/src/order-tray-screen.tsx apps/web/lib/order-tray-section-web.tsx"
     ;;
   simplicity)
     run "FAMILY_VALUES_SCRATCH=$OUT node scripts/fv-e2e-preflight.mjs"
@@ -36,12 +37,13 @@ case "$CLUSTER" in
     ;;
   delight-web)
     run "pnpm --filter web typecheck"
-    run "rg -n 'order-tray-opener-core|SHCOrderReviewTrayContentWeb' 'apps/web/app/orders/[id]/page.tsx' apps/web/lib/order-tray-content-web.tsx"
+    run "rg -n 'OrderTrackingTraySectionWeb|useOrderTrayTracking' apps/web/app/orders/[id]/page.tsx apps/web/lib/order-tray-section-web.tsx"
+    run "rg -n 'const trayFns|openOrderReviewTray' apps/web/app/orders/[id]/page.tsx && exit 1 || echo 'web page: no duplicate trayFns'"
     ;;
   docs-tests)
-    run "ls -la $OUT/tray-flow-maestro-*.log"
-    run "rg FAILED $OUT/tray-flow-maestro-order.log || echo 'order-tray: no FAILED'"
-    run "rg -n 'subagent-raw' scripts/fv-cluster-review.sh"
+    run "rg -n 'review-success-tray|dispute-success-tray|submit-review-btn' apps/mobile-customer/e2e/order-tray.yaml"
+    run "test -f $OUT/tray-flow-maestro-order-clean.log && rg FAILED $OUT/tray-flow-maestro-order-clean.log && exit 1 || echo 'maestro clean: no FAILED'"
+    run "rg -n 'spawn_tool: spawn_subagent' scripts/fv-subagent-run.sh"
     ;;
   *)
     echo "unknown cluster: $CLUSTER" | tee -a "$LOG"

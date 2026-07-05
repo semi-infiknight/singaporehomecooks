@@ -12,7 +12,12 @@ import { SHCTrayProvider } from '@shc/ui';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+    mutations: { retry: false },
+  },
+});
 
 export default function RootLayout() {
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   useOrder,
@@ -8,8 +8,8 @@ import {
   useOrderDisputes,
   useReview,
 } from '../../../lib/useOrder';
-import { useAuth } from '../../../lib/useAuth';
 import { submitReview, submitOrderDispute } from '../../../lib/api-client';
+import { OrderTrackingTraySectionWeb } from '../../../lib/order-tray-section-web';
 import {
   SHCCard,
   SHCButton,
@@ -17,8 +17,6 @@ import {
   GourmeatScreenHeader,
   SHCLoading,
   OrderTimeline,
-  useSHCTrayWeb,
-  SHCTrayActionWeb,
 } from '../../components/SHCWebComponents';
 import {
   getOrderStatusLabel,
@@ -26,16 +24,7 @@ import {
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
-  orderTrayActions,
 } from '@shc/utils';
-import {
-  openOrderReviewTray,
-  openOrderDisputeTray,
-} from '@shc/ui/order-tray-opener-core';
-import {
-  SHCOrderReviewTrayContentWeb,
-  SHCOrderDisputeTrayContentWeb,
-} from '../../../lib/order-tray-content-web';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -60,7 +49,6 @@ export default function TrackOrder() {
     [orderRaw, id, maestroE2e]
   );
   const { messages, send } = useChat(id);
-  const { user } = useAuth();
   const { review: existingReviewRaw } = useReview(id);
   const existingReview = useMemo(
     () => resolveReviewForDisplay<OrderReview | null | undefined>(existingReviewRaw as OrderReview | null | undefined, id, { maestroE2e }),
@@ -71,61 +59,7 @@ export default function TrackOrder() {
     () => resolveDisputesForDisplay<OrderDispute>(disputesRaw as OrderDispute[], id, { maestroE2e }),
     [disputesRaw, id, maestroE2e]
   );
-  const { openTray, dismiss } = useSHCTrayWeb();
   const [msg, setMsg] = useState('');
-
-  const trayFns = useMemo(
-    () => ({
-      openTray,
-      dismiss,
-      renderSuccess: ({
-        message,
-        primaryLabel,
-        testID,
-        secondaryLabel,
-        onSecondary,
-      }: {
-        message: string;
-        primaryLabel: string;
-        testID: string;
-        secondaryLabel?: string;
-        onSecondary?: () => void;
-      }) => (
-        <SHCTrayActionWeb
-          message={message}
-          primaryLabel={primaryLabel}
-          onPrimary={dismiss}
-          secondaryLabel={secondaryLabel}
-          onSecondary={onSecondary}
-          testID={testID}
-        />
-      ),
-      renderError: ({ id, message }: { id: string; message: string }) => (
-        <SHCTrayActionWeb
-          message={message}
-          primaryLabel="OK"
-          onPrimary={dismiss}
-          testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
-        />
-      ),
-    }),
-    [dismiss, openTray]
-  );
-
-  const openReviewTray = useCallback(() => {
-    if (!id) return;
-    openOrderReviewTray(id, submitReview, trayFns, SHCOrderReviewTrayContentWeb);
-  }, [id, trayFns]);
-
-  const openDisputeTray = useCallback(() => {
-    if (!id) return;
-    openOrderDisputeTray(id, submitOrderDispute, trayFns, SHCOrderDisputeTrayContentWeb, {
-      onMessageCook: () => {
-        dismiss();
-        document.getElementById('order-chat-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      },
-    });
-  }, [dismiss, id, trayFns]);
 
   if ((!maestroE2e && isLoading) || !order) {
     return (
@@ -136,11 +70,6 @@ export default function TrackOrder() {
   }
 
   const status = (order.shc_status || 'pending') as SHCOrderStatus;
-  const { showReviewBtn: showReviewForm, showDisputeBtn: showDisputeForm } = orderTrayActions({
-    order,
-    review: existingReview,
-    disputes,
-  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
@@ -243,13 +172,19 @@ export default function TrackOrder() {
         </SHCCard>
       )}
 
-      {showReviewForm && (
-        <SHCButton className="mt-6 w-full" onClick={openReviewTray} data-testid="open-review-tray-btn">
-          Leave a review
-        </SHCButton>
-      )}
+      <OrderTrackingTraySectionWeb
+        orderId={id}
+        order={order}
+        existingReview={existingReview}
+        disputes={disputes}
+        submitReview={submitReview}
+        submitOrderDispute={submitOrderDispute}
+        onMessageCook={() => {
+          document.getElementById('order-chat-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+      />
 
-      {!showDisputeForm ? (
+      {disputes.length > 0 && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
           <SHCSectionTitle>Issue reported</SHCSectionTitle>
           <p className="mt-1 text-xs font-semibold text-[#5C5144]">
@@ -257,10 +192,6 @@ export default function TrackOrder() {
           </p>
           {disputes[0].notes && <p className="mt-2 text-sm text-[#5C5144]">{disputes[0].notes}</p>}
         </SHCCard>
-      ) : (
-        <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} data-testid="open-dispute-tray-btn">
-          Report an issue
-        </SHCButton>
       )}
     </div>
   );

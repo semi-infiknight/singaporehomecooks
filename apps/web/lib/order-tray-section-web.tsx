@@ -1,16 +1,13 @@
-// Shipped order tray screen section — thin render over useOrderTrayTracking (mobile).
-// @ts-nocheck
+'use client';
+
 import React, { useMemo } from 'react';
-import { GourmeatPrimaryButton } from './gourmeat';
-import { shcSpacing } from './theme';
-import { useSHCTray, SHCTrayAction } from './tray';
-import { createOrderTrayFns, useOrderTrayTracking } from './order-tray-tracking';
-import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
-import type { OrderTrayScreenOrder } from './order-tray-tracking';
+import { SHCButton, SHCTrayActionWeb, useSHCTrayWeb } from '../app/components/SHCWebComponents';
+import { createOrderTrayFns, useOrderTrayTracking } from '@shc/ui/order-tray-tracking';
+import type { SubmitReviewFn, SubmitDisputeFn } from '@shc/ui/order-tray-opener-core';
+import type { OrderTrayScreenOrder } from '@shc/ui/order-tray-tracking';
+import { SHCOrderReviewTrayContentWeb, SHCOrderDisputeTrayContentWeb } from './order-tray-content-web';
 
-export type { OrderTrayScreenOrder } from './order-tray-tracking';
-
-export function OrderTrackingTraySection({
+export function OrderTrackingTraySectionWeb({
   orderId,
   order,
   existingReview,
@@ -27,14 +24,14 @@ export function OrderTrackingTraySection({
   submitOrderDispute: SubmitDisputeFn;
   onMessageCook?: () => void;
 }) {
-  const { openTray, dismiss } = useSHCTray();
+  const { openTray, dismiss } = useSHCTrayWeb();
   const trayFns = useMemo(
     () =>
       createOrderTrayFns({
         openTray,
         dismiss,
         renderSuccess: ({ message, primaryLabel, testID, secondaryLabel, onSecondary }) => (
-          <SHCTrayAction
+          <SHCTrayActionWeb
             message={message}
             primaryLabel={primaryLabel}
             onPrimary={dismiss}
@@ -44,7 +41,7 @@ export function OrderTrackingTraySection({
           />
         ),
         renderError: ({ id, message }) => (
-          <SHCTrayAction
+          <SHCTrayActionWeb
             message={message}
             primaryLabel="OK"
             onPrimary={dismiss}
@@ -64,25 +61,21 @@ export function OrderTrackingTraySection({
     submitOrderDispute,
     trayFns,
     onMessageCook,
+    ReviewContent: SHCOrderReviewTrayContentWeb,
+    DisputeContent: SHCOrderDisputeTrayContentWeb,
   });
 
   return (
     <>
       {showReviewForm ? (
-        <GourmeatPrimaryButton
-          label="Leave a review"
-          onPress={openReviewTray}
-          testID="open-review-tray-btn"
-          style={{ marginBottom: shcSpacing.sm }}
-        />
+        <SHCButton className="mt-6 w-full" onClick={openReviewTray} data-testid="open-review-tray-btn">
+          Leave a review
+        </SHCButton>
       ) : null}
       {showDisputeForm ? (
-        <GourmeatPrimaryButton
-          label="Report an issue"
-          variant="outline"
-          onPress={openDisputeTray}
-          testID="open-dispute-tray-btn"
-        />
+        <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} data-testid="open-dispute-tray-btn">
+          Report an issue
+        </SHCButton>
       ) : null}
     </>
   );

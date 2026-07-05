@@ -13,6 +13,7 @@ export * from './order-tray-content';
 export * from './order-tray-opener';
 export * from './order-tray-mutations';
 export * from './order-tray-screen';
+export * from './order-tray-tracking';
 export * from './family-values-ui';
 export * from './tab-direction';
 export * from './visuals';

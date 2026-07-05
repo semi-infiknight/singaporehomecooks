@@ -1,0 +1,86 @@
+// Canonical shipped order tray contract — hook + trayFns builder (mobile + web).
+// @ts-nocheck
+import React, { useCallback, useMemo, type ComponentType, type ReactNode } from 'react';
+import { orderTrayActions } from '@shc/utils';
+import {
+  openOrderReviewTray as openOrderReviewTrayCore,
+  openOrderDisputeTray as openOrderDisputeTrayCore,
+} from './order-tray-opener-core';
+import { SHCOrderReviewTrayContent, SHCOrderDisputeTrayContent } from './order-tray-content';
+import type {
+  OrderTrayOpenFns,
+  OrderReviewTrayContentProps,
+  OrderDisputeTrayContentProps,
+  SubmitReviewFn,
+  SubmitDisputeFn,
+} from './order-tray-opener-core';
+
+export type OrderTrayScreenOrder = { shc_status?: string };
+
+export type OrderTrayTrackingInput = {
+  orderId: string;
+  order: OrderTrayScreenOrder;
+  existingReview: unknown;
+  disputes: unknown[];
+  submitReview: SubmitReviewFn;
+  submitOrderDispute: SubmitDisputeFn;
+  trayFns: OrderTrayOpenFns;
+  onMessageCook?: () => void;
+  ReviewContent?: ComponentType<OrderReviewTrayContentProps>;
+  DisputeContent?: ComponentType<OrderDisputeTrayContentProps>;
+};
+
+export function createOrderTrayFns(args: {
+  openTray: OrderTrayOpenFns['openTray'];
+  dismiss: OrderTrayOpenFns['dismiss'];
+  renderSuccess: (p: {
+    message: string;
+    primaryLabel: string;
+    testID: string;
+    secondaryLabel?: string;
+    onSecondary?: () => void;
+  }) => ReactNode;
+  renderError: (p: { id: string; message: string }) => ReactNode;
+}): OrderTrayOpenFns {
+  return {
+    openTray: args.openTray,
+    dismiss: args.dismiss,
+    renderSuccess: (p) => args.renderSuccess(p),
+    renderError: (p) => args.renderError(p),
+  };
+}
+
+export function useOrderTrayTracking(input: OrderTrayTrackingInput) {
+  const {
+    orderId,
+    order,
+    existingReview,
+    disputes,
+    submitReview,
+    submitOrderDispute,
+    trayFns,
+    onMessageCook,
+    ReviewContent = SHCOrderReviewTrayContent,
+    DisputeContent = SHCOrderDisputeTrayContent,
+  } = input;
+
+  const openReviewTray = useCallback(() => {
+    openOrderReviewTrayCore(orderId, submitReview, trayFns, ReviewContent);
+  }, [orderId, submitReview, trayFns, ReviewContent]);
+
+  const openDisputeTray = useCallback(() => {
+    openOrderDisputeTrayCore(orderId, submitOrderDispute, trayFns, DisputeContent, { onMessageCook });
+  }, [orderId, submitOrderDispute, trayFns, DisputeContent, onMessageCook]);
+
+  const flags = useMemo(
+    () => orderTrayActions({ order, review: existingReview, disputes }),
+    [order, existingReview, disputes]
+  );
+
+  return {
+    showReviewForm: flags.showReviewBtn,
+    showDisputeForm: flags.showDisputeBtn,
+    openReviewTray,
+    openDisputeTray,
+  };
+}

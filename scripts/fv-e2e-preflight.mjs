@@ -33,14 +33,20 @@ function run(cmd, label) {
 
 const mobileOrders = resolve(root, 'apps/mobile-customer/app/(customer)/orders/[id].tsx');
 const webOrders = resolve(root, 'apps/web/app/orders/[id]/page.tsx');
+const webTraySection = resolve(root, 'apps/web/lib/order-tray-section-web.tsx');
 
 run(`rg -n "resolveOrderForDisplay" "${mobileOrders}"`, 'mobile orders uses resolveOrderForDisplay');
 run(`rg -n "resolveOrderForDisplay" "${webOrders}"`, 'web orders uses resolveOrderForDisplay');
 run(`rg -n "OrderTrackingTraySection" "${mobileOrders}"`, 'mobile orders uses OrderTrackingTraySection');
 run('rg -n "orderTrayActions|open-review-tray-btn" packages/shc-ui/src/order-tray-screen.tsx', 'shared order-tray-screen uses orderTrayActions + Maestro testIDs');
 run('pnpm --filter @shc/utils exec vitest run src/family-values-e2e-fixtures.test.ts', 'fixture unit test');
-run('pnpm --filter @shc/ui exec vitest run src/family-values-tray-integration.test.tsx', 'shipped tray integration test');
-run(`rg -n "orderTrayActions" "${webOrders}"`, 'web orders uses orderTrayActions');
+run('pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-parity.test.ts', 'shipped tray hook+section+parity tests');
+run(`rg -n "OrderTrackingTraySectionWeb" "${webOrders}"`, 'web orders uses OrderTrackingTraySectionWeb');
+run(`rg -n "useOrderTrayTracking|createOrderTrayFns" "${webTraySection}"`, 'web section uses useOrderTrayTracking');
+run(
+  `bash -c 'rg -n "orderTrayActions|const trayFns|openOrderReviewTray" "${webOrders}" && exit 1 || echo "no duplicate tray wiring on web page"'`,
+  'web page has no duplicate tray wiring'
+);
 run('rg -n "order-e2e-review" apps/mobile-customer/e2e/order-tray.yaml', 'maestro deep link matches E2E_ORDER_SEED');
 run(
   `rg -n "open-review-tray-btn|OrderTrackingTraySection" "${mobileOrders}" packages/shc-ui/src/order-tray-screen.tsx packages/shc-ui/src/order-tray-forms.tsx`,
