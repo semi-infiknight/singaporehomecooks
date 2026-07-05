@@ -10,7 +10,7 @@ for c in "${clusters[@]}"; do
   LOG="$OUT/cluster-${c}-spawn.log"
   {
     echo "=== cluster-${c} spawn review $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-    echo "automated_checks: PASS"
+    echo "automated_checks: running"
     case "$c" in
       foundation)
         rg -n "wrapTrayContentFn|SHCTrayProvider" "$ROOT/packages/shc-ui/src/tray.tsx"
@@ -37,6 +37,11 @@ for c in "${clusters[@]}"; do
         ;;
     esac
     echo "cluster-${c}: automated PASS"
+    if [[ -f "$OUT/cluster-${c}-subagent.txt" ]]; then
+      echo ""
+      echo "--- subagent transcript (spawn_subagent) ---"
+      cat "$OUT/cluster-${c}-subagent.txt"
+    fi
   } > "$LOG" 2>&1
   echo "Wrote $LOG"
 done

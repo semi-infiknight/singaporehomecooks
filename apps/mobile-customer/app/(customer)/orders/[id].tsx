@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -13,6 +13,8 @@ import {
   shcSpacing,
   useSHCTray,
   SHCTrayAction,
+  SHCOrderReviewTrayForm,
+  SHCOrderDisputeTrayForm,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -54,7 +56,6 @@ function OrderReviewTrayContent({
 }) {
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
-  const reviewInputRef = useRef<TextInput>(null);
   const qc = useQueryClient();
   const reviewMut = useMutation({
     mutationFn: () => submitReview(orderId, rating, reviewBody || undefined),
@@ -66,44 +67,14 @@ function OrderReviewTrayContent({
   });
 
   return (
-    <View testID="order-review-tray">
-      <View style={{ flexDirection: 'row', marginTop: 8, gap: 4 }}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Text
-            key={n}
-            onPress={() => setRating(n)}
-            style={{ fontSize: 28, color: n <= rating ? gourmeatColors.accent : gourmeatColors.textMuted }}
-          >
-            ★
-          </Text>
-        ))}
-      </View>
-      <Pressable
-        testID="review-body-input"
-        accessibilityLabel="review-body-input"
-        collapsable={false}
-        onPress={() => reviewInputRef.current?.focus()}
-      >
-        <TextInput
-          ref={reviewInputRef}
-          placeholder="Share your experience (optional)"
-          value={reviewBody}
-          onChangeText={setReviewBody}
-          multiline
-          style={styles.reviewInput}
-          accessibilityLabel="review-body-input"
-          accessibilityValue={{ text: reviewBody }}
-          placeholderTextColor={gourmeatColors.textMuted}
-        />
-      </Pressable>
-      <GourmeatPrimaryButton
-        label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
-        onPress={() => reviewMut.mutate()}
-        disabled={reviewMut.isPending}
-        testID="submit-review-btn"
-        style={{ marginTop: 10 }}
-      />
-    </View>
+    <SHCOrderReviewTrayForm
+      rating={rating}
+      onRatingChange={setRating}
+      reviewBody={reviewBody}
+      onReviewBodyChange={setReviewBody}
+      onSubmit={() => reviewMut.mutate()}
+      isPending={reviewMut.isPending}
+    />
   );
 }
 
@@ -117,7 +88,6 @@ function OrderDisputeTrayContent({
   onError: (message: string) => void;
 }) {
   const [disputeNotes, setDisputeNotes] = useState('');
-  const disputeInputRef = useRef<TextInput>(null);
   const qc = useQueryClient();
   const disputeMut = useMutation({
     mutationFn: () => submitOrderDispute(orderId, { type: 'other', notes: disputeNotes.trim() }),
@@ -129,34 +99,12 @@ function OrderDisputeTrayContent({
   });
 
   return (
-    <View testID="order-dispute-tray">
-      <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
-      <Pressable
-        testID="dispute-notes-input"
-        accessibilityLabel="dispute-notes-input"
-        collapsable={false}
-        onPress={() => disputeInputRef.current?.focus()}
-      >
-        <TextInput
-          ref={disputeInputRef}
-          placeholder="Tell ops what happened"
-          value={disputeNotes}
-          onChangeText={setDisputeNotes}
-          multiline
-          style={styles.reviewInput}
-          accessibilityLabel="dispute-notes-input"
-          accessibilityValue={{ text: disputeNotes }}
-          placeholderTextColor={gourmeatColors.textMuted}
-        />
-      </Pressable>
-      <GourmeatPrimaryButton
-        label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-        onPress={() => disputeMut.mutate()}
-        disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-        testID="submit-dispute-btn"
-        style={{ marginTop: 10 }}
-      />
-    </View>
+    <SHCOrderDisputeTrayForm
+      disputeNotes={disputeNotes}
+      onDisputeNotesChange={setDisputeNotes}
+      onSubmit={() => disputeMut.mutate()}
+      isPending={disputeMut.isPending}
+    />
   );
 }
 
@@ -370,14 +318,4 @@ const styles = StyleSheet.create({
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   addressLine: { marginTop: shcSpacing.sm, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   hintLine: { marginTop: shcSpacing.sm, fontSize: 11, color: gourmeatColors.textLight },
-  reviewInput: {
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    borderRadius: gourmeatRadii.md,
-    padding: 10,
-    marginTop: 8,
-    minHeight: 72,
-    backgroundColor: gourmeatColors.surfaceAlt,
-    color: gourmeatColors.text,
-  },
 });

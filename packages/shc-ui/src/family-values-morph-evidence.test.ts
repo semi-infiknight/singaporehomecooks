@@ -26,7 +26,8 @@ describe.skipIf(!hasMorphFlow)('morph-flow.json evidence (required for FV verifi
       continuity: { ok: boolean };
       morphFrames?: Array<{ delay: number; heroImage?: { w: number; y: number } }>;
     };
-    expect(flow.clickDishImage.y).toBeLessThan(800);
+    expect(flow.clickDishImage.y).toBeLessThan(400);
+    expect(flow.clickDishImage.y).toBeGreaterThan(100);
     expect(flow.heroImage.h).toBe(224);
     const result = validateMorphContinuity(flow.clickDishImage, flow.heroImage);
     expect(result.ok).toBe(true);

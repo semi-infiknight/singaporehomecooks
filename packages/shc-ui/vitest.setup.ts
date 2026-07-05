@@ -6,6 +6,8 @@ vi.mock('react-native', () => {
   const React = require('react');
   const mapProps = (props: Record<string, unknown>) => {
     const { testID, onPress, onChangeText, children, style, ...rest } = props;
+    const resolvedStyle =
+      typeof style === 'function' ? (style as (s: { pressed: boolean }) => object)({ pressed: false }) : style;
     return {
       ...rest,
       'data-testid': testID,
@@ -14,7 +16,7 @@ vi.mock('react-native', () => {
         ? (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
             (onChangeText as (v: string) => void)(e.target.value)
         : undefined,
-      style,
+      style: resolvedStyle,
       children,
     };
   };

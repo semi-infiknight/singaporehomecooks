@@ -99,53 +99,35 @@ fs.writeFileSync(out+'/pixel-review.md', lines.join('\n'));
 console.log('Wrote '+out+'/pixel-review.md');
 " FAMILY_VALUES_SCRATCH="$OUT"
 
-# Cluster logs (40+ lines, spawn evidence)
-TICKETS="$OUT/pr-cluster-tickets.json"
-for cluster in foundation simplicity fluidity delight-web docs-tests; do
-  {
-    echo "=== Cluster: $cluster ==="
-    echo "Spawn: implementer agent $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "Subagent review: generalPurpose readonly (fluidity-press, morph-wizard)"
-    echo ""
-    node -e "const t=require('$TICKETS');const c=t.find(x=>x.id==='$cluster');if(c){console.log('Title:',c.title);console.log('Files:');c.files.forEach(f=>console.log('  '+f));}"
-    echo ""
-    echo "--- Per-file symbol check ---"
-    node -e "
-      const t=require('$TICKETS');
-      const c=t.find(x=>x.id==='$cluster');
-      if(!c) process.exit(0);
-      const {execSync}=require('child_process');
-      for (const f of c.files) {
-        try {
-          const hits=execSync('rg -l \"SHCTray|ListingWizardMorphCta|SharedDishNavSurface|navigateSharedDishPress|SHCCelebration\" '+process.cwd()+'/'+f,{encoding:'utf8'}).trim();
-          console.log(f+': '+ (hits?'symbols found':'(present)'));
-        } catch { console.log(f+': present'); }
-      }
-    " 2>/dev/null || true
-    echo ""
-    echo "--- Full audit transcript ---"
-    cat "$OUT/audit-full.log"
-    echo ""
-    echo "--- Unit test excerpt ---"
-    tail -20 "$OUT/unit-tests.log" 2>/dev/null || tail -20 "$OUT/build.log"
-    echo ""
-    echo "Cluster status: PASS"
-  } > "$OUT/cluster-${cluster}.log"
-done
+# Cluster spawn logs (automated checks + optional subagent transcripts)
+FAMILY_VALUES_SCRATCH="$OUT" "$ROOT/scripts/fv-cluster-review.sh" 2>&1 | tee -a "$OUT/evidence-pipeline.log"
 
 # Subagent review artifact (from cluster-*-spawn.log transcripts)
 {
   echo "# Family Values subagent review"
   echo ""
-  echo "Automated cluster spawn logs (see cluster-*-spawn.log):"
   for cluster in foundation simplicity fluidity delight-web docs-tests; do
     echo ""
     echo "## $cluster"
-    tail -25 "$OUT/cluster-${cluster}-spawn.log" 2>/dev/null || echo "(missing)"
+    if [[ -f "$OUT/cluster-${cluster}-subagent.txt" ]]; then
+      echo "subagent_id: $(head -1 "$OUT/cluster-${cluster}-subagent.txt" | rg -o 'AGENT_ID:.*' || true)"
+      cat "$OUT/cluster-${cluster}-subagent.txt"
+    else
+      echo "(no subagent transcript)"
+    fi
+    echo ""
+    echo "### automated spawn log"
+    tail -30 "$OUT/cluster-${cluster}-spawn.log" 2>/dev/null || echo "(missing)"
   done
   echo ""
-  echo "Maestro device logs: tray-flow-maestro-{listing,checkout,order}.log"
-  echo "Morph: morph-flow.json + family-values-morph-evidence.test.ts"
+  for f in tray-flow-maestro-listing.log tray-flow-maestro-checkout.log tray-flow-maestro-order.log; do
+    if [[ -f "$OUT/$f" ]]; then
+      status=$([[ "$(rg -c FAILED "$OUT/$f" 2>/dev/null || echo 0)" -eq 0 ]] && echo PASS || echo FAIL)
+      echo "- $f: $status"
+    else
+      echo "- $f: (not captured — set MAESTRO_RUN_DEVICE=true)"
+    fi
+  done
 } > "$OUT/subagent-review.md"
 
 echo "=== Evidence pipeline complete ===" | tee -a "$OUT/evidence-pipeline.log"
