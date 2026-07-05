@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { SHCButton, SHCTrayActionWeb, useSHCTrayWeb } from '../app/components/SHCWebComponents';
+import { SHCButton, SHCTrayActionWeb, useSHCTrayWeb } from './shc-tray-web';
 import { createOrderTrayFns, useOrderTrayTracking } from '@shc/ui/order-tray-tracking';
 import type { SubmitReviewFn, SubmitDisputeFn } from '@shc/ui/order-tray-opener-core';
 import type { OrderTrayScreenOrder } from '@shc/ui/order-tray-tracking';
@@ -68,12 +68,12 @@ export function OrderTrackingTraySectionWeb({
   return (
     <>
       {showReviewForm ? (
-        <SHCButton className="mt-6 w-full" onClick={openReviewTray} data-testid="open-review-tray-btn">
+        <SHCButton className="mt-6 w-full" onClick={openReviewTray} testID="open-review-tray-btn">
           Leave a review
         </SHCButton>
       ) : null}
       {showDisputeForm ? (
-        <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} data-testid="open-dispute-tray-btn">
+        <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} testID="open-dispute-tray-btn">
           Report an issue
         </SHCButton>
       ) : null}

@@ -15,7 +15,7 @@ for c in "${clusters[@]}"; do
     case "$c" in
       foundation)
         rg -n "wrapTrayContentFn|SHCTrayProvider" "$ROOT/packages/shc-ui/src/tray.tsx"
-        pnpm --filter @shc/ui exec vitest run src/family-values-tray-ids.test.ts src/family-values-tray-live.test.ts src/family-values-tray-integration.test.tsx 2>&1
+        pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-web-tracking.test.tsx src/order-tray-parity.test.ts src/order-tray-mobile-shipped-page.test.tsx src/order-tray-web-shipped-page.test.tsx 2>&1
         ;;
       simplicity)
         rg -n "resolveOrderForDisplay|OrderTrackingTraySection" "$ROOT/apps/mobile-customer/app/(customer)/orders/[id].tsx"

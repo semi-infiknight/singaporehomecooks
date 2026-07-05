@@ -1,5 +1,4 @@
 // Canonical shipped order tray contract — hook + trayFns builder (mobile + web).
-// @ts-nocheck
 import React, { useCallback, useMemo, type ComponentType, type ReactNode } from 'react';
 import { orderTrayActions } from '@shc/utils';
 import {

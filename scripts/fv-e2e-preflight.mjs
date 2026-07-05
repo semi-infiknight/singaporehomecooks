@@ -40,7 +40,7 @@ run(`rg -n "resolveOrderForDisplay" "${webOrders}"`, 'web orders uses resolveOrd
 run(`rg -n "OrderTrackingTraySection" "${mobileOrders}"`, 'mobile orders uses OrderTrackingTraySection');
 run('rg -n "orderTrayActions|open-review-tray-btn" packages/shc-ui/src/order-tray-screen.tsx', 'shared order-tray-screen uses orderTrayActions + Maestro testIDs');
 run('pnpm --filter @shc/utils exec vitest run src/family-values-e2e-fixtures.test.ts', 'fixture unit test');
-run('pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-parity.test.ts', 'shipped tray hook+section+parity tests');
+run('pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-parity.test.ts src/order-tray-mobile-shipped-page.test.tsx src/order-tray-web-shipped-page.test.tsx', 'shipped tray hook+section+parity+page tests');
 run(`rg -n "OrderTrackingTraySectionWeb" "${webOrders}"`, 'web orders uses OrderTrackingTraySectionWeb');
 run(`rg -n "useOrderTrayTracking|createOrderTrayFns" "${webTraySection}"`, 'web section uses useOrderTrayTracking');
 run(

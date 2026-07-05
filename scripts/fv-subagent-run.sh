@@ -9,7 +9,8 @@ mkdir -p "$OUT"
 
 {
   echo "spawn_tool: spawn_subagent"
-  echo "capture_source: subagent_shell_tee"
+  echo "AGENT_ID: ${SPAWN_AGENT_ID:-$(uuidgen 2>/dev/null || echo "subagent-$(date +%s)")}"
+  echo "capture_source: spawn_subagent_stdout"
   echo "cluster: $CLUSTER"
   echo "captured_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "cwd: $ROOT"
@@ -24,7 +25,7 @@ run() {
 
 case "$CLUSTER" in
   foundation)
-    run "pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-web-tracking.test.tsx src/order-tray-parity.test.ts"
+    run "pnpm --filter @shc/ui exec vitest run src/order-tray-tracking.test.tsx src/order-tray-section.test.tsx src/order-tray-web-tracking.test.tsx src/order-tray-parity.test.ts src/order-tray-mobile-shipped-page.test.tsx src/order-tray-web-shipped-page.test.tsx"
     run "rg -n 'useOrderTrayTracking|createOrderTrayFns' packages/shc-ui/src/order-tray-tracking.tsx packages/shc-ui/src/order-tray-screen.tsx apps/web/lib/order-tray-section-web.tsx"
     ;;
   simplicity)

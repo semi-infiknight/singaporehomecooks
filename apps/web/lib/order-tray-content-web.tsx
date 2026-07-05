@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { SHCButton } from '../app/components/SHCWebComponents';
+import { SHCButton } from './shc-tray-web';
 import { useOrderReviewTrayMutation, useOrderDisputeTrayMutation } from '@shc/ui/order-tray-mutations';
 import type {
   OrderReviewTrayContentProps,
@@ -42,7 +42,7 @@ export function SHCOrderReviewTrayContentWeb({
         className="mt-2.5"
         disabled={tray.isPending}
         onClick={tray.submit}
-        data-testid="submit-review-btn"
+        testID="submit-review-btn"
       >
         {tray.isPending ? 'Submitting…' : 'Submit review'}
       </SHCButton>
@@ -74,7 +74,7 @@ export function SHCOrderDisputeTrayContentWeb({
         className="mt-2.5"
         disabled={tray.isPending || !tray.canSubmit}
         onClick={tray.submit}
-        data-testid="submit-dispute-btn"
+        testID="submit-dispute-btn"
       >
         {tray.isPending ? 'Reporting…' : 'Report issue'}
       </SHCButton>
