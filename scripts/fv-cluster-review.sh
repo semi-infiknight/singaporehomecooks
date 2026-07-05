@@ -37,10 +37,13 @@ for c in "${clusters[@]}"; do
         ;;
     esac
     echo "cluster-${c}: automated PASS"
-    if [[ -f "$OUT/cluster-${c}-subagent.txt" ]]; then
+    if [[ -f "$OUT/cluster-${c}-subagent-raw.txt" ]]; then
       echo ""
-      echo "--- subagent transcript (spawn_subagent) ---"
-      cat "$OUT/cluster-${c}-subagent.txt"
+      echo "--- subagent raw transcript (verbatim spawn_subagent output) ---"
+      cat "$OUT/cluster-${c}-subagent-raw.txt"
+    else
+      echo ""
+      echo "--- subagent raw transcript: MISSING (run spawn_subagent for cluster-${c}) ---"
     fi
   } > "$LOG" 2>&1
   echo "Wrote $LOG"

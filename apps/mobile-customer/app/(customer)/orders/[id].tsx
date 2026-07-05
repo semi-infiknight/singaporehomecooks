@@ -13,8 +13,8 @@ import {
   shcSpacing,
   useSHCTray,
   SHCTrayAction,
-  SHCOrderReviewTrayForm,
-  SHCOrderDisputeTrayForm,
+  SHCOrderReviewTrayContent,
+  SHCOrderDisputeTrayContent,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -27,7 +27,7 @@ import {
 } from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getOrderDisputes, getReview, submitOrderDispute, submitReview } from '../../../lib/api-client';
 import type { SHCOrderStatus } from '@shc/types';
 
@@ -44,69 +44,6 @@ type OrderDisplay = Record<string, unknown> & {
 
 type OrderReview = { rating: number; body?: string };
 type OrderDispute = { status?: string; type?: string; notes?: string };
-
-function OrderReviewTrayContent({
-  orderId,
-  onSuccess,
-  onError,
-}: {
-  orderId: string;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) {
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const qc = useQueryClient();
-  const reviewMut = useMutation({
-    mutationFn: () => submitReview(orderId, rating, reviewBody || undefined),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['review', orderId] });
-      onSuccess();
-    },
-    onError: (e: any) => onError(e?.message || 'Could not submit review'),
-  });
-
-  return (
-    <SHCOrderReviewTrayForm
-      rating={rating}
-      onRatingChange={setRating}
-      reviewBody={reviewBody}
-      onReviewBodyChange={setReviewBody}
-      onSubmit={() => reviewMut.mutate()}
-      isPending={reviewMut.isPending}
-    />
-  );
-}
-
-function OrderDisputeTrayContent({
-  orderId,
-  onSuccess,
-  onError,
-}: {
-  orderId: string;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) {
-  const [disputeNotes, setDisputeNotes] = useState('');
-  const qc = useQueryClient();
-  const disputeMut = useMutation({
-    mutationFn: () => submitOrderDispute(orderId, { type: 'other', notes: disputeNotes.trim() }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['order-disputes', orderId] });
-      onSuccess();
-    },
-    onError: (e: any) => onError(e?.message || 'Please try again.'),
-  });
-
-  return (
-    <SHCOrderDisputeTrayForm
-      disputeNotes={disputeNotes}
-      onDisputeNotesChange={setDisputeNotes}
-      onSubmit={() => disputeMut.mutate()}
-      isPending={disputeMut.isPending}
-    />
-  );
-}
 
 export default function OrderTracking() {
   const insets = useSafeAreaInsets();
@@ -146,8 +83,9 @@ export default function OrderTracking() {
 
   const openReviewTray = useCallback(() => {
     openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
-      <OrderReviewTrayContent
+      <SHCOrderReviewTrayContent
         orderId={orderId}
+        submitReviewFn={submitReview}
         onSuccess={() => {
           dismiss();
           openTray(
@@ -172,8 +110,9 @@ export default function OrderTracking() {
 
   const openDisputeTray = useCallback(() => {
     openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
-      <OrderDisputeTrayContent
+      <SHCOrderDisputeTrayContent
         orderId={orderId}
+        submitDisputeFn={submitOrderDispute}
         onSuccess={() => {
           dismiss();
           openTray(

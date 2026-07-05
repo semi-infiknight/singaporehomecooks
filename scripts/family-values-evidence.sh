@@ -109,15 +109,15 @@ FAMILY_VALUES_SCRATCH="$OUT" "$ROOT/scripts/fv-cluster-review.sh" 2>&1 | tee -a 
   for cluster in foundation simplicity fluidity delight-web docs-tests; do
     echo ""
     echo "## $cluster"
-    if [[ -f "$OUT/cluster-${cluster}-subagent.txt" ]]; then
-      echo "subagent_id: $(head -1 "$OUT/cluster-${cluster}-subagent.txt" | rg -o 'AGENT_ID:.*' || true)"
-      cat "$OUT/cluster-${cluster}-subagent.txt"
+    if [[ -f "$OUT/cluster-${cluster}-subagent-raw.txt" ]]; then
+      head -5 "$OUT/cluster-${cluster}-subagent-raw.txt"
+      echo "(full transcript in cluster-${cluster}-subagent-raw.txt)"
     else
-      echo "(no subagent transcript)"
+      echo "(no subagent-raw transcript — spawn_subagent not run)"
     fi
     echo ""
-    echo "### automated spawn log"
-    tail -30 "$OUT/cluster-${cluster}-spawn.log" 2>/dev/null || echo "(missing)"
+    echo "### spawn log tail"
+    tail -15 "$OUT/cluster-${cluster}-spawn.log" 2>/dev/null || echo "(missing)"
   done
   echo ""
   for f in tray-flow-maestro-listing.log tray-flow-maestro-checkout.log tray-flow-maestro-order.log; do
