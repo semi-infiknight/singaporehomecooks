@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -44,6 +44,7 @@ export default function OrderTracking() {
     mutationFn: () => submitReview(id || '', rating, reviewBody || undefined),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['review', id] });
+      dismiss();
       openTray(
         { id: 'review-success', title: 'Thank you', height: 'compact' },
         <SHCTrayAction
@@ -74,6 +75,7 @@ export default function OrderTracking() {
     onSuccess: () => {
       setDisputeNotes('');
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
+      dismiss();
       openTray(
         { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
         <SHCTrayAction
@@ -111,6 +113,62 @@ export default function OrderTracking() {
   const showReviewForm = canSubmitReview(status) && !existingReview;
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
+
+  const openReviewTray = useCallback(() => {
+    openTray(
+      { id: 'order-review', title: 'Leave a review', height: 'medium' },
+      <View testID="order-review-tray">
+        <View style={{ flexDirection: 'row', marginTop: 8, gap: 4 }}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Text key={n} onPress={() => setRating(n)} style={{ fontSize: 28, color: n <= rating ? gourmeatColors.accent : gourmeatColors.textMuted }}>
+              ★
+            </Text>
+          ))}
+        </View>
+        <TextInput
+          placeholder="Share your experience (optional)"
+          value={reviewBody}
+          onChangeText={setReviewBody}
+          multiline
+          style={styles.reviewInput}
+          testID="review-body-input"
+          placeholderTextColor={gourmeatColors.textMuted}
+        />
+        <GourmeatPrimaryButton
+          label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
+          onPress={() => reviewMut.mutate()}
+          disabled={reviewMut.isPending}
+          testID="submit-review-btn"
+          style={{ marginTop: 10 }}
+        />
+      </View>
+    );
+  }, [openTray, rating, reviewBody, reviewMut]);
+
+  const openDisputeTray = useCallback(() => {
+    openTray(
+      { id: 'order-dispute', title: 'Report an issue', height: 'medium' },
+      <View testID="order-dispute-tray">
+        <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
+        <TextInput
+          placeholder="Tell ops what happened"
+          value={disputeNotes}
+          onChangeText={setDisputeNotes}
+          multiline
+          style={styles.reviewInput}
+          testID="dispute-notes-input"
+          placeholderTextColor={gourmeatColors.textMuted}
+        />
+        <GourmeatPrimaryButton
+          label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+          onPress={() => disputeMut.mutate()}
+          disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+          testID="submit-dispute-btn"
+          style={{ marginTop: 10 }}
+        />
+      </View>
+    );
+  }, [disputeMut, disputeNotes, openTray]);
 
   return (
     <ScrollView
@@ -169,66 +227,30 @@ export default function OrderTracking() {
       )}
 
       {showReviewForm && (
-        <GourmeatCard testID="order-review-form">
-          <Text style={styles.cardTitle}>Leave a review</Text>
-          <View style={{ flexDirection: 'row', marginTop: 8, gap: 4 }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <Text key={n} onPress={() => setRating(n)} style={{ fontSize: 28, color: n <= rating ? gourmeatColors.accent : gourmeatColors.textMuted }}>
-                ★
-              </Text>
-            ))}
-          </View>
-          <TextInput
-            placeholder="Share your experience (optional)"
-            value={reviewBody}
-            onChangeText={setReviewBody}
-            multiline
-            style={styles.reviewInput}
-            testID="review-body-input"
-            placeholderTextColor={gourmeatColors.textMuted}
-          />
-          <GourmeatPrimaryButton
-            label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
-            onPress={() => reviewMut.mutate()}
-            disabled={reviewMut.isPending}
-            testID="submit-review-btn"
-            style={{ marginTop: 10 }}
-          />
-        </GourmeatCard>
+        <GourmeatPrimaryButton
+          label="Leave a review"
+          onPress={openReviewTray}
+          testID="open-review-tray-btn"
+          style={{ marginBottom: shcSpacing.sm }}
+        />
       )}
 
-      <GourmeatCard testID="order-dispute-panel">
-        <Text style={styles.cardTitle}>Report an issue</Text>
-        <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
-        {disputes.length > 0 ? (
-          <View style={styles.disputeStatus}>
-            <Text style={styles.disputeTitle}>Issue already reported</Text>
-            <Text style={styles.cardMeta}>
-              {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
-            </Text>
-            {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
-          </View>
-        ) : (
-          <>
-            <TextInput
-              placeholder="Tell ops what happened"
-              value={disputeNotes}
-              onChangeText={setDisputeNotes}
-              multiline
-              style={styles.reviewInput}
-              testID="dispute-notes-input"
-              placeholderTextColor={gourmeatColors.textMuted}
-            />
-            <GourmeatPrimaryButton
-              label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-              onPress={() => disputeMut.mutate()}
-              disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-              testID="submit-dispute-btn"
-              style={{ marginTop: 10 }}
-            />
-          </>
-        )}
-      </GourmeatCard>
+      {disputes.length > 0 ? (
+        <GourmeatCard testID="order-dispute-submitted">
+          <Text style={styles.cardTitle}>Issue reported</Text>
+          <Text style={styles.cardMeta}>
+            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+          </Text>
+          {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
+        </GourmeatCard>
+      ) : (
+        <GourmeatPrimaryButton
+          label="Report an issue"
+          variant="outline"
+          onPress={openDisputeTray}
+          testID="open-dispute-tray-btn"
+        />
+      )}
     </ScrollView>
   );
 }

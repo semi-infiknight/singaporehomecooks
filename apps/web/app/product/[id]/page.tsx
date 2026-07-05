@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Minus, Plus } from 'lucide-react';
-import { getDishImageUrl } from '@shc/utils';
+import { getDishImageUrl, resolveProductForDisplay } from '@shc/utils';
 import {
   useProduct,
   useAddToCart,
@@ -32,7 +32,9 @@ import { useFavorites } from '../../../lib/useFavorites';
 export default function ProductDetail() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  const { data: product, isLoading } = useProduct(id || '');
+  const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
+  const { data: productRaw, isLoading } = useProduct(id || '');
+  const product = resolveProductForDisplay(productRaw, id || '', { evidence: evidenceMode });
   const { data: slots = [] } = useCollectionSlots(id || '');
   const addMut = useAddToCart();
   const aiMut = useAICalorieEstimate();
@@ -43,7 +45,7 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null);
   const [aiCalories, setAiCalories] = useState<number | null>(null);
 
-  if (isLoading || !product) {
+  if ((isLoading && !evidenceMode) || !product) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
         <SHCLoading label="Loading dish details…" />
@@ -98,7 +100,7 @@ export default function ProductDetail() {
           alt={product.name}
           hero
           className="absolute inset-0 w-full h-full"
-          testID="product-hero-image"
+          testID={`shared-dish-${product.id}-hero`}
         />
         <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center gap-2">
           <Link

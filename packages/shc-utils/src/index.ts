@@ -13,3 +13,4 @@ export * from './location';
 export * from './discover';
 export * from './cook-listings';
 export * from './e2e-cart';
+export * from './discover-evidence';

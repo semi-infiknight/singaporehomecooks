@@ -18,6 +18,18 @@ describe('family values tray frame ids', () => {
     expect(stack).toHaveLength(0);
   });
 
+  it('order action tray frames match customer/cook selectors', () => {
+    const review = { id: 'order-review', title: 'Leave a review', height: 'medium' as const };
+    const dispute = { id: 'order-dispute', title: 'Report an issue', height: 'medium' as const };
+    const status = { id: 'order-status-confirm', title: 'Accept', height: 'compact' as const };
+    expect(`shc-tray-${review.id}`).toBe('shc-tray-order-review');
+    expect(`shc-tray-${dispute.id}`).toBe('shc-tray-order-dispute');
+    expect(`shc-tray-${status.id}`).toBe('shc-tray-order-status-confirm');
+    let stack = pushTray([], review);
+    stack = pushTray(stack, dispute);
+    expect(stack.map((f) => f.id)).toEqual(['order-review', 'order-dispute']);
+  });
+
   it('listing tray frames match Maestro selectors', () => {
     const actions = { id: 'listing-actions', title: 'Listing actions', height: 'medium' as const };
     const confirm = { id: 'listing-delete-confirm', title: 'Delete?', height: 'medium' as const };

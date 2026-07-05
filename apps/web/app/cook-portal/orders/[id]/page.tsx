@@ -10,6 +10,8 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCLoading,
+  useSHCTrayWeb,
+  SHCTrayActionWeb,
 } from '../../../components/SHCWebComponents';
 
 const NEXT: Record<string, { to: SHCOrderStatus; label: string }[]> = {
@@ -24,6 +26,7 @@ export default function CookOrderDetailPage() {
   const id = params?.id as string;
   const { data: order, isLoading } = useCookOrder(id);
   const transMut = useCookTransitionOrder();
+  const { openTray, dismiss } = useSHCTrayWeb();
 
   if (isLoading || !order) {
     return (
@@ -35,6 +38,30 @@ export default function CookOrderDetailPage() {
 
   const status = String(order.shc_status || '');
   const actions = NEXT[status] || [];
+
+  const confirmTransition = (to: SHCOrderStatus, label: string) => {
+    openTray(
+      { id: 'order-status-confirm', title: label, height: 'compact' },
+      <SHCTrayActionWeb
+        message={`Advance this order to “${label}”? The customer will see the update immediately.`}
+        primaryLabel={label}
+        onPrimary={async () => {
+          dismiss();
+          try {
+            await transMut.mutateAsync({ orderId: id, to });
+          } catch (e) {
+            openTray(
+              { id: 'order-status-error', title: 'Update failed', height: 'compact' },
+              <SHCTrayActionWeb message={(e as Error).message} primaryLabel="OK" onPrimary={dismiss} testID="order-status-error-tray" />
+            );
+          }
+        }}
+        secondaryLabel="Cancel"
+        onSecondary={dismiss}
+        testID="order-status-confirm-tray"
+      />
+    );
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4">
@@ -60,13 +87,8 @@ export default function CookOrderDetailPage() {
             key={a.to}
             label={transMut.isPending ? 'Updating…' : a.label}
             disabled={transMut.isPending}
-            onClick={async () => {
-              try {
-                await transMut.mutateAsync({ orderId: id, to: a.to });
-              } catch (e) {
-                alert((e as Error).message);
-              }
-            }}
+            onClick={() => confirmTransition(a.to, a.label)}
+            testID={`cook-portal-order-transition-${a.to}`}
           />
         ))}
       </div>

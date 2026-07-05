@@ -18,6 +18,7 @@ import {
   MIND_CUISINE_CATEGORIES,
   sortByCookProximity,
   filterDiscoverProducts,
+  resolveDiscoverProductsForDisplay,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -72,7 +73,11 @@ export default function DiscoverHome() {
   const addMut = useAddToCart();
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
-  const productList = products as DishCardProduct[];
+  const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
+  const productList = useMemo(
+    () => resolveDiscoverProductsForDisplay(products as DishCardProduct[], { evidence: evidenceMode }),
+    [products, evidenceMode]
+  );
 
   const filteredProducts = useMemo(() => {
     const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
@@ -154,7 +159,7 @@ export default function DiscoverHome() {
   );
 
   return (
-    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8" data-testid="customer-discover-screen">
+    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8" data-testid="customer-discover-screen discover-home">
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
         locationLabel={headerLocation}

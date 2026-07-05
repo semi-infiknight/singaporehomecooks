@@ -1724,7 +1724,10 @@ export function GourmeatCategoryRow({
 
 function captureSharedDishLayout(dishId: string, cardTestID: string, e: React.MouseEvent<HTMLElement>) {
   const card = (e.currentTarget as HTMLElement).closest(`[data-testid="${cardTestID}"]`);
-  const img = card?.querySelector('img');
+  const img =
+    card?.querySelector(`[data-testid="${cardTestID}-image"]`) ??
+    card?.querySelector('img[data-testid$="-image"]') ??
+    card?.querySelector('img');
   if (img) {
     const r = img.getBoundingClientRect();
     registerSharedDishLayout(dishId, { x: r.left, y: r.top, w: r.width, h: r.height });
@@ -1781,7 +1784,7 @@ export function GourmeatDishCard({
   return (
     <div className="flex flex-col min-w-0" data-testid={cardTestID}>
       <div className="bg-card rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)] flex-1 flex flex-col relative">
-        <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="block">
+        <SharedDishProductLink dishId={product.id} cardTestID={cardTestID} href={productHref} className="block flex-1">
           <div className="relative">
             <div className="relative h-[140px] w-full">
               <SHCSharedDishImageWeb
@@ -1811,19 +1814,15 @@ export function GourmeatDishCard({
               ) : null}
             </div>
           </div>
-          <div className="p-3 pb-1">
+          <div className="p-3 pb-3 pr-12">
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>
             {product.cook_name ? (
-              <div className="text-[11px] text-[#8A8A8A] truncate" data-testid={`${cardTestID}-cook`}>
+              <div className="text-[11px] text-[#8A8A8A] truncate mb-1" data-testid={`${cardTestID}-cook`}>
                 {product.cook_name}
               </div>
             ) : null}
-          </div>
-        </SharedDishProductLink>
-        <div className="px-3 pb-3 pr-12 flex items-end justify-between">
-          <div>
             {product.price !== undefined && (
               <div className="text-[15px] font-extrabold text-primary" data-testid={`${cardTestID}-price`}>
                 S${product.price}
@@ -1836,7 +1835,7 @@ export function GourmeatDishCard({
               <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
             </div>
           </div>
-        </div>
+        </SharedDishProductLink>
         <div className="absolute bottom-3 right-3 z-10">
           <GourmeatAddButton onClick={handleAddClick} testID={`${cardTestID}-add`} />
         </div>

@@ -49,6 +49,7 @@ export default function CookManageOrder() {
     onSuccess: () => {
       setDisputeNotes('');
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
+      dismiss();
       openTray(
         { id: 'issue-reported', title: 'Issue reported', height: 'compact' },
         <SHCTrayAction
@@ -75,6 +76,48 @@ export default function CookManageOrder() {
     } catch (e: any) {
       setErr({ message: e?.message || 'Transition failed' });
     }
+  };
+
+  const confirmTransition = (to: SHCOrderStatus, label: string) => {
+    openTray(
+      { id: 'order-status-confirm', title: label, height: 'compact' },
+      <SHCTrayAction
+        message={`Advance this order to “${label}”? The customer will see the update immediately.`}
+        primaryLabel={label}
+        onPrimary={() => {
+          dismiss();
+          doTransition(to);
+        }}
+        secondaryLabel="Cancel"
+        onSecondary={dismiss}
+        testID="order-status-confirm-tray"
+      />
+    );
+  };
+
+  const openDisputeTray = () => {
+    openTray(
+      { id: 'cook-order-dispute', title: 'Report an issue', height: 'medium' },
+      <View testID="cook-order-dispute-tray">
+        <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
+        <TextInput
+          value={disputeNotes}
+          onChangeText={setDisputeNotes}
+          placeholder="Tell ops what happened"
+          placeholderTextColor={gourmeatColors.textMuted}
+          multiline
+          style={styles.disputeInput}
+          testID="cook-dispute-notes-input"
+        />
+        <GourmeatPrimaryButton
+          label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
+          onPress={() => disputeMut.mutate()}
+          disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
+          testID="cook-submit-dispute-btn"
+          style={{ marginTop: 10 }}
+        />
+      </View>
+    );
   };
 
   if (!order) {
@@ -126,7 +169,7 @@ export default function CookManageOrder() {
             <GourmeatPrimaryButton
               key={a.to}
               label={transMut.isPending ? 'Updating…' : a.label}
-              onPress={() => doTransition(a.to)}
+              onPress={() => confirmTransition(a.to, a.label)}
               disabled={transMut.isPending}
               testID={`cook-order-transition-${a.to}`}
             />
@@ -141,38 +184,22 @@ export default function CookManageOrder() {
         testID="cook-order-chat-btn"
       />
 
-      <GourmeatCard>
-        <Text style={styles.cardTitle}>Report an issue</Text>
-        <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
-        {disputes.length > 0 ? (
-          <View style={styles.disputeStatus}>
-            <Text style={styles.disputeTitle}>Issue already reported</Text>
-            <Text style={styles.cardMeta}>
-              {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
-            </Text>
-            {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
-          </View>
-        ) : (
-          <>
-            <TextInput
-              value={disputeNotes}
-              onChangeText={setDisputeNotes}
-              placeholder="Tell ops what happened"
-              placeholderTextColor={gourmeatColors.textMuted}
-              multiline
-              style={styles.disputeInput}
-              testID="cook-dispute-notes-input"
-            />
-            <GourmeatPrimaryButton
-              label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-              onPress={() => disputeMut.mutate()}
-              disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-              testID="cook-submit-dispute-btn"
-              style={{ marginTop: 10 }}
-            />
-          </>
-        )}
-      </GourmeatCard>
+      {disputes.length > 0 ? (
+        <GourmeatCard testID="cook-order-dispute-submitted">
+          <Text style={styles.cardTitle}>Issue reported</Text>
+          <Text style={styles.cardMeta}>
+            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+          </Text>
+          {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
+        </GourmeatCard>
+      ) : (
+        <GourmeatPrimaryButton
+          label="Report an issue"
+          variant="outline"
+          onPress={openDisputeTray}
+          testID="cook-open-dispute-tray-btn"
+        />
+      )}
 
       <Text style={styles.footer}>Valid transitions only — invalid moves show SHC-ORDER-001.</Text>
     </ScrollView>

@@ -16,8 +16,12 @@ if (!existsSync(bboxPath)) {
 }
 
 const captures = JSON.parse(readFileSync(bboxPath, 'utf8'));
-const fixture = captures.find((c) => c.name === 'fv-fixture') || captures.find((c) => c.name === 'discover-home');
-const pdp = captures.find((c) => c.name === 'fv-pdp') || captures.find((c) => c.name === 'product-pdp');
+const morphFlow = captures.find((c) => c.name === 'discover-to-pdp-morph' && c.discoverElements);
+const fixture = captures.find((c) => c.name === 'fv-fixture');
+const discover = captures.find((c) => c.name === 'discover-home');
+const pdp = captures.find((c) => c.name === 'product-pdp') || morphFlow;
+const dishSource = morphFlow?.discoverElements ?? discover?.elements ?? fixture?.elements;
+const heroSource = morphFlow?.elements ?? pdp?.elements;
 
 function continuity(card, hero) {
   if (!card || !hero) return { ok: false, reason: 'missing bbox' };
@@ -53,12 +57,14 @@ function continuity(card, hero) {
   };
 }
 
-const dishImage = fixture?.elements?.dishImage;
-const heroImage = fixture?.elements?.heroImage || pdp?.elements?.heroImage;
+const dishImage = dishSource?.dishImage;
+const heroImage = heroSource?.heroImage;
 
 const report = {
   generatedAt: new Date().toISOString(),
   fixture: fixture?.name,
+  discover: discover?.name,
+  morphFlow: morphFlow?.name,
   pdp: pdp?.name,
   dishImage,
   heroImage,
