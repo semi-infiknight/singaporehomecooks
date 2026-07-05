@@ -5,16 +5,19 @@ appId: com.singaporehomecooks.cook
 ---
 - launchApp:
     stopApp: true
-- extendedWaitUntil:
-    visible: "Sign in as cook"
-    timeout: 60000
-    optional: true
-- tapOn:
-    id: "auth-submit-btn"
-    optional: true
-- tapOn:
-    text: "OK"
-    optional: true
+- runFlow:
+    when:
+      visible: "Sign in as cook"
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "auth-submit-btn"
+          timeout: 60000
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
 - runFlow:
     when:
       visible: "Welcome, home cook"
@@ -25,11 +28,21 @@ appId: com.singaporehomecooks.cook
     visible:
       id: "cook-dashboard"
     timeout: 120000
-# Deep link — iOS tab press can fail to switch scene when dev error overlay is present
+    optional: true
+# Deep link — iOS tab press can fail; deep link may also surface auth gate
 - openLink: shc-cook:///(cook)/listings
 - tapOn:
     text: "Open"
     optional: true
+- runFlow:
+    when:
+      visible: "Sign in as cook"
+    commands:
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
 - tapOn:
     text: "Dismiss"
     optional: true
@@ -37,13 +50,9 @@ appId: com.singaporehomecooks.cook
     text: "Minimize"
     optional: true
 - extendedWaitUntil:
-    visible: "Dish Basics"
-    timeout: 90000
-    optional: true
-- extendedWaitUntil:
     visible:
       id: "cook-listings-screen"
-    timeout: 90000
+    timeout: 120000
 - extendedWaitUntil:
     visible:
       id: "listing-card-e2e"

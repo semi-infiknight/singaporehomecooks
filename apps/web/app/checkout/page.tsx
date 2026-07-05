@@ -158,7 +158,6 @@ export default function CheckoutPage() {
     );
   }
 
-  const canPlace = selected && allergenAck && pdpaConsent && !checkoutMut.isPending;
   const checkoutSteps = [
     { id: 'slot', label: 'Collection', done: !!selected },
     { id: 'safety', label: 'Safety', done: allergenAck && pdpaConsent },
@@ -253,7 +252,7 @@ export default function CheckoutPage() {
         className="mt-6 w-full hidden sm:flex"
         size="lg"
         onClick={doCheckout}
-        disabled={!canPlace}
+        disabled={checkoutMut.isPending}
         testID="complete-checkout-web"
       >
         {checkoutMut.isPending ? 'Placing order…' : `Place order · S$${amountDue.toFixed(2)}`}
@@ -270,7 +269,7 @@ export default function CheckoutPage() {
             className="flex-1"
             size="lg"
             onClick={doCheckout}
-            disabled={!canPlace}
+            disabled={checkoutMut.isPending}
             testID="complete-checkout-web"
           >
             {checkoutMut.isPending ? 'Placing…' : 'Place order'}

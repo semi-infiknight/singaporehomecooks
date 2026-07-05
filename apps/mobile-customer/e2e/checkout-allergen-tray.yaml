@@ -1,34 +1,53 @@
 # Customer checkout — allergen gate tray (Family Values)
+# Prereq: EXPO_PUBLIC_MAESTRO_E2E=1 in .env.local + Metro on 8081
 # Run: maestro test --device <id> apps/mobile-customer/e2e/checkout-allergen-tray.yaml
 appId: com.singaporehomecooks.customer
 ---
-- launchApp
+- launchApp:
+    stopApp: true
+    clearState: true
+    clearKeychain: true
 - extendedWaitUntil:
     visible:
-      id: "discover-tab"
+      id: "customer-discover-screen"
     timeout: 120000
-    optional: true
+# Auth via deep link (guest-browse-bar tap is flaky — CTA is separate from container)
+- openLink: shc-customer:///(shared)/auth
 - tapOn:
-    id: "cart-tab"
+    text: "Open"
     optional: true
 - extendedWaitUntil:
     visible:
-      id: "proceed-checkout"
+      id: "auth-submit-btn"
     timeout: 30000
-    optional: true
 - tapOn:
-    id: "proceed-checkout"
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
     optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+# Deep link to checkout (E2E cart seed when EXPO_PUBLIC_MAESTRO_E2E=1)
+- openLink: shc-customer:///(customer)/checkout
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "checkout-screen"
+    timeout: 120000
 - extendedWaitUntil:
     visible:
       id: "do-checkout"
     timeout: 30000
-    optional: true
 - tapOn:
     id: "do-checkout"
-    optional: true
 - extendedWaitUntil:
     visible:
       id: "shc-tray-allergen-gate"
     timeout: 10000
+- tapOn:
+    id: "allergen-tray-confirm"
     optional: true

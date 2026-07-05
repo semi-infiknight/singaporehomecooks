@@ -27,7 +27,7 @@ import {
   SHCCelebration,
   useMilestoneCelebration,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
 import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
@@ -84,7 +84,12 @@ export default function Checkout() {
       router.replace('/(shared)/auth' as any);
     }
   }, [authLoading, user, router]);
-  const { data: cart = { items: [] } } = useCart();
+  const { data: cartRaw = { items: [] } } = useCart();
+  const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
+  const cart = useMemo(
+    () => resolveCartForDisplay(cartRaw as { items: Array<Record<string, unknown>> }, { dev: __DEV__, maestroE2e }),
+    [cartRaw, maestroE2e]
+  );
   const [allergenAck, setAllergenAck] = useState(false);
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: string } | null>(null);
@@ -178,7 +183,6 @@ export default function Checkout() {
     );
   }
 
-  const canPlace = !!selectedSlot && allergenAck && pdpaConsent && !isSubmitting;
   const creditDiscount = Math.floor(creditsToApply / 4);
   const cartItems = (cart.items || []).map((i: any) => ({
     name: String(i.name || 'Dish'),
@@ -357,7 +361,7 @@ export default function Checkout() {
           label="Pay Now"
           amount={`S$${amountDue.toFixed(2)}`}
           onPress={handleCheckout as any}
-          disabled={!canPlace}
+          disabled={isSubmitting}
           loading={isSubmitting}
           testID="do-checkout"
         />

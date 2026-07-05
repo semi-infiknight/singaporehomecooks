@@ -71,7 +71,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v15-single-react';
+config.cacheVersion = 'mobile-customer-v16-fusebox-shim';
 
 const expoLocationRoot = resolvePackageRoot('expo-location');
 const expoLocationEntry = expoLocationRoot
@@ -103,9 +103,22 @@ function resolveFromApp(name) {
   }
 }
 
+const fuseboxShim = path.join(projectRoot, 'fusebox-shim.js');
+
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, realModuleName, platform, moduleName) => {
-  if (realModuleName === 'react' || realModuleName.startsWith('react/')) {
+  if (
+    typeof realModuleName === 'string' &&
+    realModuleName.includes('setUpFuseboxReactDevToolsDispatcher')
+  ) {
+    return { type: 'sourceFile', filePath: fuseboxShim };
+  }
+  if (
+    realModuleName === 'react' ||
+    realModuleName.startsWith('react/') ||
+    realModuleName === 'react-native' ||
+    realModuleName.startsWith('react-native/')
+  ) {
     const resolved = resolveFromApp(realModuleName);
     if (resolved) return resolved;
   }
