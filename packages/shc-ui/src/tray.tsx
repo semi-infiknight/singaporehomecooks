@@ -26,6 +26,12 @@ import { SHCIcon } from './icons';
 
 export type TrayContentInput = React.ReactNode | (() => React.ReactNode);
 
+/** Store render fns in contentMap — stale ReactNode snapshots freeze controlled inputs. */
+export function wrapTrayContentFn(content: TrayContentInput): () => React.ReactNode {
+  if (typeof content === 'function') return content;
+  return () => content;
+}
+
 type TrayContextValue = {
   stack: TrayFrame[];
   openTray: (frame: TrayFrame, content: TrayContentInput) => void;
@@ -53,10 +59,7 @@ export function SHCTrayProvider({ children }: { children: React.ReactNode }) {
     AccessibilityInfo.isReduceMotionEnabled?.().then(setReduceMotion).catch(() => {});
   }, []);
 
-  const wrapTrayContent = useCallback((content: TrayContentInput): (() => React.ReactNode) => {
-    if (typeof content === 'function') return content;
-    return () => content;
-  }, []);
+  const wrapTrayContent = useCallback(wrapTrayContentFn, []);
 
   const openTray = useCallback(
     (frame: TrayFrame, content: TrayContentInput) => {

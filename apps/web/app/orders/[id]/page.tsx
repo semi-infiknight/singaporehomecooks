@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrder, useChat, useOrderDisputes, useReview } from '../../../lib/useOrder';
@@ -15,9 +15,27 @@ import {
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../../components/SHCWebComponents';
-import { getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
-import { canSubmitReview } from '@shc/business-rules';
+import {
+  getOrderStatusLabel,
+  isActiveOrderStatus,
+  resolveOrderForDisplay,
+  resolveReviewForDisplay,
+  resolveDisputesForDisplay,
+  orderTrayActions,
+} from '@shc/utils';
 import type { SHCOrderStatus } from '@shc/types';
+
+type OrderDisplay = Record<string, unknown> & {
+  shc_status?: SHCOrderStatus | string;
+  collection_date?: string;
+  collection_slot?: string;
+  total?: number | string;
+  cook_name?: string;
+  paynow_reference?: string;
+};
+
+type OrderReview = { rating: number; body?: string };
+type OrderDispute = { status?: string; type?: string; notes?: string };
 
 function OrderReviewTrayContentWeb({
   orderId,
@@ -122,11 +140,24 @@ function OrderDisputeTrayContentWeb({
 export default function TrackOrder() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  const { data: order, isLoading, isFetching } = useOrder(id);
+  const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
+  const { data: orderRaw, isLoading, isFetching } = useOrder(id);
+  const order = useMemo(
+    () => resolveOrderForDisplay<OrderDisplay>(orderRaw as OrderDisplay | undefined, id, { maestroE2e }),
+    [orderRaw, id, maestroE2e]
+  );
   const { messages, send } = useChat(id);
   const { user } = useAuth();
-  const { review: existingReview } = useReview(id);
-  const { disputes } = useOrderDisputes(id);
+  const { review: existingReviewRaw } = useReview(id);
+  const existingReview = useMemo(
+    () => resolveReviewForDisplay<OrderReview | null | undefined>(existingReviewRaw as OrderReview | null | undefined, id, { maestroE2e }),
+    [existingReviewRaw, id, maestroE2e]
+  );
+  const { disputes: disputesRaw = [] } = useOrderDisputes(id);
+  const disputes = useMemo(
+    () => resolveDisputesForDisplay<OrderDispute>(disputesRaw as OrderDispute[], id, { maestroE2e }),
+    [disputesRaw, id, maestroE2e]
+  );
   const { openTray, dismiss } = useSHCTrayWeb();
   const [msg, setMsg] = useState('');
 
@@ -184,7 +215,7 @@ export default function TrackOrder() {
     ));
   }, [dismiss, id, openTray]);
 
-  if (isLoading || !order) {
+  if ((!maestroE2e && isLoading) || !order) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10">
         <SHCLoading label="Loading order…" />
@@ -193,7 +224,11 @@ export default function TrackOrder() {
   }
 
   const status = (order.shc_status || 'pending') as SHCOrderStatus;
-  const showReviewForm = canSubmitReview(status) && !existingReview;
+  const { showReviewBtn: showReviewForm, showDisputeBtn: showDisputeForm } = orderTrayActions({
+    order,
+    review: existingReview,
+    disputes,
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -300,7 +335,7 @@ export default function TrackOrder() {
         </SHCButton>
       )}
 
-      {disputes.length > 0 ? (
+      {!showDisputeForm ? (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
           <SHCSectionTitle>Issue reported</SHCSectionTitle>
           <p className="mt-1 text-xs font-semibold text-[#5C5144]">

@@ -57,14 +57,14 @@ node "$ROOT/apps/web/scripts/family-values-screenshots.mjs" "$OUT/screenshots" h
 
 if ls "$OUT/screenshots/"*.png >/dev/null 2>&1; then
   PIXEL_ANALYSIS_OUT="$OUT/pixel-analysis.json" node "$ROOT/scripts/analyze-png-pixels.mjs" "$OUT/screenshots/"fv-fixture.png "$OUT/screenshots/"discover-home.png 2>/dev/null | tee -a "$OUT/pixel-analysis.log" "$OUT/evidence-pipeline.log" || true
-  FAMILY_VALUES_SCRATCH="$OUT" node "$ROOT/scripts/family-values-morph-diff.mjs" 2>&1 | tee -a "$OUT/evidence-pipeline.log" "$OUT/morph-diff-run.log"
+  FAMILY_VALUES_SCRATCH="$OUT" node "$ROOT/scripts/family-values-morph-diff.mjs" 2>&1 | tee -a "$OUT/evidence-pipeline.log" "$OUT/morph-flow-run.log"
 fi
 
 # pixel-review.md
 node -e "
 const fs=require('fs');
 const out=process.env.FAMILY_VALUES_SCRATCH||'.';
-const morph=fs.existsSync(out+'/morph-diff.json')?JSON.parse(fs.readFileSync(out+'/morph-diff.json','utf8')):null;
+const morph=fs.existsSync(out+'/morph-flow.json')?JSON.parse(fs.readFileSync(out+'/morph-flow.json','utf8')):null;
 const px=fs.existsSync(out+'/pixel-analysis.json')?JSON.parse(fs.readFileSync(out+'/pixel-analysis.json','utf8')):null;
 const lines=[
   '# Family Values pixel review',
@@ -73,13 +73,13 @@ const lines=[
   '| Surface | Platform | Evidence |',
   '|---------|----------|----------|',
   '| Discover card | web fixture | fv-fixture.png + dishImage bbox |',
-  '| PDP hero morph | web fixture | shared-dish hero bbox + morph-diff |',
+  '| PDP hero morph | web fixture | shared-dish hero bbox + morph-flow.json |',
   '| Cook listings tray | mobile | listing-tray.yaml step inventory |',
   '| Checkout allergen tray | mobile | checkout-allergen-tray.yaml |',
   '| Wizard CTA morph | mobile | wizardCtaMorphOnStepEnter tests (Start→Continue) |',
   '',
   '## Morph continuity (playwright bboxes + core math)',
-  morph ? '- dishImage: '+JSON.stringify(morph.dishImage) : '- (pending)',
+  morph ? '- clickDishImage: '+JSON.stringify(morph.clickDishImage) : '- (pending)',
   morph ? '- heroImage: '+JSON.stringify(morph.heroImage) : '',
   morph ? '- continuity.ok: '+morph.continuity.ok : '',
   morph ? '- scale: '+morph.continuity.scale : '',
@@ -87,7 +87,7 @@ const lines=[
   '',
   '## PNG analysis (element-targeted)',
   ...(px?.images||[]).map(f=>'- '+f.path.split('/').pop()+': '+f.width+'×'+f.height+' content-bbox='+JSON.stringify(f.bbox)),
-  '- dishImage DOM bbox: '+JSON.stringify(morph?.dishImage),
+  '- clickDishImage DOM bbox: '+JSON.stringify(morph?.clickDishImage),
   '- heroImage DOM bbox: '+JSON.stringify(morph?.heroImage),
   '',
   '## Fixes applied this pass',
@@ -133,21 +133,19 @@ for cluster in foundation simplicity fluidity delight-web docs-tests; do
   } > "$OUT/cluster-${cluster}.log"
 done
 
-# Subagent review artifact
+# Subagent review artifact (from cluster-*-spawn.log transcripts)
 {
   echo "# Family Values subagent review"
   echo ""
-  echo "| Cluster | Agent | Result |"
-  echo "|---------|-------|--------|"
-  echo "| foundation | implementer | tray+motion primitives PASS |"
-  echo "| simplicity | implementer | listings+cart trays PASS |"
-  echo "| fluidity | implementer + fluidity-press subagent | press path + morph PASS |"
-  echo "| delight-web | implementer | milestones + web parity PASS |"
-  echo "| docs-tests | implementer | 42 vitest + audit gate PASS |"
+  echo "Automated cluster spawn logs (see cluster-*-spawn.log):"
+  for cluster in foundation simplicity fluidity delight-web docs-tests; do
+    echo ""
+    echo "## $cluster"
+    tail -25 "$OUT/cluster-${cluster}-spawn.log" 2>/dev/null || echo "(missing)"
+  done
   echo ""
-  echo "Spawn evidence: cluster-*.log each ≥40 lines with full audit transcript."
-  echo "Press contract: family-values-press-path.test.ts (measure→register→navigate)"
-  echo "Morph continuity: family-values-morph-continuity.test.ts + morph-diff.json"
+  echo "Maestro device logs: tray-flow-maestro-{listing,checkout,order}.log"
+  echo "Morph: morph-flow.json + family-values-morph-evidence.test.ts"
 } > "$OUT/subagent-review.md"
 
 echo "=== Evidence pipeline complete ===" | tee -a "$OUT/evidence-pipeline.log"

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,13 +14,34 @@ import {
   useSHCTray,
   SHCTrayAction,
 } from '@shc/ui';
-import { getDishImageUrl, getOrderStatusLabel, isActiveOrderStatus, E2E_ORDER_SEED } from '@shc/utils';
+import {
+  getDishImageUrl,
+  getOrderStatusLabel,
+  isActiveOrderStatus,
+  resolveOrderForDisplay,
+  resolveReviewForDisplay,
+  resolveDisputesForDisplay,
+  orderTrayActions,
+} from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getOrderDisputes, getReview, submitOrderDispute, submitReview } from '../../../lib/api-client';
-import { canSubmitReview } from '@shc/business-rules';
 import type { SHCOrderStatus } from '@shc/types';
+
+type OrderDisplay = Record<string, unknown> & {
+  id: string;
+  shc_status: SHCOrderStatus | string;
+  items?: Array<{ product_id?: string; productId?: string; name?: string; qty?: number }>;
+  total?: number | string;
+  collection_date?: string;
+  collection_slot?: string;
+  collection_instructions?: string;
+  address_released_at?: string;
+};
+
+type OrderReview = { rating: number; body?: string };
+type OrderDispute = { status?: string; type?: string; notes?: string };
 
 function OrderReviewTrayContent({
   orderId,
@@ -33,6 +54,7 @@ function OrderReviewTrayContent({
 }) {
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const reviewInputRef = useRef<TextInput>(null);
   const qc = useQueryClient();
   const reviewMut = useMutation({
     mutationFn: () => submitReview(orderId, rating, reviewBody || undefined),
@@ -56,16 +78,24 @@ function OrderReviewTrayContent({
           </Text>
         ))}
       </View>
-      <TextInput
-        placeholder="Share your experience (optional)"
-        value={reviewBody}
-        onChangeText={setReviewBody}
-        multiline
-        style={styles.reviewInput}
+      <Pressable
         testID="review-body-input"
         accessibilityLabel="review-body-input"
-        placeholderTextColor={gourmeatColors.textMuted}
-      />
+        collapsable={false}
+        onPress={() => reviewInputRef.current?.focus()}
+      >
+        <TextInput
+          ref={reviewInputRef}
+          placeholder="Share your experience (optional)"
+          value={reviewBody}
+          onChangeText={setReviewBody}
+          multiline
+          style={styles.reviewInput}
+          accessibilityLabel="review-body-input"
+          accessibilityValue={{ text: reviewBody }}
+          placeholderTextColor={gourmeatColors.textMuted}
+        />
+      </Pressable>
       <GourmeatPrimaryButton
         label={reviewMut.isPending ? 'Submitting…' : 'Submit review'}
         onPress={() => reviewMut.mutate()}
@@ -87,6 +117,7 @@ function OrderDisputeTrayContent({
   onError: (message: string) => void;
 }) {
   const [disputeNotes, setDisputeNotes] = useState('');
+  const disputeInputRef = useRef<TextInput>(null);
   const qc = useQueryClient();
   const disputeMut = useMutation({
     mutationFn: () => submitOrderDispute(orderId, { type: 'other', notes: disputeNotes.trim() }),
@@ -100,16 +131,24 @@ function OrderDisputeTrayContent({
   return (
     <View testID="order-dispute-tray">
       <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
-      <TextInput
-        placeholder="Tell ops what happened"
-        value={disputeNotes}
-        onChangeText={setDisputeNotes}
-        multiline
-        style={styles.reviewInput}
+      <Pressable
         testID="dispute-notes-input"
         accessibilityLabel="dispute-notes-input"
-        placeholderTextColor={gourmeatColors.textMuted}
-      />
+        collapsable={false}
+        onPress={() => disputeInputRef.current?.focus()}
+      >
+        <TextInput
+          ref={disputeInputRef}
+          placeholder="Tell ops what happened"
+          value={disputeNotes}
+          onChangeText={setDisputeNotes}
+          multiline
+          style={styles.reviewInput}
+          accessibilityLabel="dispute-notes-input"
+          accessibilityValue={{ text: disputeNotes }}
+          placeholderTextColor={gourmeatColors.textMuted}
+        />
+      </Pressable>
       <GourmeatPrimaryButton
         label={disputeMut.isPending ? 'Reporting…' : 'Report issue'}
         onPress={() => disputeMut.mutate()}
@@ -126,29 +165,36 @@ export default function OrderTracking() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = id || '';
-  const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' || __DEV__;
-  const useE2eOrder = maestroE2e && orderId === E2E_ORDER_SEED.id;
-  const { data: orderRaw, isFetching } = useOrder(useE2eOrder ? '' : orderId);
-  const order = useMemo(() => {
-    if (useE2eOrder) return E2E_ORDER_SEED as NonNullable<typeof orderRaw>;
-    return orderRaw;
-  }, [orderRaw, useE2eOrder]);
+  const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
+  const { data: orderRaw, isFetching } = useOrder(orderId);
+  const order = useMemo(
+    () => resolveOrderForDisplay<OrderDisplay>(orderRaw as OrderDisplay | undefined, orderId, { maestroE2e }),
+    [orderRaw, orderId, maestroE2e]
+  );
   const { user } = useAuth();
   const { openTray, dismiss } = useSHCTray();
   const qc = useQueryClient();
 
-  const { data: existingReview } = useQuery({
+  const { data: existingReviewRaw } = useQuery({
     queryKey: ['review', orderId],
     queryFn: () => getReview(orderId),
-    enabled: !!orderId && !useE2eOrder,
+    enabled: !!orderId,
   });
+  const existingReview = useMemo(
+    () => resolveReviewForDisplay<OrderReview | null | undefined>(existingReviewRaw as OrderReview | null | undefined, orderId, { maestroE2e }),
+    [existingReviewRaw, orderId, maestroE2e]
+  );
 
-  const { data: disputes = [] } = useQuery({
+  const { data: disputesRaw = [] } = useQuery({
     queryKey: ['order-disputes', orderId],
     queryFn: () => getOrderDisputes(orderId),
-    enabled: !!orderId && !useE2eOrder,
+    enabled: !!orderId,
     placeholderData: [],
   });
+  const disputes = useMemo(
+    () => resolveDisputesForDisplay<OrderDispute>(disputesRaw as OrderDispute[], orderId, { maestroE2e }),
+    [disputesRaw, orderId, maestroE2e]
+  );
 
   const openReviewTray = useCallback(() => {
     openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
@@ -218,7 +264,11 @@ export default function OrderTracking() {
   const status = order.shc_status as SHCOrderStatus;
   const live = isActiveOrderStatus(status);
   const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
-  const showReviewForm = canSubmitReview(status) && !existingReview;
+  const { showReviewBtn: showReviewForm, showDisputeBtn: showDisputeForm } = orderTrayActions({
+    order,
+    review: existingReview,
+    disputes,
+  });
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
 
@@ -287,7 +337,7 @@ export default function OrderTracking() {
         />
       )}
 
-      {disputes.length > 0 ? (
+      {!showDisputeForm ? (
         <GourmeatCard testID="order-dispute-submitted">
           <Text style={styles.cardTitle}>Issue reported</Text>
           <Text style={styles.cardMeta}>

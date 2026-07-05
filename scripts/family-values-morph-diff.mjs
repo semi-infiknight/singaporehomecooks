@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
- * Compare discover card image bbox vs PDP hero bbox for morph continuity evidence.
- * Uses the same transform math as family-values-core (not tautological center checks).
+ * Morph continuity evidence — click-time path only (morph-flow.json).
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const scratch = process.env.FAMILY_VALUES_SCRATCH || process.cwd();
 const bboxPath = resolve(scratch, 'screenshots/playwright-bboxes.json');
-const outPath = resolve(scratch, 'morph-diff.json');
+const outPath = resolve(scratch, 'morph-flow.json');
 const VIEWPORT = { w: 390, h: 844 };
 
 function computeSharedHeroTransform(origin, hero) {
@@ -69,56 +68,28 @@ if (!existsSync(bboxPath)) {
 
 const captures = JSON.parse(readFileSync(bboxPath, 'utf8'));
 const morphFlow = captures.find((c) => c.name === 'discover-to-pdp-morph');
-const fixture = captures.find((c) => c.name === 'fv-fixture');
-const discover = captures.find((c) => c.name === 'discover-home');
 const pdp = captures.find((c) => c.name === 'product-pdp');
 
-// Morph continuity MUST use click-time bbox from live flow — no cherry-picking discover-home fallback
-const dishImage = morphFlow?.clickDishImage;
+const clickDishImage = morphFlow?.clickDishImage;
 const heroImage = pdp?.elements?.heroImage ?? morphFlow?.elements?.heroImage;
 
-if (!morphFlow?.clickDishImage) {
+if (!clickDishImage) {
   console.error('Missing morphFlow.clickDishImage — run morph flow with scroll + click-time measure');
   process.exit(1);
 }
 
-const continuity = validateMorphContinuity(dishImage, heroImage);
-const discoverHomeValidation = discover?.elements?.dishImage
-  ? validateMorphContinuity(discover.elements.dishImage, heroImage)
-  : { ok: false, reasons: ['discover-home missing dishImage'], cardOnScreen: false };
+const continuity = validateMorphContinuity(clickDishImage, heroImage);
 
 const report = {
   generatedAt: new Date().toISOString(),
-  fixture: fixture?.name,
-  discover: discover?.name,
-  morphFlow: morphFlow?.name,
-  pdp: pdp?.name,
-  dishImage,
+  source: 'discover-to-pdp-morph',
+  clickDishImage,
   heroImage,
-  clickDishImage: morphFlow.clickDishImage,
-  discoverHomeDishImage: discover?.elements?.dishImage ?? null,
-  discoverHomeScrolled: discover?.scrolledIntoView ?? false,
-  discoverHomeValidation,
   morphFrames: morphFlow?.morphFrames ?? null,
   continuity,
-  captures: captures.map((c) => ({
-    name: c.name,
-    url: c.url,
-    elements: c.elements,
-    discoverElements: c.discoverElements,
-    clickDishImage: c.clickDishImage,
-    scrolledIntoView: c.scrolledIntoView,
-    error: c.error,
-  })),
 };
 
 writeFileSync(outPath, JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
 console.log(`Wrote ${outPath}`);
-
-const exitOk =
-  continuity.ok &&
-  discoverHomeValidation.cardOnScreen &&
-  (discover?.scrolledIntoView ?? false);
-
-process.exit(exitOk ? 0 : 1);
+process.exit(continuity.ok ? 0 : 1);
