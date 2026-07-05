@@ -80,7 +80,9 @@ export function SHCOrderDisputeTrayForm({
 
   return (
     <View testID="order-dispute-tray">
-      <Text style={styles.hintLine}>Use this for food quality, collection, or safety issues that need ops review.</Text>
+      <Text style={styles.hintLine}>
+        Use this for food quality, collection, or safety issues that need ops review.
+      </Text>
       <Pressable
         testID="dispute-notes-input"
         accessibilityLabel="dispute-notes-input"
@@ -89,7 +91,7 @@ export function SHCOrderDisputeTrayForm({
       >
         <TextInput
           ref={disputeInputRef}
-          placeholder="Tell ops what happened"
+          placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
           value={disputeNotes}
           onChangeText={onDisputeNotesChange}
           multiline

@@ -1,6 +1,7 @@
 // Family Values tray system — React Native bottom sheet overlay.
 // @ts-nocheck
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   Modal,
   View,
@@ -49,7 +50,14 @@ export function useSHCTray(): TrayContextValue {
   return ctx;
 }
 
-export function SHCTrayProvider({ children }: { children: React.ReactNode }) {
+export function SHCTrayProvider({
+  children,
+  queryClient,
+}: {
+  children: React.ReactNode;
+  /** Re-provide inside RN Modal — Modal portals break React Query context. */
+  queryClient?: QueryClient;
+}) {
   const [stack, setStack] = useState<TrayFrame[]>([]);
   const [contentMap, setContentMap] = useState<Record<string, () => React.ReactNode>>({});
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -91,7 +99,7 @@ export function SHCTrayProvider({ children }: { children: React.ReactNode }) {
   return (
     <TrayContext.Provider value={value}>
       {children}
-      <SHCTrayOverlay reduceMotion={reduceMotion} />
+      <SHCTrayOverlay reduceMotion={reduceMotion} queryClient={queryClient} />
     </TrayContext.Provider>
   );
 }
@@ -100,7 +108,13 @@ function trayHeightPx(height: TrayHeight, maxH: number): number {
   return Math.min(TRAY_HEIGHT_PX[height], maxH * 0.92);
 }
 
-function SHCTrayOverlay({ reduceMotion }: { reduceMotion: boolean }) {
+function SHCTrayOverlay({
+  reduceMotion,
+  queryClient,
+}: {
+  reduceMotion: boolean;
+  queryClient?: QueryClient;
+}) {
   const { stack, popTray: pop, dismiss, contentMap } = useSHCTray();
   const frame = currentTray(stack);
   const { height: winH } = useWindowDimensions();
@@ -113,6 +127,12 @@ function SHCTrayOverlay({ reduceMotion }: { reduceMotion: boolean }) {
   const depth = stack.length;
   const renderContent = contentMap[frame.id];
   const content = renderContent?.();
+  const trayBody =
+    queryClient && content ? (
+      <QueryClientProvider client={queryClient}>{content}</QueryClientProvider>
+    ) : (
+      content
+    );
 
   return (
     <Modal visible transparent animationType={noMotion ? 'none' : 'fade'} onRequestClose={depth > 1 ? pop : dismiss}>
@@ -137,7 +157,7 @@ function SHCTrayOverlay({ reduceMotion }: { reduceMotion: boolean }) {
             </Text>
             <View style={{ width: 22 }} />
           </View>
-          <View style={styles.body}>{content}</View>
+          <View style={styles.body}>{trayBody}</View>
         </Pressable>
       </Pressable>
     </Modal>

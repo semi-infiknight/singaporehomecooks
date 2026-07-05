@@ -36,7 +36,7 @@ case "$CLUSTER" in
     ;;
   delight-web)
     run "pnpm --filter web typecheck"
-    run "rg -n 'maestroE2e|SHCTrayProviderWeb' 'apps/web/app/orders/[id]/page.tsx' apps/web/app/components/SHCWebComponents.tsx | head -20"
+    run "rg -n 'order-tray-opener-core|SHCOrderReviewTrayContentWeb' 'apps/web/app/orders/[id]/page.tsx' apps/web/lib/order-tray-content-web.tsx"
     ;;
   docs-tests)
     run "ls -la $OUT/tray-flow-maestro-*.log"

@@ -10,6 +10,7 @@ export * from './family-values-core';
 export * from './tray';
 export * from './order-tray-forms';
 export * from './order-tray-content';
+export * from './order-tray-opener';
 export * from './family-values-ui';
 export * from './tab-direction';
 export * from './visuals';

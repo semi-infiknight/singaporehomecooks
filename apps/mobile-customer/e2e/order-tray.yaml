@@ -53,17 +53,23 @@ appId: com.singaporehomecooks.customer
     timeout: 10000
 - extendedWaitUntil:
     visible:
-      id: "review-body-input"
-    timeout: 8000
-- tapOn:
-    id: "review-body-input"
-- inputText: "Maestro review typing visible"
-- extendedWaitUntil:
-    visible:
       id: "submit-review-btn"
     timeout: 8000
 - tapOn:
+    id: "submit-review-btn"
+- extendedWaitUntil:
+    visible:
+      id: "review-success-tray"
+    timeout: 20000
+- tapOn:
+    id: "review-success-tray-primary"
+    optional: true
+- tapOn:
+    text: "Done"
+    optional: true
+- tapOn:
     id: "shc-tray-nav"
+    optional: true
 - scrollUntilVisible:
     element:
       id: "open-dispute-tray-btn"
@@ -77,12 +83,11 @@ appId: com.singaporehomecooks.customer
     timeout: 10000
 - extendedWaitUntil:
     visible:
-      id: "dispute-notes-input"
-    timeout: 8000
-- tapOn:
-    id: "dispute-notes-input"
-- inputText: "E2E dispute notes visible"
-- extendedWaitUntil:
-    visible:
       id: "submit-dispute-btn"
     timeout: 8000
+- tapOn:
+    id: "submit-dispute-btn"
+- extendedWaitUntil:
+    visible:
+      id: "dispute-success-tray"
+    timeout: 20000

@@ -21,7 +21,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <ErrorBoundary>
-            <SHCTrayProvider>
+            <SHCTrayProvider queryClient={queryClient}>
             <Stack
               screenOptions={{
                 headerStyle: { backgroundColor: shcColors.primary },

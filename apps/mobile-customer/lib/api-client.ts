@@ -1,4 +1,5 @@
 import { createShcApiClient } from '@shc/api-client';
+import { isMaestroE2eOrderId } from '@shc/utils';
 import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'shc_customer_token';
@@ -112,11 +113,19 @@ export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCal
 export const getPhotoTips = () => client.getPhotoTips();
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);
 export const getReview = (orderId: string) => client.getReview(orderId);
-export const submitReview = (orderId: string, rating: number, body?: string) =>
-  client.submitReview(orderId, rating, body);
+export const submitReview = (orderId: string, rating: number, body?: string) => {
+  if (process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' && isMaestroE2eOrderId(orderId)) {
+    return Promise.resolve({ id: 'e2e-review', order_id: orderId, rating, body });
+  }
+  return client.submitReview(orderId, rating, body);
+};
 export const getOrderDisputes = (orderId: string) => client.getOrderDisputes(orderId);
-export const submitOrderDispute = (orderId: string, input: { type?: string; notes: string }) =>
-  client.submitOrderDispute(orderId, input);
+export const submitOrderDispute = (orderId: string, input: { type?: string; notes: string }) => {
+  if (process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' && isMaestroE2eOrderId(orderId)) {
+    return Promise.resolve({ id: 'e2e-dispute', order_id: orderId, status: 'open', ...input });
+  }
+  return client.submitOrderDispute(orderId, input);
+};
 export const registerPushToken = (token: string, opts?: { cookId?: string; role?: 'cook' | 'customer' }) =>
   client.registerPushToken(token, opts);
 

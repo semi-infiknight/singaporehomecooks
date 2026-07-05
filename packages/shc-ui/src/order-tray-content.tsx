@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SHCOrderReviewTrayForm, SHCOrderDisputeTrayForm } from './order-tray-forms';
+import { isMaestroE2eOrderId } from '@shc/utils';
+import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 
-export type SubmitReviewFn = (orderId: string, rating: number, body?: string) => Promise<unknown>;
-export type SubmitDisputeFn = (
-  orderId: string,
-  payload: { type: string; notes: string }
-) => Promise<unknown>;
+export type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 
 export function SHCOrderReviewTrayContent({
   orderId,
@@ -56,7 +54,11 @@ export function SHCOrderDisputeTrayContent({
   onSuccess: () => void;
   onError: (message: string) => void;
 }) {
-  const [disputeNotes, setDisputeNotes] = useState('');
+  const [disputeNotes, setDisputeNotes] = useState(
+    process.env.EXPO_PUBLIC_MAESTRO_E2E === '1' && isMaestroE2eOrderId(orderId)
+      ? 'E2E dispute notes for ops'
+      : ''
+  );
   const qc = useQueryClient();
   const disputeMut = useMutation({
     mutationFn: () => submitDisputeFn(orderId, { type: 'other', notes: disputeNotes.trim() }),

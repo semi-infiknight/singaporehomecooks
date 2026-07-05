@@ -2,9 +2,14 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useOrder, useChat, useOrderDisputes, useReview } from '../../../lib/useOrder';
+import {
+  useOrder,
+  useChat,
+  useOrderDisputes,
+  useReview,
+} from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
+import { submitReview, submitOrderDispute } from '../../../lib/api-client';
 import {
   SHCCard,
   SHCButton,
@@ -23,6 +28,14 @@ import {
   resolveDisputesForDisplay,
   orderTrayActions,
 } from '@shc/utils';
+import {
+  openOrderReviewTray,
+  openOrderDisputeTray,
+} from '@shc/ui/order-tray-opener-core';
+import {
+  SHCOrderReviewTrayContentWeb,
+  SHCOrderDisputeTrayContentWeb,
+} from '../../../lib/order-tray-content-web';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -36,106 +49,6 @@ type OrderDisplay = Record<string, unknown> & {
 
 type OrderReview = { rating: number; body?: string };
 type OrderDispute = { status?: string; type?: string; notes?: string };
-
-function OrderReviewTrayContentWeb({
-  orderId,
-  onSuccess,
-  onError,
-}: {
-  orderId: string;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) {
-  const [rating, setRating] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
-  const { submit: reviewMut } = useReview(orderId);
-
-  return (
-    <div data-testid="order-review-tray">
-      <div className="flex gap-1 mt-3">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setRating(n)}
-            className={`text-2xl ${n <= rating ? 'text-amber-500' : 'text-muted-foreground/40'}`}
-            aria-label={`${n} stars`}
-          >
-            ★
-          </button>
-        ))}
-      </div>
-      <textarea
-        value={reviewBody}
-        onChange={(e) => setReviewBody(e.target.value)}
-        placeholder="Share your experience (optional)"
-        className="shc-input w-full mt-3 min-h-[72px] py-2"
-        data-testid="review-body-input"
-      />
-      <SHCButton
-        className="mt-3"
-        disabled={reviewMut.isPending}
-        onClick={() =>
-          reviewMut.mutate(
-            { rating, body: reviewBody || undefined },
-            {
-              onSuccess: () => onSuccess(),
-              onError: (e: Error) => onError(e?.message || 'Could not submit review'),
-            }
-          )
-        }
-        data-testid="submit-review-btn"
-      >
-        {reviewMut.isPending ? 'Submitting…' : 'Submit review'}
-      </SHCButton>
-    </div>
-  );
-}
-
-function OrderDisputeTrayContentWeb({
-  orderId,
-  onSuccess,
-  onError,
-}: {
-  orderId: string;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) {
-  const [disputeNotes, setDisputeNotes] = useState('');
-  const { submit: disputeMut } = useOrderDisputes(orderId);
-
-  return (
-    <div data-testid="order-dispute-tray">
-      <p className="text-sm text-muted-foreground mt-1">
-        Use this if food quality, collection, or safety needs ops review.
-      </p>
-      <textarea
-        value={disputeNotes}
-        onChange={(e) => setDisputeNotes(e.target.value)}
-        placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
-        className="shc-input w-full mt-3 min-h-[88px] py-2"
-        data-testid="dispute-notes-input"
-      />
-      <SHCButton
-        className="mt-3"
-        variant="outline"
-        disabled={disputeMut.isPending || disputeNotes.trim().length < 5}
-        onClick={() =>
-          disputeMut.mutate(
-            { type: 'other', notes: disputeNotes.trim() },
-            {
-              onSuccess: () => onSuccess(),
-              onError: (e: Error) => onError(e?.message || 'Please try again'),
-            }
-          )
-        }
-        data-testid="submit-dispute-btn"
-      >
-        {disputeMut.isPending ? 'Reporting…' : 'Report issue'}
-      </SHCButton>
-    </div>
-  );
-}
 
 export default function TrackOrder() {
   const params = useParams<{ id: string }>();
@@ -161,59 +74,58 @@ export default function TrackOrder() {
   const { openTray, dismiss } = useSHCTrayWeb();
   const [msg, setMsg] = useState('');
 
+  const trayFns = useMemo(
+    () => ({
+      openTray,
+      dismiss,
+      renderSuccess: ({
+        message,
+        primaryLabel,
+        testID,
+        secondaryLabel,
+        onSecondary,
+      }: {
+        message: string;
+        primaryLabel: string;
+        testID: string;
+        secondaryLabel?: string;
+        onSecondary?: () => void;
+      }) => (
+        <SHCTrayActionWeb
+          message={message}
+          primaryLabel={primaryLabel}
+          onPrimary={dismiss}
+          secondaryLabel={secondaryLabel}
+          onSecondary={onSecondary}
+          testID={testID}
+        />
+      ),
+      renderError: ({ id, message }: { id: string; message: string }) => (
+        <SHCTrayActionWeb
+          message={message}
+          primaryLabel="OK"
+          onPrimary={dismiss}
+          testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
+        />
+      ),
+    }),
+    [dismiss, openTray]
+  );
+
   const openReviewTray = useCallback(() => {
     if (!id) return;
-    openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
-      <OrderReviewTrayContentWeb
-        orderId={id}
-        onSuccess={() => {
-          dismiss();
-          openTray(
-            { id: 'review-success', title: 'Thank you', height: 'compact' },
-            <SHCTrayActionWeb
-              message="Your review helps other families find trusted home cooks."
-              primaryLabel="Done"
-              onPrimary={dismiss}
-              testID="review-success-tray"
-            />
-          );
-        }}
-        onError={(message) => {
-          openTray(
-            { id: 'review-error', title: 'Review failed', height: 'compact' },
-            <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="review-error-tray" />
-          );
-        }}
-      />
-    ));
-  }, [dismiss, id, openTray]);
+    openOrderReviewTray(id, submitReview, trayFns, SHCOrderReviewTrayContentWeb);
+  }, [id, trayFns]);
 
   const openDisputeTray = useCallback(() => {
     if (!id) return;
-    openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
-      <OrderDisputeTrayContentWeb
-        orderId={id}
-        onSuccess={() => {
-          dismiss();
-          openTray(
-            { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
-            <SHCTrayActionWeb
-              message="Ops will review this order and follow up with you."
-              primaryLabel="Done"
-              onPrimary={dismiss}
-              testID="dispute-success-tray"
-            />
-          );
-        }}
-        onError={(message) => {
-          openTray(
-            { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
-            <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="dispute-error-tray" />
-          );
-        }}
-      />
-    ));
-  }, [dismiss, id, openTray]);
+    openOrderDisputeTray(id, submitOrderDispute, trayFns, SHCOrderDisputeTrayContentWeb, {
+      onMessageCook: () => {
+        dismiss();
+        document.getElementById('order-chat-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      },
+    });
+  }, [dismiss, id, trayFns]);
 
   if ((!maestroE2e && isLoading) || !order) {
     return (
@@ -231,7 +143,7 @@ export default function TrackOrder() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
       <GourmeatScreenHeader
         title={getOrderStatusLabel(status)}
         subtitle={`Order ${id}`}
@@ -275,7 +187,9 @@ export default function TrackOrder() {
         </p>
       </SHCCard>
 
-      <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Chat</SHCSectionTitle>
+      <div id="order-chat-section">
+        <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Chat</SHCSectionTitle>
+      </div>
       <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
@@ -324,7 +238,7 @@ export default function TrackOrder() {
       {existingReview && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-review-submitted">
           <SHCSectionTitle>Your review</SHCSectionTitle>
-          <p className="text-amber-500 text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
+          <p className="text-[#FFB800] text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
           {existingReview.body ? <p className="text-sm text-[#5C5144] mt-2">{existingReview.body}</p> : null}
         </SHCCard>
       )}

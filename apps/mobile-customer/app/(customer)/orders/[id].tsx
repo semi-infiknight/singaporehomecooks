@@ -13,8 +13,8 @@ import {
   shcSpacing,
   useSHCTray,
   SHCTrayAction,
-  SHCOrderReviewTrayContent,
-  SHCOrderDisputeTrayContent,
+  openOrderReviewTray,
+  openOrderDisputeTray,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -81,64 +81,56 @@ export default function OrderTracking() {
     [disputesRaw, orderId, maestroE2e]
   );
 
+  const trayFns = useMemo(
+    () => ({
+      openTray,
+      dismiss,
+      renderSuccess: ({
+        message,
+        primaryLabel,
+        testID,
+        secondaryLabel,
+        onSecondary,
+      }: {
+        message: string;
+        primaryLabel: string;
+        testID: string;
+        secondaryLabel?: string;
+        onSecondary?: () => void;
+      }) => (
+        <SHCTrayAction
+          message={message}
+          primaryLabel={primaryLabel}
+          onPrimary={dismiss}
+          secondaryLabel={secondaryLabel}
+          onSecondary={onSecondary}
+          testID={testID}
+        />
+      ),
+      renderError: ({ id, message }: { id: string; message: string }) => (
+        <SHCTrayAction
+          message={message}
+          primaryLabel="OK"
+          onPrimary={dismiss}
+          testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
+        />
+      ),
+    }),
+    [dismiss, openTray]
+  );
+
   const openReviewTray = useCallback(() => {
-    openTray({ id: 'order-review', title: 'Leave a review', height: 'medium' }, () => (
-      <SHCOrderReviewTrayContent
-        orderId={orderId}
-        submitReviewFn={submitReview}
-        onSuccess={() => {
-          dismiss();
-          openTray(
-            { id: 'review-success', title: 'Thank you', height: 'compact' },
-            <SHCTrayAction
-              message="Your review helps other families find trusted home cooks."
-              primaryLabel="Done"
-              onPrimary={dismiss}
-              testID="review-success-tray"
-            />
-          );
-        }}
-        onError={(message) => {
-          openTray(
-            { id: 'review-error', title: 'Review failed', height: 'compact' },
-            <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} />
-          );
-        }}
-      />
-    ));
-  }, [dismiss, openTray, orderId]);
+    openOrderReviewTray(orderId, submitReview, trayFns);
+  }, [orderId, trayFns]);
 
   const openDisputeTray = useCallback(() => {
-    openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
-      <SHCOrderDisputeTrayContent
-        orderId={orderId}
-        submitDisputeFn={submitOrderDispute}
-        onSuccess={() => {
-          dismiss();
-          openTray(
-            { id: 'dispute-success', title: 'Issue reported', height: 'compact' },
-            <SHCTrayAction
-              message="Ops will review this order and follow up with you."
-              primaryLabel="Got it"
-              onPrimary={dismiss}
-              secondaryLabel="Message your cook"
-              onSecondary={() => {
-                dismiss();
-                router.push(`/(shared)/chat/${orderId}` as any);
-              }}
-              testID="dispute-success-tray"
-            />
-          );
-        }}
-        onError={(message) => {
-          openTray(
-            { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
-            <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} />
-          );
-        }}
-      />
-    ));
-  }, [dismiss, openTray, orderId, router]);
+    openOrderDisputeTray(orderId, submitOrderDispute, trayFns, {
+      onMessageCook: () => {
+        dismiss();
+        router.push(`/(shared)/chat/${orderId}` as any);
+      },
+    });
+  }, [dismiss, orderId, router, trayFns]);
 
   if (!order) {
     return (
