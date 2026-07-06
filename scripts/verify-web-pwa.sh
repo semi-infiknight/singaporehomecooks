@@ -36,6 +36,14 @@ else
   echo "OK: manifest.json valid standalone PWA"
 fi
 
+echo "=== Build fingerprint unit test ==="
+if (cd "$WEB" && pnpm test); then
+  echo "OK: build-fingerprint tests passed"
+else
+  echo "FAIL: build-fingerprint tests failed"
+  FAIL=1
+fi
+
 echo "=== Web production build ==="
 if (cd "$WEB" && pnpm exec next build >/dev/null); then
   echo "OK: next build succeeded"
