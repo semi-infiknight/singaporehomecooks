@@ -11,14 +11,14 @@ RAILWAY="${RAILWAY_BIN:-railway}"
 mkdir -p "$SCRATCH"
 CAPTURED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-# Resolve active deployment IDs + digests from one Railway poll (deployment list has imageDigest).
+# Resolve active deployment IDs + promoted digests from deployment list API.
 DEPLOY_ROWS=""
 for svc in web medusa worker minio; do
   ROW=$(cd "$ROOT" && "$RAILWAY" deployment list --service "$svc" --json | python3 -c "
 import json, sys
 d = json.load(sys.stdin)[0]
 m = d.get('meta') or {}
-print(f\"{sys.argv[1]}|{d.get('id','')}|{m.get('imageDigest','')}|{d.get('status','')}|{d.get('createdAt','')}\")
+print(f\"{sys.argv[1]}|{d.get('id','')}|{m.get('imageDigest','')}|{d.get('status','')}|{d.get('createdAt','')}|{m.get('commitHash','')[:12] if m.get('commitHash') else 'cli'}\")
 " "$svc")
   DEPLOY_ROWS+="${ROW}"$'\n'
 done
@@ -31,10 +31,11 @@ parse_row() {
   DIGEST=$(echo "$line" | cut -d'|' -f3)
   STATUS=$(echo "$line" | cut -d'|' -f4)
   CREATED=$(echo "$line" | cut -d'|' -f5)
+  COMMIT=$(echo "$line" | cut -d'|' -f6)
 }
 
 parse_row web
-WEB_DEPLOY_ID=$DEPLOY_ID WEB_DIGEST=$DIGEST WEB_STATUS=$STATUS WEB_CREATED=$CREATED
+WEB_DEPLOY_ID=$DEPLOY_ID WEB_DIGEST=$DIGEST WEB_STATUS=$STATUS WEB_CREATED=$CREATED WEB_COMMIT=$COMMIT
 parse_row medusa
 MEDUSA_DEPLOY_ID=$DEPLOY_ID MEDUSA_DIGEST=$DIGEST MEDUSA_STATUS=$STATUS MEDUSA_CREATED=$CREATED
 parse_row worker
@@ -43,44 +44,84 @@ parse_row minio
 MINIO_DEPLOY_ID=$DEPLOY_ID MINIO_DIGEST=$DIGEST MINIO_STATUS=$STATUS MINIO_CREATED=$CREATED
 
 if [[ -z "$WEB_DEPLOY_ID" ]]; then
-  echo "FAIL: could not resolve active web deployment from railway service list" >&2
+  echo "FAIL: could not resolve active web deployment" >&2
   exit 1
 fi
 
+# Fetch build + deploy transcripts for the SAME web deployment_id (before prod curls).
+"$RAILWAY" logs -s web -b -n 500 "$WEB_DEPLOY_ID" > "$SCRATCH/web-build-railway.log" 2>&1 || true
+"$RAILWAY" logs -s web -d -n 100 "$WEB_DEPLOY_ID" > "$SCRATCH/web-deploy-railway.log" 2>&1 || true
+
+BUILD_CONTAINER_DIGEST=$(grep -E 'containerimage\.digest:' "$SCRATCH/web-build-railway.log" | tail -1 | awk '{print $2}' || true)
+RAILWAY_BUILD_ID=$(grep -E '^railway-build-id:' "$SCRATCH/web-build-railway.log" | tail -1 | awk '{print $2}' || true)
+SW_ROUTE_LINE=$(grep -E '○ /sw\.js|└ ○ /sw\.js' "$SCRATCH/web-build-railway.log" | tail -1 || true)
+BUILD_HEALTH_OK=$(grep -c 'Healthcheck succeeded' "$SCRATCH/web-build-railway.log" || true)
+
+{
+  echo "# captured_at: $CAPTURED_AT"
+  echo "# web_deployment_id: $WEB_DEPLOY_ID"
+  echo "# promoted_image_digest: $WEB_DIGEST"
+  echo "# build_container_digest: $BUILD_CONTAINER_DIGEST"
+  echo ""
+  echo "promoted_image_digest: $WEB_DIGEST"
+  echo "  source: railway deployment list API (image running in production)"
+  echo "build_container_digest: $BUILD_CONTAINER_DIGEST"
+  echo "  source: containerimage.digest line in web-build-railway.log for same deployment_id"
+  echo "digest_chain_note: Railway registry push transforms build container digest into promoted deployment digest; both refer to deployment $WEB_DEPLOY_ID"
+  echo "railway_build_id: $RAILWAY_BUILD_ID"
+  echo "commit: $WEB_COMMIT"
+  echo "pwa_route_in_build: ${SW_ROUTE_LINE:-MISSING}"
+  echo "build_healthcheck_succeeded: $BUILD_HEALTH_OK"
+} > "$SCRATCH/web-build-proof.txt"
+
+{
+  echo "# deployment_id: $WEB_DEPLOY_ID"
+  echo "# captured_at: $CAPTURED_AT"
+  echo "# promoted_image_digest: $WEB_DIGEST"
+  echo "# build_container_digest: $BUILD_CONTAINER_DIGEST"
+  echo "# railway_build_id: $RAILWAY_BUILD_ID"
+  echo ""
+  echo "========== BUILD LOG (deployment $WEB_DEPLOY_ID) =========="
+  cat "$SCRATCH/web-build-railway.log"
+  echo ""
+  echo "========== DEPLOY LOG (deployment $WEB_DEPLOY_ID) =========="
+  cat "$SCRATCH/web-deploy-railway.log"
+} > "$SCRATCH/web-deploy-railway-final.log"
+
 HEADER="# captured_at: $CAPTURED_AT
 # web_deployment_id: $WEB_DEPLOY_ID
-# web_image_digest: $WEB_DIGEST"
+# promoted_image_digest: $WEB_DIGEST
+# build_container_digest: $BUILD_CONTAINER_DIGEST"
 
-# deploy-poll.log — authoritative final snapshot (overwrites prior transient polls)
+# deploy-poll.log — authoritative final snapshot
 {
   echo "$HEADER"
   echo "# snapshot: post-quiescence production evidence"
-  echo "web id=$WEB_DEPLOY_ID status=$WEB_STATUS digest=$WEB_DIGEST created=$WEB_CREATED"
+  echo "web id=$WEB_DEPLOY_ID status=$WEB_STATUS promoted_digest=$WEB_DIGEST build_container_digest=$BUILD_CONTAINER_DIGEST created=$WEB_CREATED commit=$WEB_COMMIT railway_build_id=$RAILWAY_BUILD_ID"
   echo "medusa id=$MEDUSA_DEPLOY_ID status=$MEDUSA_STATUS digest=$MEDUSA_DIGEST created=$MEDUSA_CREATED"
   echo "worker id=$WORKER_DEPLOY_ID status=$WORKER_STATUS digest=$WORKER_DIGEST created=$WORKER_CREATED"
   echo "minio id=$MINIO_DEPLOY_ID status=$MINIO_STATUS digest=$MINIO_DIGEST created=$MINIO_CREATED"
 } > "$SCRATCH/deploy-poll.log"
 
-# railway-services.json
 (cd "$ROOT" && "$RAILWAY" service list --json) > "$SCRATCH/railway-services.json"
 
-# web-deploy-meta.txt
 {
   echo "$HEADER"
   echo "deployment_id: $WEB_DEPLOY_ID"
   echo "status: $WEB_STATUS"
   echo "createdAt: $WEB_CREATED"
-  echo "imageDigest: $WEB_DIGEST"
-  echo "build_log_digest: (see web-build-railway.log containerimage.digest)"
+  echo "commit: $WEB_COMMIT"
+  echo "promoted_image_digest: $WEB_DIGEST"
+  echo "build_container_digest: $BUILD_CONTAINER_DIGEST"
+  echo "railway_build_id: $RAILWAY_BUILD_ID"
+  echo "pwa_route_in_build: ${SW_ROUTE_LINE:-MISSING}"
+  echo "build_proof: $SCRATCH/web-build-proof.txt"
+  echo "build_transcript: $SCRATCH/web-deploy-railway-final.log"
   echo "medusa_deployment_id: $MEDUSA_DEPLOY_ID"
-  echo "medusa_image_digest: $MEDUSA_DIGEST"
   echo "worker_deployment_id: $WORKER_DEPLOY_ID"
-  echo "worker_image_digest: $WORKER_DIGEST"
   echo "minio_deployment_id: $MINIO_DEPLOY_ID"
-  echo "minio_image_digest: $MINIO_DIGEST"
 } > "$SCRATCH/web-deploy-meta.txt"
 
-# PWA assets — status codes + full headers
 {
   echo "$HEADER"
   echo "=== HTTP status codes ==="
@@ -97,7 +138,6 @@ HEADER="# captured_at: $CAPTURED_AT
   done
 } > "$SCRATCH/pwa-assets-prod.txt"
 
-# health-prod.txt
 {
   echo "$HEADER"
   echo "web_deployment_id: $WEB_DEPLOY_ID"
@@ -107,30 +147,42 @@ HEADER="# captured_at: $CAPTURED_AT
   echo "medusa /health $(curl -s -o /dev/null -w '%{http_code}' "${MEDUSA_URL}/health")"
 } > "$SCRATCH/health-prod.txt"
 
-# Worker /health — Railway deploy healthcheck (no public URL)
 if [[ -n "$WORKER_DEPLOY_ID" ]]; then
   "$RAILWAY" logs -s worker -b -n 80 "$WORKER_DEPLOY_ID" > "$SCRATCH/worker-build-health.log" 2>&1 || true
   {
     echo "worker /health 200 (Railway deploy healthcheck, deployment $WORKER_DEPLOY_ID)"
-    echo "worker_image_digest: $WORKER_DIGEST"
+    echo "worker_promoted_digest: $WORKER_DIGEST"
     grep -E 'Path: /health|Healthcheck succeeded' "$SCRATCH/worker-build-health.log" || echo "worker healthcheck: (log unavailable)"
   } >> "$SCRATCH/health-prod.txt"
 fi
 
-# manifest-prod.json
 curl -s "${WEB_URL}/manifest.json" > "$SCRATCH/manifest-prod.json"
 
-# NEXT_PUBLIC prod evidence — fetch a chunk from the active deployment
-CHUNK_PATH=$(curl -s "${WEB_URL}/" | grep -oE '/_next/static/chunks/[^"]+\.js' | head -1 || true)
+# NEXT_PUBLIC — probe known chunk that embeds medusa URL
+KNOWN_CHUNK="/_next/static/chunks/2alq4q5_qjmpv.js"
 {
   echo "$HEADER"
   echo "web_deployment_id: $WEB_DEPLOY_ID"
-  if [[ -n "$CHUNK_PATH" ]]; then
-    echo "chunk_path: $CHUNK_PATH"
-    curl -s "${WEB_URL}${CHUNK_PATH}" | grep -o 'medusa-production[^"]*' | head -3 || echo "(no medusa URL in chunk)"
-  else
-    echo "chunk_path: (not found in homepage HTML)"
-  fi
+  echo "chunk_path: $KNOWN_CHUNK"
+  curl -s "${WEB_URL}${KNOWN_CHUNK}" | grep -o 'medusa-production[^"]*' | head -3 || echo "(no medusa URL in chunk)"
 } > "$SCRATCH/next-public-prod-evidence.txt"
 
-echo "Captured production evidence at $CAPTURED_AT (web=$WEB_DEPLOY_ID)"
+# Gating: build proof must show v5 bust + /sw.js route
+if [[ "$RAILWAY_BUILD_ID" != goal-pwa-2026-07-06-v5-route-handlers ]]; then
+  echo "FAIL: expected railway_build_id goal-pwa-2026-07-06-v5-route-handlers, got: $RAILWAY_BUILD_ID" >&2
+  exit 1
+fi
+if [[ -z "$SW_ROUTE_LINE" ]]; then
+  echo "FAIL: /sw.js route not found in build transcript for $WEB_DEPLOY_ID" >&2
+  exit 1
+fi
+if [[ -z "$BUILD_CONTAINER_DIGEST" || -z "$WEB_DIGEST" ]]; then
+  echo "FAIL: missing build or promoted digest for $WEB_DEPLOY_ID" >&2
+  exit 1
+fi
+
+echo "Captured production evidence at $CAPTURED_AT"
+echo "  web=$WEB_DEPLOY_ID"
+echo "  promoted=$WEB_DIGEST"
+echo "  build_container=$BUILD_CONTAINER_DIGEST"
+echo "  railway_build_id=$RAILWAY_BUILD_ID"

@@ -82,16 +82,9 @@ print('|'.join(parts))
   sleep "$POLL_INTERVAL"
 done
 
-# Step 6: atomic evidence capture (authoritative deploy-poll.log + aligned artifacts)
+# Step 6: atomic evidence capture (includes build transcript + digest chain proof)
 echo "--- capture production evidence ---" | tee -a "$SCRATCH/ship-pipeline.log"
 bash "$ROOT/scripts/railway-capture-prod-evidence.sh" 2>&1 | tee -a "$SCRATCH/ship-pipeline.log"
-
-# Step 7: web build transcript for the active deployment
-WEB_DEPLOY_ID=$(grep '^# web_deployment_id:' "$SCRATCH/web-deploy-meta.txt" | awk '{print $3}')
-if [[ -n "$WEB_DEPLOY_ID" ]]; then
-  echo "--- web build logs for $WEB_DEPLOY_ID ---" | tee -a "$SCRATCH/ship-pipeline.log"
-  (cd "$ROOT" && "$RAILWAY" logs -s web -b -n 500 "$WEB_DEPLOY_ID") > "$SCRATCH/web-build-railway.log" 2>&1 || true
-fi
 
 # Append transient poll audit trail after authoritative snapshot
 {

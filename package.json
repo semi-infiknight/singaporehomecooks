@@ -51,7 +51,8 @@
     "railway:configure-minio": "node scripts/railway-configure-service.mjs --service minio --config railway.minio.toml --dockerfile apps/minio/Dockerfile --no-redeploy",
     "railway:wire": "node scripts/railway-wire-references.mjs",
     "railway:cleanup": "node scripts/railway-cleanup.mjs",
-    "railway:ship": "bash scripts/railway-ship-pwa.sh"
+    "railway:ship": "bash scripts/railway-ship-pwa.sh",
+    "railway:verify-pwa": "bash scripts/railway-verify-pwa-evidence.sh"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
