@@ -22,14 +22,15 @@ RUN pnpm --filter @shc/api-client build
 RUN pnpm --filter web build
 
 FROM node:22-alpine AS runner
+RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Standalone server + static assets + public PWA files (manifest, sw.js, icons)
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build /app/apps/web/public ./apps/web/public
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages ./packages
+COPY --from=build /app/apps/web ./apps/web
+COPY package.json pnpm-workspace.yaml ./
 
 WORKDIR /app/apps/web
 EXPOSE 3001
-CMD ["node", "server.js"]
+CMD ["pnpm", "start"]
