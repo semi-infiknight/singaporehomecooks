@@ -82,7 +82,7 @@ print('|'.join(parts))
   sleep "$POLL_INTERVAL"
 done
 
-# Step 6: atomic evidence capture (includes build transcript + digest chain proof)
+# Step 6: atomic evidence capture (runtime fingerprint gate)
 echo "--- capture production evidence ---" | tee -a "$SCRATCH/ship-pipeline.log"
 bash "$ROOT/scripts/railway-capture-prod-evidence.sh" 2>&1 | tee -a "$SCRATCH/ship-pipeline.log"
 

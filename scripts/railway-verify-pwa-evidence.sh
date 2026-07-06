@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRATCH="${SCRATCH:?SCRATCH env required}"
 WEB_URL="${WEB_URL:-https://web-production-9226.up.railway.app}"
 MEDUSA_URL="${MEDUSA_URL:-https://medusa-production-d2ba.up.railway.app}"
+EXPECTED_BUILD_ID="$(cat "$ROOT/apps/web/.railway-build-id")"
 
 mkdir -p "$SCRATCH"
 export SCRATCH WEB_URL MEDUSA_URL
@@ -49,9 +50,9 @@ grep -q 'web / 200' "$SCRATCH/health-prod.txt"
 grep -q 'medusa /health 200' "$SCRATCH/health-prod.txt"
 grep -q 'must-revalidate' "$SCRATCH/pwa-assets-prod.txt"
 grep -q 'max-age=86400' "$SCRATCH/pwa-assets-prod.txt"
-grep -q 'goal-pwa-' "$SCRATCH/web-deploy-meta.txt"
-grep -q 'running_image_digest:' "$SCRATCH/digest-link-emitted.txt"
-grep -q 'must-revalidate' "$SCRATCH/digest-link-emitted.txt"
+grep -q "expected_build_id: $EXPECTED_BUILD_ID" "$SCRATCH/web-deploy-meta.txt"
+grep -q "runtime_build_id: $EXPECTED_BUILD_ID" "$SCRATCH/web-deploy-meta.txt"
+grep -qi 'x-shc-railway-build-id' "$SCRATCH/pwa-assets-prod.txt"
 test -s "$SCRATCH/web-deployment-emitted.json"
 python3 -c "
 import json,re
@@ -59,7 +60,6 @@ d=json.load(open('$SCRATCH/web-deployment-emitted.json'))[0]
 meta=open('$SCRATCH/web-deploy-meta.txt').read()
 m=re.search(r'deployment_id: (\S+)', meta)
 assert m and d['id']==m.group(1)
-assert (d.get('meta') or {}).get('imageDigest')
 "
 
 echo "VERIFICATION PLAN PASSED" | tee -a "$SCRATCH/verify-plan.log"

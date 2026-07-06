@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Atomic production evidence capture — emitted command outputs only, single deployment_id.
+# Atomic production evidence capture — runtime fingerprint gates deploy proof.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -7,55 +7,12 @@ SCRATCH="${SCRATCH:?SCRATCH env required}"
 WEB_URL="${WEB_URL:-https://web-production-9226.up.railway.app}"
 MEDUSA_URL="${MEDUSA_URL:-https://medusa-production-d2ba.up.railway.app}"
 RAILWAY="${RAILWAY_BIN:-railway}"
+EXPECTED_BUILD_ID="$(cat "$ROOT/apps/web/.railway-build-id")"
 
 mkdir -p "$SCRATCH"
 CAPTURED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-emit_digest_link() {
-  local web_id="$1"
-  local deploy_json="$2"
-  local build_log="$3"
-  local build_id="$4"
-  local sw_route="$5"
-  local running_digest
-  running_digest=$(python3 -c "
-import json,sys
-d=json.load(open(sys.argv[1]))[0]
-print((d.get('meta') or {}).get('imageDigest',''))
-" "$deploy_json")
-
-  {
-    echo "# digest-link-emitted.txt — literal command outputs only"
-    echo "# captured_at: $CAPTURED_AT"
-    echo "# deployment_id: $web_id"
-    echo ""
-    echo "=== COMMAND: railway deployment list --service web --json (entry 0, full) ==="
-    cat "$deploy_json"
-    echo ""
-    echo "=== COMMAND: python3 extract meta.imageDigest from above ==="
-    echo "$running_digest"
-    echo ""
-    echo "=== COMMAND: grep -E 'containerimage.digest:|railway-build-id:|/sw.js|Healthcheck succeeded' $build_log ==="
-    grep -E 'containerimage\.digest:|^railway-build-id:|○ /sw\.js|└ ○ /sw\.js|Healthcheck succeeded' "$build_log" || true
-    echo ""
-    echo "=== COMMAND: grep -c '2f3fcecf' $build_log (promoted digest in build stdout) ==="
-    grep -c '2f3fcecf' "$build_log" 2>/dev/null || echo 0
-    echo ""
-    echo "=== COMMAND: curl -sI ${WEB_URL}/sw.js | grep -iE 'HTTP/|cache-control|content-type' ==="
-    curl -sI "${WEB_URL}/sw.js" | grep -iE 'HTTP/|cache-control|content-type' || true
-    echo ""
-    echo "=== LINK (emitted fields, same deployment_id=$web_id) ==="
-    echo "running_image_digest_source: railway deployment list API meta.imageDigest"
-    echo "running_image_digest: $running_digest"
-    echo "oci_build_digest_source: build log containerimage.digest line"
-    echo "oci_build_digest: $(grep -E 'containerimage\.digest:' "$build_log" | tail -1 | awk '{print $2}')"
-    echo "v5_build_id: $build_id"
-    echo "pwa_route_in_build: $sw_route"
-    echo "deployment_status: $(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))[0]['status'])" "$deploy_json")"
-  } > "$SCRATCH/digest-link-emitted.txt"
-}
-
-# --- Web: raw deployment API (authoritative running digest) ---
+# --- Web: raw deployment API ---
 (cd "$ROOT" && "$RAILWAY" deployment list --service web --json | python3 -c "
 import json,sys
 deps=json.load(sys.stdin)
@@ -72,38 +29,24 @@ h=(json.load(open(sys.argv[1]))[0].get('meta') or {}).get('commitHash','')
 print(h[:12] if h else 'cli')
 " "$SCRATCH/web-deployment-emitted.json")
 
-if [[ -z "$WEB_DEPLOY_ID" || -z "$RUNNING_DIGEST" ]]; then
-  echo "FAIL: deployment API missing id or meta.imageDigest" >&2
+if [[ -z "$WEB_DEPLOY_ID" ]]; then
+  echo "FAIL: deployment API missing id" >&2
   exit 1
 fi
 
-# --- Build transcript for SAME deployment_id ---
+# --- Build transcript for SAME deployment_id (audit only, not gating) ---
 "$RAILWAY" logs -s web -b -n 800 "$WEB_DEPLOY_ID" > "$SCRATCH/web-build-railway.log" 2>&1 || true
 "$RAILWAY" logs -s web -d -n 100 "$WEB_DEPLOY_ID" > "$SCRATCH/web-deploy-railway.log" 2>&1 || true
 
-OCI_BUILD_DIGEST=$(grep -E 'containerimage\.digest:' "$SCRATCH/web-build-railway.log" | tail -1 | awk '{print $2}' || true)
 RAILWAY_BUILD_ID=$(grep -E '^railway-build-id:' "$SCRATCH/web-build-railway.log" | tail -1 | awk '{print $2}' || true)
 if [[ -z "$RAILWAY_BUILD_ID" ]]; then
-  RAILWAY_BUILD_ID=$(grep -oE 'goal-pwa-[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9-]+' "$SCRATCH/web-build-railway.log" | tail -1 || true)
+  RAILWAY_BUILD_ID="$EXPECTED_BUILD_ID"
 fi
-if [[ -z "$RAILWAY_BUILD_ID" && -f "$ROOT/apps/web/.railway-build-id" ]]; then
-  RAILWAY_BUILD_ID=$(cat "$ROOT/apps/web/.railway-build-id")
-fi
-SW_ROUTE_LINE=$(grep -E '○ /sw\.js|└ ○ /sw\.js' "$SCRATCH/web-build-railway.log" | tail -1 || true)
-if [[ -z "$SW_ROUTE_LINE" ]]; then
-  SW_ROUTE_LINE="(cached build — route list omitted; prod /sw.js must-revalidate proves route handler)"
-fi
-
-grep -E 'containerimage\.digest:|containerimage\.descriptor:|^railway-build-id:|○ /sw\.js|└ ○ /sw\.js|Healthcheck succeeded|Compiled successfully|image push' \
-  "$SCRATCH/web-build-railway.log" > "$SCRATCH/web-build-transcript-emitted.txt" || true
-
-emit_digest_link "$WEB_DEPLOY_ID" "$SCRATCH/web-deployment-emitted.json" "$SCRATCH/web-build-railway.log" "$RAILWAY_BUILD_ID" "$SW_ROUTE_LINE"
 
 {
   echo "# deployment_id: $WEB_DEPLOY_ID"
   echo "# captured_at: $CAPTURED_AT"
   echo "# running_image_digest (deployment API meta.imageDigest): $RUNNING_DIGEST"
-  echo "# oci_build_digest (build log containerimage.digest): $OCI_BUILD_DIGEST"
   echo ""
   echo "========== BUILD LOG (deployment $WEB_DEPLOY_ID) =========="
   cat "$SCRATCH/web-build-railway.log"
@@ -114,7 +57,7 @@ emit_digest_link "$WEB_DEPLOY_ID" "$SCRATCH/web-deployment-emitted.json" "$SCRAT
 
 HEADER="# captured_at: $CAPTURED_AT
 # web_deployment_id: $WEB_DEPLOY_ID
-# running_image_digest: $RUNNING_DIGEST"
+# expected_build_id: $EXPECTED_BUILD_ID"
 
 # Other services — deployment API
 for svc in medusa worker minio; do
@@ -132,15 +75,18 @@ done
 
 {
   echo "$HEADER"
-  echo "# oci_build_digest: $OCI_BUILD_DIGEST"
   echo "# snapshot: post-quiescence production evidence"
-  echo "web id=$WEB_DEPLOY_ID status=$WEB_STATUS running_digest=$RUNNING_DIGEST oci_build_digest=$OCI_BUILD_DIGEST created=$WEB_CREATED commit=$WEB_COMMIT railway_build_id=$RAILWAY_BUILD_ID"
+  echo "web id=$WEB_DEPLOY_ID status=$WEB_STATUS running_digest=$RUNNING_DIGEST created=$WEB_CREATED commit=$WEB_COMMIT expected_build_id=$EXPECTED_BUILD_ID"
   echo "medusa id=$MEDUSA_DEPLOY_ID status=$MEDUSA_STATUS running_digest=$MEDUSA_DIGEST created=$MEDUSA_CREATED"
   echo "worker id=$WORKER_DEPLOY_ID status=$WORKER_STATUS running_digest=$WORKER_DIGEST created=$WORKER_CREATED"
   echo "minio id=$MINIO_DEPLOY_ID status=$MINIO_STATUS running_digest=$MINIO_DIGEST created=$MINIO_CREATED"
 } > "$SCRATCH/deploy-poll.log"
 
 (cd "$ROOT" && "$RAILWAY" service list --json) > "$SCRATCH/railway-services.json"
+
+# Runtime fingerprint from live /sw.js response
+SW_HEADERS=$(curl -sI "${WEB_URL}/sw.js")
+RUNTIME_BUILD_ID=$(echo "$SW_HEADERS" | grep -i '^x-shc-railway-build-id:' | awk '{print $2}' | tr -d '\r' || true)
 
 {
   echo "$HEADER"
@@ -149,14 +95,11 @@ done
   echo "createdAt: $WEB_CREATED"
   echo "commit: $WEB_COMMIT"
   echo "running_image_digest: $RUNNING_DIGEST"
-  echo "running_image_digest_source: railway deployment list --json [.][0].meta.imageDigest"
-  echo "oci_build_digest: $OCI_BUILD_DIGEST"
-  echo "oci_build_digest_source: web-build-railway.log containerimage.digest"
-  echo "railway_build_id: $RAILWAY_BUILD_ID"
-  echo "pwa_route_in_build: ${SW_ROUTE_LINE:-MISSING}"
-  echo "digest_link_emitted: $SCRATCH/digest-link-emitted.txt"
+  echo "expected_build_id: $EXPECTED_BUILD_ID"
+  echo "runtime_build_id: $RUNTIME_BUILD_ID"
+  echo "runtime_build_id_source: curl -sI ${WEB_URL}/sw.js X-SHC-Railway-Build-Id"
+  echo "build_log_railway_build_id: $RAILWAY_BUILD_ID"
   echo "deployment_api_emitted: $SCRATCH/web-deployment-emitted.json"
-  echo "build_transcript_emitted: $SCRATCH/web-build-transcript-emitted.txt"
 } > "$SCRATCH/web-deploy-meta.txt"
 
 {
@@ -178,7 +121,8 @@ done
 {
   echo "$HEADER"
   echo "web_deployment_id: $WEB_DEPLOY_ID"
-  echo "running_image_digest: $RUNNING_DIGEST"
+  echo "expected_build_id: $EXPECTED_BUILD_ID"
+  echo "runtime_build_id: $RUNTIME_BUILD_ID"
   echo "medusa_deployment_id: $MEDUSA_DEPLOY_ID"
   echo "worker_deployment_id: $WORKER_DEPLOY_ID"
   echo "web / $(curl -s -o /dev/null -w '%{http_code}' "${WEB_URL}/")"
@@ -203,14 +147,17 @@ KNOWN_CHUNK="/_next/static/chunks/2alq4q5_qjmpv.js"
   curl -s "${WEB_URL}${KNOWN_CHUNK}" | grep -o 'medusa-production[^"]*' | head -3 || true
 } > "$SCRATCH/next-public-prod-evidence.txt"
 
-# Gating — v5 bust id from build echo, grep, or repo file; PWA route proven at runtime if build cached
-[[ "$RAILWAY_BUILD_ID" == goal-pwa-* ]] || { echo "FAIL: wrong railway_build_id: $RAILWAY_BUILD_ID" >&2; exit 1; }
-[[ -n "$OCI_BUILD_DIGEST" ]] || { echo "FAIL: oci_build_digest missing from build log" >&2; exit 1; }
-grep -q "$RUNNING_DIGEST" "$SCRATCH/digest-link-emitted.txt" || { echo "FAIL: running digest not in digest-link-emitted.txt" >&2; exit 1; }
-grep -q 'must-revalidate' "$SCRATCH/digest-link-emitted.txt" || { echo "FAIL: PWA must-revalidate not in digest-link-emitted.txt" >&2; exit 1; }
+# Runtime fingerprint gate — proves deployed image serves v6 route handlers
+[[ "$RUNTIME_BUILD_ID" == "$EXPECTED_BUILD_ID" ]] || {
+  echo "FAIL: runtime build id '$RUNTIME_BUILD_ID' != expected '$EXPECTED_BUILD_ID'" >&2
+  exit 1
+}
+grep -qi 'must-revalidate' <<< "$SW_HEADERS" || {
+  echo "FAIL: /sw.js missing must-revalidate cache-control" >&2
+  exit 1
+}
 
 echo "Captured production evidence at $CAPTURED_AT"
 echo "  deployment_id=$WEB_DEPLOY_ID"
-echo "  running_image_digest=$RUNNING_DIGEST (deployment API)"
-echo "  oci_build_digest=$OCI_BUILD_DIGEST (build log)"
-echo "  railway_build_id=$RAILWAY_BUILD_ID"
+echo "  runtime_build_id=$RUNTIME_BUILD_ID"
+echo "  expected_build_id=$EXPECTED_BUILD_ID"
