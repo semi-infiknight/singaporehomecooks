@@ -7,6 +7,7 @@
  * runtime but leave services visually disconnected on the dashboard.
  *
  * Usage: pnpm railway:wire
+ *         pnpm railway:wire -- --no-redeploy
  * Prereqs: railway login && railway link (repo root)
  */
 import { execSync } from "node:child_process";
@@ -14,6 +15,7 @@ import path from "node:path";
 
 const ROOT = path.join(import.meta.dirname, "..");
 const RAILWAY = process.env.RAILWAY_BIN ?? "railway";
+const noRedeploy = process.argv.includes("--no-redeploy");
 
 function set(service, pairs) {
   for (const [key, value] of pairs) {
@@ -59,13 +61,19 @@ set("web", [
   ["WEB_PUBLIC_URL", "https://${{web.RAILWAY_PUBLIC_DOMAIN}}"],
 ]);
 
-console.log("\n✓ References set. Redeploying medusa, worker, web…");
-redeploy("medusa", "worker", "web");
+if (noRedeploy) {
+  console.log("\n✓ References set (--no-redeploy: skipping service redeploys).");
+} else {
+  console.log("\n✓ References set. Redeploying medusa, worker, web…");
+  redeploy("medusa", "worker", "web");
+}
 
 console.log("\nDone. Refresh the Railway canvas — you should see:");
 console.log("  medusa ── Postgres, Redis, minio");
 console.log("  worker ── Postgres, medusa");
 console.log("  web    ── medusa");
 
-console.log("\nRunning cleanup audit…");
-execSync("node scripts/railway-cleanup.mjs", { cwd: ROOT, stdio: "inherit" });
+if (!noRedeploy) {
+  console.log("\nRunning cleanup audit…");
+  execSync("node scripts/railway-cleanup.mjs", { cwd: ROOT, stdio: "inherit" });
+}
