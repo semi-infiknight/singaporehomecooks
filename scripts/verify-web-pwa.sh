@@ -18,10 +18,12 @@ check_file() {
 
 echo "=== Web PWA guard ==="
 
+PWA_ASSETS="$WEB/public/pwa-assets"
 check_file "$WEB/public/manifest.json" "manifest.json" || true
-check_file "$WEB/public/sw.js" "service worker" || true
-check_file "$WEB/public/icon.png" "PWA icon 192" || true
-check_file "$WEB/public/apple-touch-icon.png" "apple-touch-icon" || true
+check_file "$PWA_ASSETS/sw.js" "service worker" || true
+check_file "$PWA_ASSETS/icon.png" "PWA icon 192" || true
+check_file "$PWA_ASSETS/icon-512.png" "PWA icon 512" || true
+check_file "$PWA_ASSETS/apple-touch-icon.png" "apple-touch-icon" || true
 
 if ! node -e "
   const m = require('$WEB/public/manifest.json');

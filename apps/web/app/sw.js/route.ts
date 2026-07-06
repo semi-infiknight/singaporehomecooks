@@ -4,7 +4,7 @@ import { join } from 'node:path';
 export const dynamic = 'force-static';
 
 export async function GET() {
-  const body = readFileSync(join(process.cwd(), 'public', 'sw.js'), 'utf8');
+  const body = readFileSync(join(process.cwd(), 'public', 'pwa-assets', 'sw.js'), 'utf8');
   return new Response(body, {
     headers: {
       'Content-Type': 'application/javascript; charset=utf-8',
