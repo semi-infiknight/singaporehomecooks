@@ -161,20 +161,25 @@ export default function DiscoverHome() {
 
   return (
     <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8" data-testid="customer-discover-screen discover-home">
-      <GourmeatHomeHeader
-        headline="Hungry? Order & Eat."
-        locationLabel={headerLocation}
-        locationHint="Collect from"
-        avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
-        locationHref="/location"
-      />
-
-      <GourmeatSearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Search dishes, cooks, occasions…"
-        onFilterPress={() => router.push('/search')}
-      />
+      {/* Mobile: Gourmeat chrome (AppHeader is hidden below md). Desktop: search/location live in AppHeader. */}
+      <div className="md:hidden">
+        <GourmeatHomeHeader
+          headline="Hungry? Order & Eat."
+          locationLabel={headerLocation}
+          locationHint="Collect from"
+          avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+          locationHref="/location"
+        />
+        <GourmeatSearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Search dishes, cooks, occasions…"
+          onFilterPress={() => router.push('/search')}
+        />
+      </div>
+      <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-4">
+        Hungry? Order &amp; Eat.
+      </h1>
 
       {query.trim().length > 0 && (
         <SearchResultsPanel
@@ -186,7 +191,11 @@ export default function DiscoverHome() {
         />
       )}
 
-      {isGuest && <GuestBrowseBar onSignInClick={() => router.push('/login')} />}
+      {isGuest && (
+        <div className="md:hidden">
+          <GuestBrowseBar onSignInClick={() => router.push('/login')} />
+        </div>
+      )}
 
       {!query.trim() && (
         <div className="shc-section-gap mb-4">
