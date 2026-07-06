@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/useAuth';
 import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponents';
@@ -8,7 +8,13 @@ import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponent
 export default function LoginPage() {
   const { login, register } = useAuth();
   const router = useRouter();
+  const [nextPath, setNextPath] = useState('/');
   const [mode, setMode] = useState<'login' | 'register'>('login');
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next?.startsWith('/')) setNextPath(next);
+  }, []);
   const [email, setEmail] = useState('customer@shc.local');
   const [password, setPassword] = useState('customersecret');
   const [error, setError] = useState('');
@@ -21,7 +27,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') await login(email, password);
       else await register(email, password);
-      router.push('/');
+      router.push(nextPath.startsWith('/') ? nextPath : '/');
     } catch (err) {
       setError((err as Error).message);
     } finally {

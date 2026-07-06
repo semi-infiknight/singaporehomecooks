@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
@@ -27,8 +27,14 @@ import { useAuth } from '../../lib/useAuth';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { data: cart = { items: [] } } = useCart();
+  const { user, loading: authLoading } = useAuth();
+  const { data: cart = { items: [] }, isLoading: cartLoading, isFetching: cartFetching } = useCart();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/login?next=/checkout');
+    }
+  }, [authLoading, user, router]);
   const checkoutMut = useCheckout();
   const transitionMut = useTransitionOrder();
   const { data: creditsData } = useCredits();
@@ -101,7 +107,11 @@ export default function CheckoutPage() {
       }
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
-      setError({ code: err?.code, message: err?.message || 'Unable to place order. Please try again.' });
+      const message =
+        err?.message === 'Failed to fetch'
+          ? 'Could not reach the server. Check your connection and try again.'
+          : err?.message || 'Unable to place order. Please try again.';
+      setError({ code: err?.code, message });
     }
   };
 
@@ -149,11 +159,27 @@ export default function CheckoutPage() {
     );
   }
 
+  if (authLoading || cartLoading || cartFetching) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <p className="text-muted-foreground font-semibold">Loading checkout…</p>
+      </div>
+    );
+  }
+
   const items = cart.items || [];
   if (items.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
-        <SHCPageHeader title="Checkout" subtitle="Your cart is empty." backHref="/cart" backLabel="Back to cart" />
+        <SHCPageHeader
+          title="Checkout"
+          subtitle="Your cart is empty. Add dishes from Discover, then return here."
+          backHref="/cart"
+          backLabel="Back to cart"
+        />
+        <SHCButton className="mt-4" onClick={() => router.push('/')}>
+          Browse dishes
+        </SHCButton>
       </div>
     );
   }

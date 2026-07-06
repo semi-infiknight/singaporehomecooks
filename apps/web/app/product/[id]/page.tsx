@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Minus, Plus } from 'lucide-react';
@@ -30,6 +30,7 @@ import {
 import { useFavorites } from '../../../lib/useFavorites';
 
 export default function ProductDetail() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
@@ -67,6 +68,11 @@ export default function ProductDetail() {
     setError(null);
     if (!allergenAck) {
       setError('Please acknowledge allergens before adding to cart.');
+      return;
+    }
+    const { isAuthenticated } = await import('../../../lib/api-client');
+    if (!isAuthenticated()) {
+      router.push('/login?next=' + encodeURIComponent(`/product/${id}`));
       return;
     }
     try {

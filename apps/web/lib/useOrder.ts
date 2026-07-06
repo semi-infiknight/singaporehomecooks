@@ -39,7 +39,7 @@ export function useCheckout() {
     mutationFn: ({allergenAck, collection, pdpaConsent, creditsToApply=0, isCorporate=false}: any) => 
       creditsToApply || isCorporate ? checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate) : checkout(allergenAck, collection, pdpaConsent ?? true),
     onSuccess: (data:any) => { qc.invalidateQueries({queryKey:['orders']}); qc.invalidateQueries({queryKey:['cart']}); if(data?.order?.id) qc.setQueryData(['order',data.order.id], data.order); },
-    onError:(err:any)=>{ if(err?.code) throw createSHCError(err.code as SHCErrorCode, err.message||'Checkout violation'); }
+    onError:(err:any)=>{ throw err?.code ? createSHCError(err.code as SHCErrorCode, err.message||'Checkout violation') : err; }
   });
 }
 export function useTransitionOrder() {

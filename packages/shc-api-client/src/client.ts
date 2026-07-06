@@ -1,4 +1,15 @@
 import { z } from "zod";
+import type { SHCErrorCode } from "@shc/types";
+
+export class ShcRequestError extends Error {
+  code?: SHCErrorCode;
+
+  constructor(message: string, code?: SHCErrorCode) {
+    super(message);
+    this.name = "ShcRequestError";
+    this.code = code;
+  }
+}
 
 export type ShcUser = {
   role: "customer" | "cook";
@@ -35,8 +46,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     const res = await fetch(`${config.medusaBase}${path}`, { ...init, headers });
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      const msg = (errBody as any)?.error?.message || (errBody as any)?.message || `HTTP ${res.status}`;
-      throw new Error(msg);
+      const apiError = (errBody as { error?: { code?: SHCErrorCode; message?: string } }).error;
+      const msg = apiError?.message || (errBody as { message?: string }).message || `HTTP ${res.status}`;
+      const code = apiError?.code;
+      if (code) throw new ShcRequestError(msg, code);
+      throw new ShcRequestError(msg);
     }
     const json = await res.json();
     if (schema) {

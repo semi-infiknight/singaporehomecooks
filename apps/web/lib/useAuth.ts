@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   clearSession,
   getCurrentUser,
@@ -14,6 +15,7 @@ import {
 type User = ReturnType<typeof getCurrentUser>;
 
 export function useAuth() {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,15 +30,21 @@ export function useAuth() {
     const { token, user: u } = await apiLogin(email, password);
     await persistSession(token, u);
     setUser(u);
+    await queryClient.invalidateQueries({ queryKey: ['cart'] });
+    await queryClient.invalidateQueries({ queryKey: ['orders'] });
+    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
-  }, []);
+  }, [queryClient]);
 
   const register = useCallback(async (email: string, password: string) => {
     const { token, user: u } = await apiRegister(email, password);
     await persistSession(token, u);
     setUser(u);
+    await queryClient.invalidateQueries({ queryKey: ['cart'] });
+    await queryClient.invalidateQueries({ queryKey: ['orders'] });
+    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
-  }, []);
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
     await clearSession();
