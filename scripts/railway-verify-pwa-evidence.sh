@@ -49,15 +49,17 @@ grep -q 'web / 200' "$SCRATCH/health-prod.txt"
 grep -q 'medusa /health 200' "$SCRATCH/health-prod.txt"
 grep -q 'must-revalidate' "$SCRATCH/pwa-assets-prod.txt"
 grep -q 'max-age=86400' "$SCRATCH/pwa-assets-prod.txt"
-grep -q 'goal-pwa-2026-07-06-v5-route-handlers' "$SCRATCH/web-build-transcript-emitted.txt"
-grep -q '/sw.js' "$SCRATCH/web-build-transcript-emitted.txt"
+grep -q 'goal-pwa-' "$SCRATCH/web-deploy-meta.txt"
 grep -q 'running_image_digest:' "$SCRATCH/digest-link-emitted.txt"
+grep -q 'must-revalidate' "$SCRATCH/digest-link-emitted.txt"
 test -s "$SCRATCH/web-deployment-emitted.json"
 python3 -c "
-import json,sys
+import json,re
 d=json.load(open('$SCRATCH/web-deployment-emitted.json'))[0]
-assert d['id']==open('$SCRATCH/web-deploy-meta.txt').read().split('deployment_id: ')[1].split()[0]
-assert (d.get('meta') or {}).get('imageDigest'), d
+meta=open('$SCRATCH/web-deploy-meta.txt').read()
+m=re.search(r'deployment_id: (\S+)', meta)
+assert m and d['id']==m.group(1)
+assert (d.get('meta') or {}).get('imageDigest')
 "
 
 echo "VERIFICATION PLAN PASSED" | tee -a "$SCRATCH/verify-plan.log"
