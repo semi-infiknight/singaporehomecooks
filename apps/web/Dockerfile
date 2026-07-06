@@ -10,6 +10,9 @@ COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
+# Bust Railway Docker layer cache when redeploying PWA/asset fixes.
+ARG RAILWAY_DEPLOY_REVISION=25c9e02
+RUN echo "railway deploy revision: ${RAILWAY_DEPLOY_REVISION}"
 ARG NEXT_PUBLIC_SHC_API_BASE=http://localhost:9000
 ARG NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_build_placeholder
 ENV NEXT_PUBLIC_SHC_API_BASE=$NEXT_PUBLIC_SHC_API_BASE
