@@ -5,7 +5,6 @@ import {
   openOrderReviewTray as openOrderReviewTrayCore,
   openOrderDisputeTray as openOrderDisputeTrayCore,
 } from './order-tray-opener-core';
-import { SHCOrderReviewTrayContent, SHCOrderDisputeTrayContent } from './order-tray-content';
 import type {
   OrderTrayOpenFns,
   OrderReviewTrayContentProps,
@@ -25,8 +24,8 @@ export type OrderTrayTrackingInput = {
   submitOrderDispute: SubmitDisputeFn;
   trayFns: OrderTrayOpenFns;
   onMessageCook?: () => void;
-  ReviewContent?: ComponentType<OrderReviewTrayContentProps>;
-  DisputeContent?: ComponentType<OrderDisputeTrayContentProps>;
+  ReviewContent: ComponentType<OrderReviewTrayContentProps>;
+  DisputeContent: ComponentType<OrderDisputeTrayContentProps>;
 };
 
 export function createOrderTrayFns(args: {
@@ -59,8 +58,8 @@ export function useOrderTrayTracking(input: OrderTrayTrackingInput) {
     submitOrderDispute,
     trayFns,
     onMessageCook,
-    ReviewContent = SHCOrderReviewTrayContent,
-    DisputeContent = SHCOrderDisputeTrayContent,
+    ReviewContent,
+    DisputeContent,
   } = input;
 
   const openReviewTray = useCallback(() => {

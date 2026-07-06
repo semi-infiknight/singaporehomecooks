@@ -5,6 +5,7 @@ import { GourmeatPrimaryButton } from './gourmeat';
 import { shcSpacing } from './theme';
 import { useSHCTray, SHCTrayAction } from './tray';
 import { createOrderTrayFns, useOrderTrayTracking } from './order-tray-tracking';
+import { SHCOrderReviewTrayContent, SHCOrderDisputeTrayContent } from './order-tray-content';
 import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 import type { OrderTrayScreenOrder } from './order-tray-tracking';
 
@@ -64,6 +65,8 @@ export function OrderTrackingTraySection({
     submitOrderDispute,
     trayFns,
     onMessageCook,
+    ReviewContent: SHCOrderReviewTrayContent,
+    DisputeContent: SHCOrderDisputeTrayContent,
   });
 
   return (

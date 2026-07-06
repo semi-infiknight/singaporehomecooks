@@ -12,6 +12,8 @@ import {
   SHCTrayAction,
   createOrderTrayFns,
   useOrderTrayTracking,
+  SHCOrderReviewTrayContent,
+  SHCOrderDisputeTrayContent,
 } from './index';
 import { E2E_ORDER_SEED, resolveOrderForDisplay, resolveReviewForDisplay, resolveDisputesForDisplay } from '@shc/utils';
 
@@ -54,6 +56,8 @@ function HookHarness({ orderId }: { orderId: string }) {
     submitReview,
     submitOrderDispute,
     trayFns,
+    ReviewContent: SHCOrderReviewTrayContent,
+    DisputeContent: SHCOrderDisputeTrayContent,
   });
 
   if (!showReviewForm) return null;
