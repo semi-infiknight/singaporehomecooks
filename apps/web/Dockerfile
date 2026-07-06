@@ -7,6 +7,7 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
+COPY apps/web/.railway-build-id ./apps/web/.railway-build-id
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build

@@ -1,0 +1,13 @@
+node_modules
+.git
+.metro-cache
+apps/mobile-customer
+apps/mobile-cook
+apps/mobile
+apps/medusa
+apps/worker
+apps/minio
+.backup-ios
+.metro-logs
+**/node_modules
+**/.next/cache
