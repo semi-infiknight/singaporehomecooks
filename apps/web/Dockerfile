@@ -12,12 +12,13 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 # Bust Railway Docker layer cache when redeploying PWA/asset fixes.
-ARG RAILWAY_DEPLOY_REVISION=25c9e02
-RUN echo "railway deploy revision: ${RAILWAY_DEPLOY_REVISION}"
-ARG NEXT_PUBLIC_SHC_API_BASE=http://localhost:9000
-ARG NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_build_placeholder
-ENV NEXT_PUBLIC_SHC_API_BASE=$NEXT_PUBLIC_SHC_API_BASE
-ENV NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=$NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+ARG RAILWAY_DEPLOY_REVISION=goal-pwa-v3
+RUN echo "railway deploy revision: ${RAILWAY_DEPLOY_REVISION}" && cat apps/web/.railway-build-id
+# Railway service variables are injected as build-args when set on the service.
+ARG NEXT_PUBLIC_SHC_API_BASE
+ARG NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_SHC_API_BASE=${NEXT_PUBLIC_SHC_API_BASE:-http://localhost:9000}
+ENV NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-pk_build_placeholder}
 RUN pnpm --filter @shc/types build
 RUN pnpm --filter @shc/business-rules build
 RUN pnpm --filter @shc/utils build
