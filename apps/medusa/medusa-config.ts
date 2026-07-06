@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "@medusajs/framework/utils";
 import { modules } from "./src/modules";
+import { parseCorsOrigins } from "./src/utils/cors-origins";
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
 
@@ -12,14 +13,21 @@ if (isProd && (!process.env.JWT_SECRET || !process.env.COOKIE_SECRET)) {
 
 const LOCAL_CORS =
   "http://localhost:8081,http://localhost:8082,http://localhost:3000,http://localhost:3001,http://127.0.0.1:9000,http://127.0.0.1:3001,https://*.trycloudflare.com";
+
 const railwayOrigin = process.env.RAILWAY_PUBLIC_DOMAIN
-  ? `,https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-  : "";
-const webOrigin = process.env.WEB_PUBLIC_URL ? `,${process.env.WEB_PUBLIC_URL}` : "";
-const productionCors = [process.env.STORE_CORS, process.env.WEB_PUBLIC_URL, railwayOrigin ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : ""]
-  .filter(Boolean)
-  .join(",");
-const corsOrigins = isProd ? productionCors : `${LOCAL_CORS}${railwayOrigin}${webOrigin}`;
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : undefined;
+const productionCors = parseCorsOrigins(
+  process.env.STORE_CORS,
+  process.env.WEB_PUBLIC_URL,
+  railwayOrigin,
+  "http://localhost:3001",
+  "http://localhost:8081",
+  "http://localhost:8082",
+);
+const corsOrigins = isProd
+  ? productionCors
+  : parseCorsOrigins(LOCAL_CORS, railwayOrigin, process.env.WEB_PUBLIC_URL);
 
 export default defineConfig({
   projectConfig: {

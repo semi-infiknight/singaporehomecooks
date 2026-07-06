@@ -47,6 +47,16 @@ set("medusa", [
   ["MINIO_USE_SSL", "false"],
   ["MINIO_BUCKET", "shc-images"],
   ["MINIO_COMPLIANCE_BUCKET", "cook-certs"],
+  ["WEB_PUBLIC_URL", "https://${{web.RAILWAY_PUBLIC_DOMAIN}}"],
+  // Explicit origins only — never mix "*" with URLs (breaks browser sign-in CORS).
+  [
+    "STORE_CORS",
+    "https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+  ],
+  [
+    "AUTH_CORS",
+    "https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+  ],
 ]);
 
 // worker → Postgres, medusa
