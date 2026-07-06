@@ -1,5 +1,5 @@
 # Singapore Home Cooks — Next.js web (Railway)
-FROM node:22-alpine AS base
+FROM node:22-alpine3.20 AS base
 RUN corepack enable && corepack prepare pnpm@11.1.3 --activate
 WORKDIR /app
 
