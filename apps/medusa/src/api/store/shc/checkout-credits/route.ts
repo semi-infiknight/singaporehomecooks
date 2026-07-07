@@ -38,6 +38,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     if (e?.message?.includes("login required") || e?.message?.includes("Customer login")) {
       return unauthorized(res, "Customer login required");
     }
-    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", e?.message || "Checkout with credits failed") });
+    const code = e?.code || "SHC-GENERIC-001";
+    const status = ["SHC-CART-001", "SHC-CART-002", "SHC-CART-003", "SHC-CART-004"].includes(code) ? 400 : 400;
+    return res.status(status).json({
+      error: e?.code ? e : createSHCError("SHC-GENERIC-001", e?.message || "Checkout with credits failed"),
+    });
   }
 }

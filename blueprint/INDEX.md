@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Overnight launch gaps) — public platform-stats store route + tri-platform homepage counters; web Open Graph `metadataBase` fix.
+**Last Updated:** 2026-07-08 (Overnight loop iter 1) — `@shc/i18n` infra + Mandarin operational strings; checkout minimum-order hardening; search synonym depth; web push UX.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 

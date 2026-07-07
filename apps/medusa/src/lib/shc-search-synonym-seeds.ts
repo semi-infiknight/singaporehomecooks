@@ -1,0 +1,23 @@
+/** Singapore heritage dish search synonym seeds — bidirectional local food terms. */
+export const SHC_SEARCH_SYNONYM_SEEDS: Array<{ term: string; expansions: string[] }> = [
+  { term: "sotong", expansions: ["squid", "calamari", "cuttlefish"] },
+  { term: "squid", expansions: ["sotong", "calamari"] },
+  { term: "udang", expansions: ["prawn", "shrimp", "虾"] },
+  { term: "prawn", expansions: ["udang", "shrimp", "sambal prawn"] },
+  { term: "ayam", expansions: ["chicken", "poultry", "鸡"] },
+  { term: "chicken", expansions: ["ayam", "poultry"] },
+  { term: "babi", expansions: ["pork", "猪"] },
+  { term: "pork", expansions: ["babi"] },
+  { term: "ikan", expansions: ["fish", "seafood", "鱼"] },
+  { term: "fish", expansions: ["ikan", "seafood"] },
+  { term: "nasi", expansions: ["rice", "lemak", "饭"] },
+  { term: "mee", expansions: ["noodles", "面"] },
+  { term: "kueh", expansions: ["cake", "dessert", "糕"] },
+  { term: "rendang", expansions: ["beef", "curry", "干咖喱"] },
+  { term: "sambal", expansions: ["chili", "spicy", "辣椒酱"] },
+  { term: "keluak", expansions: ["buah keluak", "black nut", "黑果"] },
+  { term: "lemak", expansions: ["coconut rice", "nasi lemak", "椰浆饭"] },
+  { term: "devil", expansions: ["devil's curry", "eurasian curry"] },
+  { term: "laksa", expansions: ["curry noodles", "叻沙"] },
+  { term: "popiah", expansions: ["spring roll", "薄饼"] },
+];

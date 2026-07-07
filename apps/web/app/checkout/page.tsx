@@ -24,9 +24,13 @@ import {
   useMilestoneCelebrationWeb,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
+import { enforceMinimumOrder } from '@shc/business-rules';
+import { useShcI18n } from '@shc/i18n';
+import { WebPushPromptBanner } from '../components/WebPushOptIn';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { t } = useShcI18n();
   const { user, loading: authLoading } = useAuth();
   const { data: cart = { items: [] }, isLoading: cartLoading, isFetching: cartFetching } = useCart();
 
@@ -85,6 +89,15 @@ export default function CheckoutPage() {
     }
     if (!selected) {
       setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
+      return;
+    }
+    const totalCents = Math.round(total * 100);
+    const minimumCheck = enforceMinimumOrder({
+      totalCents,
+      lines: (cart.items || []).map((i: { price: number }) => ({ price_cents: Math.round(i.price * 100) })),
+    });
+    if (!minimumCheck.valid) {
+      setError({ code: minimumCheck.code, message: t('checkout.minimum_order') });
       return;
     }
     try {
@@ -146,6 +159,7 @@ export default function CheckoutPage() {
         <p className="mt-3 text-xs font-medium text-muted-foreground">
           Address released 2h before slot. Chat opens after payment confirm.
         </p>
+        <WebPushPromptBanner className="mt-4" />
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
           message="Your first heritage order — thank you for supporting local home cooks!"

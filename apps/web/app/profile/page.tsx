@@ -17,6 +17,7 @@ import {
   SHCBadge,
 } from '../components/SHCWebComponents';
 import { WebPushOptIn } from '../components/WebPushOptIn';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../../lib/useAuth';
 
 type RequestRow = {
@@ -189,6 +190,7 @@ export default function Profile() {
         )}
       </SHCCard>
 
+      <LanguageSwitcher className="mb-4" />
       <WebPushOptIn />
     </div>
   );

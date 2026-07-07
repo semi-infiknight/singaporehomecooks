@@ -1,8 +1,10 @@
 import type { MedusaRequest } from "@medusajs/framework/http";
-import { SHCOrderStatus } from "@shc/types";
+import { SHCOrderStatus, createSHCError } from "@shc/types";
+import { enforceMinimumOrder } from "@shc/business-rules";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcCartModuleService from "../modules/shc-cart/service";
 import ShcCreditWalletModuleService from "../modules/shc-credit-wallet/service";
+import ShcProductMetaModuleService from "../modules/shc-product-meta/service";
 import { getCustomerId } from "./shc-actors";
 import ShcNotificationModuleService from "../modules/shc-notification/service";
 
@@ -25,7 +27,31 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
 
   const cart = await cartService.getCart(customerId);
   if (!cart.items?.length) {
-    throw new Error("Cart is empty — add items before checkout");
+    throw createSHCError("SHC-GENERIC-001", "Cart is empty — add items before checkout");
+  }
+
+  const productMetaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
+  const minimumLines = await Promise.all(
+    cart.items.map(async (item) => {
+      const meta = await productMetaService.getMetaForProduct(item.product_id).catch(() => null);
+      const unitCents = Math.round(item.price * 100);
+      return {
+        tasting_portion: meta?.tasting_portion,
+        price_cents: unitCents,
+      };
+    })
+  );
+  const totalCents = cart.items.reduce((s, i) => s + Math.round(i.price * i.qty * 100), 0);
+  const minimumCheck = enforceMinimumOrder({ totalCents, lines: minimumLines });
+  if (!minimumCheck.valid) {
+    throw createSHCError(minimumCheck.code || "SHC-CART-004", minimumCheck.error || "Minimum order not met");
+  }
+
+  if (!allergen_acked) {
+    throw createSHCError("SHC-CART-003", "Allergen acknowledgment is required before checkout");
+  }
+  if (!pdpa_consent) {
+    throw createSHCError("SHC-GENERIC-001", "PDPA consent is required before checkout");
   }
 
   let creditsApplied = 0;

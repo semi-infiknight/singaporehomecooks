@@ -33,6 +33,7 @@ All API errors return a consistent shape:
 | SHC-CART-001      | Cart              | Multiple cooks detected in cart              | Enforce one-cook rule               |
 | SHC-CART-002      | Cart              | Minimum quantity not met for product         | Block add/checkout; show min_qty    |
 | SHC-CART-003      | Cart              | Allergen acknowledgment is required before checkout | Require ack UI + re-validate     |
+| SHC-CART-004      | Cart              | Order total below platform minimum (S$50)    | Block checkout; show minimum message |
 | SHC-PAY-001       | Payment           | PayNow reference already used                | Reject duplicate                    |
 | SHC-COMPLIANCE-001| Compliance        | Cook missing required SFA/WSQ doc            | Block order acceptance              |
 | SHC-COMPLIANCE-002| Compliance        | Cook compliance docs not verified for this action | Gate cook actions (accept etc)   |

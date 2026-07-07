@@ -21,6 +21,7 @@ import {
 // @ts-ignore workspace dep for script
 import { validateMinQty, calculateCookEarnings, calculatePlatformFee } from "@shc/business-rules";
 import { hashCookPassword } from "../src/lib/shc-password";
+import { SHC_SEARCH_SYNONYM_SEEDS } from "../src/lib/shc-search-synonym-seeds";
 
 const COOK_DEV_PASSWORD = process.env.SEED_COOK_PASS || "cooksecret";
 const COOK_PASSWORD_HASH = hashCookPassword(COOK_DEV_PASSWORD);
@@ -401,6 +402,17 @@ async function seed() {
       [JSON.stringify({ cooks: 127, meals_this_month: 4892, areas: 28 })]
     );
     console.log("  ✓ homepage platform counters seeded");
+
+    // Singapore food search synonyms (P1-02 depth)
+    for (const row of SHC_SEARCH_SYNONYM_SEEDS) {
+      await pg2.query(
+        `INSERT INTO shc_search_synonym (id, term, expansions, created_at, updated_at)
+         VALUES ($1, $2, $3::jsonb, now(), now())
+         ON CONFLICT (term) DO UPDATE SET expansions = EXCLUDED.expansions, updated_at = now()`,
+        [`syn_${row.term.replace(/\W+/g, "_")}`, row.term, JSON.stringify(row.expansions)]
+      );
+    }
+    console.log("  ✓ search synonym seeds upserted");
 
     console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth samples (requests, bids, credits, heritage) + ledger tie-ins complete. Use routes to demo.");
   } catch (e: any) {

@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SHCTrayProvider } from '@shc/ui';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { MobileI18nProvider } from '../lib/i18n-provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +27,7 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <StatusBar style="dark" />
           <ErrorBoundary>
+            <MobileI18nProvider>
             <SHCTrayProvider queryClient={queryClient}>
             <Stack
               screenOptions={{
@@ -42,6 +44,7 @@ export default function RootLayout() {
               <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
             </Stack>
             </SHCTrayProvider>
+            </MobileI18nProvider>
           </ErrorBoundary>
         </SafeAreaProvider>
       </QueryClientProvider>

@@ -35,18 +35,19 @@ async function expandSearchTerms(scope: any, search: string): Promise<string[]> 
   try {
     const synonymService = scope.resolve("shcSearchSynonym");
     const [exactRows] = await synonymService.listAndCountSearchSynonyms({ term: ql }, { take: 1 });
-    const [allRows] = await synonymService.listAndCountSearchSynonyms({}, { take: 100 });
-    const rows = [...(exactRows || []), ...(allRows || [])];
-    for (const row of rows) {
+    const applyRow = (row: { term?: string; expansions?: string[] }) => {
       const expansions = Array.isArray(row.expansions) ? row.expansions : [];
-      if (row.term?.toLowerCase() === ql) {
+      const rowTerm = String(row.term || "").toLowerCase();
+      if (rowTerm === ql || expansions.some((term: string) => term.toLowerCase() === ql)) {
+        if (rowTerm) terms.add(rowTerm);
         expansions.forEach((term: string) => terms.add(term.toLowerCase()));
       }
-      if (expansions.some((term: string) => term.toLowerCase() === ql)) {
-        terms.add(String(row.term).toLowerCase());
-        expansions.forEach((term: string) => terms.add(term.toLowerCase()));
-      }
-    }
+    };
+    for (const row of exactRows || []) applyRow(row);
+
+    // Reverse lookup: find rows whose expansions contain the query term.
+    const [reverseRows] = await synonymService.listAndCountSearchSynonyms({}, { take: 200 });
+    for (const row of reverseRows || []) applyRow(row);
   } catch {
     /* synonym module is optional for search fallback */
   }

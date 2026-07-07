@@ -13,6 +13,7 @@
   "dependencies": {
     "@shc/api-client": "workspace:*",
     "@shc/business-rules": "workspace:*",
+    "@shc/i18n": "workspace:*",
     "@shc/types": "workspace:*",
     "@shc/ui": "workspace:*",
     "@shc/utils": "workspace:*",

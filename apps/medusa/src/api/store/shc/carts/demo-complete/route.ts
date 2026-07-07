@@ -42,8 +42,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id} credits=${creditsToApply}`);
     res.json(result);
   } catch (e: any) {
-    return res.status(500).json({
-      error: createSHCError("SHC-GENERIC-001", e?.message || "Checkout failed"),
+    const code = e?.code || "SHC-GENERIC-001";
+    const status = ["SHC-CART-001", "SHC-CART-002", "SHC-CART-003", "SHC-CART-004", "SHC-AVAIL-001"].includes(code)
+      ? 400
+      : 500;
+    return res.status(status).json({
+      error: e?.code ? e : createSHCError("SHC-GENERIC-001", e?.message || "Checkout failed"),
     });
   }
 }

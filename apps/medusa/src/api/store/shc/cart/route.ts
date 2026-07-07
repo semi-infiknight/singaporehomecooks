@@ -62,6 +62,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     });
     res.json({ cart });
   } catch (e: any) {
-    return res.status(400).json({ error: createSHCError("SHC-CART-002", e.message) });
+    if (e?.code && e?.message) {
+      return res.status(400).json({ error: e });
+    }
+    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", e?.message || "Cart update failed") });
   }
 }

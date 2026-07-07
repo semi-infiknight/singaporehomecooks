@@ -25,6 +25,8 @@ export const shcProductMetaSchema = z.object({
   price_cents: z.number().int().positive().optional(),
   last_minute_premium_pct: z.number().min(0).max(100).optional(),
   heritage_note: z.string().optional(),
+  /** Tasting portions (≤S$8) bypass S$50 minimum order check per Decisions_Log 29I. */
+  tasting_portion: z.boolean().optional(),
   image_url: z.string().optional(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),

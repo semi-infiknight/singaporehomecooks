@@ -15,6 +15,19 @@ export function isWebPushSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+export function getWebPushPermissionState():
+  | 'unsupported'
+  | 'granted'
+  | 'denied'
+  | 'default'
+  | 'missing_vapid' {
+  if (!isWebPushSupported()) return 'unsupported';
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return 'missing_vapid';
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') return 'denied';
+  return 'default';
+}
+
 /** Subscribe to browser push and persist subscription on the customer profile via Medusa. */
 export async function registerWebPushSubscription(): Promise<{ ok: boolean; reason?: string }> {
   if (!isWebPushSupported()) return { ok: false, reason: 'unsupported' };

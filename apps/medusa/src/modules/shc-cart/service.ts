@@ -49,7 +49,7 @@ class ShcCartModuleService extends MedusaService({ Cart }) {
 
     const conflict = enforceOneCookOnAdd(cart.cookId, item.cook_id);
     if (!conflict.valid) {
-      throw createSHCError("SHC-CART-002", conflict.error || "One cook per cart");
+      throw createSHCError(conflict.code || "SHC-CART-001", conflict.error || "One cook per cart");
     }
     if (!cart.cookId) cart.cookId = item.cook_id;
 

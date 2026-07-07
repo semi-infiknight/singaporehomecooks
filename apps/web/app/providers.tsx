@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { QueryClient, QueryClientProvider as TanstackProvider } from '@tanstack/react-query';
+import { ShcI18nProvider } from '@shc/i18n';
 import { SHCTrayProviderWeb } from './components/SHCWebComponents';
 
 type SearchContextValue = {
@@ -33,9 +34,11 @@ export function QueryClientProvider({ children }: { children: React.ReactNode })
   }));
   return (
     <TanstackProvider client={queryClient}>
-      <SHCTrayProviderWeb>
-        <SearchProvider>{children}</SearchProvider>
-      </SHCTrayProviderWeb>
+      <ShcI18nProvider>
+        <SHCTrayProviderWeb>
+          <SearchProvider>{children}</SearchProvider>
+        </SHCTrayProviderWeb>
+      </ShcI18nProvider>
     </TanstackProvider>
   );
 }
