@@ -13,8 +13,10 @@ import {
 import { useRouter } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
+import { useShcI18n } from '@shc/i18n';
 
 export default function AuthScreen() {
+  const { t } = useShcI18n();
   const { login, register } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
@@ -34,7 +36,7 @@ export default function AuthScreen() {
       }
       router.replace('/(customer)');
     } catch (e) {
-      Alert.alert('Sign in failed', (e as Error).message);
+      Alert.alert(t('auth.failed_title'), (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -50,8 +52,8 @@ export default function AuthScreen() {
         keyboardShouldPersistTaps="handled"
         bounces={false}
       >
-        <Text style={styles.title}>Singapore Home Cooks</Text>
-        <Text style={styles.subtitle}>Sign in to checkout and track orders — or browse dishes first.</Text>
+        <Text style={styles.title}>{t('auth.app_title')}</Text>
+        <Text style={styles.subtitle}>{t('auth.sign_in_subtitle')}</Text>
 
         <TextInput
           value={email}
@@ -63,7 +65,7 @@ export default function AuthScreen() {
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => passwordRef.current?.focus()}
-          placeholder="Email"
+          placeholder={t('auth.email_placeholder')}
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-email-input"
@@ -76,7 +78,7 @@ export default function AuthScreen() {
           textContentType="password"
           returnKeyType="go"
           onSubmitEditing={submit}
-          placeholder="Password"
+          placeholder={t('auth.password_placeholder')}
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-password-input"
@@ -89,12 +91,12 @@ export default function AuthScreen() {
           testID="auth-submit-btn"
           style={styles.submitBtn}
         >
-          {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+          {busy ? t('auth.please_wait') : mode === 'login' ? t('auth.sign_in_btn') : t('auth.create_account_btn')}
         </SHCButton>
 
         <Pressable onPress={() => setMode(mode === 'login' ? 'register' : 'login')} style={styles.modeToggle} testID="auth-mode-toggle">
           <Text style={styles.modeToggleText}>
-            {mode === 'login' ? 'New here? Create an account' : 'Have an account? Log in'}
+            {mode === 'login' ? t('auth.toggle_to_register') : t('auth.toggle_to_login_mobile')}
           </Text>
         </Pressable>
 
@@ -104,10 +106,10 @@ export default function AuthScreen() {
           testID="auth-browse-guest-btn"
           accessibilityRole="button"
         >
-          <Text style={styles.browseBtnText}>Browse without signing in</Text>
+          <Text style={styles.browseBtnText}>{t('auth.browse_guest')}</Text>
         </Pressable>
 
-        <Text style={styles.demoHint}>Demo: customer@shc.local / customersecret (after bootstrap)</Text>
+        <Text style={styles.demoHint}>{t('auth.demo_hint')}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

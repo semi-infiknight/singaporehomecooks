@@ -47,16 +47,17 @@ function AllergenGateTrayContent({
   tier1?: string[];
   onConfirm: () => void;
 }) {
+  const { t } = useShcI18n();
   const [localAck, setLocalAck] = useState(false);
 
   return (
     <View>
       <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 18 }}>
-        Please review and acknowledge allergens before placing your order.
+        {t('checkout.allergen_gate_body')}
       </Text>
       <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} allergens={allergens} tier1={tier1} />
       <GourmeatPrimaryButton
-        label="I understand — continue"
+        label={t('checkout.allergen_confirm')}
         onPress={onConfirm}
         disabled={!localAck}
         style={{ marginTop: shcSpacing.md }}
@@ -121,7 +122,7 @@ export default function Checkout() {
 
   const openAllergenTray = useCallback(() => {
     openTray(
-      { id: 'allergen-gate', title: 'Allergen acknowledgment', height: 'medium' },
+      { id: 'allergen-gate', title: t('checkout.allergen_section'), height: 'medium' },
       <AllergenGateTrayContent
         allergens={(cart.items[0] as any)?.allergens}
         tier1={['Shellfish / Nuts (typical)']}
@@ -131,7 +132,7 @@ export default function Checkout() {
         }}
       />
     );
-  }, [cart.items, dismiss, openTray]);
+  }, [cart.items, dismiss, openTray, t]);
 
   const handleCheckout = async () => {
     setError(null);
@@ -190,7 +191,7 @@ export default function Checkout() {
   if (!cart.items?.length) {
     return (
       <View style={styles.empty}>
-        <Text>Cart empty. Add dishes from discovery first.</Text>
+        <Text>{t('checkout.cart_empty_mobile')}</Text>
       </View>
     );
   }
@@ -224,13 +225,13 @@ export default function Checkout() {
           testID="checkout-screen"
         >
           <SHCCartPageHero
-            title="Order placed"
+            title={t('checkout.order_placed')}
             subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
             imageUri={BENTO_ACTION_IMAGES.checkout}
           />
           {orderSummaryCard}
           <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
-          <Text style={styles.paynowHint}>Address released 2h before slot. Chat opens on payment confirm.</Text>
+          <Text style={styles.paynowHint}>{t('checkout.paynow_hint')}</Text>
           <SHCCard variant="bento-yellow" style={styles.footerCard}>
             <Text style={styles.footerText}>
               Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
@@ -258,27 +259,29 @@ export default function Checkout() {
         testID="checkout-screen"
       >
         <Text style={styles.checkoutTitle}>{t('checkout.title')}</Text>
-        <Text style={styles.checkoutSubtitle}>{itemCount} portion{itemCount !== 1 ? 's' : ''} · HDB collection</Text>
+        <Text style={styles.checkoutSubtitle}>
+          {t('checkout.portions_hdb').replace('{count}', String(itemCount))}
+        </Text>
 
         <SHCCard variant="bento-mint" style={styles.sectionCard}>
-          <SHCSectionTitle style={styles.sectionTitle}>Your collection point</SHCSectionTitle>
+          <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.collection_point')}</SHCSectionTitle>
           {collectionLocation ? (
             <Text style={styles.locationBody}>{formatLocationLabel(collectionLocation)}</Text>
           ) : (
-            <Text style={styles.locationBody}>No location set — cooks sorted by default.</Text>
+            <Text style={styles.locationBody}>{t('checkout.no_location')}</Text>
           )}
           <SHCButton variant="outline" size="sm" onPress={() => router.push('/(customer)/location' as any)} testID="checkout-change-location">
-            <SHCButtonText variant="outline">Change location</SHCButtonText>
+            <SHCButtonText variant="outline">{t('checkout.change_location')}</SHCButtonText>
           </SHCButton>
         </SHCCard>
 
         {orderSummaryCard}
 
-        <Text style={styles.sectionLabel}>Payment method</Text>
+        <Text style={styles.sectionLabel}>{t('checkout.payment_method')}</Text>
         <GourmeatPaymentMethodRow
           id="paynow"
-          label="PayNow"
-          subtitle="Singapore's preferred instant payment"
+          label={t('checkout.paynow_label')}
+          subtitle={t('checkout.paynow_method_sub')}
           selected={paymentMethod === 'paynow'}
           onSelect={handlePaymentSelect}
           testID="payment-paynow"
@@ -286,8 +289,8 @@ export default function Checkout() {
         {creditBal > 0 && (
           <GourmeatPaymentMethodRow
             id="credits"
-            label={`Credits (${creditBal} available)`}
-            subtitle="4 credits ≈ S$1 off your order"
+            label={t('checkout.credits_method').replace('{balance}', String(creditBal))}
+            subtitle={t('checkout.credits_method_sub')}
             selected={paymentMethod === 'credits'}
             onSelect={handlePaymentSelect}
             testID="payment-credits"
@@ -296,12 +299,12 @@ export default function Checkout() {
 
         <SHCFadeIn>
           <SHCCard style={styles.sectionCard}>
-            <SHCSectionTitle style={styles.sectionTitle}>1. Collection Slot (availability enforced)</SHCSectionTitle>
+            <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.collection_section_mobile')}</SHCSectionTitle>
             <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
           </SHCCard>
 
           <SHCCard style={styles.sectionCard}>
-            <SHCSectionTitle style={styles.sectionTitle}>2. Allergen Acknowledgment Gate</SHCSectionTitle>
+            <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.allergen_section_mobile')}</SHCSectionTitle>
             <AllergenAckCheckbox
               checked={allergenAck}
               onChange={setAllergenAck}
@@ -311,7 +314,7 @@ export default function Checkout() {
           </SHCCard>
 
           <SHCCard style={styles.sectionCard}>
-            <SHCSectionTitle style={styles.sectionTitle}>3. PDPA Consent (Singapore Data Protection)</SHCSectionTitle>
+            <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.pdpa_section_mobile')}</SHCSectionTitle>
             <Pressable
               onPress={() => setPdpaConsent(!pdpaConsent)}
               testID="pdpa-consent"
@@ -320,11 +323,9 @@ export default function Checkout() {
               <View style={[styles.pdpaBox, pdpaConsent && styles.pdpaBoxChecked]}>
                 {pdpaConsent && <Text style={styles.pdpaCheck}>✓</Text>}
               </View>
-              <Text style={styles.pdpaText}>
-                I consent to the collection and use of my personal data (contact, address, order history) solely for order fulfilment and platform operations, in line with PDPA.
-              </Text>
+              <Text style={styles.pdpaText}>{t('checkout.pdpa_consent_mobile')}</Text>
             </Pressable>
-            <Text style={styles.pdpaHint}>Consent timestamp will be recorded on order for audit.</Text>
+            <Text style={styles.pdpaHint}>{t('checkout.pdpa_hint')}</Text>
           </SHCCard>
 
           {creditBal > 0 && (
@@ -355,7 +356,7 @@ export default function Checkout() {
             accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub"
           >
             <View style={[styles.corporateBox, isCorporate && styles.corporateBoxChecked]} />
-            <Text style={styles.corporateText}>Corporate/Group Order (multi-dish note + invoice stub)</Text>
+            <Text style={styles.corporateText}>{t('checkout.corporate_mobile')}</Text>
           </Pressable>
 
           {error && <SHCErrorBanner code={error.code} message={error.message} />}

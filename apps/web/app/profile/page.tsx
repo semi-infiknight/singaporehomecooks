@@ -19,6 +19,7 @@ import {
 import { WebPushOptIn } from '../components/WebPushOptIn';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../../lib/useAuth';
+import { useShcI18n } from '@shc/i18n';
 
 type RequestRow = {
   id: string;
@@ -36,6 +37,7 @@ type BidRow = {
 };
 
 function MyRequestCard({ request }: { request: RequestRow }) {
+  const { t } = useShcI18n();
   const { data: bids = [] } = useBids(request.id);
   const acceptBid = useAcceptBid();
   const pendingBids = (bids as BidRow[]).filter((bid) => bid.status === 'pending');
@@ -52,10 +54,10 @@ function MyRequestCard({ request }: { request: RequestRow }) {
         {request.party_size ? `${request.party_size} pax · ` : ''}
         {request.budget_cents
           ? `Budget S$${Math.round(request.budget_cents / 100)}`
-          : 'Open budget'}
+          : t('wallet.open_budget')}
       </p>
       {pendingBids.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No pending bids yet. Cooks respond from their dashboard.</p>
+        <p className="text-sm text-muted-foreground">{t('wallet.no_pending_bids')}</p>
       ) : (
         <ul className="space-y-2">
           {pendingBids.map((bid) => (
@@ -70,7 +72,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
                 disabled={acceptBid.isPending}
                 data-testid={`accept-bid-${bid.id}`}
               >
-                Accept
+                {t('wallet.accept')}
               </SHCButton>
             </li>
           ))}
@@ -81,6 +83,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
 }
 
 export default function Profile() {
+  const { t } = useShcI18n();
   const { user } = useAuth();
   const { data: credits } = useCredits();
   const redeem = useRedeemCredits();
@@ -99,7 +102,7 @@ export default function Profile() {
           <button
             type="button"
             className="relative"
-            aria-label="Notifications"
+            aria-label={t('wallet.notifications')}
             onClick={() => {
               const next = !showNotifs;
               setShowNotifs(next);
@@ -123,7 +126,9 @@ export default function Profile() {
         <div className="relative z-10 flex items-center justify-between h-full px-5">
           <div>
             <div className="text-3xl font-black tabular-nums font-mono text-foreground">{balance}</div>
-            <div className="text-xs font-bold text-muted-foreground">Home Credits · {tier}</div>
+            <div className="text-xs font-bold text-muted-foreground">
+              {t('wallet.home_credits_tier').replace('{tier}', tier)}
+            </div>
           </div>
           <span className="w-12 h-12 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]" aria-hidden>
             <Wallet className="w-6 h-6 text-primary" />
@@ -144,17 +149,17 @@ export default function Profile() {
           onClick={() => redeem.mutate(20)}
           disabled={balance < 20}
         >
-          Redeem 20 credits
+          {t('wallet.redeem_20')}
         </SHCButton>
       </div>
 
-      <SHCSectionTitle>My requests</SHCSectionTitle>
+      <SHCSectionTitle>{t('wallet.my_requests')}</SHCSectionTitle>
       {myRequests.length === 0 ? (
         <SHCCard>
-          <p className="text-sm text-muted-foreground font-semibold">No dish requests yet.</p>
+          <p className="text-sm text-muted-foreground font-semibold">{t('wallet.no_requests')}</p>
           <Link href="/request" className="inline-block mt-3">
             <SHCButton size="sm" variant="outline">
-              Request a dish
+              {t('wallet.request_dish')}
             </SHCButton>
           </Link>
         </SHCCard>
@@ -166,14 +171,14 @@ export default function Profile() {
         </div>
       )}
 
-      <SHCSectionTitle>Notifications</SHCSectionTitle>
+      <SHCSectionTitle>{t('wallet.notifications')}</SHCSectionTitle>
       <SHCCard>
         {notifs.length === 0 ? (
           <div className="text-center py-6">
             <span className="text-3xl" aria-hidden>
               🛎️
             </span>
-            <p className="text-sm text-muted-foreground mt-2 font-semibold">All caught up</p>
+            <p className="text-sm text-muted-foreground mt-2 font-semibold">{t('wallet.all_caught_up')}</p>
           </div>
         ) : (
           <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">

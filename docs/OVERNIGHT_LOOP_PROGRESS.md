@@ -138,3 +138,27 @@
 - Order detail page i18n
 - Cook mobile tab bar (optional)
 - EAS monitor; cancel/retry if 6h+ stuck
+
+---
+
+## Iteration 8 — 2026-07-08 ~02:56 IST
+
+### Implemented
+1. **Checkout i18n** — web `/checkout` + mobile checkout: steps, collection/safety/pay, PDPA, credits, payment methods, allergen tray
+2. **Trust page i18n** — web `/content/trust` client `TrustPageContent` + `getTrustPageLayers` in `@shc/i18n`
+3. **Auth i18n** — web `/login` + mobile `/(shared)/auth` (sign-in, register toggle, guest browse)
+4. **Wallet/profile i18n** — web `/profile` + mobile profile: credits, requests, bids, notifications, trust card, quick actions
+5. **New keys** — `auth.*`, `trust.page.*`, `trust.layer.*`, `checkout.*` (extended), `wallet.*` in en + zh-Hans
+
+### Tests
+- `@shc/i18n`: **10 tests** PASS (incl. auth-trust-wallet)
+- web + mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: still **IN_QUEUE** (~2h+) — no APK download yet; retry only if 6h+ stuck
+
+### Next iteration
+- Order detail page i18n (`/orders/[id]`)
+- Cook mobile tab bar (optional)
+- EAS monitor; download APK when FINISHED
+- Continue loop until 9:00 AM IST Jul 9

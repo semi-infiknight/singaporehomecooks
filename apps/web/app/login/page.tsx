@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useShcI18n } from '@shc/i18n';
 import { useAuth } from '../../lib/useAuth';
 import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponents';
 
 export default function LoginPage() {
+  const { t } = useShcI18n();
   const { login, register } = useAuth();
   const router = useRouter();
   const [nextPath, setNextPath] = useState('/');
@@ -37,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-16">
-      <SHCPageHeader title="Sign in" subtitle="Customer account — orders, credits, and checkout." />
+      <SHCPageHeader title={t('auth.sign_in_title')} subtitle={t('auth.sign_in_subtitle_web')} />
       <SHCCard className="p-6 space-y-4">
         <form onSubmit={submit} className="space-y-4">
           <input
@@ -45,7 +47,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="shc-input"
-            placeholder="Email"
+            placeholder={t('auth.email_placeholder')}
             required
           />
           <input
@@ -53,12 +55,16 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="shc-input"
-            placeholder="Password"
+            placeholder={t('auth.password_placeholder')}
             required
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <SHCButton type="submit" disabled={busy} size="lg" className="w-full min-h-[52px]">
-            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {busy
+              ? t('auth.please_wait')
+              : mode === 'login'
+                ? t('auth.sign_in_btn')
+                : t('auth.create_account_btn')}
           </SHCButton>
         </form>
         <button
@@ -66,9 +72,9 @@ export default function LoginPage() {
           className="text-sm text-primary w-full text-center"
           onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
         >
-          {mode === 'login' ? 'New here? Create an account' : 'Already have an account? Sign in'}
+          {mode === 'login' ? t('auth.toggle_to_register') : t('auth.toggle_to_login')}
         </button>
-        <p className="text-xs text-muted-foreground text-center">Demo: customer@shc.local / customersecret</p>
+        <p className="text-xs text-muted-foreground text-center">{t('auth.demo_hint')}</p>
       </SHCCard>
     </div>
   );

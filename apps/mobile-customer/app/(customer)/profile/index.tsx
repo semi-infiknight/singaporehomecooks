@@ -25,13 +25,15 @@ import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../../hooks/useOrder';
 import { MobileLanguageSwitcher } from '../../../components/MobileLanguageSwitcher';
+import { useShcI18n } from '@shc/i18n';
 
-const QUICK_TILES = [
-  { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
-  { iconKey: 'search' as const, label: 'Search', image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
+const QUICK_TILE_DEFS = [
+  { iconKey: 'orders' as const, labelKey: 'tab.orders' as const, image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
+  { iconKey: 'search' as const, labelKey: 'wallet.advanced_search' as const, image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
 ];
 
 function MyRequestCard({ request }: { request: any }) {
+  const { t } = useShcI18n();
   const { data: bids = [] } = useBids(request.id);
   const acceptBid = useAcceptBid();
   const pendingBids = bids.filter((bid: any) => bid.status === 'pending');
@@ -43,9 +45,9 @@ function MyRequestCard({ request }: { request: any }) {
         <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>{request.status}</SHCBadge>
       </View>
       <Text style={styles.requestMeta}>
-        {request.party_size ? `${request.party_size} pax · ` : ''}{request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : 'Open budget'}
+        {request.party_size ? `${request.party_size} pax · ` : ''}{request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : t('wallet.open_budget')}
       </Text>
-      {pendingBids.length === 0 && <Text style={styles.requestEmpty}>No pending bids yet. Cooks will respond from their dashboard.</Text>}
+      {pendingBids.length === 0 && <Text style={styles.requestEmpty}>{t('wallet.no_pending_bids')}</Text>}
       {pendingBids.map((bid: any) => (
         <View key={bid.id} style={styles.bidRow}>
           <View style={styles.bidInfo}>
@@ -58,7 +60,7 @@ function MyRequestCard({ request }: { request: any }) {
             style={styles.acceptBidBtn}
             testID={`accept-bid-${bid.id}`}
           >
-            <SHCButtonText>Accept</SHCButtonText>
+            <SHCButtonText>{t('wallet.accept')}</SHCButtonText>
           </SHCButton>
         </View>
       ))}
@@ -67,6 +69,7 @@ function MyRequestCard({ request }: { request: any }) {
 }
 
 export default function Profile() {
+  const { t } = useShcI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { showRequest } = useLocalSearchParams<{ showRequest?: string }>();
@@ -135,14 +138,14 @@ export default function Profile() {
       <MobileLanguageSwitcher />
 
       <View style={styles.tilesRow}>
-        {QUICK_TILES.map((t) => (
-          <View key={t.label} style={styles.tileCol}>
-            <Link href={t.href as any} asChild>
+        {QUICK_TILE_DEFS.map((tile) => (
+          <View key={tile.testID} style={styles.tileCol}>
+            <Link href={tile.href as any} asChild>
               <SHCVisualBentoTile
-                imageUri={t.image}
-                iconKey={t.iconKey}
-                label={t.label}
-                testID={t.testID}
+                imageUri={tile.image}
+                iconKey={tile.iconKey}
+                label={t(tile.labelKey)}
+                testID={tile.testID}
                 variant="bento-mint"
               />
             </Link>
@@ -152,7 +155,7 @@ export default function Profile() {
           <SHCVisualBentoTile
             imageUri={BENTO_ACTION_IMAGES.credits}
             iconKey="credits"
-            label={`${bal} Credits`}
+            label={t('wallet.credits_tile').replace('{balance}', String(bal))}
             variant="bento-yellow"
             testID="profile-credits-tile"
           />
@@ -173,8 +176,8 @@ export default function Profile() {
 
       {myRequests.length > 0 && (
         <View style={styles.requestsSection} testID="my-requests-panel">
-          <Text style={styles.savedTitle}>My requests</Text>
-          <Text style={styles.savedSub}>Review cook bids and accept one to create your order.</Text>
+          <Text style={styles.savedTitle}>{t('wallet.my_requests')}</Text>
+          <Text style={styles.savedSub}>{t('wallet.my_requests_sub')}</Text>
           {myRequests.map((request: any) => (
             <MyRequestCard key={request.id} request={request} />
           ))}
@@ -183,8 +186,8 @@ export default function Profile() {
 
       {savedDishes.length > 0 && (
         <View style={{ marginTop: shcSpacing.md }}>
-          <Text style={styles.savedTitle}>Saved dishes</Text>
-          <Text style={styles.savedSub}>Tap a dish to order again</Text>
+          <Text style={styles.savedTitle}>{t('wallet.saved_dishes')}</Text>
+          <Text style={styles.savedSub}>{t('wallet.saved_sub')}</Text>
           <SHCZomatoDishRowRail
             title=""
             dishes={savedDishes.map((d) => ({
@@ -202,23 +205,23 @@ export default function Profile() {
 
       <SHCCard variant="bento-peach" style={styles.trustCard}>
         <SHCIcon name="compliance" size={28} color={shcColors.primary} active />
-        <Text style={styles.trustTitle}>5-Layer Trust</Text>
-        <Text style={styles.trustBody}>Verified cooks · allergen disclosure · HDB collection · PayNow escrow</Text>
+        <Text style={styles.trustTitle}>{t('wallet.trust_card_title')}</Text>
+        <Text style={styles.trustBody}>{t('wallet.trust_card_body')}</Text>
       </SHCCard>
 
       <Link href="/(customer)/orders" asChild>
         <SHCButton style={styles.actionBtn}>
-          <SHCButtonText>View My Orders</SHCButtonText>
+          <SHCButtonText>{t('wallet.view_orders')}</SHCButtonText>
         </SHCButton>
       </Link>
       <Link href="/(shared)/onboarding" asChild>
         <SHCButton variant="outline" style={styles.actionBtn} testID="trust-safety-link">
-          <SHCButtonText variant="outline">Trust & Safety</SHCButtonText>
+          <SHCButtonText variant="outline">{t('nav.trust_safety')}</SHCButtonText>
         </SHCButton>
       </Link>
       <Link href="/(customer)/search" asChild>
         <SHCButton variant="outline" style={styles.actionBtn} testID="advanced-search-link">
-          <SHCButtonText>Advanced Search</SHCButtonText>
+          <SHCButtonText>{t('wallet.advanced_search')}</SHCButtonText>
         </SHCButton>
       </Link>
 
@@ -227,18 +230,18 @@ export default function Profile() {
         style={styles.logoutBtn}
         testID="logout-btn"
         accessibilityRole="button"
-        accessibilityLabel="Logout"
+        accessibilityLabel={t('wallet.logout')}
       >
-        <Text style={styles.logout}>Logout</Text>
+        <Text style={styles.logout}>{t('wallet.logout')}</Text>
       </Pressable>
 
       {showNotifs && (
         <SHCCard style={styles.notifsCard}>
           <View style={styles.notifsTitleRow}>
             <SHCIcon name="notifications" size={18} color={shcColors.text} active />
-            <Text style={styles.notifsTitle}>Notifications</Text>
+            <Text style={styles.notifsTitle}>{t('wallet.notifications')}</Text>
           </View>
-          {notifs.length === 0 && <Text style={styles.notifsEmpty}>No events yet</Text>}
+          {notifs.length === 0 && <Text style={styles.notifsEmpty}>{t('wallet.no_events')}</Text>}
           {notifs.map((n: any, i: number) => (
             <Text key={i} style={[styles.notifItem, !n.read && styles.notifUnread]}>
               {!n.read ? '● ' : ''}{n.body}

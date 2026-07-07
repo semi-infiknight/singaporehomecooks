@@ -66,7 +66,7 @@ export default function CheckoutPage() {
 
   const openAllergenTray = useCallback(() => {
     openTray(
-      { id: 'allergen-gate', title: 'Allergen acknowledgment', height: 'medium' },
+      { id: 'allergen-gate', title: t('checkout.allergen_section'), height: 'medium' },
       <AllergenGateTrayContentWeb
         onConfirm={() => {
           setAllergenAck(true);
@@ -74,7 +74,7 @@ export default function CheckoutPage() {
         }}
       />
     );
-  }, [dismiss, openTray]);
+  }, [dismiss, openTray, t]);
 
   const doCheckout = async () => {
     setError(null);
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
         <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
           <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
           <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
-            <h1 className="text-xl font-black text-white">Order placed</h1>
+            <h1 className="text-xl font-black text-white">{t('checkout.order_placed')}</h1>
             <p className="text-xs font-semibold text-white/90">Ref {orderId} — complete PayNow to confirm</p>
           </div>
         </div>
@@ -156,9 +156,7 @@ export default function CheckoutPage() {
           onRefChange={setPaynowRef}
           onConfirmPay={confirmPay}
         />
-        <p className="mt-3 text-xs font-medium text-muted-foreground">
-          Address released 2h before slot. Chat opens after payment confirm.
-        </p>
+        <p className="mt-3 text-xs font-medium text-muted-foreground">{t('checkout.paynow_hint')}</p>
         <WebPushPromptBanner className="mt-4" />
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
@@ -176,7 +174,7 @@ export default function CheckoutPage() {
   if (authLoading || cartLoading || cartFetching) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
-        <p className="text-muted-foreground font-semibold">Loading checkout…</p>
+        <p className="text-muted-foreground font-semibold">{t('checkout.loading')}</p>
       </div>
     );
   }
@@ -186,22 +184,22 @@ export default function CheckoutPage() {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
         <SHCPageHeader
-          title="Checkout"
-          subtitle="Your cart is empty. Add dishes from Discover, then return here."
+          title={t('checkout.title')}
+          subtitle={t('checkout.empty_subtitle')}
           backHref="/cart"
-          backLabel="Back to cart"
+          backLabel={t('checkout.back_cart_label')}
         />
         <SHCButton className="mt-4" onClick={() => router.push('/')}>
-          Browse dishes
+          {t('orders.browse_cta')}
         </SHCButton>
       </div>
     );
   }
 
   const checkoutSteps = [
-    { id: 'slot', label: 'Collection', done: !!selected },
-    { id: 'safety', label: 'Safety', done: allergenAck && pdpaConsent },
-    { id: 'pay', label: 'PayNow', done: false },
+    { id: 'slot', label: t('checkout.step.collection'), done: !!selected },
+    { id: 'safety', label: t('checkout.step.safety'), done: allergenAck && pdpaConsent },
+    { id: 'pay', label: t('checkout.step.pay'), done: false },
   ];
   const checkoutStep = !selected ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
 
@@ -210,9 +208,12 @@ export default function CheckoutPage() {
       <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
-          <h1 className="text-xl font-black text-white">Checkout</h1>
+          <h1 className="text-xl font-black text-white">{t('checkout.title')}</h1>
           <p className="text-xs font-semibold text-white/90">
-            {items.length} item{items.length !== 1 ? 's' : ''} · PayNow collection
+            {t('checkout.portions_hdb').replace(
+              '{count}',
+              String(items.reduce((s: number, i: { qty: number }) => s + i.qty, 0))
+            )}
           </p>
         </div>
       </div>
@@ -220,11 +221,9 @@ export default function CheckoutPage() {
         href="/cart"
         className="text-sm font-semibold text-muted-foreground hover:text-primary mb-4 inline-block"
       >
-        ← Back to cart
+        {t('checkout.back_cart')}
       </a>
-      <p className="text-muted-foreground mb-4 text-sm">
-        3 quick steps — collection, safety, then PayNow.
-      </p>
+      <p className="text-muted-foreground mb-4 text-sm">{t('checkout.steps_hint')}</p>
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
 
@@ -237,10 +236,10 @@ export default function CheckoutPage() {
         </div>
       </SHCCard>
 
-      <SHCSectionTitle subtitle="Choose when you'll collect from the cook's home">Collection slot</SHCSectionTitle>
+      <SHCSectionTitle subtitle={t('checkout.collection_subtitle')}>{t('checkout.collection_slot')}</SHCSectionTitle>
       <CollectionSlotPicker slots={slots} selected={selected} onSelect={(d, s) => setSelected({ date: d, slot: s })} />
 
-      <SHCSectionTitle subtitle="Required before we can process your order">Safety & consent</SHCSectionTitle>
+      <SHCSectionTitle subtitle={t('checkout.safety_subtitle')}>{t('checkout.safety_title')}</SHCSectionTitle>
       <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-checkout-web" />
       <label className="mt-3 flex gap-3 text-sm p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg cursor-pointer shadow-[var(--shc-shadow-brutal-sm)]">
         <input
@@ -250,17 +249,14 @@ export default function CheckoutPage() {
           data-testid="pdpa-consent-web"
           className="mt-0.5 w-4 h-4 accent-primary rounded"
         />
-        <span className="font-medium">
-          I consent to Singapore Home Cooks processing my order and contact details in accordance with our privacy
-          policy.
-        </span>
+        <span className="font-medium">{t('checkout.pdpa_consent')}</span>
       </label>
 
-      <SHCSectionTitle subtitle="Earn 5% back on every collected order">Home Credits</SHCSectionTitle>
+      <SHCSectionTitle subtitle={t('checkout.credits_subtitle')}>{t('checkout.credits_title')}</SHCSectionTitle>
       <WalletCard balance={creditBal} tier={creditsData?.tier} />
       <div className="mt-3 flex flex-wrap gap-3 items-center text-sm">
         <label className="flex items-center gap-2 font-semibold">
-          <span className="text-muted-foreground">Apply</span>
+          <span className="text-muted-foreground">{t('checkout.apply_credits')}</span>
           <input
             type="number"
             min={0}
@@ -269,7 +265,9 @@ export default function CheckoutPage() {
             onChange={(e) => setCreditsApply(Math.min(creditBal, parseInt(e.target.value) || 0))}
             className="shc-input w-20 py-1.5"
           />
-          <span className="text-muted-foreground">credits (~S${(creditsApply / 4).toFixed(0)} off)</span>
+          <span className="text-muted-foreground">
+            {t('checkout.credits_off').replace('{amount}', (creditsApply / 4).toFixed(0))}
+          </span>
         </label>
         <button
           type="button"
@@ -278,13 +276,13 @@ export default function CheckoutPage() {
             isCorp ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'
           }`}
         >
-          Corporate invoice
+          {t('checkout.corporate')}
         </button>
       </div>
 
       {error && <SHCErrorBanner code={error.code} message={error.message} />}
 
-      <SHCSectionTitle>Payment</SHCSectionTitle>
+      <SHCSectionTitle>{t('checkout.payment')}</SHCSectionTitle>
       <PayNowPanel amount={amountDue} reference={'WEB-' + Date.now().toString().slice(-6)} onRefChange={setPaynowRef} />
 
       {/* Desktop CTA */}
@@ -295,14 +293,14 @@ export default function CheckoutPage() {
         disabled={checkoutMut.isPending}
         testID="complete-checkout-web"
       >
-        {checkoutMut.isPending ? 'Placing order…' : `Place order · S$${amountDue.toFixed(2)}`}
+        {checkoutMut.isPending ? t('checkout.placing') : `${t('checkout.place_order')} · S$${amountDue.toFixed(2)}`}
       </SHCButton>
 
       {/* Mobile bottom sticky CTA */}
       <BottomStickyBar className="sm:hidden">
         <div className="flex gap-3 items-center">
           <div className="shrink-0">
-            <div className="text-xs font-bold text-muted-foreground">Due</div>
+            <div className="text-xs font-bold text-muted-foreground">{t('checkout.due')}</div>
             <div className="text-lg font-black font-mono tabular-nums">S${amountDue.toFixed(2)}</div>
           </div>
           <SHCButton
@@ -312,7 +310,7 @@ export default function CheckoutPage() {
             disabled={checkoutMut.isPending}
             testID="complete-checkout-web"
           >
-            {checkoutMut.isPending ? 'Placing…' : 'Place order'}
+            {checkoutMut.isPending ? t('checkout.placing_short') : t('checkout.place_order')}
           </SHCButton>
         </div>
       </BottomStickyBar>
@@ -321,13 +319,12 @@ export default function CheckoutPage() {
 }
 
 function AllergenGateTrayContentWeb({ onConfirm }: { onConfirm: () => void }) {
+  const { t } = useShcI18n();
   const [localAck, setLocalAck] = useState(false);
 
   return (
     <div className="space-y-4" data-testid="allergen-gate-tray-web">
-      <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-        Please review and acknowledge allergens before placing your order.
-      </p>
+      <p className="text-sm font-medium text-muted-foreground leading-relaxed">{t('checkout.allergen_gate_body')}</p>
       <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} testID="allergen-tray-ack-web" />
       <SHCButton
         className="w-full"
@@ -336,7 +333,7 @@ function AllergenGateTrayContentWeb({ onConfirm }: { onConfirm: () => void }) {
         onClick={onConfirm}
         testID="allergen-tray-confirm-web"
       >
-        I understand — continue
+        {t('checkout.allergen_confirm')}
       </SHCButton>
     </div>
   );
