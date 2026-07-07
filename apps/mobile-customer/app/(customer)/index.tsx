@@ -127,7 +127,7 @@ export default function CustomerDiscover() {
 
   const handleAddToCart = useCallback(
     (productId: string, qty = 1) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
+      if (!requireAuth(t('guest.sign_in_add_body'))) return;
       addMut.mutate({ productId, qty });
     },
     [requireAuth, addMut]
@@ -301,7 +301,7 @@ export default function CustomerDiscover() {
           {t('discover.near_collection')}
         </Text>
       )}
-      <GourmeatSectionTitle title="Categories" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
+      <GourmeatSectionTitle title={t('discover.categories')} actionLabel={t('discover.see_all')} onActionPress={() => router.push('/(customer)/search' as any)} />
       <GourmeatCategoryRow
         categories={occasionCategories}
         selectedId={occasionFilter}
@@ -311,7 +311,7 @@ export default function CustomerDiscover() {
       {!query && reorderDishes.length > 0 && (
         <SHCFadeIn delay={80}>
           <View style={{ marginBottom: shcSpacing.section }}>
-            <GourmeatSectionTitle title="Order again" />
+            <GourmeatSectionTitle title={t('discover.order_again')} />
             <SHCZomatoDishRowRail title="" dishes={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
           </View>
         </SHCFadeIn>
@@ -320,13 +320,13 @@ export default function CustomerDiscover() {
       {!query && savedDishes.length > 0 && (
         <SHCFadeIn delay={100}>
           <View style={{ marginBottom: shcSpacing.section }}>
-            <GourmeatSectionTitle title="Saved for you" />
+            <GourmeatSectionTitle title={t('discover.saved_for_you')} />
             <SHCZomatoDishRowRail title="" dishes={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
           </View>
         </SHCFadeIn>
       )}
 
-      <GourmeatSectionTitle title="Explore cuisines" />
+      <GourmeatSectionTitle title={t('discover.explore_cuisines')} />
       <GourmeatCategoryRow
         categories={cuisineCategories}
         selectedId={cuisineFilter}

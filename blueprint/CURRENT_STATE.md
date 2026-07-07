@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 19) — Mobile cart + location alert i18n.
+**Last Updated:** 2026-07-08 (Overnight loop iter 20) — Checkout/orders i18n; EAS APK FINISHED.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

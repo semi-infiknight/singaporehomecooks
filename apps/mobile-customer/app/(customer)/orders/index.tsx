@@ -12,15 +12,16 @@ import {
   shcSpacing,
   DirectionalTabScreen,
 } from '@shc/ui';
-import { getActiveOrders, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
+import { getActiveOrders, isActiveOrderStatus } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getOrdersListCopy, getLocalizedOrderStatus } from '@shc/i18n';
 
 export default function MyOrdersList() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const listCopy = getOrdersListCopy(locale);
   const { data: orders = [], isFetching } = useMyOrders('customer');
   const { user } = useAuth();
   const activeOrders = getActiveOrders(orders as Record<string, unknown>[]);
@@ -45,7 +46,7 @@ export default function MyOrdersList() {
     >
       <GourmeatScreenHeader
         title={t('orders.title')}
-        subtitle={`${user?.name || 'Guest'} · Track & chat${isFetching && activeOrders.length > 0 ? ' · updating…' : ''}`}
+        subtitle={listCopy.subtitle(user?.name || listCopy.guest, isFetching && activeOrders.length > 0)}
       />
 
       {activeOrders.length > 0 && (
@@ -58,7 +59,7 @@ export default function MyOrdersList() {
               dishName={o.items?.[0]?.name}
               productId={o.items?.[0]?.product_id}
               status={o.shc_status}
-              statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
+              statusLabel={getLocalizedOrderStatus(locale, String(o.shc_status || ''))}
               collectionDate={o.collection_date}
               collectionSlot={o.collection_slot}
               total={o.total}
@@ -92,7 +93,7 @@ export default function MyOrdersList() {
           dishName={o.items?.[0]?.name}
           productId={o.items?.[0]?.product_id}
           status={o.shc_status}
-          statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
+          statusLabel={getLocalizedOrderStatus(locale, String(o.shc_status || ''))}
           collectionDate={o.collection_date}
           collectionSlot={o.collection_slot}
           total={o.total}

@@ -432,3 +432,29 @@
 - Mobile orders list subtitle i18n
 - EAS monitor until FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 20 — 2026-07-08 ~03:31 IST
+
+### Implemented
+1. **Mobile checkout validation i18n** — `getCheckoutScreenCopy`; allergen/PDPA/slot errors, celebration, credits hint, footer earnings, tier1 label
+2. **Mobile orders list** — `getOrdersListCopy` subtitle; `getLocalizedOrderStatus` on order rows
+3. **Discover section titles** — categories, order again, saved, explore cuisines + guest add-to-cart tray
+4. **EAS APK** — build `2ad24658` **FINISHED**; full APK (~120MB) at `SHC-customer-preview-new.apk` (primary path locked by poll; `SHC-customer-preview.apk` partial ~27MB)
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### Tests
+- `@shc/i18n`: **24 tests** PASS
+- mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: **FINISHED** ✅ — APK downloaded
+
+### Next iteration
+- Mobile tab stack titles i18n (`_layout.tsx`)
+- Customer cook profile screen strings
+- Rename/copy full APK when file lock clears
+- Continue loop until 9:00 AM IST Jul 9

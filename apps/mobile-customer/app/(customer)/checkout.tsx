@@ -33,7 +33,7 @@ import { useCollectionSlots } from '../../hooks/useProducts';
 import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
 import { enforceMinimumOrder } from '@shc/business-rules';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getCheckoutScreenCopy } from '@shc/i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { formatLocationLabel } from '@shc/utils';
@@ -70,7 +70,8 @@ function AllergenGateTrayContent({
 export default function Checkout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const checkoutCopy = getCheckoutScreenCopy(locale);
   const { user, loading: authLoading } = useAuth();
   const { active: collectionLocation } = useCustomerLocation();
   const { openTray, dismiss } = useSHCTray();
@@ -125,28 +126,28 @@ export default function Checkout() {
       { id: 'allergen-gate', title: t('checkout.allergen_section'), height: 'medium' },
       <AllergenGateTrayContent
         allergens={(cart.items[0] as any)?.allergens}
-        tier1={['Shellfish / Nuts (typical)']}
+        tier1={[checkoutCopy.tier1Typical]}
         onConfirm={() => {
           setAllergenAck(true);
           dismiss();
         }}
       />
     );
-  }, [cart.items, dismiss, openTray, t]);
+  }, [cart.items, checkoutCopy.tier1Typical, dismiss, openTray, t]);
 
   const handleCheckout = async () => {
     setError(null);
     if (!allergenAck) {
       openAllergenTray();
-      setError({ code: 'SHC-CART-003', message: 'Allergen acknowledgment is mandatory (08-marketplace-rules)' });
+      setError({ code: 'SHC-CART-003', message: checkoutCopy.errorAllergenRequired });
       return;
     }
     if (!pdpaConsent) {
-      setError({ code: 'SHC-GENERIC-001', message: 'PDPA consent checkbox is required for Singapore compliance (personal data processing)' });
+      setError({ code: 'SHC-GENERIC-001', message: checkoutCopy.errorPdpaRequired });
       return;
     }
     if (!selectedSlot) {
-      setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection date + slot from available (enforced)' });
+      setError({ code: 'SHC-AVAIL-001', message: checkoutCopy.errorSlotRequired });
       return;
     }
     const totalCents = Math.round(total * 100);
@@ -226,7 +227,7 @@ export default function Checkout() {
         >
           <SHCCartPageHero
             title={t('checkout.order_placed')}
-            subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
+            subtitle={checkoutCopy.orderPlacedSubtitle(completedOrderId)}
             imageUri={BENTO_ACTION_IMAGES.checkout}
           />
           {orderSummaryCard}
@@ -234,13 +235,13 @@ export default function Checkout() {
           <Text style={styles.paynowHint}>{t('checkout.paynow_hint')}</Text>
           <SHCCard variant="bento-yellow" style={styles.footerCard}>
             <Text style={styles.footerText}>
-              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+              {checkoutCopy.footerEarnings(Math.floor(amountDue * 0.85))}
             </Text>
           </SHCCard>
         </ScrollView>
         <SHCCelebration
           visible={firstOrderMilestone.show}
-          message="Your first heritage order — thank you for supporting local home cooks!"
+          message={checkoutCopy.firstOrderCelebration}
           onDone={() => {
             firstOrderMilestone.dismiss();
             navigateToOrder();
@@ -309,7 +310,7 @@ export default function Checkout() {
               checked={allergenAck}
               onChange={setAllergenAck}
               allergens={(cart.items[0] as any)?.allergens}
-              tier1={['Shellfish / Nuts (typical)']}
+              tier1={[checkoutCopy.tier1Typical]}
             />
           </SHCCard>
 
@@ -332,7 +333,7 @@ export default function Checkout() {
             <SHCCard variant="bento-mint" style={styles.sectionCard} testID="credits-apply-section">
               <CreditBadge balance={creditBal} tier={creditsData?.tier as 'Bronze' | 'Silver' | 'Gold' | undefined} />
               <Text style={styles.creditsHint}>
-                Credits available: {creditBal} (4 = ~S$1 value). Redeem for family occasions.
+                {checkoutCopy.creditsAvailableHint(creditBal)}
               </Text>
               <View style={styles.creditPresets}>
                 {[0, 20, 40, Math.min(80, creditBal)].map((v, idx) => (
@@ -353,7 +354,7 @@ export default function Checkout() {
             onPress={() => setIsCorporate(!isCorporate)}
             style={styles.corporateRow}
             testID="corporate-flag-toggle"
-            accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub"
+            accessibilityLabel={checkoutCopy.corporateA11y}
           >
             <View style={[styles.corporateBox, isCorporate && styles.corporateBoxChecked]} />
             <Text style={styles.corporateText}>{t('checkout.corporate_mobile')}</Text>
@@ -363,7 +364,7 @@ export default function Checkout() {
 
           <SHCCard variant="bento-yellow" style={styles.footerCard}>
             <Text style={styles.footerText}>
-              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+              {checkoutCopy.footerEarnings(Math.floor(amountDue * 0.85))}
             </Text>
           </SHCCard>
         </SHCFadeIn>

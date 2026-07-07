@@ -10,3 +10,4 @@ export * from './cook';
 export * from './product-chat';
 export * from './footer';
 export * from './cart-screen';
+export * from './checkout-screen';
