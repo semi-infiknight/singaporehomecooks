@@ -1,24 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Receipt, ShoppingBag, Wallet } from 'lucide-react';
 import { useCart } from '../../lib/useProducts';
 import { summarizeCart } from '@shc/utils';
+import { useShcI18n } from '@shc/i18n';
 import { StickyCartBar } from './SHCWebComponents';
 
-const TABS = [
-  { href: '/', label: 'Home', icon: Home, testID: 'mobile-tab-discover', match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') },
-  { href: '/orders', label: 'Orders', icon: Receipt, testID: 'mobile-tab-orders', match: (p: string) => p.startsWith('/orders') },
-  { href: '/cart', label: 'Cart', icon: ShoppingBag, testID: 'mobile-tab-cart', match: (p: string) => p === '/cart' || p === '/checkout' },
-  { href: '/profile', label: 'Wallet', icon: Wallet, testID: 'mobile-tab-profile', match: (p: string) => p.startsWith('/profile') },
+const TAB_ROUTES = [
+  { href: '/', icon: Home, testID: 'mobile-tab-discover', labelKey: 'tab.home' as const, match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') },
+  { href: '/orders', icon: Receipt, testID: 'mobile-tab-orders', labelKey: 'tab.orders' as const, match: (p: string) => p.startsWith('/orders') },
+  { href: '/cart', icon: ShoppingBag, testID: 'mobile-tab-cart', labelKey: 'tab.cart' as const, match: (p: string) => p === '/cart' || p === '/checkout' },
+  { href: '/profile', icon: Wallet, testID: 'mobile-tab-profile', labelKey: 'tab.wallet' as const, match: (p: string) => p.startsWith('/profile') },
 ];
 
 const HIDE_CART_BAR = /^\/(cart|checkout)(\/|$)/;
 
 export function AppMobileTabBar() {
   const pathname = usePathname();
+  const { t } = useShcI18n();
+  const tabs = useMemo(
+    () => TAB_ROUTES.map((tab) => ({ ...tab, label: t(tab.labelKey) })),
+    [t]
+  );
   const { data: cart } = useCart();
   const items = ((cart?.items ?? []) as Parameters<typeof summarizeCart>[0]) || [];
   const firstItem = items[0];
@@ -46,7 +52,7 @@ export function AppMobileTabBar() {
           aria-label="Main"
         >
           <div className="flex items-stretch min-h-[52px]">
-            {TABS.map((tab) => {
+            {tabs.map((tab) => {
               const active = tab.match(pathname);
               const Icon = tab.icon;
               const badge = tab.href === '/cart' && summary.hasItems ? summary.badgeLabel : null;

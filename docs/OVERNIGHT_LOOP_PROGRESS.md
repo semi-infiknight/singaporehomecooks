@@ -75,3 +75,25 @@
 - Expand Mandarin coverage (cart, tab bar, trust strip)
 - Retry EAS if stuck 6+ hours
 - platform-stats live deploy verification
+
+---
+
+## Iteration 5 — 2026-07-08 ~02:50 IST
+
+### Implemented
+1. **Tab bar i18n** — web `AppMobileTabBar` + mobile `CustomerTabBar` use `tab.*` keys (en/zh-Hans)
+2. **Trust strip i18n** — `formatTrustStripCopy` in `@shc/i18n`; web `TrustStrip` + mobile `LocalizedTrustStrip`
+3. **Brand polish** — TrustStrip bento mint/peach/yellow icon accents per `brand.md`
+4. **Guest cart tray** — localized sign-in prompts on mobile tab bar
+
+### Tests
+- `@shc/i18n`: 5 tests PASS (incl. trust-strip)
+- web + mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: still **IN_QUEUE** (~1.5h elapsed, not stuck)
+
+### Next iteration
+- Orders screen i18n, web desktop nav labels
+- EAS monitor / download when FINISHED
+- More brand polish (promo rail, filter chips)

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 1) — `@shc/i18n` package (en + zh-Hans operational strings); S$50 minimum order enforcement (`SHC-CART-004`); Singapore food search synonym seeds + bidirectional expansion; web push permission UX banner; tri-platform i18n providers.
+**Last Updated:** 2026-07-08 (Overnight loop iter 5) — tab bar + trust strip i18n (en/zh-Hans); TrustStrip bento accent polish per brand.md.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

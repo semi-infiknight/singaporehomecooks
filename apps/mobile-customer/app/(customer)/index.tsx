@@ -22,7 +22,6 @@ import {
   SHCFilterChipRow,
   SHCPromoRail,
   SHCRequestDishHomeCTA,
-  SHCTrustStrip,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -50,6 +49,7 @@ import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 import { useShcI18n } from '@shc/i18n';
+import { LocalizedTrustStrip } from '../../components/LocalizedTrustStrip';
 
 const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
 
@@ -247,7 +247,7 @@ export default function CustomerDiscover() {
 
       {!query && (
         <View style={{ paddingHorizontal: shcSpacing.md }} testID="homepage-social-counters">
-          <SHCTrustStrip counters={counters} />
+          <LocalizedTrustStrip counters={counters} />
         </View>
       )}
 

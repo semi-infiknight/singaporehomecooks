@@ -5,15 +5,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
 import { summarizeCart } from '@shc/utils';
+import { useShcI18n } from '@shc/i18n';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
 import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
 
-const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
-  index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
-  'orders/index': { label: 'Orders', iconKey: 'orders', testID: 'orders-tab' },
-  cart: { label: 'Cart', iconKey: 'cart', testID: 'cart-tab' },
-  'profile/index': { label: 'Wallet', iconKey: 'profile', testID: 'profile-tab' },
+const TAB_META: Record<string, { labelKey: 'tab.home' | 'tab.orders' | 'tab.cart' | 'tab.wallet'; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
+  index: { labelKey: 'tab.home', iconKey: 'discover', testID: 'discover-tab' },
+  'orders/index': { labelKey: 'tab.orders', iconKey: 'orders', testID: 'orders-tab' },
+  cart: { labelKey: 'tab.cart', iconKey: 'cart', testID: 'cart-tab' },
+  'profile/index': { labelKey: 'tab.wallet', iconKey: 'profile', testID: 'profile-tab' },
 };
 
 const VISIBLE_TABS = new Set(Object.keys(TAB_META));
@@ -22,6 +23,7 @@ const HIDE_TAB_BAR = new Set(['request', 'location', 'checkout', 'product/[id]',
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useShcI18n();
   const { user } = useAuth();
   const { notifyTabChange } = useTabDirection();
   const { showGuestAuthTray } = useGuestAuthTray();
@@ -40,7 +42,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
     const meta = TAB_META[route.name];
     return {
       key: route.name,
-      label: meta.label,
+      label: t(meta.labelKey),
       iconKey: meta.iconKey,
       testID: meta.testID,
       badge: route.name === 'cart' && summary.hasItems ? summary.badgeLabel : undefined,
@@ -50,8 +52,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const openCart = useCallback(() => {
     if (!user) {
       showGuestAuthTray(
-        'Sign in to view cart',
-        'Browse freely — sign in to checkout and track orders.'
+        t('guest.sign_in_cart_title'),
+        t('guest.sign_in_cart_body')
       );
       return;
     }

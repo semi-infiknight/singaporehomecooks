@@ -24,6 +24,22 @@ export const en = {
   'trust.cooks': 'home cooks',
   'trust.meals': 'meals this month',
   'trust.areas': 'HDB areas',
+  'tab.home': 'Home',
+  'tab.orders': 'Orders',
+  'tab.cart': 'Cart',
+  'tab.wallet': 'Wallet',
+  'trust.cooks_label': '{count}+ verified cooks',
+  'trust.cooks_sub': 'Across {areas} areas',
+  'trust.meals_label': '{count} meals',
+  'trust.meals_sub': 'Served this month',
+  'trust.allergen_label': 'Allergen disclosure',
+  'trust.allergen_sub': 'Mandatory before checkout',
+  'trust.paynow_label': 'PayNow secure',
+  'trust.paynow_sub': 'Manual confirm',
+  'trust.collection_label': 'HDB collection',
+  'trust.collection_sub': 'No delivery — planned occasions',
+  'guest.sign_in_cart_title': 'Sign in to view cart',
+  'guest.sign_in_cart_body': 'Browse freely — sign in to checkout and track orders.',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -275,13 +275,16 @@ export function SHCPersonalizedSectionHeader({
 /** Principle 1 + trust: social proof strip (ratings, cooks, collection) */
 export function SHCTrustStrip({
   counters,
+  items: itemsOverride,
   testID = 'trust-strip',
 }: {
   counters?: PlatformCounters;
+  /** Localized labels — pass from @shc/i18n formatTrustStripCopy at screen level. */
+  items?: { iconKey: SHCIconKey; label: string; sub: string }[];
   testID?: string;
 }) {
   const copy = formatPlatformCounterCopy(counters ?? LAUNCH_PLATFORM_COUNTERS);
-  const TRUST_ITEMS: { iconKey: SHCIconKey; label: string; sub: string }[] = [
+  const TRUST_ITEMS: { iconKey: SHCIconKey; label: string; sub: string }[] = itemsOverride ?? [
     { iconKey: 'discover', label: copy.cooksLabel, sub: copy.cooksSub },
     { iconKey: 'orders', label: copy.mealsLabel, sub: copy.mealsSub },
     { iconKey: 'compliance', label: 'Allergen ack', sub: 'Before checkout' },

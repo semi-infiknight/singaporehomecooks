@@ -40,10 +40,10 @@ import {
   getOrderStatusLabel,
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
-  formatPlatformCounterCopy,
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
+import { formatTrustStripCopy, useShcI18n } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -1402,12 +1402,14 @@ export function PersonalizedSectionHeader({
 }
 
 export function TrustStrip({ counters }: { counters?: PlatformCounters }) {
-  const copy = formatPlatformCounterCopy(counters ?? LAUNCH_PLATFORM_COUNTERS);
+  const { locale } = useShcI18n();
+  const data = counters ?? LAUNCH_PLATFORM_COUNTERS;
+  const copy = formatTrustStripCopy(locale, data);
   const items = [
-    { label: copy.cooksLabel, sub: copy.cooksSub, Icon: Users },
-    { label: copy.mealsLabel, sub: copy.mealsSub, Icon: UtensilsCrossed },
-    { label: 'HDB collection', sub: 'No delivery — planned occasions', Icon: Home },
-    { label: 'Allergen disclosure', sub: 'Mandatory before checkout', Icon: ShieldCheck },
+    { label: copy.cooksLabel, sub: copy.cooksSub, Icon: Users, accent: 'bg-[var(--shc-bento-mint)]' },
+    { label: copy.mealsLabel, sub: copy.mealsSub, Icon: UtensilsCrossed, accent: 'bg-[var(--shc-bento-peach)]' },
+    { label: copy.collectionLabel, sub: copy.collectionSub, Icon: Home, accent: 'bg-[var(--shc-bento-yellow)]' },
+    { label: copy.allergenLabel, sub: copy.allergenSub, Icon: ShieldCheck, accent: 'bg-[var(--shc-bento-mint)]' },
   ];
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1416,7 +1418,7 @@ export function TrustStrip({ counters }: { counters?: PlatformCounters }) {
           key={item.label}
           className="text-center p-3 bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal-sm)]"
         >
-          <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-[var(--shc-bento-mint)] border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]" aria-hidden>
+          <div className={`w-8 h-8 mx-auto mb-2 rounded-full ${item.accent} border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]`} aria-hidden>
             <item.Icon className="w-4 h-4 text-primary" />
           </div>
           <div className="font-bold text-foreground text-xs">{item.label}</div>
