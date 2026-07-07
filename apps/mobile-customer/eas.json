@@ -17,6 +17,8 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "node": "22.16.0",
+      "pnpm": "11.1.3",
       "android": {
         "buildType": "apk"
       },

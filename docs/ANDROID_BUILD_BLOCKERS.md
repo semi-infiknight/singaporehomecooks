@@ -117,16 +117,18 @@ ninja: manifest 'build.ninja' still dirty after 100 tries
 | **Status (8 Jul 2026)** | **ERRORED** |
 | **Queue time** | ~76 min (free tier) |
 | **Build duration** | ~9 sec |
-| **Error** | `Unknown error. See logs of the Install dependencies build phase` |
+| **Error** | `pnpm install --frozen-lockfile exited with non-zero code: 1` |
+| **Root cause** | `package.json` added `@react-native/gradle-plugin@0.81.5` but `pnpm-lock.yaml` was not synced before upload |
+| **Fix applied (8 Jul 2026)** | `pnpm install` at monorepo root; `pnpm install --frozen-lockfile` verified passing; `preview` profile pinned to `node: 22.16.0` / `pnpm: 11.1.3` |
 
 **What succeeded before error:**
 - Project upload (~41 MB)
 - Remote Android keystore generation in cloud
 - Fingerprint computation
 
-**Likely cause (not yet confirmed in logs):**
-- Monorepo `pnpm` workspace install on EAS — `preview` profile lacks `node`/`pnpm` pins that `production` profile has
-- Build may have been submitted from short clone `C:\shc\hc` without correct EAS monorepo root configuration
+**Why it failed:**
+- EAS runs `pnpm install --frozen-lockfile` in CI; any `package.json` change without a matching lockfile entry fails immediately
+- First build was submitted from short clone `C:\shc\hc` during an in-progress lockfile edit session
 - Original Expo project (`owner: darksend`, projectId `5c1f4300-...`) was inaccessible; re-initialized under `kikalikescows`
 
 ### 7. Expo / EAS account migration (local only)
@@ -144,9 +146,9 @@ ninja: manifest 'build.ninja' still dirty after 100 tries
 3. **pnpm monorepo** — Deep symlinked paths under `.pnpm/` are the worst-case for Windows native builds.
 
 ### EAS cloud build
-1. **Dependency install phase** — Failed before native compile; points to workspace/monorepo setup, not Windows paths.
-2. **Profile config gap** — `preview` missing explicit `node: "22.16.0"` and `pnpm: "11.1.3"` (present on `production` profile).
-3. **Possible missing** `eas.json` monorepo settings or `.easignore` tuning for pnpm workspaces.
+1. **Confirmed root cause** — `pnpm install --frozen-lockfile` failed because `@react-native/gradle-plugin` was added to `apps/mobile-customer/package.json` without a synced `pnpm-lock.yaml` in the uploaded archive.
+2. **Fix** — Run `pnpm install` at monorepo root; verify `pnpm install --frozen-lockfile` passes before `eas build`. Re-submit from `C:\Users\mathu\Projects\singaporehomecooks` (not stale short clone).
+3. **Prevention** — `preview` profile now pins `node: "22.16.0"` and `pnpm: "11.1.3"` (matching `production` and root `packageManager`).
 
 ---
 
@@ -164,7 +166,7 @@ ninja: manifest 'build.ninja' still dirty after 100 tries
 ## What does not work
 
 - ❌ Local `gradlew assembleRelease` on Windows (this machine)
-- ❌ EAS preview APK (errored — needs config fix + retry)
+- ⏳ EAS preview APK (first attempt errored on lockfile; retry pending after fix)
 - ❌ Native app install on emulator (no APK artifact)
 - ⚠️ Several PWA Phase 1 items partial/fail (see audit)
 
