@@ -13,10 +13,13 @@ import {
 } from '@shc/utils';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { getCurrentGpsCoords } from '../../lib/gps-location';
+import { useShcI18n, getLocationAlertCopy } from '@shc/i18n';
 
 export default function LocationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { locale } = useShcI18n();
+  const alerts = getLocationAlertCopy(locale);
   const { saved, activeId, saveNew, setActive, removeSaved } = useCustomerLocation();
   const [step, setStep] = useState<1 | 2>(1);
   const [query, setQuery] = useState('');
@@ -94,17 +97,11 @@ export default function LocationScreen() {
       const result = await getCurrentGpsCoords();
       if (result.ok === false) {
         if (result.reason === 'unavailable') {
-          Alert.alert(
-            'GPS not available in this build',
-            'Rebuild the dev app to enable current location:\n\n  cd apps/mobile-customer && npx expo run:ios\n\nUse search above to find your block for now.'
-          );
+          Alert.alert(alerts.gpsUnavailableTitle, alerts.gpsUnavailableBody);
         } else if (result.reason === 'denied') {
-          Alert.alert(
-            'Location permission needed',
-            'Enable location in Settings → SHC Customer, or use search to find your HDB collection point.'
-          );
+          Alert.alert(alerts.permissionTitle, alerts.permissionBody);
         } else {
-          Alert.alert('Could not get location', 'Try search instead, or set a custom location in the emulator extended controls.');
+          Alert.alert(alerts.errorTitle, alerts.errorBody);
         }
         return;
       }
@@ -117,7 +114,7 @@ export default function LocationScreen() {
       });
       void geocodeDraft(result.coords.lat, result.coords.lng);
     } catch (e: unknown) {
-      Alert.alert('Could not get location', (e as Error)?.message ?? 'Try search instead.');
+      Alert.alert(alerts.errorTitle, (e as Error)?.message ?? alerts.errorFallback);
     } finally {
       setLocating(false);
     }
@@ -187,7 +184,7 @@ export default function LocationScreen() {
       });
       router.back();
     } catch (e: unknown) {
-      Alert.alert('Could not save', (e as Error)?.message ?? 'Check address fields.');
+      Alert.alert(alerts.saveErrorTitle, (e as Error)?.message ?? alerts.saveErrorBody);
     } finally {
       setBusy(false);
     }

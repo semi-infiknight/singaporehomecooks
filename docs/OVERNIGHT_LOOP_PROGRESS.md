@@ -411,3 +411,24 @@
 - Mobile checkout error strings
 - EAS monitor until FINISHED; download APK
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 19 — 2026-07-08 ~03:28 IST
+
+### Implemented
+1. **Mobile cart i18n** — `getCartScreenCopy`; empty state, stats, checkout guest tray, all labels (en/zh-Hans)
+2. **Mobile location alerts** — `getLocationAlertCopy`; GPS unavailable, permission, error, save-failure alerts localized
+
+### Tests
+- `@shc/i18n`: **24 tests** PASS
+- mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS**
+
+### Next iteration
+- Mobile checkout validation error strings
+- Mobile orders list subtitle i18n
+- EAS monitor until FINISHED
+- Continue loop until 9:00 AM IST Jul 9
