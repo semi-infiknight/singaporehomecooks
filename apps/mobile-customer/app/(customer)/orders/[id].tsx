@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GourmeatCard,
   GourmeatPrimaryButton,
+  GourmeatScreenHeader,
   OrderStatusBadge,
   SHCOrderTimeline,
   SHCFoodImage,
@@ -97,17 +98,17 @@ export default function OrderTracking() {
       contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingBottom: 120, paddingHorizontal: shcSpacing.md }}
       testID="order-tracking-screen"
     >
-      <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>{t('orders.detail.back')}</Text>
-      </Pressable>
+      <GourmeatScreenHeader
+        title={getLocalizedOrderStatus(locale, status)}
+        subtitle={formatOrderRef(locale, order.id)}
+        onBack={() => router.back()}
+        backLabel={t('orders.detail.back')}
+        testID="order-detail-header"
+      />
 
       <SHCFoodImage uri={heroUri} height={160} rounded={gourmeatRadii.lg} />
 
-      <View style={styles.headerRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{getLocalizedOrderStatus(locale, status)}</Text>
-          <Text style={styles.subtitle}>{formatOrderRef(locale, order.id)}</Text>
-        </View>
+      <View style={styles.badgeRow}>
         <OrderStatusBadge status={order.shc_status} />
       </View>
 
@@ -181,10 +182,8 @@ export default function OrderTracking() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   loading: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm, marginTop: shcSpacing.md },
-  title: { fontSize: 22, fontWeight: '800', color: gourmeatColors.text },
-  subtitle: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2 },
-  liveHint: { fontSize: 11, fontWeight: '700', color: gourmeatColors.success, marginTop: shcSpacing.xs },
+  badgeRow: { flexDirection: 'row', marginTop: shcSpacing.sm, marginBottom: shcSpacing.xs },
+  liveHint: { fontSize: 11, fontWeight: '700', color: gourmeatColors.success, marginBottom: shcSpacing.xs },
   cardTitle: { fontWeight: '800', fontSize: 15, color: gourmeatColors.text },
   cardBody: { marginTop: 6, fontSize: 14, fontWeight: '600', color: gourmeatColors.text },
   cardMeta: { marginTop: 4, fontSize: 12, color: gourmeatColors.textLight, fontWeight: '600' },

@@ -27,7 +27,7 @@ export function WebPushOptIn() {
   if (!user || permission === 'unsupported') return null;
   if (permission === 'granted') {
     return (
-      <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-[var(--shc-shadow-soft)]" data-testid="web-push-granted">
+      <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-[var(--shc-shadow-card)]" data-testid="web-push-granted">
         <p className="font-black">{copy.title}</p>
         <p className="mt-1 text-sm text-muted-foreground">{copy.enabled}</p>
       </div>
@@ -35,7 +35,7 @@ export function WebPushOptIn() {
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-[var(--shc-shadow-soft)]" data-testid="web-push-opt-in">
+    <div className="mt-4 rounded-xl border border-border bg-card p-4 shadow-[var(--shc-shadow-card)]" data-testid="web-push-opt-in">
       <p className="font-black">{copy.title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{copy.description}</p>
       {permission === 'denied' ? (

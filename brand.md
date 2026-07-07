@@ -30,7 +30,7 @@ Reference: [Gourmeat Food APP UI/UX](https://www.behance.net/gallery/239040745/G
 
 **Cook chrome:** `GourmeatCard appearance="cook"` on cook-portal cards + mobile cook orders (2px brutal border + `shc-shadow-brutal-sm`); web cook forms use `shc-input`; `VisualBentoTile` / `SHCVisualBentoTile` default brutal on cook surfaces.
 
-**Screens (Gourmeat customer):** discover · product PDP · cart · checkout · **orders** (list + detail chat/trays) · login. **Cook surfaces:** dashboard · orders · listings · compliance · earnings (brutal chrome, Gourmeat layout components).
+**Screens (Gourmeat customer):** discover · product PDP · cart · checkout · orders (list + detail) · **profile** · login. **Cook surfaces:** dashboard · orders · listings · compliance · earnings (brutal chrome, Gourmeat layout components).
 
 ---
 

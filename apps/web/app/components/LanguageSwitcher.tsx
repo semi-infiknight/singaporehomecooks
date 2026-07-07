@@ -18,7 +18,7 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as ShcLocale)}
-        className="shc-input py-1 px-2 text-xs font-bold"
+        className="shc-input-gourmeat py-1 px-2 text-xs font-bold"
         data-testid="language-switcher-web"
         aria-label={t('language.label')}
       >

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import { useCredits, useRedeemCredits } from '../../lib/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../lib/useOrder';
@@ -11,8 +12,11 @@ import {
   WalletCard,
   SHCSectionTitle,
   GourmeatScreenHeader,
+  GourmeatCard,
+  GourmeatPrimaryButton,
   HeritageStoryBanner,
   SHCBadge,
+  BentoGrid,
 } from '../components/SHCWebComponents';
 import { WebPushOptIn } from '../components/WebPushOptIn';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
@@ -80,6 +84,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
 }
 
 export default function Profile() {
+  const router = useRouter();
   const { t, locale } = useShcI18n();
   const profileCopy = getWalletProfileCopy(locale);
   const { user } = useAuth();
@@ -102,7 +107,7 @@ export default function Profile() {
         <div className="relative mt-2">
           <button
             type="button"
-            className="relative"
+            className="relative p-2.5 rounded-xl border border-border bg-card shadow-[var(--shc-shadow-card)]"
             aria-label={profileCopy.notificationsA11y}
             onClick={() => {
               const next = !showNotifs;
@@ -111,22 +116,51 @@ export default function Profile() {
                 markRead({ all: true });
               }
             }}
+            data-testid="notif-bell"
           >
-            <Bell className="w-6 h-6 text-muted-foreground" aria-hidden />
-            {notifs.length > 0 && (
+            <Bell className="w-5 h-5 text-foreground" aria-hidden />
+            {notifs.filter((n: { read?: boolean }) => !n.read).length > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-black bg-primary text-primary-foreground border border-border rounded-full px-1">
-                {notifs.length}
+                {notifs.filter((n: { read?: boolean }) => !n.read).length}
               </span>
             )}
           </button>
         </div>
       </div>
 
-      <WalletCard balance={balance} tier={tier} />
+      <LanguageSwitcher className="mb-4" />
 
-      <div className="mt-4 mb-2">
-        <HeritageStoryBanner href="/content/trust" />
+      <div className="my-4">
+        <BentoGrid
+          tiles={[
+            {
+              href: '/orders',
+              label: t('tab.orders'),
+              iconKey: 'orders',
+              imageKey: 'orders',
+              variant: 'mint',
+            },
+            {
+              href: '/search',
+              label: t('wallet.advanced_search'),
+              iconKey: 'request',
+              imageKey: 'request',
+              variant: 'mint',
+            },
+            {
+              href: '/profile',
+              label: t('wallet.credits_tile').replace('{balance}', String(balance)),
+              iconKey: 'credits',
+              imageKey: 'credits',
+              variant: 'yellow',
+            },
+          ]}
+        />
       </div>
+
+      <HeritageStoryBanner href="/content/trust" imageKey="compliance" />
+
+      <WalletCard balance={balance} tier={tier} />
 
       <div className="mt-3">
         <SHCButton
@@ -158,31 +192,64 @@ export default function Profile() {
         </div>
       )}
 
-      <SHCSectionTitle>{t('wallet.notifications')}</SHCSectionTitle>
-      <SHCCard variant="customer">
-        {notifs.length === 0 ? (
-          <div className="text-center py-6">
-            <span className="text-3xl" aria-hidden>
-              🛎️
-            </span>
-            <p className="text-sm text-muted-foreground mt-2 font-semibold">{t('wallet.all_caught_up')}</p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
-              <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
-                <span aria-hidden>📬</span>
-                <span className="text-foreground font-medium flex-1">{n.body}</span>
-                {n.created_at && (
-                  <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+      {showNotifs && (
+        <>
+          <SHCSectionTitle>{t('wallet.notifications')}</SHCSectionTitle>
+          <GourmeatCard className="mb-4">
+            {notifs.length === 0 ? (
+              <div className="text-center py-6">
+                <span className="text-3xl" aria-hidden>
+                  🛎️
+                </span>
+                <p className="text-sm text-muted-foreground mt-2 font-semibold">{t('wallet.all_caught_up')}</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
+                  <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
+                    <span aria-hidden>📬</span>
+                    <span className="text-foreground font-medium flex-1">{n.body}</span>
+                    {n.created_at && (
+                      <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </GourmeatCard>
+        </>
+      )}
+
+      <SHCCard variant="customer" className="mt-4 text-center">
+        <p className="font-extrabold text-primary">{t('wallet.trust_card_title')}</p>
+        <p className="text-xs text-muted-foreground mt-2 font-medium">{t('wallet.trust_card_body')}</p>
       </SHCCard>
 
-      <LanguageSwitcher className="mb-4" />
+      <GourmeatPrimaryButton
+        label={t('wallet.view_orders')}
+        className="w-full mt-4"
+        testID="profile-view-orders-btn"
+        onClick={() => router.push('/orders')}
+      />
+      <SHCButton
+        appearance="customer"
+        variant="outline"
+        className="w-full mt-2"
+        testID="trust-safety-link"
+        onClick={() => router.push('/content/trust')}
+      >
+        {t('nav.trust_safety')}
+      </SHCButton>
+      <SHCButton
+        appearance="customer"
+        variant="outline"
+        className="w-full mt-2"
+        testID="advanced-search-link"
+        onClick={() => router.push('/search')}
+      >
+        {t('wallet.advanced_search')}
+      </SHCButton>
+
       <WebPushOptIn />
     </div>
   );
