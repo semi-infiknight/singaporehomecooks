@@ -345,20 +345,27 @@ export function SHCOrderTimeline({
   status,
   live = false,
   testID = 'order-timeline',
+  steps,
+  liveLabel = 'Live updates',
+  cancelledLabel,
 }: {
   status: string;
   live?: boolean;
   testID?: string;
+  steps?: Array<{ id: string; label: string; detail: string }>;
+  liveLabel?: string;
+  cancelledLabel?: string;
 }) {
   const current = getOrderTimelineIndex(status);
   const isCancelled = status === 'cancelled' || status === 'disputed';
+  const timeline = steps ?? COLLECTION_ORDER_TIMELINE;
 
   return (
     <View testID={testID} style={{ marginVertical: shcSpacing.md }}>
       {live && current >= 0 && !isCancelled && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: shcSpacing.sm }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: shcColors.success }} />
-          <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.success }}>Live updates</Text>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.success }}>{liveLabel}</Text>
         </View>
       )}
       {isCancelled ? (
@@ -371,10 +378,10 @@ export function SHCOrderTimeline({
             padding: shcSpacing.md,
           }}
         >
-          <Text style={{ fontWeight: '800', color: shcColors.error }}>{getOrderStatusLabel(status)}</Text>
+          <Text style={{ fontWeight: '800', color: shcColors.error }}>{cancelledLabel ?? getOrderStatusLabel(status)}</Text>
         </View>
       ) : (
-        COLLECTION_ORDER_TIMELINE.map((step, i) => {
+        timeline.map((step, i) => {
           const done = current > i;
           const active = current === i;
           return (
@@ -400,7 +407,7 @@ export function SHCOrderTimeline({
                     </Text>
                   )}
                 </View>
-                {i < COLLECTION_ORDER_TIMELINE.length - 1 && (
+                {i < timeline.length - 1 && (
                   <View
                     style={{
                       width: 2,

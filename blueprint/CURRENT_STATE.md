@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 9) — order detail i18n + `getLocalizedOrderStatus`; checkout/trust/auth/wallet from iter 8.
+**Last Updated:** 2026-07-08 (Overnight loop iter 10) — order timeline, search, request-dish, cook tab bar i18n; `getLocalizedOrderTimeline`.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

@@ -24,7 +24,7 @@ import {
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
-import { useShcI18n, getLocalizedOrderStatus, formatOrderRef } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline } from '@shc/i18n';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -71,6 +71,7 @@ export default function TrackOrder() {
   }
 
   const status = (order.shc_status || 'pending') as SHCOrderStatus;
+  const timelineSteps = getLocalizedOrderTimeline(locale);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
@@ -86,7 +87,13 @@ export default function TrackOrder() {
       )}
 
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
-        <OrderTimeline status={status} live={isActiveOrderStatus(status)} />
+        <OrderTimeline
+          status={status}
+          live={isActiveOrderStatus(status)}
+          steps={timelineSteps}
+          liveLabel={t('orders.timeline.live')}
+          cancelledLabel={getLocalizedOrderStatus(locale, status)}
+        />
       </SHCCard>
 
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">

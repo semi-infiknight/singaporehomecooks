@@ -19,8 +19,10 @@ import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@s
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
+import { useShcI18n, getLocalizedOccasions } from '@shc/i18n';
 
 export default function SearchScreen() {
+  const { t, locale } = useShcI18n();
   const insets = useSafeAreaInsets();
   const [q, setQ] = useState('');
   const [occ, setOcc] = useState('');
@@ -62,20 +64,21 @@ export default function SearchScreen() {
     image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name }),
   });
 
+  const occasionMeta = getLocalizedOccasions(locale);
   const occasionChips = [
-    { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-    { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
-    { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
-    { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
-    { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
+    { id: 'any', label: t('filter.all'), imageUrl: getOccasionImageUrl(''), active: !occ },
+    { id: 'raya', label: occasionMeta.find((o) => o.id === 'Hari Raya')?.chipLabel || 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
+    { id: 'cny', label: occasionMeta.find((o) => o.id === 'Chinese New Year')?.chipLabel || 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
+    { id: 'family', label: occasionMeta.find((o) => o.id === 'Family Gathering')?.chipLabel || 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
+    { id: 'xmas', label: occasionMeta.find((o) => o.id === 'Christmas')?.chipLabel || 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
   ];
 
   const filterChips = [
-    { id: 'halal', label: 'Halal', iconKey: 'leaf' as const, active: halalOnly, testID: 'halal-filter' },
-    { id: 'peranakan', label: 'Peranakan', iconKey: 'restaurant' as const, active: cuisine === 'Peranakan' },
-    { id: 'eurasian', label: 'Eurasian', iconKey: 'restaurant' as const, active: cuisine === 'Eurasian' },
-    { id: 'light', label: 'Light (<500 cal)', iconKey: 'leaf' as const, active: maxCal === 500 },
-    { id: 'moderate', label: '≤550 cal', iconKey: 'restaurant' as const, active: maxCal === 550 },
+    { id: 'halal', label: t('filter.halal'), iconKey: 'leaf' as const, active: halalOnly, testID: 'halal-filter' },
+    { id: 'peranakan', label: t('search.filter_peranakan'), iconKey: 'restaurant' as const, active: cuisine === 'Peranakan' },
+    { id: 'eurasian', label: t('search.filter_eurasian'), iconKey: 'restaurant' as const, active: cuisine === 'Eurasian' },
+    { id: 'light', label: t('filter.light'), iconKey: 'leaf' as const, active: maxCal === 500 },
+    { id: 'moderate', label: t('search.filter_moderate'), iconKey: 'restaurant' as const, active: maxCal === 550 },
   ];
 
   const handleOccasion = (id: string) => {
@@ -104,24 +107,24 @@ export default function SearchScreen() {
     >
       <View style={styles.header}>
         <SHCIcon name="search" size={24} color={shcColors.primary} active />
-        <Text style={styles.title}>Advanced Search</Text>
+        <Text style={styles.title}>{t('search.title')}</Text>
       </View>
 
-      <SHCSearchBar value={q} onChangeText={setQ} placeholder="Search dishes, cooks…" testID="search-input" />
+      <SHCSearchBar value={q} onChangeText={setQ} placeholder={t('nav.search_placeholder_mobile')} testID="search-input" />
 
-      <SHCMindSectionTitle>Occasion</SHCMindSectionTitle>
+      <SHCMindSectionTitle>{t('search.occasion_section')}</SHCMindSectionTitle>
       <SHCFilterChipRow chips={occasionChips} onChipPress={handleOccasion} testID="search-occasion-chips" />
 
-      <SHCMindSectionTitle>Filters</SHCMindSectionTitle>
+      <SHCMindSectionTitle>{t('search.filters_section')}</SHCMindSectionTitle>
       <SHCFilterChipRow chips={filterChips} onChipPress={handleFilter} testID="search-filter-chips" />
-      <Text style={styles.resultsTitle}>{results.length} results</Text>
+      <Text style={styles.resultsTitle}>{t('search.results_count').replace('{count}', String(results.length))}</Text>
       {q.trim() ? (
         <SHCSearchResultsPanel
           query={q}
           dishes={results.map(toDish)}
           onDishPress={goProduct}
           onAddPress={(id) => {
-            if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
+            if (!requireAuth(t('guest.sign_in_add_body'))) return;
             addMut.mutate({ productId: id, qty: 1 });
           }}
           testID="search-results-panel"
@@ -136,7 +139,7 @@ export default function SearchScreen() {
         </View>
       )}
       <SHCButton onPress={() => router.back()} style={{ marginTop: shcSpacing.md }}>
-        <SHCButtonText>Back</SHCButtonText>
+        <SHCButtonText>{t('search.back')}</SHCButtonText>
       </SHCButton>
     </ScrollView>
   );

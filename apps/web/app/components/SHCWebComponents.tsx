@@ -1437,17 +1437,32 @@ export function TrustStrip({ counters }: { counters?: PlatformCounters }) {
 }
 
 /** dev.to: live order status timeline */
-export function OrderTimeline({ status, live = false, testID = 'order-timeline' }: { status: string; live?: boolean; testID?: string }) {
+export function OrderTimeline({
+  status,
+  live = false,
+  testID = 'order-timeline',
+  steps,
+  liveLabel = 'Live updates',
+  cancelledLabel,
+}: {
+  status: string;
+  live?: boolean;
+  testID?: string;
+  steps?: Array<{ id: string; label: string; detail: string }>;
+  liveLabel?: string;
+  cancelledLabel?: string;
+}) {
   const current = getOrderTimelineIndex(status);
   const cancelled = status === 'cancelled' || status === 'disputed';
+  const timeline = steps ?? COLLECTION_ORDER_TIMELINE;
   return (
     <div data-testid={testID} className="space-y-3">
       {live && current >= 0 && !cancelled && (
         <p className="text-[11px] font-extrabold text-[var(--shc-success)] flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[var(--shc-success)]" /> Live updates
+          <span className="w-2 h-2 rounded-full bg-[var(--shc-success)]" /> {liveLabel}
         </p>
       )}
-      {COLLECTION_ORDER_TIMELINE.map((step, i) => {
+      {timeline.map((step, i) => {
         const done = current > i;
         const active = current === i;
         return (

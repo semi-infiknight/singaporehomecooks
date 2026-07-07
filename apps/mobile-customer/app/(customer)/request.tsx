@@ -11,8 +11,10 @@ import {
 } from '@shc/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useCreateRequest } from '../../hooks/useOrder';
+import { useShcI18n } from '@shc/i18n';
 
 export default function RequestDishScreen() {
+  const { t } = useShcI18n();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
@@ -58,7 +60,7 @@ export default function RequestDishScreen() {
       setPostedId(req?.id);
       setDone(true);
     } catch (e: unknown) {
-      Alert.alert('Could not post request', (e as Error)?.message || 'Please try again after signing in.');
+      Alert.alert(t('request.error_title'), (e as Error)?.message || t('request.error_body'));
     }
   };
 
@@ -76,12 +78,12 @@ export default function RequestDishScreen() {
         style={{ flex: 1, paddingTop: insets.top + shcSpacing.lg, paddingHorizontal: shcSpacing.lg, backgroundColor: gourmeatColors.background }}
         testID="request-dish-paused"
       >
-        <Text style={{ fontSize: 24, fontWeight: '800', color: gourmeatColors.text }}>Request a dish is paused</Text>
+        <Text style={{ fontSize: 24, fontWeight: '800', color: gourmeatColors.text }}>{t('request.paused_title')}</Text>
         <Text style={{ marginTop: 12, fontSize: 15, color: gourmeatColors.textMuted, lineHeight: 22 }}>
-          Browse existing home-cooked listings for now — we&apos;ll reopen custom requests soon.
+          {t('request.paused_body')}
         </Text>
         <Pressable onPress={() => router.replace('/(customer)/' as any)} style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: gourmeatColors.primary }}>Browse dishes</Text>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: gourmeatColors.primary }}>{t('orders.browse_cta')}</Text>
         </Pressable>
       </View>
     );

@@ -21,3 +21,15 @@ export function getLocalizedOrderStatus(locale: ShcLocale, status: string): stri
 export function formatOrderRef(locale: ShcLocale, id: string): string {
   return t(locale, 'orders.detail.order_ref').replace('{id}', id);
 }
+
+const TIMELINE_IDS = ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'] as const;
+
+export type LocalizedTimelineStep = { id: string; label: string; detail: string };
+
+export function getLocalizedOrderTimeline(locale: ShcLocale): LocalizedTimelineStep[] {
+  return TIMELINE_IDS.map((id) => ({
+    id,
+    label: t(locale, `orders.timeline.${id}.label` as MessageKey),
+    detail: t(locale, `orders.timeline.${id}.detail` as MessageKey),
+  }));
+}

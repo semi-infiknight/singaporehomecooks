@@ -8,12 +8,12 @@ import { ArrowLeft, CheckCircle2, Users, Wallet, Calendar } from 'lucide-react';
 import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
 import { useCreateRequest } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
+import { useShcI18n, getLocalizedOccasions } from '@shc/i18n';
 import { SHCButton, SHCCard, SHCSectionTitle } from '../components/SHCWebComponents';
 
-const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'];
+const OCCASION_IDS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'];
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
 const BUDGET_PRESETS = [80, 120, 150, 200];
-const STEPS = ['Your story', 'Inspiration', 'Gathering', 'Review'];
 
 function defaultDate() {
   const d = new Date();
@@ -22,6 +22,7 @@ function defaultDate() {
 }
 
 export default function RequestDishPage() {
+  const { t, locale } = useShcI18n();
   const router = useRouter();
   const { user } = useAuth();
   const createReq = useCreateRequest();
@@ -84,17 +85,29 @@ export default function RequestDishPage() {
     setDone(true);
   };
 
+  const occasions = getLocalizedOccasions(locale).filter((o) => OCCASION_IDS.includes(o.id));
+  const steps = [
+    t('request.step.story'),
+    t('request.step.inspiration'),
+    t('request.step.gathering'),
+    t('request.step.review'),
+  ];
+  const heroSubtitles = [
+    t('request.hero.step1'),
+    t('request.hero.step2'),
+    t('request.hero.step3'),
+    t('request.hero.step4'),
+  ];
+
   if (!user) return null;
 
   if (!featureLoading && !requestDishEnabled) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-black">Request a dish is paused</h1>
-        <p className="mt-3 text-muted-foreground font-medium">
-          Browse existing home-cooked listings for now — we&apos;ll reopen custom requests soon.
-        </p>
+        <h1 className="text-2xl font-black">{t('request.paused_title')}</h1>
+        <p className="mt-3 text-muted-foreground font-medium">{t('request.paused_body')}</p>
         <SHCButton className="mt-6" onClick={() => router.push('/')}>
-          Browse dishes
+          {t('orders.browse_cta')}
         </SHCButton>
       </div>
     );
@@ -104,18 +117,18 @@ export default function RequestDishPage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 max-w-lg mx-auto text-center" test-id="request-success">
         <CheckCircle2 className="w-16 h-16 text-[var(--shc-success)] mb-6" aria-hidden />
-        <h1 className="text-3xl font-black text-foreground">Request posted!</h1>
+        <h1 className="text-3xl font-black text-foreground">{t('request.success_title')}</h1>
         <p className="text-muted-foreground mt-3 font-medium leading-relaxed">
           {requestId
-            ? `Request ${requestId} is live. Home cooks will bid on the Collaboration Board.`
-            : 'Home cooks will bid soon — check notifications for offers.'}
+            ? t('request.success_with_id').replace('{id}', requestId)
+            : t('request.success_body')}
         </p>
         <div className="flex flex-col gap-3 mt-8 w-full max-w-xs">
           <SHCButton size="lg" onClick={() => router.push('/')}>
-            Browse dishes
+            {t('orders.browse_cta')}
           </SHCButton>
           <SHCButton variant="outline" onClick={() => router.push('/profile')}>
-            Back to profile
+            {t('request.back_profile')}
           </SHCButton>
         </div>
       </div>
@@ -140,17 +153,12 @@ export default function RequestDishPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <span className="text-xs font-bold text-white/85 tracking-wide">
-              STEP {step} OF 4
+              {t('request.step_of').replace('{step}', String(step))}
             </span>
           </div>
           <div>
-            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">Request a custom dish</h1>
-            <p className="text-sm md:text-base font-semibold text-white/90 mt-2 max-w-xl">
-              {step === 1 && 'Tell home cooks your occasion and what you crave'}
-              {step === 2 && 'Share a recipe video — cooks bring their HDB interpretation'}
-              {step === 3 && 'How many guests, budget, and when you need it'}
-              {step === 4 && 'Review before cooks bid on the Collaboration Board'}
-            </p>
+            <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight">{t('request.title')}</h1>
+            <p className="text-sm md:text-base font-semibold text-white/90 mt-2 max-w-xl">{heroSubtitles[step - 1]}</p>
           </div>
         </div>
       </div>
@@ -158,7 +166,7 @@ export default function RequestDishPage() {
       <div className="max-w-2xl mx-auto px-4 -mt-6 relative z-10">
         {/* Stepper */}
         <div className="flex gap-1 mb-6">
-          {STEPS.map((label, i) => {
+          {steps.map((label, i) => {
             const n = i + 1;
             const active = n === step;
             const complete = n < step;
@@ -179,27 +187,27 @@ export default function RequestDishPage() {
 
         {step === 1 && (
           <div data-testid="request-step-occasion">
-            <SHCSectionTitle>What&apos;s the occasion?</SHCSectionTitle>
+            <SHCSectionTitle>{t('request.occasion_title')}</SHCSectionTitle>
             <div className="flex flex-wrap gap-2 mb-4">
-              {OCCASIONS.map((o) => (
+              {occasions.map((o) => (
                 <button
-                  key={o}
+                  key={o.id}
                   type="button"
-                  onClick={() => setOccasion(o)}
+                  onClick={() => setOccasion(o.id)}
                   className={`px-3 py-1.5 rounded-full text-sm font-bold border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-colors ${
-                    occasion === o ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
+                    occasion === o.id ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
                   }`}
                 >
-                  {o}
+                  {o.chipLabel}
                 </button>
               ))}
             </div>
-            <label className="block text-sm font-bold mb-2">Describe the dish & vibe</label>
+            <label className="block text-sm font-bold mb-2">{t('request.describe_label')}</label>
             <textarea
               value={story}
               onChange={(e) => setStory(e.target.value)}
               className="shc-input min-h-[120px] resize-y"
-              placeholder="e.g. Ayam buah keluak for 6, Peranakan-style…"
+              placeholder={t('request.describe_placeholder')}
               data-testid="request-desc"
             />
           </div>
@@ -208,17 +216,15 @@ export default function RequestDishPage() {
         {step === 2 && (
           <div data-testid="request-step-inspiration">
             <SHCCard className="bg-[var(--shc-bento-peach)] mb-4">
-              <p className="font-bold text-sm">Cook&apos;s interpretation</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Paste a YouTube recipe — verified HDB cooks adapt it to their kitchen.
-              </p>
+              <p className="font-bold text-sm">{t('request.interpretation_title')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('request.interpretation_body')}</p>
             </SHCCard>
-            <label className="block text-sm font-bold mb-2">YouTube URL (optional)</label>
+            <label className="block text-sm font-bold mb-2">{t('request.youtube_label')}</label>
             <input
               value={youtube}
               onChange={(e) => setYoutube(e.target.value)}
               className="shc-input w-full"
-              placeholder="https://youtube.com/watch?v=…"
+              placeholder={t('request.youtube_placeholder')}
               data-testid="request-yt"
             />
           </div>
@@ -226,7 +232,7 @@ export default function RequestDishPage() {
 
         {step === 3 && (
           <div data-testid="request-step-gathering">
-            <SHCSectionTitle>Party size</SHCSectionTitle>
+            <SHCSectionTitle>{t('request.party_size')}</SHCSectionTitle>
             <div className="flex flex-wrap gap-2 mb-4">
               {PARTY_PRESETS.map((n) => (
                 <button
@@ -237,11 +243,11 @@ export default function RequestDishPage() {
                     partySize === n ? 'bg-primary text-primary-foreground' : 'bg-card'
                   }`}
                 >
-                  {n} guests
+                  {t('request.guests').replace('{n}', String(n))}
                 </button>
               ))}
             </div>
-            <SHCSectionTitle>Budget (S$)</SHCSectionTitle>
+            <SHCSectionTitle>{t('request.budget')}</SHCSectionTitle>
             <div className="flex flex-wrap gap-2 mb-4">
               {BUDGET_PRESETS.map((b) => (
                 <button
@@ -256,7 +262,7 @@ export default function RequestDishPage() {
                 </button>
               ))}
             </div>
-            <label className="block text-sm font-bold mb-2">Collection date</label>
+            <label className="block text-sm font-bold mb-2">{t('request.collection_date')}</label>
             <input
               type="date"
               value={date}
@@ -270,14 +276,14 @@ export default function RequestDishPage() {
         {step === 4 && (
           <div data-testid="request-step-review">
             <SHCCard className="bg-[var(--shc-bento-mint)]">
-              <p className="text-xs font-black text-muted-foreground tracking-wide">YOUR REQUEST</p>
+              <p className="text-xs font-black text-muted-foreground tracking-wide">{t('request.your_request')}</p>
               <p className="text-lg font-black mt-2 leading-snug">{body}</p>
               {youtube.trim() && (
                 <p className="text-sm text-primary font-semibold mt-2 truncate">📺 {youtube}</p>
               )}
               <div className="flex flex-wrap gap-2 mt-4">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card text-xs font-bold">
-                  <Users className="w-3.5 h-3.5" /> {partySize} guests
+                  <Users className="w-3.5 h-3.5" /> {t('request.guests').replace('{n}', String(partySize))}
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card text-xs font-bold">
                   <Wallet className="w-3.5 h-3.5" /> S${budget}
@@ -300,11 +306,11 @@ export default function RequestDishPage() {
             }}
             testID="submit-request-btn"
           >
-            {createReq.isPending ? 'Posting…' : step === 4 ? 'Post request — cooks will bid' : 'Continue'}
+            {createReq.isPending ? t('request.posting') : step === 4 ? t('request.post_btn') : t('request.continue')}
           </SHCButton>
           {step > 1 && (
             <SHCButton variant="outline" onClick={() => setStep((s) => s - 1)}>
-              Back
+              {t('search.back')}
             </SHCButton>
           )}
         </div>

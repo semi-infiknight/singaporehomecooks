@@ -20,7 +20,7 @@ import {
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
-import { useShcI18n, getLocalizedOrderStatus, formatOrderRef } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline } from '@shc/i18n';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -88,6 +88,7 @@ export default function OrderTracking() {
   const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
+  const timelineSteps = getLocalizedOrderTimeline(locale);
 
   return (
     <ScrollView
@@ -112,7 +113,13 @@ export default function OrderTracking() {
       {live && isFetching && <Text style={styles.liveHint}>{t('orders.detail.refreshing')}</Text>}
 
       <GourmeatCard>
-        <SHCOrderTimeline status={status} live={live} />
+        <SHCOrderTimeline
+          status={status}
+          live={live}
+          steps={timelineSteps}
+          liveLabel={t('orders.timeline.live')}
+          cancelledLabel={getLocalizedOrderStatus(locale, status)}
+        />
       </GourmeatCard>
 
       <GourmeatCard>

@@ -184,3 +184,26 @@
 - Cook mobile tab bar (optional)
 - Request-dish / search screen i18n
 - EAS monitor until FINISHED or 6h+ stuck
+
+---
+
+## Iteration 10 — 2026-07-08 ~03:01 IST
+
+### Implemented
+1. **Order timeline i18n** — `getLocalizedOrderTimeline`; web `OrderTimeline` + mobile `SHCOrderTimeline` accept localized `steps` prop
+2. **Search i18n** — web `/search` + mobile search: title, filters, occasion chips, results count, guest add-to-cart prompt
+3. **Request-dish i18n** — web `/request` full flow (steps, hero, form, success/paused); mobile paused/error states
+4. **Cook tab bar i18n** — `CookTabBar` uses `cook.tab.*` keys (Home, Orders, Listings, Docs)
+
+### Tests
+- `@shc/i18n`: **13 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: still **IN_QUEUE** (~2.5h+) — no APK download yet
+
+### Next iteration
+- `RequestDishExperience` shared component strings (mobile wizard body)
+- Active order banner / order tray i18n
+- EAS monitor; download APK when FINISHED
+- Continue loop until 9:00 AM IST Jul 9

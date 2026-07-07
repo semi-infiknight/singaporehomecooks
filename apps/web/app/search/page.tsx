@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/useAuth';
 import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
 import { useFavorites } from '../../lib/useFavorites';
 import { filterDiscoverProducts } from '@shc/utils';
+import { useShcI18n, getLocalizedOccasions } from '@shc/i18n';
 import {
   SHCButton,
   SHCPageHeader,
@@ -17,6 +18,7 @@ import {
 } from '../components/SHCWebComponents';
 
 export default function SearchPage() {
+  const { t, locale } = useShcI18n();
   const router = useRouter();
   const { user } = useAuth();
   const [q, setQ] = useState('');
@@ -25,6 +27,9 @@ export default function SearchPage() {
   const { data: products = [], isLoading } = useProducts('');
   const addMut = useAddToCart();
   const { toggle, isFavorite } = useFavorites();
+  const occasions = getLocalizedOccasions(locale).filter((o) =>
+    ['', 'Hari Raya', 'Deepavali', 'Chinese New Year'].includes(o.id)
+  );
 
   const results = useMemo(
     () =>
@@ -39,12 +44,15 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 pb-28">
-      <SHCPageHeader title="Advanced Search" subtitle={`${user?.name || 'Guest'} · filters & ADD`} />
+      <SHCPageHeader
+        title={t('search.title')}
+        subtitle={t('search.subtitle').replace('{name}', user?.name || 'Guest')}
+      />
       <input
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search dishes, cooks…"
+        placeholder={t('nav.search_placeholder_mobile')}
         className="w-full px-4 py-3 rounded-full bg-card border border-border shadow-[var(--shc-shadow-soft)] text-sm font-medium mb-4"
         data-testid="search-input"
       />
@@ -61,14 +69,14 @@ export default function SearchPage() {
       )}
 
       <div className="flex flex-wrap gap-2 mb-4">
-        {['', 'Hari Raya', 'Deepavali', 'Chinese New Year'].map((o) => (
+        {occasions.map((o) => (
           <button
-            key={o || 'all'}
+            key={o.id || 'all'}
             type="button"
-            onClick={() => setOcc(o)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold border ${occ === o ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
+            onClick={() => setOcc(o.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold border ${occ === o.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
           >
-            {o || 'All occasions'}
+            {o.id ? o.chipLabel : t('search.all_occasions')}
           </button>
         ))}
         <button
@@ -77,18 +85,20 @@ export default function SearchPage() {
           className={`px-3 py-1.5 rounded-full text-xs font-bold border ${halalOnly ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
           data-testid="halal-filter"
         >
-          Halal
+          {t('filter.halal')}
         </button>
         <button
           type="button"
           onClick={toggleLight}
           className={`px-3 py-1.5 rounded-full text-xs font-bold border ${maxCal === 500 ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border'}`}
         >
-          Light (&lt;500 cal)
+          {t('filter.light')}
         </button>
       </div>
 
-      <p className="text-sm font-bold text-muted-foreground mb-3">{isLoading ? 'Loading…' : `${results.length} results`}</p>
+      <p className="text-sm font-bold text-muted-foreground mb-3">
+        {isLoading ? t('orders.loading') : t('search.results_count').replace('{count}', String(results.length))}
+      </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {results.map((p) => (
@@ -114,8 +124,12 @@ export default function SearchPage() {
       </div>
 
       <div className="mt-6 flex gap-3">
-        <SHCButton variant="outline" onClick={() => router.back()}>Back</SHCButton>
-        <Link href="/" className="text-sm font-semibold text-primary self-center">Discover home</Link>
+        <SHCButton variant="outline" onClick={() => router.back()}>
+          {t('search.back')}
+        </SHCButton>
+        <Link href="/" className="text-sm font-semibold text-primary self-center">
+          {t('search.discover_home')}
+        </Link>
       </div>
     </div>
   );
