@@ -14,38 +14,22 @@ import {
   type SHCIconKey,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { useShcI18n, getTrustSafetyOnboardingCopy } from '@shc/i18n';
+import type { TrustLayerKey } from '@shc/i18n';
 
-const TRUST_LAYERS: { iconKey: SHCIconKey; title: string; body: string }[] = [
-  {
-    iconKey: 'compliance',
-    title: 'Kitchen transparency',
-    body: 'Cooks share dish demos and kitchen intros so you see the real HDB workspace before you order.',
-  },
-  {
-    iconKey: 'leaf',
-    title: 'Tasting portions',
-    body: 'New cooks offer S$3–5 tasting sizes — try once before committing to a full occasion order.',
-  },
-  {
-    iconKey: 'credits',
-    title: 'Clear receipts',
-    body: 'Itemised totals, platform fee, and cook earnings shown at every step. Corporate tax invoices supported.',
-  },
-  {
-    iconKey: 'orders',
-    title: 'Occasion guarantee',
-    body: 'Orders over S$150: tiered platform-backed refund (up to 50%, capped at S$100) for verified quality issues.',
-  },
-  {
-    iconKey: 'discover',
-    title: 'Safe HDB collection',
-    body: 'Exact block and unit released 2h before your slot. Collection-only — no delivery, no stranger at your door.',
-  },
-];
+const LAYER_ICONS: Record<TrustLayerKey, SHCIconKey> = {
+  kitchen: 'compliance',
+  tasting: 'leaf',
+  receipts: 'credits',
+  guarantee: 'orders',
+  collection: 'discover',
+};
 
 export default function TrustAndSafetyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { locale } = useShcI18n();
+  const copy = getTrustSafetyOnboardingCopy(locale);
 
   return (
     <ScrollView
@@ -55,46 +39,38 @@ export default function TrustAndSafetyScreen() {
     >
       <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={120} rounded={shcRadii.lg} />
 
-      <Text style={styles.title}>Trust & Safety</Text>
-      <Text style={styles.subtitle}>
-        Five layers of protection for customers and cooks — built for Singapore home kitchens, not generic delivery.
-      </Text>
+      <Text style={styles.title}>{copy.title}</Text>
+      <Text style={styles.subtitle}>{copy.subtitle}</Text>
 
-      {TRUST_LAYERS.map((layer) => (
-        <SHCCard key={layer.title} style={styles.layerCard}>
+      {copy.layers.map((layer) => (
+        <SHCCard key={layer.key} style={styles.layerCard}>
           <View style={styles.layerRow}>
             <View style={styles.layerIcon}>
-              <SHCIcon name={layer.iconKey} size={22} color={shcColors.primary} active />
+              <SHCIcon name={LAYER_ICONS[layer.key]} size={22} color={shcColors.primary} active />
             </View>
             <View style={styles.layerCopy}>
               <Text style={styles.layerTitle}>{layer.title}</Text>
-              <Text style={styles.layerBody}>{layer.body}</Text>
+              <Text style={styles.layerBody}>{layer.desc}</Text>
             </View>
           </View>
         </SHCCard>
       ))}
 
       <SHCCard variant="bento-peach" style={styles.policyCard}>
-        <Text style={styles.policyTitle}>Allergen disclosure</Text>
-        <Text style={styles.policyBody}>
-          Every dish lists Tier 1 allergens. You must acknowledge them before checkout. Home kitchens carry cross-contamination
-          risk — we state that plainly, not in fine print.
-        </Text>
+        <Text style={styles.policyTitle}>{copy.allergenTitle}</Text>
+        <Text style={styles.policyBody}>{copy.allergenBody}</Text>
       </SHCCard>
 
       <SHCCard style={styles.policyCard}>
-        <Text style={styles.policyTitle}>Cancellation</Text>
-        <Text style={styles.policyLine}>· 72+ hours before collection → full refund</Text>
-        <Text style={styles.policyLine}>· 24–72 hours → 50% refund</Text>
-        <Text style={styles.policyLine}>· Under 24 hours → no refund (food is prepped)</Text>
+        <Text style={styles.policyTitle}>{copy.cancellationTitle}</Text>
+        {copy.cancellationLines.map((line) => (
+          <Text key={line} style={styles.policyLine}>· {line}</Text>
+        ))}
       </SHCCard>
 
       <SHCCard variant="bento-mint" style={styles.policyCard}>
-        <Text style={styles.policyTitle}>PDPA & collection privacy</Text>
-        <Text style={styles.policyBody}>
-          Consent captured at checkout. Cook addresses stay hidden until 2 hours before your slot. Request data deletion from
-          Profile any time.
-        </Text>
+        <Text style={styles.policyTitle}>{copy.pdpaTitle}</Text>
+        <Text style={styles.policyBody}>{copy.pdpaBody}</Text>
       </SHCCard>
 
       <Pressable
@@ -103,11 +79,11 @@ export default function TrustAndSafetyScreen() {
         testID="trust-browse-cta"
         accessibilityRole="button"
       >
-        <Text style={styles.ctaText}>Browse dishes</Text>
+        <Text style={styles.ctaText}>{copy.browseCta}</Text>
       </Pressable>
 
       <Pressable onPress={() => router.push('/(customer)/cook/auntie-rose-tampines' as any)} style={styles.secondaryCta}>
-        <Text style={styles.secondaryCtaText}>Meet Auntie Rose (Katong heritage cook) →</Text>
+        <Text style={styles.secondaryCtaText}>{copy.meetCookCta}</Text>
       </Pressable>
     </ScrollView>
   );

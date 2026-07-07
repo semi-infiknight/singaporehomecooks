@@ -26,7 +26,7 @@ export function SHCOrderReviewTrayContentWeb({
             key={n}
             type="button"
             onClick={() => tray.setRating(n)}
-            className={`text-[28px] leading-none ${n <= tray.rating ? 'text-[#FFB800]' : 'text-muted-foreground/40'}`}
+            className={`text-[28px] leading-none ${n <= tray.rating ? 'text-[var(--shc-accent)]' : 'text-muted-foreground/40'}`}
             aria-label={`${n} stars`}
           >
             ★
@@ -63,7 +63,7 @@ export function SHCOrderDisputeTrayContentWeb({
 
   return (
     <div data-testid="order-dispute-tray">
-      <p className="text-xs text-[#5C5144] mt-1">{labels.disputeHint}</p>
+      <p className="text-xs text-muted-foreground mt-1">{labels.disputeHint}</p>
       <textarea
         value={tray.disputeNotes}
         onChange={(e) => tray.setDisputeNotes(e.target.value)}

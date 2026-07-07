@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, shcColors } from '@shc/ui';
+import { SHCCard, SHCButton, SHCButtonText, shcColors, shcBorders, shcRadii } from '@shc/ui';
 import { useOrderChat } from '../../../../hooks/useOrder';
 import { useAuth } from '../../../../hooks/useAuth';
 
@@ -26,7 +26,7 @@ export default function OrderChatScreen() {
         <Text style={{ fontSize: 18, fontWeight: '600', color: shcColors.text }} testID="chat-order-title">Chat for Order {orderId}</Text>
         <Text style={{ fontSize: 12, color: shcColors.textLight }}>Secure order-scoped • Polling every ~4s (demo) • HDB notes visible here post-pay</Text>
 
-        <SHCCard style={{ marginVertical: 12, minHeight: 220, backgroundColor: '#fff' }}>
+        <SHCCard style={{ marginVertical: 12, minHeight: 220, backgroundColor: shcColors.surface }}>
           {messages.length === 0 && <Text style={{ color: shcColors.textLight }}>No messages yet. Send a note about collection time or dietary prefs.</Text>}
           {messages.map((m: any, i: number) => (
             <Text key={i} style={{ marginBottom: 8, color: m.sender_actor === 'cook' ? shcColors.primary : shcColors.text }}>
@@ -39,7 +39,7 @@ export default function OrderChatScreen() {
       <View style={{ padding: 12, backgroundColor: shcColors.surface, flexDirection: 'row', gap: 8 }}>
         <TextInput
           testID="chat-message-input"
-          style={{ flex: 1, borderWidth: 1, borderColor: '#E8D5B7', borderRadius: 8, padding: 10, backgroundColor: '#fff' }}
+          style={{ flex: 1, borderWidth: shcBorders.brutal, borderColor: shcColors.borderLight, borderRadius: shcRadii.md, padding: 10, backgroundColor: shcColors.surface }}
           placeholder="Message the other party (collection instructions, thanks...)"
           value={draft}
           onChangeText={setDraft}

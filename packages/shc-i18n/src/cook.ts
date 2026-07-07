@@ -144,3 +144,11 @@ export function getCookOrderDetailCopy(locale: ShcLocale) {
     cancel: t(locale, 'cook.order_detail.cancel'),
   };
 }
+
+export function getCookOnboardingCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'cook.onboarding.title'),
+    subtitle: t(locale, 'cook.onboarding.subtitle'),
+    cta: t(locale, 'cook.onboarding.cta'),
+  };
+}

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 13) — Cook listings wizard, earnings expenses, auth, order detail i18n.
+**Last Updated:** 2026-07-08 (Overnight loop iter 14) — Cook/customer onboarding i18n + tri-platform UI token fixes.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

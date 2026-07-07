@@ -276,3 +276,33 @@
 - EAS monitor until FINISHED; download APK to Downloads
 - Production deploy verification
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 14 — 2026-07-08 ~03:17 IST
+
+### Implemented
+1. **Cook onboarding i18n** — `getCookOnboardingCopy`; brutalist bento hero card on cook onboarding screen
+2. **Customer trust/safety onboarding i18n** — `getTrustSafetyOnboardingCopy`; mobile onboarding reuses `getTrustPageLayers` + policy sections (en/zh-Hans)
+3. **UI fixes (tri-platform)** — replaced hardcoded hex in chat screens (cook + customer), listings destructive tray, `@shc/ui` tray destructive actions, order-tray forms hint, web order detail muted text + accent stars, location screen bg, product halal badge
+4. **Loop policy** — each iteration now includes UI fixing per `brand.md` (tokens in `theme.ts` / `globals.css`, no stray hex)
+
+### Production audit
+- `https://web-production-9226.up.railway.app/og-image.png` → **200 PNG**
+- `https://web-production-9226.up.railway.app/` → **200**
+- `https://medusa-production-d2ba.up.railway.app/health` → **OK**
+- `GET /store/shc/platform-stats` without publishable key → **400** (live deploy needs `x-publishable-api-key` on public curl; web client OK)
+
+### Tests
+- `@shc/i18n`: **20 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** (~4h+) — background 90s poll continues; APK not downloaded yet
+
+### Next iteration
+- Customer product detail + chat i18n
+- Mobile profile/checkout remaining `#fff` hex cleanup
+- EAS monitor until FINISHED; download APK
+- Production platform-stats deploy verification with publishable key
+- Continue loop until 9:00 AM IST Jul 9

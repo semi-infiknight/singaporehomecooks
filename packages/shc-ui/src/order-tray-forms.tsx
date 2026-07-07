@@ -129,7 +129,7 @@ export function SHCOrderDisputeTrayForm({
 
 const styles = StyleSheet.create({
   starRow: { flexDirection: 'row', marginTop: 8, gap: 4 },
-  hintLine: { fontSize: 12, marginTop: 4, color: '#5C5144' },
+  hintLine: { fontSize: 12, marginTop: 4, color: gourmeatColors.textLight },
   reviewInput: {
     borderWidth: 1,
     borderColor: gourmeatColors.border,

@@ -99,27 +99,27 @@ export default function TrackOrder() {
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-[#5C5144]">{t('orders.detail.collection')}</span>
+            <span className="text-muted-foreground">{t('orders.detail.collection')}</span>
             <p className="font-medium mt-0.5">
               {order.collection_date} · {order.collection_slot}
             </p>
           </div>
           <div>
-            <span className="text-[#5C5144]">{t('orders.detail.total')}</span>
+            <span className="text-muted-foreground">{t('orders.detail.total')}</span>
             <p className="font-medium mt-0.5 tabular-nums">S${order.total}</p>
           </div>
           <div>
-            <span className="text-[#5C5144]">{t('orders.detail.cook')}</span>
+            <span className="text-muted-foreground">{t('orders.detail.cook')}</span>
             <p className="font-medium mt-0.5">{order.cook_name}</p>
           </div>
           {order.paynow_reference && (
             <div>
-              <span className="text-[#5C5144]">{t('orders.detail.paynow_ref')}</span>
+              <span className="text-muted-foreground">{t('orders.detail.paynow_ref')}</span>
               <p className="font-medium mt-0.5 font-mono text-xs">{order.paynow_reference}</p>
             </div>
           )}
         </div>
-        <p className="text-xs text-[#5C5144] mt-4 pt-4 border-t border-[#E8D5B7]/60">{t('orders.detail.address_hint')}</p>
+        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-[#E8D5B7]/60">{t('orders.detail.address_hint')}</p>
       </SHCCard>
 
       <div id="order-chat-section">
@@ -128,7 +128,7 @@ export default function TrackOrder() {
       <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
-            <p className="text-[#5C5144] text-center py-8">{t('orders.detail.no_messages')}</p>
+            <p className="text-muted-foreground text-center py-8">{t('orders.detail.no_messages')}</p>
           )}
           {messages.map((m: { sender_actor?: string; body?: string }, i: number) => (
             <div
@@ -173,8 +173,8 @@ export default function TrackOrder() {
       {existingReview && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-review-submitted">
           <SHCSectionTitle>{t('orders.detail.your_review')}</SHCSectionTitle>
-          <p className="text-[#FFB800] text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
-          {existingReview.body ? <p className="text-sm text-[#5C5144] mt-2">{existingReview.body}</p> : null}
+          <p className="text-[var(--shc-accent)] text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
+          {existingReview.body ? <p className="text-sm text-muted-foreground mt-2">{existingReview.body}</p> : null}
         </SHCCard>
       )}
 
@@ -194,10 +194,10 @@ export default function TrackOrder() {
       {disputes.length > 0 && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
           <SHCSectionTitle>{t('orders.detail.issue_reported')}</SHCSectionTitle>
-          <p className="mt-1 text-xs font-semibold text-[#5C5144]">
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">
             {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
           </p>
-          {disputes[0].notes && <p className="mt-2 text-sm text-[#5C5144]">{disputes[0].notes}</p>}
+          {disputes[0].notes && <p className="mt-2 text-sm text-muted-foreground">{disputes[0].notes}</p>}
         </SHCCard>
       )}
     </div>

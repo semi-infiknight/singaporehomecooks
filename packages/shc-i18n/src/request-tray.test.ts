@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getRequestDishCopy } from './request-dish';
 import { getOrderTrayLabels } from './order-tray';
-import { getCookAuthCopy, getCookListingsCopy } from './cook';
+import { getCookAuthCopy, getCookListingsCopy, getCookOnboardingCopy } from './cook';
 
 describe('request-dish copy', () => {
   it('returns localized wizard strings', () => {
@@ -35,5 +35,10 @@ describe('cook copy', () => {
   it('returns localized cook auth and listings strings', () => {
     expect(getCookAuthCopy('en').title).toBe('SHC Cook Portal');
     expect(getCookListingsCopy('zh-Hans').wizardNew).toBe('新建菜品');
+  });
+
+  it('returns localized cook onboarding strings', () => {
+    expect(getCookOnboardingCopy('en').cta).toBe('Go to dashboard');
+    expect(getCookOnboardingCopy('zh-Hans').title).toBe('欢迎，家厨');
   });
 });

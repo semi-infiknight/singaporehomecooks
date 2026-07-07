@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     ...shcShadows.brutalSm,
   },
   trayActionText: { fontWeight: '800', fontSize: 15, color: gourmeatColors.text, textAlign: 'center' },
-  trayActionDestructive: { backgroundColor: '#FEE2E2' },
-  trayActionDestructiveText: { fontWeight: '800', fontSize: 15, color: '#B91C1C', textAlign: 'center' },
+  trayActionDestructive: { backgroundColor: shcColors.surfaceError },
+  trayActionDestructiveText: { fontWeight: '800', fontSize: 15, color: shcColors.error, textAlign: 'center' },
   tipItem: { marginTop: 4, fontSize: 13 },
 });

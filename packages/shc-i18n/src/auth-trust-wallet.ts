@@ -11,3 +11,23 @@ export function getTrustPageLayers(locale: ShcLocale) {
     desc: t(locale, `trust.layer.${key}.desc` as MessageKey),
   }));
 }
+
+export function getTrustSafetyOnboardingCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'nav.trust_safety'),
+    subtitle: t(locale, 'trust.page.subtitle'),
+    layers: getTrustPageLayers(locale),
+    allergenTitle: t(locale, 'trust.section.allergen.title'),
+    allergenBody: t(locale, 'trust.section.allergen.body'),
+    cancellationTitle: t(locale, 'trust.section.cancellation.title'),
+    cancellationLines: [
+      t(locale, 'trust.section.cancellation.line1'),
+      t(locale, 'trust.section.cancellation.line2'),
+      t(locale, 'trust.section.cancellation.line3'),
+    ],
+    pdpaTitle: t(locale, 'trust.section.pdpa.title'),
+    pdpaBody: t(locale, 'trust.section.pdpa.body'),
+    browseCta: t(locale, 'onboarding.trust.browse_cta'),
+    meetCookCta: t(locale, 'onboarding.trust.meet_cook'),
+  };
+}
