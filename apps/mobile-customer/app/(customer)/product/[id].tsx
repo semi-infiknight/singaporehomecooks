@@ -11,7 +11,6 @@ import {
   gourmeatRadii,
   gourmeatShadows,
   gourmeatDiscountPercent,
-  shcColors,
   shcSpacing,
   AllergenAckCheckbox,
   SHCDishOrderingInfo,
@@ -228,6 +227,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: gourmeatRadii.pill,
   },
-  badgeHalal: { color: gourmeatColors.success, backgroundColor: shcColors.surfaceSuccess },
+  badgeHalal: { color: gourmeatColors.success, backgroundColor: gourmeatColors.primaryLight },
   errorText: { color: gourmeatColors.error, marginTop: shcSpacing.sm, fontWeight: '600', fontSize: 13 },
 });

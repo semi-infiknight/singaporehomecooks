@@ -205,7 +205,7 @@ export default function CookListingsPage() {
     ];
     openTray(
       { id: 'photo-tips', title: copy.photoTipsTitle, height: 'tall' },
-      <PhotoTipsTrayContentWeb tips={tipList} />
+      <PhotoTipsTrayContentWeb tips={tipList} intro={copy.photoTipsIntro} />
     );
   };
 
@@ -437,6 +437,9 @@ export default function CookListingsPage() {
 
       <div ref={wizardRef}>
         <SHCSectionTitle>{editingId ? copy.wizardEdit : copy.wizardNew}</SHCSectionTitle>
+        <p className="text-sm font-extrabold text-foreground mb-2" aria-live="polite">
+          {copy.stepTitleFor(step)}
+        </p>
         <SHCWizardProgressWeb step={step} />
       </div>
 
@@ -555,7 +558,7 @@ export default function CookListingsPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Earnings preview: S${Math.floor(price * minQty * 0.85)} per minimum order
+                {copy.earningsPreview(Math.floor(price * minQty * 0.85))}
               </p>
               <div className="flex flex-wrap gap-1">
                 {occasionTags.map((t) => (
@@ -590,6 +593,7 @@ export default function CookListingsPage() {
               disabled={step >= 4 && saving}
               testID={step >= 4 ? 'listing-wizard-publish' : `listing-wizard-next-step${step}`}
               showChevron={step < 4}
+              ctaLabels={copy.wizardCtaLabels}
             />
           </div>
         </div>

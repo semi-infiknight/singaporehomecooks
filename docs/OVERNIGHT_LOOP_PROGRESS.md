@@ -737,3 +737,28 @@
 - Cook portal order chat if any hardcoded copy remains
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 31 — 2026-07-08 ~04:02 IST
+
+### Implemented
+1. **Listings wizard i18n** — step titles, earnings preview, localized morph CTA labels (`cookListingsWizardMorph*`), photo tips intro
+2. **Cook-portal order chat** — inline chat on order detail via `getOrderChatCopy`; chat link on orders list
+3. **Customer Gourmeat audit** — ErrorBoundary i18n + `gourmeatColors`; Tamagui tokens in `ui-setup.ts`; product PDP halal badge token fix
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Remaining customer screens Gourmeat token sweep
+- Cook portal dispute/report-issue parity on web order detail
+- More Mandarin coverage on web customer flows
+- Continue loop until 9:00 AM IST Jul 9
+

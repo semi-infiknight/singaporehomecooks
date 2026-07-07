@@ -115,7 +115,88 @@ export function getCookListingsCopy(locale: ShcLocale) {
     defaultIngredientName: t(locale, 'cook.listings.default_ingredient'),
     defaultDishFallback: t(locale, 'cook.listings.default_dish_fallback'),
     defaultOccasionId: t(locale, 'cook.listings.default_occasion_id'),
+    earningsPreview: (amount: number | string) =>
+      t(locale, 'cook.listings.earnings_preview').replace('{amount}', String(amount)),
+    photoTipsIntro: t(locale, 'cook.listings.photo_tips_intro'),
+    wizardProgress: (step: number, total: number) =>
+      t(locale, 'cook.listings.wizard_progress')
+        .replace('{step}', String(step))
+        .replace('{total}', String(total)),
+    stepTitleFor: (step: number) => {
+      const titles = [
+        t(locale, 'cook.listings.step1_title'),
+        t(locale, 'cook.listings.step2_title'),
+        t(locale, 'cook.listings.step3_title'),
+        t(locale, 'cook.listings.step4_title'),
+      ];
+      return titles[Math.min(4, Math.max(1, step)) - 1] ?? titles[0];
+    },
+    wizardCtaLabels: getCookListingsWizardCtaLabels(locale),
   };
+}
+
+export type CookListingsWizardCtaLabels = {
+  start: string;
+  continue: string;
+  next: string;
+  review: string;
+  publish: string;
+  saveChanges: string;
+};
+
+export function getCookListingsWizardCtaLabels(locale: ShcLocale): CookListingsWizardCtaLabels {
+  return {
+    start: t(locale, 'cook.listings.cta_start'),
+    continue: t(locale, 'cook.listings.cta_continue'),
+    next: t(locale, 'cook.listings.cta_next'),
+    review: t(locale, 'cook.listings.cta_review'),
+    publish: t(locale, 'cook.listings.cta_publish'),
+    saveChanges: t(locale, 'cook.listings.cta_save_changes'),
+  };
+}
+
+function listingsWizardStepActionLabel(
+  step: number,
+  total: number,
+  labels: CookListingsWizardCtaLabels
+): string {
+  if (step >= total) return labels.publish;
+  if (step === 1) return labels.continue;
+  if (step === 2) return labels.next;
+  if (step === 3) return labels.review;
+  return labels.continue;
+}
+
+export function cookListingsWizardMorphOnStepEnter(
+  step: number,
+  total: number,
+  editing: boolean,
+  labels: CookListingsWizardCtaLabels
+): { from: string; to: string } {
+  if (step >= total) {
+    return { from: labels.review, to: editing ? labels.saveChanges : labels.publish };
+  }
+  const to = listingsWizardStepActionLabel(step, total, labels);
+  const from = step === 1 ? labels.start : listingsWizardStepActionLabel(step - 1, total, labels);
+  return { from, to };
+}
+
+export function cookListingsWizardMorphFromTransition(
+  prevStep: number,
+  nextStep: number,
+  total: number,
+  editing: boolean,
+  labels: CookListingsWizardCtaLabels
+): { from: string; to: string } {
+  if (nextStep >= total) {
+    return {
+      from: listingsWizardStepActionLabel(prevStep, total, labels),
+      to: editing ? labels.saveChanges : labels.publish,
+    };
+  }
+  const from = prevStep === 0 ? labels.start : listingsWizardStepActionLabel(prevStep, total, labels);
+  const to = listingsWizardStepActionLabel(nextStep, total, labels);
+  return { from, to };
 }
 
 export function getCookComplianceCopy(locale: ShcLocale) {

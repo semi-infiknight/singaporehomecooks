@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -2224,6 +2224,7 @@ export function ListingWizardMorphCtaWeb({
   disabled,
   testID,
   showChevron = true,
+  ctaLabels,
 }: {
   step: number;
   total?: number;
@@ -2232,23 +2233,35 @@ export function ListingWizardMorphCtaWeb({
   disabled?: boolean;
   testID?: string;
   showChevron?: boolean;
+  ctaLabels?: CookListingsWizardCtaLabels;
 }) {
   const prevStepRef = React.useRef(step);
   const prevEditingRef = React.useRef(editing);
-  const [morph, setMorph] = React.useState(() => wizardCtaMorphOnStepEnter(step, total, editing));
+  const [morph, setMorph] = React.useState(() =>
+    ctaLabels
+      ? cookListingsWizardMorphOnStepEnter(step, total, editing, ctaLabels)
+      : wizardCtaMorphOnStepEnter(step, total, editing)
+  );
 
   React.useEffect(() => {
     if (prevStepRef.current !== step) {
-      setMorph(wizardCtaMorphFromTransition(prevStepRef.current, step, total, editing));
+      setMorph(
+        ctaLabels
+          ? cookListingsWizardMorphFromTransition(prevStepRef.current, step, total, editing, ctaLabels)
+          : wizardCtaMorphFromTransition(prevStepRef.current, step, total, editing)
+      );
       prevStepRef.current = step;
       prevEditingRef.current = editing;
       return;
     }
     if (step >= total && prevEditingRef.current !== editing) {
-      setMorph({ from: 'Review', to: editing ? 'Save changes' : 'Publish' });
+      setMorph({
+        from: ctaLabels?.review ?? 'Review',
+        to: editing ? ctaLabels?.saveChanges ?? 'Save changes' : ctaLabels?.publish ?? 'Publish',
+      });
       prevEditingRef.current = editing;
     }
-  }, [step, total, editing]);
+  }, [step, total, editing, ctaLabels]);
 
   const { from, to } = morph;
   return (
@@ -2279,10 +2292,10 @@ export function useMilestoneCelebrationWeb(id: MilestoneId, userId: string) {
   return { show, triggerIfFirst, dismiss };
 }
 
-export function PhotoTipsTrayContentWeb({ tips }: { tips: string[] }) {
+export function PhotoTipsTrayContentWeb({ tips, intro }: { tips: string[]; intro?: string }) {
   return (
     <div className="space-y-3" data-testid="photo-tips-tray">
-      <p className="text-sm font-medium text-muted-foreground">3 SG-specific tips for better dish photos:</p>
+      {intro ? <p className="text-sm font-medium text-muted-foreground">{intro}</p> : null}
       <ul className="space-y-2 text-sm">
         {tips.map((t, i) => (
           <li key={i} className="flex gap-2">

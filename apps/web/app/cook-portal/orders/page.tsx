@@ -24,7 +24,7 @@ import {
 export default function CookOrdersPage() {
   const router = useRouter();
   const { user } = useCookAuth();
-  const { locale } = useShcI18n();
+  const { locale, t } = useShcI18n();
   const copy = getCookOrdersCopy(locale);
   const orderDetailCopy = getCookOrderDetailCopy(locale);
   const { data: orders = [] } = useCookOrders();
@@ -100,6 +100,12 @@ export default function CookOrdersPage() {
                   className="inline-flex items-center px-3 py-2 rounded-xl border border-border bg-card text-sm font-bold"
                 >
                   {copy.details}
+                </Link>
+                <Link
+                  href={`/cook-portal/orders/${o.id}#cook-order-chat-section`}
+                  className="inline-flex items-center px-3 py-2 rounded-xl border border-border bg-card text-sm font-bold"
+                >
+                  {t('cook.orders.chat')}
                 </Link>
               </>
             }

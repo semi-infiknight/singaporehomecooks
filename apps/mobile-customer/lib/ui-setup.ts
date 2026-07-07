@@ -1,23 +1,23 @@
 import { createTamagui } from '@tamagui/core';
 import { config as tamaguiDefaultConfig } from '@tamagui/config/v3';
-import { shcColors, shcNativeWindTheme, shcRadii, shcSpacing } from '@shc/ui';
+import { gourmeatColors, shcNativeWindTheme, shcRadii, shcSpacing } from '@shc/ui';
 
 export { shcNativeWindTheme };
 
-/** Lightweight Tamagui config — no provider wired yet; ready for future screens. */
+/** Lightweight Tamagui config — customer Gourmeat tokens for future screens. */
 export const shcTamaguiConfig = createTamagui({
   ...tamaguiDefaultConfig,
   tokens: {
     ...tamaguiDefaultConfig.tokens,
     color: {
       ...tamaguiDefaultConfig.tokens.color,
-      shcPrimary: shcColors.primary,
-      shcPrimaryDark: shcColors.primaryDark,
-      shcAccent: shcColors.accent,
-      shcBackground: shcColors.background,
-      shcSurface: shcColors.surface,
-      shcText: shcColors.text,
-      shcBorder: shcColors.border,
+      shcPrimary: gourmeatColors.primary,
+      shcPrimaryDark: gourmeatColors.primaryDark,
+      shcAccent: gourmeatColors.accent,
+      shcBackground: gourmeatColors.background,
+      shcSurface: gourmeatColors.surface,
+      shcText: gourmeatColors.text,
+      shcBorder: gourmeatColors.border,
     },
     space: {
       ...tamaguiDefaultConfig.tokens.space,

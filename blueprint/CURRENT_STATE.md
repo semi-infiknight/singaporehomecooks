@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 30) — Web cook-portal i18n; customer trust Gourmeat skin; cook heritage stub.
+**Last Updated:** 2026-07-08 (Overnight loop iter 31) — Listings wizard step titles/CTA i18n; cook-portal order chat; customer Gourmeat token audit.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

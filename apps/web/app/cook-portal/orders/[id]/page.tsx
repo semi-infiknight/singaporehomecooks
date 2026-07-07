@@ -1,15 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
 import { useCookOrder, useCookTransitionOrder } from '../../../../lib/useCookPortal';
+import { useOrderChat } from '../../../../lib/useOrder';
 import {
   GourmeatScreenHeader,
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCLoading,
+  SHCSectionTitle,
+  SHCButton,
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../../../components/SHCWebComponents';
@@ -18,6 +21,7 @@ import {
   getCookOrderTransitionActions,
   getLocalizedOrderStatus,
   getCookOrderDetailCopy,
+  getOrderChatCopy,
 } from '@shc/i18n';
 
 export default function CookOrderDetailPage() {
@@ -25,9 +29,12 @@ export default function CookOrderDetailPage() {
   const id = params?.id as string;
   const { locale } = useShcI18n();
   const copy = getCookOrderDetailCopy(locale);
+  const chatCopy = getOrderChatCopy(locale, 'cook');
   const { data: order, isLoading } = useCookOrder(id);
   const transMut = useCookTransitionOrder();
   const { openTray, dismiss } = useSHCTrayWeb();
+  const { messages, send } = useOrderChat(id);
+  const [msg, setMsg] = useState('');
 
   const nextActions = useMemo(() => {
     const actions = getCookOrderTransitionActions(locale);
@@ -90,7 +97,7 @@ export default function CookOrderDetailPage() {
         <p className="text-xs text-muted-foreground mt-2">{copy.cookLabel(String(order.cook_name || ''))}</p>
       </GourmeatCard>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mb-6">
         {actions.map((a) => (
           <GourmeatPrimaryButton
             key={a.to}
@@ -100,6 +107,57 @@ export default function CookOrderDetailPage() {
             testID={`cook-portal-order-transition-${a.to}`}
           />
         ))}
+      </div>
+
+      <div id="cook-order-chat-section">
+        <SHCSectionTitle subtitle={chatCopy.subtitle}>{chatCopy.title(id)}</SHCSectionTitle>
+      </div>
+      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] mb-6">
+        <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm" data-testid="cook-portal-chat-messages">
+          {messages.length === 0 && (
+            <p className="text-muted-foreground text-center py-8">{chatCopy.empty}</p>
+          )}
+          {messages.map((m: { sender_actor?: string; body?: string }, i: number) => (
+            <div
+              key={i}
+              className={`max-w-[85%] p-3 rounded-lg ${
+                m.sender_actor === 'cook'
+                  ? 'bg-primary text-primary-foreground ml-auto'
+                  : 'bg-secondary text-foreground mr-auto'
+              }`}
+            >
+              <p className="text-[10px] font-bold opacity-80 mb-1">{chatCopy.senderLabel(String(m.sender_actor || 'customer'))}</p>
+              {m.body}
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 p-3 border-t border-border bg-secondary">
+          <input
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            className="shc-input flex-1 py-2"
+            placeholder={chatCopy.placeholder}
+            data-testid="cook-portal-chat-input"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && msg.trim()) {
+                send({ body: msg, from: 'cook' });
+                setMsg('');
+              }
+            }}
+          />
+          <SHCButton
+            size="sm"
+            onClick={() => {
+              if (msg.trim()) {
+                send({ body: msg, from: 'cook' });
+                setMsg('');
+              }
+            }}
+            testID="cook-portal-chat-send"
+          >
+            {chatCopy.send}
+          </SHCButton>
+        </div>
       </div>
 
       <Link href="/cook-portal/orders" className="block text-center text-sm font-semibold text-primary mt-8">
