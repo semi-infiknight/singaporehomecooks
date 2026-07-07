@@ -1,10 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Bell, Wallet } from 'lucide-react';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { Bell } from 'lucide-react';
 import { useCredits, useRedeemCredits } from '../../lib/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../lib/useOrder';
 import {
@@ -121,21 +119,6 @@ export default function Profile() {
               </span>
             )}
           </button>
-        </div>
-      </div>
-
-      <div className="relative overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4 h-28">
-        <Image src={BENTO_ACTION_IMAGES.credits} alt="" fill className="object-cover opacity-70" sizes="100vw" />
-        <div className="relative z-10 flex items-center justify-between h-full px-5">
-          <div>
-            <div className="text-3xl font-black tabular-nums font-mono text-foreground">{balance}</div>
-            <div className="text-xs font-bold text-muted-foreground">
-              {t('wallet.home_credits_tier').replace('{tier}', tier)}
-            </div>
-          </div>
-          <span className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center shadow-[var(--shc-shadow-soft)]" aria-hidden>
-            <Wallet className="w-6 h-6 text-primary" />
-          </span>
         </div>
       </div>
 

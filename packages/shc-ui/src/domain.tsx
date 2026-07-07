@@ -16,7 +16,7 @@ import {
 import { SHCFoodImage } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
-import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography, gourmeatColors, gourmeatShadows } from './theme';
+import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography, gourmeatColors, gourmeatShadows, gourmeatRadii } from './theme';
 import { RequestDishExperience } from './request-ux';
 
 export type SHCDishCardData = {
@@ -437,7 +437,7 @@ export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }
   const [ref, setRef] = useState('');
   const suggested = `${orderId}-${Date.now().toString(36).slice(-6).toUpperCase()}`;
   return (
-    <SHCCard>
+    <SHCCard variant="bento-yellow" appearance="customer">
       <SHCSectionTitle>PayNow to Singapore Home Cooks</SHCSectionTitle>
       <Text>UEN: {uen} (Corporate)</Text>
       <Text>Amount: S${total.toFixed(2)}</Text>
@@ -447,17 +447,19 @@ export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }
         value={ref}
         onChangeText={setRef}
         style={{
-          borderWidth: shcBorders.brutal,
-          borderColor: colors.borderLight,
-          borderRadius: shcRadii.md,
+          borderWidth: 1,
+          borderColor: gourmeatColors.border,
+          borderRadius: gourmeatRadii.md,
           padding: shcSpacing.sm,
-          backgroundColor: colors.surface,
+          backgroundColor: gourmeatColors.surface,
           ...shcTypography.mono,
           color: colors.text,
+          ...gourmeatShadows.soft,
         }}
         testID="paynow-ref-input"
       />
       <SHCButton
+        appearance="customer"
         onPress={() => onConfirmPay(ref || suggested)}
         disabled={!ref && !suggested}
         style={{ marginTop: 12 }}
@@ -481,10 +483,18 @@ export function CollectionSlotPicker({ availableSlots, onSelect, selected }: { a
           <Pressable
             key={idx}
             onPress={() => onSelect(s.date, s.slot)}
-            style={{ padding: 12, backgroundColor: isSel ? colors.bentoMint : colors.surfaceAlt, borderRadius: 8, marginBottom: 6, borderWidth: 2, borderColor: isSel ? colors.primary : colors.border }}
+            style={{
+              padding: 12,
+              backgroundColor: isSel ? gourmeatColors.primaryLight : gourmeatColors.surface,
+              borderRadius: gourmeatRadii.md,
+              marginBottom: 6,
+              borderWidth: isSel ? 2 : 1,
+              borderColor: isSel ? gourmeatColors.primary : gourmeatColors.border,
+              ...gourmeatShadows.soft,
+            }}
             testID={`slot-${s.date}-${s.slot}`}
           >
-            <Text style={{ fontWeight: isSel ? '600' : '400' }}>{s.date} • {s.slot} (Singapore time)</Text>
+            <Text style={{ fontWeight: isSel ? '700' : '600', color: isSel ? gourmeatColors.primary : gourmeatColors.text }}>{s.date} • {s.slot} (Singapore time)</Text>
             <Text style={{ fontSize: 11, color: colors.textLight }}>Collect from cook's HDB unit. Address released 2h prior.</Text>
           </Pressable>
         );
@@ -614,12 +624,12 @@ export function WalletCard({ balance, lifetimeSpend = 0, onRedeem, redeemable = 
   const tier = lifetimeSpend > 1200 ? 'Gold' : lifetimeSpend > 450 ? 'Silver' : 'Bronze';
   const tierLabel = lifetimeSpend > 1200 ? 'Gold (5% bonus earn)' : lifetimeSpend > 450 ? 'Silver (unlock more)' : 'Bronze — earn on every completed order';
   return (
-    <SHCCard variant="bento-mint" testID="wallet-card">
+    <SHCCard variant="bento-mint" appearance="customer" testID="wallet-card">
       <SHCSectionTitle>🏠 Home Credits Wallet (SG Family Feasts)</SHCSectionTitle>
       <CreditBadge balance={balance} tier={tier as any} />
       <Text style={{ marginTop: 6, fontSize: 12, color: colors.textLight }}>{tierLabel} • Lifetime spend S${lifetimeSpend} • 5% of order total earned on 'collected'</Text>
       {onRedeem && redeemable > 0 && (
-        <SHCButton onPress={() => onRedeem(Math.min(redeemable, balance))} style={{ marginTop: 8 }} testID="redeem-credits-btn">
+        <SHCButton appearance="customer" onPress={() => onRedeem(Math.min(redeemable, balance))} style={{ marginTop: 8 }} testID="redeem-credits-btn">
           <SHCButtonText>Redeem S${(Math.min(redeemable, balance) / 4).toFixed(0)} (apply {Math.min(redeemable, balance)} credits)</SHCButtonText>
         </SHCButton>
       )}

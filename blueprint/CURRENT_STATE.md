@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 49) — mobile AllergenAckCheckbox + cart minimum hint Gourmeat borders.
+**Last Updated:** 2026-07-08 (Overnight loop iter 50) — PayNowPanel/CollectionSlotPicker/WalletCard Gourmeat; web profile wallet dedupe.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

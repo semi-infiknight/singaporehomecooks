@@ -124,11 +124,11 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 | `SHCWizardProgress` | Listing wizard step indicator |
 | `CookCard` | Cook profile preview with heritage snippet |
 | `OrderCard` / `OrderStatusBadge` | Status-aware order cards |
-| `PayNowPanel` | UEN, amount, ref input, confirm CTA |
-| `CollectionSlotPicker` | HDB collection date/slot selector |
-| `AllergenAckCheckbox` | Mandatory tier-1 allergen acknowledgment |
+| `PayNowPanel` | UEN, amount, ref input, confirm CTA — mobile customer: `bento-yellow` + `appearance="customer"` |
+| `CollectionSlotPicker` | HDB collection date/slot selector — Gourmeat 1px slot chips + soft shadow |
+| `AllergenAckCheckbox` | Mandatory tier-1 allergen acknowledgment — Gourmeat 1px border (customer checkout) |
 | `ListingWizardStep` | Cook listing wizard step shell |
-| `CreditBadge` / `WalletCard` | Home Credits wallet |
+| `CreditBadge` / `WalletCard` | Home Credits wallet — `bento-mint` + `appearance="customer"` on mobile |
 | `AICalorieBadge` | Traffic-light calorie estimate |
 | `RequestDishForm` | Custom dish request bidding form |
 

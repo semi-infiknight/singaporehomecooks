@@ -1104,3 +1104,23 @@
 - Web profile wallet bento cards audit
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 50 — 2026-07-08 ~04:52 IST
+
+### Implemented
+1. **Mobile `PayNowPanel`** — `bento-yellow` + `appearance="customer"`; Gourmeat ref input + confirm button
+2. **Mobile `CollectionSlotPicker`** — Gourmeat slot chips (1px border, soft shadow, primary selected state)
+3. **Mobile `WalletCard`** — `appearance="customer"` on bento-mint card + redeem CTA
+4. **Web profile** — removed duplicate credits hero banner; single `WalletCard` bento-mint source of truth
+5. **`brand.md`** — checkout domain components noted in customer chrome API
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Mobile `SHCVisualBentoTile` customer Gourmeat borders on profile tiles
+- Web PDP/checkout remaining brutal chrome audit
+- Continue loop until 9:00 AM IST Jul 9
+
