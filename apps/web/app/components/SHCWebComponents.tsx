@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, getCheckoutScreenCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, getCheckoutScreenCopy, getWalletCardCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -1192,29 +1192,34 @@ export function PriceEarningsCalc({ total, compact }: { total: number; compact?:
 }
 
 export function CreditBadge({ balance }: { balance: number }) {
+  const { locale } = useShcI18n();
+  const walletCopy = getWalletCardCopy(locale);
   return (
-    <span className="text-xs px-2.5 py-1 bg-[var(--shc-bento-mint)] text-[var(--shc-success)] rounded-full font-bold border-2 border-[var(--shc-border-brutal)]">
-      {balance} Home Credits · ~S${(balance / 4).toFixed(0)} value
+    <span
+      className={`text-xs px-2.5 py-1 bg-[var(--shc-bento-mint)] text-[var(--shc-success)] rounded-full font-bold border border-border shadow-[var(--shc-shadow-soft)]`}
+      data-testid="credit-badge"
+    >
+      {walletCopy.creditBadgeLine(balance)}
     </span>
   );
 }
 
 export function WalletCard({ balance, tier = 'Silver' }: { balance: number; tier?: string }) {
+  const { locale } = useShcI18n();
+  const walletCopy = getWalletCardCopy(locale);
   return (
-    <SHCCard className="shc-bento-mint" variant="customer">
+    <SHCCard className="shc-bento-mint" variant="customer" data-testid="wallet-card">
       <div className="flex justify-between items-start">
         <div>
-          <div className="text-sm font-semibold text-muted-foreground">Home Credits</div>
+          <div className="text-sm font-semibold text-muted-foreground">{walletCopy.homeCredits}</div>
           <div className="text-3xl font-black mt-1 tabular-nums font-mono">{balance}</div>
-          <div className="text-xs text-muted-foreground mt-1 font-medium">
-            ~S${(balance / 4).toFixed(0)} redeemable at checkout
-          </div>
+          <div className="text-xs text-muted-foreground mt-1 font-medium">{walletCopy.redeemableAtCheckout(balance)}</div>
         </div>
-        <SHCBadge variant="heritage">{tier} tier</SHCBadge>
+        <SHCBadge variant="heritage" soft>
+          {walletCopy.tierBadge(tier)}
+        </SHCBadge>
       </div>
-      <p className="text-xs text-muted-foreground mt-4 pt-3 border-t-2 border-[var(--shc-border-brutal)] font-medium">
-        Earn 5% back on every collected order. Credits expire after 12 months.
-      </p>
+      <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border font-medium">{walletCopy.earnFootnote}</p>
     </SHCCard>
   );
 }

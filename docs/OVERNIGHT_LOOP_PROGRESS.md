@@ -906,3 +906,21 @@
 - Product PDP cook link `GourmeatPrimaryButton`
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 39 — 2026-07-08 ~04:25 IST
+
+### Implemented
+1. **`getWalletCardCopy(locale)`** — `homeCredits`, `redeemableAtCheckout`, `tierBadge`, `earnFootnote`, `creditBadgeLine` en/zh-Hans
+2. **WalletCard / CreditBadge** — full i18n via `getWalletCardCopy`; Gourmeat 1px `border-border` + `--shc-shadow-soft`; `SHCBadge soft` tier; `data-testid` hooks
+3. **Locale keys** — `wallet.redeemable_checkout`, `wallet.tier_badge`, `wallet.credits_earn_footnote`, `wallet.credit_badge_line`
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Product PDP cook link `GourmeatPrimaryButton`
+- Remaining customer web brutal border cleanup (`SHCCard`/`DishCard` legacy)
+- Continue loop until 9:00 AM IST Jul 9
+

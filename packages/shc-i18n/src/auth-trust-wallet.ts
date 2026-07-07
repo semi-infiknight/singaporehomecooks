@@ -61,3 +61,18 @@ export function getWalletProfileCopy(locale: ShcLocale) {
       statusKeys[status] ? t(locale, statusKeys[status]) : status,
   };
 }
+
+export function getWalletCardCopy(locale: ShcLocale) {
+  const redeemValue = (balance: number) => (balance / 4).toFixed(0);
+  return {
+    homeCredits: t(locale, 'wallet.home_credits'),
+    redeemableAtCheckout: (balance: number) =>
+      t(locale, 'wallet.redeemable_checkout').replace('{amount}', redeemValue(balance)),
+    tierBadge: (tier: string) => t(locale, 'wallet.tier_badge').replace('{tier}', tier),
+    earnFootnote: t(locale, 'wallet.credits_earn_footnote'),
+    creditBadgeLine: (balance: number) =>
+      t(locale, 'wallet.credit_badge_line')
+        .replace('{balance}', String(balance))
+        .replace('{amount}', redeemValue(balance)),
+  };
+}

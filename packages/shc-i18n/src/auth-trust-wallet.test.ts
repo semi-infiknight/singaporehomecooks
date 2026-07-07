@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTrustPageLayers, getTrustSafetyOnboardingCopy, getWalletProfileCopy } from './auth-trust-wallet';
+import { getTrustPageLayers, getTrustSafetyOnboardingCopy, getWalletProfileCopy, getWalletCardCopy } from './auth-trust-wallet';
 
 describe('getTrustPageLayers', () => {
   it('returns five localized trust layers in English', () => {
@@ -35,5 +35,15 @@ describe('getWalletProfileCopy', () => {
     expect(copy.requestMeta(4, 8000)).toContain('4');
     expect(copy.requestStatusLabel('matched')).toBe('matched');
     expect(getWalletProfileCopy('zh-Hans').guest).toBe('访客');
+  });
+});
+
+describe('getWalletCardCopy', () => {
+  it('returns localized wallet card strings', () => {
+    const copy = getWalletCardCopy('en');
+    expect(copy.homeCredits).toBe('Home Credits');
+    expect(copy.creditBadgeLine(40)).toContain('40');
+    expect(copy.redeemableAtCheckout(40)).toContain('10');
+    expect(getWalletCardCopy('zh-Hans').tierBadge('Silver')).toContain('Silver');
   });
 });
