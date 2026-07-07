@@ -567,12 +567,16 @@ export function SHCActiveOrderBanner({
   collectionLabel,
   onPress,
   testID = 'active-order-banner',
+  inProgressLabel = 'Order in progress',
+  trackLabel = 'Track →',
 }: {
   statusLabel: string;
   dishName?: string;
   collectionLabel?: string;
   onPress: () => void;
   testID?: string;
+  inProgressLabel?: string;
+  trackLabel?: string;
 }) {
   return (
     <Pressable
@@ -594,7 +598,7 @@ export function SHCActiveOrderBanner({
       <View style={{ flex: 1, paddingRight: shcSpacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: shcColors.success }} />
-          <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.success }}>Order in progress</Text>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.success }}>{inProgressLabel}</Text>
         </View>
         <Text style={{ fontSize: 14, fontWeight: '900', color: shcColors.text, marginTop: 4 }} numberOfLines={1}>
           {statusLabel}
@@ -606,7 +610,7 @@ export function SHCActiveOrderBanner({
           </Text>
         ) : null}
       </View>
-      <Text style={{ fontSize: 12, fontWeight: '900', color: shcColors.primary }}>Track →</Text>
+      <Text style={{ fontSize: 12, fontWeight: '900', color: shcColors.primary }}>{trackLabel}</Text>
     </Pressable>
   );
 }

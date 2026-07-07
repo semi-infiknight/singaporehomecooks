@@ -26,6 +26,7 @@ export type OrderTrayTrackingInput = {
   onMessageCook?: () => void;
   ReviewContent: ComponentType<OrderReviewTrayContentProps>;
   DisputeContent: ComponentType<OrderDisputeTrayContentProps>;
+  labels?: import('./order-tray-opener-core').OrderTrayLabels;
 };
 
 export function createOrderTrayFns(args: {
@@ -60,15 +61,16 @@ export function useOrderTrayTracking(input: OrderTrayTrackingInput) {
     onMessageCook,
     ReviewContent,
     DisputeContent,
+    labels,
   } = input;
 
   const openReviewTray = useCallback(() => {
-    openOrderReviewTrayCore(orderId, submitReview, trayFns, ReviewContent);
-  }, [orderId, submitReview, trayFns, ReviewContent]);
+    openOrderReviewTrayCore(orderId, submitReview, trayFns, ReviewContent, labels);
+  }, [orderId, submitReview, trayFns, ReviewContent, labels]);
 
   const openDisputeTray = useCallback(() => {
-    openOrderDisputeTrayCore(orderId, submitOrderDispute, trayFns, DisputeContent, { onMessageCook });
-  }, [orderId, submitOrderDispute, trayFns, DisputeContent, onMessageCook]);
+    openOrderDisputeTrayCore(orderId, submitOrderDispute, trayFns, DisputeContent, { onMessageCook, labels });
+  }, [orderId, submitOrderDispute, trayFns, DisputeContent, onMessageCook, labels]);
 
   const flags = useMemo(
     () => orderTrayActions({ order, review: existingReview, disputes }),

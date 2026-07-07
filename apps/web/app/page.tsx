@@ -10,7 +10,6 @@ import { useDiscoverSearch } from './providers';
 import {
   extractReorderDishes,
   getActiveOrders,
-  getOrderStatusLabel,
   favoritesToReorderDishes,
   getOccasionImageUrl,
   getCookAvatarUrl,
@@ -26,7 +25,7 @@ import {
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
-import { useShcI18n, getLocalizedOccasions, getOccasionDishesTitle } from '@shc/i18n';
+import { useShcI18n, getLocalizedOccasions, getOccasionDishesTitle, getLocalizedOrderStatus, getActiveOrderBannerLabels, getRequestDishCopy } from '@shc/i18n';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -239,7 +238,7 @@ export default function DiscoverHome() {
       {activeOrder && (
         <div className="mb-3">
           <ActiveOrderBanner
-            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
+            statusLabel={getLocalizedOrderStatus(locale, String(activeOrder.shc_status || ''))}
             dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
             collectionLabel={
               activeOrder.collection_date
@@ -247,6 +246,7 @@ export default function DiscoverHome() {
                 : undefined
             }
             href={`/orders/${activeOrder.id}`}
+            {...getActiveOrderBannerLabels(locale)}
           />
         </div>
       )}

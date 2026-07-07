@@ -24,7 +24,7 @@ import {
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
-import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline, getOrderTrayLabels } from '@shc/i18n';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -185,6 +185,7 @@ export default function TrackOrder() {
         disputes={disputes}
         submitReview={submitReview}
         submitOrderDispute={submitOrderDispute}
+        labels={getOrderTrayLabels(locale)}
         onMessageCook={() => {
           document.getElementById('order-chat-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }}

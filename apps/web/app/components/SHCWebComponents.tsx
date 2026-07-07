@@ -1491,12 +1491,16 @@ export function ActiveOrderBanner({
   collectionLabel,
   href,
   testID = 'active-order-banner',
+  inProgressLabel = 'Order in progress',
+  trackLabel = 'Track →',
 }: {
   statusLabel: string;
   dishName?: string;
   collectionLabel?: string;
   href: string;
   testID?: string;
+  inProgressLabel?: string;
+  trackLabel?: string;
 }) {
   return (
     <Link
@@ -1506,7 +1510,7 @@ export function ActiveOrderBanner({
     >
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-extrabold text-[var(--shc-success)] flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[var(--shc-success)]" /> Order in progress
+          <span className="w-2 h-2 rounded-full bg-[var(--shc-success)]" /> {inProgressLabel}
         </p>
         <p className="text-sm font-black text-foreground mt-1 truncate">{statusLabel}</p>
         {dishName ? (
@@ -1516,7 +1520,7 @@ export function ActiveOrderBanner({
           </p>
         ) : null}
       </div>
-      <span className="text-xs font-black text-primary shrink-0">Track →</span>
+      <span className="text-xs font-black text-primary shrink-0">{trackLabel}</span>
     </Link>
   );
 }

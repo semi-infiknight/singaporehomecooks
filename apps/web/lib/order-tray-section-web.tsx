@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react';
 import { SHCButton, SHCTrayActionWeb, useSHCTrayWeb } from './shc-tray-web';
 import { createOrderTrayFns, useOrderTrayTracking } from '@shc/ui/order-tray-tracking';
-import type { SubmitReviewFn, SubmitDisputeFn } from '@shc/ui/order-tray-opener-core';
+import type { OrderTrayLabels, SubmitReviewFn, SubmitDisputeFn } from '@shc/ui/order-tray-opener-core';
+import { DEFAULT_TRAY_LABELS } from '@shc/ui/order-tray-opener-core';
 import type { OrderTrayScreenOrder } from '@shc/ui/order-tray-tracking';
 import { SHCOrderReviewTrayContentWeb, SHCOrderDisputeTrayContentWeb } from './order-tray-content-web';
 
@@ -15,6 +16,7 @@ export function OrderTrackingTraySectionWeb({
   submitReview,
   submitOrderDispute,
   onMessageCook,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   orderId: string;
   order: OrderTrayScreenOrder;
@@ -23,6 +25,7 @@ export function OrderTrackingTraySectionWeb({
   submitReview: SubmitReviewFn;
   submitOrderDispute: SubmitDisputeFn;
   onMessageCook?: () => void;
+  labels?: OrderTrayLabels;
 }) {
   const { openTray, dismiss } = useSHCTrayWeb();
   const trayFns = useMemo(
@@ -43,13 +46,13 @@ export function OrderTrackingTraySectionWeb({
         renderError: ({ id, message }) => (
           <SHCTrayActionWeb
             message={message}
-            primaryLabel="OK"
+            primaryLabel={labels.ok}
             onPrimary={dismiss}
             testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
           />
         ),
       }),
-    [dismiss, openTray]
+    [dismiss, labels.ok, openTray]
   );
 
   const { showReviewForm, showDisputeForm, openReviewTray, openDisputeTray } = useOrderTrayTracking({
@@ -63,18 +66,19 @@ export function OrderTrackingTraySectionWeb({
     onMessageCook,
     ReviewContent: SHCOrderReviewTrayContentWeb,
     DisputeContent: SHCOrderDisputeTrayContentWeb,
+    labels,
   });
 
   return (
     <>
       {showReviewForm ? (
         <SHCButton className="mt-6 w-full" onClick={openReviewTray} testID="open-review-tray-btn">
-          Leave a review
+          {labels.leaveReview}
         </SHCButton>
       ) : null}
       {showDisputeForm ? (
         <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} testID="open-dispute-tray-btn">
-          Report an issue
+          {labels.reportIssue}
         </SHCButton>
       ) : null}
     </>

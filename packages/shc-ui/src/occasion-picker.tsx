@@ -7,10 +7,12 @@ export function OccasionTagPicker({
   selected,
   onToggle,
   options = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'],
+  optionLabels,
 }: {
   selected: string[];
   onToggle: (t: string) => void;
   options?: string[];
+  optionLabels?: Record<string, string>;
 }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -29,7 +31,7 @@ export function OccasionTagPicker({
               backgroundColor: sel ? colors.primary : colors.surfaceAlt,
             }}
           >
-            <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{tag}</Text>
+            <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{optionLabels?.[tag] ?? tag}</Text>
           </Pressable>
         );
       })}

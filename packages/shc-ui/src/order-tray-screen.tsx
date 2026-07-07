@@ -6,7 +6,8 @@ import { shcSpacing } from './theme';
 import { useSHCTray, SHCTrayAction } from './tray';
 import { createOrderTrayFns, useOrderTrayTracking } from './order-tray-tracking';
 import { SHCOrderReviewTrayContent, SHCOrderDisputeTrayContent } from './order-tray-content';
-import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
+import type { SubmitReviewFn, SubmitDisputeFn, OrderTrayLabels } from './order-tray-opener-core';
+import { DEFAULT_TRAY_LABELS } from './order-tray-opener-core';
 import type { OrderTrayScreenOrder } from './order-tray-tracking';
 
 export type { OrderTrayScreenOrder } from './order-tray-tracking';
@@ -19,6 +20,7 @@ export function OrderTrackingTraySection({
   submitReview,
   submitOrderDispute,
   onMessageCook,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   orderId: string;
   order: OrderTrayScreenOrder;
@@ -27,6 +29,7 @@ export function OrderTrackingTraySection({
   submitReview: SubmitReviewFn;
   submitOrderDispute: SubmitDisputeFn;
   onMessageCook?: () => void;
+  labels?: OrderTrayLabels;
 }) {
   const { openTray, dismiss } = useSHCTray();
   const trayFns = useMemo(
@@ -67,13 +70,14 @@ export function OrderTrackingTraySection({
     onMessageCook,
     ReviewContent: SHCOrderReviewTrayContent,
     DisputeContent: SHCOrderDisputeTrayContent,
+    labels,
   });
 
   return (
     <>
       {showReviewForm ? (
         <GourmeatPrimaryButton
-          label="Leave a review"
+          label={labels.leaveReview}
           onPress={openReviewTray}
           testID="open-review-tray-btn"
           style={{ marginBottom: shcSpacing.sm }}
@@ -81,7 +85,7 @@ export function OrderTrackingTraySection({
       ) : null}
       {showDisputeForm ? (
         <GourmeatPrimaryButton
-          label="Report an issue"
+          label={labels.reportIssue}
           variant="outline"
           onPress={openDisputeTray}
           testID="open-dispute-tray-btn"

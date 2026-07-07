@@ -20,7 +20,7 @@ import {
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
-import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline, getOrderTrayLabels } from '@shc/i18n';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -162,6 +162,7 @@ export default function OrderTracking() {
         disputes={disputes}
         submitReview={submitReview}
         submitOrderDispute={submitOrderDispute}
+        labels={getOrderTrayLabels(locale)}
         onMessageCook={() => router.push(`/(shared)/chat/${orderId}` as any)}
       />
 

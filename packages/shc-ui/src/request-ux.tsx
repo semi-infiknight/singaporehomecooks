@@ -27,6 +27,87 @@ const STEPS = [
   { id: 'review', label: 'Review' },
 ];
 
+export type RequestDishCopyInput = {
+  stepOf: string;
+  title: string;
+  heroSteps: [string, string, string, string];
+  steps: Array<{ id: string; label: string }>;
+  occasionTitle: string;
+  describeLabel: string;
+  describePlaceholder: string;
+  storyHint: string;
+  interpretationTitle: string;
+  interpretationBody: string;
+  youtubeLabel: string;
+  youtubePlaceholder: string;
+  skipVideo: string;
+  partySize: string;
+  budget: string;
+  collectionDate: string;
+  datePlaceholder: string;
+  collectionHint: string;
+  yourRequest: string;
+  guests: string;
+  reviewBoardBody: string;
+  posting: string;
+  postBtn: string;
+  continue: string;
+  back: string;
+  occasionValues: string[];
+  occasionLabels: Record<string, string>;
+  successTitle: string;
+  successWithId: string;
+  successBody: string;
+  successBrowseWait: string;
+  backProfile: string;
+  homeCtaTitle: string;
+  homeCtaSubtitle: string;
+};
+
+const DEFAULT_COPY: RequestDishCopyInput = {
+  stepOf: 'STEP {step} OF 4',
+  title: 'Request a custom dish',
+  heroSteps: [
+    'Tell home cooks your occasion and what you crave',
+    'Share a recipe video — cooks bring their HDB interpretation',
+    'How many guests, budget, and when you need it',
+    'Review before cooks bid on the Collaboration Board',
+  ],
+  steps: STEPS,
+  occasionTitle: "What's the occasion?",
+  describeLabel: 'Describe the dish & vibe',
+  describePlaceholder: 'e.g. Ayam buah keluak for 6, Peranakan-style, medium spice…',
+  storyHint: 'Min 10 characters — cooks use this to craft their bid.',
+  interpretationTitle: "Cook's interpretation",
+  interpretationBody: 'Paste a YouTube recipe — verified HDB cooks adapt it to their kitchen, not a carbon copy.',
+  youtubeLabel: 'YouTube URL (optional)',
+  youtubePlaceholder: 'https://youtube.com/watch?v=…',
+  skipVideo: 'Skip — no video needed',
+  partySize: 'Party size',
+  budget: 'Budget (S$)',
+  collectionDate: 'Collection date',
+  datePlaceholder: 'YYYY-MM-DD',
+  collectionHint: 'HDB collection only — exact block released 2h before slot.',
+  yourRequest: 'YOUR REQUEST',
+  guests: '{n} guests',
+  reviewBoardBody:
+    'Cooks on the Collaboration Board will bid with price and a personal note. Accept a bid to create your order — same trust layers as regular checkout.',
+  posting: 'Posting…',
+  postBtn: 'Post request — cooks will bid',
+  continue: 'Continue',
+  back: 'Back',
+  occasionValues: ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'],
+  occasionLabels: {},
+  successTitle: 'Request posted!',
+  successWithId:
+    "Request {id} is live. Home cooks will bid on the Collaboration Board — we'll notify you when offers arrive.",
+  successBody: 'Home cooks will bid soon. Check notifications for offers.',
+  successBrowseWait: 'Browse dishes while you wait',
+  backProfile: 'Back to profile',
+  homeCtaTitle: 'Request a custom dish',
+  homeCtaSubtitle: '4-step wizard — occasion, inspiration, gathering, review',
+};
+
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
 const BUDGET_PRESETS = [80, 120, 150, 200];
 
@@ -42,6 +123,7 @@ export function RequestDishExperience({
   busy = false,
   bottomInset = 32,
   testID = 'request-dish-experience',
+  copy: copyProp,
 }: {
   onSubmit: (data: RequestDishPayload) => void | Promise<void>;
   onBack?: () => void;
@@ -49,7 +131,10 @@ export function RequestDishExperience({
   /** Safe area + tab bar clearance for bottom CTAs */
   bottomInset?: number;
   testID?: string;
+  copy?: RequestDishCopyInput;
 }) {
+  const copy = copyProp ?? DEFAULT_COPY;
+  const STEPS_LOCAL = copy.steps;
   const [step, setStep] = React.useState(1);
   const [occasion, setOccasion] = React.useState('Hari Raya');
   const [story, setStory] = React.useState(
@@ -61,7 +146,7 @@ export function RequestDishExperience({
   const [date, setDate] = React.useState(defaultDate);
 
   const heroUri = occasion ? getOccasionImageUrl(occasion) : BENTO_ACTION_IMAGES.request;
-  const stepMeta = STEPS[step - 1];
+  const stepMeta = STEPS_LOCAL[step - 1];
 
   const body = [occasion ? `${occasion}:` : '', story.trim()].filter(Boolean).join(' ').trim();
 
@@ -137,48 +222,46 @@ export function RequestDishExperience({
                 <Text style={{ fontSize: 20, fontWeight: '800', color: '#fff' }}>←</Text>
               </Pressable>
               <Text style={{ fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5 }}>
-                STEP {step} OF 4
+                {copy.stepOf.replace('{step}', String(step))}
               </Text>
             </View>
             <SHCFadeIn key={stepMeta.id}>
               <Text style={{ fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: -0.5, lineHeight: 34 }}>
-                Request a custom dish
+                {copy.title}
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.9)', marginTop: 6 }}>
-                {step === 1 && 'Tell home cooks your occasion and what you crave'}
-                {step === 2 && 'Share a recipe video — cooks bring their HDB interpretation'}
-                {step === 3 && 'How many guests, budget, and when you need it'}
-                {step === 4 && 'Review before cooks bid on the Collaboration Board'}
+                {copy.heroSteps[step - 1]}
               </Text>
             </SHCFadeIn>
           </View>
         </View>
 
         <View style={{ paddingHorizontal: shcSpacing.md, marginTop: shcSpacing.md }}>
-          <SHCCheckoutStepper steps={STEPS} currentStep={step} testID="request-stepper" />
+          <SHCCheckoutStepper steps={STEPS_LOCAL} currentStep={step} testID="request-stepper" />
         </View>
 
         <View style={{ paddingHorizontal: shcSpacing.md }}>
           <SHCWizardPane stepKey={step}>
             {step === 1 && (
               <View testID="request-step-occasion">
-                <Text style={labelStyle}>What&apos;s the occasion?</Text>
+                <Text style={labelStyle}>{copy.occasionTitle}</Text>
                 <OccasionTagPicker
                   selected={[occasion]}
                   onToggle={(tag) => setOccasion(tag)}
-                  options={['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding']}
+                  options={copy.occasionValues}
+                  optionLabels={copy.occasionLabels}
                 />
-                <Text style={[labelStyle, { marginTop: shcSpacing.md }]}>Describe the dish & vibe</Text>
+                <Text style={[labelStyle, { marginTop: shcSpacing.md }]}>{copy.describeLabel}</Text>
                 <TextInput
                   value={story}
                   onChangeText={setStory}
                   multiline
-                  placeholder="e.g. Ayam buah keluak for 6, Peranakan-style, medium spice…"
+                  placeholder={copy.describePlaceholder}
                   placeholderTextColor={shcColors.textLight}
                   style={inputMultiline}
                   testID="request-desc"
                 />
-                <Text style={hintStyle}>Min 10 characters — cooks use this to craft their bid.</Text>
+                <Text style={hintStyle}>{copy.storyHint}</Text>
               </View>
             )}
 
@@ -188,33 +271,33 @@ export function RequestDishExperience({
                   <View style={{ flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'flex-start' }}>
                     <SHCIcon name="discover" size={22} color={shcColors.heritage} active />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '800', color: shcColors.text, fontSize: 14 }}>Cook&apos;s interpretation</Text>
+                      <Text style={{ fontWeight: '800', color: shcColors.text, fontSize: 14 }}>{copy.interpretationTitle}</Text>
                       <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>
-                        Paste a YouTube recipe — verified HDB cooks adapt it to their kitchen, not a carbon copy.
+                        {copy.interpretationBody}
                       </Text>
                     </View>
                   </View>
                 </SHCCard>
-                <Text style={labelStyle}>YouTube URL (optional)</Text>
+                <Text style={labelStyle}>{copy.youtubeLabel}</Text>
                 <TextInput
                   value={youtube}
                   onChangeText={setYoutube}
                   autoCapitalize="none"
                   keyboardType="url"
-                  placeholder="https://youtube.com/watch?v=…"
+                  placeholder={copy.youtubePlaceholder}
                   placeholderTextColor={shcColors.textLight}
                   style={inputSingle}
                   testID="request-yt"
                 />
                 <Pressable onPress={() => setYoutube('')} style={{ marginTop: shcSpacing.sm }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.primary }}>Skip — no video needed</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.primary }}>{copy.skipVideo}</Text>
                 </Pressable>
               </View>
             )}
 
             {step === 3 && (
               <View testID="request-step-gathering">
-                <Text style={labelStyle}>Party size</Text>
+                <Text style={labelStyle}>{copy.partySize}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
                   {PARTY_PRESETS.map((n) => (
                     <Pressable
@@ -223,11 +306,11 @@ export function RequestDishExperience({
                       style={chipStyle(partySize === n)}
                       testID={`request-party-${n}`}
                     >
-                      <Text style={chipText(partySize === n)}>{n} guests</Text>
+                      <Text style={chipText(partySize === n)}>{copy.guests.replace('{n}', String(n))}</Text>
                     </Pressable>
                   ))}
                 </View>
-                <Text style={labelStyle}>Budget (S$)</Text>
+                <Text style={labelStyle}>{copy.budget}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
                   {BUDGET_PRESETS.map((b) => (
                     <Pressable key={b} onPress={() => setBudget(b)} style={chipStyle(budget === b)} testID={`request-budget-${b}`}>
@@ -235,23 +318,23 @@ export function RequestDishExperience({
                     </Pressable>
                   ))}
                 </View>
-                <Text style={labelStyle}>Collection date</Text>
+                <Text style={labelStyle}>{copy.collectionDate}</Text>
                 <TextInput
                   value={date}
                   onChangeText={setDate}
-                  placeholder="YYYY-MM-DD"
+                  placeholder={copy.datePlaceholder}
                   placeholderTextColor={shcColors.textLight}
                   style={inputSingle}
                   testID="request-date"
                 />
-                <Text style={hintStyle}>HDB collection only — exact block released 2h before slot.</Text>
+                <Text style={hintStyle}>{copy.collectionHint}</Text>
               </View>
             )}
 
             {step === 4 && (
               <View testID="request-step-review">
                 <SHCCard variant="bento-mint" style={{ marginBottom: shcSpacing.md }}>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, letterSpacing: 0.5 }}>YOUR REQUEST</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, letterSpacing: 0.5 }}>{copy.yourRequest}</Text>
                   <Text style={{ fontSize: 16, fontWeight: '800', color: shcColors.text, marginTop: 6, lineHeight: 22 }}>{body}</Text>
                   {youtube.trim() ? (
                     <Text style={{ fontSize: 12, color: shcColors.primary, marginTop: 8, fontWeight: '600' }} numberOfLines={1}>
@@ -261,7 +344,7 @@ export function RequestDishExperience({
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.md }}>
                     <View style={reviewPill}>
                       <SHCIcon name="people" size={14} color={shcColors.text} />
-                      <Text style={reviewPillText}>{partySize} guests</Text>
+                      <Text style={reviewPillText}>{copy.guests.replace('{n}', String(partySize))}</Text>
                     </View>
                     <View style={reviewPill}>
                       <SHCIcon name="credits" size={14} color={shcColors.text} />
@@ -274,9 +357,7 @@ export function RequestDishExperience({
                   </View>
                 </SHCCard>
                 <SHCCard>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 }}>
-                    Cooks on the Collaboration Board will bid with price and a personal note. Accept a bid to create your order — same trust layers as regular checkout.
-                  </Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 }}>{copy.reviewBoardBody}</Text>
                 </SHCCard>
               </View>
             )}
@@ -285,11 +366,11 @@ export function RequestDishExperience({
 
         <View style={{ paddingHorizontal: shcSpacing.md, marginTop: shcSpacing.lg, gap: shcSpacing.sm, alignSelf: 'stretch' }}>
           <SHCButton onPress={goNext} disabled={!canNext || busy} size="lg" testID="submit-request-btn" style={{ alignSelf: 'stretch', width: '100%' }}>
-            <SHCButtonText>{busy ? 'Posting…' : step === 4 ? 'Post request — cooks will bid' : 'Continue'}</SHCButtonText>
+            <SHCButtonText>{busy ? copy.posting : step === 4 ? copy.postBtn : copy.continue}</SHCButtonText>
           </SHCButton>
           {step > 1 && (
             <SHCButton variant="outline" onPress={goBack} disabled={busy}>
-              <SHCButtonText variant="outline">Back</SHCButtonText>
+              <SHCButtonText variant="outline">{copy.back}</SHCButtonText>
             </SHCButton>
           )}
         </View>
@@ -344,10 +425,13 @@ function chipText(active: boolean) {
 export function SHCRequestDishHomeCTA({
   onPress,
   testID = 'open-request-page-btn',
+  copy: copyProp,
 }: {
   onPress: () => void;
   testID?: string;
+  copy?: Pick<RequestDishCopyInput, 'homeCtaTitle' | 'homeCtaSubtitle'>;
 }) {
+  const copy = { ...DEFAULT_COPY, ...copyProp };
   return (
     <Pressable onPress={onPress} testID={testID} style={{ marginTop: shcSpacing.section }}>
       <View
@@ -386,9 +470,9 @@ export function SHCRequestDishHomeCTA({
                 <SHCIcon name="request" size={24} color={shcColors.primary} active />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: shcColors.text }}>Request a custom dish</Text>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: shcColors.text }}>{copy.homeCtaTitle}</Text>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 2, lineHeight: 16 }}>
-                  4-step wizard — occasion, inspiration, gathering, review
+                  {copy.homeCtaSubtitle}
                 </Text>
               </View>
               <Text style={{ fontSize: 20, fontWeight: '900', color: shcColors.primary }}>→</Text>
@@ -406,12 +490,15 @@ export function RequestDishSuccess({
   onViewProfile,
   onDiscover,
   testID = 'request-success',
+  copy: copyProp,
 }: {
   requestId?: string;
   onViewProfile?: () => void;
   onDiscover?: () => void;
   testID?: string;
+  copy?: RequestDishCopyInput;
 }) {
+  const copy = copyProp ?? DEFAULT_COPY;
   return (
     <View
       testID={testID}
@@ -440,21 +527,19 @@ export function RequestDishSuccess({
         >
           <SHCIcon name="checkmark" size={36} color={shcColors.success} active />
         </View>
-        <Text style={{ fontSize: 26, fontWeight: '900', color: shcColors.text, textAlign: 'center' }}>Request posted!</Text>
+        <Text style={{ fontSize: 26, fontWeight: '900', color: shcColors.text, textAlign: 'center' }}>{copy.successTitle}</Text>
         <Text style={{ fontSize: 14, color: shcColors.textLight, textAlign: 'center', marginTop: shcSpacing.sm, lineHeight: 20, maxWidth: 300 }}>
-          {requestId
-            ? `Request ${requestId} is live. Home cooks will bid on the Collaboration Board — we'll notify you when offers arrive.`
-            : 'Home cooks will bid soon. Check notifications for offers.'}
+          {requestId ? copy.successWithId.replace('{id}', requestId) : copy.successBody}
         </Text>
         <View style={{ marginTop: shcSpacing.xl, gap: shcSpacing.sm, width: '100%', maxWidth: 320 }}>
           {onDiscover && (
             <SHCButton size="lg" onPress={onDiscover} testID="request-success-discover">
-              <SHCButtonText>Browse dishes while you wait</SHCButtonText>
+              <SHCButtonText>{copy.successBrowseWait}</SHCButtonText>
             </SHCButton>
           )}
           {onViewProfile && (
             <SHCButton variant="outline" onPress={onViewProfile} testID="request-success-profile">
-              <SHCButtonText variant="outline">Back to profile</SHCButtonText>
+              <SHCButtonText variant="outline">{copy.backProfile}</SHCButtonText>
             </SHCButton>
           )}
         </View>

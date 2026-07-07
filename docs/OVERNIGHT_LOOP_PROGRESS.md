@@ -207,3 +207,26 @@
 - Active order banner / order tray i18n
 - EAS monitor; download APK when FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 11 — 2026-07-08 ~03:05 IST
+
+### Implemented
+1. **RequestDishExperience i18n** — `getRequestDishCopy(locale)` + `copy` prop on wizard, success screen, home CTA; `OccasionTagPicker` localized labels
+2. **Active order banner i18n** — `getActiveOrderBannerLabels`; web + mobile discover use `getLocalizedOrderStatus` + banner labels
+3. **Order tray i18n** — `getOrderTrayLabels`; review/dispute tray titles, success/error messages, section buttons on web + mobile order detail
+4. **Mobile discover fix** — `discover.near_collection` key on index (was hardcoded English)
+
+### Tests
+- `@shc/i18n`: **16 tests** PASS (incl. request-tray)
+- web + mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: still **IN_QUEUE** (~2.5h+) — no APK download yet
+
+### Next iteration
+- Review/dispute tray form placeholders (shared forms)
+- Cook app screen strings (dashboard, orders list)
+- EAS monitor; download APK when FINISHED
+- Continue loop until 9:00 AM IST Jul 9

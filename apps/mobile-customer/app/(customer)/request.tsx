@@ -11,10 +11,11 @@ import {
 } from '@shc/ui';
 import { useAuth } from '../../hooks/useAuth';
 import { useCreateRequest } from '../../hooks/useOrder';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getRequestDishCopy } from '@shc/i18n';
 
 export default function RequestDishScreen() {
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const requestCopy = getRequestDishCopy(locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
@@ -94,6 +95,7 @@ export default function RequestDishScreen() {
       <View style={{ flex: 1, paddingTop: insets.top }} testID="request-dish-screen">
         <RequestDishSuccess
           requestId={postedId}
+          copy={requestCopy}
           onDiscover={() => router.replace('/(customer)/' as any)}
           onViewProfile={() => router.replace('/(customer)/profile' as any)}
         />
@@ -106,6 +108,7 @@ export default function RequestDishScreen() {
       <RequestDishExperience
         busy={createReq.isPending}
         bottomInset={insets.bottom + shcSpacing.lg}
+        copy={requestCopy}
         onBack={() => router.back()}
         onSubmit={handleSubmit}
       />

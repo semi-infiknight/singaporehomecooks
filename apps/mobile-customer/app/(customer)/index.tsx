@@ -34,7 +34,6 @@ import {
   getCollectionSlotLabel,
   extractReorderDishes,
   getActiveOrders,
-  getOrderStatusLabel,
   favoritesToReorderDishes,
   sortByCookProximity,
   filterDiscoverProducts,
@@ -48,7 +47,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, getActiveOrderBannerLabels, getRequestDishCopy } from '@shc/i18n';
 import { getLocalizedOccasions, getOccasionDishesTitle, getMobileLocalizedPromos } from '@shc/i18n';
 import { LocalizedTrustStrip } from '../../components/LocalizedTrustStrip';
 
@@ -207,7 +206,10 @@ export default function CustomerDiscover() {
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
 
   const ListFooter = !query.trim() ? (
-    <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
+    <SHCRequestDishHomeCTA
+      onPress={() => router.push('/(customer)/request' as any)}
+      copy={getRequestDishCopy(locale)}
+    />
   ) : null;
 
   const ListHeader = (
@@ -281,7 +283,7 @@ export default function CustomerDiscover() {
       {activeOrder && (
         <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
           <SHCActiveOrderBanner
-            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
+            statusLabel={getLocalizedOrderStatus(locale, String(activeOrder.shc_status || ''))}
             dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
             collectionLabel={
               activeOrder.collection_date
@@ -289,13 +291,14 @@ export default function CustomerDiscover() {
                 : undefined
             }
             onPress={() => router.push(`/(customer)/orders/${activeOrder.id}` as any)}
+            {...getActiveOrderBannerLabels(locale)}
           />
         </View>
       )}
 
       {collectionLocation && (
         <Text style={{ paddingHorizontal: shcSpacing.md, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginBottom: shcSpacing.xs }}>
-          Showing cooks near your collection point first
+          {t('discover.near_collection')}
         </Text>
       )}
       <GourmeatSectionTitle title="Categories" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
