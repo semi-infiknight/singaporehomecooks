@@ -2119,7 +2119,7 @@ export function GourmeatPrimaryButton({
       data-testid={testID}
       className={`inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-extrabold transition-opacity disabled:opacity-50 ${
         outline
-          ? 'bg-card border border-border text-foreground'
+          ? 'bg-card border border-border text-foreground shadow-[var(--shc-shadow-soft)]'
           : 'bg-primary text-primary-foreground hover:bg-[var(--shc-primary-dark)]'
       } ${className}`}
     >

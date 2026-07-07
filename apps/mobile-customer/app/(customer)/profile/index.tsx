@@ -298,6 +298,8 @@ export default function Profile() {
 
                 variant="bento-mint"
 
+                appearance="customer"
+
               />
 
             </Link>
@@ -317,6 +319,8 @@ export default function Profile() {
             label={t('wallet.credits_tile').replace('{balance}', String(bal))}
 
             variant="bento-yellow"
+
+            appearance="customer"
 
             testID="profile-credits-tile"
 

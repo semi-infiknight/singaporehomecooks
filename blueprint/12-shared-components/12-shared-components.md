@@ -74,7 +74,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | Component | Purpose |
 |---|---|
 | `SHCFoodImage` | Consistent food photo with fallback gradient |
-| `SHCVisualBentoTile` | Photo-background bento tile + icon badge + label |
+| `SHCVisualBentoTile` | Photo-background bento tile + icon badge + label; `appearance="customer"` for Gourmeat 1px border on profile/discover tiles |
 | `SHCBentoStatCell` | Stat cell with icon (earnings, orders count) |
 | `SHCZomatoAddButton` | Compact ADD CTA for search results |
 | `SHCIcon` / `SHCTabIcon` | Vector icons (`SHCIconKey` type union) |

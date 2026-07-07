@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { shcColors, shcRadii, shcBorders, shcShadows, shcSpacing } from './theme';
+import { shcColors, shcRadii, shcBorders, shcShadows, shcSpacing, gourmeatColors, gourmeatShadows, gourmeatRadii } from './theme';
 import { SHCBentoIconBadge, type SHCIconKey } from './icons';
 
 /** Zomato green rating pill */
@@ -120,11 +120,13 @@ type SHCVisualBentoTileProps = {
   onPress?: () => void;
   testID?: string;
   variant?: 'default' | 'bento-mint' | 'bento-peach' | 'bento-yellow';
+  /** Gourmeat customer skin — 1px border + soft shadow (profile/discover tiles) */
+  appearance?: 'default' | 'customer';
 };
 
 /** Swiggy-style bento tile: photo background + vector icon badge, minimal label */
 export const SHCVisualBentoTile = React.forwardRef<View, SHCVisualBentoTileProps>(function SHCVisualBentoTile(
-  { imageUri, iconKey, icon, label, badge, onPress, testID, variant = 'default' },
+  { imageUri, iconKey, icon, label, badge, onPress, testID, variant = 'default', appearance = 'default' },
   ref
 ) {
   const bg =
@@ -135,17 +137,18 @@ export const SHCVisualBentoTile = React.forwardRef<View, SHCVisualBentoTileProps
         : variant === 'bento-yellow'
           ? shcColors.bentoYellow
           : shcColors.surface;
+  const isCustomer = appearance === 'customer';
 
   const inner = (
     <View
       style={{
         height: 88,
-        borderRadius: shcRadii.lg,
+        borderRadius: isCustomer ? gourmeatRadii.lg : shcRadii.lg,
         overflow: 'hidden',
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
+        borderWidth: isCustomer ? 1 : shcBorders.brutal,
+        borderColor: isCustomer ? gourmeatColors.border : shcColors.border,
         backgroundColor: bg,
-        ...shcShadows.brutalSm,
+        ...(isCustomer ? gourmeatShadows.card : shcShadows.brutalSm),
       }}
     >
       <Image source={{ uri: imageUri }} style={{ ...StyleSheet.absoluteFillObject, opacity: 0.85 }} resizeMode="cover" />
@@ -163,8 +166,8 @@ export const SHCVisualBentoTile = React.forwardRef<View, SHCVisualBentoTileProps
                 height: 22,
                 borderRadius: 11,
                 backgroundColor: shcColors.primary,
-                borderWidth: 2,
-                borderColor: shcColors.border,
+                borderWidth: isCustomer ? 1 : 2,
+                borderColor: isCustomer ? gourmeatColors.border : shcColors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingHorizontal: 4,

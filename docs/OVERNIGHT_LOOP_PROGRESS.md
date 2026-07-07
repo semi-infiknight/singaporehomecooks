@@ -1124,3 +1124,23 @@
 - Web PDP/checkout remaining brutal chrome audit
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 51 — 2026-07-08 ~04:54 IST
+
+### Implemented
+1. **`SHCVisualBentoTile appearance="customer"`** — Gourmeat 1px border + card shadow; badge chip softened
+2. **Mobile profile** — quick-action + credits tiles wired `appearance="customer"`
+3. **Web PDP** — `GourmeatPrimaryButton` outline variant gets soft shadow (view-cook CTA)
+4. **Web checkout success** — `GourmeatScreenHeader` + decorative hero (title/back i18n); removed duplicate overlay text
+5. **`brand.md`** — `SHCVisualBentoTile` noted in customer chrome API
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Mobile discover/home bento tiles Gourmeat sweep if any brutal remnants
+- Web `DishCardSkeleton` Gourmeat variant for customer loading states
+- Continue loop until 9:00 AM IST Jul 9
+

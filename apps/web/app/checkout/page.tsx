@@ -146,12 +146,14 @@ export default function CheckoutPage() {
   if (orderId) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
+        <GourmeatScreenHeader
+          title={t('checkout.order_placed')}
+          subtitle={checkoutCopy.orderPlacedSubtitle(orderId)}
+          backHref={`/orders/${orderId}`}
+          backLabel={t('orders.detail.back')}
+        />
         <div className="relative h-24 overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4">
           <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
-          <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
-            <h1 className="text-xl font-black text-white">{t('checkout.order_placed')}</h1>
-            <p className="text-xs font-semibold text-white/90">{checkoutCopy.orderPlacedSubtitle(orderId)}</p>
-          </div>
         </div>
         <PayNowPanel
           amount={amountDue}
