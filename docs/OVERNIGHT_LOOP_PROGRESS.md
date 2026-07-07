@@ -1144,3 +1144,22 @@
 - Web `DishCardSkeleton` Gourmeat variant for customer loading states
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 52 — 2026-07-08 ~04:56 IST
+
+### Implemented
+1. **`DishCardSkeleton appearance="customer"`** — Gourmeat 1px border + card shadow; `SHCSkeletonGrid` passes appearance through
+2. **Web discover** — `BentoGrid` quick actions (cart/orders/credits/request); skeleton grid + empty-state button use customer chrome
+3. **Mobile discover** — `SHCVisualBentoTile` quick-action row (`bento-cart`, `bento-orders`, `bento-credits`, `bento-request`) with `appearance="customer"`
+4. **`brand.md`** — discover tiles + skeleton noted in customer chrome API
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Mobile discover loading skeleton (Gourmeat) vs text placeholder
+- Web search page brutal chrome audit
+- Continue loop until 9:00 AM IST Jul 9
+

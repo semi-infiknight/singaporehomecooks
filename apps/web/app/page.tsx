@@ -43,6 +43,7 @@ import {
   PromoRail,
   RequestDishHomeCTA,
   TrustStrip,
+  BentoGrid,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 import { usePlatformStats } from '../lib/usePlatformStats';
@@ -224,6 +225,19 @@ export default function DiscoverHome() {
         </div>
       )}
 
+      {!query.trim() && (
+        <div className="shc-section-gap mb-4">
+          <BentoGrid
+            tiles={[
+              { href: '/cart', label: t('tab.cart'), iconKey: 'cart', imageKey: 'cart', variant: 'mint' },
+              { href: '/orders', label: t('tab.orders'), iconKey: 'orders', imageKey: 'orders', variant: 'peach' },
+              { href: '/profile', label: t('wallet.home_credits'), iconKey: 'credits', imageKey: 'credits', variant: 'yellow' },
+              { href: '/request', label: t('wallet.request_dish'), iconKey: 'request', imageKey: 'request', variant: 'mint' },
+            ]}
+          />
+        </div>
+      )}
+
       <FilterChipRow
         chips={[
           { id: 'halal', label: t('filter.halal'), active: halalOnly },
@@ -299,13 +313,14 @@ export default function DiscoverHome() {
         testID="all-dishes-header"
       />
 
-      {isLoading && <SHCSkeletonGrid />}
+      {isLoading && <SHCSkeletonGrid appearance="customer" />}
       {!isLoading && gridProducts.length === 0 && !query.trim() && (
         <SHCEmptyState
           title={homeCopy.emptyTitle}
           description={homeCopy.emptyDescription}
           action={
             <SHCButton
+              appearance="customer"
               variant="outline"
               onClick={() => {
                 setQuery('');

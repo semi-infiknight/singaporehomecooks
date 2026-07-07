@@ -1072,15 +1072,33 @@ export function DishCard({
   );
 }
 
-export function DishCardSkeleton() {
+export function DishCardSkeleton({ appearance = 'default' }: { appearance?: 'default' | 'customer' }) {
+  const chrome =
+    appearance === 'customer'
+      ? 'bg-card border border-border rounded-2xl overflow-hidden shadow-[var(--shc-shadow-card)]'
+      : 'shc-brutal-card overflow-hidden';
   return (
-    <div className="shc-brutal-card overflow-hidden" aria-hidden>
+    <div className={chrome} aria-hidden>
       <div className="shc-skeleton h-44 w-full rounded-none" />
     </div>
   );
 }
 
-/* ── Bottom sticky CTA bar (cart / checkout / PDP) ── */
+export function SHCSkeletonGrid({
+  count = 6,
+  appearance = 'default',
+}: {
+  count?: number;
+  appearance?: 'default' | 'customer';
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 md:gap-4" aria-busy="true" aria-label="Loading dishes">
+      {Array.from({ length: count }).map((_, i) => (
+        <DishCardSkeleton key={i} appearance={appearance} />
+      ))}
+    </div>
+  );
+}
 
 export function BottomStickyBar({
   children,
@@ -1136,15 +1154,7 @@ export function SHCEmptyState({
   );
 }
 
-export function SHCSkeletonGrid({ count = 6 }: { count?: number }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4" aria-busy="true" aria-label="Loading dishes">
-      {Array.from({ length: count }).map((_, i) => (
-        <DishCardSkeleton key={i} />
-      ))}
-    </div>
-  );
-}
+/* ── Bottom sticky CTA bar (cart / checkout / PDP) ── */
 
 export function SHCLoading({ label = 'Loading…' }: { label?: string }) {
   return (

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 51) — `SHCVisualBentoTile appearance="customer"`; web checkout success GourmeatScreenHeader.
+**Last Updated:** 2026-07-08 (Overnight loop iter 52) — discover bento quick tiles; `DishCardSkeleton appearance="customer"`.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

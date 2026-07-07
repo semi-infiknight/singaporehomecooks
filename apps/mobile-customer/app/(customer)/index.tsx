@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -22,6 +22,7 @@ import {
   SHCFilterChipRow,
   SHCPromoRail,
   SHCRequestDishHomeCTA,
+  SHCVisualBentoTile,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -39,7 +40,7 @@ import {
   filterDiscoverProducts,
   LAUNCH_PLATFORM_COUNTERS,
 } from '@shc/utils';
-import { useProducts, useAddToCart } from '../../hooks/useProducts';
+import { useProducts, useAddToCart, useCredits } from '../../hooks/useProducts';
 import { usePlatformStats } from '../../hooks/usePlatformStats';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { useOrders } from '../../hooks/useOrder';
@@ -50,6 +51,12 @@ import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 import { useShcI18n, getLocalizedOrderStatus, getActiveOrderBannerLabels, getRequestDishCopy } from '@shc/i18n';
 import { getLocalizedOccasions, getOccasionDishesTitle, getMobileLocalizedPromos } from '@shc/i18n';
 import { LocalizedTrustStrip } from '../../components/LocalizedTrustStrip';
+
+const DISCOVER_BENTO_TILES = [
+  { iconKey: 'cart' as const, labelKey: 'tab.cart' as const, image: BENTO_ACTION_IMAGES.cart, href: '/(customer)/cart', testID: 'bento-cart', variant: 'bento-mint' as const },
+  { iconKey: 'orders' as const, labelKey: 'tab.orders' as const, image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'bento-orders', variant: 'bento-peach' as const },
+  { iconKey: 'request' as const, labelKey: 'wallet.request_dish' as const, image: BENTO_ACTION_IMAGES.request, href: '/(customer)/request', testID: 'bento-request', variant: 'bento-yellow' as const },
+];
 
 function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
   const id = String(product.id);
@@ -82,6 +89,8 @@ export default function CustomerDiscover() {
   const { data: orders = [] } = useOrders('customer');
   const { favorites, toggle, isFavorite } = useFavorites();
   const { data: products = [], isLoading } = useProducts('');
+  const { data: credits } = useCredits();
+  const creditBal = credits?.balance ?? 0;
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
   const { t, locale } = useShcI18n();
@@ -266,6 +275,37 @@ export default function CustomerDiscover() {
         </View>
       )}
 
+      {!query && (
+        <View style={styles.tilesRow} testID="bento-quick-actions">
+          {DISCOVER_BENTO_TILES.map((tile) => (
+            <View key={tile.testID} style={styles.tileCol}>
+              <Link href={tile.href as any} asChild>
+                <SHCVisualBentoTile
+                  imageUri={tile.image}
+                  iconKey={tile.iconKey}
+                  label={t(tile.labelKey)}
+                  testID={tile.testID}
+                  variant={tile.variant}
+                  appearance="customer"
+                />
+              </Link>
+            </View>
+          ))}
+          <View style={styles.tileCol}>
+            <Link href="/(customer)/profile" asChild>
+              <SHCVisualBentoTile
+                imageUri={BENTO_ACTION_IMAGES.credits}
+                iconKey="credits"
+                label={t('wallet.credits_tile').replace('{balance}', String(creditBal))}
+                variant="bento-yellow"
+                appearance="customer"
+                testID="bento-credits"
+              />
+            </Link>
+          </View>
+        </View>
+      )}
+
       <View style={{ paddingHorizontal: shcSpacing.md }}>
         <SHCFilterChipRow
           chips={[
@@ -377,6 +417,8 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   searchOverlay: { zIndex: 20, elevation: 12 },
   listContent: { paddingHorizontal: shcSpacing.md, paddingBottom: 120 },
+  tilesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm, paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md },
+  tileCol: { width: '48%' },
   loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
