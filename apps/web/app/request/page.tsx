@@ -140,7 +140,7 @@ export default function RequestDishPage() {
       {/* Immersive hero */}
       <div className="relative h-52 md:h-64 overflow-hidden">
         <Image src={heroUri} alt="" fill className="object-cover" sizes="100vw" priority />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1C1C]/90 via-[#1C1C1C]/50 to-[#1C1C1C]/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/50 to-foreground/30" />
         <div className="absolute inset-0 flex flex-col justify-between p-5 md:p-8 max-w-3xl mx-auto w-full">
           <div className="flex items-center justify-between">
             <button

@@ -360,7 +360,7 @@ export default function OpsDashboard() {
       <SHCCard className="mt-6 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
-            <thead className="bg-[#FFE6A7]">
+            <thead className="bg-[var(--shc-bento-yellow)]">
               <tr>
                 <th className="p-3">Ledger ID</th>
                 <th className="p-3">Order</th>

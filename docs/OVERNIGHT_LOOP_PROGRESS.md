@@ -360,3 +360,28 @@
 - Cook dashboard bid default message + compliance doc badges
 - EAS monitor until FINISHED; download APK to `SHC-customer-preview.apk`
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 17 — 2026-07-08 ~03:24 IST
+
+### Implemented
+1. **Web cook profile i18n** — `getCookProfileCopy`; localized badges, heritage/menu sections (en/zh-Hans)
+2. **Cook mobile** — bid default message, compliance doc verified/pending labels
+3. **Web hex cleanup** — `AppFooter`, `cook/[slug]` → design tokens; request hero gradient → `foreground`; ops ledger header → `--shc-bento-yellow`
+
+### Production audit
+- No deploys; platform-stats **404** on prod still expected
+
+### Tests
+- `@shc/i18n`: **22 tests** PASS
+- web + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** — 90s background poll active
+
+### Next iteration
+- AppFooter i18n
+- WebPushOptIn hardcoded push error strings
+- EAS monitor until FINISHED
+- Continue loop until 9:00 AM IST Jul 9

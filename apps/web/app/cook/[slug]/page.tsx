@@ -6,12 +6,15 @@ import Link from 'next/link';
 import { MapPin, Shield } from 'lucide-react';
 import { useCook, useProducts } from '../../../lib/useProducts';
 import { useAuth } from '../../../lib/useAuth';
+import { useShcI18n, getCookProfileCopy } from '@shc/i18n';
 import { SHCCard, SHCButton, SHCBadge, SHCSectionTitle, SHCLoading, SHCPageHeader } from '../../components/SHCWebComponents';
 import { getHeritageArchive } from '../../../lib/api-client';
 
 export default function CookProfile() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug as string;
+  const { locale } = useShcI18n();
+  const copy = getCookProfileCopy(locale);
   const { data: cook, isLoading } = useCook(slug);
   const { data: products = [] } = useProducts('');
   const { user } = useAuth();
@@ -24,7 +27,7 @@ export default function CookProfile() {
   if (isLoading || !cook) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <SHCLoading label="Loading cook profile…" />
+        <SHCLoading label={copy.loading} />
       </div>
     );
   }
@@ -35,63 +38,63 @@ export default function CookProfile() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <SHCPageHeader title={cook.display_name} backHref="/" backLabel="All cooks" />
+      <SHCPageHeader title={cook.display_name} backHref="/" backLabel={copy.backLabel} />
 
       <div className="flex flex-wrap gap-2 mb-6">
         <SHCBadge variant="heritage">
           <MapPin className="w-3 h-3 inline mr-1" aria-hidden />
           {cook.area}
         </SHCBadge>
-        {cook.status === 'active' && <SHCBadge variant="success">Verified cook</SHCBadge>}
+        {cook.status === 'active' && <SHCBadge variant="success">{copy.verified}</SHCBadge>}
         {cook.sfa_reg_number && (
           <SHCBadge>
             <Shield className="w-3 h-3 inline mr-1" aria-hidden />
-            SFA registered
+            {copy.sfaRegistered}
           </SHCBadge>
         )}
       </div>
 
       <SHCCard className="mb-8">
-        <p className="text-[#2C2416] leading-relaxed italic">{cook.story}</p>
-        <div className="mt-4 pt-4 border-t border-[#E8D5B7]/60 text-sm text-[#5C5144] space-y-1">
+        <p className="text-foreground leading-relaxed italic">{cook.story}</p>
+        <div className="mt-4 pt-4 border-t border-border/60 text-sm text-muted-foreground space-y-1">
           <p>
-            <span className="font-medium text-[#2C2416]">Collection area:</span> {cook.collection_address}
+            <span className="font-medium text-foreground">{copy.collectionArea}</span> {cook.collection_address}
           </p>
           <p>
-            <span className="font-medium text-[#2C2416]">Instructions:</span> {cook.collection_instructions}
+            <span className="font-medium text-foreground">{copy.instructions}</span> {cook.collection_instructions}
           </p>
         </div>
       </SHCCard>
 
-      <SHCSectionTitle subtitle="Family recipes and stories, preserved for the community">
-        Heritage archive
-      </SHCSectionTitle>
+      <SHCSectionTitle subtitle={copy.heritageSubtitle}>{copy.heritageTitle}</SHCSectionTitle>
       <div className="grid gap-4 mb-10">
         {heritage.length > 0 ? (
           heritage.map((h, i) => (
             <SHCCard key={i}>
-              <div className="font-medium text-[#2C2416]">{h.title}</div>
-              <p className="text-sm text-[#5C5144] mt-2 leading-relaxed">{h.story}</p>
+              <div className="font-medium text-foreground">{h.title}</div>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{h.story}</p>
               {h.created_at && (
-                <p className="text-xs text-primary mt-3">Published {h.created_at.slice(0, 10)}</p>
+                <p className="text-xs text-primary mt-3">
+                  {copy.published} {h.created_at.slice(0, 10)}
+                </p>
               )}
             </SHCCard>
           ))
         ) : (
-          <p className="text-sm text-[#5C5144] py-4">Heritage stories from this cook will appear here.</p>
+          <p className="text-sm text-muted-foreground py-4">{copy.heritageEmpty}</p>
         )}
       </div>
 
-      <SHCSectionTitle subtitle={`${cookProducts.length} dish${cookProducts.length !== 1 ? 'es' : ''} available to order`}>
-        Menu
-      </SHCSectionTitle>
+      <SHCSectionTitle subtitle={copy.menuSubtitle(cookProducts.length)}>{copy.menuTitle}</SHCSectionTitle>
       <div className="grid sm:grid-cols-2 gap-4">
         {(cookProducts as Array<Record<string, unknown>>).map((p) => (
           <Link key={String(p.id)} href={`/product/${p.id}`}>
             <SHCCard hover>
-              <div className="font-semibold text-[#2C2416]">{String(p.name)}</div>
-              <div className="text-sm text-[#B85C38] mt-1">S${String(p.price)} / portion</div>
-              <p className="text-xs text-[#5C5144] mt-2 line-clamp-2">{String(p.heritage_note)}</p>
+              <div className="font-semibold text-foreground">{String(p.name)}</div>
+              <div className="text-sm text-primary mt-1">
+                S${String(p.price)} {copy.perPortion}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{String(p.heritage_note)}</p>
               <div className="mt-3">
                 <SHCBadge variant="heritage">{String(p.cuisine)}</SHCBadge>
               </div>

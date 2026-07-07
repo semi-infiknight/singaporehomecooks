@@ -173,7 +173,7 @@ export default function ComplianceUpload() {
                   <Text style={styles.resultFile} numberOfLines={1}>{doc.file_key}</Text>
                 </View>
                 <SHCBadge variant={doc.verified_at ? 'success' : 'warning'}>
-                  {doc.verified_at ? 'verified' : 'pending review'}
+                  {doc.verified_at ? t('cook.compliance.doc_verified') : t('cook.compliance.doc_pending')}
                 </SHCBadge>
               </View>
             </SHCCard>

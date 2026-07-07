@@ -66,7 +66,7 @@ export default function CookDashboard() {
     await createBidMut.mutateAsync({
       requestId: reqId,
       priceCents: price,
-      message: collabMsg || 'Heritage HDB recipe interpretation ready. Flexible for your party size.',
+      message: collabMsg || dashExtras.bidDefaultMessage,
     });
     setCollabMsg('');
   };

@@ -171,6 +171,29 @@ export function getCookDashboardExtras(locale: ShcLocale) {
     addStory: t(locale, 'cook.dashboard.add_story'),
     heritageAdded: t(locale, 'cook.dashboard.heritage_added'),
     verifiedBadge: t(locale, 'cook.dashboard.verified_badge'),
+    bidDefaultMessage: t(locale, 'cook.dashboard.bid_default_message'),
+  };
+}
+
+export function getCookProfileCopy(locale: ShcLocale) {
+  return {
+    loading: t(locale, 'cook.profile.loading'),
+    backLabel: t(locale, 'cook.profile.back_label'),
+    verified: t(locale, 'cook.profile.verified'),
+    sfaRegistered: t(locale, 'cook.profile.sfa_registered'),
+    collectionArea: t(locale, 'cook.profile.collection_area'),
+    instructions: t(locale, 'cook.profile.instructions'),
+    heritageTitle: t(locale, 'cook.profile.heritage_title'),
+    heritageSubtitle: t(locale, 'cook.profile.heritage_subtitle'),
+    heritageEmpty: t(locale, 'cook.profile.heritage_empty'),
+    menuTitle: t(locale, 'cook.profile.menu_title'),
+    menuSubtitle: (count: number) =>
+      t(locale, count === 1 ? 'cook.profile.menu_subtitle' : 'cook.profile.menu_subtitle_plural').replace(
+        '{count}',
+        String(count)
+      ),
+    perPortion: t(locale, 'cook.profile.per_portion'),
+    published: t(locale, 'cook.profile.published'),
   };
 }
 
