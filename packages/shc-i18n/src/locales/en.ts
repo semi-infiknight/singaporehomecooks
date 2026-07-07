@@ -9,6 +9,7 @@ export const en = {
     'Minimum order is S$50. Please add more portions or select a different listing.',
   'checkout.place_order': 'Place order',
   'checkout.placing': 'Placing order…',
+  'cart.minimum_hint': 'Minimum order is S$50 — add more portions before checkout.',
   'push.title': 'Browser notifications',
   'push.description': 'Get order updates in your browser when the app is installed or open in the background.',
   'push.enable': 'Enable notifications',

@@ -9,6 +9,8 @@ import { getDishImageUrl } from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
 import { useAuth } from '../../lib/useAuth';
+import { enforceMinimumOrder } from '@shc/business-rules';
+import { useShcI18n } from '@shc/i18n';
 import {
   GourmeatScreenHeader,
   GourmeatPayButton,
@@ -27,6 +29,7 @@ type CartItem = {
 
 export default function CartPage() {
   const router = useRouter();
+  const { t } = useShcI18n();
   const { user } = useAuth();
   const { openTray, dismiss } = useSHCTrayWeb();
   const { data: cart = { items: [] }, isLoading } = useCart();
@@ -60,6 +63,12 @@ export default function CartPage() {
   }
 
   const items = (cart.items || []) as CartItem[];
+  const belowMinimum =
+    items.length > 0 &&
+    !enforceMinimumOrder({
+      totalCents: Math.round(total * 100),
+      lines: items.map((i) => ({ price_cents: Math.round(i.price * 100) })),
+    }).valid;
 
   return (
     <div className={`max-w-2xl mx-auto px-4 py-8 ${items.length > 0 ? 'pb-28' : ''}`}>
@@ -91,6 +100,12 @@ export default function CartPage() {
               <div className="text-xs font-semibold text-muted-foreground mt-1">Subtotal</div>
             </div>
           </div>
+
+          {belowMinimum && (
+            <p className="mb-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-peach-50)] p-3 text-sm font-semibold text-foreground" data-testid="cart-minimum-hint">
+              {t('cart.minimum_hint')}
+            </p>
+          )}
 
           <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden mb-4">
             <ul className="divide-y divide-border">

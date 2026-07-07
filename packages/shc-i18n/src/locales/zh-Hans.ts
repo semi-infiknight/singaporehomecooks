@@ -11,6 +11,7 @@ export const zhHans: Record<MessageKey, string> = {
   'checkout.minimum_order': '最低订单金额为新币50元。请增加份量或选择其他菜品。',
   'checkout.place_order': '下单',
   'checkout.placing': '正在下单…',
+  'cart.minimum_hint': '最低订单为新币50元 — 结账前请增加份量。',
   'push.title': '浏览器通知',
   'push.description': '安装应用或在后台打开时，可在浏览器接收订单更新。',
   'push.enable': '开启通知',

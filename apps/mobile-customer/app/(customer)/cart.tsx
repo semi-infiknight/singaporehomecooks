@@ -19,9 +19,12 @@ import { getDishImageUrl, summarizeCart } from '@shc/utils';
 import { useCart, useClearCart } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthTray } from '../../hooks/useGuestAuthTray';
+import { enforceMinimumOrder } from '@shc/business-rules';
+import { useShcI18n } from '@shc/i18n';
 
 export default function Cart() {
   const insets = useSafeAreaInsets();
+  const { t } = useShcI18n();
   const { data: cart, isLoading } = useCart();
   const cartData = cart ?? { items: [], cookId: null };
   const clearMut = useClearCart();
@@ -45,6 +48,14 @@ export default function Cart() {
   const itemCount = summary.itemCount;
 
   const hasItems = cartData.items && cartData.items.length > 0;
+  const belowMinimum =
+    hasItems &&
+    !enforceMinimumOrder({
+      totalCents: Math.round(total * 100),
+      lines: (cartData.items || []).map((item: { price?: number }) => ({
+        price_cents: Math.round(Number(item.price || 0) * 100),
+      })),
+    }).valid;
 
   return (
     <DirectionalTabScreen testID="cart-tab-scene">
@@ -80,6 +91,12 @@ export default function Cart() {
               <View style={{ width: shcSpacing.sm }} />
               <GourmeatStatPill iconKey="cart" value={`S$${total.toFixed(2)}`} label="Subtotal" />
             </View>
+
+            {belowMinimum && (
+              <Text style={styles.minimumHint} testID="cart-minimum-hint">
+                {t('cart.minimum_hint')}
+              </Text>
+            )}
 
             <GourmeatCard style={{ padding: shcSpacing.sm }}>
               <Text style={styles.itemsTitle}>Order items</Text>
@@ -126,4 +143,15 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: shcSpacing.sm, marginTop: shcSpacing.xs, borderTopWidth: 1, borderTopColor: gourmeatColors.border, paddingHorizontal: shcSpacing.xs },
   totalLabel: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
   totalValue: { fontSize: 20, fontWeight: '800', color: gourmeatColors.primary },
+  minimumHint: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: gourmeatColors.text,
+    backgroundColor: gourmeatColors.primaryLight,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    padding: shcSpacing.sm,
+    marginBottom: shcSpacing.md,
+  },
 });
