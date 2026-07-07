@@ -1612,7 +1612,7 @@ export function GourmeatHomeHeader({
         <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
         <span className="text-[11px] font-semibold text-muted-foreground">{locationHint}</span>
         <span className="text-xs font-bold text-foreground ml-1 truncate max-w-[200px]">{locationLabel}</span>
-        <span className="text-[10px] text-[#B0B0B0] ml-1">▼</span>
+        <span className="text-[10px] text-muted-foreground/70 ml-1">▼</span>
       </Link>
     </div>
   );
@@ -1634,14 +1634,14 @@ export function GourmeatSearchBar({
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="flex-1 flex items-center bg-card rounded-full px-4 py-3 shadow-[var(--shc-shadow-soft)] min-w-0">
-        <Search className="w-[18px] h-[18px] text-[#B0B0B0] shrink-0" aria-hidden />
+        <Search className="w-[18px] h-[18px] text-muted-foreground/70 shrink-0" aria-hidden />
         <input
           type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           data-testid={testID}
-          className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-[#B0B0B0] min-w-0"
+          className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/70 min-w-0"
         />
       </div>
       {onFilterPress ? (
@@ -1851,7 +1851,7 @@ export function GourmeatDishCard({
               {product.name}
             </div>
             {product.cook_name ? (
-              <div className="text-[11px] text-[#8A8A8A] truncate mb-1" data-testid={`${cardTestID}-cook`}>
+              <div className="text-[11px] text-muted-foreground truncate mb-1" data-testid={`${cardTestID}-cook`}>
                 {product.cook_name}
               </div>
             ) : null}
@@ -1864,7 +1864,7 @@ export function GourmeatDishCard({
               <span className="text-[10px] text-accent" aria-hidden>
                 ★
               </span>
-              <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
+              <span className="text-[10px] font-semibold text-muted-foreground">{displayRating.toFixed(1)}</span>
             </div>
           </div>
         </SharedDishProductLink>
@@ -2016,7 +2016,7 @@ export function GourmeatCookHeader({
   return (
     <div className="mb-4" data-testid={testID}>
       <h1 className="text-[28px] font-extrabold text-foreground tracking-[-0.5px]">{title}</h1>
-      {subtitle ? <p className="text-[13px] text-[#8A8A8A] mt-1">{subtitle}</p> : null}
+      {subtitle ? <p className="text-[13px] text-muted-foreground mt-1">{subtitle}</p> : null}
       {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}
     </div>
   );

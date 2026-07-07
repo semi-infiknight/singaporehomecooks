@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SHCTrayProvider } from '@shc/ui';
 import { shcColors } from '@shc/ui/theme';
+import { useShcI18n, getCookLayoutCopy } from '@shc/i18n';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { MobileI18nProvider } from '../lib/i18n-provider';
 
@@ -20,6 +21,28 @@ const queryClient = new QueryClient({
   },
 });
 
+function CookNavigator() {
+  const { locale } = useShcI18n();
+  const layout = getCookLayoutCopy(locale);
+
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: shcColors.primary },
+        headerTintColor: shcColors.background,
+        headerTitleStyle: { fontWeight: '600' },
+        headerTitle: layout.appTitle,
+      }}
+    >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(cook)" options={{ headerShown: false }} />
+      <Stack.Screen name="(shared)/auth/index" options={{ title: layout.signIn }} />
+      <Stack.Screen name="(shared)/onboarding/index" options={{ title: layout.welcome }} />
+      <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: layout.orderChat }} />
+    </Stack>
+  );
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -28,22 +51,9 @@ export default function RootLayout() {
           <StatusBar style="dark" />
           <ErrorBoundary>
             <MobileI18nProvider>
-            <SHCTrayProvider queryClient={queryClient}>
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: shcColors.primary },
-                headerTintColor: shcColors.background,
-                headerTitleStyle: { fontWeight: '600' },
-                headerTitle: 'SHC — Cook',
-              }}
-            >
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(cook)" options={{ headerShown: false }} />
-              <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
-              <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
-              <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
-            </Stack>
-            </SHCTrayProvider>
+              <SHCTrayProvider queryClient={queryClient}>
+                <CookNavigator />
+              </SHCTrayProvider>
             </MobileI18nProvider>
           </ErrorBoundary>
         </SafeAreaProvider>

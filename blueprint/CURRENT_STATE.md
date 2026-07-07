@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 15) — Product/chat i18n + onPrimary hex cleanup.
+**Last Updated:** 2026-07-08 (Overnight loop iter 16) — ErrorBoundary CSS vars + cook layout/dashboard i18n.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

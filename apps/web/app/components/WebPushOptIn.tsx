@@ -26,19 +26,19 @@ export function WebPushOptIn() {
   if (!user || permission === 'unsupported') return null;
   if (permission === 'granted') {
     return (
-      <div className="mt-4 rounded-xl border-2 border-[#241812] bg-white p-4" data-testid="web-push-granted">
+      <div className="mt-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]" data-testid="web-push-granted">
         <p className="font-black">{t('push.title')}</p>
-        <p className="mt-1 text-sm text-[#5C5144]">{t('push.enabled')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('push.enabled')}</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-4 rounded-xl border-2 border-[#241812] bg-white p-4" data-testid="web-push-opt-in">
+    <div className="mt-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]" data-testid="web-push-opt-in">
       <p className="font-black">{t('push.title')}</p>
-      <p className="mt-1 text-sm text-[#5C5144]">{t('push.description')}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{t('push.description')}</p>
       {permission === 'denied' ? (
-        <p className="mt-3 text-sm font-semibold text-[#5C5144]">{t('push.denied')}</p>
+        <p className="mt-3 text-sm font-semibold text-muted-foreground">{t('push.denied')}</p>
       ) : (
         <SHCButton
           className="mt-3"
@@ -68,7 +68,7 @@ export function WebPushOptIn() {
           {busy ? t('push.enabling') : t('push.enable')}
         </SHCButton>
       )}
-      {status && <p className="mt-2 text-sm font-semibold text-[#5C5144]">{status}</p>}
+      {status && <p className="mt-2 text-sm font-semibold text-muted-foreground">{status}</p>}
     </div>
   );
 }

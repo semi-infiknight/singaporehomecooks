@@ -345,7 +345,7 @@ export default function CookListings() {
       goToStep(1);
       setAiCal(null);
     } catch (e: any) {
-      const message = e?.message || e?.code || 'Could not save listing. Check your connection and try again.';
+      const message = e?.message || e?.code || copy.saveErrorGeneric;
       showErrorTray(editingId ? copy.updateFailed : copy.publishFailed, message);
     } finally {
       setPublishing(false);

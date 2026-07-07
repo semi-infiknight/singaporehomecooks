@@ -13,7 +13,7 @@ import {
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
-import { useShcI18n, getCookOrderTransitionActions, getCookOrderStatusLabel } from '@shc/i18n';
+import { useShcI18n, getCookOrderTransitionActions, getCookOrderStatusLabel, getCookOrderDetailCopy } from '@shc/i18n';
 
 import { useMyOrders, useTransitionOrder } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,6 +24,7 @@ export default function CookOrders() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { t, locale } = useShcI18n();
+  const orderCopy = getCookOrderDetailCopy(locale);
   const { data: orders = [] } = useMyOrders();
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
@@ -41,7 +42,7 @@ export default function CookOrders() {
     try {
       await transMut.mutateAsync({ orderId, to });
     } catch (e: any) {
-      setErr({ message: e?.message || 'Transition failed' });
+      setErr({ message: e?.message || orderCopy.transitionFailed });
     }
   };
 

@@ -2,12 +2,16 @@
 
 import React, { Component, ReactNode } from 'react';
 import { SHCErrorCode } from '@shc/types';
+import { useShcI18n, getErrorBoundaryCopy } from '@shc/i18n';
 
 interface Props { children: ReactNode; fallbackTitle?: string; }
 interface State { hasError: boolean; error: Error | null; errorCode?: SHCErrorCode | string; }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundaryInner extends Component<
+  Props & { copy: ReturnType<typeof getErrorBoundaryCopy> },
+  State
+> {
+  constructor(props: Props & { copy: ReturnType<typeof getErrorBoundaryCopy> }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -26,15 +30,20 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const code = this.state.errorCode || 'SHC-GENERIC-001';
+      const { copy } = this.props;
       return (
-        <div className="min-h-[50vh] flex items-center justify-center p-8 bg-[#FAF7F2]">
-          <div className="max-w-md w-full border border-[#E8D5B7] bg-white rounded-xl p-8">
-            <h2 className="text-xl font-semibold text-[#B91C1C] mb-2">Something went wrong</h2>
-            <p className="text-sm mb-1">Error code: <code className="font-mono">{code}</code></p>
-            <p className="text-[#5C5144] text-sm mb-4">{this.state.error?.message || 'Unexpected error. Retry or refresh.'}</p>
-            <p className="text-xs text-[#5C5144] mb-4">Logged for ops. See ERROR_CODES.md + production-hardening.</p>
-            <button onClick={this.handleRetry} className="px-4 py-2 bg-primary text-primary-foreground rounded font-medium">Retry</button>
-            <a href="/" className="ml-4 text-sm underline text-primary">Go to Discover</a>
+        <div className="min-h-[50vh] flex items-center justify-center p-8 bg-background">
+          <div className="max-w-md w-full border border-border bg-card rounded-xl p-8 shadow-[var(--shc-shadow-brutal-sm)]">
+            <h2 className="text-xl font-semibold text-destructive mb-2">{copy.title}</h2>
+            <p className="text-sm mb-1">
+              {copy.codeLabel} <code className="font-mono">{code}</code>
+            </p>
+            <p className="text-muted-foreground text-sm mb-4">{this.state.error?.message || copy.message}</p>
+            <p className="text-xs text-muted-foreground mb-4">{copy.opsNote}</p>
+            <button onClick={this.handleRetry} className="px-4 py-2 bg-primary text-primary-foreground rounded font-medium">
+              {copy.retry}
+            </button>
+            <a href="/" className="ml-4 text-sm underline text-primary">{copy.discover}</a>
           </div>
         </div>
       );
@@ -42,3 +51,11 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export default function ErrorBoundary(props: Props) {
+  const { locale } = useShcI18n();
+  const copy = getErrorBoundaryCopy(locale);
+  return <ErrorBoundaryInner {...props} copy={copy} />;
+}
+
+export { ErrorBoundary };

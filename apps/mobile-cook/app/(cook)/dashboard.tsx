@@ -28,7 +28,7 @@ import {
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
 import { useMyOrders, useRequests, useCreateBid } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
-import { useShcI18n, getCookQuickActionLabels } from '@shc/i18n';
+import { useShcI18n, getCookQuickActionLabels, getCookDashboardExtras } from '@shc/i18n';
 
 const QUICK_ACTION_HREFS = [
   { href: '/(cook)/listings', iconKey: 'listings' as const, image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
@@ -43,6 +43,7 @@ export default function CookDashboard() {
   const { user } = useAuth();
   const { t, locale } = useShcI18n();
   const quickLabels = getCookQuickActionLabels(locale);
+  const dashExtras = getCookDashboardExtras(locale);
   const quickActions = [
     { ...QUICK_ACTION_HREFS[0], label: quickLabels.listings },
     { ...QUICK_ACTION_HREFS[1], label: quickLabels.orders },
@@ -242,21 +243,21 @@ export default function CookDashboard() {
               });
             }
             (global as any).alert
-              ? (global as any).alert('Heritage entry added (permanent). View on your cook profile.')
+              ? (global as any).alert(dashExtras.heritageAdded)
               : console.log('added');
           }}
           testID="add-heritage-btn"
           style={styles.heritageBtn}
         >
-          <SHCButtonText>+ Add Story</SHCButtonText>
+          <SHCButtonText>{dashExtras.addStory}</SHCButtonText>
         </SHCButton>
       </SHCCard>
 
-      <Text style={styles.recentLabel}>Recent Orders</Text>
+      <Text style={styles.recentLabel}>{dashExtras.recentOrders}</Text>
       {orders.length === 0 && (
         <View style={styles.noOrders}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.orders} height={64} rounded={shcRadii.md} />
-          <SHCBadge variant="default">No orders yet</SHCBadge>
+          <SHCBadge variant="default">{dashExtras.noOrdersYet}</SHCBadge>
         </View>
       )}
       {orders.slice(0, 4).map((o: any) => (
@@ -284,7 +285,7 @@ export default function CookDashboard() {
       ))}
 
       <View style={styles.footerBadge}>
-        <SHCBadge variant="success">SFA/WSQ verified</SHCBadge>
+        <SHCBadge variant="success">{dashExtras.verifiedBadge}</SHCBadge>
       </View>
     </ScrollView>
   

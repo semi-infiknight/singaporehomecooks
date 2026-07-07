@@ -333,3 +333,30 @@
 - UI: web ErrorBoundary hex → CSS vars
 - EAS monitor until FINISHED; download APK
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 16 — 2026-07-08 ~03:25 IST
+
+### Implemented
+1. **Web ErrorBoundary** — CSS vars (`bg-background`, `border-border`, `text-destructive`, `text-muted-foreground`); i18n via `getErrorBoundaryCopy` (en/zh-Hans)
+2. **Cook i18n** — layout stack titles (`getCookLayoutCopy`), dashboard recent orders/add story/heritage alert/verified badge (`getCookDashboardExtras`), compliance celebration, listings save-error fallback, orders transition-failed, onboarding HDB badge
+3. **Web hex cleanup** — TrustPageContent → `text-foreground`/`text-muted-foreground`; WebPushOptIn → brutal border + card tokens; order detail chat panel → `border-border`/`bg-card`/`bg-secondary`; SHCWebComponents Gourmeat muted grays → `text-muted-foreground`
+
+### Production audit
+- og-image + web health → **200** (unchanged)
+- `GET /store/shc/platform-stats` with publishable key → **404** (expected until brother merges+deploys)
+- **No Railway production deploys** this iteration
+
+### Tests
+- `@shc/i18n`: **22 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** (~4h+) — APK not downloaded yet
+
+### Next iteration
+- Remaining web hex (request page gradient, ops page)
+- Cook dashboard bid default message + compliance doc badges
+- EAS monitor until FINISHED; download APK to `SHC-customer-preview.apk`
+- Continue loop until 9:00 AM IST Jul 9

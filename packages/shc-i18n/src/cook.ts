@@ -90,6 +90,7 @@ export function getCookListingsCopy(locale: ShcLocale) {
     unpauseFailed: t(locale, 'cook.listings.unpause_failed'),
     badgePaused: t(locale, 'cook.listings.badge_paused'),
     badgeMin: t(locale, 'cook.listings.badge_min'),
+    saveErrorGeneric: t(locale, 'cook.listings.save_error_generic'),
   };
 }
 
@@ -150,5 +151,36 @@ export function getCookOnboardingCopy(locale: ShcLocale) {
     title: t(locale, 'cook.onboarding.title'),
     subtitle: t(locale, 'cook.onboarding.subtitle'),
     cta: t(locale, 'cook.onboarding.cta'),
+    hdbBadge: t(locale, 'cook.onboarding.hdb_badge'),
+  };
+}
+
+export function getCookLayoutCopy(locale: ShcLocale) {
+  return {
+    appTitle: t(locale, 'cook.layout.app_title'),
+    signIn: t(locale, 'cook.layout.sign_in'),
+    welcome: t(locale, 'cook.layout.welcome'),
+    orderChat: t(locale, 'cook.layout.order_chat'),
+  };
+}
+
+export function getCookDashboardExtras(locale: ShcLocale) {
+  return {
+    recentOrders: t(locale, 'cook.dashboard.recent_orders'),
+    noOrdersYet: t(locale, 'cook.dashboard.no_orders_yet'),
+    addStory: t(locale, 'cook.dashboard.add_story'),
+    heritageAdded: t(locale, 'cook.dashboard.heritage_added'),
+    verifiedBadge: t(locale, 'cook.dashboard.verified_badge'),
+  };
+}
+
+export function getErrorBoundaryCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'error.boundary.title'),
+    codeLabel: t(locale, 'error.boundary.code'),
+    message: t(locale, 'error.boundary.message'),
+    opsNote: t(locale, 'error.boundary.ops_note'),
+    retry: t(locale, 'error.boundary.retry'),
+    discover: t(locale, 'error.boundary.discover'),
   };
 }

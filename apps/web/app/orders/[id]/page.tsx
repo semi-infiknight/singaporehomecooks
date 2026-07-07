@@ -119,13 +119,13 @@ export default function TrackOrder() {
             </div>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-[#E8D5B7]/60">{t('orders.detail.address_hint')}</p>
+        <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/60">{t('orders.detail.address_hint')}</p>
       </SHCCard>
 
       <div id="order-chat-section">
         <SHCSectionTitle subtitle={t('orders.detail.chat_subtitle')}>{t('orders.detail.chat_title')}</SHCSectionTitle>
       </div>
-      <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
+      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-brutal-sm)]">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
             <p className="text-muted-foreground text-center py-8">{t('orders.detail.no_messages')}</p>
@@ -143,7 +143,7 @@ export default function TrackOrder() {
             </div>
           ))}
         </div>
-        <div className="flex gap-2 p-3 border-t border-[#E8D5B7] bg-[#FAF7F2]">
+        <div className="flex gap-2 p-3 border-t border-border bg-secondary">
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}

@@ -188,7 +188,7 @@ export default function ComplianceUpload() {
     </ScrollView>
       <SHCCelebration
         visible={showApprovedCelebration}
-        message="Compliance approved — you're cleared to accept orders!"
+        message={t('cook.compliance.celebration')}
         onDone={dismiss}
         testID="compliance-approved-celebration"
       />
