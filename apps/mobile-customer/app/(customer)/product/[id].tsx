@@ -143,7 +143,7 @@ export default function ProductDetail() {
           <View style={styles.badgeRow}>
             {product.cuisine ? <Text style={styles.badge}>{product.cuisine}</Text> : null}
             {product.halal ? <Text style={[styles.badge, styles.badgeHalal]}>{copy.halal}</Text> : null}
-            <Text style={styles.badge}>{copy.minQty.replace('{qty}', String(product.min_qty))}</Text>
+            <Text style={styles.badge}>{copy.minQty(product.min_qty)}</Text>
           </View>
 
           <GourmeatCard>

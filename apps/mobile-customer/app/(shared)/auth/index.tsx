@@ -11,7 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
+import { shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton, gourmeatColors } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { useShcI18n } from '@shc/i18n';
 
@@ -66,7 +66,7 @@ export default function AuthScreen() {
           blurOnSubmit={false}
           onSubmitEditing={() => passwordRef.current?.focus()}
           placeholder={t('auth.email_placeholder')}
-          placeholderTextColor={shcColors.textLight}
+          placeholderTextColor={gourmeatColors.textMuted}
           style={styles.input}
           testID="auth-email-input"
         />
@@ -79,7 +79,7 @@ export default function AuthScreen() {
           returnKeyType="go"
           onSubmitEditing={submit}
           placeholder={t('auth.password_placeholder')}
-          placeholderTextColor={shcColors.textLight}
+          placeholderTextColor={gourmeatColors.textMuted}
           style={styles.input}
           testID="auth-password-input"
         />
@@ -116,36 +116,36 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { flexGrow: 1, padding: shcSpacing.lg, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '800', marginBottom: shcSpacing.sm, color: shcColors.text },
-  subtitle: { fontSize: 14, color: shcColors.textLight, marginBottom: shcSpacing.lg },
+  title: { fontSize: 24, fontWeight: '800', marginBottom: shcSpacing.sm, color: gourmeatColors.text },
+  subtitle: { fontSize: 14, color: gourmeatColors.textLight, marginBottom: shcSpacing.lg },
   input: {
     borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    borderColor: gourmeatColors.border,
     borderRadius: shcRadii.md,
     padding: shcSpacing.md,
     marginBottom: shcSpacing.md,
-    backgroundColor: shcColors.surface,
+    backgroundColor: gourmeatColors.surface,
     fontSize: 16,
-    color: shcColors.text,
+    color: gourmeatColors.text,
   },
   submitBtn: {
     alignSelf: 'stretch',
     marginTop: shcSpacing.xs,
   },
   modeToggle: { marginTop: shcSpacing.md, paddingVertical: shcSpacing.sm },
-  modeToggleText: { textAlign: 'center', color: shcColors.primary, fontWeight: '700', fontSize: 15 },
+  modeToggleText: { textAlign: 'center', color: gourmeatColors.primary, fontWeight: '700', fontSize: 15 },
   browseBtn: {
     marginTop: shcSpacing.sm,
     paddingVertical: shcSpacing.md,
     borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    borderColor: gourmeatColors.border,
     borderRadius: shcRadii.md,
-    backgroundColor: shcColors.bentoYellow,
+    backgroundColor: gourmeatColors.primaryLight,
     alignItems: 'center',
     ...shcShadows.brutalSm,
   },
-  browseBtnText: { color: shcColors.text, fontWeight: '800', fontSize: 15 },
-  demoHint: { textAlign: 'center', marginTop: shcSpacing.lg, fontSize: 11, color: shcColors.textLight },
+  browseBtnText: { color: gourmeatColors.text, fontWeight: '800', fontSize: 15 },
+  demoHint: { textAlign: 'center', marginTop: shcSpacing.lg, fontSize: 11, color: gourmeatColors.textLight },
 });

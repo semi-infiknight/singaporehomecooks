@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Minus, Plus } from 'lucide-react';
 import { getDishImageUrl, resolveProductForDisplay } from '@shc/utils';
 import {
@@ -70,7 +69,7 @@ export default function ProductDetail() {
   const handleAdd = async () => {
     setError(null);
     if (!allergenAck) {
-      setError('Please acknowledge allergens before adding to cart.');
+      setError(copy.allergenRequired);
       return;
     }
     const { isAuthenticated } = await import('../../../lib/api-client');
@@ -83,7 +82,7 @@ export default function ProductDetail() {
       window.location.href = '/cart';
     } catch (e: unknown) {
       const err = e as { message?: string; code?: string };
-      setError(err?.message || 'Unable to add to cart. You may already have items from another cook.');
+      setError(err?.message || copy.addCartConflict);
     }
   };
 
@@ -101,7 +100,6 @@ export default function ProductDetail() {
 
   return (
     <>
-      {/* Full-width hero food image */}
       <div className="relative w-full h-56 sm:h-64 md:h-80">
         <SHCSharedDishImageWeb
           dishId={product.id}
@@ -116,25 +114,25 @@ export default function ProductDetail() {
             href="/"
             className="text-sm font-bold bg-card/95 px-3 py-2 rounded-full shadow-[var(--shc-shadow-soft)]"
           >
-            ← Back
+            {copy.back}
           </Link>
           <div className="flex items-center gap-2">
             <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-md">
-              {gourmeatDiscountPercent(product.id)}% OFF
+              {copy.offBadge(gourmeatDiscountPercent(product.id))}
             </span>
             <FavoriteButton
-            active={isFavorite(product.id)}
-            onClick={() =>
-              toggle({
-                id: product.id,
-                name: product.name,
-                cook_name: product.cook_name,
-                price: product.price,
-                cuisine: product.cuisine,
-              })
-            }
-            testID="pdp-favorite-btn"
-          />
+              active={isFavorite(product.id)}
+              onClick={() =>
+                toggle({
+                  id: product.id,
+                  name: product.name,
+                  cook_name: product.cook_name,
+                  price: product.price,
+                  cuisine: product.cuisine,
+                })
+              }
+              testID="pdp-favorite-btn"
+            />
           </div>
         </div>
       </div>
@@ -142,13 +140,13 @@ export default function ProductDetail() {
       <div className="max-w-3xl mx-auto px-4 py-6 shc-bottom-bar-pad">
         <h1 className="shc-display text-2xl md:text-3xl tracking-tight text-foreground">{product.name}</h1>
         <p className="text-sm font-semibold text-primary mt-1">
-          {product.cook_name} · S${product.price} · min {minQty}
+          {copy.priceMeta(product.cook_name || '', product.price, minQty)}
         </p>
 
         <div className="flex flex-wrap gap-2 my-4">
           <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>
           <CalorieBadge calories={displayCal} />
-          {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
+          {product.halal && <SHCBadge variant="success">{copy.halal}</SHCBadge>}
           {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
         </div>
 
@@ -158,29 +156,29 @@ export default function ProductDetail() {
           </SHCCard>
         )}
 
-        <SHCSectionTitle subtitle="Review before ordering">Ingredients & allergens</SHCSectionTitle>
+        <SHCSectionTitle subtitle={copy.ingredientsSubtitle}>{copy.ingredientsTitle}</SHCSectionTitle>
         <SHCCard className="rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
           {tier1.length > 0 && (
             <div className="mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--shc-error)]">Contains</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-destructive">{copy.allergenContains}</span>
               <p className="text-sm mt-1 font-medium">{tier1.join(', ')}</p>
             </div>
           )}
           {(product.allergen_tiers?.tier2 || []).length > 0 && (
             <div className="mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">May contain</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{copy.allergenMayContain}</span>
               <p className="text-sm mt-1 font-medium">{(product.allergen_tiers?.tier2 || []).join(', ')}</p>
             </div>
           )}
           {(product.allergen_tiers?.tier3 || []).length > 0 && (
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trace</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{copy.allergenTrace}</span>
               <p className="text-sm mt-1 font-medium">{(product.allergen_tiers?.tier3 || []).join(', ')}</p>
             </div>
           )}
           {Array.isArray(product.ingredients) && product.ingredients.length > 0 && (
             <div className="mt-4 pt-4 border-t-2 border-[var(--shc-border-brutal)]">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ingredients</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{copy.ingredientsLabel}</span>
               <ul className="text-sm mt-2 space-y-1 text-muted-foreground font-medium">
                 {product.ingredients.map((ing: { name?: string; qty?: string }, i: number) => (
                   <li key={i}>
@@ -197,17 +195,17 @@ export default function ProductDetail() {
             className="mt-3 text-xs text-primary font-bold hover:underline"
             disabled={aiMut.isPending}
           >
-            {aiMut.isPending ? 'Estimating…' : '🔥 Refresh calorie estimate'}
+            {aiMut.isPending ? copy.calorieEstimating : copy.calorieRefresh}
           </button>
         </SHCCard>
 
-        <SHCSectionTitle>Quantity</SHCSectionTitle>
+        <SHCSectionTitle>{copy.quantityTitle}</SHCSectionTitle>
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setQty(Math.max(minQty, effectiveQty - 1))}
             className="w-10 h-10 rounded-lg border-2 border-[var(--shc-border-brutal)] flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-brutal-sm)]"
-            aria-label="Decrease quantity"
+            aria-label={copy.decreaseQty}
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -216,11 +214,11 @@ export default function ProductDetail() {
             type="button"
             onClick={() => setQty(effectiveQty + 1)}
             className="w-10 h-10 rounded-lg border-2 border-[var(--shc-border-brutal)] flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-brutal-sm)]"
-            aria-label="Increase quantity"
+            aria-label={copy.increaseQty}
           >
             <Plus className="w-4 h-4" />
           </button>
-          <span className="text-sm text-muted-foreground font-semibold">Min {minQty}</span>
+          <span className="text-sm text-muted-foreground font-semibold">{copy.minQty(minQty)}</span>
         </div>
 
         <div className="mt-6">
@@ -231,7 +229,7 @@ export default function ProductDetail() {
 
         <div className="mt-6 hidden sm:flex flex-row gap-3">
           <GourmeatPayButton
-            label={addMut.isPending ? 'Adding…' : 'Add to cart'}
+            label={addMut.isPending ? copy.adding : copy.addToCart}
             amount={`S$${lineTotal.toFixed(2)}`}
             onClick={handleAdd}
             disabled={!allergenAck || addMut.isPending}
@@ -246,12 +244,12 @@ export default function ProductDetail() {
           )}
         </div>
 
-        <SHCSectionTitle>Collection slots</SHCSectionTitle>
+        <SHCSectionTitle>{copy.collectionSlots}</SHCSectionTitle>
         <CollectionSlotPicker slots={slots} selected={null} onSelect={() => {}} />
 
         <div className="sm:hidden fixed bottom-[110px] left-4 right-4 z-40">
           <GourmeatPayButton
-            label={addMut.isPending ? 'Adding…' : 'Add to cart'}
+            label={addMut.isPending ? copy.adding : copy.addToCart}
             amount={`S$${lineTotal.toFixed(2)}`}
             onClick={handleAdd}
             disabled={!allergenAck || addMut.isPending}

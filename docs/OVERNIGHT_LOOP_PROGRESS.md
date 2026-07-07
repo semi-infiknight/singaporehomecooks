@@ -528,3 +528,28 @@
 - Customer auth screen gourmeat tokens
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 23 — 2026-07-08 ~03:38 IST
+
+### Implemented
+1. **Web PDP i18n** — extended `getProductDetailCopy` with allergens, quantity, add-to-cart, collection slots, back link, discount badge (en/zh-Hans)
+2. **Mobile search Gourmeat tokens** — `search.tsx` migrated `shcColors` → `gourmeatColors`
+3. **Customer auth Gourmeat tokens** — `auth/index.tsx` full `gourmeatColors` skin (inputs, browse guest, mode toggle)
+
+### Tests
+- `@shc/i18n`: **27 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK ready at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Mobile request-dish remaining strings
+- Web login page Gourmeat/i18n parity
+- Customer orders detail mobile strings
+- Continue loop until 9:00 AM IST Jul 9
+

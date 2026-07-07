@@ -12,8 +12,8 @@ import {
   SHCMindSectionTitle,
   SHCIcon,
   type SHCDishCardData,
-  shcColors,
   shcSpacing,
+  gourmeatColors,
 } from '@shc/ui';
 import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
@@ -106,7 +106,7 @@ export default function SearchScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 80 }]}
     >
       <View style={styles.header}>
-        <SHCIcon name="search" size={24} color={shcColors.primary} active />
+        <SHCIcon name="search" size={24} color={gourmeatColors.primary} active />
         <Text style={styles.title}>{t('search.title')}</Text>
       </View>
 
@@ -146,11 +146,11 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
-  title: { fontSize: 24, fontWeight: '900', color: shcColors.text },
-  resultsTitle: { fontSize: 13, fontWeight: '700', color: shcColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
+  title: { fontSize: 24, fontWeight: '900', color: gourmeatColors.text },
+  resultsTitle: { fontSize: 13, fontWeight: '700', color: gourmeatColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
   gridItem: { width: '48%' },
 });
