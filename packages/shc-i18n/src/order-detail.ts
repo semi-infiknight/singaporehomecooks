@@ -33,3 +33,16 @@ export function getLocalizedOrderTimeline(locale: ShcLocale): LocalizedTimelineS
     detail: t(locale, `orders.timeline.${id}.detail` as MessageKey),
   }));
 }
+
+export function getCustomerOrderDetailCopy(locale: ShcLocale) {
+  return {
+    guest: t(locale, 'cart.guest'),
+    totalMeta: (total: string | number, name: string) =>
+      t(locale, 'orders.detail.total_meta').replace('{total}', String(total)).replace('{name}', name),
+    itemLine: (qty: number, name: string) =>
+      t(locale, 'orders.detail.item_line').replace('{qty}', String(qty)).replace('{name}', name),
+    disputeMeta: (status?: string, type?: string) =>
+      `${status || t(locale, 'orders.detail.dispute_open')} · ${type || t(locale, 'orders.detail.dispute_other')}`,
+    loadingAuth: t(locale, 'request.loading_auth'),
+  };
+}

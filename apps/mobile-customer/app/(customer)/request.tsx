@@ -69,6 +69,9 @@ export default function RequestDishScreen() {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: gourmeatColors.background }}>
         <ActivityIndicator size="large" color={gourmeatColors.primary} />
+        <Text style={{ marginTop: shcSpacing.sm, color: gourmeatColors.textLight, fontWeight: '600' }}>
+          {t('request.loading_auth')}
+        </Text>
       </View>
     );
   }

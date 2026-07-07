@@ -20,7 +20,7 @@ import {
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
-import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline, getOrderTrayLabels } from '@shc/i18n';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef, getLocalizedOrderTimeline, getOrderTrayLabels, getCustomerOrderDetailCopy } from '@shc/i18n';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -43,6 +43,7 @@ type OrderDispute = { status?: string; type?: string; notes?: string };
 
 export default function OrderTracking() {
   const { t, locale } = useShcI18n();
+  const orderCopy = getCustomerOrderDetailCopy(locale);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -127,10 +128,10 @@ export default function OrderTracking() {
         <Text style={styles.cardBody}>
           {order.collection_date} · {order.collection_slot}
         </Text>
-        <Text style={styles.cardMeta}>S${order.total} · {user?.name || 'Guest'}</Text>
+        <Text style={styles.cardMeta}>{orderCopy.totalMeta(order.total ?? '', user?.name || orderCopy.guest)}</Text>
         {(order.items || []).map((it: any, i: number) => (
           <Text key={i} style={styles.itemLine}>
-            {it.qty}× {it.name}
+            {orderCopy.itemLine(it.qty ?? 1, it.name ?? '')}
           </Text>
         ))}
         {addrReleased && order.shc_status !== 'cart' ? (
@@ -169,9 +170,7 @@ export default function OrderTracking() {
       {disputes.length > 0 && (
         <GourmeatCard testID="order-dispute-submitted">
           <Text style={styles.cardTitle}>{t('orders.detail.issue_reported')}</Text>
-          <Text style={styles.cardMeta}>
-            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
-          </Text>
+          <Text style={styles.cardMeta}>{orderCopy.disputeMeta(disputes[0].status, disputes[0].type)}</Text>
           {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
         </GourmeatCard>
       )}

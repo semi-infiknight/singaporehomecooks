@@ -553,3 +553,28 @@
 - Customer orders detail mobile strings
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 24 — 2026-07-08 ~03:40 IST
+
+### Implemented
+1. **Mobile order detail i18n** — `getCustomerOrderDetailCopy`; guest/total meta, item lines, dispute status fallbacks
+2. **Web login Gourmeat parity** — `auth.app_title` + mobile subtitle, browse-guest CTA, brutal card styling, `text-destructive` errors
+3. **Mobile request-dish** — loading label, dedicated `request.back` key (was `search.back`)
+
+### Tests
+- `@shc/i18n`: **28 tests** PASS (+1 order detail meta)
+- web + mobile-customer typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web cart/checkout remaining strings
+- Mobile orders index polish
+- Cook app remaining i18n gaps
+- Continue loop until 9:00 AM IST Jul 9
+

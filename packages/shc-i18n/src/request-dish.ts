@@ -81,7 +81,7 @@ export function getRequestDishCopy(locale: ShcLocale): RequestDishCopy {
     posting: t(locale, 'request.posting'),
     postBtn: t(locale, 'request.post_btn'),
     continue: t(locale, 'request.continue'),
-    back: t(locale, 'search.back'),
+    back: t(locale, 'request.back'),
     occasionValues: OCCASION_VALUES,
     occasionLabels,
     successTitle: t(locale, 'request.success_title'),
