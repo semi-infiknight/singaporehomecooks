@@ -3,6 +3,7 @@ export const en = {
   'nav.cart': 'Cart',
   'nav.profile': 'Profile',
   'nav.search_placeholder': 'Try nasi lemak, buah keluak, Hari Raya…',
+  'nav.search_placeholder_mobile': 'Search dishes, cooks, occasions…',
   'checkout.title': 'Checkout',
   'checkout.minimum_order':
     'Minimum order is S$50. Please add more portions or select a different listing.',

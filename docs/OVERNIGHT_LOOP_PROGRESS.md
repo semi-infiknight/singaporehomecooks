@@ -57,3 +57,21 @@
 - Production PWA audit (og-image, counters)
 - EAS build monitor
 - More blueprint gaps
+
+---
+
+## Iteration 3 — 2026-07-08 ~02:47 IST
+
+### Audit (production)
+- `og-image.png` on Railway web: **200 OK** (PNG)
+- Homepage HTML: still pre-deploy build (og:image fix needs Railway redeploy)
+- EAS `2ad24658`: still **IN_QUEUE** (~1h, not stuck)
+
+### Implemented
+1. **Discover search i18n** — web `AppHeader` + mobile discover placeholder use `@shc/i18n`
+2. **i18n unit tests** — `normalizeLocale` + zh checkout message
+
+### Next iteration
+- Expand Mandarin coverage (cart, tab bar, trust strip)
+- Retry EAS if stuck 6+ hours
+- platform-stats live deploy verification

@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useCart, useProducts, useAddToCart } from '../../lib/useProducts';
 import { useDiscoverSearch } from '../providers';
+import { useShcI18n } from '@shc/i18n';
 import { ZomatoLocationBar, SearchResultsDropdown, type DishCardProduct } from './SHCWebComponents';
 import { getCookAvatarUrl } from '@shc/utils';
 
@@ -16,6 +17,7 @@ const navLinks = [
 ];
 
 export function AppHeader() {
+  const { t } = useShcI18n();
   const { user } = useAuth();
   const { locationLabel, active: collectionLocation } = useCustomerLocation();
   const { data: cart } = useCart();
@@ -50,7 +52,7 @@ export function AppHeader() {
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Try nasi lemak, buah keluak, Hari Raya…"
+                placeholder={t('nav.search_placeholder')}
                 className="shc-input pl-10 py-2 text-sm"
                 data-testid="search-input-web"
                 aria-label="Search heritage dishes and cooks"

@@ -6,6 +6,7 @@ export const zhHans: Record<MessageKey, string> = {
   'nav.cart': '购物车',
   'nav.profile': '我的',
   'nav.search_placeholder': '试试椰浆饭、黑果焖鸡、开斋节…',
+  'nav.search_placeholder_mobile': '搜索菜品、家厨、节庆…',
   'checkout.title': '结账',
   'checkout.minimum_order': '最低订单金额为新币50元。请增加份量或选择其他菜品。',
   'checkout.place_order': '下单',

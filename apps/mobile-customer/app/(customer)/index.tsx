@@ -49,6 +49,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
+import { useShcI18n } from '@shc/i18n';
 
 const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
 
@@ -85,6 +86,7 @@ export default function CustomerDiscover() {
   const { data: products = [], isLoading } = useProducts('');
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
+  const { t } = useShcI18n();
 
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
@@ -205,7 +207,7 @@ export default function CustomerDiscover() {
       <GourmeatSearchBar
         value={query}
         onChangeText={setQuery}
-        placeholder="Search dishes, cooks, occasions…"
+        placeholder={t('nav.search_placeholder_mobile')}
         onFilterPress={() => router.push('/(customer)/search' as any)}
         testID="search-input"
       />
