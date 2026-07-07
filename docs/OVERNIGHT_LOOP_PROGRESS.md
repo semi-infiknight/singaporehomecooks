@@ -385,3 +385,29 @@
 - WebPushOptIn hardcoded push error strings
 - EAS monitor until FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 18 — 2026-07-08 ~03:26 IST
+
+### Implemented
+1. **AppFooter i18n** — `getFooterCopy`; full footer localized (en/zh-Hans) via client component
+2. **WebPush i18n** — `getWebPushCopy`; unsupported device, enable-failed, and "Not now" strings localized
+3. **Mobile discover header** — `discover.home_headline`, `collect_from`, `set_location` wired on customer home
+4. **Stray hex audit** — web `*.tsx` clean except `layout.tsx` themeColor (brand primary token)
+
+### Production audit
+- No Railway deploys; platform-stats **404** on prod still expected
+
+### Tests
+- `@shc/i18n`: **24 tests** PASS (+2 footer/push)
+- web + mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** — 90s background poll active
+
+### Next iteration
+- Mobile cart/location alert i18n
+- Mobile checkout error strings
+- EAS monitor until FINISHED; download APK
+- Continue loop until 9:00 AM IST Jul 9

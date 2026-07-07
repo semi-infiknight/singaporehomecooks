@@ -8,3 +8,4 @@ export * from './request-dish';
 export * from './order-tray';
 export * from './cook';
 export * from './product-chat';
+export * from './footer';

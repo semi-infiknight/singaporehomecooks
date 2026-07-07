@@ -7,14 +7,15 @@ import {
   isWebPushSupported,
   registerWebPushSubscription,
 } from '../../lib/web-push';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getWebPushCopy } from '@shc/i18n';
 import { useAuth } from '../../lib/useAuth';
 
 type PushState = 'unsupported' | 'granted' | 'denied' | 'default' | 'missing_vapid';
 
 export function WebPushOptIn() {
   const { user } = useAuth();
-  const { t } = useShcI18n();
+  const { locale } = useShcI18n();
+  const copy = getWebPushCopy(locale);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [permission, setPermission] = useState<PushState>('default');
@@ -27,18 +28,18 @@ export function WebPushOptIn() {
   if (permission === 'granted') {
     return (
       <div className="mt-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]" data-testid="web-push-granted">
-        <p className="font-black">{t('push.title')}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t('push.enabled')}</p>
+        <p className="font-black">{copy.title}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{copy.enabled}</p>
       </div>
     );
   }
 
   return (
     <div className="mt-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]" data-testid="web-push-opt-in">
-      <p className="font-black">{t('push.title')}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{t('push.description')}</p>
+      <p className="font-black">{copy.title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{copy.description}</p>
       {permission === 'denied' ? (
-        <p className="mt-3 text-sm font-semibold text-muted-foreground">{t('push.denied')}</p>
+        <p className="mt-3 text-sm font-semibold text-muted-foreground">{copy.denied}</p>
       ) : (
         <SHCButton
           className="mt-3"
@@ -50,22 +51,22 @@ export function WebPushOptIn() {
             try {
               const result = await registerWebPushSubscription();
               if (result.ok) {
-                setStatus(t('push.enabled'));
+                setStatus(copy.enabled);
                 setPermission('granted');
-              } else if (result.reason === 'missing_vapid_key') setStatus(t('push.not_configured'));
+              } else if (result.reason === 'missing_vapid_key') setStatus(copy.notConfigured);
               else if (result.reason === 'denied') {
-                setStatus(t('push.denied'));
+                setStatus(copy.denied);
                 setPermission('denied');
-              } else setStatus('Push not supported on this device.');
+              } else setStatus(copy.unsupportedDevice);
             } catch (e) {
-              setStatus((e as Error).message || 'Could not enable notifications.');
+              setStatus((e as Error).message || copy.enableFailed);
             } finally {
               setBusy(false);
             }
           }}
           testID="web-push-enable-btn"
         >
-          {busy ? t('push.enabling') : t('push.enable')}
+          {busy ? copy.enabling : copy.enable}
         </SHCButton>
       )}
       {status && <p className="mt-2 text-sm font-semibold text-muted-foreground">{status}</p>}
@@ -76,7 +77,8 @@ export function WebPushOptIn() {
 /** Compact banner for checkout success / profile nudge (P1-21). */
 export function WebPushPromptBanner({ className = '' }: { className?: string }) {
   const { user } = useAuth();
-  const { t } = useShcI18n();
+  const { locale } = useShcI18n();
+  const copy = getWebPushCopy(locale);
   const [dismissed, setDismissed] = useState(false);
   const [busy, setBusy] = useState(false);
   const permission = getWebPushPermissionState();
@@ -88,7 +90,7 @@ export function WebPushPromptBanner({ className = '' }: { className?: string }) 
       className={`rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-peach-50)] p-4 shadow-[var(--shc-shadow-brutal-sm)] ${className}`}
       data-testid="web-push-prompt-banner"
     >
-      <p className="text-sm font-bold text-foreground">{t('push.prompt_banner')}</p>
+      <p className="text-sm font-bold text-foreground">{copy.promptBanner}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <SHCButton
           size="sm"
@@ -101,14 +103,14 @@ export function WebPushPromptBanner({ className = '' }: { className?: string }) 
           }}
           testID="web-push-banner-enable"
         >
-          {busy ? t('push.enabling') : t('push.enable')}
+          {busy ? copy.enabling : copy.enable}
         </SHCButton>
         <button
           type="button"
           className="text-xs font-bold text-muted-foreground underline"
           onClick={() => setDismissed(true)}
         >
-          Not now
+          {copy.notNow}
         </button>
       </div>
     </div>

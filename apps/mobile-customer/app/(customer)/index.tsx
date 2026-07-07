@@ -203,7 +203,7 @@ export default function CustomerDiscover() {
     [colWidth, handleAddToCart, handleFavorite, isFavorite]
   );
 
-  const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
+  const headerLocationLabel = collectionLocation ? locationLabel : t('discover.set_location');
 
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA
@@ -215,9 +215,9 @@ export default function CustomerDiscover() {
   const ListHeader = (
     <>
       <GourmeatHomeHeader
-        headline="Hungry? Order & Eat."
+        headline={t('discover.home_headline')}
         locationLabel={headerLocationLabel}
-        locationHint="Collect from"
+        locationHint={t('discover.collect_from')}
         avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
         onProfilePress={() => router.push('/(customer)/profile' as any)}
         onLocationPress={() => router.push('/(customer)/location' as any)}
