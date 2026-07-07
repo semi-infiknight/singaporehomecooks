@@ -33,7 +33,7 @@
 |----|------|----------------------|
 | BUG-01 | og:image localhost on production | Fixed in code — needs Railway deploy |
 | P1-03 | Homepage live social counters | Fixed in code — needs Medusa deploy for live API |
-| P2-03 | Mandarin i18n at launch | **In progress** — customer flows + order tray forms + cook dashboard/orders/earnings/compliance |
+| P2-03 | Mandarin i18n at launch | **In progress** — customer flows + full cook app screens (listings wizard, auth, order detail) |
 | P1-02 | Dish synonym search depth | **Improved** — 20 SG heritage seeds + bidirectional expansion |
 | P1-09–11 | One-cook cart / PayNow / S$50 min E2E | **Improved** — S$50 min enforced (`SHC-CART-004`); one-cook `SHC-CART-001` fix + cart test |
 | P1-21 | Web push permission flow | **Improved** — permission states + post-order prompt banner |

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getRequestDishCopy } from './request-dish';
 import { getOrderTrayLabels } from './order-tray';
+import { getCookAuthCopy, getCookListingsCopy } from './cook';
 
 describe('request-dish copy', () => {
   it('returns localized wizard strings', () => {
@@ -27,5 +28,12 @@ describe('order tray labels', () => {
     expect(labels.reviewPlaceholder).toBe('Share your experience (optional)');
     expect(labels.disputeSubmit).toBe('Report issue');
     expect(getOrderTrayLabels('zh-Hans').reviewSubmit).toBe('提交评价');
+  });
+});
+
+describe('cook copy', () => {
+  it('returns localized cook auth and listings strings', () => {
+    expect(getCookAuthCopy('en').title).toBe('SHC Cook Portal');
+    expect(getCookListingsCopy('zh-Hans').wizardNew).toBe('新建菜品');
   });
 });

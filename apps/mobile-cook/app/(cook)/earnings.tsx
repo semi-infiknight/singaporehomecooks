@@ -16,7 +16,7 @@ import {
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
-import { useShcI18n, getCookQuickActionLabels } from '@shc/i18n';
+import { useShcI18n, getCookQuickActionLabels, getCookEarningsCopy } from '@shc/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createCookExpense, getEarnings, listCookExpenses } from '../../lib/api-client';
 
@@ -25,7 +25,8 @@ export default function Earnings() {
   const router = useRouter();
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { t, locale } = useShcI18n();
+  const { locale } = useShcI18n();
+  const copy = getCookEarningsCopy(locale);
   const quickLabels = getCookQuickActionLabels(locale);
   const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useQuery({
     queryKey: ['earnings'],
@@ -45,7 +46,7 @@ export default function Earnings() {
       setExpenseAmount('');
       qc.invalidateQueries({ queryKey: ['cook-expenses'] });
     },
-    onError: (e) => Alert.alert('Could not log expense', (e as Error).message || 'Please try again.'),
+    onError: (e) => Alert.alert(copy.expenseFailedTitle, (e as Error).message || copy.expenseFailedBody),
   });
 
   const weekTotal = earnings.thisWeek ?? 0;
@@ -58,7 +59,7 @@ export default function Earnings() {
   const submitExpense = () => {
     const amount = Number(expenseAmount);
     if (!amount || amount <= 0) {
-      Alert.alert('Enter an expense amount', 'Use Singapore dollars, e.g. 18.50');
+      Alert.alert(copy.expenseInvalidTitle, copy.expenseInvalidBody);
       return;
     }
     expenseMut.mutate({
@@ -75,11 +76,11 @@ export default function Earnings() {
       testID="cook-earnings-screen"
     >
       <GourmeatCookHeader
-        title={t('cook.earnings.title')}
-        subtitle={`${user?.name} · 85% payout · PayNow weekly`}
+        title={copy.title}
+        subtitle={copy.subtitle.replace('{name}', user?.name || '')}
         badges={
           <View style={styles.heroBadges}>
-            <SHCBadge variant="heritage">{t('cook.dashboard.this_week')}</SHCBadge>
+            <SHCBadge variant="heritage">{copy.thisWeek}</SHCBadge>
             <SHCBadge variant="success">S${weekTotal}</SHCBadge>
           </View>
         }
@@ -88,17 +89,17 @@ export default function Earnings() {
       <SHCFadeIn delay={60}>
         <View style={styles.statsRow}>
           <SHCCard variant="bento-mint" style={styles.statCard}>
-            <Text style={styles.statLabel}>Projected</Text>
+            <Text style={styles.statLabel}>{copy.projected}</Text>
             <Text style={styles.statValue}>S${earnings.projectedPayout || weekTotal}</Text>
           </SHCCard>
           <SHCCard variant="bento-yellow" style={styles.statCard}>
-            <Text style={styles.statLabel}>Completed</Text>
-            <Text style={styles.statValue}>{orderCount} orders</Text>
+            <Text style={styles.statLabel}>{copy.completed}</Text>
+            <Text style={styles.statValue}>{copy.ordersCount.replace('{count}', String(orderCount))}</Text>
           </SHCCard>
         </View>
       </SHCFadeIn>
 
-      <Text style={styles.sectionLabel}>{t('cook.dashboard.quick_actions')}</Text>
+      <Text style={styles.sectionLabel}>{copy.quickActions}</Text>
       <View style={styles.bentoRow}>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
@@ -124,21 +125,19 @@ export default function Earnings() {
 
       <Link href="/(cook)/listings" asChild>
         <SHCButton testID="create-listings-btn" style={{ marginTop: shcSpacing.md }}>
-          <SHCButtonText>Create more listings for earnings</SHCButtonText>
+          <SHCButtonText>{copy.createListingsCta}</SHCButtonText>
         </SHCButton>
       </Link>
 
       <SHCCard variant="bento-peach" style={styles.noteCard}>
-        <Text style={styles.noteText}>
-          Platform fees and cook expenses are tracked for IRAS records. Annual exports remain an ops workflow.
-        </Text>
+        <Text style={styles.noteText}>{copy.note}</Text>
       </SHCCard>
 
-      <Text style={styles.sectionLabel}>Expense tracker</Text>
+      <Text style={styles.sectionLabel}>{copy.expenseSection}</Text>
       <SHCCard variant="bento-mint" style={styles.expenseCard}>
         <View style={styles.expenseHeader}>
           <View>
-            <Text style={styles.statLabel}>Recorded this year</Text>
+            <Text style={styles.statLabel}>{copy.recordedYear}</Text>
             <Text style={styles.statValue}>S${expenseTotal}</Text>
           </View>
           <SHCBadge variant="heritage">IRAS</SHCBadge>
@@ -148,7 +147,7 @@ export default function Earnings() {
             value={expenseAmount}
             onChangeText={setExpenseAmount}
             keyboardType="decimal-pad"
-            placeholder="Amount, e.g. 18.50"
+            placeholder={copy.amountPlaceholder}
             placeholderTextColor={shcColors.textLight}
             style={styles.input}
             testID="expense-amount-input"
@@ -156,17 +155,17 @@ export default function Earnings() {
           <TextInput
             value={expenseCategory}
             onChangeText={setExpenseCategory}
-            placeholder="Category"
+            placeholder={copy.categoryPlaceholder}
             placeholderTextColor={shcColors.textLight}
             style={styles.input}
             testID="expense-category-input"
           />
           <SHCButton onPress={submitExpense} disabled={expenseMut.isPending} testID="expense-submit-btn">
-            <SHCButtonText>{expenseMut.isPending ? 'Saving…' : 'Log expense'}</SHCButtonText>
+            <SHCButtonText>{expenseMut.isPending ? copy.saving : copy.logExpense}</SHCButtonText>
           </SHCButton>
         </View>
         {expenseRows.length === 0 ? (
-          <Text style={styles.emptyText}>No expenses yet. Log ingredient receipts as you buy for orders.</Text>
+          <Text style={styles.emptyText}>{copy.emptyExpenses}</Text>
         ) : (
           <View style={styles.expenseList}>
             {expenseRows.slice(0, 5).map((expense: any) => (

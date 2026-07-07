@@ -32,3 +32,115 @@ export function getCookQuickActionLabels(locale: ShcLocale) {
 export function getCookOrderStatusLabel(locale: ShcLocale, status: string): string {
   return getLocalizedOrderStatus(locale, status);
 }
+
+export function getCookAuthCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'cook.auth.title'),
+    subtitle: t(locale, 'cook.auth.subtitle'),
+    emailPlaceholder: t(locale, 'cook.auth.email_placeholder'),
+    passwordPlaceholder: t(locale, 'auth.password_placeholder'),
+    signInBtn: t(locale, 'cook.auth.sign_in_btn'),
+    pleaseWait: t(locale, 'auth.please_wait'),
+    failedTitle: t(locale, 'auth.failed_title'),
+    demoHint: t(locale, 'cook.auth.demo_hint'),
+  };
+}
+
+export function getCookListingsCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'cook.listings.title'),
+    subtitleCount: t(locale, 'cook.listings.subtitle_count'),
+    searchPlaceholder: t(locale, 'cook.listings.search_placeholder'),
+    filterAll: t(locale, 'cook.listings.filter_all'),
+    filterLive: t(locale, 'cook.listings.filter_live'),
+    filterPaused: t(locale, 'cook.listings.filter_paused'),
+    holdHint: t(locale, 'cook.listings.hold_hint'),
+    empty: t(locale, 'cook.listings.empty'),
+    noMatch: t(locale, 'cook.listings.no_match'),
+    wizardNew: t(locale, 'cook.listings.wizard_new'),
+    wizardEdit: t(locale, 'cook.listings.wizard_edit'),
+    step1Title: t(locale, 'cook.listings.step1_title'),
+    step2Title: t(locale, 'cook.listings.step2_title'),
+    step3Title: t(locale, 'cook.listings.step3_title'),
+    step4Title: t(locale, 'cook.listings.step4_title'),
+    dishNamePlaceholder: t(locale, 'cook.listings.dish_name_placeholder'),
+    pricePlaceholder: t(locale, 'cook.listings.price_placeholder'),
+    minQtyPlaceholder: t(locale, 'cook.listings.min_qty_placeholder'),
+    aiCalories: t(locale, 'cook.listings.ai_calories'),
+    photoTips: t(locale, 'cook.listings.photo_tips'),
+    photoTipsTitle: t(locale, 'cook.listings.photo_tips_title'),
+    cancelEdit: t(locale, 'cook.listings.cancel_edit'),
+    publishedLive: t(locale, 'cook.listings.published_live'),
+    celebration: t(locale, 'cook.listings.celebration'),
+    edit: t(locale, 'cook.listings.edit'),
+    pause: t(locale, 'cook.listings.pause'),
+    unpause: t(locale, 'cook.listings.unpause'),
+    delete: t(locale, 'cook.listings.delete'),
+    deleteTitle: t(locale, 'cook.listings.delete_title'),
+    deleteMessage: t(locale, 'cook.listings.delete_message'),
+    deleteBtn: t(locale, 'cook.listings.delete_btn'),
+    ok: t(locale, 'cook.listings.ok'),
+    cancel: t(locale, 'cook.listings.cancel'),
+    signInRequired: t(locale, 'cook.listings.sign_in_required'),
+    signInBody: t(locale, 'cook.listings.sign_in_body'),
+    publishFailed: t(locale, 'cook.listings.publish_failed'),
+    updateFailed: t(locale, 'cook.listings.update_failed'),
+    deleteFailed: t(locale, 'cook.listings.delete_failed'),
+    pauseFailed: t(locale, 'cook.listings.pause_failed'),
+    unpauseFailed: t(locale, 'cook.listings.unpause_failed'),
+    badgePaused: t(locale, 'cook.listings.badge_paused'),
+    badgeMin: t(locale, 'cook.listings.badge_min'),
+  };
+}
+
+export function getCookEarningsCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'cook.earnings.title'),
+    subtitle: t(locale, 'cook.earnings.subtitle'),
+    thisWeek: t(locale, 'cook.dashboard.this_week'),
+    projected: t(locale, 'cook.earnings.projected'),
+    completed: t(locale, 'cook.earnings.completed'),
+    ordersCount: t(locale, 'cook.earnings.orders_count'),
+    quickActions: t(locale, 'cook.dashboard.quick_actions'),
+    createListingsCta: t(locale, 'cook.earnings.create_listings_cta'),
+    note: t(locale, 'cook.earnings.note'),
+    expenseSection: t(locale, 'cook.earnings.expense_section'),
+    recordedYear: t(locale, 'cook.earnings.recorded_year'),
+    amountPlaceholder: t(locale, 'cook.earnings.amount_placeholder'),
+    categoryPlaceholder: t(locale, 'cook.earnings.category_placeholder'),
+    saving: t(locale, 'cook.earnings.saving'),
+    logExpense: t(locale, 'cook.earnings.log_expense'),
+    emptyExpenses: t(locale, 'cook.earnings.empty_expenses'),
+    expenseFailedTitle: t(locale, 'cook.earnings.expense_failed_title'),
+    expenseFailedBody: t(locale, 'cook.earnings.expense_failed_body'),
+    expenseInvalidTitle: t(locale, 'cook.earnings.expense_invalid_title'),
+    expenseInvalidBody: t(locale, 'cook.earnings.expense_invalid_body'),
+  };
+}
+
+export function getCookOrderDetailCopy(locale: ShcLocale) {
+  return {
+    loading: t(locale, 'cook.order_detail.loading'),
+    collection: t(locale, 'cook.order_detail.collection'),
+    itemsMeta: t(locale, 'cook.order_detail.items_meta'),
+    hint: t(locale, 'cook.order_detail.hint'),
+    updating: t(locale, 'cook.order_detail.updating'),
+    chat: t(locale, 'cook.order_detail.chat'),
+    issueReported: t(locale, 'cook.order_detail.issue_reported'),
+    reportIssue: t(locale, 'cook.order_detail.report_issue'),
+    disputeHint: t(locale, 'cook.order_detail.dispute_hint'),
+    disputePlaceholder: t(locale, 'cook.order_detail.dispute_placeholder'),
+    disputeSubmitting: t(locale, 'cook.order_detail.dispute_submitting'),
+    disputeSubmit: t(locale, 'tray.dispute_submit'),
+    confirmMessage: t(locale, 'cook.order_detail.confirm_message'),
+    trayReportedTitle: t(locale, 'cook.order_detail.tray_reported_title'),
+    trayReportedBody: t(locale, 'cook.order_detail.tray_reported_body'),
+    gotIt: t(locale, 'cook.order_detail.got_it'),
+    trayErrorTitle: t(locale, 'cook.order_detail.tray_error_title'),
+    trayErrorBody: t(locale, 'cook.order_detail.tray_error_body'),
+    ok: t(locale, 'tray.ok'),
+    footer: t(locale, 'cook.order_detail.footer'),
+    transitionFailed: t(locale, 'cook.order_detail.transition_failed'),
+    cancel: t(locale, 'cook.order_detail.cancel'),
+  };
+}

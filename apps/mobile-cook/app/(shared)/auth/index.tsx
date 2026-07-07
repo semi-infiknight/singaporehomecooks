@@ -14,8 +14,11 @@ import { useRouter } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { hasSeenCookOnboarding } from '../../../lib/onboarding';
+import { useShcI18n, getCookAuthCopy } from '@shc/i18n';
 
 export default function CookAuthScreen() {
+  const { locale } = useShcI18n();
+  const copy = getCookAuthCopy(locale);
   const { login } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
@@ -31,7 +34,7 @@ export default function CookAuthScreen() {
       const seenOnboarding = await hasSeenCookOnboarding();
       router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
     } catch (e) {
-      Alert.alert('Sign in failed', (e as Error).message);
+      Alert.alert(copy.failedTitle, (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -47,8 +50,8 @@ export default function CookAuthScreen() {
         keyboardShouldPersistTaps="handled"
         bounces={false}
       >
-        <Text style={styles.title}>SHC Cook Portal</Text>
-        <Text style={styles.subtitle}>Sign in to manage listings, orders, and earnings.</Text>
+        <Text style={styles.title}>{copy.title}</Text>
+        <Text style={styles.subtitle}>{copy.subtitle}</Text>
 
         <TextInput
           value={email}
@@ -60,7 +63,7 @@ export default function CookAuthScreen() {
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => passwordRef.current?.focus()}
-          placeholder="Cook email"
+          placeholder={copy.emailPlaceholder}
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-email-input"
@@ -73,7 +76,7 @@ export default function CookAuthScreen() {
           textContentType="password"
           returnKeyType="go"
           onSubmitEditing={submit}
-          placeholder="Password"
+          placeholder={copy.passwordPlaceholder}
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-password-input"
@@ -86,10 +89,10 @@ export default function CookAuthScreen() {
           testID="auth-submit-btn"
           accessibilityRole="button"
         >
-          <Text style={styles.submitBtnText}>{busy ? 'Please wait…' : 'Sign in as cook'}</Text>
+          <Text style={styles.submitBtnText}>{busy ? copy.pleaseWait : copy.signInBtn}</Text>
         </Pressable>
 
-        <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret</Text>
+        <Text style={styles.demoHint}>{copy.demoHint}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

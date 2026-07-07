@@ -253,3 +253,26 @@
 - Cook auth / order detail screens
 - EAS monitor; download APK when FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 13 — 2026-07-08 ~03:12 IST
+
+### Implemented
+1. **Cook listings wizard i18n** — `getCookListingsCopy`; dashboard search/filters, wizard steps 1–4, tray actions (edit/pause/delete), celebration, publish errors
+2. **Cook earnings expense i18n** — `getCookEarningsCopy`; projected/completed stats, expense form placeholders, alerts, empty state
+3. **Cook auth i18n** — `getCookAuthCopy`; title, subtitle, placeholders, sign-in button, demo hint
+4. **Cook order detail i18n** — `getCookOrderDetailCopy`; collection card, transitions, dispute tray, confirm/success/error trays
+
+### Tests
+- `@shc/i18n`: **18 tests** PASS (incl. cook copy)
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** — background poll started; APK not downloaded yet
+
+### Next iteration
+- Cook onboarding screen i18n
+- EAS monitor until FINISHED; download APK to Downloads
+- Production deploy verification
+- Continue loop until 9:00 AM IST Jul 9

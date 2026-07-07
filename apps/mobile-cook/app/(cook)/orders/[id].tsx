@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,34 +14,36 @@ import {
   useSHCTray,
   SHCTrayAction,
 } from '@shc/ui';
-import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
 import { getOrderDisputes, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
+import { useShcI18n, getCookOrderTransitionActions, getCookOrderStatusLabel, getCookOrderDetailCopy } from '@shc/i18n';
 
 function CookOrderDisputeTrayContent({
   onSubmit,
   isPending,
+  copy,
 }: {
   onSubmit: (notes: string) => void;
   isPending: boolean;
+  copy: ReturnType<typeof getCookOrderDetailCopy>;
 }) {
   const [disputeNotes, setDisputeNotes] = React.useState('');
 
   return (
     <View testID="cook-order-dispute-tray">
-      <Text style={styles.hint}>Use this for late cancellation, no-show, safety, or collection issues that need ops review.</Text>
+      <Text style={styles.hint}>{copy.disputeHint}</Text>
       <TextInput
         value={disputeNotes}
         onChangeText={setDisputeNotes}
-        placeholder="Tell ops what happened"
+        placeholder={copy.disputePlaceholder}
         placeholderTextColor={gourmeatColors.textMuted}
         multiline
         style={styles.disputeInput}
         testID="cook-dispute-notes-input"
       />
       <GourmeatPrimaryButton
-        label={isPending ? 'Reporting…' : 'Report issue'}
+        label={isPending ? copy.disputeSubmitting : copy.disputeSubmit}
         onPress={() => onSubmit(disputeNotes.trim())}
         disabled={isPending || disputeNotes.trim().length < 5}
         testID="cook-submit-dispute-btn"
@@ -51,22 +53,25 @@ function CookOrderDisputeTrayContent({
   );
 }
 
-const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
-  paid: [{ to: 'accepted', label: 'Accept' }],
-  accepted: [{ to: 'preparing', label: 'Prepare' }],
-  preparing: [{ to: 'ready_for_collection', label: 'Ready' }],
-  ready_for_collection: [{ to: 'collected', label: 'Collected' }],
-};
-
 export default function CookManageOrder() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
+  const { locale } = useShcI18n();
+  const copy = getCookOrderDetailCopy(locale);
   const { data: order } = useOrder(id || '');
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
   const { openTray, dismiss } = useSHCTray();
+
+  const nextActions = React.useMemo(() => {
+    const actions = getCookOrderTransitionActions(locale);
+    return Object.fromEntries(actions.map((a) => [a.status, [{ to: a.to, label: a.label }]])) as Record<
+      string,
+      { to: SHCOrderStatus; label: string }[]
+    >;
+  }, [locale]);
 
   const { data: disputes = [] } = useQuery({
     queryKey: ['order-disputes', id],
@@ -81,10 +86,10 @@ export default function CookManageOrder() {
       qc.invalidateQueries({ queryKey: ['order-disputes', id] });
       dismiss();
       openTray(
-        { id: 'issue-reported', title: 'Issue reported', height: 'compact' },
+        { id: 'issue-reported', title: copy.trayReportedTitle, height: 'compact' },
         <SHCTrayAction
-          message="Ops will review this order and follow up."
-          primaryLabel="Got it"
+          message={copy.trayReportedBody}
+          primaryLabel={copy.gotIt}
           onPrimary={dismiss}
           testID="cook-issue-reported-tray"
         />
@@ -92,8 +97,8 @@ export default function CookManageOrder() {
     },
     onError: (e: any) => {
       openTray(
-        { id: 'issue-error', title: 'Could not report issue', height: 'compact' },
-        <SHCTrayAction message={e?.message || 'Please try again.'} primaryLabel="OK" onPrimary={dismiss} />
+        { id: 'issue-error', title: copy.trayErrorTitle, height: 'compact' },
+        <SHCTrayAction message={e?.message || copy.trayErrorBody} primaryLabel={copy.ok} onPrimary={dismiss} />
       );
     },
   });
@@ -104,7 +109,7 @@ export default function CookManageOrder() {
     try {
       await transMut.mutateAsync({ orderId: id, to });
     } catch (e: any) {
-      setErr({ message: e?.message || 'Transition failed' });
+      setErr({ message: e?.message || copy.transitionFailed });
     }
   };
 
@@ -112,13 +117,13 @@ export default function CookManageOrder() {
     openTray(
       { id: 'order-status-confirm', title: label, height: 'compact' },
       <SHCTrayAction
-        message={`Advance this order to “${label}”? The customer will see the update immediately.`}
+        message={copy.confirmMessage.replace('{label}', label)}
         primaryLabel={label}
         onPrimary={() => {
           dismiss();
           doTransition(to);
         }}
-        secondaryLabel="Cancel"
+        secondaryLabel={copy.cancel}
         onSecondary={dismiss}
         testID="order-status-confirm-tray"
       />
@@ -126,20 +131,24 @@ export default function CookManageOrder() {
   };
 
   const openDisputeTray = () => {
-    openTray({ id: 'cook-order-dispute', title: 'Report an issue', height: 'medium' }, () => (
-      <CookOrderDisputeTrayContent onSubmit={(notes) => disputeMut.mutate(notes)} isPending={disputeMut.isPending} />
+    openTray({ id: 'cook-order-dispute', title: copy.reportIssue, height: 'medium' }, () => (
+      <CookOrderDisputeTrayContent
+        onSubmit={(notes) => disputeMut.mutate(notes)}
+        isPending={disputeMut.isPending}
+        copy={copy}
+      />
     ));
   };
 
   if (!order) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
-        <Text style={{ color: gourmeatColors.textLight }}>Loading order…</Text>
+        <Text style={{ color: gourmeatColors.textLight }}>{copy.loading}</Text>
       </View>
     );
   }
 
-  const actions = NEXT_ACTIONS[order.shc_status] || [];
+  const actions = nextActions[order.shc_status] || [];
   const dishName = order.items?.[0]?.name;
 
   return (
@@ -150,7 +159,7 @@ export default function CookManageOrder() {
     >
       <GourmeatScreenHeader
         title={dishName || `Order ${order.id}`}
-        subtitle={getOrderStatusLabel(String(order.shc_status || ''))}
+        subtitle={getCookOrderStatusLabel(locale, String(order.shc_status || ''))}
         onBack={() => router.back()}
       />
 
@@ -159,19 +168,19 @@ export default function CookManageOrder() {
       <OrderStatusBadge status={order.shc_status} />
 
       <GourmeatCard>
-        <Text style={styles.cardTitle}>Collection</Text>
+        <Text style={styles.cardTitle}>{copy.collection}</Text>
         <Text style={styles.cardBody}>
           {order.collection_date} · {order.collection_slot}
         </Text>
-        <Text style={styles.cardMeta}>S${order.total} · {order.items?.length || 1} item(s)</Text>
+        <Text style={styles.cardMeta}>
+          {copy.itemsMeta.replace('{total}', String(order.total)).replace('{count}', String(order.items?.length || 1))}
+        </Text>
         {(order.items || []).map((it: any, i: number) => (
           <Text key={i} style={styles.itemLine}>
             {it.qty}× {it.name}
           </Text>
         ))}
-        <Text style={styles.hint}>
-          Customer address in chat after accept. Use the buttons below to advance fulfilment.
-        </Text>
+        <Text style={styles.hint}>{copy.hint}</Text>
       </GourmeatCard>
 
       {actions.length > 0 && (
@@ -179,7 +188,7 @@ export default function CookManageOrder() {
           {actions.map((a) => (
             <GourmeatPrimaryButton
               key={a.to}
-              label={transMut.isPending ? 'Updating…' : a.label}
+              label={transMut.isPending ? copy.updating : a.label}
               onPress={() => confirmTransition(a.to, a.label)}
               disabled={transMut.isPending}
               testID={`cook-order-transition-${a.to}`}
@@ -189,7 +198,7 @@ export default function CookManageOrder() {
       )}
 
       <GourmeatPrimaryButton
-        label="Chat with customer"
+        label={copy.chat}
         variant="outline"
         onPress={() => router.push(`/(shared)/chat/${order.id}` as any)}
         testID="cook-order-chat-btn"
@@ -197,7 +206,7 @@ export default function CookManageOrder() {
 
       {disputes.length > 0 ? (
         <GourmeatCard testID="cook-order-dispute-submitted">
-          <Text style={styles.cardTitle}>Issue reported</Text>
+          <Text style={styles.cardTitle}>{copy.issueReported}</Text>
           <Text style={styles.cardMeta}>
             {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
           </Text>
@@ -205,14 +214,14 @@ export default function CookManageOrder() {
         </GourmeatCard>
       ) : (
         <GourmeatPrimaryButton
-          label="Report an issue"
+          label={copy.reportIssue}
           variant="outline"
           onPress={openDisputeTray}
           testID="cook-open-dispute-tray-btn"
         />
       )}
 
-      <Text style={styles.footer}>Valid transitions only — invalid moves show SHC-ORDER-001.</Text>
+      <Text style={styles.footer}>{copy.footer}</Text>
     </ScrollView>
   );
 }
@@ -236,14 +245,5 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surfaceAlt,
     color: gourmeatColors.text,
   },
-  disputeStatus: {
-    marginTop: shcSpacing.sm,
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    borderRadius: 12,
-    backgroundColor: gourmeatColors.surfaceAlt,
-    padding: shcSpacing.sm,
-  },
-  disputeTitle: { fontSize: 13, fontWeight: '800', color: gourmeatColors.text },
   footer: { fontSize: 11, marginTop: shcSpacing.md, color: gourmeatColors.textMuted },
 });

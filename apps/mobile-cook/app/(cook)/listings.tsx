@@ -53,6 +53,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAICalorieEstimate, useCookListings } from '../../hooks/useProducts';
 import { getPhotoTips, createCookListing, updateCookListing, deleteCookListing } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { useShcI18n, getCookListingsCopy } from '@shc/i18n';
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -74,6 +75,8 @@ export default function CookListings() {
   const router = useRouter();
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
+  const { locale } = useShcI18n();
+  const copy = getCookListingsCopy(locale);
   const qc = useQueryClient();
   const { data: myListings = [] } = useCookListings();
   const { openTray, pushTrayContent, popTray, dismiss } = useSHCTray();
@@ -131,9 +134,9 @@ export default function CookListings() {
 
   const filterChips = useMemo(() => {
     const chips = [
-      { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
-      { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
-      { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
+      { id: 'status:all', label: copy.filterAll, active: statusFilter === 'all' && cuisineFilter === 'all' },
+      { id: 'status:live', label: copy.filterLive, active: statusFilter === 'live' },
+      { id: 'status:paused', label: copy.filterPaused, active: statusFilter === 'paused' },
       ...uniqueListingCuisines(myListings).map((cuisine) => ({
         id: `cuisine:${cuisine}`,
         label: cuisine,
@@ -141,7 +144,7 @@ export default function CookListings() {
       })),
     ];
     return chips;
-  }, [myListings, statusFilter, cuisineFilter]);
+  }, [myListings, statusFilter, cuisineFilter, copy.filterAll, copy.filterLive, copy.filterPaused]);
 
   const handleFilterChip = (chipId: string) => {
     if (chipId === 'status:all') {
@@ -204,10 +207,10 @@ export default function CookListings() {
     (title: string, message: string) => {
       openTray(
         { id: 'listing-error', title, height: 'compact' },
-        <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} testID="listing-error-tray" />
+        <SHCTrayAction message={message} primaryLabel={copy.ok} onPrimary={dismiss} testID="listing-error-tray" />
       );
     },
-    [dismiss, openTray]
+    [copy.ok, dismiss, openTray]
   );
 
   const performDelete = async (listing: any) => {
@@ -217,7 +220,7 @@ export default function CookListings() {
       if (editingId === listing.id) resetWizard();
       await qc.invalidateQueries({ queryKey: ['cook-listings'] });
     } catch (e: any) {
-      showErrorTray('Delete failed', e?.message || 'Could not delete listing.');
+      showErrorTray(copy.deleteFailed, e?.message || copy.deleteFailed);
     }
   };
 
@@ -227,21 +230,21 @@ export default function CookListings() {
       await updateCookListing(listing.id, { paused });
       await qc.invalidateQueries({ queryKey: ['cook-listings'] });
     } catch (e: any) {
-      showErrorTray(paused ? 'Pause failed' : 'Unpause failed', e?.message || 'Could not update listing.');
+      showErrorTray(paused ? copy.pauseFailed : copy.unpauseFailed, e?.message || copy.updateFailed);
     }
   };
 
   const pushDeleteConfirm = (listing: any) => {
     pushTrayContent(
-      { id: 'listing-delete-confirm', title: 'Delete listing?', height: 'medium' },
+      { id: 'listing-delete-confirm', title: copy.deleteTitle, height: 'medium' },
       <SHCTrayAction
-        message={`Remove "${listing.name}" from your menu? This cannot be undone.`}
-        primaryLabel="Delete"
+        message={copy.deleteMessage.replace('{name}', String(listing.name))}
+        primaryLabel={copy.deleteBtn}
         onPrimary={() => {
           dismiss();
           void performDelete(listing);
         }}
-        secondaryLabel="Cancel"
+        secondaryLabel={copy.cancel}
         onSecondary={popTray}
         destructive
         testID="listing-delete-confirm-tray"
@@ -262,7 +265,7 @@ export default function CookListings() {
           }}
           testID={`edit-listing-${listing.id}`}
         >
-          <Text style={styles.trayActionText}>Edit listing</Text>
+          <Text style={styles.trayActionText}>{copy.edit}</Text>
         </Pressable>
         <Pressable
           style={styles.trayActionBtn}
@@ -272,14 +275,14 @@ export default function CookListings() {
           }}
           testID={`pause-listing-${listing.id}`}
         >
-          <Text style={styles.trayActionText}>{isPaused ? 'Unpause listing' : 'Pause listing'}</Text>
+          <Text style={styles.trayActionText}>{isPaused ? copy.unpause : copy.pause}</Text>
         </Pressable>
         <Pressable
           style={[styles.trayActionBtn, styles.trayActionDestructive]}
           onPress={() => pushDeleteConfirm(listing)}
           testID={`delete-listing-${listing.id}`}
         >
-          <Text style={styles.trayActionDestructiveText}>Delete listing</Text>
+          <Text style={styles.trayActionDestructiveText}>{copy.delete}</Text>
         </Pressable>
       </View>
     );
@@ -291,7 +294,7 @@ export default function CookListings() {
   const publish = async () => {
     if (publishing) return;
     if (!user?.id) {
-      showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
+      showErrorTray(copy.signInRequired, copy.signInBody);
       return;
     }
     setPublishing(true);
@@ -343,7 +346,7 @@ export default function CookListings() {
       setAiCal(null);
     } catch (e: any) {
       const message = e?.message || e?.code || 'Could not save listing. Check your connection and try again.';
-      showErrorTray(editingId ? 'Update failed' : 'Publish failed', message);
+      showErrorTray(editingId ? copy.updateFailed : copy.publishFailed, message);
     } finally {
       setPublishing(false);
     }
@@ -360,10 +363,12 @@ export default function CookListings() {
       testID="cook-listings-screen"
     >
       <GourmeatCookHeader
-        title="My Listings"
+        title={copy.title}
         subtitle={
           listingsForDisplay.length
-            ? `${filteredListings.length} of ${listingsForDisplay.length} dishes`
+            ? copy.subtitleCount
+                .replace('{shown}', String(filteredListings.length))
+                .replace('{total}', String(listingsForDisplay.length))
             : user?.name
         }
         testID="listings-hero"
@@ -373,7 +378,7 @@ export default function CookListings() {
         <GourmeatSearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search your dishes…"
+          placeholder={copy.searchPlaceholder}
           testID="cook-listings-search"
         />
       </View>
@@ -385,19 +390,19 @@ export default function CookListings() {
             onChipPress={handleFilterChip}
             testID="cook-listings-filter-chips"
           />
-          <Text style={styles.holdHint}>Press and hold a dish for edit, pause, or delete</Text>
+          <Text style={styles.holdHint}>{copy.holdHint}</Text>
         </>
       ) : null}
 
       {listingsForDisplay.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCFoodImage uri={CUISINE_IMAGE.Peranakan} height={80} rounded={shcRadii.md} />
-          <SHCBadge variant="default">No listings yet</SHCBadge>
+          <SHCBadge variant="default">{copy.empty}</SHCBadge>
         </SHCCard>
       )}
       {listingsForDisplay.length > 0 && filteredListings.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
-          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+          <SHCBadge variant="default">{copy.noMatch}</SHCBadge>
         </SHCCard>
       )}
       {filteredListings.map((p: any, index: number) => (
@@ -421,8 +426,8 @@ export default function CookListings() {
                 <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
                 <View style={styles.listingBadges}>
                   <SHCBadge variant="default">S${p.price}</SHCBadge>
-                  <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
-                  {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                  <SHCBadge variant="heritage">{copy.badgeMin.replace('{qty}', String(p.min_qty))}</SHCBadge>
+                  {p.shc_availability?.paused ? <SHCBadge variant="warning">{copy.badgePaused}</SHCBadge> : null}
                 </View>
               </View>
             </View>
@@ -436,35 +441,35 @@ export default function CookListings() {
         }}
       >
       <SHCFadeIn>
-        <SHCSectionTitle style={styles.wizardTitle}>{editingId ? 'Edit Listing' : 'New Listing'}</SHCSectionTitle>
+        <SHCSectionTitle style={styles.wizardTitle}>{editingId ? copy.wizardEdit : copy.wizardNew}</SHCSectionTitle>
         <SHCWizardProgress step={step} />
       </SHCFadeIn>
       </View>
 
       <SHCWizardPane stepKey={step}>
       {step === 1 && (
-        <ListingWizardStep step={1} title="Dish Basics">
+        <ListingWizardStep step={1} title={copy.step1Title}>
           <SHCFoodImage uri={previewImage} height={100} rounded={shcRadii.md} />
-          <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} />
+          <TextInput value={name} onChangeText={setName} placeholder={copy.dishNamePlaceholder} style={inputStyle} />
           <TextInput
             value={String(price)}
             onChangeText={(t) => setPrice(parseInt(t) || 10)}
             keyboardType="numeric"
-            placeholder="Price S$"
+            placeholder={copy.pricePlaceholder}
             style={inputStyle}
           />
           <TextInput
             value={String(minQty)}
             onChangeText={(t) => setMinQty(parseInt(t) || 3)}
             keyboardType="numeric"
-            placeholder="Min Qty"
+            placeholder={copy.minQtyPlaceholder}
             style={inputStyle}
           />
         </ListingWizardStep>
       )}
 
       {step === 2 && (
-        <ListingWizardStep step={2} title="Tags & Cuisine">
+        <ListingWizardStep step={2} title={copy.step2Title}>
           <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
           <TextInput value={cuisine} onChangeText={setCuisine} style={inputStyle} />
           <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
@@ -472,7 +477,7 @@ export default function CookListings() {
       )}
 
       {step === 3 && (
-        <ListingWizardStep step={3} title="Ingredients & Heritage">
+        <ListingWizardStep step={3} title={copy.step3Title}>
           <IngredientTierEditor value={ingredients} onChange={setIngredients} />
           <SHCButton
             variant="outline"
@@ -483,7 +488,7 @@ export default function CookListings() {
             testID="ai-cal-est-btn"
             style={{ marginTop: 6 }}
           >
-            <SHCButtonText>🔥 AI Calories</SHCButtonText>
+            <SHCButtonText>{copy.aiCalories}</SHCButtonText>
           </SHCButton>
           {aiCal && <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} />}
           <Pressable
@@ -491,7 +496,7 @@ export default function CookListings() {
               const tips = await getPhotoTips();
               const tipList = (tips as { tips?: string[] }).tips || [];
               openTray(
-                { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
+                { id: 'photo-tips', title: copy.photoTipsTitle, height: 'tall' },
                 <ScrollView>
                   <PhotoTipsModalContent onClose={dismiss} />
                   {tipList.map((t: string, i: number) => (
@@ -504,7 +509,7 @@ export default function CookListings() {
             style={styles.photoTipsBtn}
           >
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-            <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
+            <SHCBadge variant="heritage">{copy.photoTips}</SHCBadge>
           </Pressable>
           <TextInput value={heritage} onChangeText={setHeritage} multiline style={[inputStyle, { height: 60 }]} />
         </ListingWizardStep>
@@ -512,7 +517,7 @@ export default function CookListings() {
 
       {step === 4 && (
         <View testID="listing-wizard-step4">
-        <ListingWizardStep step={4} title="Review & Publish">
+        <ListingWizardStep step={4} title={copy.step4Title}>
           <SHCFoodImage
             uri={previewImage}
             height={120}
@@ -533,7 +538,7 @@ export default function CookListings() {
           {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
           {editingId ? (
             <SHCButton variant="outline" onPress={resetWizard} style={{ marginTop: 8 }}>
-              <SHCButtonText>Cancel edit</SHCButtonText>
+              <SHCButtonText>{copy.cancelEdit}</SHCButtonText>
             </SHCButton>
           ) : null}
           <SHCButton variant="outline" onPress={() => goToStep(3)} style={{ marginTop: 8 }}>
@@ -542,7 +547,7 @@ export default function CookListings() {
           {published && (
             <SHCCard variant="bento-mint" style={styles.publishedCard}>
               <SHCIcon name="checkmark" size={28} color={shcColors.success} active />
-              <SHCBadge variant="success">{published.name} live</SHCBadge>
+              <SHCBadge variant="success">{copy.publishedLive.replace('{name}', String(published.name))}</SHCBadge>
             </SHCCard>
           )}
         </ListingWizardStep>
@@ -570,7 +575,7 @@ export default function CookListings() {
 
       <SHCCelebration
         visible={showCelebration}
-        message="Your first dish is live! Families can now discover your heritage cooking."
+        message={copy.celebration}
         onDone={dismissCelebration}
         testID="first-listing-celebration"
       />
