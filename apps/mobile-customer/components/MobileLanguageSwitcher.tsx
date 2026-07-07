@@ -43,5 +43,5 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: gourmeatColors.primary },
   chipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
-  chipTextActive: { color: '#fff' },
+  chipTextActive: { color: gourmeatColors.onPrimary },
 });

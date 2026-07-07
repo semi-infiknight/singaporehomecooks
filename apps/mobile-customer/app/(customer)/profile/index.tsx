@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bellCount: { fontSize: 9, color: '#fff', fontWeight: '800' },
+  bellCount: { fontSize: 9, color: shcColors.onPrimary, fontWeight: '800' },
   tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   tileCol: { flex: 1 },
   trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },

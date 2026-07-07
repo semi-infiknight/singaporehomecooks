@@ -24,9 +24,12 @@ import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
 import { useAuth } from '../../../hooks/useAuth';
 import { hydrateSession, isAuthenticated } from '../../../lib/api-client';
 import { useFavorites } from '../../../hooks/useFavorites';
+import { useShcI18n, getProductDetailCopy } from '@shc/i18n';
 
 export default function ProductDetail() {
   const insets = useSafeAreaInsets();
+  const { locale } = useShcI18n();
+  const copy = getProductDetailCopy(locale);
   const { id, allergenAck: allergenAckParam } = useLocalSearchParams<{ id: string; allergenAck?: string }>();
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id || '');
@@ -47,7 +50,7 @@ export default function ProductDetail() {
   if (authLoading || isLoading || !product) {
     return (
       <View style={styles.loadingWrap}>
-        <Text style={styles.loadingText}>{authLoading ? 'Restoring session…' : 'Loading dish…'}</Text>
+        <Text style={styles.loadingText}>{authLoading ? copy.restoringSession : copy.loadingDish}</Text>
       </View>
     );
   }
@@ -59,23 +62,23 @@ export default function ProductDetail() {
   const handleAdd = async () => {
     setError(null);
     await hydrateSession();
-    if (!isAuthenticated() && !requireAuth('Sign in to add this dish to your cart.')) return;
+    if (!isAuthenticated() && !requireAuth(copy.signInToAdd)) return;
     if (!allergenAck) {
-      setError('Please acknowledge allergens before adding to cart.');
+      setError(copy.allergenRequired);
       return;
     }
     try {
       const cart = await addMut.mutateAsync({ productId: product.id, qty });
       qc.setQueryData(['cart'], cart);
       if (!cart?.items?.length) {
-        setError('Cart did not update — try again.');
+        setError(copy.cartUpdateFailed);
         return;
       }
       setAdded(true);
       // Brief beat so E2E can observe add-to-cart-success before tab navigation
       setTimeout(() => router.replace('/(customer)/cart' as any), 600);
     } catch (e: any) {
-      setError(e?.message || 'Failed to add to cart');
+      setError(e?.message || copy.addFailed);
     }
   };
 
@@ -135,8 +138,8 @@ export default function ProductDetail() {
           </View>
           <View style={styles.badgeRow}>
             {product.cuisine ? <Text style={styles.badge}>{product.cuisine}</Text> : null}
-            {product.halal ? <Text style={[styles.badge, styles.badgeHalal]}>Halal</Text> : null}
-            <Text style={styles.badge}>min {product.min_qty}</Text>
+            {product.halal ? <Text style={[styles.badge, styles.badgeHalal]}>{copy.halal}</Text> : null}
+            <Text style={styles.badge}>{copy.minQty.replace('{qty}', String(product.min_qty))}</Text>
           </View>
 
           <GourmeatCard>

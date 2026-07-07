@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surface,
   },
   pdpaBoxChecked: { backgroundColor: gourmeatColors.primary },
-  pdpaCheck: { color: '#fff', fontWeight: '800' },
+  pdpaCheck: { color: gourmeatColors.onPrimary, fontWeight: '800' },
   pdpaText: { flex: 1, fontSize: 13, color: gourmeatColors.text },
   pdpaHint: { fontSize: 10, color: gourmeatColors.textLight, marginTop: 6 },
   creditsHint: { fontSize: 12, marginTop: shcSpacing.sm },
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   creditChipActive: { backgroundColor: gourmeatColors.primary },
   creditChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
-  creditChipTextActive: { color: '#fff' },
+  creditChipTextActive: { color: gourmeatColors.onPrimary },
   creditsApplied: { color: gourmeatColors.success, fontSize: 12, marginTop: 6, fontWeight: '600' },
   corporateRow: { flexDirection: 'row', alignItems: 'center', padding: shcSpacing.sm, marginBottom: shcSpacing.md },
   corporateBox: {

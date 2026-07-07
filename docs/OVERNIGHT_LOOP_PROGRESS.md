@@ -306,3 +306,30 @@
 - EAS monitor until FINISHED; download APK
 - Production platform-stats deploy verification with publishable key
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 15 — 2026-07-08 ~03:20 IST
+
+### Implemented
+1. **Product detail i18n** — `getProductDetailCopy`; mobile PDP loading/errors, halal/min-qty badges, allergen gate messages
+2. **Order chat i18n** — `getOrderChatCopy(role)`; customer + cook chat screens (title, subtitle, empty, placeholder, send)
+3. **UI token fixes** — replaced `#fff` with `gourmeatColors.onPrimary` / `shcColors.onPrimary` in profile bell, checkout PDPA/credits, language switcher
+
+### Production audit
+- `GET /store/shc/platform-stats` with publishable key → **404** (route not deployed on `medusa-production-d2ba` yet; code exists on branch)
+- og-image + web health still **200** (from iter 14)
+
+### Tests
+- `@shc/i18n`: **22 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** — new 90s background poll started; APK not downloaded yet
+
+### Next iteration
+- Cook profile/chat remaining strings
+- Deploy platform-stats to Railway Medusa (user/brother)
+- UI: web ErrorBoundary hex → CSS vars
+- EAS monitor until FINISHED; download APK
+- Continue loop until 9:00 AM IST Jul 9
