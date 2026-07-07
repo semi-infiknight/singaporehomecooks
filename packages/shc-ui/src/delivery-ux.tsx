@@ -9,6 +9,9 @@ import {
   COLLECTION_ORDER_TIMELINE,
   getOrderTimelineIndex,
   getOrderStatusLabel,
+  formatPlatformCounterCopy,
+  LAUNCH_PLATFORM_COUNTERS,
+  type PlatformCounters,
 } from '@shc/utils';
 
 /**
@@ -270,14 +273,20 @@ export function SHCPersonalizedSectionHeader({
 }
 
 /** Principle 1 + trust: social proof strip (ratings, cooks, collection) */
-const TRUST_ITEMS: { iconKey: SHCIconKey; label: string; sub: string }[] = [
-  { iconKey: 'discover', label: '127+ cooks', sub: '28 SG areas' },
-  { iconKey: 'orders', label: '4,892 meals', sub: 'This month' },
-  { iconKey: 'compliance', label: 'Allergen ack', sub: 'Before checkout' },
-  { iconKey: 'paynow', label: 'PayNow secure', sub: 'Manual confirm' },
-];
-
-export function SHCTrustStrip({ testID = 'trust-strip' }: { testID?: string }) {
+export function SHCTrustStrip({
+  counters,
+  testID = 'trust-strip',
+}: {
+  counters?: PlatformCounters;
+  testID?: string;
+}) {
+  const copy = formatPlatformCounterCopy(counters ?? LAUNCH_PLATFORM_COUNTERS);
+  const TRUST_ITEMS: { iconKey: SHCIconKey; label: string; sub: string }[] = [
+    { iconKey: 'discover', label: copy.cooksLabel, sub: copy.cooksSub },
+    { iconKey: 'orders', label: copy.mealsLabel, sub: copy.mealsSub },
+    { iconKey: 'compliance', label: 'Allergen ack', sub: 'Before checkout' },
+    { iconKey: 'paynow', label: 'PayNow secure', sub: 'Manual confirm' },
+  ];
   return (
     <View
       testID={testID}

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-29 (Launch-readiness loop) — web push subscription + PayNow→paid parity + My Requests accept-bid on web; feature-flag gating (`request_dish`, `corporate_orders`) with admin API and `/ops` toggles; `/ops` surfaces disputes, commission rules, cook expenses, search synonyms, platform stats, and payout batches; `/ops` can resolve disputes and approve pending payout batches; worker health reports last job results and supports protected manual `POST /run/:job`; worker internal Medusa routes wired for order escalation and notification retry; customer/cook order dispute reporting API added and wired into web, mobile customer, and mobile cook order tracking; opening disputes marks orders `disputed`, ops resolution marks them `resolved`; product search now applies `shc_search_synonym` expansions; cook-authenticated expense tracker API and mobile cook earnings UI added for IRAS records; ledger commission posting now uses active `shc_commission_rule` rates and fixed idempotency filters; payout batch lookup/approval filters fixed; server web-push on order transitions; bid accept creates full `shc_order_meta` (customer_id, total, items, notifications); corporate/group order notes persist to order meta; route coverage gate expanded (store + admin launch routes).
+**Last Updated:** 2026-07-08 (Overnight launch gaps) — public `GET /store/shc/platform-stats` for homepage social-proof counters (live cook/order counts with seed fallback); web `metadataBase` + `/og-image.png` fixes production Open Graph; `TrustStrip`/`SHCTrustStrip` wired on customer discover (web + mobile).
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -14,7 +14,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus lightweight `/cook-portal` (cook login/order list) and `/ops` (health/ledger/payouts); PWA service worker + manifest |
+| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus lightweight `/cook-portal` (cook login/order list) and `/ops` (health/ledger/payouts); PWA service worker + manifest; homepage social counters + production OG image metadata |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
@@ -150,6 +150,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/earnings` | GET | cook JWT |
 | `/store/shc/notifications` | GET | customer or cook JWT |
 | `/store/shc/listings` | POST | cook JWT |
+| `/store/shc/platform-stats` | GET | public |
 | …growth routes (credits, requests, bids, heritage, ai) | various | partial |
 
 ### Server libs (`apps/medusa/src/lib/`)
@@ -160,6 +161,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `shc-actors.ts` | Resolve customer/cook from Bearer token |
 | `shc-cart` module | Postgres-backed cart (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | `shc-product-shape.ts` | Product DTO mapper |
+| `shc-platform-counters.ts` | Live/seed homepage social-proof counter resolver |
 | `shc-notifications-store.ts` | In-memory notifications (dev) |
 
 ---

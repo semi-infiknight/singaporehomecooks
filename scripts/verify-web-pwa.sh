@@ -24,6 +24,7 @@ check_file "$PWA_ASSETS/sw.js" "service worker" || true
 check_file "$PWA_ASSETS/icon.png" "PWA icon 192" || true
 check_file "$PWA_ASSETS/icon-512.png" "PWA icon 512" || true
 check_file "$PWA_ASSETS/apple-touch-icon.png" "apple-touch-icon" || true
+check_file "$PWA_ASSETS/og-image.png" "og-image" || true
 
 if ! node -e "
   const m = require('$WEB/public/manifest.json');

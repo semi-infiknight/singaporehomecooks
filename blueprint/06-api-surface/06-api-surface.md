@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-06-29 (launch-readiness wiring) — listing publish/display fields fixed, compliance route added, request/bid accept UI supported, Sharp WebP upload derivative, auth rate-limit and request-id logging middleware added.
+**Last Updated:** 2026-07-08 (Overnight launch gaps) — `GET /store/shc/platform-stats` public counters; web OG metadataBase + og-image route.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -44,6 +44,8 @@ All routes require Authorization except public ones. Full table of 30+ routes pr
 **Push token route (added final wave):** POST /store/shc/push-token { cook_id, expo_push_token } — registers for targeted pushes on order events (paid, ready_for_collection, completed). See subscriber + 03-railway.md. Real Expo service (expo-server-sdk) required in prod.
 
 **Compliance route (2026-06-29 launch pass):** GET/POST `/store/shc/compliance` — cook JWT required; persists SFA/WSQ document references in `shc_compliance_doc` for admin review.
+
+**Platform stats (2026-07-08):** GET `/store/shc/platform-stats` — public homepage social-proof counters (`cooks`, `meals_this_month`, `areas`); live DB when active cooks exist, else seeded `homepage_counters` / launch defaults. Wired to web `TrustStrip` + mobile `SHCTrustStrip`.
 
 ## SHC Admin API (`/admin/shc/*`)
 

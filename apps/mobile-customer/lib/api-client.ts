@@ -128,6 +128,7 @@ export const submitOrderDispute = (orderId: string, input: { type?: string; note
 };
 export const registerPushToken = (token: string, opts?: { cookId?: string; role?: 'cook' | 'customer' }) =>
   client.registerPushToken(token, opts);
+export const getPlatformStats = () => client.getPlatformStats();
 
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

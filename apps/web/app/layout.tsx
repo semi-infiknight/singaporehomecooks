@@ -20,7 +20,12 @@ const dmMono = DM_Mono({
   weight: ["400", "500"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SHC_WEB_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://web-production-9226.up.railway.app");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Singapore Home Cooks | Heritage HDB Recipes",
     template: "%s | Singapore Home Cooks",

@@ -394,6 +394,14 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING`);
     console.log("  ✓ sample credit ledger entry seeded");
 
+    await pg2.query(
+      `INSERT INTO shc_platform_stat (id, key, value, created_at, updated_at)
+       VALUES ('stat_homepage_counters', 'homepage_counters', $1::jsonb, now(), now())
+       ON CONFLICT (key) DO NOTHING`,
+      [JSON.stringify({ cooks: 127, meals_this_month: 4892, areas: 28 })]
+    );
+    console.log("  ✓ homepage platform counters seeded");
+
     console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth samples (requests, bids, credits, heritage) + ledger tie-ins complete. Use routes to demo.");
   } catch (e: any) {
     console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth seed partial (migrations/DB ready?):", e.message);

@@ -20,6 +20,8 @@ import {
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
   OFFLINE_DISCOVER_PRODUCT,
+  LAUNCH_PLATFORM_COUNTERS,
+  type PlatformCounters,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -40,8 +42,10 @@ import {
   SearchResultsPanel,
   PromoRail,
   RequestDishHomeCTA,
+  TrustStrip,
   type DishCardProduct,
 } from './components/SHCWebComponents';
+import { usePlatformStats } from '../lib/usePlatformStats';
 
 const occasions = [
   { id: '', label: 'All' },
@@ -73,6 +77,8 @@ export default function DiscoverHome() {
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
+  const { data: platformStats } = usePlatformStats();
+  const counters: PlatformCounters = platformStats?.counters ?? LAUNCH_PLATFORM_COUNTERS;
 
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
   const productList = useMemo(
@@ -206,6 +212,12 @@ export default function DiscoverHome() {
               else if (id === 'promo-paynow') router.push('/content/trust');
             }}
           />
+        </div>
+      )}
+
+      {!query.trim() && (
+        <div className="shc-section-gap mb-4" data-testid="homepage-social-counters">
+          <TrustStrip counters={counters} />
         </div>
       )}
 

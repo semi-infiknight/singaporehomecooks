@@ -121,5 +121,7 @@ export const submitOrderDispute = (orderId: string, input: { type?: string; note
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) =>
   client.getUploadUrl(objectName, resourceOwner, options);
 
+export const getPlatformStats = () => client.getPlatformStats();
+
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

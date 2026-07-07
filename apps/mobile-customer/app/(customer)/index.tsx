@@ -22,6 +22,7 @@ import {
   SHCFilterChipRow,
   SHCPromoRail,
   SHCRequestDishHomeCTA,
+  SHCTrustStrip,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -38,8 +39,10 @@ import {
   favoritesToReorderDishes,
   sortByCookProximity,
   filterDiscoverProducts,
+  LAUNCH_PLATFORM_COUNTERS,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
+import { usePlatformStats } from '../../hooks/usePlatformStats';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { useOrders } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
@@ -133,6 +136,9 @@ export default function CustomerDiscover() {
       ? sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng })
       : list;
   }, [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
+
+  const { data: platformStats } = usePlatformStats();
+  const counters = platformStats?.counters ?? LAUNCH_PLATFORM_COUNTERS;
 
   const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
 
@@ -234,6 +240,12 @@ export default function CustomerDiscover() {
               else router.push('/(shared)/onboarding' as any);
             }}
           />
+        </View>
+      )}
+
+      {!query && (
+        <View style={{ paddingHorizontal: shcSpacing.md }} testID="homepage-social-counters">
+          <SHCTrustStrip counters={counters} />
         </View>
       )}
 

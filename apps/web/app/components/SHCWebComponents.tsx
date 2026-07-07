@@ -40,6 +40,9 @@ import {
   getOrderStatusLabel,
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
+  formatPlatformCounterCopy,
+  LAUNCH_PLATFORM_COUNTERS,
+  type PlatformCounters,
 } from '@shc/utils';
 import {
   pushTray,
@@ -1398,10 +1401,11 @@ export function PersonalizedSectionHeader({
   );
 }
 
-export function TrustStrip() {
+export function TrustStrip({ counters }: { counters?: PlatformCounters }) {
+  const copy = formatPlatformCounterCopy(counters ?? LAUNCH_PLATFORM_COUNTERS);
   const items = [
-    { label: '127+ verified cooks', sub: 'Across 28 areas', Icon: Users },
-    { label: '4,892 meals', sub: 'Served this month', Icon: UtensilsCrossed },
+    { label: copy.cooksLabel, sub: copy.cooksSub, Icon: Users },
+    { label: copy.mealsLabel, sub: copy.mealsSub, Icon: UtensilsCrossed },
     { label: 'HDB collection', sub: 'No delivery — planned occasions', Icon: Home },
     { label: 'Allergen disclosure', sub: 'Mandatory before checkout', Icon: ShieldCheck },
   ];

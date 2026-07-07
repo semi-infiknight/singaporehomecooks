@@ -410,6 +410,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
       return (r as any).dispute;
     },
+
+    async getPlatformStats() {
+      const r = await request("/store/shc/platform-stats", { method: "GET" });
+      return r as { counters: { cooks: number; meals_this_month: number; areas: number }; source: "live" | "seed" };
+    },
   };
 
   return api;

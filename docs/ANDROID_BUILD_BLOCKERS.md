@@ -232,9 +232,9 @@ Linux avoids Windows CMAKE_OBJECT_PATH_MAX. Use `~/` short home path. Still need
 
 | ID | Issue | Status |
 |----|-------|--------|
-| P1-03 | Live social proof counters on homepage | **Fail** |
+| P1-03 | Live social proof counters on homepage | **Fixed in branch** — `/store/shc/platform-stats` + `TrustStrip`/`SHCTrustStrip` wired on web + mobile |
 | P2-03 | Mandarin UI at launch | **Fail** |
-| BUG-01 | `og:image` points to `localhost:3000` on production | **Fail** |
+| BUG-01 | `og:image` points to `localhost:3000` on production | **Fixed in branch** — `metadataBase` + `/og-image.png` route |
 | P1-02 | Dish synonym search depth | Partial |
 | P1-09 | One-cook-per-cart live verification | Partial |
 | P1-10–11 | PayNow checkout + S$50 minimum (needs signed-in E2E) | Partial |
