@@ -75,7 +75,9 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 |---|---|
 | `SHCFoodImage` | Consistent food photo with fallback gradient |
 | `SHCVisualBentoTile` | Photo-background bento tile + icon badge + label; `appearance="customer"` for Gourmeat 1px border on discover/profile tiles |
-| `DishCardSkeleton` / `SHCSkeletonGrid` | Web discover loading placeholders; `appearance="customer"` for Gourmeat card chrome |
+| `GourmeatDishCard` | Customer discover grid card — soft shadow, no brutal border |
+| `GourmeatDishCardSkeleton` / `GourmeatDishSkeletonGrid` | Mobile discover loading placeholders (Gourmeat card chrome) |
+| `DishCardSkeleton` / `SHCSkeletonGrid` | Web discover/search loading; `appearance="customer"` for Gourmeat card chrome |
 | `SHCBentoStatCell` | Stat cell with icon (earnings, orders count) |
 | `SHCZomatoAddButton` | Compact ADD CTA for search results |
 | `SHCIcon` / `SHCTabIcon` | Vector icons (`SHCIconKey` type union) |

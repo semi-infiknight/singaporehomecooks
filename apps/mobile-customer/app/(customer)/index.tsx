@@ -23,6 +23,7 @@ import {
   SHCPromoRail,
   SHCRequestDishHomeCTA,
   SHCVisualBentoTile,
+  GourmeatDishSkeletonGrid,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -379,7 +380,7 @@ export default function CustomerDiscover() {
         testID="all-dishes-header"
       />
 
-      {isLoading && <Text style={styles.loading}>···</Text>}
+      {isLoading && <GourmeatDishSkeletonGrid count={4} testID="discover-dish-skeleton" />}
       {gridProducts.length === 0 && !isLoading && (
         <View style={styles.empty}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.cart} height={80} rounded={16} />
@@ -419,7 +420,6 @@ const styles = StyleSheet.create({
   listContent: { paddingHorizontal: shcSpacing.md, paddingBottom: 120 },
   tilesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm, paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md },
   tileCol: { width: '48%' },
-  loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
 });

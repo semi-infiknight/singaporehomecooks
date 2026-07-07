@@ -395,6 +395,52 @@ export function GourmeatDishCard({
   );
 }
 
+/** Gourmeat dish card loading placeholder — customer discover grid */
+export function GourmeatDishCardSkeleton({ testID }: { testID?: string }) {
+  const line = (width: `${number}%`) => ({
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    width,
+  });
+  return (
+    <View
+      testID={testID}
+      style={{
+        flex: 1,
+        backgroundColor: gourmeatColors.surface,
+        borderRadius: gourmeatRadii.lg,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
+        ...gourmeatShadows.card,
+      }}
+    >
+      <View style={{ height: 140, backgroundColor: gourmeatColors.surfaceAlt }} />
+      <View style={{ padding: shcSpacing.sm, gap: 6 }}>
+        <View style={line('82%')} />
+        <View style={line('58%')} />
+        <View style={[line('38%'), { marginTop: 4, height: 12 }]} />
+      </View>
+    </View>
+  );
+}
+
+export function GourmeatDishSkeletonGrid({ count = 4, testID }: { count?: number; testID?: string }) {
+  return (
+    <View
+      testID={testID}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm, marginBottom: shcSpacing.md }}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={{ width: '48%' }}>
+          <GourmeatDishCardSkeleton testID={testID ? `${testID}-${i}` : undefined} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function GourmeatSectionTitle({
   title,
   actionLabel,
