@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Image, Dimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GourmeatDiscountBadge,
@@ -49,9 +49,12 @@ export default function ProductDetail() {
 
   if (authLoading || isLoading || !product) {
     return (
-      <View style={styles.loadingWrap}>
-        <Text style={styles.loadingText}>{authLoading ? copy.restoringSession : copy.loadingDish}</Text>
-      </View>
+      <>
+        <Stack.Screen options={{ title: copy.screenTitle }} />
+        <View style={styles.loadingWrap}>
+          <Text style={styles.loadingText}>{authLoading ? copy.restoringSession : copy.loadingDish}</Text>
+        </View>
+      </>
     );
   }
 
@@ -84,6 +87,7 @@ export default function ProductDetail() {
 
   return (
     <View style={styles.screen} testID="product-detail-screen">
+      <Stack.Screen options={{ title: product.name || copy.screenTitle }} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}

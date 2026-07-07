@@ -9,7 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SHCTrayProvider } from '@shc/ui';
-import { shcColors } from '@shc/ui/theme';
+import { gourmeatColors } from '@shc/ui/theme';
 import { useShcI18n, getCustomerLayoutCopy } from '@shc/i18n';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { MobileI18nProvider } from '../lib/i18n-provider';
@@ -28,9 +28,9 @@ function CustomerNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: shcColors.primary },
-        headerTintColor: shcColors.onPrimary,
-        headerTitleStyle: { fontWeight: '700', color: shcColors.onPrimary },
+        headerStyle: { backgroundColor: gourmeatColors.nav },
+        headerTintColor: gourmeatColors.onDark,
+        headerTitleStyle: { fontWeight: '700', color: gourmeatColors.onDark },
         headerTitle: layout.appTitle,
       }}
     >
@@ -40,9 +40,9 @@ function CustomerNavigator() {
         name="(shared)/auth/index"
         options={{
           title: layout.signIn,
-          headerStyle: { backgroundColor: shcColors.primary },
-          headerTintColor: shcColors.onPrimary,
-          headerTitleStyle: { fontWeight: '800', color: shcColors.onPrimary },
+          headerStyle: { backgroundColor: gourmeatColors.nav },
+          headerTintColor: gourmeatColors.onDark,
+          headerTitleStyle: { fontWeight: '800', color: gourmeatColors.onDark },
         }}
       />
       <Stack.Screen name="(shared)/onboarding/index" options={{ title: layout.trustSafety }} />

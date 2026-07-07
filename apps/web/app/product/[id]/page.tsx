@@ -28,8 +28,11 @@ import {
   SHCSharedDishImageWeb,
 } from '../../components/SHCWebComponents';
 import { useFavorites } from '../../../lib/useFavorites';
+import { useShcI18n, getProductDetailCopy } from '@shc/i18n';
 
 export default function ProductDetail() {
+  const { locale } = useShcI18n();
+  const copy = getProductDetailCopy(locale);
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
@@ -49,7 +52,7 @@ export default function ProductDetail() {
   if ((isLoading && !evidenceMode) || !product) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <SHCLoading label="Loading dish details…" />
+        <SHCLoading label={copy.loadingWeb} />
       </div>
     );
   }

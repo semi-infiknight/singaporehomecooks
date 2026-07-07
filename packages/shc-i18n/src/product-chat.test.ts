@@ -8,6 +8,7 @@ describe('product detail copy', () => {
     expect(copy.loadingDish).toBe('Loading dish…');
     expect(copy.halal).toBe('Halal');
     expect(getProductDetailCopy('zh-Hans').allergenRequired).toContain('过敏原');
+    expect(getProductDetailCopy('en').screenTitle).toBe('Dish details');
   });
 
   it('returns mobile cook profile extras', () => {

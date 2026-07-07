@@ -12,6 +12,8 @@ export function getProductDetailCopy(locale: ShcLocale) {
     allergenRequired: t(locale, 'product.allergen_required'),
     cartUpdateFailed: t(locale, 'product.cart_update_failed'),
     addFailed: t(locale, 'product.add_failed'),
+    screenTitle: t(locale, 'product.screen_title'),
+    loadingWeb: t(locale, 'product.loading_web'),
   };
 }
 

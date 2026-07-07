@@ -503,3 +503,28 @@
 - Optional: emulator APK install
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 22 — 2026-07-08 ~03:36 IST
+
+### Implemented
+1. **Profile Gourmeat tokens** — migrated `profile/index.tsx` from `shcColors` → `gourmeatColors`; localized subtitle via `getWalletProfileCopy`
+2. **Product detail stack title i18n** — mobile `Stack.Screen` with `product.screen_title` / dish name; web PDP loading label localized
+3. **Customer root stack** — auth/shared screens use `gourmeatColors.nav` headers (brand.md Gourmeat skin)
+
+### Tests
+- `@shc/i18n`: **27 tests** PASS (+1 wallet profile, +1 screen title)
+- web + mobile-customer typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- Build `2ad24658`: **FINISHED** ✅ — `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Mobile search screen remaining strings
+- Web product PDP remaining hardcoded copy
+- Customer auth screen gourmeat tokens
+- Continue loop until 9:00 AM IST Jul 9
+

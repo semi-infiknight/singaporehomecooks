@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getTrustPageLayers, getTrustSafetyOnboardingCopy } from './auth-trust-wallet';
+import { getTrustPageLayers, getTrustSafetyOnboardingCopy, getWalletProfileCopy } from './auth-trust-wallet';
 
 describe('getTrustPageLayers', () => {
   it('returns five localized trust layers in English', () => {
@@ -23,5 +23,14 @@ describe('getTrustSafetyOnboardingCopy', () => {
     expect(copy.layers).toHaveLength(5);
     expect(copy.browseCta).toBe('Browse dishes');
     expect(getTrustSafetyOnboardingCopy('zh-Hans').browseCta).toBe('浏览菜品');
+  });
+});
+
+describe('getWalletProfileCopy', () => {
+  it('returns localized profile header copy', () => {
+    const copy = getWalletProfileCopy('en');
+    expect(copy.guest).toBe('Guest');
+    expect(copy.subtitle('Gold')).toContain('Gold');
+    expect(getWalletProfileCopy('zh-Hans').guest).toBe('访客');
   });
 });
