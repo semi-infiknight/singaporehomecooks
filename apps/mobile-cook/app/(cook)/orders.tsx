@@ -12,28 +12,29 @@ import {
   SHCFadeIn,
   gourmeatColors,
   shcSpacing,
-  DirectionalTabScreen,
 } from '@shc/ui';
-import { getOrderStatusLabel } from '@shc/utils';
+import { useShcI18n, getCookOrderTransitionActions, getCookOrderStatusLabel } from '@shc/i18n';
 
 import { useMyOrders, useTransitionOrder } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { SHCOrderStatus } from '@shc/types';
 
-const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
-  paid: [{ to: 'accepted', label: 'Accept' }],
-  accepted: [{ to: 'preparing', label: 'Prepare' }],
-  preparing: [{ to: 'ready_for_collection', label: 'Ready' }],
-  ready_for_collection: [{ to: 'collected', label: 'Collected' }],
-};
-
 export default function CookOrders() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t, locale } = useShcI18n();
   const { data: orders = [] } = useMyOrders();
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
+
+  const nextActions = React.useMemo(() => {
+    const actions = getCookOrderTransitionActions(locale);
+    return Object.fromEntries(actions.map((a) => [a.status, [{ to: a.to, label: a.label }]])) as Record<
+      string,
+      { to: SHCOrderStatus; label: string }[]
+    >;
+  }, [locale]);
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
     setErr(null);
@@ -53,12 +54,12 @@ export default function CookOrders() {
       testID="cook-orders-screen"
     >
       <GourmeatCookHeader
-        title="Orders"
+        title={t('cook.orders.title')}
         subtitle={user?.name}
         badges={
           pendingCount > 0 ? (
             <Text style={{ fontSize: 11, fontWeight: '700', color: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-              {pendingCount} active
+              {t('cook.orders.active_badge').replace('{count}', String(pendingCount))}
             </Text>
           ) : undefined
         }
@@ -68,24 +69,22 @@ export default function CookOrders() {
 
       {orders.length === 0 && (
         <GourmeatCard>
-          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+          <GourmeatEmptyState title={t('cook.orders.empty_title')} body={t('cook.orders.empty_body')} />
         </GourmeatCard>
       )}
 
       <SHCFadeIn delay={80}>
       {orders.map((o: any) => {
-        const actions = NEXT_ACTIONS[o.shc_status] || [];
+        const actions = nextActions[o.shc_status] || [];
         const dishName = o.items?.[0]?.name;
         return (
-    <DirectionalTabScreen testID="cook-orders-tab-scene">
-
           <GourmeatOrderRow
             key={o.id}
             orderId={o.id}
             dishName={dishName}
             productId={o.items?.[0]?.product_id}
             status={o.shc_status}
-            statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
+            statusLabel={getCookOrderStatusLabel(locale, String(o.shc_status || ''))}
             collectionDate={o.collection_date}
             collectionSlot={o.collection_slot}
             total={o.total}
@@ -97,23 +96,21 @@ export default function CookOrders() {
                   <GourmeatPrimaryButton key={idx} label={a.label} onPress={() => doTransition(o.id, a.to)} style={{ paddingVertical: 8, paddingHorizontal: 12, minWidth: 80 }} />
                 ))}
                 <Link href={`/(shared)/chat/${o.id}` as any} style={styles.actionLink}>
-                  <Text style={styles.actionLinkText}>Chat</Text>
+                  <Text style={styles.actionLinkText}>{t('cook.orders.chat')}</Text>
                 </Link>
                 <Link href={`/(cook)/orders/${o.id}` as any} style={styles.actionLink}>
-                  <Text style={styles.actionLinkText}>Details</Text>
+                  <Text style={styles.actionLinkText}>{t('cook.orders.details')}</Text>
                 </Link>
               </View>
             }
           />
-        
-    </DirectionalTabScreen>
-  );
+        );
       })}
       </SHCFadeIn>
 
       <Link href="/(cook)/listings" asChild>
         <Pressable style={styles.listingsBtn}>
-          <Text style={styles.listingsBtnText}>Manage listings →</Text>
+          <Text style={styles.listingsBtnText}>{t('cook.orders.manage_listings')}</Text>
         </Pressable>
       </Link>
     </ScrollView>

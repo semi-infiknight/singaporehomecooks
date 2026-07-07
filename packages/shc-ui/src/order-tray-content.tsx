@@ -3,7 +3,8 @@
 import React from 'react';
 import { SHCOrderReviewTrayForm, SHCOrderDisputeTrayForm } from './order-tray-forms';
 import { useOrderReviewTrayMutation, useOrderDisputeTrayMutation } from './order-tray-mutations';
-import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
+import type { SubmitReviewFn, SubmitDisputeFn, OrderTrayLabels } from './order-tray-opener-core';
+import { DEFAULT_TRAY_LABELS } from './order-tray-opener-core';
 
 export type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 
@@ -12,11 +13,13 @@ export function SHCOrderReviewTrayContent({
   submitReviewFn,
   onSuccess,
   onError,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   orderId: string;
   submitReviewFn: SubmitReviewFn;
   onSuccess: () => void;
   onError: (message: string) => void;
+  labels?: OrderTrayLabels;
 }) {
   const tray = useOrderReviewTrayMutation({ orderId, submitReviewFn, onSuccess, onError });
 
@@ -28,6 +31,7 @@ export function SHCOrderReviewTrayContent({
       onReviewBodyChange={tray.setReviewBody}
       onSubmit={tray.submit}
       isPending={tray.isPending}
+      labels={labels}
     />
   );
 }
@@ -37,11 +41,13 @@ export function SHCOrderDisputeTrayContent({
   submitDisputeFn,
   onSuccess,
   onError,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   orderId: string;
   submitDisputeFn: SubmitDisputeFn;
   onSuccess: () => void;
   onError: (message: string) => void;
+  labels?: OrderTrayLabels;
 }) {
   const tray = useOrderDisputeTrayMutation({ orderId, submitDisputeFn, onSuccess, onError });
 
@@ -51,6 +57,7 @@ export function SHCOrderDisputeTrayContent({
       onDisputeNotesChange={tray.setDisputeNotes}
       onSubmit={tray.submit}
       isPending={tray.isPending}
+      labels={labels}
     />
   );
 }

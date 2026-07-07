@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 11) — RequestDishExperience copy, active-order banner, order tray labels i18n.
+**Last Updated:** 2026-07-08 (Overnight loop iter 12) — Order tray form placeholders + cook app screens i18n.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

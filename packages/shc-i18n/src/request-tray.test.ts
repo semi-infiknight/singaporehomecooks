@@ -21,4 +21,11 @@ describe('order tray labels', () => {
     expect(getOrderTrayLabels('en').leaveReview).toBe('Leave a review');
     expect(getOrderTrayLabels('zh-Hans').reportIssue).toBe('报告问题');
   });
+
+  it('returns localized tray form labels', () => {
+    const labels = getOrderTrayLabels('en');
+    expect(labels.reviewPlaceholder).toBe('Share your experience (optional)');
+    expect(labels.disputeSubmit).toBe('Report issue');
+    expect(getOrderTrayLabels('zh-Hans').reviewSubmit).toBe('提交评价');
+  });
 });

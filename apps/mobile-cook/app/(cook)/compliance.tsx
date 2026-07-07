@@ -24,6 +24,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { useShcI18n } from '@shc/i18n';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
 
 const milestoneStorage = {
@@ -34,6 +35,7 @@ const milestoneStorage = {
 export default function ComplianceUpload() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { t } = useShcI18n();
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
   const [docs, setDocs] = useState<any[]>([]);
@@ -81,19 +83,17 @@ export default function ComplianceUpload() {
       testID="cook-compliance-screen"
     >
       <View style={styles.phaseBanner} testID="compliance-phase-banner">
-        <Text style={styles.phaseBannerTitle}>Compliance documents are saved for admin review</Text>
-        <Text style={styles.phaseBannerBody}>
-          Submit your SFA registration or WSQ certificate reference. Admin verification controls launch readiness and payout safety.
-        </Text>
+        <Text style={styles.phaseBannerTitle}>{t('cook.compliance.banner_title')}</Text>
+        <Text style={styles.phaseBannerBody}>{t('cook.compliance.banner_body')}</Text>
       </View>
 
       <GourmeatCookHeader
-        title="Compliance"
+        title={t('cook.compliance.title')}
         subtitle={user?.name}
         badges={
           <View style={styles.heroBadges}>
             <SHCIcon name="compliance" size={22} color={gourmeatColors.primary} active />
-            <SHCBadge variant="warning">Required to accept orders</SHCBadge>
+            <SHCBadge variant="warning">{t('cook.compliance.required_badge')}</SHCBadge>
           </View>
         }
       />
@@ -141,7 +141,7 @@ export default function ComplianceUpload() {
           />
 
           <SHCButton onPress={upload} disabled={!fileName || submitting} style={styles.uploadBtn} testID="compliance-submit-btn">
-            <SHCButtonText>{submitting ? 'Submitting…' : 'Submit'}</SHCButtonText>
+            <SHCButtonText>{submitting ? t('cook.compliance.submitting') : t('cook.compliance.submit')}</SHCButtonText>
           </SHCButton>
         </SHCCard>
       </SHCFadeIn>
@@ -163,7 +163,7 @@ export default function ComplianceUpload() {
 
       {docs.length > 0 && (
         <SHCFadeIn>
-          <SHCSectionTitle>Submitted documents</SHCSectionTitle>
+          <SHCSectionTitle>{t('cook.compliance.submitted_docs')}</SHCSectionTitle>
           {docs.map((doc: any) => (
             <SHCCard key={doc.id || doc.file_key} style={styles.resultCard}>
               <View style={styles.resultRow}>

@@ -7,12 +7,14 @@ import type {
   OrderReviewTrayContentProps,
   OrderDisputeTrayContentProps,
 } from '@shc/ui/order-tray-opener-core';
+import { DEFAULT_TRAY_LABELS } from '@shc/ui/order-tray-opener-core';
 
 export function SHCOrderReviewTrayContentWeb({
   orderId,
   submitReviewFn,
   onSuccess,
   onError,
+  labels = DEFAULT_TRAY_LABELS,
 }: OrderReviewTrayContentProps) {
   const tray = useOrderReviewTrayMutation({ orderId, submitReviewFn, onSuccess, onError });
 
@@ -34,7 +36,7 @@ export function SHCOrderReviewTrayContentWeb({
       <textarea
         value={tray.reviewBody}
         onChange={(e) => tray.setReviewBody(e.target.value)}
-        placeholder="Share your experience (optional)"
+        placeholder={labels.reviewPlaceholder}
         className="shc-input w-full mt-2 min-h-[72px] py-2"
         data-testid="review-body-input"
       />
@@ -44,7 +46,7 @@ export function SHCOrderReviewTrayContentWeb({
         onClick={tray.submit}
         testID="submit-review-btn"
       >
-        {tray.isPending ? 'Submitting…' : 'Submit review'}
+        {tray.isPending ? labels.reviewSubmitting : labels.reviewSubmit}
       </SHCButton>
     </div>
   );
@@ -55,18 +57,17 @@ export function SHCOrderDisputeTrayContentWeb({
   submitDisputeFn,
   onSuccess,
   onError,
+  labels = DEFAULT_TRAY_LABELS,
 }: OrderDisputeTrayContentProps) {
   const tray = useOrderDisputeTrayMutation({ orderId, submitDisputeFn, onSuccess, onError });
 
   return (
     <div data-testid="order-dispute-tray">
-      <p className="text-xs text-[#5C5144] mt-1">
-        Use this for food quality, collection, or safety issues that need ops review.
-      </p>
+      <p className="text-xs text-[#5C5144] mt-1">{labels.disputeHint}</p>
       <textarea
         value={tray.disputeNotes}
         onChange={(e) => tray.setDisputeNotes(e.target.value)}
-        placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
+        placeholder={labels.disputePlaceholder}
         className="shc-input w-full mt-2 min-h-[72px] py-2"
         data-testid="dispute-notes-input"
       />
@@ -76,7 +77,7 @@ export function SHCOrderDisputeTrayContentWeb({
         onClick={tray.submit}
         testID="submit-dispute-btn"
       >
-        {tray.isPending ? 'Reporting…' : 'Report issue'}
+        {tray.isPending ? labels.disputeSubmitting : labels.disputeSubmit}
       </SHCButton>
     </div>
   );

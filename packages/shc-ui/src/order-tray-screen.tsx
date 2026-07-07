@@ -50,13 +50,13 @@ export function OrderTrackingTraySection({
         renderError: ({ id, message }) => (
           <SHCTrayAction
             message={message}
-            primaryLabel="OK"
+            primaryLabel={labels.ok}
             onPrimary={dismiss}
             testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
           />
         ),
       }),
-    [dismiss, openTray]
+    [dismiss, labels.ok, openTray]
   );
 
   const { showReviewForm, showDisputeForm, openReviewTray, openDisputeTray } = useOrderTrayTracking({

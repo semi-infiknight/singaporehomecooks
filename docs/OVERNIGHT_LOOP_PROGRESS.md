@@ -230,3 +230,26 @@
 - Cook app screen strings (dashboard, orders list)
 - EAS monitor; download APK when FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 12 — 2026-07-08 ~03:10 IST
+
+### Implemented
+1. **Order tray form i18n** — `tray.review_*` / `tray.dispute_*` form keys; `OrderTrayLabels` extended; shared `SHCOrderReviewTrayForm` / `SHCOrderDisputeTrayForm` + web tray content accept `labels` prop; opener passes labels through to content
+2. **Cook app screen i18n** — dashboard (greeting, stats, collab board, bid placeholders), orders (title, empty state, Accept/Prepare/Ready/Collected, Chat/Details), earnings title + quick actions, compliance banner/title/submit
+3. **`getCookQuickActionLabels` / `getCookOrderTransitionActions`** — new `@shc/i18n/cook.ts` helpers
+4. **Cook orders fix** — removed erroneous `DirectionalTabScreen` wrapper inside order list map
+
+### Tests
+- `@shc/i18n`: **17 tests** PASS (incl. tray form labels)
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### EAS
+- Build `2ad24658`: **IN_PROGRESS** (was IN_QUEUE) — no APK download yet
+
+### Next iteration
+- Cook listings wizard + earnings expense strings i18n
+- Cook auth / order detail screens
+- EAS monitor; download APK when FINISHED
+- Continue loop until 9:00 AM IST Jul 9

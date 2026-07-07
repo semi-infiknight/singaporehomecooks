@@ -6,3 +6,4 @@ export * from './auth-trust-wallet';
 export * from './order-detail';
 export * from './request-dish';
 export * from './order-tray';
+export * from './cook';

@@ -24,6 +24,13 @@ export type OrderTrayLabels = {
   disputeMessageCook: string;
   disputeFailed: string;
   ok: string;
+  reviewPlaceholder: string;
+  reviewSubmit: string;
+  reviewSubmitting: string;
+  disputeHint: string;
+  disputePlaceholder: string;
+  disputeSubmit: string;
+  disputeSubmitting: string;
 };
 
 export const DEFAULT_TRAY_LABELS: OrderTrayLabels = {
@@ -41,6 +48,13 @@ export const DEFAULT_TRAY_LABELS: OrderTrayLabels = {
   disputeMessageCook: 'Message your cook',
   disputeFailed: 'Could not report issue',
   ok: 'OK',
+  reviewPlaceholder: 'Share your experience (optional)',
+  reviewSubmit: 'Submit review',
+  reviewSubmitting: 'Submitting…',
+  disputeHint: 'Use this for food quality, collection, or safety issues that need ops review.',
+  disputePlaceholder: 'Tell ops what happened. Include timing, dish condition, or collection issue.',
+  disputeSubmit: 'Report issue',
+  disputeSubmitting: 'Reporting…',
 };
 
 export type OrderTrayOpenFns = {
@@ -63,6 +77,7 @@ export type OrderReviewTrayContentProps = {
   submitReviewFn: SubmitReviewFn;
   onSuccess: () => void;
   onError: (message: string) => void;
+  labels?: OrderTrayLabels;
 };
 
 export type OrderDisputeTrayContentProps = {
@@ -70,6 +85,7 @@ export type OrderDisputeTrayContentProps = {
   submitDisputeFn: SubmitDisputeFn;
   onSuccess: () => void;
   onError: (message: string) => void;
+  labels?: OrderTrayLabels;
 };
 
 export function openOrderReviewTray(
@@ -83,6 +99,7 @@ export function openOrderReviewTray(
     <ReviewContent
       orderId={orderId}
       submitReviewFn={submitReviewFn}
+      labels={labels}
       onSuccess={() => {
         tray.openTray(
           { id: 'review-success', title: labels.reviewThanksTitle, height: 'compact' },
@@ -118,6 +135,7 @@ export function openOrderDisputeTray(
     <DisputeContent
       orderId={orderId}
       submitDisputeFn={submitDisputeFn}
+      labels={labels}
       onSuccess={() => {
         tray.openTray(
           { id: 'dispute-success', title: labels.disputeReportedTitle, height: 'compact' },

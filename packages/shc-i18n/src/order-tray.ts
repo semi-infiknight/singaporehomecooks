@@ -15,6 +15,13 @@ export type OrderTrayLabels = {
   disputeMessageCook: string;
   disputeFailed: string;
   ok: string;
+  reviewPlaceholder: string;
+  reviewSubmit: string;
+  reviewSubmitting: string;
+  disputeHint: string;
+  disputePlaceholder: string;
+  disputeSubmit: string;
+  disputeSubmitting: string;
 };
 
 export function getOrderTrayLabels(locale: ShcLocale): OrderTrayLabels {
@@ -33,6 +40,13 @@ export function getOrderTrayLabels(locale: ShcLocale): OrderTrayLabels {
     disputeMessageCook: t(locale, 'tray.dispute_message_cook'),
     disputeFailed: t(locale, 'tray.dispute_failed'),
     ok: t(locale, 'tray.ok'),
+    reviewPlaceholder: t(locale, 'tray.review_placeholder'),
+    reviewSubmit: t(locale, 'tray.review_submit'),
+    reviewSubmitting: t(locale, 'tray.review_submitting'),
+    disputeHint: t(locale, 'tray.dispute_hint'),
+    disputePlaceholder: t(locale, 'tray.dispute_placeholder'),
+    disputeSubmit: t(locale, 'tray.dispute_submit'),
+    disputeSubmitting: t(locale, 'tray.dispute_submitting'),
   };
 }
 

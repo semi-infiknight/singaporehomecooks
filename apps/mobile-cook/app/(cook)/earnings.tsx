@@ -16,6 +16,7 @@ import {
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { useShcI18n, getCookQuickActionLabels } from '@shc/i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createCookExpense, getEarnings, listCookExpenses } from '../../lib/api-client';
 
@@ -24,6 +25,8 @@ export default function Earnings() {
   const router = useRouter();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { t, locale } = useShcI18n();
+  const quickLabels = getCookQuickActionLabels(locale);
   const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useQuery({
     queryKey: ['earnings'],
     queryFn: getEarnings,
@@ -72,11 +75,11 @@ export default function Earnings() {
       testID="cook-earnings-screen"
     >
       <GourmeatCookHeader
-        title="Earnings"
+        title={t('cook.earnings.title')}
         subtitle={`${user?.name} · 85% payout · PayNow weekly`}
         badges={
           <View style={styles.heroBadges}>
-            <SHCBadge variant="heritage">This week</SHCBadge>
+            <SHCBadge variant="heritage">{t('cook.dashboard.this_week')}</SHCBadge>
             <SHCBadge variant="success">S${weekTotal}</SHCBadge>
           </View>
         }
@@ -95,13 +98,13 @@ export default function Earnings() {
         </View>
       </SHCFadeIn>
 
-      <Text style={styles.sectionLabel}>Quick actions</Text>
+      <Text style={styles.sectionLabel}>{t('cook.dashboard.quick_actions')}</Text>
       <View style={styles.bentoRow}>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
             imageUri={BENTO_ACTION_IMAGES.listings}
             iconKey="listings"
-            label="Listings"
+            label={quickLabels.listings}
             variant="bento-peach"
             testID="earnings-listings-tile"
             onPress={() => router.push('/(cook)/listings' as any)}
@@ -111,7 +114,7 @@ export default function Earnings() {
           <SHCVisualBentoTile
             imageUri={BENTO_ACTION_IMAGES.orders}
             iconKey="orders"
-            label="Orders"
+            label={quickLabels.orders}
             variant="bento-mint"
             testID="earnings-orders-tile"
             onPress={() => router.push('/(cook)/orders' as any)}

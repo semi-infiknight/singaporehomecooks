@@ -28,18 +28,27 @@ import {
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
 import { useMyOrders, useRequests, useCreateBid } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
+import { useShcI18n, getCookQuickActionLabels } from '@shc/i18n';
 
-const QUICK_ACTIONS = [
-  { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
-  { href: '/(cook)/orders', iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/(cook)/earnings', iconKey: 'earnings' as const, label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
-  { href: '/(cook)/compliance', iconKey: 'compliance' as const, label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
-];
+const QUICK_ACTION_HREFS = [
+  { href: '/(cook)/listings', iconKey: 'listings' as const, image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
+  { href: '/(cook)/orders', iconKey: 'orders' as const, image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
+  { href: '/(cook)/earnings', iconKey: 'earnings' as const, image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
+  { href: '/(cook)/compliance', iconKey: 'compliance' as const, image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
+] as const;
 
 export default function CookDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { t, locale } = useShcI18n();
+  const quickLabels = getCookQuickActionLabels(locale);
+  const quickActions = [
+    { ...QUICK_ACTION_HREFS[0], label: quickLabels.listings },
+    { ...QUICK_ACTION_HREFS[1], label: quickLabels.orders },
+    { ...QUICK_ACTION_HREFS[2], label: quickLabels.earnings },
+    { ...QUICK_ACTION_HREFS[3], label: quickLabels.compliance },
+  ];
   const { data: orders = [] } = useMyOrders();
   const { data: openReqs = [] } = useRequests();
   const createBidMut = useCreateBid();
@@ -70,13 +79,13 @@ export default function CookDashboard() {
       testID="cook-dashboard"
     >
       <GourmeatCookHeader
-        title="Good morning, Chef"
-        subtitle={`${user?.name} · HDB kitchen · 85% payout`}
+        title={t('cook.dashboard.greeting')}
+        subtitle={t('cook.dashboard.subtitle').replace('{name}', user?.name || '')}
         testID="cook-dashboard-hero"
         badges={
           <View style={styles.heroBadges}>
-            <SHCBadge variant="heritage">85% payout</SHCBadge>
-            <SHCBadge variant="success">S${earnings} this week</SHCBadge>
+            <SHCBadge variant="heritage">{t('cook.dashboard.payout_badge')}</SHCBadge>
+            <SHCBadge variant="success">{t('cook.dashboard.earnings_badge').replace('{amount}', String(earnings))}</SHCBadge>
           </View>
         }
       />
@@ -93,9 +102,9 @@ export default function CookDashboard() {
                 <View style={styles.earningsOverlay}>
                   <View style={styles.earningsTopRow}>
                     <SHCBentoIconBadge iconKey="earnings" size={28} />
-                    <SHCBadge variant="heritage">85% payout</SHCBadge>
+                    <SHCBadge variant="heritage">{t('cook.dashboard.payout_badge')}</SHCBadge>
                   </View>
-                  <Text style={styles.earningsLabel}>This week</Text>
+                  <Text style={styles.earningsLabel}>{t('cook.dashboard.this_week')}</Text>
                   <Text style={styles.earningsValue}>S${earnings}</Text>
                 </View>
               }
@@ -105,76 +114,78 @@ export default function CookDashboard() {
         <SHCBentoCell variant="bento-yellow">
           <SHCBentoIconBadge iconKey="orders" size={24} />
           <Text style={styles.statNum}>{orders.length}</Text>
-          <Text style={styles.statLabel}>Active</Text>
+          <Text style={styles.statLabel}>{t('cook.dashboard.active')}</Text>
         </SHCBentoCell>
         <SHCBentoCell variant="bento-peach">
           <SHCBentoIconBadge iconKey="request" size={24} />
           <Text style={styles.statNum}>{openReqs.length}</Text>
-          <Text style={styles.statLabel}>Requests</Text>
+          <Text style={styles.statLabel}>{t('cook.dashboard.requests')}</Text>
         </SHCBentoCell>
       </SHCBentoGrid>
       </SHCFadeIn>
 
       {/* 2×2 visual quick actions */}
-      <Text style={styles.sectionLabel}>Quick actions</Text>
+      <Text style={styles.sectionLabel}>{t('cook.dashboard.quick_actions')}</Text>
       <View style={styles.bentoRow}>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[0].image}
-            iconKey={QUICK_ACTIONS[0].iconKey}
-            label={QUICK_ACTIONS[0].label}
-            onPress={() => router.push(QUICK_ACTIONS[0].href as any)}
-            variant={QUICK_ACTIONS[0].variant}
+            imageUri={quickActions[0].image}
+            iconKey={quickActions[0].iconKey}
+            label={quickActions[0].label}
+            onPress={() => router.push(quickActions[0].href as any)}
+            variant={quickActions[0].variant}
           />
         </View>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[1].image}
-            iconKey={QUICK_ACTIONS[1].iconKey}
-            label={QUICK_ACTIONS[1].label}
+            imageUri={quickActions[1].image}
+            iconKey={quickActions[1].iconKey}
+            label={quickActions[1].label}
             badge={orders.length || undefined}
-            onPress={() => router.push(QUICK_ACTIONS[1].href as any)}
-            variant={QUICK_ACTIONS[1].variant}
+            onPress={() => router.push(quickActions[1].href as any)}
+            variant={quickActions[1].variant}
           />
         </View>
       </View>
       <View style={styles.bentoRow}>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[2].image}
-            iconKey={QUICK_ACTIONS[2].iconKey}
-            label={QUICK_ACTIONS[2].label}
-            onPress={() => router.push(QUICK_ACTIONS[2].href as any)}
-            variant={QUICK_ACTIONS[2].variant}
+            imageUri={quickActions[2].image}
+            iconKey={quickActions[2].iconKey}
+            label={quickActions[2].label}
+            onPress={() => router.push(quickActions[2].href as any)}
+            variant={quickActions[2].variant}
           />
         </View>
         <View style={styles.bentoCol}>
           <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[3].image}
-            iconKey={QUICK_ACTIONS[3].iconKey}
-            label={QUICK_ACTIONS[3].label}
-            onPress={() => router.push(QUICK_ACTIONS[3].href as any)}
-            variant={QUICK_ACTIONS[3].variant}
+            imageUri={quickActions[3].image}
+            iconKey={quickActions[3].iconKey}
+            label={quickActions[3].label}
+            onPress={() => router.push(quickActions[3].href as any)}
+            variant={quickActions[3].variant}
           />
         </View>
       </View>
 
       <Link href="/(shared)/chat/SHC-2026-00001" asChild>
         <SHCButton variant="outline" style={styles.chatBtn}>
-          <SHCButtonText>Demo Chat</SHCButtonText>
+          <SHCButtonText>{t('cook.dashboard.demo_chat')}</SHCButtonText>
         </SHCButton>
       </Link>
 
       {/* Collaboration board */}
       <View style={styles.sectionHeader}>
-        <SHCSectionTitle style={styles.collabTitle}>Collaboration Board</SHCSectionTitle>
-        {openReqs.length > 0 && <SHCBadge variant="warning">{openReqs.length} open</SHCBadge>}
+        <SHCSectionTitle style={styles.collabTitle}>{t('cook.dashboard.collab_board')}</SHCSectionTitle>
+        {openReqs.length > 0 && (
+          <SHCBadge variant="warning">{t('cook.dashboard.open_requests').replace('{count}', String(openReqs.length))}</SHCBadge>
+        )}
       </View>
       <SHCCard variant="bento-peach">
         {openReqs.length === 0 && (
           <View style={styles.collabEmpty}>
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.request} height={64} rounded={shcRadii.md} />
-            <SHCBadge variant="default">No open requests</SHCBadge>
+            <SHCBadge variant="default">{t('cook.dashboard.no_requests')}</SHCBadge>
           </View>
         )}
         {openReqs.map((r: any) => (
@@ -186,20 +197,20 @@ export default function CookDashboard() {
               <SHCBadge variant="default">{r.date}</SHCBadge>
             </View>
             <TextInput
-              placeholder="Bid S$ e.g. 14"
+              placeholder={t('cook.dashboard.bid_placeholder')}
               value={bidPrices[r.id] || ''}
-              onChangeText={(t) => setBidPrices((p) => ({ ...p, [r.id]: t }))}
+              onChangeText={(text) => setBidPrices((p) => ({ ...p, [r.id]: text }))}
               keyboardType="numeric"
               style={styles.collabInput}
             />
             <TextInput
-              placeholder="Message (optional)"
+              placeholder={t('cook.dashboard.message_placeholder')}
               value={collabMsg}
               onChangeText={setCollabMsg}
               style={styles.collabInput}
             />
             <SHCButton size="sm" onPress={() => handleBid(r.id)} testID={`bid-btn-${r.id}`}>
-              <SHCButtonText>Bid</SHCButtonText>
+              <SHCButtonText>{t('cook.dashboard.bid_btn')}</SHCButtonText>
             </SHCButton>
 
           </SHCCard>
@@ -207,7 +218,7 @@ export default function CookDashboard() {
       </SHCCard>
 
       {/* Heritage archive */}
-      <SHCSectionTitle>Heritage Archive</SHCSectionTitle>
+      <SHCSectionTitle>{t('cook.dashboard.heritage_archive')}</SHCSectionTitle>
       <SHCCard variant="bento-mint" style={styles.heritageCard}>
         <SHCFoodImage
           uri={BENTO_ACTION_IMAGES.listings}

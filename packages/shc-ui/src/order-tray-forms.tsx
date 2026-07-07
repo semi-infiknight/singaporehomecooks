@@ -4,6 +4,19 @@ import React, { useRef } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { GourmeatPrimaryButton } from './gourmeat';
 import { gourmeatColors, gourmeatRadii } from './theme';
+import type { OrderTrayLabels } from './order-tray-opener-core';
+import { DEFAULT_TRAY_LABELS } from './order-tray-opener-core';
+
+type TrayFormLabels = Pick<
+  OrderTrayLabels,
+  | 'reviewPlaceholder'
+  | 'reviewSubmit'
+  | 'reviewSubmitting'
+  | 'disputeHint'
+  | 'disputePlaceholder'
+  | 'disputeSubmit'
+  | 'disputeSubmitting'
+>;
 
 export function SHCOrderReviewTrayForm({
   rating,
@@ -12,6 +25,7 @@ export function SHCOrderReviewTrayForm({
   onReviewBodyChange,
   onSubmit,
   isPending,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   rating: number;
   onRatingChange: (n: number) => void;
@@ -19,6 +33,7 @@ export function SHCOrderReviewTrayForm({
   onReviewBodyChange: (text: string) => void;
   onSubmit: () => void;
   isPending?: boolean;
+  labels?: TrayFormLabels;
 }) {
   const reviewInputRef = useRef<TextInput>(null);
 
@@ -43,7 +58,7 @@ export function SHCOrderReviewTrayForm({
       >
         <TextInput
           ref={reviewInputRef}
-          placeholder="Share your experience (optional)"
+          placeholder={labels.reviewPlaceholder}
           value={reviewBody}
           onChangeText={onReviewBodyChange}
           multiline
@@ -54,7 +69,7 @@ export function SHCOrderReviewTrayForm({
         />
       </Pressable>
       <GourmeatPrimaryButton
-        label={isPending ? 'Submitting…' : 'Submit review'}
+        label={isPending ? labels.reviewSubmitting : labels.reviewSubmit}
         onPress={onSubmit}
         disabled={!!isPending}
         testID="submit-review-btn"
@@ -69,20 +84,20 @@ export function SHCOrderDisputeTrayForm({
   onDisputeNotesChange,
   onSubmit,
   isPending,
+  labels = DEFAULT_TRAY_LABELS,
 }: {
   disputeNotes: string;
   onDisputeNotesChange: (text: string) => void;
   onSubmit: () => void;
   isPending?: boolean;
+  labels?: TrayFormLabels;
 }) {
   const disputeInputRef = useRef<TextInput>(null);
   const canSubmit = disputeNotes.trim().length >= 5;
 
   return (
     <View testID="order-dispute-tray">
-      <Text style={styles.hintLine}>
-        Use this for food quality, collection, or safety issues that need ops review.
-      </Text>
+      <Text style={styles.hintLine}>{labels.disputeHint}</Text>
       <Pressable
         testID="dispute-notes-input"
         accessibilityLabel="dispute-notes-input"
@@ -91,7 +106,7 @@ export function SHCOrderDisputeTrayForm({
       >
         <TextInput
           ref={disputeInputRef}
-          placeholder="Tell ops what happened. Include timing, dish condition, or collection issue."
+          placeholder={labels.disputePlaceholder}
           value={disputeNotes}
           onChangeText={onDisputeNotesChange}
           multiline
@@ -102,7 +117,7 @@ export function SHCOrderDisputeTrayForm({
         />
       </Pressable>
       <GourmeatPrimaryButton
-        label={isPending ? 'Reporting…' : 'Report issue'}
+        label={isPending ? labels.disputeSubmitting : labels.disputeSubmit}
         onPress={onSubmit}
         disabled={!!isPending || !canSubmit}
         testID="submit-dispute-btn"
