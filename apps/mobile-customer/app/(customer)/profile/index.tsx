@@ -24,6 +24,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../../hooks/useOrder';
+import { MobileLanguageSwitcher } from '../../../components/MobileLanguageSwitcher';
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
@@ -130,6 +131,8 @@ export default function Profile() {
           )}
         </Pressable>
       </View>
+
+      <MobileLanguageSwitcher />
 
       <View style={styles.tilesRow}>
         {QUICK_TILES.map((t) => (

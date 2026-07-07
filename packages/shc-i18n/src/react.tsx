@@ -14,9 +14,10 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 const STORAGE_KEY = 'shc-locale';
 
 function readStoredLocale(): ShcLocale {
-  if (typeof window === 'undefined') return DEFAULT_LOCALE;
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const storage = (globalThis as any).localStorage;
+    if (!storage?.getItem) return DEFAULT_LOCALE;
+    const stored = storage.getItem(STORAGE_KEY);
     if (stored) return normalizeLocale(stored);
   } catch {
     /* ignore */
@@ -36,8 +37,12 @@ export function ShcI18nProvider({
   const setLocale = useCallback((next: ShcLocale) => {
     setLocaleState(next);
     try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-      document.documentElement.lang = next === 'zh-Hans' ? 'zh-Hans' : 'en';
+      const storage = (globalThis as any).localStorage;
+      storage?.setItem?.(STORAGE_KEY, next);
+      const doc = (globalThis as any).document;
+      if (doc?.documentElement) {
+        doc.documentElement.lang = next === 'zh-Hans' ? 'zh-Hans' : 'en';
+      }
     } catch {
       /* ignore */
     }

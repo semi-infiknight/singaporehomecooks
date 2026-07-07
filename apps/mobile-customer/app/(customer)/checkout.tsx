@@ -32,6 +32,8 @@ import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
 import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
+import { enforceMinimumOrder } from '@shc/business-rules';
+import { useShcI18n } from '@shc/i18n';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { formatLocationLabel } from '@shc/utils';
@@ -67,6 +69,7 @@ function AllergenGateTrayContent({
 export default function Checkout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useShcI18n();
   const { user, loading: authLoading } = useAuth();
   const { active: collectionLocation } = useCustomerLocation();
   const { openTray, dismiss } = useSHCTray();
@@ -143,6 +146,15 @@ export default function Checkout() {
     }
     if (!selectedSlot) {
       setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection date + slot from available (enforced)' });
+      return;
+    }
+    const totalCents = Math.round(total * 100);
+    const minimumCheck = enforceMinimumOrder({
+      totalCents,
+      lines: (cart.items || []).map((i: { price?: number }) => ({ price_cents: Math.round(Number(i.price || 0) * 100) })),
+    });
+    if (!minimumCheck.valid) {
+      setError({ code: minimumCheck.code as SHCErrorCode, message: t('checkout.minimum_order') });
       return;
     }
     setIsSubmitting(true);
@@ -245,7 +257,7 @@ export default function Checkout() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 }]}
         testID="checkout-screen"
       >
-        <Text style={styles.checkoutTitle}>Checkout</Text>
+        <Text style={styles.checkoutTitle}>{t('checkout.title')}</Text>
         <Text style={styles.checkoutSubtitle}>{itemCount} portion{itemCount !== 1 ? 's' : ''} · HDB collection</Text>
 
         <SHCCard variant="bento-mint" style={styles.sectionCard}>
@@ -358,7 +370,7 @@ export default function Checkout() {
 
       <View style={{ paddingHorizontal: shcSpacing.md, paddingBottom: Math.max(insets.bottom, shcSpacing.md) }}>
         <GourmeatPayButton
-          label="Pay Now"
+          label={isSubmitting ? t('checkout.placing') : t('checkout.place_order')}
           amount={`S$${amountDue.toFixed(2)}`}
           onPress={handleCheckout as any}
           disabled={isSubmitting}

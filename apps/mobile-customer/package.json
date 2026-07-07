@@ -29,6 +29,7 @@
     "@react-native/assets-registry": "0.81.5",
     "@shc/api-client": "workspace:*",
     "@shc/business-rules": "workspace:*",
+    "@shc/business-rules": "workspace:*",
     "@shc/i18n": "workspace:*",
     "@shc/types": "workspace:*",
     "@shc/ui": "workspace:*",

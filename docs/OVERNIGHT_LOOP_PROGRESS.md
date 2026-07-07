@@ -36,3 +36,24 @@
 - Mobile checkout minimum-order guard
 - Add cart route vitest for one-cook conflict
 - Continue loop until 9 AM IST
+
+---
+
+## Iteration 2 — 2026-07-08 ~02:45 IST
+
+### Implemented
+1. **Mobile checkout** — `enforceMinimumOrder` client guard + i18n title/button strings
+2. **Mobile profile** — `MobileLanguageSwitcher` component
+3. **Cart route test** — `SHC-CART-001` one-cook conflict coverage
+4. **@shc/i18n react** — RN-safe `globalThis` guards (no window/document TS errors)
+5. **PR doc** — gap table updated with iter 1 status
+
+### Tests
+- `cart/route.test.ts` PASS
+- `mobile-customer typecheck` PASS
+
+### Next iteration
+- Mandarin strings on discover/search screens (web + mobile)
+- Production PWA audit (og-image, counters)
+- EAS build monitor
+- More blueprint gaps
