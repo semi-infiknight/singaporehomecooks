@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -846,7 +846,7 @@ export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
 
 export function ZomatoLocationBar({
   areaLabel,
-  areaHint = 'COLLECT FROM',
+  areaHint,
   avatarName,
   onProfileHref = '/profile',
   onLocationHref = '/location',
@@ -857,11 +857,14 @@ export function ZomatoLocationBar({
   onProfileHref?: string;
   onLocationHref?: string;
 }) {
+  const { locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
+  const hint = areaHint ?? layout.collectFromUpper;
   const avatarUri = avatarName ? getCookAvatarUrl(undefined, avatarName) : undefined;
   return (
     <div className="flex items-center justify-between gap-3 mb-3" data-testid="zomato-location-bar">
       <Link href={onLocationHref} className="flex-1 min-w-0 group" data-testid="open-location-page-btn">
-        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">{areaHint}</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">{hint}</p>
         <div className="flex items-center gap-1 mt-0.5">
           <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
           <span className="font-bold text-foreground truncate group-hover:text-primary transition-colors" data-testid="sticky-header-location">{areaLabel}</span>
@@ -1541,12 +1544,14 @@ export function FavoriteButton({
   onClick: () => void;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
   return (
     <button
       type="button"
       onClick={onClick}
       data-testid={testID}
-      aria-label={active ? 'Remove from saved dishes' : 'Save dish'}
+      aria-label={active ? layout.removeSavedA11y : layout.saveDishA11y}
       className={`w-9 h-9 rounded-full border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-lg leading-none ${
         active ? 'bg-[var(--shc-bento-peach)] text-primary' : 'bg-card text-muted-foreground'
       }`}

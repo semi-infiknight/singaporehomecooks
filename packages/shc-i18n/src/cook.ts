@@ -175,6 +175,7 @@ export function getCookOnboardingCopy(locale: ShcLocale) {
     subtitle: t(locale, 'cook.onboarding.subtitle'),
     cta: t(locale, 'cook.onboarding.cta'),
     hdbBadge: t(locale, 'cook.onboarding.hdb_badge'),
+    body: t(locale, 'cook.onboarding.body'),
   };
 }
 
@@ -190,6 +191,7 @@ export function getCookLayoutCopy(locale: ShcLocale) {
     complianceTab: t(locale, 'cook.layout.compliance_tab'),
     manageOrder: t(locale, 'cook.layout.manage_order'),
     earnings: t(locale, 'cook.layout.earnings'),
+    onboardingTitle: t(locale, 'cook.onboarding.title'),
   };
 }
 

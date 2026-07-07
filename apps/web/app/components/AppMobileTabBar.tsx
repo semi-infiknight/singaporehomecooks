@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Receipt, ShoppingBag, Wallet } from 'lucide-react';
 import { useCart } from '../../lib/useProducts';
 import { summarizeCart } from '@shc/utils';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getWebLayoutCopy } from '@shc/i18n';
 import { StickyCartBar } from './SHCWebComponents';
 
 const TAB_ROUTES = [
@@ -20,7 +20,8 @@ const HIDE_CART_BAR = /^\/(cart|checkout)(\/|$)/;
 
 export function AppMobileTabBar() {
   const pathname = usePathname();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
   const tabs = useMemo(
     () => TAB_ROUTES.map((tab) => ({ ...tab, label: t(tab.labelKey) })),
     [t]
@@ -49,7 +50,7 @@ export function AppMobileTabBar() {
         <nav
           className="rounded-[28px] bg-[var(--shc-gourmeat-nav)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] px-2 py-2"
           data-testid="mobile-bottom-tab-bar"
-          aria-label="Main"
+          aria-label={layout.tabBarA11y}
         >
           <div className="flex items-stretch min-h-[52px]">
             {tabs.map((tab) => {

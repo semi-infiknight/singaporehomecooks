@@ -33,7 +33,7 @@ export default function OrderChatScreen() {
           {messages.length === 0 && <Text style={{ color: shcColors.textLight }}>{copy.empty}</Text>}
           {messages.map((m: any, i: number) => (
             <Text key={i} style={{ marginBottom: 8, color: m.sender_actor === 'cook' ? shcColors.primary : shcColors.text }}>
-              {m.sender_actor}: {m.body}{' '}
+              {copy.senderLabel(m.sender_actor)}: {m.body}{' '}
               <Text style={{ fontSize: 10, color: shcColors.textLight }}>
                 ({new Date(m.created_at).toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' })})
               </Text>

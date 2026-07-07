@@ -658,3 +658,29 @@
 - Mobile cook profile / shared chat strings
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 28 — 2026-07-08 ~03:51 IST
+
+### Implemented
+1. **`getWebLayoutCopy`** — AppHeader brand, nav, cart/menu a11y, PWA install banner, favorite button labels (en/zh-Hans)
+2. **Web chrome** — `AppHeader`, `AppMobileTabBar`, `PWAInstallBanner`, `ZomatoLocationBar`, `FavoriteButton` wired
+3. **Cook onboarding** — dedicated `cook.onboarding.body`; stack title uses onboarding title key
+4. **Shared chat** — localized cook/customer sender labels on mobile customer + cook apps
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS (+1 web-layout)
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web metadata / CookMobileTabBar strings
+- Mobile customer cook profile remaining copy
+- Cook compliance/listings polish
+- Continue loop until 9:00 AM IST Jul 9
+

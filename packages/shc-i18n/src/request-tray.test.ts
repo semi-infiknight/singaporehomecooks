@@ -39,6 +39,7 @@ describe('cook copy', () => {
 
   it('returns localized cook onboarding strings', () => {
     expect(getCookOnboardingCopy('en').cta).toBe('Go to dashboard');
+    expect(getCookOnboardingCopy('en').body).toContain('compliance');
     expect(getCookOnboardingCopy('zh-Hans').title).toBe('欢迎，家厨');
   });
 });

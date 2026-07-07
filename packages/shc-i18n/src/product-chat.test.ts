@@ -28,5 +28,6 @@ describe('order chat copy', () => {
     expect(customer.title('SHC-1')).toBe('Chat for Order SHC-1');
     expect(cook.empty).toContain('collection time');
     expect(getOrderChatCopy('zh-Hans', 'customer').send).toBe('发送');
+    expect(getOrderChatCopy('en', 'cook').senderLabel('cook')).toBe('Cook');
   });
 });

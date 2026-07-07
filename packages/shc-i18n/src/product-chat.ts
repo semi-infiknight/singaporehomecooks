@@ -48,5 +48,7 @@ export function getOrderChatCopy(locale: ShcLocale, role: OrderChatRole) {
     empty: t(locale, isCook ? 'chat.empty_cook' : 'orders.detail.no_messages'),
     placeholder: t(locale, isCook ? 'chat.placeholder_cook' : 'orders.detail.message_placeholder'),
     send: t(locale, 'orders.detail.send'),
+    senderLabel: (actor: string) =>
+      actor === 'cook' ? t(locale, 'chat.sender_cook') : t(locale, 'chat.sender_customer'),
   };
 }

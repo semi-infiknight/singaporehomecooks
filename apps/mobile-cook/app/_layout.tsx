@@ -37,7 +37,7 @@ function CookNavigator() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(cook)" options={{ headerShown: false }} />
       <Stack.Screen name="(shared)/auth/index" options={{ title: layout.signIn }} />
-      <Stack.Screen name="(shared)/onboarding/index" options={{ title: layout.welcome }} />
+      <Stack.Screen name="(shared)/onboarding/index" options={{ title: layout.onboardingTitle }} />
       <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: layout.orderChat }} />
     </Stack>
   );

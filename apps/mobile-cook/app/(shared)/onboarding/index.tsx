@@ -47,7 +47,7 @@ export default function Onboarding() {
           <SHCBadge variant="heritage">{t('cook.dashboard.payout_badge')}</SHCBadge>
           <SHCBadge variant="success">{copy.hdbBadge}</SHCBadge>
         </View>
-        <Text style={styles.body}>{copy.subtitle}</Text>
+        <Text style={styles.body}>{copy.body}</Text>
         <SHCButton onPress={finish} testID="cook-onboarding-finish-btn" style={styles.cta}>
           <SHCButtonText>{copy.cta}</SHCButtonText>
         </SHCButton>

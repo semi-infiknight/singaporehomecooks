@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
+import { useShcI18n, getWebLayoutCopy } from '@shc/i18n';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -11,6 +12,8 @@ type BeforeInstallPromptEvent = Event & {
 const DISMISS_KEY = 'shc_pwa_install_dismissed';
 
 export function PWAInstallBanner() {
+  const { locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -35,14 +38,14 @@ export function PWAInstallBanner() {
     <div
       className="md:hidden fixed left-3 right-3 z-[60] bottom-[calc(110px+env(safe-area-inset-bottom))] rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal)] p-3 flex items-center gap-3"
       role="region"
-      aria-label="Install app"
+      aria-label={layout.pwaInstallRegion}
     >
       <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
         <Download className="w-5 h-5 text-primary" aria-hidden />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-extrabold text-foreground">Install SHC</p>
-        <p className="text-xs text-muted-foreground">Add to Home Screen for app-like ordering.</p>
+        <p className="text-sm font-extrabold text-foreground">{layout.pwaInstallTitle}</p>
+        <p className="text-xs text-muted-foreground">{layout.pwaInstallBody}</p>
       </div>
       <button
         type="button"
@@ -53,12 +56,12 @@ export function PWAInstallBanner() {
           setDeferred(null);
         }}
       >
-        Install
+        {layout.pwaInstallBtn}
       </button>
       <button
         type="button"
         className="shrink-0 p-1 text-muted-foreground"
-        aria-label="Dismiss install prompt"
+        aria-label={layout.pwaDismissA11y}
         onClick={() => {
           localStorage.setItem(DISMISS_KEY, '1');
           setVisible(false);
