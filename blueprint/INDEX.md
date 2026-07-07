@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Overnight loop iter 48) — `SHCCard appearance="customer"`; mobile profile/checkout Gourmeat cards.
+**Last Updated:** 2026-07-08 (Overnight loop iter 49) — AllergenAckCheckbox Gourmeat; cart minimum hint soft border.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 

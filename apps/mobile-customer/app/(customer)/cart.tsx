@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
 
     backgroundColor: gourmeatColors.primaryLight,
 
-    borderWidth: 2,
+    borderWidth: 1,
 
     borderColor: gourmeatColors.border,
 

@@ -1087,3 +1087,20 @@
 - Web `SHCCard appearance` parity if bento cards need soft borders
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 49 — 2026-07-08 ~04:50 IST
+
+### Implemented
+1. **`AllergenAckCheckbox`** (mobile `@shc/ui`) — Gourmeat 1px border + soft shadow (parity with web checkout)
+2. **Mobile cart** — minimum-order hint `borderWidth` 2 → 1 (Gourmeat)
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- `CollectionSlotPicker` / `PayNowPanel` customer Gourmeat sweep if brutal remnants
+- Web profile wallet bento cards audit
+- Continue loop until 9:00 AM IST Jul 9
+

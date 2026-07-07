@@ -16,7 +16,7 @@ import {
 import { SHCFoodImage } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
-import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography, gourmeatColors, gourmeatShadows } from './theme';
 import { RequestDishExperience } from './request-ux';
 
 export type SHCDishCardData = {
@@ -576,7 +576,7 @@ export function ListingWizardStep({ step, title, children }: { step: number; tit
 export function AllergenAckCheckbox({ checked, onChange, allergens, tier1 }: { checked: boolean; onChange: (v: boolean) => void; allergens?: string[]; tier1?: string[] }) {
   const list = (tier1 || allergens || []).join(', ');
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start', padding: shcSpacing.sm, backgroundColor: colors.surfaceWarning, borderRadius: shcRadii.md, borderWidth: shcBorders.brutal, borderColor: colors.border }} testID="allergen-ack">
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', padding: shcSpacing.sm, backgroundColor: colors.surfaceWarning, borderRadius: shcRadii.md, borderWidth: 1, borderColor: gourmeatColors.border, ...gourmeatShadows.soft }} testID="allergen-ack">
       <View testID="allergen-ack-switch" style={{ marginRight: shcSpacing.sm, padding: 4 }}>
         <Switch
           value={checked}
