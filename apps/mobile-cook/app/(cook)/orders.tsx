@@ -12,6 +12,9 @@ import {
   SHCFadeIn,
   gourmeatColors,
   shcSpacing,
+  shcBorders,
+  shcColors,
+  shcShadows,
 } from '@shc/ui';
 import { useShcI18n, getCookOrderTransitionActions, getCookOrderStatusLabel, getCookOrderDetailCopy } from '@shc/i18n';
 
@@ -127,9 +130,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
     backgroundColor: gourmeatColors.surface,
+    ...shcShadows.brutalSm,
   },
   actionLinkText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text },
 });

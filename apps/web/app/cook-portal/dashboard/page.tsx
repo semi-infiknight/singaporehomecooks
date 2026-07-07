@@ -118,7 +118,7 @@ export default function CookDashboardPage() {
           <p className="text-sm text-muted-foreground text-center py-4">{t('cook.dashboard.no_requests')}</p>
         ) : (
           openReqs.map((r: { id: string; body?: string; party_size?: number; budget_cents?: number; date?: string }) => (
-            <div key={r.id} className="bg-card rounded-xl p-3 mb-3 last:mb-0 shadow-[var(--shc-shadow-soft)]" data-testid={`collab-req-${r.id}`}>
+            <div key={r.id} className="bg-card rounded-xl p-3 mb-3 last:mb-0 border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)]" data-testid={`collab-req-${r.id}`}>
               <p className="font-bold text-sm line-clamp-2">{r.body}</p>
               <div className="flex flex-wrap gap-1.5 mt-2">
                 <SHCBadge variant="heritage">{dashExtras.guestsBadge(r.party_size || '?')}</SHCBadge>

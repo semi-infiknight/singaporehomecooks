@@ -1236,3 +1236,22 @@
 - Web cook-portal remaining soft shadows in nested cards
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 57 — 2026-07-08 ~05:12 IST
+
+### Implemented
+1. **Mobile cook orders** — `actionLink` + dispute `TextInput` use `shcBorders.brutal` + `shcShadows.brutalSm`
+2. **Mobile cook listings** — wizard `inputStyle` border color → `shcColors.border` (width already brutal)
+3. **Web cook dashboard** — collab request nested cards → brutal 2px border (was soft shadow)
+4. **Audit note:** mobile-cook has no profile/settings route; auth screen already uses `shc-input` brutal tokens
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Web `/orders` customer Gourmeat parity
+- Mobile customer profile remaining brutal chrome
+- Continue loop until 9:00 AM IST Jul 9
+

@@ -11,6 +11,9 @@ import {
   SHCErrorBanner,
   gourmeatColors,
   shcSpacing,
+  shcBorders,
+  shcColors,
+  shcShadows,
   useSHCTray,
   SHCTrayAction,
 } from '@shc/ui';
@@ -237,14 +240,15 @@ const styles = StyleSheet.create({
   hint: { marginTop: shcSpacing.sm, fontSize: 12, color: gourmeatColors.textLight, lineHeight: 18 },
   actions: { gap: 8, marginTop: shcSpacing.md, marginBottom: shcSpacing.sm },
   disputeInput: {
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
     borderRadius: 12,
     padding: 10,
     marginTop: shcSpacing.sm,
     minHeight: 76,
     backgroundColor: gourmeatColors.surfaceAlt,
     color: gourmeatColors.text,
+    ...shcShadows.brutalSm,
   },
   footer: { fontSize: 11, marginTop: shcSpacing.md, color: gourmeatColors.textMuted },
 });

@@ -57,7 +57,7 @@ import { useShcI18n, getCookListingsCopy } from '@shc/i18n';
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
-  borderColor: gourmeatColors.border,
+  borderColor: shcColors.border,
   padding: shcSpacing.sm,
   marginBottom: shcSpacing.sm,
   borderRadius: shcRadii.md,
