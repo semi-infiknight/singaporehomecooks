@@ -1,4 +1,4 @@
-# Singapore Home Cooks — Android / APK Build Status Report
+﻿# Singapore Home Cooks — Android / APK Build Status Report
 
 **Date:** 8 July 2026  
 **Session scope:** Customer mobile app (`apps/mobile-customer`) against Railway production  
@@ -13,10 +13,10 @@
 | **Customer PWA (production)** | ✅ Works in Chrome — `https://web-production-9226.up.railway.app` |
 | **Medusa backend (production)** | ✅ Live — `https://medusa-production-d2ba.up.railway.app` |
 | **Local Windows release APK** | ❌ Blocked — CMake path limits + Reanimated new-arch requirement |
-| **EAS cloud preview APK** | ❌ Errored — Install dependencies phase (see below) |
+| **EAS cloud preview APK** | ✅ **FINISHED** — build `2ad24658` (~8 Jul 2026); APK at `C:\Users\mathu\Downloads\SHC-customer-preview.apk` |
 | **Android emulator** | ⚠️ Partial — `emulator-5554` online; ghost `emulator-5562` offline entry |
 
-**Bottom line:** Brother confirmed PWA is fine for now. Native Android should be pursued via **fixed EAS monorepo config** or **WSL/Linux clone**, not local Windows `gradlew assembleRelease`.
+**Bottom line:** Brother confirmed PWA is fine for now. **EAS preview APK succeeded** after lockfile sync (`2ad24658`); local Windows `gradlew assembleRelease` remains blocked — use EAS or WSL/Linux for native builds.
 
 ---
 
@@ -138,6 +138,23 @@ ninja: manifest 'build.ninja' still dirty after 100 tries
 
 ---
 
+### 8. EAS cloud build — **FINISHED** (retry after lockfile fix)
+
+| Field | Value |
+|-------|-------|
+| **Build ID** | `2ad24658-89d8-489c-9bcd-e9d0e41058ed` |
+| **Profile** | `preview` (production Medusa env vars) |
+| **Status (8 Jul 2026)** | **FINISHED** |
+| **APK (local)** | `C:\Users\mathu\Downloads\SHC-customer-preview.apk` |
+| **Artifact URL** | https://expo.dev/artifacts/eas/L7sB6JxjfzIiU99UpvxQcXuc_9EHPtqIkEBugiZb5Ik.apk |
+| **Build URL** | https://expo.dev/accounts/kikalikescows/projects/shc-customer/builds/2ad24658-89d8-489c-9bcd-e9d0e41058ed |
+| **Git commit** | `fe3886d8d2e1b865a9781e49ff5f620ccc981575` |
+| **Queue / build** | ~54 min queue, ~21 min compile (free tier) |
+
+**Fix that unblocked:** `pnpm install` at monorepo root so `pnpm install --frozen-lockfile` passes on EAS; `preview` profile pins `node: 22.16.0` / `pnpm: 11.1.3`.
+
+---
+
 ## Root cause analysis
 
 ### Windows local builds
@@ -167,7 +184,7 @@ ninja: manifest 'build.ninja' still dirty after 100 tries
 
 - ❌ Local `gradlew assembleRelease` on Windows (this machine)
 - ⏳ EAS preview APK (first attempt errored on lockfile; retry pending after fix)
-- ❌ Native app install on emulator (no APK artifact)
+- ⚠️ Native app install on emulator — APK exists locally; `emulator-5562` offline (start AVD + `adb install`)
 - ⚠️ Several PWA Phase 1 items partial/fail (see audit)
 
 ---
@@ -282,8 +299,8 @@ Linux avoids Windows CMAKE_OBJECT_PATH_MAX. Use `~/` short home path. Still need
 - [ ] Read this report and `docs/PR_DRAFT_ANDROID_DEFERRED.md`
 - [ ] Confirm PWA is acceptable customer channel until APK ready
 - [ ] Decide Expo org / project ownership
-- [ ] Fix EAS `preview` profile (node/pnpm/monorepo) and retry build
-- [ ] Do **not** merge claims of "APK ready" — no artifact exists
+- [x] Fix EAS `preview` profile (node/pnpm/monorepo) and retry build — **done** (`2ad24658`)
+- [x] EAS preview APK artifact exists (`2ad24658`; local copy in Downloads)
 - [ ] Verify `.env` not staged (`git status`)
 - [ ] Fix production `og:image` (web app — separate PR)
 - [ ] Plan Mandarin i18n and homepage counters per scope docs

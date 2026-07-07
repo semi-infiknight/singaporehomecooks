@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getProductDetailCopy, getOrderChatCopy } from './product-chat';
+import { getCookProfileCopy } from './cook';
 
 describe('product detail copy', () => {
   it('returns localized PDP strings', () => {
@@ -7,6 +8,13 @@ describe('product detail copy', () => {
     expect(copy.loadingDish).toBe('Loading dish…');
     expect(copy.halal).toBe('Halal');
     expect(getProductDetailCopy('zh-Hans').allergenRequired).toContain('过敏原');
+  });
+
+  it('returns mobile cook profile extras', () => {
+    const copy = getCookProfileCopy('en');
+    expect(copy.menuHighlights).toBe('Menu highlights');
+    expect(copy.viewCart).toBe('View Cart');
+    expect(getCookProfileCopy('zh-Hans').noListings).toContain('暂无');
   });
 });
 

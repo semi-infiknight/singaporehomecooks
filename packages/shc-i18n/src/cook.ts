@@ -194,6 +194,10 @@ export function getCookProfileCopy(locale: ShcLocale) {
       ),
     perPortion: t(locale, 'cook.profile.per_portion'),
     published: t(locale, 'cook.profile.published'),
+    menuHighlights: t(locale, 'cook.profile.menu_highlights'),
+    allListings: t(locale, 'cook.profile.all_listings'),
+    noListings: t(locale, 'cook.profile.no_listings'),
+    viewCart: t(locale, 'cook.profile.view_cart'),
   };
 }
 

@@ -12,17 +12,21 @@ import {
   SHCSectionTitle,
   SHCFoodImage,
   type SHCDishCardData,
+  gourmeatColors,
   shcColors,
   shcRadii,
   shcSpacing,
 } from '@shc/ui';
 import { getDishImageUrl, getCookAvatarUrl, BENTO_ACTION_IMAGES } from '@shc/utils';
+import { useShcI18n, getCookProfileCopy } from '@shc/i18n';
 import { useCook, useDiscovery } from '../../../hooks/useProducts';
 import { getHeritageArchive } from '../../../lib/api-client';
 
 export default function CookProfile() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const insets = useSafeAreaInsets();
+  const { locale } = useShcI18n();
+  const copy = getCookProfileCopy(locale);
   const { data: cook } = useCook(slug || '');
   const { data: allProducts = [] } = useDiscovery('', {});
   const router = useRouter();
@@ -40,7 +44,7 @@ export default function CookProfile() {
     return (
       <View style={styles.loading}>
         <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.lg} />
-        <Text style={{ marginTop: shcSpacing.sm }}>Loading cook…</Text>
+        <Text style={styles.loadingText}>{copy.loading}</Text>
       </View>
     );
   }
@@ -71,14 +75,18 @@ export default function CookProfile() {
       />
 
       {dishRows.length > 0 && (
-        <SHCZomatoDishRowRail title="Menu highlights" dishes={dishRows} onDishPress={(id) => router.push(`/(customer)/product/${id}` as any)} />
+        <SHCZomatoDishRowRail
+          title={copy.menuHighlights}
+          dishes={dishRows}
+          onDishPress={(id) => router.push(`/(customer)/product/${id}` as any)}
+        />
       )}
 
-      <SHCSectionTitle>All listings</SHCSectionTitle>
+      <SHCSectionTitle>{copy.allListings}</SHCSectionTitle>
       {listings.length === 0 && (
         <SHCCard variant="bento-yellow" style={styles.emptyCard}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={72} rounded={shcRadii.md} />
-          <Text style={styles.emptyText}>No active listings</Text>
+          <Text style={styles.emptyText}>{copy.noListings}</Text>
         </SHCCard>
       )}
       <View style={styles.grid}>
@@ -91,7 +99,7 @@ export default function CookProfile() {
 
       {archive.length > 0 && (
         <>
-          <SHCSectionTitle>Heritage archive</SHCSectionTitle>
+          <SHCSectionTitle>{copy.heritageTitle}</SHCSectionTitle>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.archiveRail}>
             {archive.map((a: any, i: number) => (
               <SHCCard key={i} variant="bento-peach" style={styles.archiveCard}>
@@ -105,26 +113,25 @@ export default function CookProfile() {
       )}
 
       <SHCButton onPress={() => router.push('/(customer)/cart' as any)} style={styles.cartBtn}>
-        <SHCButtonText>View Cart</SHCButtonText>
+        <SHCButtonText>{copy.viewCart}</SHCButtonText>
       </SHCButton>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: shcSpacing.xl },
-  loadingEmoji: { fontSize: 48, marginBottom: shcSpacing.sm },
+  loadingText: { marginTop: shcSpacing.sm, fontWeight: '600', color: gourmeatColors.textMuted },
   emptyCard: { alignItems: 'center', padding: shcSpacing.lg },
-  emptyEmoji: { fontSize: 36 },
-  emptyText: { fontWeight: '700', color: shcColors.textLight, marginTop: 4 },
+  emptyText: { fontWeight: '700', color: gourmeatColors.textMuted, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
   gridItem: { width: '48%' },
   archiveRail: { gap: shcSpacing.sm, paddingBottom: shcSpacing.sm },
   archiveCard: { width: 200, minHeight: 120 },
   archiveIcon: { fontSize: 24 },
   archiveTitle: { fontWeight: '800', color: shcColors.heritage, marginTop: 4 },
-  archiveStory: { fontSize: 11, color: shcColors.textLight, marginTop: 4 },
+  archiveStory: { fontSize: 11, color: gourmeatColors.textMuted, marginTop: 4 },
   cartBtn: { marginTop: shcSpacing.lg },
 });

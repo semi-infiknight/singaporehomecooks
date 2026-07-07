@@ -458,3 +458,48 @@
 - Customer cook profile screen strings
 - Rename/copy full APK when file lock clears
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 20 — 2026-07-08 ~03:32 IST
+
+### EAS (build watcher)
+- Build `2ad24658-89d8-489c-9bcd-e9d0e41058ed`: **FINISHED** (preview / Android / SDK 54)
+- **APK downloaded:** `C:\Users\mathu\Downloads\SHC-customer-preview.apk` (~119.7 MB)
+- Artifact: https://expo.dev/artifacts/eas/L7sB6JxjfzIiU99UpvxQcXuc_9EHPtqIkEBugiZb5Ik.apk
+- Build page: https://expo.dev/accounts/kikalikescows/projects/shc-customer/builds/2ad24658-89d8-489c-9bcd-e9d0e41058ed
+- Git commit on build: `fe3886d8` — lockfile sync + preview node/pnpm pin (fix for prior `86b5a197` install failure)
+- Metrics: queue ~54 min, build ~21 min
+- **Emulator install:** skipped — only `emulator-5562` offline in `adb devices` (no `emulator-5554`)
+
+### Next iteration
+- Resume blueprint loop (mobile checkout validation errors, orders subtitle i18n)
+- Optional: start `emulator-5554` and `adb install -r` preview APK
+- Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 21 — 2026-07-08 ~03:35 IST
+
+### Implemented
+1. **Mobile tab/stack titles i18n** — `getCustomerLayoutCopy`; root stack + customer tabs `_layout.tsx` wired (en/zh-Hans)
+2. **Customer cook profile i18n** — mobile `cook/[slug]` uses `getCookProfileCopy` (menu highlights, listings, heritage, view cart)
+3. **UI (brand.md)** — cook profile screen uses `gourmeatColors` background/text; heritage accent via `shcColors.heritage` token
+4. **APK rename** — `SHC-customer-preview-new.apk` → `SHC-customer-preview.apk` copy **succeeded** (file lock cleared)
+
+### Tests
+- `@shc/i18n`: **26 tests** PASS (+2 customer-layout, cook profile extras)
+- mobile-customer typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- Build `2ad24658`: **FINISHED** ✅ — full APK at `SHC-customer-preview.apk`
+
+### Next iteration
+- Mobile profile screen gourmeat token migration (remaining `shcColors` on profile)
+- Web/mobile product detail stack title i18n
+- Optional: emulator APK install
+- Continue loop until 9:00 AM IST Jul 9
+
