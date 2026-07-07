@@ -12,7 +12,7 @@ import {
   SHCButton,
   WalletCard,
   SHCSectionTitle,
-  SHCPageHeader,
+  GourmeatScreenHeader,
   HeritageStoryBanner,
   SHCBadge,
 } from '../components/SHCWebComponents';
@@ -47,7 +47,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
     <SHCCard className="mb-3" variant="customer">
       <div className="flex items-start justify-between gap-3 mb-2">
         <p className="font-bold text-foreground flex-1">{request.body}</p>
-        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>
+        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'} soft>
           {profileCopy.requestStatusLabel(request.status || 'open')}
         </SHCBadge>
       </div>
@@ -95,9 +95,9 @@ export default function Profile() {
   const tier = credits?.tier || 'Silver';
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-10 pb-28 md:pb-10">
       <div className="flex items-start justify-between mb-6">
-        <SHCPageHeader
+        <GourmeatScreenHeader
           title={profileCopy.greeting(user?.name?.split(' ')[0])}
           subtitle={profileCopy.subtitle(tier)}
         />

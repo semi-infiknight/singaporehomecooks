@@ -74,7 +74,7 @@ export default function TrackOrder() {
   const timelineSteps = getLocalizedOrderTimeline(locale);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
+    <div className="max-w-2xl mx-auto px-4 py-10 pb-28 md:pb-10" data-testid="order-tracking-screen">
       <GourmeatScreenHeader
         title={getLocalizedOrderStatus(locale, status)}
         subtitle={formatOrderRef(locale, id)}

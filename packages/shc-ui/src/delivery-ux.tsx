@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows } from './theme';
+import { shcColors, shcRadii, shcSpacing, gourmeatColors, gourmeatShadows } from './theme';
 import { SHCIcon, type SHCIconKey } from './icons';
 import { SHCButton } from './primitives';
 import {
@@ -50,7 +50,7 @@ export function SHCStickyCartBar({
     >
       <View style={stickyCartBarStyles.left}>
         <View style={stickyCartBarStyles.bagCircle}>
-          <SHCIcon name="cart" size={18} color={shcColors.primary} active />
+          <SHCIcon name="cart" size={18} color={gourmeatColors.onDark} active />
         </View>
         <View style={stickyCartBarStyles.copy}>
           <Text style={stickyCartBarStyles.countText} numberOfLines={1}>
@@ -84,18 +84,18 @@ const stickyCartBarStyles = {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: shcColors.primary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    backgroundColor: gourmeatColors.pay,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: shcRadii.lg,
     paddingVertical: shcSpacing.md,
     paddingHorizontal: shcSpacing.md,
     minHeight: 58,
     gap: shcSpacing.sm,
-    ...shcShadows.brutal,
+    ...gourmeatShadows.soft,
   },
   pressed: {
-    backgroundColor: shcColors.primaryDark,
+    backgroundColor: gourmeatColors.payPressed,
   },
   left: {
     flex: 1,
@@ -108,9 +108,9 @@ const stickyCartBarStyles = {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: shcColors.onPrimary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -119,20 +119,20 @@ const stickyCartBarStyles = {
     minWidth: 0,
   },
   countText: {
-    color: shcColors.onPrimary,
+    color: gourmeatColors.onDark,
     fontWeight: '900',
     fontSize: 14,
     letterSpacing: -0.2,
   },
   ctaText: {
-    color: shcColors.onPrimary,
+    color: gourmeatColors.onDark,
     fontWeight: '700',
     fontSize: 11,
     opacity: 0.92,
     marginTop: 1,
   },
   previewText: {
-    color: shcColors.onPrimary,
+    color: gourmeatColors.onDark,
     fontWeight: '600',
     fontSize: 10,
     opacity: 0.85,
@@ -148,9 +148,9 @@ const stickyCartBarStyles = {
     minWidth: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: shcColors.accent,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    backgroundColor: gourmeatColors.primary,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
@@ -158,16 +158,16 @@ const stickyCartBarStyles = {
   badgeText: {
     fontSize: 11,
     fontWeight: '900',
-    color: shcColors.text,
+    color: gourmeatColors.onPrimary,
   },
   totalText: {
-    color: shcColors.onPrimary,
+    color: gourmeatColors.onDark,
     fontWeight: '900',
     fontSize: 17,
     fontVariant: ['tabular-nums'],
   },
   chevron: {
-    color: shcColors.onPrimary,
+    color: gourmeatColors.onDark,
     fontWeight: '900',
     fontSize: 20,
     lineHeight: 20,
@@ -221,15 +221,15 @@ const guestBrowseStyles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: shcSpacing.sm,
-    backgroundColor: shcColors.bentoYellow,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    backgroundColor: gourmeatColors.primaryLight,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
     borderRadius: shcRadii.lg,
     paddingVertical: shcSpacing.md,
     paddingHorizontal: shcSpacing.md,
     marginBottom: shcSpacing.section,
     minHeight: 60,
-    ...shcShadows.brutal,
+    ...gourmeatShadows.soft,
   },
   copyWrap: {
     flex: 1,
@@ -306,13 +306,13 @@ export function SHCTrustStrip({
           key={item.label}
           style={{
             width: '48%',
-            backgroundColor: shcColors.surface,
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
+            backgroundColor: gourmeatColors.surface,
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
             borderRadius: shcRadii.lg,
             padding: shcSpacing.sm,
             alignItems: 'center',
-            ...shcShadows.brutalSm,
+            ...gourmeatShadows.soft,
           }}
         >
           <View
@@ -320,9 +320,9 @@ export function SHCTrustStrip({
               width: 32,
               height: 32,
               borderRadius: 16,
-              backgroundColor: shcColors.bentoMint,
-              borderWidth: shcBorders.brutal,
-              borderColor: shcColors.border,
+              backgroundColor: gourmeatColors.primaryLight,
+              borderWidth: 1,
+              borderColor: gourmeatColors.border,
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 4,
@@ -372,8 +372,8 @@ export function SHCOrderTimeline({
         <View
           style={{
             backgroundColor: shcColors.surfaceError,
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
             borderRadius: shcRadii.md,
             padding: shcSpacing.md,
           }}
@@ -392,9 +392,9 @@ export function SHCOrderTimeline({
                     width: 24,
                     height: 24,
                     borderRadius: 12,
-                    borderWidth: shcBorders.brutal,
-                    borderColor: done || active ? shcColors.primary : shcColors.borderLight,
-                    backgroundColor: done ? shcColors.primary : active ? shcColors.bentoPeach : shcColors.surface,
+                    borderWidth: 1,
+                    borderColor: done || active ? gourmeatColors.primary : gourmeatColors.border,
+                    backgroundColor: done ? gourmeatColors.primary : active ? gourmeatColors.primaryLight : gourmeatColors.surface,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
@@ -457,11 +457,11 @@ export function SHCDishOrderingInfo({
         <View
           style={{
             backgroundColor: shcColors.bentoYellow,
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
             borderRadius: shcRadii.md,
             padding: shcSpacing.md,
-            ...shcShadows.brutalSm,
+            ...gourmeatShadows.soft,
           }}
         >
           <Text style={{ fontSize: 13, fontWeight: '600', fontStyle: 'italic', color: shcColors.heritage }}>{heritageNote}</Text>
@@ -471,11 +471,11 @@ export function SHCDishOrderingInfo({
       <View
         style={{
           backgroundColor: shcColors.surface,
-          borderWidth: shcBorders.brutal,
-          borderColor: shcColors.border,
+          borderWidth: 1,
+          borderColor: gourmeatColors.border,
           borderRadius: shcRadii.lg,
           padding: shcSpacing.md,
-          ...shcShadows.brutalSm,
+          ...gourmeatShadows.card,
         }}
       >
         <Text style={{ fontSize: 14, fontWeight: '900', color: shcColors.text, marginBottom: shcSpacing.sm }}>
@@ -545,12 +545,12 @@ export function SHCFavoriteButton({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: active ? shcColors.bentoPeach : shcColors.surface,
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
+        backgroundColor: active ? gourmeatColors.primaryLight : gourmeatColors.surface,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         alignItems: 'center',
         justifyContent: 'center',
-        ...shcShadows.brutalSm,
+        ...gourmeatShadows.soft,
       }}
       accessibilityRole="button"
       accessibilityLabel={active ? 'Remove from saved dishes' : 'Save dish'}
@@ -586,13 +586,13 @@ export function SHCActiveOrderBanner({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: shcColors.bentoMint,
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
+        backgroundColor: gourmeatColors.primaryLight,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         borderRadius: shcRadii.md,
         padding: shcSpacing.md,
         marginBottom: shcSpacing.section,
-        ...shcShadows.brutalSm,
+        ...gourmeatShadows.soft,
       }}
     >
       <View style={{ flex: 1, paddingRight: shcSpacing.sm }}>

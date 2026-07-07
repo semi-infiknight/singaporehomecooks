@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 45) — mobile request-ux/zomato/food-ux Gourmeat border sweep.
+**Last Updated:** 2026-07-08 (Overnight loop iter 46) — delivery-ux Gourmeat sweep; web profile GourmeatScreenHeader.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

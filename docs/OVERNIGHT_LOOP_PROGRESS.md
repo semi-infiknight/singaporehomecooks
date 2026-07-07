@@ -1030,3 +1030,21 @@
 - Web profile/orders detail remaining brutal chrome
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 46 — 2026-07-08 ~04:43 IST
+
+### Implemented
+1. **`delivery-ux.tsx`** — sticky cart bar (black pay chrome), guest browse bar, trust strip, order timeline, dish ordering info, favorite button, active order banner → Gourmeat 1px + soft shadows
+2. **Web profile** — `GourmeatScreenHeader`; request badge `soft`; mobile bottom padding
+3. **Web orders detail** — bottom tab bar padding (`pb-28`)
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Next iteration
+- Web checkout empty state `GourmeatScreenHeader`
+- `primitives.tsx` mobile customer `SHCButton` appearance prop
+- Continue loop until 9:00 AM IST Jul 9
+
