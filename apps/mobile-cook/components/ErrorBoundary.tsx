@@ -7,6 +7,7 @@ import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { shcColors, SHCButton, SHCButtonText } from '@shc/ui';
 import { SHCErrorCode } from '@shc/types';
+import { useShcI18n, getErrorBoundaryCopy } from '@shc/i18n';
 
 interface Props {
   children: ReactNode;
@@ -19,14 +20,16 @@ interface State {
   errorCode?: SHCErrorCode | string;
 }
 
-export default class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundaryInner extends Component<
+  Props & { copy: ReturnType<typeof getErrorBoundaryCopy> },
+  State
+> {
+  constructor(props: Props & { copy: ReturnType<typeof getErrorBoundaryCopy> }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error) {
-    // Map generic to SHC if possible
     let code: any = 'SHC-GENERIC-001';
     if (error.message?.includes('SHC-')) {
       code = error.message.match(/SHC-[A-Z]+-\d+/)?.[0] || code;
@@ -35,7 +38,6 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    // Observability stub: console + perf for later pino/railway + tracing
     console.error('[SHC-ERROR-BOUNDARY]', error, errorInfo);
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('shc_error_boundary_catch');
@@ -44,35 +46,39 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   handleRetry = () => {
     this.setState({ hasError: false, error: null, errorCode: undefined });
-    // Caller can add reload logic if needed
   };
 
   render() {
     if (this.state.hasError) {
       const code = this.state.errorCode || 'SHC-GENERIC-001';
+      const { copy } = this.props;
       return (
         <View style={{ flex: 1, backgroundColor: shcColors.background, padding: 20, justifyContent: 'center' }}>
           <Text style={{ fontSize: 20, fontWeight: '700', color: shcColors.error, marginBottom: 8 }}>
-            Something went wrong
+            {copy.title}
           </Text>
           <Text style={{ fontSize: 14, color: shcColors.text, marginBottom: 4 }}>
-            Error code: {code}
+            {copy.codeLabel} {code}
           </Text>
           <Text style={{ fontSize: 13, color: shcColors.textLight, marginBottom: 16 }}>
-            {this.state.error?.message || 'An unexpected error occurred. Please retry or restart the flow.'}
+            {this.state.error?.message || copy.message}
           </Text>
-          <Text style={{ fontSize: 11, color: shcColors.textLight, marginBottom: 12 }}>
-            This is logged for ops. (See ERROR_CODES.md)
-          </Text>
+          <Text style={{ fontSize: 11, color: shcColors.textLight, marginBottom: 12 }}>{copy.opsNote}</Text>
           <SHCButton onPress={this.handleRetry}>
-            <SHCButtonText>Retry</SHCButtonText>
+            <SHCButtonText>{copy.retry}</SHCButtonText>
           </SHCButton>
           <Pressable onPress={() => router.replace('/(cook)/dashboard')} style={{ marginTop: 12 }}>
-            <Text style={{ color: shcColors.primary, textAlign: 'center' }}>Go to dashboard</Text>
+            <Text style={{ color: shcColors.primary, textAlign: 'center' }}>{copy.cookDashboard}</Text>
           </Pressable>
         </View>
       );
     }
     return this.props.children;
   }
+}
+
+export default function ErrorBoundary(props: Props) {
+  const { locale } = useShcI18n();
+  const copy = getErrorBoundaryCopy(locale);
+  return <ErrorBoundaryInner {...props} copy={copy} />;
 }

@@ -578,3 +578,29 @@
 - Cook app remaining i18n gaps
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 25 — 2026-07-08 ~03:43 IST
+
+### Implemented
+1. **Web cart i18n** — full `getCartScreenCopy` wiring (guest tray, empty state, labels, loading)
+2. **Web checkout i18n** — validation errors, network/place-order fallbacks, item count, PayNow subtitle, first-order celebration
+3. **Mobile orders index polish** — active count section label; past orders header when history-only
+4. **Cook app i18n** — tab/stack titles via `getCookLayoutCopy`; ErrorBoundary localized; dashboard guests/heritage badges
+
+### Tests
+- `@shc/i18n`: **29 tests** PASS (+1 cart copy)
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web orders list/detail remaining strings
+- Mobile checkout remaining hardcoded copy
+- Cook listings/compliance screen strings
+- Continue loop until 9:00 AM IST Jul 9
+

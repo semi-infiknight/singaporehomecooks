@@ -13,6 +13,13 @@ export function getCheckoutScreenCopy(locale: ShcLocale) {
       t(locale, 'checkout.footer_earnings').replace('{amount}', String(amount)),
     corporateA11y: t(locale, 'checkout.corporate_a11y'),
     tier1Typical: t(locale, 'checkout.tier1_typical'),
+    errorNetwork: t(locale, 'checkout.error.network'),
+    errorPlaceOrder: t(locale, 'checkout.error.place_order'),
+    itemsCount: (count: number) =>
+      t(locale, count === 1 ? 'checkout.items_count' : 'checkout.items_count_plural').replace(
+        '{count}',
+        String(count)
+      ),
   };
 }
 
@@ -21,5 +28,7 @@ export function getOrdersListCopy(locale: ShcLocale) {
     guest: t(locale, 'cart.guest'),
     subtitle: (name: string, updating: boolean) =>
       t(locale, updating ? 'orders.list_subtitle_updating' : 'orders.list_subtitle').replace('{name}', name),
+    inProgressLabel: (count: number) =>
+      t(locale, 'orders.in_progress_count').replace('{count}', String(count)),
   };
 }

@@ -161,6 +161,12 @@ export function getCookLayoutCopy(locale: ShcLocale) {
     signIn: t(locale, 'cook.layout.sign_in'),
     welcome: t(locale, 'cook.layout.welcome'),
     orderChat: t(locale, 'cook.layout.order_chat'),
+    dashboard: t(locale, 'cook.layout.dashboard'),
+    ordersTab: t(locale, 'cook.layout.orders_tab'),
+    listingsTab: t(locale, 'cook.layout.listings_tab'),
+    complianceTab: t(locale, 'cook.layout.compliance_tab'),
+    manageOrder: t(locale, 'cook.layout.manage_order'),
+    earnings: t(locale, 'cook.layout.earnings'),
   };
 }
 
@@ -172,6 +178,11 @@ export function getCookDashboardExtras(locale: ShcLocale) {
     heritageAdded: t(locale, 'cook.dashboard.heritage_added'),
     verifiedBadge: t(locale, 'cook.dashboard.verified_badge'),
     bidDefaultMessage: t(locale, 'cook.dashboard.bid_default_message'),
+    guestsBadge: (count: number | string) =>
+      t(locale, 'cook.dashboard.guests_badge').replace('{count}', String(count)),
+    heritageArchiveBadge: t(locale, 'cook.dashboard.heritage_archive_badge'),
+    heritageStoryTitle: (id: string | number) =>
+      t(locale, 'cook.dashboard.heritage_story_title').replace('{id}', String(id)),
   };
 }
 
@@ -209,5 +220,6 @@ export function getErrorBoundaryCopy(locale: ShcLocale) {
     opsNote: t(locale, 'error.boundary.ops_note'),
     retry: t(locale, 'error.boundary.retry'),
     discover: t(locale, 'error.boundary.discover'),
+    cookDashboard: t(locale, 'error.boundary.cook_dashboard'),
   };
 }

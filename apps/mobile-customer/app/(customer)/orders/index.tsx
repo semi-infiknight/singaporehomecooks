@@ -51,7 +51,11 @@ export default function MyOrdersList() {
 
       {activeOrders.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>{t('orders.in_progress')}</Text>
+          <Text style={styles.sectionLabel}>
+            {activeOrders.length > 1
+              ? listCopy.inProgressLabel(activeOrders.length)
+              : t('orders.in_progress')}
+          </Text>
           {activeOrders.map((o: any) => (
             <GourmeatOrderRow
               key={o.id}
@@ -82,7 +86,7 @@ export default function MyOrdersList() {
         </GourmeatCard>
       )}
 
-      {pastOrders.length > 0 && activeOrders.length > 0 && (
+      {pastOrders.length > 0 && (
         <Text style={styles.sectionLabel}>{t('orders.past')}</Text>
       )}
 

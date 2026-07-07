@@ -193,7 +193,7 @@ export default function CookDashboard() {
           <SHCCard key={r.id} style={styles.collabCard} testID={`collab-req-${r.id}`}>
             <Text style={styles.collabBody} numberOfLines={2}>{r.body}</Text>
             <View style={styles.collabBadges}>
-              <SHCBadge variant="heritage">{r.party_size || '?'} guests</SHCBadge>
+              <SHCBadge variant="heritage">{dashExtras.guestsBadge(r.party_size || '?')}</SHCBadge>
               <SHCBadge variant="default">S${r.budget_cents ? (r.budget_cents / 100).toFixed(0) : '—'}</SHCBadge>
               <SHCBadge variant="default">{r.date}</SHCBadge>
             </View>
@@ -228,7 +228,7 @@ export default function CookDashboard() {
           overlay={
             <View style={styles.heritageOverlay}>
               <SHCIcon name="document" size={22} color={shcColors.onPrimary} active />
-              <SHCBadge variant="heritage">NLB · NHB</SHCBadge>
+              <SHCBadge variant="heritage">{dashExtras.heritageArchiveBadge}</SHCBadge>
             </View>
           }
         />
@@ -237,7 +237,7 @@ export default function CookDashboard() {
             const mod: any = await import('../../lib/api-client');
             if (mod.addHeritageEntry) {
               await mod.addHeritageEntry(user?.id || '', {
-                title: 'New Family Story ' + Date.now(),
+                title: dashExtras.heritageStoryTitle(Date.now()),
                 story: 'HDB kitchen ritual from 1970s — passed to next gen for Hari Raya & gatherings.',
                 photo_stub: 'hdb-kitchen-stub.jpg',
               });

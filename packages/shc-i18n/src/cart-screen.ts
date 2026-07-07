@@ -20,6 +20,15 @@ export function getCartScreenCopy(locale: ShcLocale) {
     clearCart: t(locale, 'cart.clear_cart'),
     checkoutBtn: t(locale, 'cart.checkout_btn'),
     minimumHint: t(locale, 'cart.minimum_hint'),
+    loading: t(locale, 'cart.loading'),
+    keepBrowsing: t(locale, 'cart.keep_browsing'),
+    signInBtn: t(locale, 'auth.sign_in_btn'),
+    signInBodyWeb: t(locale, 'cart.sign_in_body_web'),
+    headerPortions: (count: number) =>
+      t(locale, count === 1 ? 'cart.header_portion' : 'cart.header_portions_plural').replace(
+        '{count}',
+        String(count)
+      ),
   };
 }
 

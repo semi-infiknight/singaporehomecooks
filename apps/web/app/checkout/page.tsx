@@ -25,12 +25,13 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { enforceMinimumOrder } from '@shc/business-rules';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getCheckoutScreenCopy } from '@shc/i18n';
 import { WebPushPromptBanner } from '../components/WebPushOptIn';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const checkoutCopy = getCheckoutScreenCopy(locale);
   const { user, loading: authLoading } = useAuth();
   const { data: cart = { items: [] }, isLoading: cartLoading, isFetching: cartFetching } = useCart();
 
@@ -80,15 +81,15 @@ export default function CheckoutPage() {
     setError(null);
     if (!allergenAck) {
       openAllergenTray();
-      setError({ code: 'SHC-CART-003', message: 'Please acknowledge allergens before placing your order.' });
+      setError({ code: 'SHC-CART-003', message: checkoutCopy.errorAllergenRequired });
       return;
     }
     if (!pdpaConsent) {
-      setError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
+      setError({ code: 'SHC-GENERIC-001', message: checkoutCopy.errorPdpaRequired });
       return;
     }
     if (!selected) {
-      setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
+      setError({ code: 'SHC-AVAIL-001', message: checkoutCopy.errorSlotRequired });
       return;
     }
     const totalCents = Math.round(total * 100);
@@ -122,8 +123,8 @@ export default function CheckoutPage() {
       const err = e as { code?: string; message?: string };
       const message =
         err?.message === 'Failed to fetch'
-          ? 'Could not reach the server. Check your connection and try again.'
-          : err?.message || 'Unable to place order. Please try again.';
+          ? checkoutCopy.errorNetwork
+          : err?.message || checkoutCopy.errorPlaceOrder;
       setError({ code: err?.code, message });
     }
   };
@@ -147,7 +148,7 @@ export default function CheckoutPage() {
           <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
           <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
             <h1 className="text-xl font-black text-white">{t('checkout.order_placed')}</h1>
-            <p className="text-xs font-semibold text-white/90">Ref {orderId} — complete PayNow to confirm</p>
+            <p className="text-xs font-semibold text-white/90">{checkoutCopy.orderPlacedSubtitle(orderId)}</p>
           </div>
         </div>
         <PayNowPanel
@@ -160,7 +161,7 @@ export default function CheckoutPage() {
         <WebPushPromptBanner className="mt-4" />
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
-          message="Your first heritage order — thank you for supporting local home cooks!"
+          message={checkoutCopy.firstOrderCelebration}
           onDone={() => {
             dismissFirstOrderCelebration();
             router.push(`/orders/${orderId}`);
@@ -229,9 +230,7 @@ export default function CheckoutPage() {
 
       <SHCCard className="mb-6 shc-bento-peach">
         <div className="flex justify-between items-center">
-          <span className="text-muted-foreground font-semibold">
-            {items.length} item{items.length !== 1 ? 's' : ''}
-          </span>
+          <span className="text-muted-foreground font-semibold">{checkoutCopy.itemsCount(items.length)}</span>
           <span className="text-2xl font-black tabular-nums font-mono">S${total.toFixed(2)}</span>
         </div>
       </SHCCard>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getFooterCopy, getWebPushCopy } from './footer';
 import { getCheckoutScreenCopy, getOrdersListCopy } from './checkout-screen';
+import { getCartScreenCopy } from './cart-screen';
 
 describe('footer + web push copy', () => {
   it('localizes footer copyright year', () => {
@@ -11,6 +12,14 @@ describe('footer + web push copy', () => {
   it('localizes checkout validation errors', () => {
     const copy = getCheckoutScreenCopy('en');
     expect(copy.errorAllergenRequired).toContain('Allergen');
+    expect(copy.itemsCount(2)).toContain('2');
     expect(getOrdersListCopy('zh-Hans').guest).toBe('访客');
+    expect(getOrdersListCopy('en').inProgressLabel(3)).toContain('3');
+  });
+
+  it('localizes web cart copy', () => {
+    const copy = getCartScreenCopy('zh-Hans');
+    expect(copy.headerPortions(2)).toContain('2');
+    expect(copy.keepBrowsing).toBe('继续浏览');
   });
 });
