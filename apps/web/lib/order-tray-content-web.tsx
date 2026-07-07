@@ -37,11 +37,12 @@ export function SHCOrderReviewTrayContentWeb({
         value={tray.reviewBody}
         onChange={(e) => tray.setReviewBody(e.target.value)}
         placeholder={labels.reviewPlaceholder}
-        className="shc-input w-full mt-2 min-h-[72px] py-2"
+        className="shc-input-gourmeat w-full mt-2 min-h-[72px] py-2"
         data-testid="review-body-input"
       />
       <SHCButton
         className="mt-2.5"
+        appearance="customer"
         disabled={tray.isPending}
         onClick={tray.submit}
         testID="submit-review-btn"
@@ -68,11 +69,12 @@ export function SHCOrderDisputeTrayContentWeb({
         value={tray.disputeNotes}
         onChange={(e) => tray.setDisputeNotes(e.target.value)}
         placeholder={labels.disputePlaceholder}
-        className="shc-input w-full mt-2 min-h-[72px] py-2"
+        className="shc-input-gourmeat w-full mt-2 min-h-[72px] py-2"
         data-testid="dispute-notes-input"
       />
       <SHCButton
         className="mt-2.5"
+        appearance="customer"
         disabled={tray.isPending || !tray.canSubmit}
         onClick={tray.submit}
         testID="submit-dispute-btn"

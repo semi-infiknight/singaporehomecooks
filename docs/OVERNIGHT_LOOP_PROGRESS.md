@@ -1255,3 +1255,22 @@
 - Mobile customer profile remaining brutal chrome
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 58 — 2026-07-08 ~05:15 IST
+
+### Implemented
+1. **Web `/orders`** — empty state `GourmeatCard`; detail chat in `GourmeatCard` + `shc-input-gourmeat`
+2. **Web order trays** — `shc-tray-web` `SHCButton`/`SHCTrayActionWeb` `appearance="customer"`; review/dispute textareas → `shc-input-gourmeat`
+3. **Mobile profile** — explicit `appearance="customer"` on request/notifs cards; bell + logout buttons get `gourmeatShadows.card`
+4. **`brand.md`** — orders chat/trays documented under customer chrome
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Web `/profile` customer Gourmeat parity
+- Mobile customer orders detail header Gourmeat sweep
+- Continue loop until 9:00 AM IST Jul 9
+

@@ -41,6 +41,7 @@ export function OrderTrackingTraySectionWeb({
             secondaryLabel={secondaryLabel}
             onSecondary={onSecondary}
             testID={testID}
+            appearance="customer"
           />
         ),
         renderError: ({ id, message }) => (
@@ -49,6 +50,7 @@ export function OrderTrackingTraySectionWeb({
             primaryLabel={labels.ok}
             onPrimary={dismiss}
             testID={id === 'dispute-error' ? 'dispute-error-tray' : 'review-error-tray'}
+            appearance="customer"
           />
         ),
       }),
@@ -72,12 +74,12 @@ export function OrderTrackingTraySectionWeb({
   return (
     <>
       {showReviewForm ? (
-        <SHCButton className="mt-6 w-full" onClick={openReviewTray} testID="open-review-tray-btn">
+        <SHCButton className="mt-6 w-full" appearance="customer" onClick={openReviewTray} testID="open-review-tray-btn">
           {labels.leaveReview}
         </SHCButton>
       ) : null}
       {showDisputeForm ? (
-        <SHCButton className="mt-6 w-full" variant="outline" onClick={openDisputeTray} testID="open-dispute-tray-btn">
+        <SHCButton className="mt-6 w-full" variant="outline" appearance="customer" onClick={openDisputeTray} testID="open-dispute-tray-btn">
           {labels.reportIssue}
         </SHCButton>
       ) : null}

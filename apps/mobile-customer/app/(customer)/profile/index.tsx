@@ -32,6 +32,8 @@ import {
 
   gourmeatColors,
 
+  gourmeatShadows,
+
 } from '@shc/ui';
 
 import { BENTO_ACTION_IMAGES, favoritesToReorderDishes } from '@shc/utils';
@@ -78,7 +80,7 @@ function MyRequestCard({ request }: { request: any }) {
 
   return (
 
-    <SHCCard variant="customer" style={styles.requestCard}>
+    <SHCCard variant="customer" appearance="customer" style={styles.requestCard}>
 
       <View style={styles.requestHeader}>
 
@@ -480,7 +482,7 @@ export default function Profile() {
 
       {showNotifs && (
 
-        <SHCCard variant="customer" style={styles.notifsCard}>
+        <SHCCard variant="customer" appearance="customer" style={styles.notifsCard}>
 
           <View style={styles.notifsTitleRow}>
 
@@ -543,6 +545,8 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surface,
 
     marginTop: shcSpacing.md,
+
+    ...gourmeatShadows.card,
 
   },
 
@@ -641,6 +645,8 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.primaryLight,
 
     alignItems: 'center',
+
+    ...gourmeatShadows.card,
 
   },
 

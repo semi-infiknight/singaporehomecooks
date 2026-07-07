@@ -25,6 +25,7 @@ export function SHCButton({
   testID,
   className = '',
   type = 'button',
+  appearance = 'default',
 }: {
   children: React.ReactNode;
   onClick?: () => void;
@@ -34,20 +35,31 @@ export function SHCButton({
   testID?: string;
   className?: string;
   type?: 'button' | 'submit';
+  appearance?: 'default' | 'customer';
 }) {
-  const base =
+  const brutalBase =
     'inline-flex items-center justify-center gap-2 font-bold rounded-lg border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:translate-x-px active:translate-y-px active:shadow-none';
+  const customerBase =
+    'inline-flex items-center justify-center gap-2 font-bold rounded-xl border border-border shadow-[var(--shc-shadow-card)] transition-shadow duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+  const base = appearance === 'customer' ? customerBase : brutalBase;
   const sizes: Record<ButtonSize, string> = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2.5 text-sm',
     lg: 'px-6 py-3.5 text-base',
   };
-  const variants: Record<ButtonVariant, string> = {
+  const brutalVariants: Record<ButtonVariant, string> = {
     primary: 'shc-btn-primary',
     outline: 'border-2 border-[var(--shc-border-brutal)] text-primary hover:bg-secondary bg-card',
     accent: 'bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)]',
     ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
   };
+  const customerVariants: Record<ButtonVariant, string> = {
+    primary: 'bg-primary text-primary-foreground border-transparent hover:brightness-105',
+    outline: 'border border-border text-primary hover:bg-secondary bg-card',
+    accent: 'bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)] border border-border',
+    ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
+  };
+  const variants = appearance === 'customer' ? customerVariants : brutalVariants;
   return (
     <button
       type={type}
@@ -205,6 +217,7 @@ export function SHCTrayActionWeb({
   onSecondary,
   destructive,
   testID = 'shc-tray-action',
+  appearance = 'default',
 }: {
   message: string;
   primaryLabel: string;
@@ -213,6 +226,7 @@ export function SHCTrayActionWeb({
   onSecondary?: () => void;
   destructive?: boolean;
   testID?: string;
+  appearance?: 'default' | 'customer';
 }) {
   return (
     <div className="flex flex-col gap-4" data-testid={testID}>
@@ -221,6 +235,7 @@ export function SHCTrayActionWeb({
         className="w-full"
         size="lg"
         variant={destructive ? 'outline' : 'primary'}
+        appearance={appearance}
         onClick={onPrimary}
         testID={`${testID}-primary`}
       >

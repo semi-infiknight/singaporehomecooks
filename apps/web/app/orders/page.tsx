@@ -5,7 +5,7 @@ import { getActiveOrders, isActiveOrderStatus } from '@shc/utils';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
 import { useShcI18n, getOrdersListCopy, getLocalizedOrderStatus } from '@shc/i18n';
-import { GourmeatScreenHeader, GourmeatOrderRow, GourmeatPrimaryButton, SHCEmptyState } from '../components/SHCWebComponents';
+import { GourmeatScreenHeader, GourmeatOrderRow, GourmeatPrimaryButton, GourmeatCard, SHCEmptyState } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
   const { t, locale } = useShcI18n();
@@ -64,7 +64,7 @@ export default function OrdersList() {
       )}
 
       {!isLoading && orders.length === 0 && (
-        <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-card)] p-8 text-center">
+        <GourmeatCard className="p-8 text-center">
           <SHCEmptyState
             title={t('orders.empty_title')}
             action={
@@ -78,7 +78,7 @@ export default function OrdersList() {
               />
             }
           />
-        </div>
+        </GourmeatCard>
       )}
 
       {pastOrders.length > 0 && (

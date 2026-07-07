@@ -15,6 +15,7 @@ import {
   SHCButton,
   SHCSectionTitle,
   GourmeatScreenHeader,
+  GourmeatCard,
   SHCLoading,
   OrderTimeline,
 } from '../../components/SHCWebComponents';
@@ -125,7 +126,7 @@ export default function TrackOrder() {
       <div id="order-chat-section">
         <SHCSectionTitle subtitle={t('orders.detail.chat_subtitle')}>{t('orders.detail.chat_title')}</SHCSectionTitle>
       </div>
-      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-card)]">
+      <GourmeatCard className="p-0 overflow-hidden mb-6">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
             <p className="text-muted-foreground text-center py-8">{t('orders.detail.no_messages')}</p>
@@ -147,7 +148,7 @@ export default function TrackOrder() {
           <input
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
-            className="shc-input flex-1 py-2"
+            className="shc-input-gourmeat flex-1 py-2"
             placeholder={t('orders.detail.message_placeholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && msg.trim()) {
@@ -169,7 +170,7 @@ export default function TrackOrder() {
             {t('orders.detail.send')}
           </SHCButton>
         </div>
-      </div>
+      </GourmeatCard>
 
       {existingReview && (
         <SHCCard className="mt-6" variant="customer" data-testid="order-review-submitted">
