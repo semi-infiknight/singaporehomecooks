@@ -33,7 +33,7 @@
 |----|------|----------------------|
 | BUG-01 | og:image localhost on production | Fixed in code — needs Railway deploy |
 | P1-03 | Homepage live social counters | Fixed in code — **prod audit:** og-image 200; `/store/shc/platform-stats` **404** on live Medusa (needs deploy) |
-| P2-03 | Mandarin i18n at launch | **In progress** — cook profile Gourmeat; `product.view_cook`; WalletCard i18n; customer chrome sweep |
+| P2-03 | Mandarin i18n at launch | **In progress** — search ADD i18n; cook profile Gourmeat; WalletCard/view_cook keys |
 | P1-02 | Dish synonym search depth | **Improved** — 20 SG heritage seeds + bidirectional expansion |
 | P1-09–11 | One-cook cart / PayNow / S$50 min E2E | **Improved** — S$50 min enforced (`SHC-CART-004`); one-cook `SHC-CART-001` fix + cart test |
 | P1-21 | Web push permission flow | **Improved** — permission states + post-order prompt banner |

@@ -272,19 +272,19 @@ export function BentoTile({ href, label, iconKey, imageKey = 'cart', variant = '
   return (
     <Link
       href={href}
-      className={`${bentoVariants[variant]} border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow relative overflow-hidden h-24 block`}
+      className={`${bentoVariants[variant]} ${gourmeatDiscoverBorder} rounded-xl ${gourmeatDiscoverShadow} hover:shadow-[var(--shc-shadow-card)] transition-shadow relative overflow-hidden h-24 block`}
     >
       <Image src={bgImage} alt="" fill className="object-cover opacity-85" sizes="33vw" />
       <div className="relative z-10 flex flex-col justify-between h-full p-3">
         <div className="flex justify-between items-start">
           <span
-            className="w-8 h-8 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]"
+            className={`w-8 h-8 rounded-full bg-card ${gourmeatDiscoverBorder} flex items-center justify-center ${gourmeatDiscoverShadow}`}
             aria-hidden
           >
             <Icon className="w-4 h-4 text-primary" />
           </span>
           {badge !== undefined && badge !== 0 && (
-            <span className="min-w-[22px] h-[22px] flex items-center justify-center text-[11px] font-black bg-primary text-primary-foreground border-2 border-[var(--shc-border-brutal)] rounded-full px-1">
+            <span className={`min-w-[22px] h-[22px] flex items-center justify-center text-[11px] font-black bg-primary text-primary-foreground ${gourmeatDiscoverBorder} rounded-full px-1`}>
               {badge}
             </span>
           )}
@@ -695,7 +695,7 @@ export function CheckoutStepper({
             <React.Fragment key={step.id}>
               <div className="flex-1 flex flex-col items-center min-w-0">
                 <div
-                  className={`w-7 h-7 rounded-full border-2 border-[var(--shc-border-brutal)] flex items-center justify-center text-xs font-black shadow-[var(--shc-shadow-brutal-sm)] ${
+                  className={`w-7 h-7 rounded-full ${gourmeatDiscoverBorder} flex items-center justify-center text-xs font-black ${gourmeatDiscoverShadow} ${
                     done ? 'bg-primary text-primary-foreground' : active ? 'bg-[var(--shc-bento-peach)] text-primary' : 'bg-card text-muted-foreground'
                   }`}
                 >
@@ -725,11 +725,13 @@ export function SearchResultRow({
   onAdd?: () => void;
   href: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const imgUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 border-b border-[var(--shc-border-brutal)]/30 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 px-3 border-b border-border/30 last:border-0">
       <Link href={href} className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border-2 border-[var(--shc-border-brutal)]">
+        <div className={`relative w-12 h-12 shrink-0 rounded-lg overflow-hidden ${gourmeatDiscoverBorder}`}>
           <Image src={imgUrl} alt="" fill className="object-cover" sizes="48px" />
         </div>
         <div className="min-w-0 flex-1">
@@ -742,10 +744,10 @@ export function SearchResultRow({
         <button
           type="button"
           onClick={onAdd}
-          className="shrink-0 px-3 py-1.5 text-xs font-black text-primary border-2 border-primary rounded-lg bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:bg-secondary"
+          className={`shrink-0 px-3 py-1.5 text-xs font-black text-primary border border-primary rounded-lg bg-card ${gourmeatDiscoverShadow} hover:bg-secondary`}
           data-testid={`search-add-${product.id}`}
         >
-          ADD
+          {homeCopy.dishAdd}
         </button>
       )}
     </div>
@@ -1423,12 +1425,12 @@ export function GuestBrowseBar({
   const { locale } = useShcI18n();
   const homeCopy = getDiscoverHomeCopy(locale);
   const ctaClass =
-    'shc-btn-primary inline-flex items-center justify-center min-w-[96px] px-4 py-2.5 text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0';
+    `inline-flex items-center justify-center min-w-[96px] px-4 py-2.5 text-sm font-black ${gourmeatDiscoverBorder} rounded-lg ${gourmeatDiscoverShadow} hover:shadow-[var(--shc-shadow-card)] transition-shadow shrink-0 bg-primary text-primary-foreground`;
 
   return (
     <div
       data-testid={testID}
-      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] border-2 border-[var(--shc-border-brutal)] rounded-xl px-4 py-4 mb-[var(--shc-section-gap)] min-h-[60px] shadow-[var(--shc-shadow-brutal)]"
+      className={`flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] ${gourmeatDiscoverBorder} rounded-xl px-4 py-4 mb-[var(--shc-section-gap)] min-h-[60px] ${gourmeatDiscoverCardShadow}`}
     >
       <div className="flex-1 min-w-0 pr-2">
         <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">{homeCopy.guestBrowseTitle}</p>
@@ -2191,7 +2193,7 @@ export function VisualBentoTile({
           ? 'bg-[var(--shc-bento-yellow)]'
           : 'bg-card';
   const inner = (
-    <div className={`relative h-28 rounded-2xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] ${bg}`}>
+    <div className={`relative h-28 rounded-2xl overflow-hidden ${gourmeatDiscoverBorder} ${gourmeatDiscoverShadow} ${bg}`}>
       <Image src={imageUrl} alt="" fill className="object-cover opacity-80" sizes="50vw" />
       <div className="absolute inset-0 bg-[rgba(36,24,18,0.35)] flex flex-col justify-end p-3">
         {badge != null && (
@@ -2428,7 +2430,7 @@ export function SHCCelebrationWeb({
 
   return (
     <div
-      className={`fixed left-4 right-4 top-[30%] z-[300] pointer-events-none flex flex-col items-center bg-card/95 backdrop-blur-sm border-2 border-[var(--shc-border-brutal)] rounded-2xl p-6 shadow-[var(--shc-shadow-brutal)] ${
+      className={`fixed left-4 right-4 top-[30%] z-[300] pointer-events-none flex flex-col items-center bg-card/95 backdrop-blur-sm ${gourmeatDiscoverBorder} rounded-2xl p-6 ${gourmeatDiscoverCardShadow} ${
         exiting ? 'shc-celebration-exit' : reduce ? '' : 'shc-celebration-enter'
       }`}
       data-testid={testID}

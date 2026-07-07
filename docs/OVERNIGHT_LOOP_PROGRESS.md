@@ -957,3 +957,20 @@
 - `SearchResultsDropdown` / `DishRowCard` remaining brutal if any
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 42 — 2026-07-08 ~04:33 IST
+
+### Implemented
+1. **Home/discover chrome Gourmeat** — `BentoTile`, `VisualBentoTile`, `GuestBrowseBar`, `CheckoutStepper`, celebration toast soft borders
+2. **SearchResultRow** — Gourmeat image/add button; `discover.dishAdd` i18n replaces hardcoded "ADD"
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- GourmeatPayButton / bottom nav remaining brutal offsets
+- Orders list web Gourmeat pass
+- Continue loop until 9:00 AM IST Jul 9
+
