@@ -447,10 +447,12 @@ export function GourmeatFloatingTabBar({
         marginBottom: shcSpacing.sm,
         borderRadius: gourmeatRadii.nav,
         backgroundColor: gourmeatColors.nav,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
         flexDirection: 'row',
         paddingVertical: shcSpacing.sm,
         paddingHorizontal: shcSpacing.xs,
-        ...gourmeatShadows.nav,
+        ...gourmeatShadows.soft,
       }}
     >
       {tabs.map((tab) => {
@@ -520,6 +522,8 @@ export function GourmeatStickyCartBar({
   countLabel,
   totalLabel,
   previewName,
+  subtitle = 'View cart · PayNow →',
+  accessibilityLabel,
   onPress,
   testID = 'sticky-cart-bar',
 }: {
@@ -527,32 +531,35 @@ export function GourmeatStickyCartBar({
   countLabel: string;
   totalLabel: string;
   previewName?: string;
+  subtitle?: string;
+  accessibilityLabel?: string;
   onPress: () => void;
   testID?: string;
 }) {
   if (itemCount <= 0) return null;
   const badge = itemCount > 99 ? '99+' : String(itemCount);
+  const a11y = accessibilityLabel ?? `View cart, ${countLabel}, ${totalLabel}`;
 
   return (
     <Pressable
       onPress={onPress}
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={`View cart, ${countLabel}, ${totalLabel}`}
+      accessibilityLabel={a11y}
       style={({ pressed }) => ({
         marginHorizontal: shcSpacing.sm,
         marginBottom: shcSpacing.sm,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
+        backgroundColor: pressed ? gourmeatColors.payPressed : gourmeatColors.pay,
         borderRadius: gourmeatRadii.lg,
-        borderWidth: 3,
-        borderColor: gourmeatColors.borderDark,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
         paddingVertical: shcSpacing.md,
         paddingHorizontal: shcSpacing.md,
         minHeight: 58,
-        ...gourmeatShadows.nav,
+        ...gourmeatShadows.soft,
       })}
     >
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, minWidth: 0 }}>
@@ -561,21 +568,21 @@ export function GourmeatStickyCartBar({
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: gourmeatColors.onPrimary,
-            borderWidth: 2,
-            borderColor: gourmeatColors.borderDark,
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.2)',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <SHCIcon name="cart" size={20} color={gourmeatColors.primary} active />
+          <SHCIcon name="cart" size={20} color={gourmeatColors.onDark} active />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ fontSize: 15, fontWeight: '900', color: gourmeatColors.onPrimary }} numberOfLines={1}>
+          <Text style={{ fontSize: 15, fontWeight: '900', color: gourmeatColors.onDark }} numberOfLines={1}>
             {countLabel}
           </Text>
           <Text style={{ fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.95)', marginTop: 1 }} numberOfLines={1}>
-            View cart · PayNow →
+            {subtitle}
           </Text>
           {previewName ? (
             <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)', marginTop: 2 }} numberOfLines={1}>
@@ -590,18 +597,18 @@ export function GourmeatStickyCartBar({
             minWidth: 26,
             height: 26,
             borderRadius: 13,
-            backgroundColor: gourmeatColors.accent,
-            borderWidth: 2,
-            borderColor: gourmeatColors.borderDark,
+            backgroundColor: gourmeatColors.primary,
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.2)',
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: 5,
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.text }}>{badge}</Text>
+          <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.onPrimary }}>{badge}</Text>
         </View>
-        <Text style={{ fontSize: 17, fontWeight: '900', color: gourmeatColors.onPrimary }}>{totalLabel}</Text>
-        <Text style={{ fontSize: 20, fontWeight: '900', color: gourmeatColors.onPrimary }}>›</Text>
+        <Text style={{ fontSize: 17, fontWeight: '900', color: gourmeatColors.onDark }}>{totalLabel}</Text>
+        <Text style={{ fontSize: 20, fontWeight: '900', color: gourmeatColors.onDark }}>›</Text>
       </View>
     </Pressable>
   );
@@ -613,6 +620,7 @@ export function GourmeatPayButton({
   onPress,
   disabled,
   loading,
+  processingLabel = 'Processing…',
   testID = 'gourmeat-pay-btn',
 }: {
   label?: string;
@@ -620,6 +628,7 @@ export function GourmeatPayButton({
   onPress?: () => void;
   disabled?: boolean;
   loading?: boolean;
+  processingLabel?: string;
   testID?: string;
 }) {
   return (
@@ -630,6 +639,8 @@ export function GourmeatPayButton({
       style={({ pressed }) => ({
         backgroundColor: disabled ? gourmeatColors.textMuted : pressed ? gourmeatColors.payPressed : gourmeatColors.pay,
         borderRadius: gourmeatRadii.md,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.08)',
         paddingVertical: 16,
         paddingHorizontal: shcSpacing.lg,
         flexDirection: 'row',
@@ -641,7 +652,7 @@ export function GourmeatPayButton({
       })}
     >
       <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>
-        {loading ? 'Processing…' : label}
+        {loading ? processingLabel : label}
       </Text>
       {amount && !loading ? (
         <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>{amount}</Text>
@@ -669,6 +680,8 @@ export function GourmeatOrderSummaryCard({
       style={{
         backgroundColor: gourmeatColors.surface,
         borderRadius: gourmeatRadii.lg,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         padding: shcSpacing.md,
         ...gourmeatShadows.card,
       }}

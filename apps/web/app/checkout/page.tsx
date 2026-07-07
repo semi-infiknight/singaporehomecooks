@@ -228,7 +228,7 @@ export default function CheckoutPage() {
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
 
-      <SHCCard className="mb-6 shc-bento-peach">
+      <SHCCard className="mb-6 shc-bento-peach" variant="customer">
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground font-semibold">{checkoutCopy.itemsCount(items.length)}</span>
           <span className="text-2xl font-black tabular-nums font-mono">S${total.toFixed(2)}</span>

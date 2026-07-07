@@ -992,3 +992,22 @@
 - Mobile customer Gourmeat parity check (`@shc/ui` gourmeat.tsx)
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 44 — 2026-07-08 ~04:38 IST
+
+### Implemented
+1. **Web checkout** — order summary `SHCCard variant="customer"` (Gourmeat bento peach card)
+2. **Mobile `@shc/ui` Gourmeat parity** — `GourmeatStickyCartBar` black pay chrome + soft borders (matches web iter 43); `GourmeatFloatingTabBar` soft shadow; `GourmeatPayButton` `processingLabel` prop + border; `GourmeatOrderSummaryCard` border
+3. **Mobile customer** — `CustomerTabBar` wires `stickyCartSubtitle`/`stickyCartA11y` i18n; cart passes `copy.processing`
+4. **Customer tray** — `tray.tsx` sheet/action buttons Gourmeat soft borders (no brutal)
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Next iteration
+- `request-ux` / `zomato` mobile brutal border sweep (customer flows)
+- Web `SHCPageHeader` → GourmeatScreenHeader on checkout empty state
+- Continue loop until 9:00 AM IST Jul 9
+

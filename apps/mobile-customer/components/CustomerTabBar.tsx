@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
 import { summarizeCart } from '@shc/utils';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getWebLayoutCopy } from '@shc/i18n';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
 import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
@@ -23,7 +23,8 @@ const HIDE_TAB_BAR = new Set(['request', 'location', 'checkout', 'product/[id]',
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
   const { user } = useAuth();
   const { notifyTabChange } = useTabDirection();
   const { showGuestAuthTray } = useGuestAuthTray();
@@ -78,6 +79,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
           countLabel={summary.countLabel}
           totalLabel={summary.totalLabel}
           previewName={summary.previewName}
+          subtitle={layout.stickyCartSubtitle}
+          accessibilityLabel={layout.stickyCartA11y(summary.countLabel, summary.totalLabel)}
           onPress={openCart}
         />
       </View>
@@ -102,6 +105,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
           countLabel={summary.countLabel}
           totalLabel={summary.totalLabel}
           previewName={summary.previewName}
+          subtitle={layout.stickyCartSubtitle}
+          accessibilityLabel={layout.stickyCartA11y(summary.countLabel, summary.totalLabel)}
           onPress={openCart}
         />
       )}

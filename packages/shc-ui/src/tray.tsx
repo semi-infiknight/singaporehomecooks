@@ -22,7 +22,7 @@ import {
   currentTray,
   shouldReduceMotion,
 } from './family-values-core';
-import { gourmeatColors, shcBorders, shcColors, shcRadii, shcShadows, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatShadows, shcColors, shcRadii, shcSpacing } from './theme';
 import { SHCIcon } from './icons';
 
 export type TrayContentInput = React.ReactNode | (() => React.ReactNode);
@@ -211,10 +211,10 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surface,
     borderTopLeftRadius: shcRadii.lg,
     borderTopRightRadius: shcRadii.lg,
-    borderWidth: shcBorders.brutal,
-    borderColor: gourmeatColors.text,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
     borderBottomWidth: 0,
-    ...shcShadows.brutal,
+    ...gourmeatShadows.card,
   },
   handle: {
     alignSelf: 'center',
@@ -252,8 +252,9 @@ const styles = StyleSheet.create({
     paddingVertical: shcSpacing.md,
     borderRadius: shcRadii.md,
     alignItems: 'center',
-    borderWidth: shcBorders.brutal,
-    borderColor: gourmeatColors.text,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    ...gourmeatShadows.soft,
   },
   actionDestructive: { backgroundColor: shcColors.surfaceError },
   actionBtnText: { fontWeight: '800', fontSize: 15, color: shcColors.onPrimary },

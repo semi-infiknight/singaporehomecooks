@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 43) — StickyCartBar/GourmeatPayButton Gourmeat; orders list + bottom nav.
+**Last Updated:** 2026-07-08 (Overnight loop iter 44) — checkout SHCCard customer; mobile Gourmeat sticky cart/tray parity.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
