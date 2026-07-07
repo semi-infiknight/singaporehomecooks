@@ -870,3 +870,21 @@
 - Web product PDP remaining brutal borders
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 37 — 2026-07-08 ~04:19 IST
+
+### Implemented
+1. **`SHCCard variant="customer"`** — Gourmeat 1px border + `--shc-shadow-card`; `SHCBadge soft` prop; wired on profile, orders detail, product PDP, wallet, empty state
+2. **Customer form chrome** — `AllergenAckCheckbox` + `CollectionSlotPicker` Gourmeat borders + `getCheckoutScreenCopy` i18n (en/zh-Hans); `CalorieBadge` soft borders
+3. **PDP / orders / search** — qty steppers soft borders; order chat panel card shadow; search guest subtitle + `GourmeatPrimaryButton` back
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- `SHCButton` customer appearance for checkout/profile CTAs
+- Cook-portal keeps default brutal `SHCCard` (unchanged)
+- Continue loop until 9:00 AM IST Jul 9
+

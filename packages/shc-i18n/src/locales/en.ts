@@ -727,6 +727,10 @@ export const en = {
   'checkout.error.network': 'Could not reach the server. Check your connection and try again.',
   'checkout.error.place_order': 'Unable to place order. Please try again.',
   'checkout.corporate_flag_note': 'Corporate/group order — invoice stub for ops.',
+  'checkout.allergen_ack_label':
+    'I acknowledge the allergens listed for this dish. I understand this is prepared in a home kitchen and cross-contamination is possible.',
+  'checkout.collection_slot_hint': "Pick-up from the cook's HDB — address shared before your slot",
+  'checkout.collection_slot_empty': 'No collection slots available right now. Try another dish or check back soon.',
   'checkout.items_count': '{count} item',
   'checkout.items_count_plural': '{count} items',
   'wallet.home_credits': 'Home Credits',

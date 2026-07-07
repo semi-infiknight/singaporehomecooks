@@ -8,17 +8,18 @@ import { useAuth } from '../../lib/useAuth';
 import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
 import { useFavorites } from '../../lib/useFavorites';
 import { filterDiscoverProducts } from '@shc/utils';
-import { useShcI18n, getLocalizedOccasions } from '@shc/i18n';
+import { useShcI18n, getLocalizedOccasions, getOrdersListCopy } from '@shc/i18n';
 import {
-  SHCButton,
-  SHCPageHeader,
   GourmeatDishCard,
+  GourmeatPrimaryButton,
+  SHCPageHeader,
   SearchResultsDropdown,
   type DishCardProduct,
 } from '../components/SHCWebComponents';
 
 export default function SearchPage() {
   const { t, locale } = useShcI18n();
+  const listCopy = getOrdersListCopy(locale);
   const router = useRouter();
   const { user } = useAuth();
   const [q, setQ] = useState('');
@@ -46,7 +47,7 @@ export default function SearchPage() {
     <div className="max-w-3xl mx-auto px-4 py-8 pb-28">
       <SHCPageHeader
         title={t('search.title')}
-        subtitle={t('search.subtitle').replace('{name}', user?.name || 'Guest')}
+        subtitle={t('search.subtitle').replace('{name}', user?.name || listCopy.guest)}
       />
       <input
         type="search"
@@ -123,11 +124,9 @@ export default function SearchPage() {
         ))}
       </div>
 
-      <div className="mt-6 flex gap-3">
-        <SHCButton variant="outline" onClick={() => router.back()}>
-          {t('search.back')}
-        </SHCButton>
-        <Link href="/" className="text-sm font-semibold text-primary self-center">
+      <div className="mt-6 flex gap-3 items-center">
+        <GourmeatPrimaryButton label={t('search.back')} variant="outline" onClick={() => router.back()} />
+        <Link href="/" className="text-sm font-semibold text-primary">
           {t('search.discover_home')}
         </Link>
       </div>

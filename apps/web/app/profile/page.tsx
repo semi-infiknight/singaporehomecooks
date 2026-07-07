@@ -44,7 +44,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
   const pendingBids = (bids as BidRow[]).filter((bid) => bid.status === 'pending');
 
   return (
-    <SHCCard className="mb-3">
+    <SHCCard className="mb-3" variant="customer">
       <div className="flex items-start justify-between gap-3 mb-2">
         <p className="font-bold text-foreground flex-1">{request.body}</p>
         <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>
@@ -157,7 +157,7 @@ export default function Profile() {
 
       <SHCSectionTitle>{t('wallet.my_requests')}</SHCSectionTitle>
       {myRequests.length === 0 ? (
-        <SHCCard>
+        <SHCCard variant="customer">
           <p className="text-sm text-muted-foreground font-semibold">{t('wallet.no_requests')}</p>
           <Link href="/request" className="inline-block mt-3">
             <SHCButton size="sm" variant="outline">
@@ -174,7 +174,7 @@ export default function Profile() {
       )}
 
       <SHCSectionTitle>{t('wallet.notifications')}</SHCSectionTitle>
-      <SHCCard>
+      <SHCCard variant="customer">
         {notifs.length === 0 ? (
           <div className="text-center py-6">
             <span className="text-3xl" aria-hidden>

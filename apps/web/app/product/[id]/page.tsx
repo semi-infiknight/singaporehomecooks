@@ -144,20 +144,20 @@ export default function ProductDetail() {
         </p>
 
         <div className="flex flex-wrap gap-2 my-4">
-          <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>
+          <SHCBadge variant="heritage" soft>{product.cuisine}</SHCBadge>
           <CalorieBadge calories={displayCal} />
-          {product.halal && <SHCBadge variant="success">{copy.halal}</SHCBadge>}
-          {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
+          {product.halal && <SHCBadge variant="success" soft>{copy.halal}</SHCBadge>}
+          {product.festive_timing && <SHCBadge soft>{product.festive_timing}</SHCBadge>}
         </div>
 
         {product.heritage_note && (
-          <SHCCard className="mb-6 shc-bento-yellow py-3 px-4">
+          <SHCCard className="mb-6 shc-bento-yellow py-3 px-4" variant="customer">
             <p className="text-sm text-foreground leading-snug font-medium italic line-clamp-3">{product.heritage_note}</p>
           </SHCCard>
         )}
 
         <SHCSectionTitle subtitle={copy.ingredientsSubtitle}>{copy.ingredientsTitle}</SHCSectionTitle>
-        <SHCCard className="rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
+        <SHCCard variant="customer">
           {tier1.length > 0 && (
             <div className="mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-destructive">{copy.allergenContains}</span>
@@ -177,7 +177,7 @@ export default function ProductDetail() {
             </div>
           )}
           {Array.isArray(product.ingredients) && product.ingredients.length > 0 && (
-            <div className="mt-4 pt-4 border-t-2 border-[var(--shc-border-brutal)]">
+            <div className="mt-4 pt-4 border-t border-border">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{copy.ingredientsLabel}</span>
               <ul className="text-sm mt-2 space-y-1 text-muted-foreground font-medium">
                 {product.ingredients.map((ing: { name?: string; qty?: string }, i: number) => (
@@ -204,7 +204,7 @@ export default function ProductDetail() {
           <button
             type="button"
             onClick={() => setQty(Math.max(minQty, effectiveQty - 1))}
-            className="w-10 h-10 rounded-lg border-2 border-[var(--shc-border-brutal)] flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-brutal-sm)]"
+            className="w-10 h-10 rounded-lg border border-border flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-soft)]"
             aria-label={copy.decreaseQty}
           >
             <Minus className="w-4 h-4" />
@@ -213,7 +213,7 @@ export default function ProductDetail() {
           <button
             type="button"
             onClick={() => setQty(effectiveQty + 1)}
-            className="w-10 h-10 rounded-lg border-2 border-[var(--shc-border-brutal)] flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-brutal-sm)]"
+            className="w-10 h-10 rounded-lg border border-border flex items-center justify-center hover:bg-secondary transition-colors shadow-[var(--shc-shadow-soft)]"
             aria-label={copy.increaseQty}
           >
             <Plus className="w-4 h-4" />

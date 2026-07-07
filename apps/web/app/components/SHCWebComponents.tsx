@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, getCheckoutScreenCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -123,15 +123,19 @@ export function SHCCard({
   children,
   className = '',
   hover = false,
+  variant = 'default',
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { hover?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement> & { hover?: boolean; variant?: 'default' | 'customer' }) {
+  const base =
+    variant === 'customer'
+      ? `bg-card border border-border rounded-2xl p-5 shadow-[var(--shc-shadow-card)]${
+          hover ? ' transition-shadow hover:brightness-[0.99]' : ''
+        }`
+      : `bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl p-5 shadow-[var(--shc-shadow)]${
+          hover ? ' transition-shadow hover:shadow-[var(--shc-shadow-lg)]' : ''
+        }`;
   return (
-    <div
-      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl p-5 shadow-[var(--shc-shadow)] ${
-        hover ? 'transition-shadow hover:shadow-[var(--shc-shadow-lg)]' : ''
-      } ${className}`}
-      {...props}
-    >
+    <div className={`${base} ${className}`} {...props}>
       {children}
     </div>
   );
@@ -140,9 +144,12 @@ export function SHCCard({
 export function SHCBadge({
   children,
   variant = 'default',
+  soft = false,
 }: {
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'error' | 'heritage';
+  /** Gourmeat customer skin — 1px border */
+  soft?: boolean;
 }) {
   const styles: Record<string, string> = {
     default: 'bg-secondary text-foreground',
@@ -153,7 +160,9 @@ export function SHCBadge({
   };
   return (
     <span
-      className={`inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full border-2 border-[var(--shc-border-brutal)] ${styles[variant]}`}
+      className={`inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full ${
+        soft ? 'border border-border' : 'border-2 border-[var(--shc-border-brutal)]'
+      } ${styles[variant]}`}
     >
       {children}
     </span>
@@ -488,7 +497,7 @@ export function ZomatoOrderRow({
     <Link href={href} data-testid={`order-row-${orderId}`}>
       <SHCCard hover className="p-0 overflow-hidden">
         <div className="flex gap-3 p-3">
-          <div className="relative w-[72px] h-[72px] shrink-0 rounded-lg overflow-hidden border-2 border-[var(--shc-border-brutal)]">
+          <div className="relative w-[72px] h-[72px] shrink-0 rounded-lg overflow-hidden border border-border">
             <Image src={imgUrl} alt={dishName} fill className="object-cover" sizes="72px" />
           </div>
           <div className="min-w-0 flex-1">
@@ -1101,7 +1110,7 @@ export function SHCEmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <SHCCard className="text-center py-12 shc-bento-peach">
+    <SHCCard className="text-center py-12 shc-bento-peach" variant="customer">
       <p className="font-bold text-foreground text-lg">{title}</p>
       {description && <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -1137,8 +1146,10 @@ export function AllergenAckCheckbox({
   onChange: (v: boolean) => void;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const checkoutCopy = getCheckoutScreenCopy(locale);
   return (
-    <label className="flex items-start gap-3 text-sm cursor-pointer p-4 bg-[var(--shc-surface-alt)] border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)]">
+    <label className="flex items-start gap-3 text-sm cursor-pointer p-4 bg-[var(--shc-surface-alt)] border border-border rounded-lg shadow-[var(--shc-shadow-soft)]">
       <input
         type="checkbox"
         checked={checked}
@@ -1147,10 +1158,7 @@ export function AllergenAckCheckbox({
         className="mt-0.5 w-4 h-4 accent-primary rounded"
         aria-required="true"
       />
-      <span className="text-foreground leading-relaxed font-medium">
-        I acknowledge the allergens listed for this dish. I understand this is prepared in a home kitchen and
-        cross-contamination is possible.
-      </span>
+      <span className="text-foreground leading-relaxed font-medium">{checkoutCopy.allergenAckLabel}</span>
     </label>
   );
 }
@@ -1177,7 +1185,7 @@ export function CreditBadge({ balance }: { balance: number }) {
 
 export function WalletCard({ balance, tier = 'Silver' }: { balance: number; tier?: string }) {
   return (
-    <SHCCard className="shc-bento-mint">
+    <SHCCard className="shc-bento-mint" variant="customer">
       <div className="flex justify-between items-start">
         <div>
           <div className="text-sm font-semibold text-muted-foreground">Home Credits</div>
@@ -1281,15 +1289,15 @@ export function CollectionSlotPicker({
   selected: { date: string; slot: string } | null;
   onSelect: (d: string, s: string) => void;
 }) {
+  const { locale } = useShcI18n();
+  const checkoutCopy = getCheckoutScreenCopy(locale);
   return (
     <div>
-      <p className="text-sm text-muted-foreground mb-3 font-medium">
-        Pick-up from the cook&apos;s HDB — address shared before your slot
-      </p>
+      <p className="text-sm text-muted-foreground mb-3 font-medium">{checkoutCopy.collectionSlotHint}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {slots.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-2 py-4 text-center bg-secondary rounded-lg border-2 border-[var(--shc-border-brutal)] font-medium">
-            No collection slots available right now. Try another dish or check back soon.
+          <p className="text-sm text-muted-foreground col-span-2 py-4 text-center bg-secondary rounded-lg border border-border font-medium">
+            {checkoutCopy.collectionSlotEmpty}
           </p>
         )}
         {slots.map((s, i) => {
@@ -1299,10 +1307,10 @@ export function CollectionSlotPicker({
               key={i}
               type="button"
               onClick={() => onSelect(s.date, s.slot)}
-              className={`text-left p-3 border-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`text-left p-3 border rounded-lg text-sm font-semibold transition-all shadow-[var(--shc-shadow-soft)] ${
                 isSelected
-                  ? 'border-[var(--shc-border-brutal)] bg-primary text-primary-foreground shadow-[var(--shc-shadow-brutal-sm)]'
-                  : 'border-[var(--shc-border-brutal)] hover:bg-secondary bg-card shadow-[var(--shc-shadow-brutal-sm)]'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border hover:bg-secondary bg-card'
               }`}
               data-testid={`slot-${i}`}
             >
@@ -1588,8 +1596,8 @@ export function CalorieBadge({ calories }: { calories: number }) {
   const label =
     level === 'light' ? homeCopy.calorieLight : level === 'moderate' ? homeCopy.calorieModerate : homeCopy.calorieHearty;
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card">
-      <span className={`w-2.5 h-2.5 rounded-full border border-[var(--shc-border-brutal)] ${dotClass}`} aria-hidden />
+    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full border border-border bg-card`}>
+      <span className={`w-2.5 h-2.5 rounded-full border border-border ${dotClass}`} aria-hidden />
       {label} · {homeCopy.calorieApprox(calories)}
     </span>
   );

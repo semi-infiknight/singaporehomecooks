@@ -16,6 +16,9 @@ export function getCheckoutScreenCopy(locale: ShcLocale) {
     errorNetwork: t(locale, 'checkout.error.network'),
     errorPlaceOrder: t(locale, 'checkout.error.place_order'),
     corporateFlagNote: t(locale, 'checkout.corporate_flag_note'),
+    allergenAckLabel: t(locale, 'checkout.allergen_ack_label'),
+    collectionSlotHint: t(locale, 'checkout.collection_slot_hint'),
+    collectionSlotEmpty: t(locale, 'checkout.collection_slot_empty'),
     itemsCount: (count: number) =>
       t(locale, count === 1 ? 'checkout.items_count' : 'checkout.items_count_plural').replace(
         '{count}',

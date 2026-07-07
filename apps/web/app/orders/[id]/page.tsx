@@ -86,7 +86,7 @@ export default function TrackOrder() {
         <p className="text-[11px] font-bold text-[var(--shc-success)] mb-3">{t('orders.detail.refreshing')}</p>
       )}
 
-      <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
+      <SHCCard className="mb-6" variant="customer">
         <OrderTimeline
           status={status}
           live={isActiveOrderStatus(status)}
@@ -96,7 +96,7 @@ export default function TrackOrder() {
         />
       </SHCCard>
 
-      <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
+      <SHCCard className="mb-6" variant="customer">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-muted-foreground">{t('orders.detail.collection')}</span>
@@ -125,7 +125,7 @@ export default function TrackOrder() {
       <div id="order-chat-section">
         <SHCSectionTitle subtitle={t('orders.detail.chat_subtitle')}>{t('orders.detail.chat_title')}</SHCSectionTitle>
       </div>
-      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-brutal-sm)]">
+      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-card)]">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
             <p className="text-muted-foreground text-center py-8">{t('orders.detail.no_messages')}</p>
@@ -171,7 +171,7 @@ export default function TrackOrder() {
       </div>
 
       {existingReview && (
-        <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-review-submitted">
+        <SHCCard className="mt-6" variant="customer" data-testid="order-review-submitted">
           <SHCSectionTitle>{t('orders.detail.your_review')}</SHCSectionTitle>
           <p className="text-[var(--shc-accent)] text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
           {existingReview.body ? <p className="text-sm text-muted-foreground mt-2">{existingReview.body}</p> : null}
@@ -192,7 +192,7 @@ export default function TrackOrder() {
       />
 
       {disputes.length > 0 && (
-        <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
+        <SHCCard className="mt-6" variant="customer" data-testid="order-dispute-submitted">
           <SHCSectionTitle>{t('orders.detail.issue_reported')}</SHCSectionTitle>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">
             {disputes[0].status === 'open'

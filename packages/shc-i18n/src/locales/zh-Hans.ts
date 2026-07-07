@@ -727,6 +727,10 @@ export const zhHans: Record<MessageKey, string> = {
   'checkout.error.network': '无法连接服务器。请检查网络后重试。',
   'checkout.error.place_order': '无法下单。请重试。',
   'checkout.corporate_flag_note': '企业/团体订单 — 运营发票存根。',
+  'checkout.allergen_ack_label':
+    '我已确认本菜品所列过敏原。我理解这是在家庭厨房制作，可能存在交叉污染风险。',
+  'checkout.collection_slot_hint': '在厨师组屋自取 — 时段前 2 小时公布具体地址',
+  'checkout.collection_slot_empty': '暂无自取时段。请换一道菜或稍后再试。',
   'checkout.items_count': '{count} 件商品',
   'checkout.items_count_plural': '{count} 件商品',
   'wallet.home_credits': '家厨积分',
