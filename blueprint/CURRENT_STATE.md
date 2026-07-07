@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 26) — Web orders list i18n; cook compliance/listings defaults.
+**Last Updated:** 2026-07-08 (Overnight loop iter 27) — Discover home i18n; wallet profile + cook earnings copy.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

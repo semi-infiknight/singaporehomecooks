@@ -12,3 +12,4 @@ export * from './footer';
 export * from './cart-screen';
 export * from './checkout-screen';
 export * from './customer-layout';
+export * from './discover-home';

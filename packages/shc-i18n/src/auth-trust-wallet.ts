@@ -33,9 +33,29 @@ export function getTrustSafetyOnboardingCopy(locale: ShcLocale) {
 }
 
 export function getWalletProfileCopy(locale: ShcLocale) {
+  const statusKeys: Record<string, MessageKey> = {
+    open: 'request.status.open',
+    matched: 'request.status.matched',
+    pending: 'request.status.pending',
+    closed: 'request.status.closed',
+  };
   return {
     guest: t(locale, 'cart.guest'),
     subtitle: (tier: string) => t(locale, 'wallet.profile_subtitle').replace('{tier}', tier),
     notificationsA11y: t(locale, 'wallet.notifications'),
+    unreadPrefix: t(locale, 'wallet.unread_prefix'),
+    requestMeta: (partySize?: number, budgetCents?: number) => {
+      if (partySize && budgetCents) {
+        return t(locale, 'wallet.request_meta')
+          .replace('{size}', String(partySize))
+          .replace('{amount}', String(Math.round(budgetCents / 100)));
+      }
+      if (partySize) {
+        return t(locale, 'wallet.request_pax_only').replace('{size}', String(partySize));
+      }
+      return t(locale, 'wallet.open_budget');
+    },
+    requestStatusLabel: (status: string) =>
+      statusKeys[status] ? t(locale, statusKeys[status]) : status,
   };
 }

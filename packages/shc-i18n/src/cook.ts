@@ -133,6 +133,8 @@ export function getCookEarningsCopy(locale: ShcLocale) {
     expenseFailedBody: t(locale, 'cook.earnings.expense_failed_body'),
     expenseInvalidTitle: t(locale, 'cook.earnings.expense_invalid_title'),
     expenseInvalidBody: t(locale, 'cook.earnings.expense_invalid_body'),
+    irasBadge: t(locale, 'cook.earnings.iras_badge'),
+    defaultCategory: t(locale, 'cook.earnings.default_category'),
   };
 }
 
@@ -160,6 +162,10 @@ export function getCookOrderDetailCopy(locale: ShcLocale) {
     footer: t(locale, 'cook.order_detail.footer'),
     transitionFailed: t(locale, 'cook.order_detail.transition_failed'),
     cancel: t(locale, 'cook.order_detail.cancel'),
+    orderTitle: (id: string, dishName?: string) =>
+      dishName || t(locale, 'cook.order_detail.fallback_title').replace('{id}', id),
+    disputeOpen: t(locale, 'orders.detail.dispute_open'),
+    disputeOther: t(locale, 'orders.detail.dispute_other'),
   };
 }
 

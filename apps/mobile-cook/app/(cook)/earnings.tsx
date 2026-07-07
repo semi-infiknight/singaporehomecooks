@@ -39,7 +39,7 @@ export default function Earnings() {
     queryFn: listCookExpenses,
   });
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCategory, setExpenseCategory] = useState('ingredients');
+  const [expenseCategory, setExpenseCategory] = useState(copy.defaultCategory);
   const expenseMut = useMutation({
     mutationFn: createCookExpense,
     onSuccess: () => {
@@ -140,7 +140,7 @@ export default function Earnings() {
             <Text style={styles.statLabel}>{copy.recordedYear}</Text>
             <Text style={styles.statValue}>S${expenseTotal}</Text>
           </View>
-          <SHCBadge variant="heritage">IRAS</SHCBadge>
+          <SHCBadge variant="heritage">{copy.irasBadge}</SHCBadge>
         </View>
         <View style={styles.expenseForm}>
           <TextInput

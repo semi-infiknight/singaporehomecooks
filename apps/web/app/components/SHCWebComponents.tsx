@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -606,7 +606,7 @@ export function DishRowCard({
 }
 
 export function DishRowRail({
-  title = 'Top picks for you',
+  title,
   products,
   onDishPress,
   testID = 'dish-row-rail',
@@ -616,10 +616,13 @@ export function DishRowRail({
   onDishPress?: (id: string) => void;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
+  const railTitle = title ?? homeCopy.topPicks;
   if (products.length === 0) return null;
   return (
     <div data-testid={testID}>
-      {title ? <h2 className="text-base font-black text-foreground mb-2">{title}</h2> : null}
+      {railTitle ? <h2 className="text-base font-black text-foreground mb-2">{railTitle}</h2> : null}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
         {products.map((p, i) => (
           <DishRowCard
@@ -627,8 +630,8 @@ export function DishRowRail({
             product={p}
             href={onDishPress ? undefined : `/product/${p.id}`}
             onPress={onDishPress ? () => onDishPress(p.id) : undefined}
-            offerLabel={i === 0 ? 'POPULAR' : i === 1 ? '20% OFF' : undefined}
-            offerText={i === 0 ? '★ Top rated home cook this week' : i === 1 ? '20% off on orders above S$80' : undefined}
+            offerLabel={i === 0 ? homeCopy.dishRowPopular : i === 1 ? '20% OFF' : undefined}
+            offerText={i === 0 ? homeCopy.dishRowOfferTop : i === 1 ? homeCopy.dishRowOfferDiscount : undefined}
           />
         ))}
       </div>
@@ -785,8 +788,8 @@ export function SearchResultsPanel({
 }
 
 export function HeritageStoryBanner({
-  title = 'Home cooks, heritage recipes',
-  body = '127+ verified cooks across Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
+  title,
+  body,
   imageKey = 'listings' as keyof typeof BENTO_ACTION_IMAGES,
   href = '/content/trust',
 }: {
@@ -795,6 +798,10 @@ export function HeritageStoryBanner({
   imageKey?: keyof typeof BENTO_ACTION_IMAGES;
   href?: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
+  const bannerTitle = title ?? homeCopy.heritageTitle;
+  const bannerBody = body ?? homeCopy.heritageBody;
   return (
     <Link
       href={href}
@@ -804,8 +811,8 @@ export function HeritageStoryBanner({
       <Image src={BENTO_ACTION_IMAGES[imageKey]} alt="" fill className="object-cover" sizes="100vw" />
       <div className="absolute inset-0 bg-[rgba(36,24,18,0.5)] flex items-end justify-between p-4 gap-3">
         <div>
-          <h2 className="text-base font-black text-white">{title}</h2>
-          <p className="text-[11px] font-semibold text-white/90 mt-1 max-w-md leading-snug">{body}</p>
+          <h2 className="text-base font-black text-white">{bannerTitle}</h2>
+          <p className="text-[11px] font-semibold text-white/90 mt-1 max-w-md leading-snug">{bannerBody}</p>
         </div>
         <Home className="w-7 h-7 text-white shrink-0" aria-hidden />
       </div>
@@ -814,6 +821,8 @@ export function HeritageStoryBanner({
 }
 
 export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
+  const { locale } = useShcI18n();
+  const requestCopy = getRequestDishCopy(locale);
   return (
     <Link href={href} className="block group mt-8" data-testid="open-request-page-btn">
       <div className="relative min-h-[180px] overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-transform group-hover:-translate-y-0.5">
@@ -824,10 +833,8 @@ export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
               <ChefHat className="w-6 h-6 text-primary" aria-hidden />
             </span>
             <div className="flex-1">
-              <span className="font-black text-base block">Request a custom dish</span>
-              <span className="text-sm text-muted-foreground font-medium">
-                4-step wizard — occasion, inspiration, gathering, review
-              </span>
+              <span className="font-black text-base block">{requestCopy.homeCtaTitle}</span>
+              <span className="text-sm text-muted-foreground font-medium">{requestCopy.homeCtaSubtitle}</span>
             </div>
             <span className="text-primary font-black text-lg">→</span>
           </div>
@@ -1363,6 +1370,8 @@ export function GuestBrowseBar({
   onSignInClick?: () => void;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const ctaClass =
     'shc-btn-primary inline-flex items-center justify-center min-w-[96px] px-4 py-2.5 text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0';
 
@@ -1372,18 +1381,16 @@ export function GuestBrowseBar({
       className="flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] border-2 border-[var(--shc-border-brutal)] rounded-xl px-4 py-4 mb-[var(--shc-section-gap)] min-h-[60px] shadow-[var(--shc-shadow-brutal)]"
     >
       <div className="flex-1 min-w-0 pr-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Guest browsing</p>
-        <p className="text-sm font-extrabold text-foreground leading-snug mt-0.5">
-          Sign in to checkout &amp; track orders
-        </p>
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">{homeCopy.guestBrowseTitle}</p>
+        <p className="text-sm font-extrabold text-foreground leading-snug mt-0.5">{homeCopy.guestBrowseBody}</p>
       </div>
       {onSignInClick ? (
         <button type="button" onClick={onSignInClick} className={ctaClass}>
-          Sign in
+          {homeCopy.signInBtn}
         </button>
       ) : (
         <Link href="/login" className={ctaClass}>
-          Sign in
+          {homeCopy.signInBtn}
         </Link>
       )}
     </div>
@@ -1550,14 +1557,17 @@ export function FavoriteButton({
 }
 
 export function CalorieBadge({ calories }: { calories: number }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const level = calories < 400 ? 'light' : calories < 550 ? 'moderate' : 'hearty';
   const dotClass =
     level === 'light' ? 'shc-cal-light' : level === 'moderate' ? 'shc-cal-moderate' : 'shc-cal-hearty';
-  const label = level === 'light' ? 'Light' : level === 'moderate' ? 'Moderate' : 'Hearty';
+  const label =
+    level === 'light' ? homeCopy.calorieLight : level === 'moderate' ? homeCopy.calorieModerate : homeCopy.calorieHearty;
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card">
       <span className={`w-2.5 h-2.5 rounded-full border border-[var(--shc-border-brutal)] ${dotClass}`} aria-hidden />
-      {label} · ~{calories} cal
+      {label} · {homeCopy.calorieApprox(calories)}
     </span>
   );
 }
@@ -1621,7 +1631,7 @@ export function GourmeatHomeHeader({
 export function GourmeatSearchBar({
   value,
   onChange,
-  placeholder = 'Search dishes, cooks, occasions…',
+  placeholder,
   onFilterPress,
   testID = 'search-input',
 }: {
@@ -1631,6 +1641,9 @@ export function GourmeatSearchBar({
   onFilterPress?: () => void;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
+  const searchPlaceholder = placeholder ?? homeCopy.searchPlaceholder;
   return (
     <div className="flex items-center gap-2 mb-4">
       <div className="flex-1 flex items-center bg-card rounded-full px-4 py-3 shadow-[var(--shc-shadow-soft)] min-w-0">
@@ -1639,7 +1652,7 @@ export function GourmeatSearchBar({
           type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={searchPlaceholder}
           data-testid={testID}
           className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground/70 min-w-0"
         />
@@ -1650,7 +1663,7 @@ export function GourmeatSearchBar({
           onClick={onFilterPress}
           className="w-11 h-11 shrink-0 rounded-xl bg-card shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
           data-testid="gourmeat-filter-btn"
-          aria-label="Advanced search"
+          aria-label={homeCopy.filterA11y}
         >
           <Settings2 className="w-5 h-5 text-foreground" />
         </button>

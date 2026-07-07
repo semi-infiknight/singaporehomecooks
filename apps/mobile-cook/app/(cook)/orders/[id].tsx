@@ -158,7 +158,7 @@ export default function CookManageOrder() {
       testID="cook-order-detail-screen"
     >
       <GourmeatScreenHeader
-        title={dishName || `Order ${order.id}`}
+        title={copy.orderTitle(String(order.id), dishName)}
         subtitle={getCookOrderStatusLabel(locale, String(order.shc_status || ''))}
         onBack={() => router.back()}
       />
@@ -208,7 +208,8 @@ export default function CookManageOrder() {
         <GourmeatCard testID="cook-order-dispute-submitted">
           <Text style={styles.cardTitle}>{copy.issueReported}</Text>
           <Text style={styles.cardMeta}>
-            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            {disputes[0].status === 'open' ? copy.disputeOpen : disputes[0].status || copy.disputeOpen} ·{' '}
+            {disputes[0].type || copy.disputeOther}
           </Text>
           {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
         </GourmeatCard>

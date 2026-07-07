@@ -631,3 +631,30 @@
 - Mobile profile/wallet remaining copy
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 27 — 2026-07-08 ~03:48 IST
+
+### Implemented
+1. **`getDiscoverHomeCopy`** — homepage headline, search, empty state, guest bar, heritage banner, dish rail offers, calorie badges (en/zh-Hans)
+2. **Web discover + SHCWebComponents** — `GuestBrowseBar`, `RequestDishHomeCTA`, `HeritageStoryBanner`, `DishRowRail`, `CalorieBadge`, `GourmeatSearchBar` use i18n; `page.tsx` wired
+3. **Mobile wallet/profile** — request meta/status labels, unread prefix via extended `getWalletProfileCopy`
+4. **Cook orders/earnings** — order title fallback, dispute labels, IRAS badge + default expense category
+5. **UI** — customer app root splash `gourmeatColors`
+
+### Tests
+- `@shc/i18n`: **30 tests** PASS (+1 discover-home)
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web AppHeader / layout remaining strings
+- Cook onboarding remaining copy
+- Mobile cook profile / shared chat strings
+- Continue loop until 9:00 AM IST Jul 9
+

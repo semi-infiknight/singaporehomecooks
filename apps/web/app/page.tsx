@@ -25,7 +25,7 @@ import {
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
-import { useShcI18n, getLocalizedOccasions, getOccasionDishesTitle, getLocalizedOrderStatus, getActiveOrderBannerLabels, getRequestDishCopy } from '@shc/i18n';
+import { useShcI18n, getLocalizedOccasions, getOccasionDishesTitle, getLocalizedOrderStatus, getActiveOrderBannerLabels, getRequestDishCopy, getDiscoverHomeCopy } from '@shc/i18n';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -58,6 +58,7 @@ function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: numb
 export default function DiscoverHome() {
   const router = useRouter();
   const { t, locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const { user } = useAuth();
   const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
@@ -138,7 +139,7 @@ export default function DiscoverHome() {
     imageUrl: c.imageUrl,
   }));
 
-  const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
+  const headerLocation = collectionLocation ? locationLabel : homeCopy.setLocation;
   const isGuest = !user;
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
@@ -172,21 +173,21 @@ export default function DiscoverHome() {
       {/* Mobile: Gourmeat chrome (AppHeader is hidden below md). Desktop: search/location live in AppHeader. */}
       <div className="md:hidden">
         <GourmeatHomeHeader
-          headline="Hungry? Order & Eat."
+          headline={homeCopy.headline}
           locationLabel={headerLocation}
-          locationHint="Collect from"
+          locationHint={homeCopy.collectFrom}
           avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
           locationHref="/location"
         />
         <GourmeatSearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Search dishes, cooks, occasions…"
+          placeholder={homeCopy.searchPlaceholder}
           onFilterPress={() => router.push('/search')}
         />
       </div>
       <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-4">
-        Hungry? Order &amp; Eat.
+        {homeCopy.headline}
       </h1>
 
       {query.trim().length > 0 && (
@@ -283,7 +284,7 @@ export default function DiscoverHome() {
 
       {evidenceMode && productList.length > 0 && (
         <div className="mb-4" data-testid="evidence-dish-card">
-          <GourmeatSectionTitle title="Featured dish (evidence)" />
+          <GourmeatSectionTitle title={homeCopy.evidenceTitle} />
           <GourmeatDishCard
             product={productList.find((p) => p.id === OFFLINE_DISCOVER_PRODUCT.id) ?? productList[0]}
             isFavorite={isFavorite(OFFLINE_DISCOVER_PRODUCT.id)}
@@ -301,8 +302,8 @@ export default function DiscoverHome() {
       {isLoading && <SHCSkeletonGrid />}
       {!isLoading && gridProducts.length === 0 && !query.trim() && (
         <SHCEmptyState
-          title="No dishes match your search"
-          description="Try a different category or clear your filters."
+          title={homeCopy.emptyTitle}
+          description={homeCopy.emptyDescription}
           action={
             <SHCButton
               variant="outline"
@@ -312,7 +313,7 @@ export default function DiscoverHome() {
                 setCuisineFilter('');
               }}
             >
-              Clear filters
+              {homeCopy.clearFilters}
             </SHCButton>
           }
         />
@@ -336,7 +337,7 @@ export default function DiscoverHome() {
 
       <div className="mt-8 text-center md:block hidden">
         <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline">
-          Trust &amp; Safety →
+          {homeCopy.trustLink}
         </Link>
       </div>
     </section>
