@@ -78,7 +78,7 @@ function MyRequestCard({ request }: { request: any }) {
 
   return (
 
-    <SHCCard style={styles.requestCard}>
+    <SHCCard variant="customer" style={styles.requestCard}>
 
       <View style={styles.requestHeader}>
 
@@ -410,7 +410,7 @@ export default function Profile() {
 
 
 
-      <SHCCard variant="bento-peach" style={styles.trustCard}>
+      <SHCCard variant="bento-peach" appearance="customer" style={styles.trustCard}>
 
         <SHCIcon name="compliance" size={28} color={gourmeatColors.primary} active />
 
@@ -424,7 +424,7 @@ export default function Profile() {
 
       <Link href="/(customer)/orders" asChild>
 
-        <SHCButton style={styles.actionBtn}>
+        <SHCButton appearance="customer" style={styles.actionBtn}>
 
           <SHCButtonText>{t('wallet.view_orders')}</SHCButtonText>
 
@@ -434,7 +434,7 @@ export default function Profile() {
 
       <Link href="/(shared)/onboarding" asChild>
 
-        <SHCButton variant="outline" style={styles.actionBtn} testID="trust-safety-link">
+        <SHCButton variant="outline" appearance="customer" style={styles.actionBtn} testID="trust-safety-link">
 
           <SHCButtonText variant="outline">{t('nav.trust_safety')}</SHCButtonText>
 
@@ -444,7 +444,7 @@ export default function Profile() {
 
       <Link href="/(customer)/search" asChild>
 
-        <SHCButton variant="outline" style={styles.actionBtn} testID="advanced-search-link">
+        <SHCButton variant="outline" appearance="customer" style={styles.actionBtn} testID="advanced-search-link">
 
           <SHCButtonText variant="outline">{t('wallet.advanced_search')}</SHCButtonText>
 
@@ -476,7 +476,7 @@ export default function Profile() {
 
       {showNotifs && (
 
-        <SHCCard style={styles.notifsCard}>
+        <SHCCard variant="customer" style={styles.notifsCard}>
 
           <View style={styles.notifsTitleRow}>
 

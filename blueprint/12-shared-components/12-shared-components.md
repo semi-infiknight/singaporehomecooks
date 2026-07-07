@@ -100,7 +100,7 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 | Component | Purpose |
 |---|---|
 | `SHCButton` / `SHCButtonText` | Primary, outline, accent, ghost variants with brutal shadow press |
-| `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow` variants |
+| `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow`; `variant="customer"` (Gourmeat surface); `appearance="customer"` softens borders on bento tints without changing cook-app brutal default |
 | `SHCBadge` | Status chips (success, warning, error, heritage) |
 | `SHCInput` | Brutal-bordered input shell |
 | `SHCSearchBar` | Full-width search with icon |

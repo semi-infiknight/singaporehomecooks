@@ -771,18 +771,20 @@ export function GourmeatScreenHeader({
   title,
   subtitle,
   onBack,
+  backLabel = '← Back',
   testID,
 }: {
   title: string;
   subtitle?: string;
   onBack?: () => void;
+  backLabel?: string;
   testID?: string;
 }) {
   return (
     <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
       {onBack && (
         <Pressable onPress={onBack} style={{ marginBottom: shcSpacing.sm }} testID="gourmeat-back-btn">
-          <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>← Back</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>{backLabel}</Text>
         </Pressable>
       )}
       <Text style={{ fontSize: 28, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.5 }}>{title}</Text>

@@ -197,6 +197,7 @@ export default function Checkout() {
           title={t('checkout.title')}
           subtitle={t('checkout.empty_subtitle')}
           onBack={() => router.back()}
+          backLabel={t('checkout.back_cart')}
         />
         <GourmeatPrimaryButton
           label={t('orders.browse_cta')}
@@ -243,7 +244,7 @@ export default function Checkout() {
           {orderSummaryCard}
           <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
           <Text style={styles.paynowHint}>{t('checkout.paynow_hint')}</Text>
-          <SHCCard variant="bento-yellow" style={styles.footerCard}>
+          <SHCCard variant="bento-yellow" appearance="customer" style={styles.footerCard}>
             <Text style={styles.footerText}>
               {checkoutCopy.footerEarnings(Math.floor(amountDue * 0.85))}
             </Text>
@@ -274,7 +275,7 @@ export default function Checkout() {
           {t('checkout.portions_hdb').replace('{count}', String(itemCount))}
         </Text>
 
-        <SHCCard variant="bento-mint" style={styles.sectionCard}>
+        <SHCCard variant="bento-mint" appearance="customer" style={styles.sectionCard}>
           <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.collection_point')}</SHCSectionTitle>
           {collectionLocation ? (
             <Text style={styles.locationBody}>{formatLocationLabel(collectionLocation)}</Text>
@@ -309,12 +310,12 @@ export default function Checkout() {
         )}
 
         <SHCFadeIn>
-          <SHCCard style={styles.sectionCard}>
+          <SHCCard variant="customer" style={styles.sectionCard}>
             <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.collection_section_mobile')}</SHCSectionTitle>
             <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
           </SHCCard>
 
-          <SHCCard style={styles.sectionCard}>
+          <SHCCard variant="customer" style={styles.sectionCard}>
             <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.allergen_section_mobile')}</SHCSectionTitle>
             <AllergenAckCheckbox
               checked={allergenAck}
@@ -324,7 +325,7 @@ export default function Checkout() {
             />
           </SHCCard>
 
-          <SHCCard style={styles.sectionCard}>
+          <SHCCard variant="customer" style={styles.sectionCard}>
             <SHCSectionTitle style={styles.sectionTitle}>{t('checkout.pdpa_section_mobile')}</SHCSectionTitle>
             <Pressable
               onPress={() => setPdpaConsent(!pdpaConsent)}
@@ -340,7 +341,7 @@ export default function Checkout() {
           </SHCCard>
 
           {creditBal > 0 && (
-            <SHCCard variant="bento-mint" style={styles.sectionCard} testID="credits-apply-section">
+            <SHCCard variant="bento-mint" appearance="customer" style={styles.sectionCard} testID="credits-apply-section">
               <CreditBadge balance={creditBal} tier={creditsData?.tier as 'Bronze' | 'Silver' | 'Gold' | undefined} />
               <Text style={styles.creditsHint}>
                 {checkoutCopy.creditsAvailableHint(creditBal)}
@@ -372,7 +373,7 @@ export default function Checkout() {
 
           {error && <SHCErrorBanner code={error.code} message={error.message} />}
 
-          <SHCCard variant="bento-yellow" style={styles.footerCard}>
+          <SHCCard variant="bento-yellow" appearance="customer" style={styles.footerCard}>
             <Text style={styles.footerText}>
               {checkoutCopy.footerEarnings(Math.floor(amountDue * 0.85))}
             </Text>

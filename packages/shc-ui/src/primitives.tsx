@@ -127,7 +127,7 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
 
 SHCButton.displayName = 'SHCButton';
 
-export function SHCCard({ children, style, variant = 'default', ...props }: any) {
+export function SHCCard({ children, style, variant = 'default', appearance = 'default', ...props }: any) {
   const bg =
     variant === 'bento-mint'
       ? shcColors.bentoMint
@@ -138,7 +138,7 @@ export function SHCCard({ children, style, variant = 'default', ...props }: any)
           : variant === 'customer'
             ? gourmeatColors.surface
             : shcColors.surface;
-  const isCustomer = variant === 'customer';
+  const isCustomer = variant === 'customer' || appearance === 'customer';
 
   return (
     <View

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
@@ -210,6 +211,12 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad">
+      <Link
+        href="/cart"
+        className="text-sm font-bold text-primary mb-4 inline-block"
+      >
+        {t('checkout.back_cart')}
+      </Link>
       <div className="relative h-24 overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
@@ -222,12 +229,6 @@ export default function CheckoutPage() {
           </p>
         </div>
       </div>
-      <a
-        href="/cart"
-        className="text-sm font-semibold text-muted-foreground hover:text-primary mb-4 inline-block"
-      >
-        {t('checkout.back_cart')}
-      </a>
       <p className="text-muted-foreground mb-4 text-sm">{t('checkout.steps_hint')}</p>
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />

@@ -1066,3 +1066,24 @@
 - Web checkout main flow `GourmeatScreenHeader` back link i18n
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 48 — 2026-07-08 ~04:47 IST
+
+### Implemented
+1. **`SHCCard appearance="customer"`** — Gourmeat 1px border + soft shadow on bento tints without changing cook-app brutal default
+2. **Mobile profile** — request/notifications `variant="customer"`; trust bento `appearance="customer"`; action buttons `appearance="customer"`
+3. **Mobile checkout** — collection/allergen/PDPA `variant="customer"`; bento mint/yellow `appearance="customer"`; empty state `backLabel={t('checkout.back_cart')}`
+4. **`GourmeatScreenHeader`** — mobile `backLabel` prop (i18n parity with web)
+5. **Web checkout main flow** — back-to-cart link moved above hero; `Link` + `checkout.back_cart` (Gourmeat bold primary style)
+6. **`brand.md`** — customer chrome API note (`SHCCard` variant/appearance, `SHCButton appearance`)
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Next iteration
+- Remaining customer screens brutal border sweep (orders detail, cart)
+- Web `SHCCard appearance` parity if bento cards need soft borders
+- Continue loop until 9:00 AM IST Jul 9
+
