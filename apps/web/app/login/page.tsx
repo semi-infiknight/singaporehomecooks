@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useShcI18n } from '@shc/i18n';
 import { useAuth } from '../../lib/useAuth';
-import { GourmeatCard, SHCButton, SHCPageHeader } from '../components/SHCWebComponents';
+import { GourmeatCard, GourmeatScreenHeader, SHCButton } from '../components/SHCWebComponents';
 
 export default function LoginPage() {
   const { t } = useShcI18n();
@@ -40,14 +40,14 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-16">
-      <SHCPageHeader title={t('auth.app_title')} subtitle={t('auth.sign_in_subtitle')} />
-      <GourmeatCard className="space-y-4">
+      <GourmeatScreenHeader title={t('auth.app_title')} subtitle={t('auth.sign_in_subtitle')} />
+      <GourmeatCard className="space-y-4 border border-border">
         <form onSubmit={submit} className="space-y-4">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="shc-input"
+            className="shc-input-gourmeat"
             placeholder={t('auth.email_placeholder')}
             required
             data-testid="login-email"
@@ -56,7 +56,7 @@ export default function LoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="shc-input"
+            className="shc-input-gourmeat"
             placeholder={t('auth.password_placeholder')}
             required
             data-testid="login-password"

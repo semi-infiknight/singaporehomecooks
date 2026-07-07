@@ -1198,3 +1198,22 @@
 - Web login/auth Gourmeat chrome audit
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 55 — 2026-07-08 ~05:05 IST
+
+### Implemented
+1. **Mobile PDP** — Gourmeat hero/back/badges; removed double `GourmeatCard` wrapper; `GourmeatDishCardSkeleton` loading; sticky bar i18n via `GourmeatProductStickyBar` labels
+2. **Web `/login`** — `GourmeatScreenHeader`; `shc-input-gourmeat` (1px border + soft shadow); bordered `GourmeatCard`
+3. **Mobile auth** — `SHCButton appearance="customer"` on submit
+4. **`GourmeatCard`** — explicit 1px border on mobile + web
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Web cook-portal vs customer border audit (ensure cook keeps brutal)
+- Mobile cook profile/settings Gourmeat drift check
+- Continue loop until 9:00 AM IST Jul 9
+

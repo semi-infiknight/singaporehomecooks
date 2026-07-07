@@ -26,7 +26,7 @@ Reference: [Gourmeat Food APP UI/UX](https://www.behance.net/gallery/239040745/G
 | `gourmeat-text` | `#1C1C1C` | Headlines (“Hungry? Order & Eat.”) |
 
 **Components:** `packages/shc-ui/src/gourmeat.tsx` — headers, dish/cart/order rows, floating nav, pay CTAs  
-**Customer chrome:** `SHCCard variant="customer"` or `appearance="customer"`; `GourmeatDishCard` / `GourmeatSearchBar` / `GourmeatScreenHeader` on customer search + discover; `DishCardSkeleton` / `GourmeatDishSkeletonGrid` for loading; web cart uses Gourmeat borders + skeleton; cook app keeps neo-brutalist defaults.
+**Customer chrome:** `GourmeatDishCard` / `GourmeatCard` (1px border); `shc-input-gourmeat` on web login; mobile PDP badges + sticky bar Gourmeat; `GourmeatProductStickyBar` i18n labels; cook app keeps neo-brutalist `shc-input` default.
 
 **Screens (Gourmeat):** customer discover · product PDP · cart · checkout · orders; cook dashboard · orders · listings · compliance · earnings; web parity on `/`, `/product`, `/cart`, `/orders`
 

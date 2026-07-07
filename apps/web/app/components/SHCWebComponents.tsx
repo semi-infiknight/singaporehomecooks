@@ -2150,7 +2150,7 @@ export function GourmeatCard({
   return (
     <div
       data-testid={testID}
-      className={`bg-card rounded-2xl p-4 shadow-[var(--shc-shadow-card)] ${className}`}
+      className={`bg-card rounded-2xl p-4 shadow-[var(--shc-shadow-card)] border border-border ${className}`}
     >
       {children}
     </div>

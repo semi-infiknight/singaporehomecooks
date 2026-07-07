@@ -85,6 +85,7 @@ export default function AuthScreen() {
         />
 
         <SHCButton
+          appearance="customer"
           onPress={submit}
           disabled={busy}
           size="lg"

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Image, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GourmeatDiscountBadge,
   GourmeatProductStickyBar,
-  GourmeatCard,
+  GourmeatDishCardSkeleton,
   SHCSharedDishImage,
   gourmeatColors,
   gourmeatRadii,
@@ -27,7 +27,7 @@ import { useShcI18n, getProductDetailCopy } from '@shc/i18n';
 
 export default function ProductDetail() {
   const insets = useSafeAreaInsets();
-  const { locale } = useShcI18n();
+  const { locale, t } = useShcI18n();
   const copy = getProductDetailCopy(locale);
   const { id, allergenAck: allergenAckParam } = useLocalSearchParams<{ id: string; allergenAck?: string }>();
   const router = useRouter();
@@ -51,6 +51,8 @@ export default function ProductDetail() {
       <>
         <Stack.Screen options={{ title: copy.screenTitle }} />
         <View style={styles.loadingWrap}>
+          <View style={styles.heroSkeleton} />
+          <GourmeatDishCardSkeleton testID="pdp-loading-skeleton" />
           <Text style={styles.loadingText}>{authLoading ? copy.restoringSession : copy.loadingDish}</Text>
         </View>
       </>
@@ -103,7 +105,7 @@ export default function ProductDetail() {
           <View style={[styles.heroOverlay, { paddingTop: insets.top + shcSpacing.sm }]}>
             <View style={styles.heroTopRow}>
               <Pressable onPress={() => router.back()} style={styles.iconBtn} testID="pdp-back-btn">
-                <Text style={styles.backIcon}>←</Text>
+                <Text style={styles.backIcon}>{copy.back}</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <GourmeatDiscountBadge percent={discount} />
@@ -145,17 +147,15 @@ export default function ProductDetail() {
             <Text style={styles.badge}>{copy.minQty(product.min_qty)}</Text>
           </View>
 
-          <GourmeatCard>
-            <SHCDishOrderingInfo
-              tier1={tier1}
-              tier2={product.allergen_tiers?.tier2}
-              tier3={product.allergen_tiers?.tier3}
-              ingredients={product.ingredients}
-              calories={product.calories}
-              caloriesConfidence={calConfidence}
-              heritageNote={product.heritage_note}
-            />
-          </GourmeatCard>
+          <SHCDishOrderingInfo
+            tier1={tier1}
+            tier2={product.allergen_tiers?.tier2}
+            tier3={product.allergen_tiers?.tier3}
+            ingredients={product.ingredients}
+            calories={product.calories}
+            caloriesConfidence={calConfidence}
+            heritageNote={product.heritage_note}
+          />
 
           <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} tier1={tier1} />
           {error && <Text style={styles.errorText} testID="pdp-add-error">{error}</Text>}
@@ -172,6 +172,8 @@ export default function ProductDetail() {
           onAdd={handleAdd}
           disabled={!allergenAck || addMut.isPending}
           loading={addMut.isPending}
+          addLabel={t('discover.dish_add')}
+          addingLabel={copy.adding}
           testID={
             added ? 'add-to-cart-success' : allergenAck && !addMut.isPending ? 'pdp-sticky-ready' : 'pdp-sticky-bar'
           }
@@ -193,8 +195,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 20,
     backgroundColor: gourmeatColors.surface,
+    borderTopWidth: 1,
+    borderTopColor: gourmeatColors.border,
   },
-  loadingWrap: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background, justifyContent: 'center' },
+  loadingWrap: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background },
+  heroSkeleton: {
+    height: heroHeight,
+    borderRadius: gourmeatRadii.lg,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    marginBottom: shcSpacing.md,
+  },
   loadingText: { fontWeight: '600', color: gourmeatColors.textLight },
   scroll: { flex: 1 },
   heroWrap: { width: '100%', height: heroHeight, backgroundColor: gourmeatColors.surfaceAlt },
@@ -208,9 +218,11 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
     ...gourmeatShadows.soft,
   },
-  backIcon: { fontSize: 20, fontWeight: '700', color: gourmeatColors.text },
+  backIcon: { fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   body: { padding: shcSpacing.md },
   productName: { fontSize: 24, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.3 },
   productMetaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', marginTop: 4 },
@@ -226,6 +238,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: gourmeatRadii.pill,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
   },
   badgeHalal: { color: gourmeatColors.success, backgroundColor: gourmeatColors.primaryLight },
   errorText: { color: gourmeatColors.error, marginTop: shcSpacing.sm, fontWeight: '600', fontSize: 13 },

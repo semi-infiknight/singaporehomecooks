@@ -850,6 +850,8 @@ export function GourmeatCard({ children, style, testID }: { children: React.Reac
         borderRadius: gourmeatRadii.lg,
         padding: shcSpacing.md,
         marginBottom: shcSpacing.sm,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         ...gourmeatShadows.card,
         ...(style || {}),
       }}
@@ -991,6 +993,8 @@ export function GourmeatProductStickyBar({
   onAdd,
   disabled,
   loading,
+  addLabel = 'Add',
+  addingLabel = 'Adding…',
   testID = 'pdp-sticky-bar',
 }: {
   qty: number;
@@ -1001,6 +1005,8 @@ export function GourmeatProductStickyBar({
   onAdd: () => void;
   disabled?: boolean;
   loading?: boolean;
+  addLabel?: string;
+  addingLabel?: string;
   testID?: string;
 }) {
   return (
@@ -1046,7 +1052,7 @@ export function GourmeatProductStickyBar({
         })}
       >
         <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.onPrimary }}>
-          {loading ? 'Adding…' : 'Add'}
+          {loading ? addingLabel : addLabel}
         </Text>
       </Pressable>
     </View>
