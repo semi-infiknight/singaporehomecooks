@@ -15,12 +15,12 @@ import {
 } from '@shc/ui';
 import {
   getDishImageUrl,
-  getOrderStatusLabel,
   isActiveOrderStatus,
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef } from '@shc/i18n';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +42,7 @@ type OrderReview = { rating: number; body?: string };
 type OrderDispute = { status?: string; type?: string; notes?: string };
 
 export default function OrderTracking() {
+  const { t, locale } = useShcI18n();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,7 +78,7 @@ export default function OrderTracking() {
   if (!order) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
-        <Text style={{ color: gourmeatColors.textLight }}>Loading order…</Text>
+        <Text style={{ color: gourmeatColors.textLight }}>{t('orders.detail.loading')}</Text>
       </View>
     );
   }
@@ -95,27 +96,27 @@ export default function OrderTracking() {
       testID="order-tracking-screen"
     >
       <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>← All orders</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>{t('orders.detail.back')}</Text>
       </Pressable>
 
       <SHCFoodImage uri={heroUri} height={160} rounded={gourmeatRadii.lg} />
 
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{getOrderStatusLabel(status)}</Text>
-          <Text style={styles.subtitle}>Order {order.id}</Text>
+          <Text style={styles.title}>{getLocalizedOrderStatus(locale, status)}</Text>
+          <Text style={styles.subtitle}>{formatOrderRef(locale, order.id)}</Text>
         </View>
         <OrderStatusBadge status={order.shc_status} />
       </View>
 
-      {live && isFetching && <Text style={styles.liveHint}>Refreshing status…</Text>}
+      {live && isFetching && <Text style={styles.liveHint}>{t('orders.detail.refreshing')}</Text>}
 
       <GourmeatCard>
         <SHCOrderTimeline status={status} live={live} />
       </GourmeatCard>
 
       <GourmeatCard>
-        <Text style={styles.cardTitle}>Collection</Text>
+        <Text style={styles.cardTitle}>{t('orders.detail.collection')}</Text>
         <Text style={styles.cardBody}>
           {order.collection_date} · {order.collection_slot}
         </Text>
@@ -127,18 +128,21 @@ export default function OrderTracking() {
         ))}
         {addrReleased && order.shc_status !== 'cart' ? (
           <Text style={styles.addressLine}>
-            HDB address: {order.collection_instructions || 'Check chat for block & unit.'}
+            {t('orders.detail.hdb_address').replace(
+              '{address}',
+              order.collection_instructions || t('orders.detail.hdb_fallback')
+            )}
           </Text>
         ) : (
-          <Text style={styles.hintLine}>Address released ~2h before your slot, after payment confirms.</Text>
+          <Text style={styles.hintLine}>{t('orders.detail.address_released_hint')}</Text>
         )}
       </GourmeatCard>
 
-      <GourmeatPrimaryButton label="Message your cook" onPress={() => router.push(`/(shared)/chat/${order.id}` as any)} />
+      <GourmeatPrimaryButton label={t('orders.detail.message_cook')} onPress={() => router.push(`/(shared)/chat/${order.id}` as any)} />
 
       {existingReview && (
         <GourmeatCard testID="order-review-submitted">
-          <Text style={styles.cardTitle}>Your review</Text>
+          <Text style={styles.cardTitle}>{t('orders.detail.your_review')}</Text>
           <Text style={{ color: gourmeatColors.accent, fontSize: 18 }}>{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</Text>
           {existingReview.body ? <Text style={styles.cardBody}>{existingReview.body}</Text> : null}
         </GourmeatCard>
@@ -156,7 +160,7 @@ export default function OrderTracking() {
 
       {disputes.length > 0 && (
         <GourmeatCard testID="order-dispute-submitted">
-          <Text style={styles.cardTitle}>Issue reported</Text>
+          <Text style={styles.cardTitle}>{t('orders.detail.issue_reported')}</Text>
           <Text style={styles.cardMeta}>
             {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
           </Text>

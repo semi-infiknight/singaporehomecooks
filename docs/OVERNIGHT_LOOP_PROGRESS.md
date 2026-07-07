@@ -162,3 +162,25 @@
 - Cook mobile tab bar (optional)
 - EAS monitor; download APK when FINISHED
 - Continue loop until 9:00 AM IST Jul 9
+
+---
+
+## Iteration 9 — 2026-07-08 ~02:58 IST
+
+### Implemented
+1. **Order detail i18n** — web `/orders/[id]` + mobile `orders/[id]`: collection, chat, review, dispute, status labels
+2. **`getLocalizedOrderStatus` + `formatOrderRef`** — `@shc/i18n/order-detail.ts` with `orders.status.*` and `orders.detail.*` keys
+3. **Mandarin** — 28 new order-detail keys in zh-Hans
+
+### Tests
+- `@shc/i18n`: **12 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### EAS
+- Build `2ad24658`: still **IN_QUEUE** — no APK yet
+
+### Next iteration
+- Order timeline step labels i18n (shared `OrderTimeline` component)
+- Cook mobile tab bar (optional)
+- Request-dish / search screen i18n
+- EAS monitor until FINISHED or 6h+ stuck

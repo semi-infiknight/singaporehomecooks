@@ -19,12 +19,12 @@ import {
   OrderTimeline,
 } from '../../components/SHCWebComponents';
 import {
-  getOrderStatusLabel,
   isActiveOrderStatus,
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
 } from '@shc/utils';
+import { useShcI18n, getLocalizedOrderStatus, formatOrderRef } from '@shc/i18n';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -40,6 +40,7 @@ type OrderReview = { rating: number; body?: string };
 type OrderDispute = { status?: string; type?: string; notes?: string };
 
 export default function TrackOrder() {
+  const { t, locale } = useShcI18n();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
@@ -64,7 +65,7 @@ export default function TrackOrder() {
   if ((!maestroE2e && isLoading) || !order) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10">
-        <SHCLoading label="Loading order…" />
+        <SHCLoading label={t('orders.detail.loading')} />
       </div>
     );
   }
@@ -74,14 +75,14 @@ export default function TrackOrder() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
       <GourmeatScreenHeader
-        title={getOrderStatusLabel(status)}
-        subtitle={`Order ${id}`}
+        title={getLocalizedOrderStatus(locale, status)}
+        subtitle={formatOrderRef(locale, id)}
         backHref="/orders"
-        backLabel="← All orders"
+        backLabel={t('orders.detail.back')}
       />
 
       {isActiveOrderStatus(status) && isFetching && (
-        <p className="text-[11px] font-bold text-[var(--shc-success)] mb-3">Refreshing status…</p>
+        <p className="text-[11px] font-bold text-[var(--shc-success)] mb-3">{t('orders.detail.refreshing')}</p>
       )}
 
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
@@ -91,38 +92,36 @@ export default function TrackOrder() {
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-[#5C5144]">Collection</span>
+            <span className="text-[#5C5144]">{t('orders.detail.collection')}</span>
             <p className="font-medium mt-0.5">
               {order.collection_date} · {order.collection_slot}
             </p>
           </div>
           <div>
-            <span className="text-[#5C5144]">Total</span>
+            <span className="text-[#5C5144]">{t('orders.detail.total')}</span>
             <p className="font-medium mt-0.5 tabular-nums">S${order.total}</p>
           </div>
           <div>
-            <span className="text-[#5C5144]">Cook</span>
+            <span className="text-[#5C5144]">{t('orders.detail.cook')}</span>
             <p className="font-medium mt-0.5">{order.cook_name}</p>
           </div>
           {order.paynow_reference && (
             <div>
-              <span className="text-[#5C5144]">PayNow ref</span>
+              <span className="text-[#5C5144]">{t('orders.detail.paynow_ref')}</span>
               <p className="font-medium mt-0.5 font-mono text-xs">{order.paynow_reference}</p>
             </div>
           )}
         </div>
-        <p className="text-xs text-[#5C5144] mt-4 pt-4 border-t border-[#E8D5B7]/60">
-          Your collection address will be shared about 2 hours before your slot, after payment is confirmed.
-        </p>
+        <p className="text-xs text-[#5C5144] mt-4 pt-4 border-t border-[#E8D5B7]/60">{t('orders.detail.address_hint')}</p>
       </SHCCard>
 
       <div id="order-chat-section">
-        <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Chat</SHCSectionTitle>
+        <SHCSectionTitle subtitle={t('orders.detail.chat_subtitle')}>{t('orders.detail.chat_title')}</SHCSectionTitle>
       </div>
       <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
           {messages.length === 0 && (
-            <p className="text-[#5C5144] text-center py-8">No messages yet. Say hello to your cook.</p>
+            <p className="text-[#5C5144] text-center py-8">{t('orders.detail.no_messages')}</p>
           )}
           {messages.map((m: { sender_actor?: string; body?: string }, i: number) => (
             <div
@@ -142,7 +141,7 @@ export default function TrackOrder() {
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             className="shc-input flex-1 py-2"
-            placeholder="Type a message…"
+            placeholder={t('orders.detail.message_placeholder')}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && msg.trim()) {
                 send({ body: msg, from: 'customer' });
@@ -159,14 +158,14 @@ export default function TrackOrder() {
               }
             }}
           >
-            Send
+            {t('orders.detail.send')}
           </SHCButton>
         </div>
       </div>
 
       {existingReview && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-review-submitted">
-          <SHCSectionTitle>Your review</SHCSectionTitle>
+          <SHCSectionTitle>{t('orders.detail.your_review')}</SHCSectionTitle>
           <p className="text-[#FFB800] text-lg mt-2">{'★'.repeat(existingReview.rating)}{'☆'.repeat(5 - existingReview.rating)}</p>
           {existingReview.body ? <p className="text-sm text-[#5C5144] mt-2">{existingReview.body}</p> : null}
         </SHCCard>
@@ -186,7 +185,7 @@ export default function TrackOrder() {
 
       {disputes.length > 0 && (
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
-          <SHCSectionTitle>Issue reported</SHCSectionTitle>
+          <SHCSectionTitle>{t('orders.detail.issue_reported')}</SHCSectionTitle>
           <p className="mt-1 text-xs font-semibold text-[#5C5144]">
             {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
           </p>
