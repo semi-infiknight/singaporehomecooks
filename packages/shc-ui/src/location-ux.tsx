@@ -5,7 +5,7 @@ import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from 
 import type { SHCSavedAddress } from '@shc/types';
 import type { AddressSearchResult } from '@shc/utils';
 import { formatLocationLabel, formatLocationShort } from '@shc/utils';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, gourmeatColors } from './theme';
+import { shcSpacing, gourmeatColors, gourmeatRadii, gourmeatShadows } from './theme';
 import { SHCButton, SHCButtonText, SHCCard } from './primitives';
 import { SHCIcon } from './icons';
 import { SHCCheckoutStepper } from './food-ux';
@@ -13,16 +13,44 @@ import { SHCLocationDraggableMap } from './location-map';
 
 export type PinNudgeDirection = 'n' | 's' | 'e' | 'w';
 
-const STEPS = [
-  { id: 'find', label: 'Find' },
-  { id: 'confirm', label: 'Confirm' },
-];
-
-const LABELS: Array<{ id: SHCSavedAddress['label']; title: string }> = [
-  { id: 'home', title: 'Home' },
-  { id: 'work', title: 'Work' },
-  { id: 'other', title: 'Other' },
-];
+export type LocationPickerCopy = {
+  collectionBadge: string;
+  titleStep1: string;
+  titleStep2: string;
+  subtitleStep1: string;
+  subtitleStep2: string;
+  stepFind: string;
+  stepConfirm: string;
+  useGps: string;
+  gettingGps: string;
+  savedAddresses: string;
+  remove: string;
+  searchSection: string;
+  searchPlaceholder: string;
+  searchGo: string;
+  searching: string;
+  sourceOnemap: string;
+  sourceArea: string;
+  geocodeLooking: string;
+  pinLabel: (lat: number, lng: number) => string;
+  pinHint: string;
+  addressLabelSection: string;
+  labelHome: string;
+  labelWork: string;
+  labelOther: string;
+  line1Section: string;
+  line2Section: string;
+  line2Placeholder: string;
+  postalSection: string;
+  instructionsSection: string;
+  instructionsPlaceholder: string;
+  preview: (label: string) => string;
+  saveBtn: string;
+  saving: string;
+  loadingAddress: string;
+  steps: () => Array<{ id: string; label: string }>;
+  addressLabels: () => Array<{ id: SHCSavedAddress['label']; title: string }>;
+};
 
 export function LocationPickerExperience({
   step,
@@ -46,6 +74,7 @@ export function LocationPickerExperience({
   busy,
   onNudgePin,
   onPinDrag,
+  copy,
   testID = 'location-picker',
 }: {
   step: 1 | 2;
@@ -69,8 +98,11 @@ export function LocationPickerExperience({
   busy?: boolean;
   onNudgePin?: (dir: PinNudgeDirection) => void;
   onPinDrag?: (coords: { lat: number; lng: number }) => void;
+  copy: LocationPickerCopy;
   testID?: string;
 }) {
+  const steps = copy.steps();
+  const labels = copy.addressLabels();
   const goBack = () => {
     if (step === 2) onStepChange(1);
     else onBack?.();
@@ -80,20 +112,18 @@ export function LocationPickerExperience({
     <View style={{ paddingHorizontal: shcSpacing.md, paddingTop: shcSpacing.md, backgroundColor: gourmeatColors.background }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: shcSpacing.sm }}>
         <Pressable onPress={goBack} testID="location-back-btn" style={backBtn}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: shcColors.text }}>←</Text>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: gourmeatColors.text }}>←</Text>
         </Pressable>
-        <Text style={{ fontSize: 11, fontWeight: '700', color: shcColors.textLight }}>COLLECTION POINT</Text>
+        <Text style={{ fontSize: 11, fontWeight: '700', color: gourmeatColors.textLight }}>{copy.collectionBadge}</Text>
       </View>
-      <Text style={{ fontSize: 24, fontWeight: '900', color: shcColors.text }}>
-        {step === 1 ? 'Where will you collect?' : 'Confirm your address'}
+      <Text style={{ fontSize: 24, fontWeight: '900', color: gourmeatColors.text }}>
+        {step === 1 ? copy.titleStep1 : copy.titleStep2}
       </Text>
-      <Text style={{ fontSize: 13, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>
-        {step === 1
-          ? 'HDB collection only — we use this to show cooks near you. Cook unit address releases 2h before your slot.'
-          : 'Nudge the pin if needed, then save your collection point.'}
+      <Text style={{ fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4, lineHeight: 18 }}>
+        {step === 1 ? copy.subtitleStep1 : copy.subtitleStep2}
       </Text>
       <View style={{ marginTop: shcSpacing.md }}>
-        <SHCCheckoutStepper steps={STEPS} currentStep={step} testID="location-stepper" />
+        <SHCCheckoutStepper steps={steps} currentStep={step} testID="location-stepper" />
       </View>
     </View>
   );
@@ -113,26 +143,26 @@ export function LocationPickerExperience({
             {step === 1 ? (
               <View testID="location-step-find">
                 <SHCButton variant="outline" onPress={onUseCurrentLocation} disabled={locating} testID="location-use-gps" style={{ marginBottom: shcSpacing.md }}>
-                  <SHCButtonText variant="outline">{locating ? 'Getting GPS…' : '📍 Use my current location'}</SHCButtonText>
+                  <SHCButtonText variant="outline">{locating ? copy.gettingGps : copy.useGps}</SHCButtonText>
                 </SHCButton>
 
                 {saved.length > 0 && (
                   <>
-                    <Text style={sectionLabel}>Saved addresses</Text>
+                    <Text style={sectionLabel}>{copy.savedAddresses}</Text>
                     {saved.map((addr) => (
                       <Pressable key={addr.id} onPress={() => onSelectSaved(addr)} testID={`saved-addr-${addr.id}`} style={{ marginBottom: shcSpacing.sm }}>
                         <SHCCard variant={activeId === addr.id ? 'bento-mint' : 'default'}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm }}>
-                            <SHCIcon name="location" size={18} color={shcColors.primary} active />
+                            <SHCIcon name="location" size={18} color={gourmeatColors.primary} active />
                             <View style={{ flex: 1 }}>
                               <Text style={{ fontWeight: '800', fontSize: 13, textTransform: 'capitalize' }}>{addr.label}</Text>
-                              <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }} numberOfLines={2}>
+                              <Text style={{ fontSize: 12, color: gourmeatColors.textLight, marginTop: 2 }} numberOfLines={2}>
                                 {formatLocationShort(addr)}
                               </Text>
                             </View>
                             {onDeleteSaved && (
                               <Pressable onPress={() => onDeleteSaved(addr.id)} hitSlop={8} testID={`delete-addr-${addr.id}`}>
-                                <Text style={{ fontSize: 11, fontWeight: '700', color: shcColors.error }}>Remove</Text>
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: gourmeatColors.error }}>{copy.remove}</Text>
                               </Pressable>
                             )}
                           </View>
@@ -142,32 +172,32 @@ export function LocationPickerExperience({
                   </>
                 )}
 
-                <Text style={sectionLabel}>Search postal code, block, or area</Text>
+                <Text style={sectionLabel}>{copy.searchSection}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: shcSpacing.sm }}>
                   <TextInput
                     value={query}
                     onChangeText={onQueryChange}
-                    placeholder="e.g. 520456, Tampines, Blk 89 Joo Chiat"
-                    placeholderTextColor={shcColors.textLight}
+                    placeholder={copy.searchPlaceholder}
+                    placeholderTextColor={gourmeatColors.textMuted}
                     style={[inputStyle, { flex: 1 }]}
                     testID="location-search-input"
                     returnKeyType="search"
                     onSubmitEditing={onSearch}
                   />
                   <SHCButton onPress={onSearch} disabled={searching || query.trim().length < 2} testID="location-search-btn">
-                    <SHCButtonText>{searching ? '…' : 'Go'}</SHCButtonText>
+                    <SHCButtonText>{searching ? '…' : copy.searchGo}</SHCButtonText>
                   </SHCButton>
                 </View>
 
-                {searching && <ActivityIndicator color={shcColors.primary} style={{ marginVertical: shcSpacing.sm }} />}
+                {searching && <ActivityIndicator color={gourmeatColors.primary} style={{ marginVertical: shcSpacing.sm }} />}
 
                 {results.map((r) => (
                   <Pressable key={r.id} onPress={() => onSelectResult(r)} testID={`location-result-${r.id}`} style={{ marginBottom: shcSpacing.sm }}>
                     <SHCCard>
                       <Text style={{ fontWeight: '800', fontSize: 14 }}>{r.title}</Text>
-                      <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }}>{r.subtitle}</Text>
-                      <Text style={{ fontSize: 10, color: shcColors.textLight, marginTop: 4 }}>
-                        {r.source === 'onemap' ? 'OneMap SG' : 'Area guide'}
+                      <Text style={{ fontSize: 12, color: gourmeatColors.textLight, marginTop: 2 }}>{r.subtitle}</Text>
+                      <Text style={{ fontSize: 10, color: gourmeatColors.textLight, marginTop: 4 }}>
+                        {r.source === 'onemap' ? copy.sourceOnemap : copy.sourceArea}
                       </Text>
                     </SHCCard>
                   </Pressable>
@@ -177,17 +207,17 @@ export function LocationPickerExperience({
               <View testID="location-step-confirm">
                 {draft.source === 'gps' && !draft.line1 ? (
                   <View style={geocodeBanner}>
-                    <ActivityIndicator color={shcColors.primary} size="small" />
-                    <Text style={geocodeBannerText}>Looking up your block from GPS…</Text>
+                    <ActivityIndicator color={gourmeatColors.primary} size="small" />
+                    <Text style={geocodeBannerText}>{copy.geocodeLooking}</Text>
                   </View>
                 ) : null}
                 {draft.lat != null && draft.lng != null && onPinDrag ? (
                   <View style={pinPanel} testID="location-pin-panel">
                     <SHCLocationDraggableMap lat={draft.lat} lng={draft.lng} onPinChange={onPinDrag} />
                     <Text style={pinCoords}>
-                      Pin: {draft.lat.toFixed(4)}, {draft.lng.toFixed(4)}
+                      {copy.pinLabel(draft.lat, draft.lng)}
                     </Text>
-                    <Text style={hint}>Drag the pin or tap the map — aim for your void deck or lift lobby.</Text>
+                    <Text style={hint}>{copy.pinHint}</Text>
                     {onNudgePin ? (
                     <View style={pinControls}>
                       <Pressable onPress={() => onNudgePin('n')} style={pinBtn} testID="location-map-n">
@@ -208,9 +238,9 @@ export function LocationPickerExperience({
                     ) : null}
                   </View>
                 ) : null}
-                <Text style={sectionLabel}>Address label</Text>
+                <Text style={sectionLabel}>{copy.addressLabelSection}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: shcSpacing.md }}>
-                  {LABELS.map((l) => (
+                  {labels.map((l) => (
                     <Pressable
                       key={l.id}
                       onPress={() => onDraftChange({ label: l.id })}
@@ -222,23 +252,23 @@ export function LocationPickerExperience({
                   ))}
                 </View>
 
-                <Text style={sectionLabel}>Block & street</Text>
+                <Text style={sectionLabel}>{copy.line1Section}</Text>
                 <TextInput
                   value={draft.line1 ?? ''}
                   onChangeText={(t) => onDraftChange({ line1: t })}
                   style={inputStyle}
                   testID="location-line1"
                 />
-                <Text style={sectionLabel}>Unit / floor (optional)</Text>
+                <Text style={sectionLabel}>{copy.line2Section}</Text>
                 <TextInput
                   value={draft.line2 ?? ''}
                   onChangeText={(t) => onDraftChange({ line2: t })}
-                  placeholder="#05-123"
-                  placeholderTextColor={shcColors.textLight}
+                  placeholder={copy.line2Placeholder}
+                  placeholderTextColor={gourmeatColors.textMuted}
                   style={inputStyle}
                   testID="location-line2"
                 />
-                <Text style={sectionLabel}>Postal code</Text>
+                <Text style={sectionLabel}>{copy.postalSection}</Text>
                 <TextInput
                   value={draft.postal_code ?? ''}
                   onChangeText={(t) => onDraftChange({ postal_code: t.replace(/\D/g, '').slice(0, 6) })}
@@ -246,12 +276,12 @@ export function LocationPickerExperience({
                   style={inputStyle}
                   testID="location-postal"
                 />
-                <Text style={sectionLabel}>Collection notes (optional)</Text>
+                <Text style={sectionLabel}>{copy.instructionsSection}</Text>
                 <TextInput
                   value={draft.instructions ?? ''}
                   onChangeText={(t) => onDraftChange({ instructions: t })}
-                  placeholder="Meet at void deck, call when arriving…"
-                  placeholderTextColor={shcColors.textLight}
+                  placeholder={copy.instructionsPlaceholder}
+                  placeholderTextColor={gourmeatColors.textMuted}
                   style={[inputStyle, { minHeight: 72, textAlignVertical: 'top' }]}
                   multiline
                   testID="location-instructions"
@@ -259,7 +289,7 @@ export function LocationPickerExperience({
 
                 <SHCCard variant="bento-peach" style={{ marginTop: shcSpacing.sm }}>
                   <Text style={{ fontSize: 12, fontWeight: '700', lineHeight: 18 }}>
-                    Preview: {formatLocationLabel(draft as SHCSavedAddress)}
+                    {copy.preview(formatLocationLabel(draft as SHCSavedAddress))}
                   </Text>
                 </SHCCard>
 
@@ -270,13 +300,13 @@ export function LocationPickerExperience({
                   testID="location-confirm-btn"
                   style={{ marginTop: shcSpacing.lg, width: '100%' }}
                 >
-                  <SHCButtonText>{busy ? 'Saving…' : 'Save collection location'}</SHCButtonText>
+                  <SHCButtonText>{busy ? copy.saving : copy.saveBtn}</SHCButtonText>
                 </SHCButton>
               </View>
             ) : (
               <View testID="location-step-empty" style={{ paddingVertical: shcSpacing.lg }}>
-                <ActivityIndicator color={shcColors.primary} />
-                <Text style={{ marginTop: shcSpacing.sm, fontWeight: '700', color: shcColors.textLight }}>Loading address…</Text>
+                <ActivityIndicator color={gourmeatColors.primary} />
+                <Text style={{ marginTop: shcSpacing.sm, fontWeight: '700', color: gourmeatColors.textLight }}>{copy.loadingAddress}</Text>
               </View>
             )}
         </View>
@@ -291,73 +321,72 @@ const geocodeBanner = {
   gap: 8,
   marginBottom: shcSpacing.md,
   padding: shcSpacing.sm,
-  borderRadius: shcRadii.md,
-  backgroundColor: shcColors.bentoPeach,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
+  borderRadius: gourmeatRadii.md,
+  backgroundColor: gourmeatColors.primaryLight,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
 };
-const geocodeBannerText = { fontSize: 12, fontWeight: '700', color: shcColors.text, flex: 1 };
+const geocodeBannerText = { fontSize: 12, fontWeight: '700', color: gourmeatColors.text, flex: 1 };
 
 const pinPanel = {
   marginTop: shcSpacing.sm,
   marginBottom: shcSpacing.md,
   padding: shcSpacing.md,
-  borderRadius: shcRadii.md,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-  backgroundColor: shcColors.surfaceAlt,
-  ...shcShadows.brutalSm,
+  borderRadius: gourmeatRadii.md,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
+  backgroundColor: gourmeatColors.surfaceAlt,
+  ...gourmeatShadows.soft,
 };
-const pinCoords = { fontSize: 13, fontWeight: '800', color: shcColors.text, marginBottom: 4 };
+const pinCoords = { fontSize: 13, fontWeight: '800', color: gourmeatColors.text, marginBottom: 4 };
 const pinControls = { alignItems: 'center', gap: 6, marginTop: shcSpacing.sm };
 const pinBtn = {
   width: 40,
   height: 40,
   borderRadius: 10,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-  backgroundColor: shcColors.surface,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
+  backgroundColor: gourmeatColors.surface,
   alignItems: 'center',
   justifyContent: 'center',
-  ...shcShadows.brutalSm,
+  ...gourmeatShadows.soft,
 };
-const pinBtnText = { fontSize: 16, fontWeight: '800', color: shcColors.text };
+const pinBtnText = { fontSize: 16, fontWeight: '800', color: gourmeatColors.text };
 
-const sectionLabel = { fontSize: 13, fontWeight: '800', color: shcColors.text, marginBottom: shcSpacing.sm, marginTop: shcSpacing.sm };
-const hint = { fontSize: 11, color: shcColors.textLight, marginBottom: shcSpacing.sm, fontWeight: '600' };
+const sectionLabel = { fontSize: 13, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm, marginTop: shcSpacing.sm };
+const hint = { fontSize: 11, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, fontWeight: '600' };
 const inputStyle = {
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-  borderRadius: shcRadii.md,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
+  borderRadius: gourmeatRadii.md,
   padding: shcSpacing.md,
-  backgroundColor: shcColors.surface,
+  backgroundColor: gourmeatColors.surface,
   fontSize: 15,
-  color: shcColors.text,
+  color: gourmeatColors.text,
   marginBottom: shcSpacing.sm,
-  ...shcShadows.brutalSm,
+  ...gourmeatShadows.soft,
 };
 const backBtn = {
   width: 40,
   height: 40,
   borderRadius: 20,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-  backgroundColor: shcColors.surface,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
+  backgroundColor: gourmeatColors.surface,
   alignItems: 'center',
   justifyContent: 'center',
-  ...shcShadows.brutalSm,
+  ...gourmeatShadows.soft,
 };
 function chip(active: boolean) {
   return {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: shcRadii.pill,
-    borderWidth: shcBorders.brutal,
-    borderColor: active ? gourmeatColors.primary : shcColors.border,
-    backgroundColor: active ? gourmeatColors.primary : shcColors.surface,
-    ...shcShadows.brutalSm,
+    borderRadius: gourmeatRadii.pill,
+    borderWidth: 1,
+    borderColor: active ? gourmeatColors.primary : gourmeatColors.border,
+    backgroundColor: active ? gourmeatColors.primary : gourmeatColors.surface,
   };
 }
 function chipText(active: boolean) {
-  return { fontSize: 13, fontWeight: '800', color: active ? '#fff' : shcColors.text };
+  return { fontSize: 13, fontWeight: '800', color: active ? gourmeatColors.onPrimary : gourmeatColors.text };
 }

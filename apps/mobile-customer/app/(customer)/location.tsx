@@ -13,13 +13,14 @@ import {
 } from '@shc/utils';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { getCurrentGpsCoords } from '../../lib/gps-location';
-import { useShcI18n, getLocationAlertCopy } from '@shc/i18n';
+import { useShcI18n, getLocationAlertCopy, getLocationScreenCopy } from '@shc/i18n';
 
 export default function LocationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { locale } = useShcI18n();
   const alerts = getLocationAlertCopy(locale);
+  const copy = getLocationScreenCopy(locale);
   const { saved, activeId, saveNew, setActive, removeSaved } = useCustomerLocation();
   const [step, setStep] = useState<1 | 2>(1);
   const [query, setQuery] = useState('');
@@ -217,6 +218,7 @@ export default function LocationScreen() {
         busy={busy}
         onNudgePin={onPinMove}
         onPinDrag={onPinDrag}
+        copy={copy}
       />
     </View>
   );

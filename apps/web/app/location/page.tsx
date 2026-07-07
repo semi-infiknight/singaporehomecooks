@@ -10,9 +10,13 @@ import {
   type AddressSearchResult,
 } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
+import { useShcI18n, getLocationScreenCopy, getLocationAlertCopy } from '@shc/i18n';
 
 export default function LocationPage() {
   const router = useRouter();
+  const { locale } = useShcI18n();
+  const copy = getLocationScreenCopy(locale);
+  const alerts = getLocationAlertCopy(locale);
   const { saved, activeId, saveNew, setActive, removeSaved } = useCustomerLocation();
   const [step, setStep] = useState<1 | 2>(1);
   const [query, setQuery] = useState('');
@@ -85,7 +89,7 @@ export default function LocationPage() {
 
   const onUseGps = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation not supported in this browser.');
+      alert(copy.geoUnsupportedWeb);
       return;
     }
     setLocating(true);
@@ -101,14 +105,14 @@ export default function LocationPage() {
             source: 'gps',
           });
         } catch (e: unknown) {
-          alert((e as Error)?.message ?? 'Could not resolve address');
+          alert((e as Error)?.message ?? copy.resolveFailed);
         } finally {
           setLocating(false);
         }
       },
       () => {
         setLocating(false);
-        alert('Location permission denied. Search by postal code instead.');
+        alert(copy.permissionDeniedWeb);
       },
       { enableHighAccuracy: false, timeout: 15000 }
     );
@@ -130,7 +134,7 @@ export default function LocationPage() {
       });
       router.back();
     } catch (e: unknown) {
-      alert((e as Error)?.message ?? 'Could not save');
+      alert((e as Error)?.message ?? alerts.saveErrorBody);
     } finally {
       setBusy(false);
     }
@@ -140,19 +144,19 @@ export default function LocationPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-16" data-testid="location-screen">
       <button type="button" onClick={() => (step === 2 ? setStep(1) : router.back())} className="mb-4 font-bold" data-testid="location-back-btn">
-        ← Back
+        {copy.back}
       </button>
-      <h1 className="text-2xl font-black">Where will you collect?</h1>
-      <p className="text-sm text-muted-foreground font-medium mt-1">HDB collection — cooks near your pin shown first.</p>
+      <h1 className="text-2xl font-black">{step === 1 ? copy.titleStep1 : copy.titleStep2}</h1>
+      <p className="text-sm text-muted-foreground font-medium mt-1">{step === 1 ? copy.subtitleWeb : copy.subtitleStep2}</p>
 
       {step === 1 && (
         <div data-testid="location-step-find" className="mt-6 space-y-4">
           <button type="button" onClick={onUseGps} disabled={locating} className="shc-input w-full text-left font-bold" data-testid="location-use-gps">
-            {locating ? 'Getting GPS…' : '📍 Use my current location'}
+            {locating ? copy.gettingGps : copy.useGps}
           </button>
           {saved.length > 0 && (
             <div>
-              <p className="text-sm font-bold mb-2">Saved</p>
+              <p className="text-sm font-bold mb-2">{copy.saved}</p>
               {saved.map((addr) => (
                 <button
                   key={addr.id}
@@ -174,15 +178,15 @@ export default function LocationPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Postal, block, area…"
+              placeholder={copy.searchPlaceholderWeb}
               className="shc-input flex-1"
               data-testid="location-search-input"
             />
             <button type="button" onClick={() => void runSearch()} className="shc-btn-primary px-4 rounded-lg font-bold border-2 border-[var(--shc-border-brutal)]" data-testid="location-search-btn">
-              Go
+              {copy.searchGo}
             </button>
           </div>
-          {searching && <p className="text-sm text-muted-foreground">Searching…</p>}
+          {searching && <p className="text-sm text-muted-foreground">{copy.searching}</p>}
           {results.map((r) => (
             <button
               key={r.id}
@@ -202,21 +206,21 @@ export default function LocationPage() {
 
       {step === 2 && draft && (
         <div data-testid="location-step-confirm" className="mt-6 space-y-3">
-          <iframe title="Map" src={mapSrc} className="w-full h-56 rounded-xl border-2 border-[var(--shc-border-brutal)]" data-testid="location-map" />
-          <input value={draft.line1 ?? ''} onChange={(e) => setDraft({ ...draft, line1: e.target.value })} className="shc-input w-full" placeholder="Block & street" data-testid="location-line1" />
-          <input value={draft.line2 ?? ''} onChange={(e) => setDraft({ ...draft, line2: e.target.value })} className="shc-input w-full" placeholder="Unit #05-123" data-testid="location-line2" />
+          <iframe title={copy.mapTitle} src={mapSrc} className="w-full h-56 rounded-xl border border-border" data-testid="location-map" />
+          <input value={draft.line1 ?? ''} onChange={(e) => setDraft({ ...draft, line1: e.target.value })} className="shc-input w-full" placeholder={copy.line1Section} data-testid="location-line1" />
+          <input value={draft.line2 ?? ''} onChange={(e) => setDraft({ ...draft, line2: e.target.value })} className="shc-input w-full" placeholder={copy.line2Placeholder} data-testid="location-line2" />
           <input
             value={draft.postal_code ?? ''}
             onChange={(e) => setDraft({ ...draft, postal_code: e.target.value.replace(/\D/g, '').slice(0, 6) })}
             className="shc-input w-full"
-            placeholder="Postal code"
+            placeholder={copy.postalSection}
             data-testid="location-postal"
           />
           <textarea
             value={draft.instructions ?? ''}
             onChange={(e) => setDraft({ ...draft, instructions: e.target.value })}
             className="shc-input w-full min-h-[72px]"
-            placeholder="Collection notes"
+            placeholder={copy.instructionsPlaceholder}
             data-testid="location-instructions"
           />
           <button
@@ -226,7 +230,7 @@ export default function LocationPage() {
             className="shc-btn-primary w-full py-3 rounded-lg font-black border-2 border-[var(--shc-border-brutal)]"
             data-testid="location-confirm-btn"
           >
-            {busy ? 'Saving…' : 'Save collection location'}
+            {busy ? copy.saving : copy.saveBtn}
           </button>
         </div>
       )}

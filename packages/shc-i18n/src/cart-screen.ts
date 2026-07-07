@@ -45,3 +45,62 @@ export function getLocationAlertCopy(locale: ShcLocale) {
     saveErrorBody: t(locale, 'location.save_error_body'),
   };
 }
+
+export type LocationScreenCopy = ReturnType<typeof getLocationScreenCopy>;
+
+export function getLocationScreenCopy(locale: ShcLocale) {
+  return {
+    collectionBadge: t(locale, 'location.collection_badge'),
+    titleStep1: t(locale, 'location.title_step1'),
+    titleStep2: t(locale, 'location.title_step2'),
+    subtitleStep1: t(locale, 'location.subtitle_step1'),
+    subtitleStep2: t(locale, 'location.subtitle_step2'),
+    subtitleWeb: t(locale, 'location.subtitle_web'),
+    stepFind: t(locale, 'location.step_find'),
+    stepConfirm: t(locale, 'location.step_confirm'),
+    useGps: t(locale, 'location.use_gps'),
+    gettingGps: t(locale, 'location.getting_gps'),
+    saved: t(locale, 'location.saved'),
+    savedAddresses: t(locale, 'location.saved_addresses'),
+    remove: t(locale, 'location.remove'),
+    searchSection: t(locale, 'location.search_section'),
+    searchPlaceholder: t(locale, 'location.search_placeholder'),
+    searchPlaceholderWeb: t(locale, 'location.search_placeholder_web'),
+    searchGo: t(locale, 'location.search_go'),
+    searching: t(locale, 'location.searching'),
+    sourceOnemap: t(locale, 'location.source_onemap'),
+    sourceArea: t(locale, 'location.source_area'),
+    geocodeLooking: t(locale, 'location.geocode_looking'),
+    pinLabel: (lat: number, lng: number) =>
+      t(locale, 'location.pin_label').replace('{lat}', lat.toFixed(4)).replace('{lng}', lng.toFixed(4)),
+    pinHint: t(locale, 'location.pin_hint'),
+    addressLabelSection: t(locale, 'location.address_label_section'),
+    labelHome: t(locale, 'location.label_home'),
+    labelWork: t(locale, 'location.label_work'),
+    labelOther: t(locale, 'location.label_other'),
+    line1Section: t(locale, 'location.line1_section'),
+    line2Section: t(locale, 'location.line2_section'),
+    line2Placeholder: t(locale, 'location.line2_placeholder'),
+    postalSection: t(locale, 'location.postal_section'),
+    instructionsSection: t(locale, 'location.instructions_section'),
+    instructionsPlaceholder: t(locale, 'location.instructions_placeholder'),
+    preview: (label: string) => t(locale, 'location.preview').replace('{label}', label),
+    saveBtn: t(locale, 'location.save_btn'),
+    saving: t(locale, 'location.saving'),
+    loadingAddress: t(locale, 'location.loading_address'),
+    back: t(locale, 'location.back'),
+    geoUnsupportedWeb: t(locale, 'location.geo_unsupported_web'),
+    resolveFailed: t(locale, 'location.resolve_failed'),
+    permissionDeniedWeb: t(locale, 'location.permission_denied_web'),
+    mapTitle: t(locale, 'location.map_title'),
+    steps: () => [
+      { id: 'find', label: t(locale, 'location.step_find') },
+      { id: 'confirm', label: t(locale, 'location.step_confirm') },
+    ],
+    addressLabels: () => [
+      { id: 'home' as const, title: t(locale, 'location.label_home') },
+      { id: 'work' as const, title: t(locale, 'location.label_work') },
+      { id: 'other' as const, title: t(locale, 'location.label_other') },
+    ],
+  };
+}

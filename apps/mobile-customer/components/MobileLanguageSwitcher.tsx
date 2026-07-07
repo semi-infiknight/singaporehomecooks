@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useShcI18n, type ShcLocale } from '@shc/i18n';
-import { gourmeatColors, shcBorders, shcRadii, shcSpacing } from '@shc/ui';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from '@shc/ui';
 
 export function MobileLanguageSwitcher({ testID = 'language-switcher-mobile' }: { testID?: string }) {
   const { locale, setLocale, t } = useShcI18n();
@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: shcRadii.sm,
-    borderWidth: shcBorders.brutal,
+    borderRadius: gourmeatRadii.sm,
+    borderWidth: 1,
     borderColor: gourmeatColors.border,
     backgroundColor: gourmeatColors.surface,
   },

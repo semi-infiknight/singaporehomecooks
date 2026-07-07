@@ -91,3 +91,9 @@ export const createCookExpense = (input: {
 export const listOpenRequests = () => cookClient.listOpenRequests();
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   cookClient.createBid(requestId, priceCents, message);
+export const getCookOrderDisputes = (orderId: string) => cookClient.getOrderDisputes(orderId);
+export const submitCookOrderDispute = (orderId: string, input: { type?: string; notes: string }) =>
+  cookClient.submitOrderDispute(orderId, input);
+export const getCookMessages = (orderId: string) => cookClient.getMessages(orderId);
+export const sendCookMessage = (orderId: string, body: string, from: 'cook' = 'cook') =>
+  cookClient.sendMessage(orderId, body, from);

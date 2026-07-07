@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { useCookOrder, useCookTransitionOrder } from '../../../../lib/useCookPortal';
-import { useOrderChat } from '../../../../lib/useOrder';
+import { useCookOrder, useCookTransitionOrder, useCookOrderDisputes, useCookOrderChat } from '../../../../lib/useCookPortal';
 import {
   GourmeatScreenHeader,
   GourmeatCard,
@@ -24,6 +23,36 @@ import {
   getOrderChatCopy,
 } from '@shc/i18n';
 
+function CookOrderDisputeTrayContent({
+  copy,
+  isPending,
+  onSubmit,
+}: {
+  copy: ReturnType<typeof getCookOrderDetailCopy>;
+  isPending: boolean;
+  onSubmit: (notes: string) => void;
+}) {
+  const [notes, setNotes] = useState('');
+  return (
+    <div data-testid="cook-order-dispute-tray">
+      <p className="text-sm text-muted-foreground mb-3">{copy.disputeHint}</p>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        placeholder={copy.disputePlaceholder}
+        className="shc-input w-full min-h-[80px] mb-3"
+        data-testid="cook-dispute-notes-input"
+      />
+      <GourmeatPrimaryButton
+        label={isPending ? copy.disputeSubmitting : copy.disputeSubmit}
+        onClick={() => onSubmit(notes.trim())}
+        disabled={isPending || notes.trim().length < 5}
+        testID="cook-submit-dispute-btn"
+      />
+    </div>
+  );
+}
+
 export default function CookOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
@@ -32,8 +61,9 @@ export default function CookOrderDetailPage() {
   const chatCopy = getOrderChatCopy(locale, 'cook');
   const { data: order, isLoading } = useCookOrder(id);
   const transMut = useCookTransitionOrder();
+  const { disputes, submit: submitDispute } = useCookOrderDisputes(id);
   const { openTray, dismiss } = useSHCTrayWeb();
-  const { messages, send } = useOrderChat(id);
+  const { messages, send } = useCookOrderChat(id);
   const [msg, setMsg] = useState('');
 
   const nextActions = useMemo(() => {
@@ -43,6 +73,42 @@ export default function CookOrderDetailPage() {
       { to: SHCOrderStatus; label: string }[]
     >;
   }, [locale]);
+
+  const openDisputeTray = () => {
+    openTray(
+      { id: 'cook-order-dispute', title: copy.reportIssue, height: 'medium' },
+      <CookOrderDisputeTrayContent
+        copy={copy}
+        isPending={submitDispute.isPending}
+        onSubmit={(notes) => {
+          submitDispute.mutate(notes, {
+            onSuccess: () => {
+              dismiss();
+              openTray(
+                { id: 'issue-reported', title: copy.trayReportedTitle, height: 'compact' },
+                <SHCTrayActionWeb
+                  message={copy.trayReportedBody}
+                  primaryLabel={copy.gotIt}
+                  onPrimary={dismiss}
+                  testID="cook-issue-reported-tray"
+                />
+              );
+            },
+            onError: (e) => {
+              openTray(
+                { id: 'issue-error', title: copy.trayErrorTitle, height: 'compact' },
+                <SHCTrayActionWeb
+                  message={(e as Error).message || copy.trayErrorBody}
+                  primaryLabel={copy.ok}
+                  onPrimary={dismiss}
+                />
+              );
+            },
+          });
+        }}
+      />
+    );
+  };
 
   if (isLoading || !order) {
     return (
@@ -54,6 +120,7 @@ export default function CookOrderDetailPage() {
 
   const status = String(order.shc_status || '');
   const actions = nextActions[status] || [];
+  const dispute = disputes[0] as { status?: string; type?: string; notes?: string } | undefined;
 
   const confirmTransition = (to: SHCOrderStatus, label: string) => {
     openTray(
@@ -140,7 +207,7 @@ export default function CookOrderDetailPage() {
             data-testid="cook-portal-chat-input"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && msg.trim()) {
-                send({ body: msg, from: 'cook' });
+                send({ body: msg });
                 setMsg('');
               }
             }}
@@ -149,7 +216,7 @@ export default function CookOrderDetailPage() {
             size="sm"
             onClick={() => {
               if (msg.trim()) {
-                send({ body: msg, from: 'cook' });
+                send({ body: msg });
                 setMsg('');
               }
             }}
@@ -159,6 +226,25 @@ export default function CookOrderDetailPage() {
           </SHCButton>
         </div>
       </div>
+
+      {dispute ? (
+        <GourmeatCard className="mb-6" testID="cook-order-dispute-submitted">
+          <p className="font-extrabold text-sm">{copy.issueReported}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {dispute.status === 'open' ? copy.disputeOpen : dispute.status || copy.disputeOpen} · {dispute.type || copy.disputeOther}
+          </p>
+          {dispute.notes ? <p className="text-sm mt-2">{dispute.notes}</p> : null}
+        </GourmeatCard>
+      ) : (
+        <GourmeatPrimaryButton
+          label={copy.reportIssue}
+          className="mb-6"
+          onClick={openDisputeTray}
+          testID="cook-open-dispute-tray-btn"
+        />
+      )}
+
+      <p className="text-xs text-muted-foreground mb-6">{copy.footer}</p>
 
       <Link href="/cook-portal/orders" className="block text-center text-sm font-semibold text-primary mt-8">
         {copy.backToOrders}

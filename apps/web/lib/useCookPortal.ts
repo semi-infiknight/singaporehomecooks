@@ -13,6 +13,10 @@ import {
   getCookListings,
   getCookOrder,
   getCookOrders,
+  getCookOrderDisputes,
+  getCookMessages,
+  sendCookMessage,
+  submitCookOrderDispute,
   isCookAuthenticated,
   listCookExpenses,
   listOpenRequests,
@@ -145,4 +149,34 @@ export function useCreateBid() {
       createBid(requestId, priceCents, message),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-open-requests'] }),
   });
+}
+
+export function useCookOrderDisputes(orderId: string) {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['cook-order-disputes', orderId],
+    queryFn: () => getCookOrderDisputes(orderId),
+    enabled: Boolean(orderId) && isCookAuthenticated(),
+    placeholderData: [],
+  });
+  const submit = useMutation({
+    mutationFn: (notes: string) => submitCookOrderDispute(orderId, { type: 'other', notes }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-order-disputes', orderId] }),
+  });
+  return { disputes: query.data || [], submit, isLoading: query.isLoading };
+}
+
+export function useCookOrderChat(orderId: string) {
+  const qc = useQueryClient();
+  const msgs = useQuery({
+    queryKey: ['cook-chat', orderId],
+    queryFn: () => getCookMessages(orderId),
+    enabled: Boolean(orderId) && isCookAuthenticated(),
+    refetchInterval: 4500,
+  });
+  const send = useMutation({
+    mutationFn: ({ body }: { body: string }) => sendCookMessage(orderId, body, 'cook'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-chat', orderId] }),
+  });
+  return { messages: msgs.data || [], send: send.mutate, isLoading: msgs.isLoading };
 }

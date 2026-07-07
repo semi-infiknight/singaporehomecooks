@@ -11,7 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton, gourmeatColors } from '@shc/ui';
+import { shcSpacing, gourmeatRadii, gourmeatShadows, SHCButton, gourmeatColors } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { useShcI18n } from '@shc/i18n';
 
@@ -121,9 +121,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '800', marginBottom: shcSpacing.sm, color: gourmeatColors.text },
   subtitle: { fontSize: 14, color: gourmeatColors.textLight, marginBottom: shcSpacing.lg },
   input: {
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
     borderColor: gourmeatColors.border,
-    borderRadius: shcRadii.md,
+    borderRadius: gourmeatRadii.md,
     padding: shcSpacing.md,
     marginBottom: shcSpacing.md,
     backgroundColor: gourmeatColors.surface,
@@ -139,12 +139,12 @@ const styles = StyleSheet.create({
   browseBtn: {
     marginTop: shcSpacing.sm,
     paddingVertical: shcSpacing.md,
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
     borderColor: gourmeatColors.border,
-    borderRadius: shcRadii.md,
+    borderRadius: gourmeatRadii.md,
     backgroundColor: gourmeatColors.primaryLight,
     alignItems: 'center',
-    ...shcShadows.brutalSm,
+    ...gourmeatShadows.soft,
   },
   browseBtnText: { color: gourmeatColors.text, fontWeight: '800', fontSize: 15 },
   demoHint: { textAlign: 'center', marginTop: shcSpacing.lg, fontSize: 11, color: gourmeatColors.textLight },

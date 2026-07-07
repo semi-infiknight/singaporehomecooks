@@ -762,3 +762,29 @@
 - More Mandarin coverage on web customer flows
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 32 — 2026-07-08 ~04:07 IST
+
+### Implemented
+1. **Location i18n** — `getLocationScreenCopy` (40+ keys en/zh-Hans); web `/location` + mobile `LocationPickerExperience` copy prop
+2. **@shc/ui location-ux** — Gourmeat tokens (borders/shadows/colors) replacing neo-brutalist `shcColors` on customer picker
+3. **Cook-portal order detail** — dispute/report-issue tray parity with mobile; cook JWT chat via `useCookOrderChat`
+4. **Customer Gourmeat sweep** — auth, onboarding, language switcher: `gourmeatRadii`/`gourmeatShadows`, 1px borders
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Mobile customer checkout/profile brutal border sweep
+- Web profile/wallet remaining hardcoded strings
+- Cook portal order detail items meta + hint copy
+- Continue loop until 9:00 AM IST Jul 9
+

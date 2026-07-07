@@ -7,10 +7,9 @@ import {
   SHCIcon,
   SHCFoodImage,
   gourmeatColors,
+  gourmeatRadii,
+  gourmeatShadows,
   shcSpacing,
-  shcBorders,
-  shcRadii,
-  shcShadows,
   type SHCIconKey,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
@@ -37,7 +36,7 @@ export default function TrustAndSafetyScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: insets.bottom + 32 }]}
       testID="trust-safety-screen"
     >
-      <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={120} rounded={shcRadii.lg} />
+      <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={120} rounded={gourmeatRadii.lg} />
 
       <Text style={styles.title}>{copy.title}</Text>
       <Text style={styles.subtitle}>{copy.subtitle}</Text>
@@ -101,7 +100,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: gourmeatColors.primaryLight,
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
     borderColor: gourmeatColors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -116,15 +115,15 @@ const styles = StyleSheet.create({
   cta: {
     marginTop: shcSpacing.lg,
     backgroundColor: gourmeatColors.primary,
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
     borderColor: gourmeatColors.borderDark,
-    borderRadius: shcRadii.md,
+    borderRadius: gourmeatRadii.md,
     paddingVertical: shcSpacing.md,
     alignItems: 'center',
     minHeight: 52,
-    ...shcShadows.brutalSm,
+    ...gourmeatShadows.soft,
   },
-  ctaPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
+  ctaPressed: { opacity: 0.92, transform: [{ scale: 0.98 }] },
   ctaText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 16 },
   secondaryCta: { marginTop: shcSpacing.md, paddingVertical: shcSpacing.sm, alignItems: 'center' },
   secondaryCtaText: { color: gourmeatColors.primary, fontWeight: '700', fontSize: 14 },
