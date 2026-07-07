@@ -68,6 +68,7 @@
   "devDependencies": {
     "@babel/plugin-transform-class-static-block": "^7.29.7",
     "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@react-native/gradle-plugin": "0.81.5",
     "@types/react": "~19.1.17",
     "eslint": "^9.0.0",
     "metro": "0.83.3",

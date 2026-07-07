@@ -1,0 +1,337 @@
+# Singapore Home Cooks — Android / APK Build Status Report
+
+**Date:** 8 July 2026  
+**Session scope:** Customer mobile app (`apps/mobile-customer`) against Railway production  
+**Decision:** **Ship customer experience via PWA now.** Native Android APK is **not ready** on Windows; EAS cloud build attempted but errored.
+
+---
+
+## Executive summary
+
+| Area | Status |
+|------|--------|
+| **Customer PWA (production)** | ✅ Works in Chrome — `https://web-production-9226.up.railway.app` |
+| **Medusa backend (production)** | ✅ Live — `https://medusa-production-d2ba.up.railway.app` |
+| **Local Windows release APK** | ❌ Blocked — CMake path limits + Reanimated new-arch requirement |
+| **EAS cloud preview APK** | ❌ Errored — Install dependencies phase (see below) |
+| **Android emulator** | ⚠️ Partial — `emulator-5554` online; ghost `emulator-5562` offline entry |
+
+**Bottom line:** Brother confirmed PWA is fine for now. Native Android should be pursued via **fixed EAS monorepo config** or **WSL/Linux clone**, not local Windows `gradlew assembleRelease`.
+
+---
+
+## Production endpoints
+
+| Service | URL |
+|---------|-----|
+| Web / PWA | https://web-production-9226.up.railway.app |
+| Medusa API | https://medusa-production-d2ba.up.railway.app |
+| Railway project | `homecooks` (workspace: captmathur's Projects) |
+
+---
+
+## Repository locations used
+
+| Path | Purpose |
+|------|---------|
+| `C:\Users\mathu\Projects\singaporehomecooks` | Main monorepo (canonical) |
+| `C:\shc\hc` | Short-path clone for local Gradle attempts |
+| `C:\hc` | Even shorter clone (also failed) |
+
+---
+
+## Timeline of attempts (7–8 Jul 2026)
+
+### 1. Railway & production access
+- Logged into Railway as Kika (`mathur.krishna0708@gmail.com`)
+- Confirmed production services: `web`, `medusa`, `worker`, `minio`, Postgres, Redis
+- **Read-only** — no deploys or config writes
+
+### 2. PWA criteria audit
+- Audited live PWA against `Singapore_Home_Cooks_FINAL.docx` and `Singapore_Home_Cooks_Decisions_Log_FINAL.docx`
+- **~65% Phase 1 pass rate** (see [PWA audit summary](#pwa-criteria-audit-summary))
+- Interactive report: `~/.cursor/projects/c-Users-mathu-Projects-singaporehomecooks/canvases/shc-pwa-criteria-audit.canvas.tsx`
+
+### 3. Android emulator setup
+- Created AVDs: `shc_pixel`, `shc_api35`
+- Android SDK: `C:\Users\mathu\AppData\Local\Android\Sdk`
+- `emulator-5554` came online (x86_64)
+- Persistent ghost device `emulator-5562` (offline) in `adb devices`
+
+### 4. Local Windows release APK — **FAILED** (new architecture ON)
+
+**Command pattern:**
+```powershell
+cd C:\shc\hc\apps\mobile-customer\android
+.\gradlew.bat assembleRelease -PreactNativeArchitectures=x86_64 --no-daemon
+```
+
+**Root error:**
+```
+CMAKE_OBJECT_PATH_MAX : 250
+ninja: manifest 'build.ninja' still dirty after 100 tries
+```
+
+**Why it failed:**
+- Windows default CMake object path limit (250 chars)
+- pnpm hoists dependencies under `.pnpm/<hash>/node_modules/...` — paths exceed limit even at `C:\shc\hc` and `C:\hc`
+- `subst S:` drive did not shorten physical CMake build paths
+- Registry `LongPathsEnabled=1` set but may require reboot; does not fix all CMake/ninja edge cases
+
+**Mitigations attempted (none succeeded):**
+- Short-path clones (`C:\shc\hc`, `C:\hc`)
+- `@react-native/gradle-plugin@0.81.5` devDependency
+- Gradle 8.13, compileSdk/targetSdk 35, minSdk 24, NDK 27.1
+- `GRADLE_USER_HOME=C:\g`
+- `shamefully-hoist=true` in `.npmrc` (still uses `.pnpm` paths)
+- Cleaned `android/app/.cxx` and `android/build` repeatedly
+
+**Elapsed:** Builds ran 10–45+ minutes before CMAKE/ninja failure.
+
+### 5. Local Windows release APK — **FAILED** (new architecture OFF)
+
+**Elapsed:** ~1.4 minutes (fail-fast)
+
+**Error:**
+```
+:react-native-reanimated:assertNewArchitectureEnabledTask FAILED
+[Reanimated] Reanimated requires new architecture to be enabled.
+```
+
+**Catch-22 on Windows:**
+| `newArchEnabled` | Result |
+|----------------|--------|
+| `false` | Reanimated refuses to build |
+| `true` | CMAKE_OBJECT_PATH_MAX / ninja dirty manifest |
+
+### 6. EAS cloud build — **ERRORED**
+
+| Field | Value |
+|-------|-------|
+| **Build ID** | `86b5a197-5cba-49b8-b73f-6403e3399a25` |
+| **Profile** | `preview` (production Medusa env vars) |
+| **Expo account** | `kikalikescows` |
+| **Project** | `@kikalikescows/shc-customer` |
+| **Project ID** | `df4b2f1e-29d8-4726-bba0-af941e839455` |
+| **URL** | https://expo.dev/accounts/kikalikescows/projects/shc-customer/builds/86b5a197-5cba-49b8-b73f-6403e3399a25 |
+| **Status (8 Jul 2026)** | **ERRORED** |
+| **Queue time** | ~76 min (free tier) |
+| **Build duration** | ~9 sec |
+| **Error** | `Unknown error. See logs of the Install dependencies build phase` |
+
+**What succeeded before error:**
+- Project upload (~41 MB)
+- Remote Android keystore generation in cloud
+- Fingerprint computation
+
+**Likely cause (not yet confirmed in logs):**
+- Monorepo `pnpm` workspace install on EAS — `preview` profile lacks `node`/`pnpm` pins that `production` profile has
+- Build may have been submitted from short clone `C:\shc\hc` without correct EAS monorepo root configuration
+- Original Expo project (`owner: darksend`, projectId `5c1f4300-...`) was inaccessible; re-initialized under `kikalikescows`
+
+### 7. Expo / EAS account migration (local only)
+- `app.json` owner changed: `darksend` → `kikalikescows`
+- `eas.projectId` changed to `df4b2f1e-29d8-4726-bba0-af941e839455`
+- **Team decision needed:** which Expo org should own production builds?
+
+---
+
+## Root cause analysis
+
+### Windows local builds
+1. **Path length** — React Native New Architecture + native modules (Reanimated, Skia, etc.) generate CMake object paths that exceed Windows limits when combined with pnpm's content-addressed `node_modules` layout.
+2. **Reanimated** — `react-native-reanimated@4.x` **requires** `newArchEnabled=true`; disabling new arch is not an option without downgrading or removing Reanimated.
+3. **pnpm monorepo** — Deep symlinked paths under `.pnpm/` are the worst-case for Windows native builds.
+
+### EAS cloud build
+1. **Dependency install phase** — Failed before native compile; points to workspace/monorepo setup, not Windows paths.
+2. **Profile config gap** — `preview` missing explicit `node: "22.16.0"` and `pnpm: "11.1.3"` (present on `production` profile).
+3. **Possible missing** `eas.json` monorepo settings or `.easignore` tuning for pnpm workspaces.
+
+---
+
+## What works today
+
+- ✅ **PWA** installed via Chrome, production Railway backend
+- ✅ Product discovery, cook profiles, allergens, min qty, collection slots
+- ✅ Trust page (cancellation tiers, guarantee, address timing)
+- ✅ Service worker + manifest (standalone)
+- ✅ Live Medusa catalogue (6 dishes observed in audit)
+- ✅ Railway production stack (read access verified)
+
+---
+
+## What does not work
+
+- ❌ Local `gradlew assembleRelease` on Windows (this machine)
+- ❌ EAS preview APK (errored — needs config fix + retry)
+- ❌ Native app install on emulator (no APK artifact)
+- ⚠️ Several PWA Phase 1 items partial/fail (see audit)
+
+---
+
+## Recommended fixes (ranked)
+
+### 1. Fix EAS monorepo config and retry (highest priority for APK)
+
+```jsonc
+// eas.json — preview profile additions to try
+"preview": {
+  "node": "22.16.0",
+  "pnpm": "11.1.3",
+  "android": { "buildType": "apk" },
+  // Consider: "env": { "EAS_BUILD": "true" }
+}
+```
+
+Also verify:
+- Submit from **main repo root** with correct `eas.json` / Expo monorepo docs for pnpm
+- Add/check `.easignore` — exclude unrelated apps to shrink upload
+- Review Install dependencies logs at EAS build URL
+- Consider paid EAS tier if queue time (~76 min) is unacceptable
+
+### 2. WSL2 or Linux/macOS clone
+
+```bash
+git clone <repo> ~/shc
+cd ~/shc/apps/mobile-customer/android
+./gradlew assembleRelease
+```
+
+Linux avoids Windows CMAKE_OBJECT_PATH_MAX. Use `~/` short home path. Still need `newArchEnabled=true`.
+
+### 3. Windows long paths (low confidence)
+
+- Reboot after `LongPathsEnabled=1`
+- Try `npm` flat `node_modules` instead of pnpm for mobile app only (last resort)
+- Build only `arm64-v8a` or `x86_64` single ABI to reduce path depth
+
+### 4. Do not pursue
+
+- ❌ `newArchEnabled=false` — blocked by Reanimated
+- ❌ `subst` drive letters — does not fix physical CMake paths
+- ❌ Local Gradle on this Windows host without WSL — poor ROI
+
+---
+
+## PWA criteria audit summary
+
+**Canvas:** `shc-pwa-criteria-audit.canvas.tsx` (Cursor Canvas)  
+**Pass rate:** ~65% Phase 1 customer criteria  
+**Channel audited:** Chrome PWA on production Railway
+
+### Key passes
+- Occasion-first homepage, cook profiles, allergen disclosure, min quantity, collection slots
+- Trust architecture (`/content/trust`), cancellation policy, address timing, Occasion Guarantee
+- PWA manifest + service worker, guest browse + login-gated checkout
+- Live Medusa catalogue
+
+### Key gaps (fail / partial)
+
+| ID | Issue | Status |
+|----|-------|--------|
+| P1-03 | Live social proof counters on homepage | **Fail** |
+| P2-03 | Mandarin UI at launch | **Fail** |
+| BUG-01 | `og:image` points to `localhost:3000` on production | **Fail** |
+| P1-02 | Dish synonym search depth | Partial |
+| P1-09 | One-cook-per-cart live verification | Partial |
+| P1-10–11 | PayNow checkout + S$50 minimum (needs signed-in E2E) | Partial |
+| P1-21 | Web push permission flow | Partial |
+
+### Pre-launch items (operational — outside app UI)
+
+- Food law specialist written opinion (FINAL §21)
+- MAS PayNow licence confirmation (Decisions §15)
+- Insurance in force before first transaction
+
+---
+
+## Local changes from this session (not pushed)
+
+### Safe to include in PR (after review)
+
+| File | Change |
+|------|--------|
+| `apps/mobile-customer/android/build.gradle` | SDK 35, minSdk 24, NDK 27.1 |
+| `apps/mobile-customer/android/gradle.properties` | JVM 4GB, worker limits; **`newArchEnabled=true` (reverted)** |
+| `apps/mobile-customer/android/gradle/wrapper/gradle-wrapper.properties` | Gradle 8.13 |
+| `apps/mobile-customer/package.json` | `@react-native/gradle-plugin@0.81.5` devDep |
+| `apps/mobile-customer/eas.json` | `preview.android.buildType: apk` |
+| `apps/mobile-customer/app.json` | Expo owner/projectId → `kikalikescows` / new projectId |
+| `pnpm-lock.yaml` | Lockfile from gradle-plugin add |
+
+### Must NOT commit
+
+| File | Reason |
+|------|--------|
+| `apps/mobile-customer/.env` | Production Medusa publishable key — **gitignored** |
+| `build-log.txt` | Local build artifact — do not commit |
+
+### Team decisions required
+
+1. **Expo project ownership** — `darksend` vs `kikalikescows` account
+2. **EAS env vars in `eas.json`** — publishable keys are in repo `eas.json` already on `production` profile; confirm policy
+3. **Whether Android SDK bumps** should land on `main` before APK is proven on EAS
+
+---
+
+## PR checklist for team
+
+- [ ] Read this report and `docs/PR_DRAFT_ANDROID_DEFERRED.md`
+- [ ] Confirm PWA is acceptable customer channel until APK ready
+- [ ] Decide Expo org / project ownership
+- [ ] Fix EAS `preview` profile (node/pnpm/monorepo) and retry build
+- [ ] Do **not** merge claims of "APK ready" — no artifact exists
+- [ ] Verify `.env` not staged (`git status`)
+- [ ] Fix production `og:image` (web app — separate PR)
+- [ ] Plan Mandarin i18n and homepage counters per scope docs
+- [ ] Schedule signed-in checkout E2E (PayNow, min order, PDPA consent)
+- [ ] Consider WSL build guide for developers on Windows
+
+---
+
+## Commands reference
+
+### Check EAS build status
+```bash
+cd apps/mobile-customer
+pnpm dlx eas-cli@latest build:list --platform android --limit 1 --json
+```
+
+### Retry EAS preview (after config fix)
+```bash
+cd apps/mobile-customer
+pnpm dlx eas-cli@latest build --profile preview --platform android --non-interactive
+```
+
+### Install APK when available
+```powershell
+adb -s emulator-5554 install -r C:\Users\mathu\Downloads\SHC-customer-preview.apk
+adb -s emulator-5554 shell am start -n com.singaporehomecooks.customer/.MainActivity
+```
+
+---
+
+## Appendix: error snippets
+
+### Windows CMAKE (new arch ON)
+```
+CMAKE_OBJECT_PATH_MAX : 250
+ninja: manifest 'build.ninja' still dirty after 100 tries
+```
+
+### Reanimated (new arch OFF)
+```
+Execution failed for task ':react-native-reanimated:assertNewArchitectureEnabledTask'.
+[Reanimated] Reanimated requires new architecture to be enabled.
+```
+
+### EAS (cloud)
+```
+Android build failed:
+Unknown error. See logs of the Install dependencies build phase for more information.
+```
+
+---
+
+*Generated during Android build session, 7–8 Jul 2026. No Railway writes. No git push.*
