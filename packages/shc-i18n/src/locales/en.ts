@@ -23,6 +23,7 @@ export const en = {
   'cart.portions_label': 'Portions',
   'cart.subtotal_label': 'Subtotal',
   'cart.order_items': 'Order items',
+  'cart.line_price': '{qty} × S${price}',
   'cart.total_label': 'Total',
   'cart.clear_cart': 'Clear cart',
   'cart.checkout_btn': 'Checkout',

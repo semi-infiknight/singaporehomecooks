@@ -25,6 +25,7 @@ export const zhHans: Record<MessageKey, string> = {
   'cart.portions_label': '份数',
   'cart.subtotal_label': '小计',
   'cart.order_items': '订单商品',
+  'cart.line_price': '{qty} × S${price}',
   'cart.total_label': '合计',
   'cart.clear_cart': '清空购物车',
   'cart.checkout_btn': '结账',

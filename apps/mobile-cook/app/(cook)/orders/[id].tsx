@@ -177,7 +177,7 @@ export default function CookManageOrder() {
         </Text>
         {(order.items || []).map((it: any, i: number) => (
           <Text key={i} style={styles.itemLine}>
-            {it.qty}× {it.name}
+            {copy.itemLine(it.qty || 1, it.name || '')}
           </Text>
         ))}
         <Text style={styles.hint}>{copy.hint}</Text>

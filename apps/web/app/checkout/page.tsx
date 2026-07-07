@@ -114,7 +114,7 @@ export default function CheckoutPage() {
       if (isCorp && oid) {
         try {
           const { flagCorporateOrder } = await import('../../lib/api-client');
-          await flagCorporateOrder(oid, 'Corporate/group order from web checkout — invoice stub for ops.');
+          await flagCorporateOrder(oid, checkoutCopy.corporateFlagNote);
         } catch {
           /* non-fatal */
         }
@@ -144,7 +144,7 @@ export default function CheckoutPage() {
   if (orderId) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
+        <div className="relative h-24 overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4">
           <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
           <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
             <h1 className="text-xl font-black text-white">{t('checkout.order_placed')}</h1>
@@ -206,7 +206,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad">
-      <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
+      <div className="relative h-24 overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
           <h1 className="text-xl font-black text-white">{t('checkout.title')}</h1>
@@ -240,7 +240,7 @@ export default function CheckoutPage() {
 
       <SHCSectionTitle subtitle={t('checkout.safety_subtitle')}>{t('checkout.safety_title')}</SHCSectionTitle>
       <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-checkout-web" />
-      <label className="mt-3 flex gap-3 text-sm p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg cursor-pointer shadow-[var(--shc-shadow-brutal-sm)]">
+      <label className="mt-3 flex gap-3 text-sm p-4 bg-card border border-border rounded-lg cursor-pointer shadow-[var(--shc-shadow-soft)]">
         <input
           type="checkbox"
           checked={pdpaConsent}
@@ -271,7 +271,7 @@ export default function CheckoutPage() {
         <button
           type="button"
           onClick={() => setIsCorp(!isCorp)}
-          className={`text-xs px-3 py-1.5 border-2 border-[var(--shc-border-brutal)] rounded-lg font-bold transition-colors shadow-[var(--shc-shadow-brutal-sm)] ${
+          className={`text-xs px-3 py-1.5 border border-border rounded-lg font-bold transition-colors shadow-[var(--shc-shadow-soft)] ${
             isCorp ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'
           }`}
         >

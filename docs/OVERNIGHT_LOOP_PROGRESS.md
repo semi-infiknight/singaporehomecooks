@@ -813,3 +813,21 @@
 - More customer web screens Gourmeat border audit
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 34 — 2026-07-08 ~04:11 IST
+
+### Implemented
+1. **Web checkout** — `checkoutCopy.corporateFlagNote` for ops flag; Gourmeat-soft borders on hero, PDPA row, corporate chip
+2. **Web cart** — `cart.line_price` + `getCartScreenCopy().linePrice`; minimum-hint 1px border
+3. **Mobile cook order detail** — `copy.itemLine` helper parity with web
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-cook typecheck PASS
+
+### Next iteration
+- Web AppHeader / SHCWebComponents Gourmeat border audit (customer surfaces)
+- Web request-dish flow remaining strings
+- Continue loop until 9:00 AM IST Jul 9
+

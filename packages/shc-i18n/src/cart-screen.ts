@@ -29,6 +29,8 @@ export function getCartScreenCopy(locale: ShcLocale) {
         '{count}',
         String(count)
       ),
+    linePrice: (qty: number, price: string) =>
+      t(locale, 'cart.line_price').replace('{qty}', String(qty)).replace('{price}', price),
   };
 }
 

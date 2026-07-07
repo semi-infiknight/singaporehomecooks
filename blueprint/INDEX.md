@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Overnight loop iter 33) — Wallet/profile i18n; cook order items meta; Gourmeat borders.
+**Last Updated:** 2026-07-08 (Overnight loop iter 34) — Checkout/cart i18n; Gourmeat borders.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
