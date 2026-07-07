@@ -735,24 +735,26 @@ export function SearchResultsDropdown({
   /** Inline panel below search (discover) vs absolute dropdown (header) */
   inline?: boolean;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   if (!query.trim()) return null;
   return (
     <div
-      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] max-h-80 overflow-y-auto ${
+      className={`bg-card border border-border rounded-xl shadow-[var(--shc-shadow-card)] max-h-80 overflow-y-auto ${
         inline ? 'mt-2 mb-2' : 'absolute left-0 right-0 top-full mt-1 z-50'
       }`}
       data-testid="search-results-panel"
     >
-      <div className="flex justify-between items-center px-3 py-2 bg-[var(--shc-bento-mint)] border-b-2 border-[var(--shc-border-brutal)] text-xs font-bold">
-        <span>{products.length} result{products.length !== 1 ? 's' : ''} for “{query.trim()}”</span>
+      <div className="flex justify-between items-center px-3 py-2 bg-[var(--shc-bento-mint)] border-b border-border text-xs font-bold">
+        <span>{homeCopy.searchResultsHeader(products.length, query.trim())}</span>
         {onClear && (
           <button type="button" onClick={onClear} className="text-primary font-bold">
-            Clear
+            {homeCopy.searchClear}
           </button>
         )}
       </div>
       {products.length === 0 ? (
-        <p className="p-4 text-sm text-muted-foreground text-center">No dishes match — try another occasion or filter</p>
+        <p className="p-4 text-sm text-muted-foreground text-center">{homeCopy.searchNoMatch}</p>
       ) : (
         products.slice(0, 8).map((p) => (
           <SearchResultRow key={p.id} product={p} href={`/product/${p.id}`} onAdd={onAdd ? () => onAdd(p.id) : undefined} />
@@ -873,7 +875,7 @@ export function ZomatoLocationBar({
       </Link>
       <Link
         href={onProfileHref}
-        className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] shrink-0"
+        className="w-10 h-10 rounded-full overflow-hidden border border-border shadow-[var(--shc-shadow-soft)] shrink-0"
         data-testid="zomato-profile-avatar"
       >
         {avatarUri ? (

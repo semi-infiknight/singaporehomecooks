@@ -9,6 +9,8 @@ describe('request-dish copy', () => {
     expect(copy.title).toBe('Request a custom dish');
     expect(copy.steps).toHaveLength(4);
     expect(copy.occasionLabels['Hari Raya']).toBeTruthy();
+    expect(copy.defaultStory('Hari Raya')).toContain('Nasi');
+    expect(copy.budgetBadge(120)).toBe('S$120');
   });
 
   it('returns Mandarin request copy', () => {

@@ -831,3 +831,24 @@
 - Web request-dish flow remaining strings
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 35 — 2026-07-08 ~04:14 IST
+
+### Implemented
+1. **AppHeader Gourmeat audit** — 1px `border-border` + `--shc-shadow-soft` on header, logo, sign-in, cart badge, mobile menu (neo-brutalist removed from customer chrome)
+2. **SHCWebComponents customer surfaces** — `ZomatoLocationBar` avatar, `SearchResultsDropdown` Gourmeat panel + i18n (`search.results_for`, `search.clear_btn`, `search.no_match`); `WebPushOptIn` soft borders
+3. **Web `/request`** — full `getRequestDishCopy` parity with mobile (`defaultStory`, `budgetBadge`, `guestsCount`, hints, `GourmeatCard`); Gourmeat chip borders
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### Next iteration
+- Remaining `SHCWebComponents` brutal borders on discover rails/cards (scoped)
+- Web login/onboarding Gourmeat border pass
+- Continue loop until 9:00 AM IST Jul 9
+

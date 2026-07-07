@@ -25,5 +25,11 @@ export function getDiscoverHomeCopy(locale: ShcLocale) {
     calorieModerate: t(locale, 'discover.calorie_moderate'),
     calorieHearty: t(locale, 'discover.calorie_hearty'),
     calorieApprox: (cal: number) => t(locale, 'discover.calorie_approx').replace('{cal}', String(cal)),
+    searchResultsHeader: (count: number, query: string) =>
+      t(locale, 'search.results_for')
+        .replace('{count}', String(count))
+        .replace('{query}', query),
+    searchClear: t(locale, 'search.clear_btn'),
+    searchNoMatch: t(locale, 'search.no_match'),
   };
 }

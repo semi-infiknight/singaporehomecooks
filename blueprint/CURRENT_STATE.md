@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 34) — Web checkout/cart i18n + Gourmeat borders; cook mobile itemLine.
+**Last Updated:** 2026-07-08 (Overnight loop iter 35) — AppHeader Gourmeat borders; web request-dish `getRequestDishCopy`; search results i18n.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

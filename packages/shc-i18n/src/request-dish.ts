@@ -36,6 +36,15 @@ export type RequestDishCopy = {
   backProfile: string;
   homeCtaTitle: string;
   homeCtaSubtitle: string;
+  pausedTitle: string;
+  pausedBody: string;
+  budgetBadge: (amount: number) => string;
+  defaultStory: (occasionId: string) => string;
+  backA11y: string;
+  guestsCount: (n: number) => string;
+  successWithIdWeb: string;
+  browseCta: string;
+  loadingAuth: string;
 };
 
 const OCCASION_VALUES = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'];
@@ -91,5 +100,19 @@ export function getRequestDishCopy(locale: ShcLocale): RequestDishCopy {
     backProfile: t(locale, 'request.back_profile'),
     homeCtaTitle: t(locale, 'request.title'),
     homeCtaSubtitle: t(locale, 'request.home_cta_subtitle'),
+    pausedTitle: t(locale, 'request.paused_title'),
+    pausedBody: t(locale, 'request.paused_body'),
+    budgetBadge: (amount: number) =>
+      t(locale, 'request.budget_badge').replace('{amount}', String(amount)),
+    defaultStory: (occasionId: string) =>
+      t(locale, 'request.default_story').replace(
+        '{occasion}',
+        occasionLabels[occasionId] || occasionId
+      ),
+    backA11y: t(locale, 'request.back_a11y'),
+    guestsCount: (n: number) => t(locale, 'request.guests').replace('{n}', String(n)),
+    successWithIdWeb: t(locale, 'request.success_with_id'),
+    browseCta: t(locale, 'orders.browse_cta'),
+    loadingAuth: t(locale, 'request.loading_auth'),
   };
 }
