@@ -36,13 +36,30 @@ export function getCookOrderStatusLabel(locale: ShcLocale, status: string): stri
 export function getCookAuthCopy(locale: ShcLocale) {
   return {
     title: t(locale, 'cook.auth.title'),
+    signInTitle: t(locale, 'cook.auth.sign_in_title'),
     subtitle: t(locale, 'cook.auth.subtitle'),
+    portalSubtitle: t(locale, 'cook.auth.portal_subtitle'),
     emailPlaceholder: t(locale, 'cook.auth.email_placeholder'),
     passwordPlaceholder: t(locale, 'auth.password_placeholder'),
     signInBtn: t(locale, 'cook.auth.sign_in_btn'),
+    signingIn: t(locale, 'cook.auth.signing_in'),
+    loadingSession: t(locale, 'cook.auth.loading_session'),
     pleaseWait: t(locale, 'auth.please_wait'),
     failedTitle: t(locale, 'auth.failed_title'),
+    loginFailed: t(locale, 'cook.auth.login_failed'),
     demoHint: t(locale, 'cook.auth.demo_hint'),
+  };
+}
+
+export function getCookOrdersCopy(locale: ShcLocale) {
+  return {
+    title: t(locale, 'cook.orders.title'),
+    activeBadge: (count: number) =>
+      t(locale, 'cook.orders.active_badge').replace('{count}', String(count)),
+    emptyTitle: t(locale, 'cook.orders.empty_title'),
+    emptyBody: t(locale, 'cook.orders.empty_body'),
+    details: t(locale, 'cook.orders.details'),
+    manageListings: t(locale, 'cook.orders.manage_listings'),
   };
 }
 
@@ -103,6 +120,18 @@ export function getCookListingsCopy(locale: ShcLocale) {
 
 export function getCookComplianceCopy(locale: ShcLocale) {
   return {
+    title: t(locale, 'cook.compliance.title'),
+    bannerTitle: t(locale, 'cook.compliance.banner_title'),
+    bannerBody: t(locale, 'cook.compliance.banner_body'),
+    requiredBadge: t(locale, 'cook.compliance.required_badge'),
+    submit: t(locale, 'cook.compliance.submit'),
+    submitDocument: t(locale, 'cook.compliance.submit_document'),
+    submitting: t(locale, 'cook.compliance.submitting'),
+    uploading: t(locale, 'cook.compliance.uploading'),
+    submittedSection: t(locale, 'cook.compliance.submitted_section'),
+    submittedResult: (type: string) =>
+      t(locale, 'cook.compliance.submitted_result').replace('{type}', type.toUpperCase()),
+    celebration: t(locale, 'cook.compliance.celebration'),
     uploadBadge: (type: string) =>
       t(locale, 'cook.compliance.upload_badge').replace('{type}', type.toUpperCase()),
     filePlaceholder: t(locale, 'cook.compliance.file_placeholder'),
@@ -138,6 +167,16 @@ export function getCookEarningsCopy(locale: ShcLocale) {
     expenseInvalidBody: t(locale, 'cook.earnings.expense_invalid_body'),
     irasBadge: t(locale, 'cook.earnings.iras_badge'),
     defaultCategory: t(locale, 'cook.earnings.default_category'),
+    backDashboard: t(locale, 'cook.earnings.back_dashboard'),
+    addExpenseBtn: t(locale, 'cook.earnings.add_expense_btn'),
+    totalLogged: (amount: number | string) =>
+      t(locale, 'cook.earnings.total_logged').replace('{amount}', String(amount)),
+    weekAmountBadge: (amount: number | string) =>
+      t(locale, 'cook.dashboard.earnings_badge').replace('{amount}', String(amount)),
+    subtitleFor: (name: string) =>
+      t(locale, 'cook.earnings.subtitle').replace('{name}', name),
+    ordersCountLabel: (count: number) =>
+      t(locale, 'cook.earnings.orders_count').replace('{count}', String(count)),
   };
 }
 
@@ -165,6 +204,12 @@ export function getCookOrderDetailCopy(locale: ShcLocale) {
     footer: t(locale, 'cook.order_detail.footer'),
     transitionFailed: t(locale, 'cook.order_detail.transition_failed'),
     cancel: t(locale, 'cook.order_detail.cancel'),
+    backOrders: t(locale, 'cook.order_detail.back_orders'),
+    backToOrders: t(locale, 'cook.order_detail.back_to_orders'),
+    orderSubtitle: (id: string) =>
+      t(locale, 'cook.order_detail.order_subtitle').replace('{id}', id),
+    cookLabel: (name: string) =>
+      t(locale, 'cook.order_detail.cook_label').replace('{name}', name),
     orderTitle: (id: string, dishName?: string) =>
       dishName || t(locale, 'cook.order_detail.fallback_title').replace('{id}', id),
     disputeOpen: t(locale, 'orders.detail.dispute_open'),
@@ -211,6 +256,14 @@ export function getCookDashboardExtras(locale: ShcLocale) {
     heritageArchiveBadge: t(locale, 'cook.dashboard.heritage_archive_badge'),
     heritageStoryTitle: (id: string | number) =>
       t(locale, 'cook.dashboard.heritage_story_title').replace('{id}', String(id)),
+    heritageStoryDefault: t(locale, 'cook.dashboard.heritage_story_default'),
+    customerAppLink: t(locale, 'cook.portal.customer_app_link'),
+    dashboardSubtitle: (name: string) =>
+      t(locale, 'cook.dashboard.subtitle').replace('{name}', name),
+    earningsBadge: (amount: number | string) =>
+      t(locale, 'cook.dashboard.earnings_badge').replace('{amount}', String(amount)),
+    openRequestsBadge: (count: number) =>
+      t(locale, 'cook.dashboard.open_requests').replace('{count}', String(count)),
   };
 }
 

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 29) — Web metadata sync; cook profile parity; compliance/listings polish.
+**Last Updated:** 2026-07-08 (Overnight loop iter 30) — Web cook-portal i18n; customer trust Gourmeat skin; cook heritage stub.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -14,7 +14,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus lightweight `/cook-portal` (cook login/order list) and `/ops` (health/ledger/payouts); PWA service worker + manifest; homepage social counters + production OG image metadata |
+| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus `/cook-portal` (cook login/dashboard/orders/listings/compliance/earnings — `@shc/i18n` wired iter 30) and `/ops` (health/ledger/payouts); PWA service worker + manifest; homepage social counters + production OG image metadata |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |

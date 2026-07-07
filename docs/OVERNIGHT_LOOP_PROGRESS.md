@@ -711,3 +711,29 @@
 - Cook dashboard remaining hardcoded copy
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 30 — 2026-07-08 ~04:00 IST
+
+### Implemented
+1. **Web cook-portal i18n** — dashboard, login gate, orders list/detail, listings wizard, compliance, earnings wired to `@shc/i18n` helpers (`getCookOrdersCopy`, `getCookAuthCopy`, `getCookComplianceCopy`, `getCookEarningsCopy`, `getCookListingsCopy`, `getCookDashboardExtras`)
+2. **Mobile customer trust/onboarding** — migrated `shcColors` → `gourmeatColors` per brand.md (customer Gourmeat skin)
+3. **Cook dashboard** — heritage story stub via `cook.dashboard.heritage_story_default`
+4. **New locale keys** — portal auth/compliance/earnings/order-detail back labels + zh-Hans parity
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web cook-portal listing wizard remaining strings (earnings preview, step titles)
+- More mobile customer screens Gourmeat token audit
+- Cook portal order chat if any hardcoded copy remains
+- Continue loop until 9:00 AM IST Jul 9
+

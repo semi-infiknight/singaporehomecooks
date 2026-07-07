@@ -13,9 +13,12 @@ import {
   SHCCelebrationWeb,
   useMilestoneCelebrationWeb,
 } from '../../components/SHCWebComponents';
+import { useShcI18n, getCookComplianceCopy } from '@shc/i18n';
 
 export default function CookCompliancePage() {
   const { user } = useCookAuth();
+  const { locale } = useShcI18n();
+  const copy = getCookComplianceCopy(locale);
   const { data: docs = [] } = useComplianceDocs();
   const submitDoc = useSubmitComplianceDoc();
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
@@ -41,29 +44,27 @@ export default function CookCompliancePage() {
       type,
       file_key: `compliance/${user?.id || 'cook'}/${Date.now()}-${safeName}`,
     });
-    setResult(`${type.toUpperCase()} submitted for review`);
+    setResult(copy.submittedResult(type));
     setFileName('');
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-compliance-screen">
       <div className="rounded-xl bg-[var(--shc-bento-mint)] border-2 border-[var(--shc-border-brutal)] p-4 mb-4" data-testid="compliance-phase-banner">
-        <p className="font-extrabold text-sm">Compliance documents are saved for admin review</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Submit your SFA registration or WSQ certificate reference. Admin verification controls launch readiness.
-        </p>
+        <p className="font-extrabold text-sm">{copy.bannerTitle}</p>
+        <p className="text-xs text-muted-foreground mt-1">{copy.bannerBody}</p>
       </div>
 
       <GourmeatCookHeader
-        title="Compliance"
+        title={copy.title}
         subtitle={user?.name}
-        badges={<SHCBadge variant="warning">Required to accept orders</SHCBadge>}
+        badges={<SHCBadge variant="warning">{copy.requiredBadge}</SHCBadge>}
       />
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <VisualBentoTile
           imageUrl={BENTO_ACTION_IMAGES.compliance}
-          label="SFA"
+          label={copy.sfaLabel}
           badge={type === 'sfa' ? '✓' : undefined}
           onClick={() => setType('sfa')}
           variant={type === 'sfa' ? 'bento-mint' : 'default'}
@@ -71,7 +72,7 @@ export default function CookCompliancePage() {
         />
         <VisualBentoTile
           imageUrl={BENTO_ACTION_IMAGES.listings}
-          label="WSQ"
+          label={copy.wsqLabel}
           badge={type === 'wsq' ? '✓' : undefined}
           onClick={() => setType('wsq')}
           variant={type === 'wsq' ? 'bento-yellow' : 'default'}
@@ -80,16 +81,16 @@ export default function CookCompliancePage() {
       </div>
 
       <GourmeatCard>
-        <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
+        <SHCBadge variant="heritage">{copy.uploadBadge(type)}</SHCBadge>
         <input
           className="w-full mt-3 rounded-xl border border-border px-3 py-2 text-sm"
-          placeholder="cert.pdf"
+          placeholder={copy.filePlaceholder}
           value={fileName}
           onChange={(e) => setFileName(e.target.value)}
           data-testid="compliance-file-input"
         />
         <GourmeatPrimaryButton
-          label={submitDoc.isPending ? 'Uploading…' : 'Submit document'}
+          label={submitDoc.isPending ? copy.uploading : copy.submitDocument}
           className="mt-3"
           disabled={submitDoc.isPending || !fileName.trim()}
           onClick={upload}
@@ -100,19 +101,19 @@ export default function CookCompliancePage() {
 
       {docs.length > 0 && (
         <div className="mt-6 space-y-2">
-          <p className="text-sm font-extrabold">Submitted</p>
+          <p className="text-sm font-extrabold">{copy.submittedSection}</p>
           {docs.map((d: { id?: string; type?: string; status?: string; file_key?: string }) => (
             <GourmeatCard key={d.id || d.file_key}>
               <p className="font-bold text-sm">{String(d.type || '').toUpperCase()}</p>
               <p className="text-xs text-muted-foreground">{d.file_key}</p>
-              <SHCBadge variant="warning">{d.status || 'pending_review'}</SHCBadge>
+              <SHCBadge variant="warning">{d.status || copy.statusPendingReview}</SHCBadge>
             </GourmeatCard>
           ))}
         </div>
       )}
       <SHCCelebrationWeb
         visible={showApprovedCelebration}
-        message="Compliance approved — you're cleared to accept orders!"
+        message={copy.celebration}
         onDone={dismissApprovedCelebration}
         testID="compliance-approved-celebration"
       />

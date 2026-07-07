@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { useCookAuth } from '../../lib/useCookAuth';
 import { GourmeatCookHeader, GourmeatPrimaryButton, GourmeatCard } from './SHCWebComponents';
+import { useShcI18n, getCookAuthCopy } from '@shc/i18n';
 
 export function CookLoginGate({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useCookAuth();
+  const { locale } = useShcI18n();
+  const auth = getCookAuthCopy(locale);
   const [email, setEmail] = useState('rose@shc.local');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,7 +17,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading cook session…
+        {auth.loadingSession}
       </div>
     );
   }
@@ -23,8 +26,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
         <GourmeatCookHeader
-          title="Cook sign in"
-          subtitle="HDB kitchen · 85% payout · collection-only orders"
+          title={auth.signInTitle}
+          subtitle={auth.portalSubtitle}
           testID="cook-login-hero"
         />
         <GourmeatCard>
@@ -33,7 +36,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="cook@example.com"
+              placeholder={auth.emailPlaceholder}
               data-testid="cook-login-email"
             />
             <input
@@ -41,12 +44,12 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={auth.passwordPlaceholder}
               data-testid="cook-login-password"
             />
             {error ? <p className="text-sm font-bold text-destructive">{error}</p> : null}
             <GourmeatPrimaryButton
-              label={busy ? 'Signing in…' : 'Sign in as cook'}
+              label={busy ? auth.signingIn : auth.signInBtn}
               disabled={busy}
               onClick={async () => {
                 setBusy(true);
@@ -54,7 +57,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                 try {
                   await login(email, password);
                 } catch (e) {
-                  setError((e as Error).message || 'Cook login failed');
+                  setError((e as Error).message || auth.loginFailed);
                 } finally {
                   setBusy(false);
                 }

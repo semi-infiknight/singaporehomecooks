@@ -238,7 +238,7 @@ export default function CookDashboard() {
             if (mod.addHeritageEntry) {
               await mod.addHeritageEntry(user?.id || '', {
                 title: dashExtras.heritageStoryTitle(Date.now()),
-                story: 'HDB kitchen ritual from 1970s — passed to next gen for Hari Raya & gatherings.',
+                story: dashExtras.heritageStoryDefault,
                 photo_stub: 'hdb-kitchen-stub.jpg',
               });
             }

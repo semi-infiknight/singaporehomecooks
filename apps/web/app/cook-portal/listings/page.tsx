@@ -22,6 +22,7 @@ import {
 } from '../../../lib/useCookPortal';
 import { useAICalorieEstimate } from '../../../lib/useProducts';
 import { getPhotoTips } from '../../../lib/api-client';
+import { useShcI18n, getCookListingsCopy } from '@shc/i18n';
 import {
   GourmeatCookHeader,
   GourmeatSearchBar,
@@ -58,18 +59,13 @@ type ListingRow = Record<string, unknown> & {
 };
 
 const OCCASION_OPTIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday'];
-const DEFAULT_FORM = {
-  name: 'New Nyonya Dish',
-  price: 14,
-  minQty: 4,
-  cuisine: 'Peranakan',
-  heritage: 'Family recipe from our HDB kitchen since 1978.',
-};
 
 export default function CookListingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
+  const { locale } = useShcI18n();
+  const copy = getCookListingsCopy(locale);
   const { data: myListings = [] } = useCookListings();
   const createListing = useCreateCookListing();
   const updateListing = useUpdateCookListing();
@@ -86,13 +82,13 @@ export default function CookListingsPage() {
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const [name, setName] = useState(DEFAULT_FORM.name);
-  const [price, setPrice] = useState(DEFAULT_FORM.price);
-  const [minQty, setMinQty] = useState(DEFAULT_FORM.minQty);
-  const [cuisine, setCuisine] = useState(DEFAULT_FORM.cuisine);
-  const [heritage, setHeritage] = useState(DEFAULT_FORM.heritage);
-  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
-  const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+  const [name, setName] = useState(copy.defaultDishName);
+  const [price, setPrice] = useState(14);
+  const [minQty, setMinQty] = useState(4);
+  const [cuisine, setCuisine] = useState(copy.defaultCuisine);
+  const [heritage, setHeritage] = useState(copy.defaultHeritage);
+  const [occasionTags, setOccasionTags] = useState<string[]>([copy.defaultOccasionId]);
+  const [ingredients, setIngredients] = useState([{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
   const [aiCal, setAiCal] = useState<{ calories: number; confidence: string; source?: string } | null>(null);
@@ -118,10 +114,10 @@ export default function CookListingsPage() {
     (title: string, message: string) => {
       openTray(
         { id: 'listing-error', title, height: 'compact' },
-        <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="listing-error-tray" />
+        <SHCTrayActionWeb message={message} primaryLabel={copy.ok} onPrimary={dismiss} testID="listing-error-tray" />
       );
     },
-    [dismiss, openTray]
+    [dismiss, openTray, copy.ok]
   );
 
   const filteredListings = useMemo(
@@ -131,9 +127,9 @@ export default function CookListingsPage() {
 
   const filterChips = useMemo(() => {
     const chips = [
-      { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
-      { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
-      { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
+      { id: 'status:all', label: copy.filterAll, active: statusFilter === 'all' && cuisineFilter === 'all' },
+      { id: 'status:live', label: copy.filterLive, active: statusFilter === 'live' },
+      { id: 'status:paused', label: copy.filterPaused, active: statusFilter === 'paused' },
       ...uniqueListingCuisines(myListings as ListingRow[]).map((cuisineName) => ({
         id: `cuisine:${cuisineName}`,
         label: cuisineName,
@@ -141,7 +137,7 @@ export default function CookListingsPage() {
       })),
     ];
     return chips;
-  }, [myListings, statusFilter, cuisineFilter]);
+  }, [myListings, statusFilter, cuisineFilter, copy.filterAll, copy.filterLive, copy.filterPaused]);
 
   const handleFilterChip = (chipId: string) => {
     if (chipId === 'status:all') {
@@ -163,13 +159,13 @@ export default function CookListingsPage() {
 
   const resetWizard = () => {
     setEditingId(null);
-    setName(DEFAULT_FORM.name);
-    setPrice(DEFAULT_FORM.price);
-    setMinQty(DEFAULT_FORM.minQty);
-    setCuisine(DEFAULT_FORM.cuisine);
-    setOccasionTags(['Hari Raya']);
-    setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setHeritage(DEFAULT_FORM.heritage);
+    setName(copy.defaultDishName);
+    setPrice(14);
+    setMinQty(4);
+    setCuisine(copy.defaultCuisine);
+    setOccasionTags([copy.defaultOccasionId]);
+    setIngredients([{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]);
+    setHeritage(copy.defaultHeritage);
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -177,13 +173,13 @@ export default function CookListingsPage() {
 
   const startEdit = useCallback((listing: ListingRow) => {
     setEditingId(String(listing.id));
-    setName(String(listing.name || 'Dish'));
+    setName(String(listing.name || copy.defaultDishFallback));
     setPrice(Number(listing.price) || 12);
     setMinQty(Number(listing.min_qty) || 4);
-    setCuisine(String(listing.cuisine || 'Singapore'));
-    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
+    setCuisine(String(listing.cuisine || copy.defaultCuisineFallback));
+    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [copy.defaultOccasionId]);
     setIngredients(
-      listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
+      listing.ingredients?.length ? listing.ingredients : [{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]
     );
     setHeritage(String(listing.heritage_note || ''));
     setPublished(null);
@@ -194,7 +190,7 @@ export default function CookListingsPage() {
     );
     goToStep(1);
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+  }, [copy.defaultDishFallback, copy.defaultCuisineFallback, copy.defaultIngredientName, copy.defaultOccasionId]);
 
   const toggleTag = (tag: string) => {
     setOccasionTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -208,7 +204,7 @@ export default function CookListingsPage() {
       'Include a heritage prop (e.g. tiffin carrier, batik cloth) for Singapore story.',
     ];
     openTray(
-      { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
+      { id: 'photo-tips', title: copy.photoTipsTitle, height: 'tall' },
       <PhotoTipsTrayContentWeb tips={tipList} />
     );
   };
@@ -243,8 +239,8 @@ export default function CookListingsPage() {
       setAiCal(null);
     } catch (e) {
       showErrorTray(
-        editingId ? 'Update failed' : 'Publish failed',
-        (e as Error).message || 'Could not save listing.'
+        editingId ? copy.updateFailed : copy.publishFailed,
+        (e as Error).message || copy.saveErrorGeneric
       );
     } finally {
       setPublishing(false);
@@ -257,7 +253,7 @@ export default function CookListingsPage() {
         await deleteListing.mutateAsync(String(listing.id));
         if (editingId === listing.id) resetWizard();
       } catch (e) {
-        showErrorTray('Delete failed', (e as Error).message || 'Delete failed');
+        showErrorTray(copy.deleteFailed, (e as Error).message || copy.deleteFailed);
       }
     },
     [deleteListing, editingId, showErrorTray]
@@ -269,7 +265,7 @@ export default function CookListingsPage() {
       try {
         await updateListing.mutateAsync({ id: String(listing.id), input: { paused } });
       } catch (e) {
-        showErrorTray(paused ? 'Pause failed' : 'Unpause failed', (e as Error).message || 'Could not update listing.');
+        showErrorTray(paused ? copy.pauseFailed : copy.unpauseFailed, (e as Error).message || copy.saveErrorGeneric);
       }
     },
     [showErrorTray, updateListing]
@@ -278,22 +274,22 @@ export default function CookListingsPage() {
   const pushDeleteConfirm = useCallback(
     (listing: ListingRow) => {
       pushTrayContent(
-        { id: 'listing-delete-confirm', title: 'Delete listing?', height: 'medium' },
+        { id: 'listing-delete-confirm', title: copy.deleteTitle, height: 'medium' },
         <SHCTrayActionWeb
-          message={`Delete "${listing.name}"? This cannot be undone.`}
-          primaryLabel="Delete listing"
+          message={copy.deleteMessage.replace('{name}', String(listing.name || ''))}
+          primaryLabel={copy.deleteBtn}
           onPrimary={() => {
             dismiss();
             void performDelete(listing);
           }}
-          secondaryLabel="Cancel"
+          secondaryLabel={copy.cancel}
           onSecondary={popTray}
           destructive
           testID="listing-delete-confirm-tray"
         />
       );
     },
-    [dismiss, performDelete, popTray, pushTrayContent]
+    [dismiss, performDelete, popTray, pushTrayContent, copy.deleteTitle, copy.deleteMessage, copy.deleteBtn, copy.cancel]
   );
 
   const showListingActions = useCallback(
@@ -311,7 +307,7 @@ export default function CookListingsPage() {
               startEdit(listing);
             }}
           >
-            Edit listing
+            {copy.edit}
           </button>
           <button
             type="button"
@@ -322,7 +318,7 @@ export default function CookListingsPage() {
               void togglePause(listing);
             }}
           >
-            {isPaused ? 'Unpause listing' : 'Pause listing'}
+            {isPaused ? copy.unpause : copy.pause}
           </button>
           <button
             type="button"
@@ -330,12 +326,12 @@ export default function CookListingsPage() {
             data-testid={`delete-listing-${listing.id}`}
             onClick={() => pushDeleteConfirm(listing)}
           >
-            Delete listing
+            {copy.delete}
           </button>
         </div>
       );
     },
-    [dismiss, openTray, pushDeleteConfirm, startEdit, togglePause]
+    [dismiss, openTray, pushDeleteConfirm, startEdit, togglePause, copy.edit, copy.pause, copy.unpause, copy.delete]
   );
 
   const bindListingLongPress = useCallback(
@@ -362,10 +358,12 @@ export default function CookListingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-listings-screen">
       <GourmeatCookHeader
-        title="My Listings"
+        title={copy.title}
         subtitle={
           listingsForDisplay.length
-            ? `${filteredListings.length} of ${listingsForDisplay.length} dishes`
+            ? copy.subtitleCount
+                .replace('{shown}', String(filteredListings.length))
+                .replace('{total}', String(listingsForDisplay.length))
             : user?.name
         }
         testID="listings-hero"
@@ -374,7 +372,7 @@ export default function CookListingsPage() {
       <GourmeatSearchBar
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Search your dishes…"
+        placeholder={copy.searchPlaceholder}
         testID="cook-listings-search"
       />
 
@@ -385,7 +383,7 @@ export default function CookListingsPage() {
             onChipClick={handleFilterChip}
             testID="cook-listings-filter-chips"
           />
-          <p className="text-xs text-[var(--shc-text-light)] mb-3">Press and hold a dish for edit, pause, or delete</p>
+          <p className="text-xs text-[var(--shc-text-light)] mb-3">{copy.holdHint}</p>
         </>
       ) : null}
 
@@ -394,11 +392,11 @@ export default function CookListingsPage() {
           <div className="relative h-20 rounded-xl overflow-hidden mb-2">
             <Image src={CUISINE_IMAGE.Peranakan} alt="" fill className="object-cover" sizes="100vw" />
           </div>
-          <SHCBadge variant="default">No listings yet</SHCBadge>
+          <SHCBadge variant="default">{copy.empty}</SHCBadge>
         </GourmeatCard>
       ) : filteredListings.length === 0 ? (
         <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
-          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+          <SHCBadge variant="default">{copy.noMatch}</SHCBadge>
         </GourmeatCard>
       ) : (
         filteredListings.map((p: ListingRow, index: number) => (
@@ -427,8 +425,8 @@ export default function CookListingsPage() {
                   <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
-                    <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
-                    {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                    <SHCBadge variant="heritage">{copy.badgeMin.replace('{qty}', String(p.min_qty))}</SHCBadge>
+                    {p.shc_availability?.paused ? <SHCBadge variant="warning">{copy.badgePaused}</SHCBadge> : null}
                   </div>
                 </div>
               </div>
@@ -438,7 +436,7 @@ export default function CookListingsPage() {
       )}
 
       <div ref={wizardRef}>
-        <SHCSectionTitle>{editingId ? 'Edit listing' : 'New listing'}</SHCSectionTitle>
+        <SHCSectionTitle>{editingId ? copy.wizardEdit : copy.wizardNew}</SHCSectionTitle>
         <SHCWizardProgressWeb step={step} />
       </div>
 
@@ -453,7 +451,7 @@ export default function CookListingsPage() {
                 className="w-full rounded-xl border border-border px-3 py-2 text-sm font-medium"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Dish name"
+                placeholder={copy.dishNamePlaceholder}
               />
               <div className="grid grid-cols-2 gap-2">
                 <input
@@ -461,14 +459,14 @@ export default function CookListingsPage() {
                   className="rounded-xl border border-border px-3 py-2 text-sm"
                   value={price}
                   onChange={(e) => setPrice(Number(e.target.value))}
-                  placeholder="Price"
+                  placeholder={copy.pricePlaceholder}
                 />
                 <input
                   type="number"
                   className="rounded-xl border border-border px-3 py-2 text-sm"
                   value={minQty}
                   onChange={(e) => setMinQty(Number(e.target.value))}
-                  placeholder="Min qty"
+                  placeholder={copy.minQtyPlaceholder}
                 />
               </div>
             </div>
@@ -489,7 +487,7 @@ export default function CookListingsPage() {
                 className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 value={cuisine}
                 onChange={(e) => setCuisine(e.target.value)}
-                placeholder="Cuisine"
+                placeholder={copy.defaultCuisine}
               />
               <div className="flex flex-wrap gap-2">
                 {OCCASION_OPTIONS.map((tag) => (
@@ -511,7 +509,7 @@ export default function CookListingsPage() {
           {step === 3 && (
             <div className="space-y-3" data-testid="listing-wizard-step3">
               <div className="rounded-xl border border-border p-3 text-sm">
-                <p className="font-bold mb-1">{ingredients[0]?.name || 'Chicken'}</p>
+                <p className="font-bold mb-1">{ingredients[0]?.name || copy.defaultIngredientName}</p>
                 <p className="text-muted-foreground text-xs">
                   {ingredients[0]?.quantity} {ingredients[0]?.unit}
                 </p>
@@ -524,7 +522,7 @@ export default function CookListingsPage() {
                 }}
                 testID="ai-cal-est-btn"
               >
-                🔥 AI Calories
+                {copy.aiCalories}
               </SHCButton>
               {aiCal ? <CalorieBadge calories={aiCal.calories} /> : null}
               <button
@@ -536,13 +534,13 @@ export default function CookListingsPage() {
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
                   <Image src={BENTO_ACTION_IMAGES.listings} alt="" fill className="object-cover" sizes="48px" />
                 </div>
-                <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
+                <SHCBadge variant="heritage">{copy.photoTips}</SHCBadge>
               </button>
               <textarea
                 className="w-full rounded-xl border border-border px-3 py-2 text-sm min-h-[80px]"
                 value={heritage}
                 onChange={(e) => setHeritage(e.target.value)}
-                placeholder="Heritage story"
+                placeholder={copy.defaultHeritage}
               />
             </div>
           )}
@@ -567,11 +565,11 @@ export default function CookListingsPage() {
                 ))}
               </div>
               {editingId ? (
-                <GourmeatPrimaryButton label="Cancel edit" onClick={resetWizard} />
+                <GourmeatPrimaryButton label={copy.cancelEdit} onClick={resetWizard} />
               ) : null}
               {published ? (
                 <p className="text-sm font-bold text-[var(--shc-success)]">
-                  Live: {String(published.name || name)}
+                  {copy.publishedLive.replace('{name}', String(published.name || name))}
                 </p>
               ) : null}
             </div>
@@ -599,7 +597,7 @@ export default function CookListingsPage() {
 
       <SHCCelebrationWeb
         visible={showCelebration}
-        message="Your first dish is live! Families can now discover your heritage cooking."
+        message={copy.celebration}
         onDone={dismissCelebration}
         testID="first-listing-celebration"
       />

@@ -12,14 +12,18 @@ import {
   SHCBadge,
   VisualBentoTile,
 } from '../../components/SHCWebComponents';
+import { useShcI18n, getCookEarningsCopy, getCookQuickActionLabels } from '@shc/i18n';
 
 export default function CookEarningsPage() {
   const { user } = useCookAuth();
+  const { locale } = useShcI18n();
+  const copy = getCookEarningsCopy(locale);
+  const quick = getCookQuickActionLabels(locale);
   const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useCookEarnings();
   const { data: expenses = { expenses: [], total_cents: 0 } } = useCookExpenses();
   const expenseMut = useCreateCookExpense();
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseCategory, setExpenseCategory] = useState('ingredients');
+  const [expenseCategory, setExpenseCategory] = useState(copy.defaultCategory);
 
   const weekTotal = (earnings as { thisWeek?: number }).thisWeek ?? 0;
   const orderCount =
@@ -30,12 +34,12 @@ export default function CookEarningsPage() {
   const submitExpense = () => {
     const amount = Number(expenseAmount);
     if (!amount || amount <= 0) {
-      alert('Enter an expense amount, e.g. 18.50');
+      alert(copy.expenseInvalidBody);
       return;
     }
     expenseMut.mutate({
       amount_cents: Math.round(amount * 100),
-      category: expenseCategory.trim() || 'ingredients',
+      category: expenseCategory.trim() || copy.defaultCategory,
       date: new Date().toISOString().slice(0, 10),
     });
     setExpenseAmount('');
@@ -44,57 +48,57 @@ export default function CookEarningsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-earnings-screen">
       <GourmeatCookHeader
-        title="Earnings"
-        subtitle={`${user?.name} · 85% payout · PayNow weekly`}
+        title={copy.title}
+        subtitle={copy.subtitleFor(user?.name || '')}
         badges={
           <>
-            <SHCBadge variant="heritage">This week</SHCBadge>
-            <SHCBadge variant="success">S${weekTotal}</SHCBadge>
+            <SHCBadge variant="heritage">{copy.thisWeek}</SHCBadge>
+            <SHCBadge variant="success">{copy.weekAmountBadge(weekTotal)}</SHCBadge>
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-2 mb-6">
         <GourmeatCard className="bg-[var(--shc-bento-mint)]">
-          <p className="text-xs font-bold text-muted-foreground">Projected</p>
+          <p className="text-xs font-bold text-muted-foreground">{copy.projected}</p>
           <p className="text-xl font-black">S${(earnings as { projectedPayout?: number }).projectedPayout || weekTotal}</p>
         </GourmeatCard>
         <GourmeatCard className="bg-[var(--shc-bento-yellow)]">
-          <p className="text-xs font-bold text-muted-foreground">Completed</p>
-          <p className="text-xl font-black">{orderCount} orders</p>
+          <p className="text-xs font-bold text-muted-foreground">{copy.completed}</p>
+          <p className="text-xl font-black">{copy.ordersCountLabel(orderCount)}</p>
         </GourmeatCard>
       </div>
 
-      <p className="text-sm font-extrabold mb-2">Quick actions</p>
+      <p className="text-sm font-extrabold mb-2">{copy.quickActions}</p>
       <div className="grid grid-cols-2 gap-2 mb-6">
-        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.listings} label="Listings" href="/cook-portal/listings" variant="bento-peach" />
-        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.orders} label="Orders" href="/cook-portal/orders" variant="bento-mint" />
+        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.listings} label={quick.listings} href="/cook-portal/listings" variant="bento-peach" />
+        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.orders} label={quick.orders} href="/cook-portal/orders" variant="bento-mint" />
       </div>
 
       <GourmeatCard>
-        <p className="font-extrabold text-sm mb-2">Log expense</p>
+        <p className="font-extrabold text-sm mb-2">{copy.logExpense}</p>
         <input
           className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-2"
-          placeholder="Amount S$"
+          placeholder={copy.amountPlaceholder}
           value={expenseAmount}
           onChange={(e) => setExpenseAmount(e.target.value)}
         />
         <input
           className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-3"
-          placeholder="Category"
+          placeholder={copy.categoryPlaceholder}
           value={expenseCategory}
           onChange={(e) => setExpenseCategory(e.target.value)}
         />
-        <GourmeatPrimaryButton label="Add expense" onClick={submitExpense} disabled={expenseMut.isPending} />
+        <GourmeatPrimaryButton label={copy.addExpenseBtn} onClick={submitExpense} disabled={expenseMut.isPending} />
         {(expenses.expenses || []).length > 0 && (
           <p className="text-xs text-muted-foreground mt-3">
-            Total logged: S${Math.round((expenses.total_cents || 0) / 100)}
+            {copy.totalLogged(Math.round((expenses.total_cents || 0) / 100))}
           </p>
         )}
       </GourmeatCard>
 
       <Link href="/cook-portal/dashboard" className="block text-center text-sm font-semibold text-primary mt-8">
-        ← Dashboard
+        {copy.backDashboard}
       </Link>
     </div>
   );

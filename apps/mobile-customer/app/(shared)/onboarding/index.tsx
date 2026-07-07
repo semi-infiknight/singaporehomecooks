@@ -6,7 +6,7 @@ import {
   SHCCard,
   SHCIcon,
   SHCFoodImage,
-  shcColors,
+  gourmeatColors,
   shcSpacing,
   shcBorders,
   shcRadii,
@@ -46,7 +46,7 @@ export default function TrustAndSafetyScreen() {
         <SHCCard key={layer.key} style={styles.layerCard}>
           <View style={styles.layerRow}>
             <View style={styles.layerIcon}>
-              <SHCIcon name={LAYER_ICONS[layer.key]} size={22} color={shcColors.primary} active />
+              <SHCIcon name={LAYER_ICONS[layer.key]} size={22} color={gourmeatColors.primary} active />
             </View>
             <View style={styles.layerCopy}>
               <Text style={styles.layerTitle}>{layer.title}</Text>
@@ -90,34 +90,34 @@ export default function TrustAndSafetyScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
+  screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
-  title: { fontSize: 26, fontWeight: '900', color: shcColors.text, marginTop: shcSpacing.md },
-  subtitle: { fontSize: 14, color: shcColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.md, lineHeight: 20 },
+  title: { fontSize: 26, fontWeight: '900', color: gourmeatColors.text, marginTop: shcSpacing.md },
+  subtitle: { fontSize: 14, color: gourmeatColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.md, lineHeight: 20 },
   layerCard: { marginBottom: shcSpacing.sm },
   layerRow: { flexDirection: 'row', gap: shcSpacing.sm },
   layerIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: shcColors.bentoMint,
+    backgroundColor: gourmeatColors.primaryLight,
     borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    borderColor: gourmeatColors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   layerCopy: { flex: 1 },
-  layerTitle: { fontSize: 15, fontWeight: '800', color: shcColors.text },
-  layerBody: { fontSize: 13, color: shcColors.textLight, marginTop: 4, lineHeight: 18 },
+  layerTitle: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text },
+  layerBody: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4, lineHeight: 18 },
   policyCard: { marginBottom: shcSpacing.sm },
-  policyTitle: { fontSize: 15, fontWeight: '800', color: shcColors.text, marginBottom: 6 },
-  policyBody: { fontSize: 13, color: shcColors.textLight, lineHeight: 18 },
-  policyLine: { fontSize: 13, color: shcColors.textLight, marginTop: 4 },
+  policyTitle: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text, marginBottom: 6 },
+  policyBody: { fontSize: 13, color: gourmeatColors.textLight, lineHeight: 18 },
+  policyLine: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 },
   cta: {
     marginTop: shcSpacing.lg,
-    backgroundColor: shcColors.primary,
+    backgroundColor: gourmeatColors.primary,
     borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    borderColor: gourmeatColors.borderDark,
     borderRadius: shcRadii.md,
     paddingVertical: shcSpacing.md,
     alignItems: 'center',
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     ...shcShadows.brutalSm,
   },
   ctaPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
-  ctaText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
+  ctaText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 16 },
   secondaryCta: { marginTop: shcSpacing.md, paddingVertical: shcSpacing.sm, alignItems: 'center' },
-  secondaryCtaText: { color: shcColors.primary, fontWeight: '700', fontSize: 14 },
+  secondaryCtaText: { color: gourmeatColors.primary, fontWeight: '700', fontSize: 14 },
 });
