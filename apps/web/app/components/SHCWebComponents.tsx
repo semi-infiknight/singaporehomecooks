@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -334,6 +334,7 @@ export function PromoRail({
 }: {
   onPromoClick?: (id: string) => void;
 }) {
+  const { locale } = useShcI18n();
   const icons: Record<string, LucideIcon> = {
     'promo-raya': Leaf,
     'promo-credits': Wallet,
@@ -342,7 +343,12 @@ export function PromoRail({
   };
   return (
     <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid="promo-rail">
-      {DEFAULT_PROMOS.map((promo, i) => (
+      {DEFAULT_PROMOS.map((promo, i) => {
+        const localized = getLocalizedPromo(locale, promo.id);
+        const title = localized?.title ?? promo.title;
+        const subtitle = localized?.subtitle ?? promo.subtitle;
+        const badge = localized?.badge ?? promo.badge;
+        return (
         <button
           key={promo.id}
           type="button"
@@ -365,19 +371,20 @@ export function PromoRail({
                   })()}
                 </span>
               )}
-              {promo.badge && (
+              {badge && (
                 <span className="text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded border border-[var(--shc-border-brutal)]">
-                  {promo.badge}
+                  {badge}
                 </span>
               )}
             </div>
             <div>
-              <div className="font-black text-white text-sm">{promo.title}</div>
-              <div className="text-[11px] font-semibold text-white/90 mt-0.5">{promo.subtitle}</div>
+              <div className="font-black text-white text-sm">{title}</div>
+              <div className="text-[11px] font-semibold text-white/90 mt-0.5">{subtitle}</div>
             </div>
           </div>
         </button>
-      ))}
+      );
+      })}
     </div>
   );
 }

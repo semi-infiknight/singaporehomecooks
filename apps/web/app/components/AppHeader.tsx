@@ -135,7 +135,7 @@ export function AppHeader() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search dishes, cooks, occasions…"
+              placeholder={t('nav.search_placeholder_mobile')}
               className="shc-input pl-10 py-2.5 text-sm w-full"
               aria-label="Search heritage dishes and cooks"
             />

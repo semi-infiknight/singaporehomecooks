@@ -49,9 +49,8 @@ import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 import { useShcI18n } from '@shc/i18n';
+import { getLocalizedOccasions, getOccasionDishesTitle, getMobileLocalizedPromos } from '@shc/i18n';
 import { LocalizedTrustStrip } from '../../components/LocalizedTrustStrip';
-
-const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
 
 function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
   const id = String(product.id);
@@ -86,9 +85,36 @@ export default function CustomerDiscover() {
   const { data: products = [], isLoading } = useProducts('');
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
 
-  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
+  const occasionCategories: GourmeatCategoryItem[] = useMemo(
+    () =>
+      getLocalizedOccasions(locale).map((o) => ({
+        id: o.id,
+        label: o.chipLabel,
+        iconKey: 'people' as const,
+        imageUrl: getOccasionImageUrl(o.id),
+      })),
+    [locale]
+  );
+
+  const mobilePromos = useMemo(() => {
+    const imageMap: Record<string, string> = {
+      'hari-raya': PROMO_BANNER_IMAGES.hariRaya,
+      credits: PROMO_BANNER_IMAGES.credits,
+      paynow: PROMO_BANNER_IMAGES.paynow,
+    };
+    const iconMap: Record<string, 'people' | 'profile' | 'cart'> = {
+      'hari-raya': 'people',
+      credits: 'profile',
+      paynow: 'cart',
+    };
+    return getMobileLocalizedPromos(locale).map((p) => ({
+      ...p,
+      imageUrl: imageMap[p.id],
+      iconKey: iconMap[p.id],
+    }));
+  }, [locale]);
 
   const savedDishes = useMemo(() => {
     if (query.trim()) return [];
@@ -108,16 +134,7 @@ export default function CustomerDiscover() {
     [requireAuth, addMut]
   );
 
-  const occasionCategories: GourmeatCategoryItem[] = [
-    { id: '', label: 'All', iconKey: 'restaurant' },
-    ...OCCASIONS.map((o) => ({
-      id: o,
-      label:
-        o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.length > 12 ? o.split(' ')[0] : o,
-      iconKey: 'people' as const,
-      imageUrl: getOccasionImageUrl(o),
-    })),
-  ];
+  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
 
   const cuisineCategories: GourmeatCategoryItem[] = MIND_CUISINE_CATEGORIES.map((c) => ({
     id: c.id,
@@ -231,11 +248,7 @@ export default function CustomerDiscover() {
       {!query && (
         <View style={{ paddingHorizontal: shcSpacing.md }}>
           <SHCPromoRail
-            promos={[
-              { id: 'hari-raya', title: 'Hari Raya specials', subtitle: 'Order 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Festive', iconKey: 'people' },
-              { id: 'credits', title: 'Earn credits', subtitle: '4 credits ≈ S$1 off', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Wallet', iconKey: 'profile' },
-              { id: 'paynow', title: 'PayNow collection', subtitle: 'HDB pickup · no delivery', imageUrl: PROMO_BANNER_IMAGES.paynow, iconKey: 'cart' },
-            ]}
+            promos={mobilePromos}
             onPromoPress={(id) => {
               if (id === 'hari-raya') setOccasionFilter('Hari Raya');
               else if (id === 'credits') router.push('/(customer)/profile' as any);
@@ -319,7 +332,7 @@ export default function CustomerDiscover() {
       />
 
       <GourmeatSectionTitle
-        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        title={getOccasionDishesTitle(locale, occasionFilter)}
         testID="all-dishes-header"
       />
 

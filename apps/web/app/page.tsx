@@ -26,6 +26,7 @@ import {
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
+import { useShcI18n, getLocalizedOccasions, getOccasionDishesTitle } from '@shc/i18n';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -47,15 +48,6 @@ import {
 } from './components/SHCWebComponents';
 import { usePlatformStats } from '../lib/usePlatformStats';
 
-const occasions = [
-  { id: '', label: 'All' },
-  ...['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Christmas'].map((o) => ({
-    id: o,
-    label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
-    imageUrl: getOccasionImageUrl(o),
-  })),
-];
-
 function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
   return {
     ...product,
@@ -66,6 +58,7 @@ function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: numb
 
 export default function DiscoverHome() {
   const router = useRouter();
+  const { t, locale } = useShcI18n();
   const { user } = useAuth();
   const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
@@ -79,6 +72,16 @@ export default function DiscoverHome() {
   const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
   const { data: platformStats } = usePlatformStats();
   const counters: PlatformCounters = platformStats?.counters ?? LAUNCH_PLATFORM_COUNTERS;
+
+  const occasions = useMemo(
+    () =>
+      getLocalizedOccasions(locale).map((o) => ({
+        id: o.id,
+        label: o.chipLabel,
+        imageUrl: getOccasionImageUrl(o.id),
+      })),
+    [locale]
+  );
 
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
   const productList = useMemo(
@@ -223,8 +226,8 @@ export default function DiscoverHome() {
 
       <FilterChipRow
         chips={[
-          { id: 'halal', label: 'Halal', active: halalOnly },
-          { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+          { id: 'halal', label: t('filter.halal'), active: halalOnly },
+          { id: 'light', label: t('filter.light'), active: maxCal === 500 },
         ]}
         onChipClick={(id) => {
           if (id === 'halal') toggleHalalOnly();
@@ -250,30 +253,30 @@ export default function DiscoverHome() {
 
       {collectionLocation && (
         <p className="text-xs font-bold text-primary mb-2">
-          Showing cooks near your collection point first
+          {t('discover.near_collection')}
         </p>
       )}
 
-      <GourmeatSectionTitle title="Categories" actionLabel="See all" actionHref="/search" />
+      <GourmeatSectionTitle title={t('discover.categories')} actionLabel={t('discover.see_all')} actionHref="/search" />
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
       </div>
 
       {!query.trim() && reorderDishes.length > 0 && (
         <div className="shc-section-gap">
-          <GourmeatSectionTitle title="Order again" />
+          <GourmeatSectionTitle title={t('discover.order_again')} />
           <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
         </div>
       )}
 
       {!query.trim() && savedDishes.length > 0 && (
         <div className="shc-section-gap">
-          <GourmeatSectionTitle title="Saved for you" />
+          <GourmeatSectionTitle title={t('discover.saved_for_you')} />
           <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </div>
       )}
 
-      <GourmeatSectionTitle title="Explore cuisines" />
+      <GourmeatSectionTitle title={t('discover.explore_cuisines')} />
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
       </div>
@@ -291,7 +294,7 @@ export default function DiscoverHome() {
       )}
 
       <GourmeatSectionTitle
-        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        title={getOccasionDishesTitle(locale, occasionFilter)}
         testID="all-dishes-header"
       />
 

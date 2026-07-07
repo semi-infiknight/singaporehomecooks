@@ -115,3 +115,26 @@
 - Web orders page i18n
 - Promo rail / occasion labels
 - EAS retry only if 6h+ stuck
+
+---
+
+## Iteration 7 — 2026-07-08 ~02:53 IST
+
+### Implemented
+1. **Web orders i18n** — `/orders` page uses all `orders.*` keys
+2. **Promo/occasion i18n** — `getLocalizedPromo`, `getLocalizedOccasions`, `getOccasionDishesTitle` in `@shc/i18n`
+3. **Web discover** — PromoRail, category chips, section titles, filter chips localized
+4. **Mobile discover** — promo rail + occasion categories + dish section title localized
+5. **Web mobile search** — AppHeader placeholder localized
+
+### Tests
+- `@shc/i18n`: **8 tests** PASS (incl. promo-occasion)
+- web + mobile-customer typecheck PASS
+
+### EAS
+- `2ad24658`: still **IN_QUEUE** (~2h) — no APK download yet
+
+### Next iteration
+- Order detail page i18n
+- Cook mobile tab bar (optional)
+- EAS monitor; cancel/retry if 6h+ stuck

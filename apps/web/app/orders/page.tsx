@@ -5,9 +5,11 @@ import { Package } from 'lucide-react';
 import { getActiveOrders, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
+import { useShcI18n } from '@shc/i18n';
 import { GourmeatScreenHeader, GourmeatOrderRow, SHCEmptyState } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
+  const { t } = useShcI18n();
   const { user } = useAuth();
   const { data: orders = [], isLoading, isFetching } = useOrders();
   const activeOrders = getActiveOrders(orders as Record<string, unknown>[]);
@@ -18,13 +20,13 @@ export default function OrdersList() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 pb-28 md:pb-10">
       <GourmeatScreenHeader
-        title="My Orders"
+        title={t('orders.title')}
         subtitle={`${user?.name?.split(' ')[0] || 'Guest'} · tap to track${isFetching && activeOrders.length > 0 ? ' · updating…' : ''}`}
       />
 
       {activeOrders.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-base font-extrabold text-foreground mb-3">In progress</h2>
+          <h2 className="text-base font-extrabold text-foreground mb-3">{t('orders.in_progress')}</h2>
           <div className="space-y-3">
             {activeOrders.map((o) => {
               const status = String(o.shc_status || 'pending');
@@ -52,17 +54,17 @@ export default function OrdersList() {
       {isLoading && (
         <div className="flex items-center gap-2 text-muted-foreground py-4">
           <Package className="w-5 h-5 animate-pulse" aria-hidden />
-          <span className="font-semibold">Loading…</span>
+          <span className="font-semibold">{t('orders.loading')}</span>
         </div>
       )}
 
       {!isLoading && orders.length === 0 && (
         <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] p-8 text-center">
           <SHCEmptyState
-            title="No orders yet"
+            title={t('orders.empty_title')}
             action={
               <Link href="/" className="inline-block mt-4 text-sm font-bold text-primary hover:underline">
-                Browse dishes →
+                {t('orders.browse_link')}
               </Link>
             }
           />
@@ -70,7 +72,7 @@ export default function OrdersList() {
       )}
 
       {pastOrders.length > 0 && activeOrders.length > 0 && (
-        <h2 className="text-base font-extrabold text-foreground mb-3">Past orders</h2>
+        <h2 className="text-base font-extrabold text-foreground mb-3">{t('orders.past')}</h2>
       )}
 
       <div className="space-y-3">
