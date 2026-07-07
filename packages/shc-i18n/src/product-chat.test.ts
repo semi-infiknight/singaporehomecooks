@@ -11,6 +11,7 @@ describe('product detail copy', () => {
     expect(getProductDetailCopy('en').screenTitle).toBe('Dish details');
     expect(getProductDetailCopy('en').minQty(5)).toContain('5');
     expect(getProductDetailCopy('en').addToCart).toBe('Add to cart');
+    expect(getProductDetailCopy('en').viewCook('Auntie Mei')).toBe('View Auntie Mei');
   });
 
   it('returns mobile cook profile extras', () => {

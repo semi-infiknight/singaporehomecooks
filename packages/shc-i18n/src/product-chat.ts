@@ -37,6 +37,7 @@ export function getProductDetailCopy(locale: ShcLocale) {
     addToCart: t(locale, 'product.add_to_cart'),
     collectionSlots: t(locale, 'product.collection_slots'),
     addCartConflict: t(locale, 'product.add_cart_conflict'),
+    viewCook: (name: string) => t(locale, 'product.view_cook').replace('{name}', name),
   };
 }
 

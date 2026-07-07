@@ -11,6 +11,7 @@ import {
 } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useShcI18n, getLocationScreenCopy, getLocationAlertCopy } from '@shc/i18n';
+import { GourmeatPrimaryButton } from '../components/SHCWebComponents';
 
 export default function LocationPage() {
   const router = useRouter();
@@ -182,9 +183,7 @@ export default function LocationPage() {
               className="shc-input flex-1"
               data-testid="location-search-input"
             />
-            <button type="button" onClick={() => void runSearch()} className="shc-btn-primary px-4 rounded-lg font-bold border-2 border-[var(--shc-border-brutal)]" data-testid="location-search-btn">
-              {copy.searchGo}
-            </button>
+            <GourmeatPrimaryButton label={copy.searchGo} onClick={() => void runSearch()} testID="location-search-btn" />
           </div>
           {searching && <p className="text-sm text-muted-foreground">{copy.searching}</p>}
           {results.map((r) => (
@@ -223,15 +222,13 @@ export default function LocationPage() {
             placeholder={copy.instructionsPlaceholder}
             data-testid="location-instructions"
           />
-          <button
-            type="button"
+          <GourmeatPrimaryButton
+            label={busy ? copy.saving : copy.saveBtn}
             onClick={onConfirm}
             disabled={busy}
-            className="shc-btn-primary w-full py-3 rounded-lg font-black border-2 border-[var(--shc-border-brutal)]"
-            data-testid="location-confirm-btn"
-          >
-            {busy ? copy.saving : copy.saveBtn}
-          </button>
+            className="w-full py-3"
+            testID="location-confirm-btn"
+          />
         </div>
       )}
     </div>

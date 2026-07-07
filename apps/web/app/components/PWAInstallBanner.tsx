@@ -36,7 +36,7 @@ export function PWAInstallBanner() {
 
   return (
     <div
-      className="md:hidden fixed left-3 right-3 z-[60] bottom-[calc(110px+env(safe-area-inset-bottom))] rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal)] p-3 flex items-center gap-3"
+      className="md:hidden fixed left-3 right-3 z-[60] bottom-[calc(110px+env(safe-area-inset-bottom))] rounded-2xl border border-border bg-card shadow-[var(--shc-shadow-soft)] p-3 flex items-center gap-3"
       role="region"
       aria-label={layout.pwaInstallRegion}
     >

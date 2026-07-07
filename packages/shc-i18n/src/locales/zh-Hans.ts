@@ -541,6 +541,7 @@ export const zhHans: Record<MessageKey, string> = {
   'product.add_to_cart': '加入购物车',
   'product.collection_slots': '取餐时段',
   'product.add_cart_conflict': '无法加入购物车。购物车中可能已有其他厨师的菜品。',
+  'product.view_cook': '查看 {name}',
   'wallet.greeting': '👋 {name}',
   'wallet.profile_subtitle': '{tier} 等级 · 组屋家厨爱好者',
   'chat.order_title': '订单 {id} 聊天',

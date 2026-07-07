@@ -1103,7 +1103,7 @@ export function BottomStickyBar({
 export function SHCErrorBanner({ code, message }: { code?: string; message: string }) {
   return (
     <div
-      className="flex gap-3 bg-red-50 border-2 border-[var(--shc-border-brutal)] rounded-lg p-4 my-3 shadow-[var(--shc-shadow-brutal-sm)]"
+      className="flex gap-3 bg-red-50 border border-destructive/30 rounded-lg p-4 my-3 shadow-[var(--shc-shadow-soft)]"
       role="alert"
       aria-live="polite"
     >
@@ -1599,7 +1599,7 @@ export function FavoriteButton({
       onClick={onClick}
       data-testid={testID}
       aria-label={active ? layout.removeSavedA11y : layout.saveDishA11y}
-      className={`w-9 h-9 rounded-full border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-lg leading-none ${
+      className={`w-9 h-9 rounded-full border border-border shadow-[var(--shc-shadow-soft)] text-lg leading-none ${
         active ? 'bg-[var(--shc-bento-peach)] text-primary' : 'bg-card text-muted-foreground'
       }`}
     >

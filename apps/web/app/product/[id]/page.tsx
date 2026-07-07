@@ -13,7 +13,6 @@ import {
 } from '../../../lib/useProducts';
 import {
   SHCCard,
-  SHCButton,
   SHCBadge,
   SHCSectionTitle,
   AllergenAckCheckbox,
@@ -22,6 +21,7 @@ import {
   SHCLoading,
   CalorieBadge,
   GourmeatPayButton,
+  GourmeatPrimaryButton,
   gourmeatDiscountPercent,
   FavoriteButton,
   SHCSharedDishImageWeb,
@@ -112,7 +112,7 @@ export default function ProductDetail() {
         <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-center gap-2">
           <Link
             href="/"
-            className="text-sm font-bold bg-card/95 px-3 py-2 rounded-full shadow-[var(--shc-shadow-soft)]"
+            className="text-sm font-bold bg-card/95 px-3 py-2 rounded-full border border-border shadow-[var(--shc-shadow-soft)]"
           >
             {copy.back}
           </Link>
@@ -236,11 +236,12 @@ export default function ProductDetail() {
             testID="add-to-cart-web"
           />
           {cookSlug && (
-            <Link href={`/cook/${cookSlug}`}>
-              <SHCButton variant="outline" size="lg">
-                {product.cook_name?.split(' ')[0]}
-              </SHCButton>
-            </Link>
+            <GourmeatPrimaryButton
+              label={copy.viewCook(product.cook_name?.split(' ')[0] || product.cook_name || '')}
+              variant="outline"
+              onClick={() => router.push(`/cook/${cookSlug}`)}
+              testID="pdp-view-cook-btn"
+            />
           )}
         </div>
 

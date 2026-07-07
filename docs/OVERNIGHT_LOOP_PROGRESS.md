@@ -924,3 +924,20 @@
 - Remaining customer web brutal border cleanup (`SHCCard`/`DishCard` legacy)
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 40 — 2026-07-08 ~04:27 IST
+
+### Implemented
+1. **PDP cook CTA** — `GourmeatPrimaryButton` + `product.view_cook` i18n (`viewCook(name)`) en/zh-Hans; back pill Gourmeat border
+2. **Customer Gourmeat sweep** — `FavoriteButton`, `SHCErrorBanner`, `PWAInstallBanner` soft borders; location search/confirm → `GourmeatPrimaryButton`
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Remaining `SHCWebComponents` customer brutal borders (TrustStrip, RequestDishHomeCTA if any)
+- Web `/cook/[slug]` profile Gourmeat pass
+- Continue loop until 9:00 AM IST Jul 9
+

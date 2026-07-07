@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 39) — `getWalletCardCopy`; WalletCard/CreditBadge i18n + Gourmeat.
+**Last Updated:** 2026-07-08 (Overnight loop iter 40) — PDP cook link GourmeatPrimaryButton; location/PWA/FavoriteButton Gourmeat.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
