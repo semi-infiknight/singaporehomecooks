@@ -18,6 +18,7 @@ import {
   GourmeatOrderSummaryCard,
   GourmeatPaymentMethodRow,
   GourmeatPrimaryButton,
+  GourmeatScreenHeader,
   gourmeatColors,
   SHCCartPageHero,
   SHCButton,
@@ -192,7 +193,16 @@ export default function Checkout() {
   if (!cart.items?.length) {
     return (
       <View style={styles.empty}>
-        <Text>{t('checkout.cart_empty_mobile')}</Text>
+        <GourmeatScreenHeader
+          title={t('checkout.title')}
+          subtitle={t('checkout.empty_subtitle')}
+          onBack={() => router.back()}
+        />
+        <GourmeatPrimaryButton
+          label={t('orders.browse_cta')}
+          onPress={() => router.replace('/(customer)' as any)}
+          testID="checkout-empty-browse"
+        />
       </View>
     );
   }
@@ -271,7 +281,7 @@ export default function Checkout() {
           ) : (
             <Text style={styles.locationBody}>{t('checkout.no_location')}</Text>
           )}
-          <SHCButton variant="outline" size="sm" onPress={() => router.push('/(customer)/location' as any)} testID="checkout-change-location">
+          <SHCButton variant="outline" size="sm" appearance="customer" onPress={() => router.push('/(customer)/location' as any)} testID="checkout-change-location">
             <SHCButtonText variant="outline">{t('checkout.change_location')}</SHCButtonText>
           </SHCButton>
         </SHCCard>

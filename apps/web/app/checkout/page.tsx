@@ -16,7 +16,8 @@ import {
   PayNowPanel,
   WalletCard,
   SHCSectionTitle,
-  SHCPageHeader,
+  GourmeatScreenHeader,
+  GourmeatPrimaryButton,
   BottomStickyBar,
   CheckoutStepper,
   useSHCTrayWeb,
@@ -183,16 +184,19 @@ export default function CheckoutPage() {
   const items = cart.items || [];
   if (items.length === 0) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <SHCPageHeader
+      <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad">
+        <GourmeatScreenHeader
           title={t('checkout.title')}
           subtitle={t('checkout.empty_subtitle')}
           backHref="/cart"
           backLabel={t('checkout.back_cart_label')}
         />
-        <SHCButton appearance="customer" className="mt-4" onClick={() => router.push('/')}>
-          {t('orders.browse_cta')}
-        </SHCButton>
+        <GourmeatPrimaryButton
+          label={t('orders.browse_cta')}
+          onClick={() => router.push('/')}
+          className="mt-4"
+          testID="checkout-empty-browse"
+        />
       </div>
     );
   }

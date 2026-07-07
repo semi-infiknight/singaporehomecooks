@@ -141,7 +141,7 @@ export default function CookProfile() {
         </>
       )}
 
-      <SHCButton onPress={() => router.push('/(customer)/cart' as any)} style={styles.cartBtn}>
+      <SHCButton appearance="customer" onPress={() => router.push('/(customer)/cart' as any)} style={styles.cartBtn}>
         <SHCButtonText>{copy.viewCart}</SHCButtonText>
       </SHCButton>
     </ScrollView>

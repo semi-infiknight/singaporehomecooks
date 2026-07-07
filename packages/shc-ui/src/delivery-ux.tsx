@@ -208,7 +208,7 @@ export function SHCGuestBrowseBar({
         <Text style={guestBrowseStyles.eyebrow}>Guest browsing</Text>
         <Text style={guestBrowseStyles.copy}>Sign in to checkout and track orders</Text>
       </View>
-      <SHCButton onPress={onSignInPress} size="md" testID={`${testID}-cta`}>
+      <SHCButton onPress={onSignInPress} size="md" appearance="customer" testID={`${testID}-cta`}>
         Sign in
       </SHCButton>
     </View>

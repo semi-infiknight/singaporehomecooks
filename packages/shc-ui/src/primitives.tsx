@@ -1,7 +1,7 @@
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, gourmeatColors, gourmeatShadows } from './theme';
 import { SHCIcon, SHCTabIcon, type SHCTabIconKey } from './icons';
 
 type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
@@ -41,14 +41,17 @@ type SHCButtonProps = {
   style?: any;
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** Gourmeat customer skin — soft border, no brutal offset */
+  appearance?: 'default' | 'customer';
 };
 
 export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButton(
-  { children, onPress, disabled, testID, style, variant = 'primary', size = 'md' },
+  { children, onPress, disabled, testID, style, variant = 'primary', size = 'md', appearance = 'default' },
   ref
 ) {
   const sz = buttonSizes[size];
-  const variantStyle =
+  const isCustomer = appearance === 'customer';
+  const brutalVariantStyle =
     variant === 'outline'
       ? { backgroundColor: shcColors.surface, borderWidth: shcBorders.brutal, borderColor: shcColors.border }
       : variant === 'accent'
@@ -56,13 +59,28 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
         : variant === 'ghost'
           ? { backgroundColor: 'transparent', borderWidth: 0 }
           : { backgroundColor: shcColors.primary, borderWidth: shcBorders.brutal, borderColor: shcColors.border };
+  const customerVariantStyle =
+    variant === 'outline'
+      ? { backgroundColor: gourmeatColors.surface, borderWidth: 1, borderColor: gourmeatColors.border }
+      : variant === 'accent'
+        ? { backgroundColor: gourmeatColors.accent, borderWidth: 1, borderColor: gourmeatColors.border }
+        : variant === 'ghost'
+          ? { backgroundColor: 'transparent', borderWidth: 0 }
+          : { backgroundColor: gourmeatColors.primary, borderWidth: 1, borderColor: 'transparent' };
+  const variantStyle = isCustomer ? customerVariantStyle : brutalVariantStyle;
 
   const textColor =
     variant === 'outline' || variant === 'ghost'
-      ? shcColors.text
+      ? isCustomer
+        ? gourmeatColors.text
+        : shcColors.text
       : variant === 'accent'
-        ? shcColors.text
-        : shcColors.onPrimary;
+        ? isCustomer
+          ? gourmeatColors.text
+          : shcColors.text
+        : isCustomer
+          ? gourmeatColors.onPrimary
+          : shcColors.onPrimary;
 
   return (
     <Pressable ref={ref} onPress={onPress} disabled={disabled} testID={testID} accessibilityRole="button">
@@ -73,13 +91,13 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
             {
               paddingHorizontal: sz.paddingH,
               paddingVertical: sz.paddingV,
-              borderRadius: shcRadii.md,
+              borderRadius: isCustomer ? shcRadii.lg : shcRadii.md,
               alignItems: 'center',
               justifyContent: 'center',
               minHeight: size === 'lg' ? 52 : size === 'sm' ? 36 : 44,
-              opacity: disabled ? 0.5 : 1,
-              transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
-              ...(pressed && !disabled ? shcShadows.brutalPressed : shcShadows.brutalSm),
+              opacity: disabled ? 0.5 : pressed && !disabled && !isCustomer ? 0.95 : 1,
+              transform: [{ scale: pressed && !disabled && !isCustomer ? 0.98 : 1 }],
+              ...(isCustomer ? gourmeatShadows.soft : pressed && !disabled ? shcShadows.brutalPressed : shcShadows.brutalSm),
             },
             style,
           ]}
@@ -117,7 +135,10 @@ export function SHCCard({ children, style, variant = 'default', ...props }: any)
         ? shcColors.bentoPeach
         : variant === 'bento-yellow'
           ? shcColors.bentoYellow
-          : shcColors.surface;
+          : variant === 'customer'
+            ? gourmeatColors.surface
+            : shcColors.surface;
+  const isCustomer = variant === 'customer';
 
   return (
     <View
@@ -126,9 +147,9 @@ export function SHCCard({ children, style, variant = 'default', ...props }: any)
           backgroundColor: bg,
           borderRadius: shcRadii.lg,
           padding: shcSpacing.md,
-          borderWidth: shcBorders.brutal,
-          borderColor: shcColors.border,
-          ...shcShadows.brutalSm,
+          borderWidth: isCustomer ? 1 : shcBorders.brutal,
+          borderColor: isCustomer ? gourmeatColors.border : shcColors.border,
+          ...(isCustomer ? gourmeatShadows.card : shcShadows.brutalSm),
         },
         style,
       ]}

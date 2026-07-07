@@ -111,7 +111,7 @@ function MyRequestCard({ request }: { request: any }) {
           </View>
 
           <SHCButton
-
+            appearance="customer"
             onPress={() => acceptBid.mutate(bid.id)}
 
             disabled={acceptBid.isPending}

@@ -51,7 +51,7 @@ export default function OrderChatScreen() {
           onChangeText={setDraft}
           onSubmitEditing={handleSend}
         />
-        <SHCButton onPress={handleSend}>
+        <SHCButton appearance="customer" onPress={handleSend}>
           <SHCButtonText>{copy.send}</SHCButtonText>
         </SHCButton>
       </View>

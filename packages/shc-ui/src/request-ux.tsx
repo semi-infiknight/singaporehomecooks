@@ -365,11 +365,11 @@ export function RequestDishExperience({
         </View>
 
         <View style={{ paddingHorizontal: shcSpacing.md, marginTop: shcSpacing.lg, gap: shcSpacing.sm, alignSelf: 'stretch' }}>
-          <SHCButton onPress={goNext} disabled={!canNext || busy} size="lg" testID="submit-request-btn" style={{ alignSelf: 'stretch', width: '100%' }}>
+          <SHCButton onPress={goNext} disabled={!canNext || busy} size="lg" appearance="customer" testID="submit-request-btn" style={{ alignSelf: 'stretch', width: '100%' }}>
             <SHCButtonText>{busy ? copy.posting : step === 4 ? copy.postBtn : copy.continue}</SHCButtonText>
           </SHCButton>
           {step > 1 && (
-            <SHCButton variant="outline" onPress={goBack} disabled={busy}>
+            <SHCButton variant="outline" appearance="customer" onPress={goBack} disabled={busy}>
               <SHCButtonText variant="outline">{copy.back}</SHCButtonText>
             </SHCButton>
           )}
@@ -533,12 +533,12 @@ export function RequestDishSuccess({
         </Text>
         <View style={{ marginTop: shcSpacing.xl, gap: shcSpacing.sm, width: '100%', maxWidth: 320 }}>
           {onDiscover && (
-            <SHCButton size="lg" onPress={onDiscover} testID="request-success-discover">
+            <SHCButton size="lg" appearance="customer" onPress={onDiscover} testID="request-success-discover">
               <SHCButtonText>{copy.successBrowseWait}</SHCButtonText>
             </SHCButton>
           )}
           {onViewProfile && (
-            <SHCButton variant="outline" onPress={onViewProfile} testID="request-success-profile">
+            <SHCButton variant="outline" appearance="customer" onPress={onViewProfile} testID="request-success-profile">
               <SHCButtonText variant="outline">{copy.backProfile}</SHCButtonText>
             </SHCButton>
           )}

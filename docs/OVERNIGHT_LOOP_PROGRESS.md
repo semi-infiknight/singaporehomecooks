@@ -1048,3 +1048,21 @@
 - `primitives.tsx` mobile customer `SHCButton` appearance prop
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 47 — 2026-07-08 ~04:45 IST
+
+### Implemented
+1. **Mobile `@shc/ui` `SHCButton appearance="customer"`** — Gourmeat soft border/shadow (parity with web); `SHCCard variant="customer"` added
+2. **Web checkout empty** — `GourmeatScreenHeader` + `GourmeatPrimaryButton` browse CTA
+3. **Mobile checkout empty** — `GourmeatScreenHeader` + `GourmeatPrimaryButton`; customer `appearance` wired on checkout/profile/cook/chat/request CTAs
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web + mobile-customer typecheck PASS
+
+### Next iteration
+- Mobile `SHCCard variant="customer"` on profile/checkout cards
+- Web checkout main flow `GourmeatScreenHeader` back link i18n
+- Continue loop until 9:00 AM IST Jul 9
+
