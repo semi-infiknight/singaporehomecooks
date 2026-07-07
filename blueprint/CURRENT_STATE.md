@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 55) — mobile PDP Gourmeat; web login `shc-input-gourmeat`.
+**Last Updated:** 2026-07-08 (Overnight loop iter 56) — `GourmeatCard appearance="cook"`; cook-portal brutal inputs.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

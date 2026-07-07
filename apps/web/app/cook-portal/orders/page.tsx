@@ -65,7 +65,7 @@ export default function CookOrdersPage() {
       />
 
       {orders.length === 0 && (
-        <GourmeatCard>
+        <GourmeatCard appearance="cook">
           <GourmeatEmptyState title={copy.emptyTitle} body={copy.emptyBody} />
         </GourmeatCard>
       )}
@@ -97,13 +97,13 @@ export default function CookOrdersPage() {
                 ))}
                 <Link
                   href={`/cook-portal/orders/${o.id}`}
-                  className="inline-flex items-center px-3 py-2 rounded-xl border border-border bg-card text-sm font-bold"
+                  className="inline-flex items-center px-3 py-2 rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] bg-card text-sm font-bold"
                 >
                   {copy.details}
                 </Link>
                 <Link
                   href={`/cook-portal/orders/${o.id}#cook-order-chat-section`}
-                  className="inline-flex items-center px-3 py-2 rounded-xl border border-border bg-card text-sm font-bold"
+                  className="inline-flex items-center px-3 py-2 rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] bg-card text-sm font-bold"
                 >
                   {t('cook.orders.chat')}
                 </Link>

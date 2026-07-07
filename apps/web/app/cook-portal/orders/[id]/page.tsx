@@ -157,7 +157,7 @@ export default function CookOrderDetailPage() {
         backLabel={copy.backOrders}
       />
 
-      <GourmeatCard className="mb-4">
+      <GourmeatCard appearance="cook" className="mb-4">
         <p className="font-extrabold">{copy.collection}</p>
         <p className="text-sm text-muted-foreground mt-1">
           {order.collection_date} · {order.collection_slot}
@@ -190,7 +190,7 @@ export default function CookOrderDetailPage() {
       <div id="cook-order-chat-section">
         <SHCSectionTitle subtitle={chatCopy.subtitle}>{chatCopy.title(id)}</SHCSectionTitle>
       </div>
-      <div className="border border-border bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] mb-6">
+      <div className="border-2 border-[var(--shc-border-brutal)] bg-card rounded-xl overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] mb-6">
         <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm" data-testid="cook-portal-chat-messages">
           {messages.length === 0 && (
             <p className="text-muted-foreground text-center py-8">{chatCopy.empty}</p>
@@ -239,7 +239,7 @@ export default function CookOrderDetailPage() {
       </div>
 
       {dispute ? (
-        <GourmeatCard className="mb-6" testID="cook-order-dispute-submitted">
+        <GourmeatCard appearance="cook" className="mb-6" testID="cook-order-dispute-submitted">
           <p className="font-extrabold text-sm">{copy.issueReported}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {dispute.status === 'open' ? copy.disputeOpen : dispute.status || copy.disputeOpen} · {dispute.type || copy.disputeOther}

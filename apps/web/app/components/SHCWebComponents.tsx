@@ -2142,16 +2142,20 @@ export function GourmeatCard({
   children,
   className = '',
   testID,
+  appearance = 'customer',
 }: {
   children: React.ReactNode;
   className?: string;
   testID?: string;
+  /** Customer discover/login — 1px soft border; cook portal — neo-brutalist 2px */
+  appearance?: 'customer' | 'cook';
 }) {
+  const chrome =
+    appearance === 'cook'
+      ? 'bg-card rounded-2xl p-4 border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)]'
+      : 'bg-card rounded-2xl p-4 shadow-[var(--shc-shadow-card)] border border-border';
   return (
-    <div
-      data-testid={testID}
-      className={`bg-card rounded-2xl p-4 shadow-[var(--shc-shadow-card)] border border-border ${className}`}
-    >
+    <div data-testid={testID} className={`${chrome} ${className}`}>
       {children}
     </div>
   );
@@ -2207,7 +2211,7 @@ export function VisualBentoTile({
           ? 'bg-[var(--shc-bento-yellow)]'
           : 'bg-card';
   const inner = (
-    <div className={`relative h-28 rounded-2xl overflow-hidden ${gourmeatDiscoverBorder} ${gourmeatDiscoverShadow} ${bg}`}>
+    <div className={`relative h-28 rounded-2xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] ${bg}`}>
       <Image src={imageUrl} alt="" fill className="object-cover opacity-80" sizes="50vw" />
       <div className="absolute inset-0 bg-[rgba(36,24,18,0.35)] flex flex-col justify-end p-3">
         {badge != null && (

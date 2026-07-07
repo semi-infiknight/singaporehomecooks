@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing, shcColors, shcBorders, shcShadows } from './theme';
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
@@ -841,7 +841,19 @@ export function GourmeatScreenHeader({
   );
 }
 
-export function GourmeatCard({ children, style, testID }: { children: React.ReactNode; style?: object; testID?: string }) {
+export function GourmeatCard({
+  children,
+  style,
+  testID,
+  appearance = 'customer',
+}: {
+  children: React.ReactNode;
+  style?: object;
+  testID?: string;
+  /** Customer — 1px soft border; cook orders — neo-brutalist 2px */
+  appearance?: 'customer' | 'cook';
+}) {
+  const isCook = appearance === 'cook';
   return (
     <View
       testID={testID}
@@ -850,9 +862,9 @@ export function GourmeatCard({ children, style, testID }: { children: React.Reac
         borderRadius: gourmeatRadii.lg,
         padding: shcSpacing.md,
         marginBottom: shcSpacing.sm,
-        borderWidth: 1,
-        borderColor: gourmeatColors.border,
-        ...gourmeatShadows.card,
+        borderWidth: isCook ? shcBorders.brutal : 1,
+        borderColor: isCook ? shcColors.border : gourmeatColors.border,
+        ...(isCook ? shcShadows.brutalSm : gourmeatShadows.card),
         ...(style || {}),
       }}
     >

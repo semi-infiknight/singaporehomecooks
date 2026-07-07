@@ -300,7 +300,7 @@ export default function CookListingsPage() {
         <div className="flex flex-col gap-2" data-testid="listing-actions-tray">
           <button
             type="button"
-            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold"
+            className="shc-input font-bold"
             data-testid={`edit-listing-${listing.id}`}
             onClick={() => {
               dismiss();
@@ -311,7 +311,7 @@ export default function CookListingsPage() {
           </button>
           <button
             type="button"
-            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold"
+            className="shc-input font-bold"
             data-testid={`pause-listing-${listing.id}`}
             onClick={() => {
               dismiss();
@@ -322,7 +322,7 @@ export default function CookListingsPage() {
           </button>
           <button
             type="button"
-            className="w-full rounded-xl border border-border px-4 py-3 text-sm font-bold text-red-700"
+            className="shc-input font-bold text-red-700"
             data-testid={`delete-listing-${listing.id}`}
             onClick={() => pushDeleteConfirm(listing)}
           >
@@ -388,14 +388,14 @@ export default function CookListingsPage() {
       ) : null}
 
       {listingsForDisplay.length === 0 ? (
-        <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
+        <GourmeatCard appearance="cook" className="mb-4 bg-[var(--shc-bento-mint)] text-center">
           <div className="relative h-20 rounded-xl overflow-hidden mb-2">
             <Image src={CUISINE_IMAGE.Peranakan} alt="" fill className="object-cover" sizes="100vw" />
           </div>
           <SHCBadge variant="default">{copy.empty}</SHCBadge>
         </GourmeatCard>
       ) : filteredListings.length === 0 ? (
-        <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
+        <GourmeatCard appearance="cook" className="mb-4 bg-[var(--shc-bento-mint)] text-center">
           <SHCBadge variant="default">{copy.noMatch}</SHCBadge>
         </GourmeatCard>
       ) : (
@@ -406,7 +406,7 @@ export default function CookListingsPage() {
             data-testid={cookListingE2eTestId(p, index)}
             {...bindListingLongPress(p)}
           >
-            <GourmeatCard className="mb-0">
+            <GourmeatCard appearance="cook" className="mb-0">
               <div className="flex gap-3">
                 <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
                   <Image
@@ -443,7 +443,7 @@ export default function CookListingsPage() {
         <SHCWizardProgressWeb step={step} />
       </div>
 
-      <GourmeatCard>
+      <GourmeatCard appearance="cook">
         <SHCWizardPaneWeb stepKey={step}>
           {step === 1 && (
             <div className="space-y-3" data-testid="listing-wizard-step1">
@@ -451,7 +451,7 @@ export default function CookListingsPage() {
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
               </div>
               <input
-                className="w-full rounded-xl border border-border px-3 py-2 text-sm font-medium"
+                className="shc-input font-medium"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={copy.dishNamePlaceholder}
@@ -459,14 +459,14 @@ export default function CookListingsPage() {
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
-                  className="rounded-xl border border-border px-3 py-2 text-sm"
+                  className="shc-input"
                   value={price}
                   onChange={(e) => setPrice(Number(e.target.value))}
                   placeholder={copy.pricePlaceholder}
                 />
                 <input
                   type="number"
-                  className="rounded-xl border border-border px-3 py-2 text-sm"
+                  className="shc-input"
                   value={minQty}
                   onChange={(e) => setMinQty(Number(e.target.value))}
                   placeholder={copy.minQtyPlaceholder}
@@ -487,7 +487,7 @@ export default function CookListingsPage() {
                 />
               </div>
               <input
-                className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                className="shc-input"
                 value={cuisine}
                 onChange={(e) => setCuisine(e.target.value)}
                 placeholder={copy.defaultCuisine}
@@ -511,7 +511,7 @@ export default function CookListingsPage() {
 
           {step === 3 && (
             <div className="space-y-3" data-testid="listing-wizard-step3">
-              <div className="rounded-xl border border-border p-3 text-sm">
+              <div className="rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] p-3 text-sm">
                 <p className="font-bold mb-1">{ingredients[0]?.name || copy.defaultIngredientName}</p>
                 <p className="text-muted-foreground text-xs">
                   {ingredients[0]?.quantity} {ingredients[0]?.unit}
@@ -531,7 +531,7 @@ export default function CookListingsPage() {
               <button
                 type="button"
                 onClick={openPhotoTipsTray}
-                className="flex items-center gap-2 w-full rounded-xl border border-border p-3 text-left"
+                className="flex items-center gap-2 w-full rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] p-3 text-left bg-card"
                 data-testid="photo-tips-btn"
               >
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
@@ -540,7 +540,7 @@ export default function CookListingsPage() {
                 <SHCBadge variant="heritage">{copy.photoTips}</SHCBadge>
               </button>
               <textarea
-                className="w-full rounded-xl border border-border px-3 py-2 text-sm min-h-[80px]"
+                className="shc-input min-h-[80px]"
                 value={heritage}
                 onChange={(e) => setHeritage(e.target.value)}
                 placeholder={copy.defaultHeritage}

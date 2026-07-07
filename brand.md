@@ -26,15 +26,17 @@ Reference: [Gourmeat Food APP UI/UX](https://www.behance.net/gallery/239040745/G
 | `gourmeat-text` | `#1C1C1C` | Headlines (“Hungry? Order & Eat.”) |
 
 **Components:** `packages/shc-ui/src/gourmeat.tsx` — headers, dish/cart/order rows, floating nav, pay CTAs  
-**Customer chrome:** `GourmeatDishCard` / `GourmeatCard` (1px border); `shc-input-gourmeat` on web login; mobile PDP badges + sticky bar Gourmeat; `GourmeatProductStickyBar` i18n labels; cook app keeps neo-brutalist `shc-input` default.
+**Customer chrome:** `GourmeatCard appearance="customer"` (1px border + soft shadow); `shc-input-gourmeat` on web login/checkout; mobile PDP + sticky bar Gourmeat; `GourmeatProductStickyBar` i18n labels.
 
-**Screens (Gourmeat):** customer discover · product PDP · cart · checkout · orders; cook dashboard · orders · listings · compliance · earnings; web parity on `/`, `/product`, `/cart`, `/orders`
+**Cook chrome:** `GourmeatCard appearance="cook"` on cook-portal cards + mobile cook orders (2px brutal border + `shc-shadow-brutal-sm`); web cook forms use `shc-input`; `VisualBentoTile` / `SHCVisualBentoTile` default brutal on cook surfaces.
+
+**Screens (Gourmeat customer):** discover · product PDP · cart · checkout · orders · login. **Cook surfaces:** dashboard · orders · listings · compliance · earnings (brutal chrome, Gourmeat layout components).
 
 ---
 
 ## Palette — Legacy cook internals
 
-Some shared form primitives (`ListingWizardStep`, allergen gates) still use brutal borders internally; screen chrome is Gourmeat on both apps.
+Some shared form primitives (`ListingWizardStep`, allergen gates) still use brutal borders internally. Cook portal screen chrome uses neo-brutalist borders (`appearance="cook"`); customer discover/checkout uses Gourmeat soft chrome.
 
 ### Core seeds
 

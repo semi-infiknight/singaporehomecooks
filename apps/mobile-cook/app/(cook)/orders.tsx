@@ -69,7 +69,7 @@ export default function CookOrders() {
       {err && <SHCErrorBanner code={err.code} message={err.message} />}
 
       {orders.length === 0 && (
-        <GourmeatCard>
+        <GourmeatCard appearance="cook">
           <GourmeatEmptyState title={t('cook.orders.empty_title')} body={t('cook.orders.empty_body')} />
         </GourmeatCard>
       )}

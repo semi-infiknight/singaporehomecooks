@@ -1217,3 +1217,22 @@
 - Mobile cook profile/settings Gourmeat drift check
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 56 — 2026-07-08 ~05:10 IST
+
+### Implemented
+1. **`GourmeatCard appearance`** — web + mobile: `customer` (1px soft) vs `cook` (2px brutal + `shc-shadow-brutal-sm`)
+2. **Web cook-portal** — all `GourmeatCard appearance="cook"`; form fields → `shc-input`; `VisualBentoTile` brutal borders
+3. **Mobile cook orders** — `GourmeatCard appearance="cook"` on list + detail screens
+4. **`brand.md`** — cook vs customer chrome split documented
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Mobile cook profile/settings Gourmeat drift check
+- Web cook-portal remaining soft shadows in nested cards
+- Continue loop until 9:00 AM IST Jul 9
+

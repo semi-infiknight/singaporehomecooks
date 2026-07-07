@@ -74,15 +74,15 @@ export default function CookDashboardPage() {
       />
 
       <div className="grid grid-cols-3 gap-2 mb-6">
-        <GourmeatCard className="bg-[var(--shc-bento-mint)] text-center col-span-1">
+        <GourmeatCard appearance="cook" className="bg-[var(--shc-bento-mint)] text-center col-span-1">
           <p className="text-xs font-bold text-muted-foreground">{t('cook.dashboard.this_week')}</p>
           <p className="text-2xl font-black text-primary">S${earnings}</p>
         </GourmeatCard>
-        <GourmeatCard className="bg-[var(--shc-bento-yellow)] text-center">
+        <GourmeatCard appearance="cook" className="bg-[var(--shc-bento-yellow)] text-center">
           <p className="text-xs font-bold text-muted-foreground">{t('cook.dashboard.active')}</p>
           <p className="text-2xl font-black">{orders.length}</p>
         </GourmeatCard>
-        <GourmeatCard className="bg-[var(--shc-bento-peach)] text-center">
+        <GourmeatCard appearance="cook" className="bg-[var(--shc-bento-peach)] text-center">
           <p className="text-xs font-bold text-muted-foreground">{t('cook.dashboard.requests')}</p>
           <p className="text-2xl font-black">{openReqs.length}</p>
         </GourmeatCard>
@@ -113,7 +113,7 @@ export default function CookDashboardPage() {
           <SHCBadge variant="warning">{dashExtras.openRequestsBadge(openReqs.length)}</SHCBadge>
         ) : null}
       </div>
-      <GourmeatCard className="mb-6 bg-[var(--shc-bento-peach)]">
+      <GourmeatCard appearance="cook" className="mb-6 bg-[var(--shc-bento-peach)]">
         {openReqs.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">{t('cook.dashboard.no_requests')}</p>
         ) : (
@@ -128,7 +128,7 @@ export default function CookDashboardPage() {
                 {r.date ? <SHCBadge variant="default">{r.date}</SHCBadge> : null}
               </div>
               <input
-                className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm"
+                className="shc-input mt-2"
                 placeholder={t('cook.dashboard.bid_placeholder')}
                 value={bidPrices[r.id] || ''}
                 onChange={(e) => setBidPrices((p) => ({ ...p, [r.id]: e.target.value }))}
@@ -146,7 +146,7 @@ export default function CookDashboardPage() {
 
       <p className="text-sm font-extrabold text-foreground mb-2">{dashExtras.recentOrders}</p>
       {orders.length === 0 ? (
-        <GourmeatCard>
+        <GourmeatCard appearance="cook">
           <p className="text-sm text-muted-foreground text-center">{dashExtras.noOrdersYet}</p>
         </GourmeatCard>
       ) : (

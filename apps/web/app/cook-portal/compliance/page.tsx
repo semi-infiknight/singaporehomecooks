@@ -80,10 +80,10 @@ export default function CookCompliancePage() {
         />
       </div>
 
-      <GourmeatCard>
+      <GourmeatCard appearance="cook">
         <SHCBadge variant="heritage">{copy.uploadBadge(type)}</SHCBadge>
         <input
-          className="w-full mt-3 rounded-xl border border-border px-3 py-2 text-sm"
+          className="shc-input mt-3"
           placeholder={copy.filePlaceholder}
           value={fileName}
           onChange={(e) => setFileName(e.target.value)}
@@ -103,7 +103,7 @@ export default function CookCompliancePage() {
         <div className="mt-6 space-y-2">
           <p className="text-sm font-extrabold">{copy.submittedSection}</p>
           {docs.map((d: { id?: string; type?: string; status?: string; file_key?: string }) => (
-            <GourmeatCard key={d.id || d.file_key}>
+            <GourmeatCard appearance="cook" key={d.id || d.file_key}>
               <p className="font-bold text-sm">{String(d.type || '').toUpperCase()}</p>
               <p className="text-xs text-muted-foreground">{d.file_key}</p>
               <SHCBadge variant="warning">{d.status || copy.statusPendingReview}</SHCBadge>

@@ -59,11 +59,11 @@ export default function CookEarningsPage() {
       />
 
       <div className="grid grid-cols-2 gap-2 mb-6">
-        <GourmeatCard className="bg-[var(--shc-bento-mint)]">
+        <GourmeatCard appearance="cook" className="bg-[var(--shc-bento-mint)]">
           <p className="text-xs font-bold text-muted-foreground">{copy.projected}</p>
           <p className="text-xl font-black">S${(earnings as { projectedPayout?: number }).projectedPayout || weekTotal}</p>
         </GourmeatCard>
-        <GourmeatCard className="bg-[var(--shc-bento-yellow)]">
+        <GourmeatCard appearance="cook" className="bg-[var(--shc-bento-yellow)]">
           <p className="text-xs font-bold text-muted-foreground">{copy.completed}</p>
           <p className="text-xl font-black">{copy.ordersCountLabel(orderCount)}</p>
         </GourmeatCard>
@@ -75,16 +75,16 @@ export default function CookEarningsPage() {
         <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.orders} label={quick.orders} href="/cook-portal/orders" variant="bento-mint" />
       </div>
 
-      <GourmeatCard>
+      <GourmeatCard appearance="cook">
         <p className="font-extrabold text-sm mb-2">{copy.logExpense}</p>
         <input
-          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-2"
+          className="shc-input mb-2"
           placeholder={copy.amountPlaceholder}
           value={expenseAmount}
           onChange={(e) => setExpenseAmount(e.target.value)}
         />
         <input
-          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-3"
+          className="shc-input mb-3"
           placeholder={copy.categoryPlaceholder}
           value={expenseCategory}
           onChange={(e) => setExpenseCategory(e.target.value)}

@@ -167,7 +167,7 @@ export default function CookManageOrder() {
 
       <OrderStatusBadge status={order.shc_status} />
 
-      <GourmeatCard>
+      <GourmeatCard appearance="cook">
         <Text style={styles.cardTitle}>{copy.collection}</Text>
         <Text style={styles.cardBody}>
           {order.collection_date} · {order.collection_slot}
@@ -205,7 +205,7 @@ export default function CookManageOrder() {
       />
 
       {disputes.length > 0 ? (
-        <GourmeatCard testID="cook-order-dispute-submitted">
+        <GourmeatCard appearance="cook" testID="cook-order-dispute-submitted">
           <Text style={styles.cardTitle}>{copy.issueReported}</Text>
           <Text style={styles.cardMeta}>
             {disputes[0].status === 'open' ? copy.disputeOpen : disputes[0].status || copy.disputeOpen} ·{' '}
