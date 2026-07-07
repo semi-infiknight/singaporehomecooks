@@ -33,11 +33,11 @@
 |----|------|----------------------|
 | BUG-01 | og:image localhost on production | Fixed in code — needs Railway deploy |
 | P1-03 | Homepage live social counters | Fixed in code — **prod audit:** og-image 200; `/store/shc/platform-stats` **404** on live Medusa (needs deploy) |
-| P2-03 | Mandarin i18n at launch | **In progress** — mobile cart screen + location GPS/permission alerts localized |
+| P2-03 | Mandarin i18n at launch | **In progress** — checkout validation + orders list; discover section titles |
 | P1-02 | Dish synonym search depth | **Improved** — 20 SG heritage seeds + bidirectional expansion |
 | P1-09–11 | One-cook cart / PayNow / S$50 min E2E | **Improved** — S$50 min enforced (`SHC-CART-004`); one-cook `SHC-CART-001` fix + cart test |
 | P1-21 | Web push permission flow | **Improved** — permission states + post-order prompt banner |
-| Android APK | Local Windows + first EAS error | Documented; EAS build `2ad24658` **IN_PROGRESS** |
+| Android APK | Local Windows + first EAS error | **FINISHED** — build `2ad24658`; APK at `~/Downloads/SHC-customer-preview-new.apk` |
 | GitHub PR | Push to semi-infiknight | **Blocked** — auth |
 
 ## Auth unblock (user wake-up)
