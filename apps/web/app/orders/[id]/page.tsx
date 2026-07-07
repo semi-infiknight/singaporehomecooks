@@ -158,6 +158,7 @@ export default function TrackOrder() {
           />
           <SHCButton
             size="sm"
+            appearance="customer"
             onClick={() => {
               if (msg.trim()) {
                 send({ body: msg, from: 'customer' });

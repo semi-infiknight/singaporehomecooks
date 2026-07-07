@@ -190,7 +190,7 @@ export default function CheckoutPage() {
           backHref="/cart"
           backLabel={t('checkout.back_cart_label')}
         />
-        <SHCButton className="mt-4" onClick={() => router.push('/')}>
+        <SHCButton appearance="customer" className="mt-4" onClick={() => router.push('/')}>
           {t('orders.browse_cta')}
         </SHCButton>
       </div>
@@ -286,6 +286,7 @@ export default function CheckoutPage() {
 
       {/* Desktop CTA */}
       <SHCButton
+        appearance="customer"
         className="mt-6 w-full hidden sm:flex"
         size="lg"
         onClick={doCheckout}
@@ -296,13 +297,14 @@ export default function CheckoutPage() {
       </SHCButton>
 
       {/* Mobile bottom sticky CTA */}
-      <BottomStickyBar className="sm:hidden">
+      <BottomStickyBar className="sm:hidden" appearance="customer">
         <div className="flex gap-3 items-center">
           <div className="shrink-0">
             <div className="text-xs font-bold text-muted-foreground">{t('checkout.due')}</div>
             <div className="text-lg font-black font-mono tabular-nums">S${amountDue.toFixed(2)}</div>
           </div>
           <SHCButton
+            appearance="customer"
             className="flex-1"
             size="lg"
             onClick={doCheckout}
@@ -326,6 +328,7 @@ function AllergenGateTrayContentWeb({ onConfirm }: { onConfirm: () => void }) {
       <p className="text-sm font-medium text-muted-foreground leading-relaxed">{t('checkout.allergen_gate_body')}</p>
       <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} testID="allergen-tray-ack-web" />
       <SHCButton
+        appearance="customer"
         className="w-full"
         size="lg"
         disabled={!localAck}

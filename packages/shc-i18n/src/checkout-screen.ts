@@ -19,6 +19,15 @@ export function getCheckoutScreenCopy(locale: ShcLocale) {
     allergenAckLabel: t(locale, 'checkout.allergen_ack_label'),
     collectionSlotHint: t(locale, 'checkout.collection_slot_hint'),
     collectionSlotEmpty: t(locale, 'checkout.collection_slot_empty'),
+    paynowPanelTitle: t(locale, 'checkout.paynow_panel_title'),
+    paynowPanelBody: t(locale, 'checkout.paynow_panel_body'),
+    paynowRefLabel: t(locale, 'checkout.paynow_ref_label'),
+    paynowRefPlaceholder: t(locale, 'checkout.paynow_ref_placeholder'),
+    paynowConfirming: t(locale, 'checkout.paynow_confirming'),
+    paynowConfirmPaid: t(locale, 'checkout.paynow_confirm_paid'),
+    paynowPanelFootnote: t(locale, 'checkout.paynow_panel_footnote'),
+    paynowUenLabel: t(locale, 'checkout.paynow_uen_label'),
+    paynowReferenceLabel: t(locale, 'checkout.paynow_reference_label'),
     itemsCount: (count: number) =>
       t(locale, count === 1 ? 'checkout.items_count' : 'checkout.items_count_plural').replace(
         '{count}',

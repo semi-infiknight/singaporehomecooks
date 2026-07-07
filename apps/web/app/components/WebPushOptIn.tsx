@@ -44,6 +44,7 @@ export function WebPushOptIn() {
         <SHCButton
           className="mt-3"
           size="sm"
+          appearance="customer"
           disabled={busy}
           onClick={async () => {
             setBusy(true);
@@ -94,6 +95,7 @@ export function WebPushPromptBanner({ className = '' }: { className?: string }) 
       <div className="mt-3 flex flex-wrap gap-2">
         <SHCButton
           size="sm"
+          appearance="customer"
           disabled={busy}
           onClick={async () => {
             setBusy(true);

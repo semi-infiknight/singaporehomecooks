@@ -65,6 +65,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
                 {bid.message && <p className="text-sm text-muted-foreground truncate">{bid.message}</p>}
               </div>
               <SHCButton
+                appearance="customer"
                 size="sm"
                 onClick={() => acceptBid.mutate(bid.id)}
                 disabled={acceptBid.isPending}
@@ -146,6 +147,7 @@ export default function Profile() {
 
       <div className="mt-3">
         <SHCButton
+          appearance="customer"
           size="sm"
           variant="outline"
           onClick={() => redeem.mutate(20)}
@@ -160,7 +162,7 @@ export default function Profile() {
         <SHCCard variant="customer">
           <p className="text-sm text-muted-foreground font-semibold">{t('wallet.no_requests')}</p>
           <Link href="/request" className="inline-block mt-3">
-            <SHCButton size="sm" variant="outline">
+            <SHCButton appearance="customer" size="sm" variant="outline">
               {t('wallet.request_dish')}
             </SHCButton>
           </Link>

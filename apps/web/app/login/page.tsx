@@ -62,7 +62,7 @@ export default function LoginPage() {
             data-testid="login-password"
           />
           {error && <p className="text-sm text-destructive font-semibold">{error}</p>}
-          <SHCButton type="submit" disabled={busy} size="lg" className="w-full min-h-[52px] !border-border !shadow-[var(--shc-shadow-soft)] active:translate-none" testID="login-submit">
+          <SHCButton type="submit" appearance="customer" disabled={busy} size="lg" className="w-full min-h-[52px]" testID="login-submit">
             {busy
               ? t('auth.please_wait')
               : mode === 'login'

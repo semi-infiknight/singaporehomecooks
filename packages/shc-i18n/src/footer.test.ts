@@ -15,6 +15,7 @@ describe('footer + web push copy', () => {
     expect(copy.itemsCount(2)).toContain('2');
     expect(copy.allergenAckLabel).toContain('allergen');
     expect(copy.collectionSlotEmpty).toContain('slot');
+    expect(copy.paynowPanelTitle).toContain('PayNow');
     expect(getOrdersListCopy('zh-Hans').guest).toBe('访客');
     expect(getOrdersListCopy('en').inProgressLabel(3)).toContain('3');
   });

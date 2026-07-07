@@ -888,3 +888,21 @@
 - Cook-portal keeps default brutal `SHCCard` (unchanged)
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 38 — 2026-07-08 ~04:22 IST
+
+### Implemented
+1. **`SHCButton appearance="customer"`** — Gourmeat soft border/shadow, no brutal offset; `BottomStickyBar appearance="customer"` for mobile checkout
+2. **Checkout/profile/login/orders** — all customer CTAs use `appearance="customer"` (place order, redeem, accept bid, chat send, web push)
+3. **PayNowPanel** — `SHCCard variant="customer"` + full `getCheckoutScreenCopy` i18n (panel title/body/ref labels/confirm) en/zh-Hans
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- WalletCard / CreditBadge customer i18n + Gourmeat
+- Product PDP cook link `GourmeatPrimaryButton`
+- Continue loop until 9:00 AM IST Jul 9
+

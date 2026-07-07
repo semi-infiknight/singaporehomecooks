@@ -79,6 +79,7 @@ export function SHCButton({
   disabled,
   variant = 'primary',
   size = 'md',
+  appearance = 'default',
   testID,
   className = '',
   type = 'button',
@@ -88,23 +89,35 @@ export function SHCButton({
   disabled?: boolean;
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** Gourmeat customer skin — soft border, no brutal offset */
+  appearance?: 'default' | 'customer';
   testID?: string;
   className?: string;
   type?: 'button' | 'submit';
 }) {
-  const base =
+  const brutalBase =
     'inline-flex items-center justify-center gap-2 font-bold rounded-lg border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:translate-x-px active:translate-y-px active:shadow-none';
+  const customerBase =
+    'inline-flex items-center justify-center gap-2 font-extrabold rounded-xl border shadow-[var(--shc-shadow-soft)] transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none hover:brightness-105';
   const sizes: Record<ButtonSize, string> = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2.5 text-sm',
     lg: 'px-6 py-3.5 text-base',
   };
-  const variants: Record<ButtonVariant, string> = {
+  const brutalVariants: Record<ButtonVariant, string> = {
     primary: 'shc-btn-primary',
     outline: 'border-2 border-[var(--shc-border-brutal)] text-primary hover:bg-secondary bg-card',
     accent: 'bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)]',
     ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
   };
+  const customerVariants: Record<ButtonVariant, string> = {
+    primary: 'border-transparent bg-primary text-primary-foreground hover:bg-[var(--shc-primary-dark)]',
+    outline: 'border-border text-primary hover:bg-secondary bg-card',
+    accent: 'border-border bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)]',
+    ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
+  };
+  const base = appearance === 'customer' ? customerBase : brutalBase;
+  const variants = appearance === 'customer' ? customerVariants : brutalVariants;
   return (
     <button
       type={type}
@@ -1070,15 +1083,18 @@ export function DishCardSkeleton() {
 export function BottomStickyBar({
   children,
   className = '',
+  appearance = 'default',
 }: {
   children: React.ReactNode;
   className?: string;
+  appearance?: 'default' | 'customer';
 }) {
+  const chrome =
+    appearance === 'customer'
+      ? 'bg-card border-t border-border shadow-[var(--shc-shadow-soft)]'
+      : 'bg-card border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)]';
   return (
-    <div
-      className={`fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)] ${className}`}
-      data-testid="bottom-sticky-bar"
-    >
+    <div className={`fixed bottom-0 left-0 right-0 z-50 ${chrome} ${className}`} data-testid="bottom-sticky-bar">
       <div className="max-w-6xl mx-auto px-4 py-3">{children}</div>
     </div>
   );
@@ -1208,7 +1224,7 @@ export function PayNowPanel({
   reference,
   onRefChange,
   onConfirmPay,
-  confirmLabel = "I've paid — confirm order",
+  confirmLabel,
 }: {
   amount: number;
   reference: string;
@@ -1216,37 +1232,38 @@ export function PayNowPanel({
   onConfirmPay?: (ref: string) => void | Promise<void>;
   confirmLabel?: string;
 }) {
+  const { locale } = useShcI18n();
+  const checkoutCopy = getCheckoutScreenCopy(locale);
   const [refValue, setRefValue] = React.useState(reference);
   const [confirming, setConfirming] = React.useState(false);
+  const confirmCta = confirmLabel ?? checkoutCopy.paynowConfirmPaid;
 
   React.useEffect(() => {
     setRefValue(reference);
   }, [reference]);
   return (
-    <SHCCard className="shc-bento-yellow">
+    <SHCCard className="shc-bento-yellow" variant="customer">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+        <div className={`w-8 h-8 rounded-full bg-primary/10 ${gourmeatDiscoverBorder} flex items-center justify-center`}>
           <CheckCircle2 className="w-4 h-4 text-primary" />
         </div>
         <div>
-          <div className="font-bold">Pay with PayNow</div>
-          <div className="text-sm text-muted-foreground font-medium">
-            Transfer the exact amount, then enter your reference below
-          </div>
+          <div className="font-bold">{checkoutCopy.paynowPanelTitle}</div>
+          <div className="text-sm text-muted-foreground font-medium">{checkoutCopy.paynowPanelBody}</div>
         </div>
       </div>
       <div className="text-2xl font-black tabular-nums font-mono mb-3">S${amount.toFixed(2)}</div>
-      <div className="p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg font-mono text-sm space-y-1 shadow-[var(--shc-shadow-brutal-sm)]">
+      <div className={`p-4 bg-card ${gourmeatDiscoverBorder} rounded-lg font-mono text-sm space-y-1 ${gourmeatDiscoverShadow}`}>
         <div>
-          <span className="text-muted-foreground">UEN</span> 12345678X
+          <span className="text-muted-foreground">{checkoutCopy.paynowUenLabel}</span> 12345678X
         </div>
         <div>
-          <span className="text-muted-foreground">Reference</span> {reference}
+          <span className="text-muted-foreground">{checkoutCopy.paynowReferenceLabel}</span> {reference}
         </div>
       </div>
-      <label className="block mt-4 text-sm font-bold text-foreground">Payment reference</label>
+      <label className="block mt-4 text-sm font-bold text-foreground">{checkoutCopy.paynowRefLabel}</label>
       <input
-        placeholder="Enter the reference from your banking app"
+        placeholder={checkoutCopy.paynowRefPlaceholder}
         className="shc-input mt-1.5"
         value={refValue}
         onChange={(e) => {
@@ -1259,6 +1276,7 @@ export function PayNowPanel({
         <SHCButton
           className="mt-4 w-full"
           size="lg"
+          appearance="customer"
           disabled={confirming || !refValue.trim()}
           onClick={async () => {
             setConfirming(true);
@@ -1270,12 +1288,10 @@ export function PayNowPanel({
           }}
           data-testid="paynow-confirm"
         >
-          {confirming ? 'Confirming…' : confirmLabel}
+          {confirming ? checkoutCopy.paynowConfirming : confirmCta}
         </SHCButton>
       )}
-      <p className="text-xs text-muted-foreground mt-2 font-medium">
-        Your collection address is shared 2 hours before your slot, after payment is confirmed.
-      </p>
+      <p className="text-xs text-muted-foreground mt-2 font-medium">{checkoutCopy.paynowPanelFootnote}</p>
     </SHCCard>
   );
 }
