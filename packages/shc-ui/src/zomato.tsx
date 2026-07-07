@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcTypography, gourmeatColors, gourmeatShadows } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
@@ -105,10 +105,10 @@ export function SHCZomatoLocationBar({
               height: 40,
               borderRadius: 20,
               overflow: 'hidden',
-              borderWidth: shcBorders.brutal,
-              borderColor: shcColors.border,
-              backgroundColor: shcColors.primary,
-              ...shcShadows.brutalSm,
+              borderWidth: 1,
+              borderColor: gourmeatColors.border,
+              backgroundColor: gourmeatColors.primary,
+              ...gourmeatShadows.soft,
             }}
           >
             {avatarUri ? (
@@ -158,9 +158,9 @@ export function SHCZomatoStickyHeader({
         paddingHorizontal: shcSpacing.md,
         paddingTop: shcSpacing.stickyHeaderPadding,
         paddingBottom: shcSpacing.sm,
-        borderBottomWidth: elevated ? shcBorders.brutal : 0,
-        borderBottomColor: shcColors.border,
-        ...(elevated ? shcShadows.brutalSm : {}),
+        borderBottomWidth: elevated ? 1 : 0,
+        borderBottomColor: gourmeatColors.border,
+        ...(elevated ? gourmeatShadows.soft : {}),
       }}
     >
       <SHCZomatoLocationBar
@@ -215,9 +215,9 @@ export function SHCPromoRail({
             height: 100,
             borderRadius: shcRadii.lg,
             overflow: 'hidden',
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
-            ...shcShadows.brutalSm,
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
+            ...gourmeatShadows.soft,
           }}
         >
           <Image source={{ uri: promo.imageUrl }} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
@@ -326,10 +326,10 @@ export function SHCFilterChipRow({
             paddingHorizontal: 12,
             paddingVertical: 8,
             borderRadius: shcRadii.pill,
-            borderWidth: shcBorders.brutal,
-            borderColor: chip.active ? shcColors.primary : shcColors.border,
-            backgroundColor: chip.active ? shcColors.bentoPeach : shcColors.surface,
-            ...shcShadows.brutalSm,
+            borderWidth: 1,
+            borderColor: chip.active ? gourmeatColors.primary : gourmeatColors.border,
+            backgroundColor: chip.active ? gourmeatColors.primaryLight : gourmeatColors.surface,
+            ...gourmeatShadows.soft,
           }}
         >
           {chip.imageUrl ? (
@@ -379,9 +379,9 @@ export function SHCZomatoDishRow({
         backgroundColor: shcColors.surface,
         borderRadius: shcRadii.lg,
         overflow: 'hidden',
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
-        ...shcShadows.brutalSm,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
+        ...gourmeatShadows.card,
         marginRight: shcSpacing.sm,
       }}
     >

@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, gourmeatColors } from './theme';
+import { shcColors, shcSpacing, shcRadii, gourmeatColors, gourmeatShadows } from './theme';
 import { SHCFoodImage } from './visuals';
 import { SHCIcon } from './icons';
 import { SHCButton, SHCButtonText, SHCCard } from './primitives';
@@ -384,14 +384,14 @@ const StyleSheet = { absoluteFill: { position: 'absolute' as const, left: 0, rig
 const labelStyle = { fontSize: 13, fontWeight: '800', color: shcColors.text, marginBottom: shcSpacing.sm };
 const hintStyle = { fontSize: 11, color: shcColors.textLight, marginTop: shcSpacing.sm, fontWeight: '600' };
 const inputSingle = {
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
   borderRadius: shcRadii.md,
   padding: shcSpacing.md,
-  backgroundColor: shcColors.surface,
+  backgroundColor: gourmeatColors.surface,
   fontSize: 15,
-  color: shcColors.text,
-  ...shcShadows.brutalSm,
+  color: gourmeatColors.text,
+  ...gourmeatShadows.soft,
 };
 const inputMultiline = { ...inputSingle, minHeight: 120, textAlignVertical: 'top' as const };
 const reviewPill = {
@@ -401,20 +401,20 @@ const reviewPill = {
   paddingHorizontal: 10,
   paddingVertical: 6,
   borderRadius: shcRadii.pill,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-  backgroundColor: shcColors.surface,
+  borderWidth: 1,
+  borderColor: gourmeatColors.border,
+  backgroundColor: gourmeatColors.surface,
 };
-const reviewPillText = { fontSize: 12, fontWeight: '700', color: shcColors.text };
+const reviewPillText = { fontSize: 12, fontWeight: '700', color: gourmeatColors.text };
 function chipStyle(active: boolean) {
   return {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: shcRadii.pill,
-    borderWidth: shcBorders.brutal,
-    borderColor: active ? gourmeatColors.primary : shcColors.border,
-    backgroundColor: active ? gourmeatColors.primary : shcColors.surface,
-    ...shcShadows.brutalSm,
+    borderWidth: 1,
+    borderColor: active ? gourmeatColors.primary : gourmeatColors.border,
+    backgroundColor: active ? gourmeatColors.primary : gourmeatColors.surface,
+    ...gourmeatShadows.soft,
   };
 }
 function chipText(active: boolean) {
@@ -439,9 +439,9 @@ export function SHCRequestDishHomeCTA({
           minHeight: 168,
           borderRadius: shcRadii.lg,
           overflow: 'hidden',
-          borderWidth: shcBorders.brutal,
-          borderColor: shcColors.border,
-          ...shcShadows.brutalSm,
+          borderWidth: 1,
+          borderColor: gourmeatColors.border,
+          ...gourmeatShadows.soft,
         }}
       >
         <SHCFoodImage uri={BENTO_ACTION_IMAGES.request} height={168} rounded={0} />
@@ -460,9 +460,9 @@ export function SHCRequestDishHomeCTA({
                   width: 48,
                   height: 48,
                   borderRadius: 24,
-                  backgroundColor: shcColors.bentoPeach,
-                  borderWidth: shcBorders.brutal,
-                  borderColor: shcColors.border,
+                  backgroundColor: gourmeatColors.primaryLight,
+                  borderWidth: 1,
+                  borderColor: gourmeatColors.border,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -516,13 +516,13 @@ export function RequestDishSuccess({
             width: 72,
             height: 72,
             borderRadius: 36,
-            backgroundColor: shcColors.bentoMint,
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
+            backgroundColor: gourmeatColors.primaryLight,
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: shcSpacing.lg,
-            ...shcShadows.brutal,
+            ...gourmeatShadows.soft,
           }}
         >
           <SHCIcon name="checkmark" size={36} color={shcColors.success} active />

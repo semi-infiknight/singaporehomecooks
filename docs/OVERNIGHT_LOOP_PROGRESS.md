@@ -1011,3 +1011,22 @@
 - Web `SHCPageHeader` → GourmeatScreenHeader on checkout empty state
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 45 — 2026-07-08 ~04:41 IST
+
+### Implemented
+1. **`request-ux.tsx`** — inputs, chips, home CTA, success icon → Gourmeat 1px borders + `gourmeatShadows.soft`
+2. **`zomato.tsx`** — location avatar, sticky header, promo rail, filter chips, dish row → Gourmeat soft borders
+3. **`food-ux.tsx`** — checkout stepper, search panel, heritage banner → Gourmeat parity
+4. **`occasion-picker.tsx`** — occasion tags Gourmeat chips (request wizard)
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- mobile-customer typecheck PASS
+
+### Next iteration
+- `delivery-ux` mobile brutal sweep (favorites, dish cards if any)
+- Web profile/orders detail remaining brutal chrome
+- Continue loop until 9:00 AM IST Jul 9
+

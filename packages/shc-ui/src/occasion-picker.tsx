@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
+import { shcColors as colors, shcSpacing, shcRadii, gourmeatColors, gourmeatShadows } from './theme';
 
 export function OccasionTagPicker({
   selected,
@@ -26,9 +26,10 @@ export function OccasionTagPicker({
               paddingHorizontal: 10,
               paddingVertical: 4,
               borderRadius: shcRadii.pill,
-              borderWidth: shcBorders.brutal,
-              borderColor: colors.border,
-              backgroundColor: sel ? colors.primary : colors.surfaceAlt,
+              borderWidth: 1,
+              borderColor: sel ? gourmeatColors.primary : gourmeatColors.border,
+              backgroundColor: sel ? gourmeatColors.primary : gourmeatColors.surface,
+              ...gourmeatShadows.soft,
             }}
           >
             <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 12, fontWeight: '600' }}>{optionLabels?.[tag] ?? tag}</Text>

@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcTypography, gourmeatColors, gourmeatShadows } from './theme';
 import { SHCFoodImage, SHCZomatoAddButton } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
 import { SHCIcon } from './icons';
@@ -34,12 +34,12 @@ export function SHCCheckoutStepper({
                     width: 28,
                     height: 28,
                     borderRadius: 14,
-                    borderWidth: shcBorders.brutal,
-                    borderColor: done || active ? shcColors.primary : shcColors.border,
-                    backgroundColor: done ? shcColors.primary : active ? shcColors.bentoPeach : shcColors.surface,
+                    borderWidth: 1,
+                    borderColor: done || active ? gourmeatColors.primary : gourmeatColors.border,
+                    backgroundColor: done ? gourmeatColors.primary : active ? gourmeatColors.primaryLight : gourmeatColors.surface,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    ...shcShadows.brutalSm,
+                    ...gourmeatShadows.soft,
                   }}
                 >
                   {done ? (
@@ -156,13 +156,13 @@ export function SHCSearchResultsPanel({
     <View
       testID={testID}
       style={{
-        backgroundColor: shcColors.surface,
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
+        backgroundColor: gourmeatColors.surface,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         borderRadius: shcRadii.lg,
         marginTop: shcSpacing.sm,
         maxHeight: 320,
-        ...shcShadows.brutal,
+        ...gourmeatShadows.card,
         overflow: 'hidden',
       }}
     >
@@ -227,10 +227,10 @@ export function SHCHeritageStoryBanner({
       style={{
         borderRadius: shcRadii.lg,
         overflow: 'hidden',
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
+        borderWidth: 1,
+        borderColor: gourmeatColors.border,
         marginBottom: shcSpacing.section,
-        ...shcShadows.brutalSm,
+        ...gourmeatShadows.soft,
       }}
     >
       <SHCFoodImage
