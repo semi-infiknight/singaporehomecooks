@@ -3,14 +3,14 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  SHCButton,
-  SHCButtonText,
-  SHCSearchBar,
+  GourmeatScreenHeader,
+  GourmeatSearchBar,
+  GourmeatSectionTitle,
+  GourmeatDishCard,
+  GourmeatPrimaryButton,
+  GourmeatDishSkeletonGrid,
   SHCFilterChipRow,
-  SHCDishCard,
   SHCSearchResultsPanel,
-  SHCMindSectionTitle,
-  SHCIcon,
   type SHCDishCardData,
   shcSpacing,
   gourmeatColors,
@@ -19,10 +19,13 @@ import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@s
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
-import { useShcI18n, getLocalizedOccasions } from '@shc/i18n';
+import { useShcI18n, getLocalizedOccasions, getOrdersListCopy } from '@shc/i18n';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function SearchScreen() {
   const { t, locale } = useShcI18n();
+  const listCopy = getOrdersListCopy(locale);
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [q, setQ] = useState('');
   const [occ, setOcc] = useState('');
@@ -30,7 +33,7 @@ export default function SearchScreen() {
   const { halalOnly, maxCal, toggleHalalOnly, setMaxCal } = useDiscoverPrefs();
   const maxC = maxCal ?? 700;
   const router = useRouter();
-  const { data: rawResults = [] } = useProducts('');
+  const { data: rawResults = [], isLoading } = useProducts('');
   const addMut = useAddToCart();
   const { requireAuth } = useGuestAuthGate();
 
@@ -104,21 +107,32 @@ export default function SearchScreen() {
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 80 }]}
+      testID="customer-search-screen"
     >
-      <View style={styles.header}>
-        <SHCIcon name="search" size={24} color={gourmeatColors.primary} active />
-        <Text style={styles.title}>{t('search.title')}</Text>
+      <GourmeatScreenHeader
+        title={t('search.title')}
+        subtitle={t('search.subtitle').replace('{name}', user?.name || listCopy.guest)}
+        onBack={() => router.back()}
+        backLabel={t('search.back')}
+      />
+
+      <View style={styles.searchWrap}>
+        <GourmeatSearchBar value={q} onChangeText={setQ} placeholder={t('nav.search_placeholder_mobile')} testID="search-input" />
       </View>
 
-      <SHCSearchBar value={q} onChangeText={setQ} placeholder={t('nav.search_placeholder_mobile')} testID="search-input" />
-
-      <SHCMindSectionTitle>{t('search.occasion_section')}</SHCMindSectionTitle>
+      <GourmeatSectionTitle title={t('search.occasion_section')} />
       <SHCFilterChipRow chips={occasionChips} onChipPress={handleOccasion} testID="search-occasion-chips" />
 
-      <SHCMindSectionTitle>{t('search.filters_section')}</SHCMindSectionTitle>
+      <GourmeatSectionTitle title={t('search.filters_section')} />
       <SHCFilterChipRow chips={filterChips} onChipPress={handleFilter} testID="search-filter-chips" />
-      <Text style={styles.resultsTitle}>{t('search.results_count').replace('{count}', String(results.length))}</Text>
-      {q.trim() ? (
+
+      <Text style={styles.resultsTitle}>
+        {isLoading ? t('orders.loading') : t('search.results_count').replace('{count}', String(results.length))}
+      </Text>
+
+      {isLoading ? (
+        <GourmeatDishSkeletonGrid count={4} testID="search-dish-skeleton" />
+      ) : q.trim() ? (
         <SHCSearchResultsPanel
           query={q}
           dishes={results.map(toDish)}
@@ -130,17 +144,24 @@ export default function SearchScreen() {
           testID="search-results-panel"
         />
       ) : (
-        <View style={styles.grid}>
+        <View style={styles.grid} testID="search-results-grid">
           {results.map((p: any) => (
             <View key={p.id} style={styles.gridItem}>
-              <SHCDishCard dish={toDish(p)} onPress={() => goProduct(p.id)} testID={`search-dish-${p.id}`} />
+              <GourmeatDishCard
+                dish={toDish(p)}
+                onPress={() => goProduct(p.id)}
+                onAddPress={() => {
+                  if (!requireAuth(t('guest.sign_in_add_body'))) return;
+                  addMut.mutate({ productId: p.id, qty: 1 });
+                }}
+                testID={`search-dish-${p.id}`}
+              />
             </View>
           ))}
         </View>
       )}
-      <SHCButton onPress={() => router.back()} style={{ marginTop: shcSpacing.md }}>
-        <SHCButtonText>{t('search.back')}</SHCButtonText>
-      </SHCButton>
+
+      <GourmeatPrimaryButton label={t('search.back')} variant="outline" onPress={() => router.back()} style={{ marginTop: shcSpacing.md }} />
     </ScrollView>
   );
 }
@@ -148,8 +169,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
-  header: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
-  title: { fontSize: 24, fontWeight: '900', color: gourmeatColors.text },
+  searchWrap: { marginHorizontal: -shcSpacing.md, marginBottom: shcSpacing.sm },
   resultsTitle: { fontSize: 13, fontWeight: '700', color: gourmeatColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
   gridItem: { width: '48%' },

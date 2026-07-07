@@ -10,8 +10,6 @@ import Image from 'next/image';
 
 import { useRouter } from 'next/navigation';
 
-import { Trash2 } from 'lucide-react';
-
 import { getDishImageUrl } from '@shc/utils';
 
 import { useCart, useClearCart } from '../../lib/useProducts';
@@ -29,6 +27,8 @@ import {
   GourmeatScreenHeader,
 
   GourmeatPayButton,
+
+  GourmeatPrimaryButton,
 
   SHCEmptyState,
 
@@ -113,17 +113,20 @@ export default function CartPage() {
 
 
   if (isLoading) {
-
     return (
-
       <div className="max-w-2xl mx-auto px-4 py-8">
-
-        <p className="text-muted-foreground font-semibold">{cartCopy.loading}</p>
-
+        <GourmeatScreenHeader title={cartCopy.title} subtitle={cartCopy.loading} />
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-soft)] p-4 h-20 shc-skeleton" aria-hidden />
+          <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-soft)] p-4 h-20 shc-skeleton" aria-hidden />
+        </div>
+        <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-card)] overflow-hidden p-4 space-y-3" aria-busy="true">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="shc-skeleton h-14 w-full rounded-xl" />
+          ))}
+        </div>
       </div>
-
     );
-
   }
 
 
@@ -196,7 +199,7 @@ export default function CartPage() {
 
           <div className="grid grid-cols-2 gap-3 mb-5">
 
-            <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-soft)] p-4 text-center">
+            <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-soft)] p-4 text-center">
 
               <div className="text-2xl font-extrabold tabular-nums">{itemCount}</div>
 
@@ -204,7 +207,7 @@ export default function CartPage() {
 
             </div>
 
-            <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-soft)] p-4 text-center">
+            <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-soft)] p-4 text-center">
 
               <div className="text-2xl font-extrabold tabular-nums text-primary">S${total.toFixed(2)}</div>
 
@@ -234,7 +237,7 @@ export default function CartPage() {
 
 
 
-          <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden mb-4">
+          <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-card)] overflow-hidden mb-4">
 
             <ul className="divide-y divide-border">
 
@@ -292,21 +295,12 @@ export default function CartPage() {
 
 
 
-          <button
-
-            type="button"
-
+          <GourmeatPrimaryButton
+            label={cartCopy.clearCart}
+            variant="outline"
             onClick={() => clear.mutate()}
-
-            className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-6"
-
-          >
-
-            <Trash2 className="w-4 h-4" aria-hidden />
-
-            {cartCopy.clearCart}
-
-          </button>
+            className="mb-6"
+          />
 
 
 
