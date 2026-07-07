@@ -3,6 +3,7 @@ import type { MessageKey } from './en';
 /** Operational Mandarin strings — professional translation pass pending. */
 export const zhHans: Record<MessageKey, string> = {
   'nav.discover': '发现美食',
+  'nav.trust_safety': '信任与安全',
   'nav.cart': '购物车',
   'nav.profile': '我的',
   'nav.search_placeholder': '试试椰浆饭、黑果焖鸡、开斋节…',
@@ -12,6 +13,7 @@ export const zhHans: Record<MessageKey, string> = {
   'checkout.place_order': '下单',
   'checkout.placing': '正在下单…',
   'cart.minimum_hint': '最低订单为新币50元 — 结账前请增加份量。',
+  'cart.title': '购物车',
   'push.title': '浏览器通知',
   'push.description': '安装应用或在后台打开时，可在浏览器接收订单更新。',
   'push.enable': '开启通知',
@@ -42,4 +44,14 @@ export const zhHans: Record<MessageKey, string> = {
   'trust.collection_sub': '无配送 — 计划性订餐',
   'guest.sign_in_cart_title': '登录查看购物车',
   'guest.sign_in_cart_body': '可自由浏览 — 登录后结账并追踪订单。',
+  'orders.title': '我的订单',
+  'orders.in_progress': '进行中',
+  'orders.past': '历史订单',
+  'orders.chat_cook': '联系家厨',
+  'orders.empty_title': '暂无订单',
+  'orders.empty_body': '发现适合您下次聚餐的家常菜。',
+  'orders.browse_cta': '浏览菜品',
+  'filter.all': '全部',
+  'filter.halal': '清真',
+  'filter.light': '轻食 (<500卡)',
 };

@@ -97,3 +97,21 @@
 - Orders screen i18n, web desktop nav labels
 - EAS monitor / download when FINISHED
 - More brand polish (promo rail, filter chips)
+
+---
+
+## Iteration 6 — 2026-07-08 ~02:50 IST
+
+### Implemented
+1. **Orders screen i18n** — mobile orders list (title, sections, empty state, chat CTA)
+2. **Filter chips i18n** — Halal / Light on mobile discover
+3. **Web nav i18n** — Discover + Trust & Safety header links
+4. **Cart title i18n** — web + mobile cart screens
+
+### EAS
+- `2ad24658`: still **IN_QUEUE** (~1.5h) — no APK download yet
+
+### Next iteration
+- Web orders page i18n
+- Promo rail / occasion labels
+- EAS retry only if 6h+ stuck

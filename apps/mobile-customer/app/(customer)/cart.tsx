@@ -66,7 +66,7 @@ export default function Cart() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: hasItems ? 100 : 80 }]}
       >
         <GourmeatScreenHeader
-          title="Your Cart"
+          title={t('cart.title')}
           subtitle={`${user?.name || 'Guest'} · ${itemCount} portion${itemCount !== 1 ? 's' : ''}`}
         />
 

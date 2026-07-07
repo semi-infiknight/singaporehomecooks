@@ -12,8 +12,8 @@ import { ZomatoLocationBar, SearchResultsDropdown, type DishCardProduct } from '
 import { getCookAvatarUrl } from '@shc/utils';
 
 const navLinks = [
-  { href: '/#discover', label: 'Discover' },
-  { href: '/content/trust', label: 'Trust & Safety' },
+  { href: '/#discover', labelKey: 'nav.discover' as const },
+  { href: '/content/trust', labelKey: 'nav.trust_safety' as const },
 ];
 
 export function AppHeader() {
@@ -79,7 +79,7 @@ export function AppHeader() {
                 href={link.href}
                 className="px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
               >
-                {link.label}
+                  {t(link.labelKey)}
               </Link>
             ))}
           </nav>
@@ -166,7 +166,7 @@ export function AppHeader() {
                 onClick={() => setMobileOpen(false)}
                 className="px-3 py-2.5 text-sm font-semibold text-foreground hover:bg-secondary rounded-lg"
               >
-                {link.label}
+                  {t(link.labelKey)}
               </Link>
             ))}
             <Link

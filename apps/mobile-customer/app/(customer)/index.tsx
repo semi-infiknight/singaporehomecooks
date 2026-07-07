@@ -254,8 +254,8 @@ export default function CustomerDiscover() {
       <View style={{ paddingHorizontal: shcSpacing.md }}>
         <SHCFilterChipRow
           chips={[
-            { id: 'halal', label: 'Halal', active: halalOnly },
-            { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+            { id: 'halal', label: t('filter.halal'), active: halalOnly },
+            { id: 'light', label: t('filter.light'), active: maxCal === 500 },
           ]}
           onChipPress={(id) => {
             if (id === 'halal') toggleHalalOnly();

@@ -15,10 +15,12 @@ import {
 import { getActiveOrders, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
+import { useShcI18n } from '@shc/i18n';
 
 export default function MyOrdersList() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { t } = useShcI18n();
   const { data: orders = [], isFetching } = useMyOrders('customer');
   const { user } = useAuth();
   const activeOrders = getActiveOrders(orders as Record<string, unknown>[]);
@@ -26,7 +28,7 @@ export default function MyOrdersList() {
 
   const orderActions = (orderId: string) => (
     <GourmeatPrimaryButton
-      label="Chat with cook"
+      label={t('orders.chat_cook')}
       onPress={() => router.push(`/(shared)/chat/${orderId}` as any)}
       testID={`order-chat-${orderId}`}
       style={{ marginTop: shcSpacing.xs }}
@@ -42,13 +44,13 @@ export default function MyOrdersList() {
       testID="customer-orders-screen"
     >
       <GourmeatScreenHeader
-        title="My Orders"
+        title={t('orders.title')}
         subtitle={`${user?.name || 'Guest'} · Track & chat${isFetching && activeOrders.length > 0 ? ' · updating…' : ''}`}
       />
 
       {activeOrders.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>In progress</Text>
+          <Text style={styles.sectionLabel}>{t('orders.in_progress')}</Text>
           {activeOrders.map((o: any) => (
             <GourmeatOrderRow
               key={o.id}
@@ -71,16 +73,16 @@ export default function MyOrdersList() {
       {orders.length === 0 && (
         <GourmeatCard>
           <GourmeatEmptyState
-            title="No orders yet"
-            body="Discover dishes for your next occasion."
-            ctaLabel="Browse dishes"
+            title={t('orders.empty_title')}
+            body={t('orders.empty_body')}
+            ctaLabel={t('orders.browse_cta')}
             onCta={() => router.push('/(customer)/' as any)}
           />
         </GourmeatCard>
       )}
 
       {pastOrders.length > 0 && activeOrders.length > 0 && (
-        <Text style={styles.sectionLabel}>Past orders</Text>
+        <Text style={styles.sectionLabel}>{t('orders.past')}</Text>
       )}
 
       {pastOrders.map((o: any) => (

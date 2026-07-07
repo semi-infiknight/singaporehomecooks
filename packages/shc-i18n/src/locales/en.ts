@@ -1,5 +1,6 @@
 export const en = {
   'nav.discover': 'Discover',
+  'nav.trust_safety': 'Trust & Safety',
   'nav.cart': 'Cart',
   'nav.profile': 'Profile',
   'nav.search_placeholder': 'Try nasi lemak, buah keluak, Hari Raya…',
@@ -10,6 +11,7 @@ export const en = {
   'checkout.place_order': 'Place order',
   'checkout.placing': 'Placing order…',
   'cart.minimum_hint': 'Minimum order is S$50 — add more portions before checkout.',
+  'cart.title': 'Your Cart',
   'push.title': 'Browser notifications',
   'push.description': 'Get order updates in your browser when the app is installed or open in the background.',
   'push.enable': 'Enable notifications',
@@ -40,6 +42,16 @@ export const en = {
   'trust.collection_sub': 'No delivery — planned occasions',
   'guest.sign_in_cart_title': 'Sign in to view cart',
   'guest.sign_in_cart_body': 'Browse freely — sign in to checkout and track orders.',
+  'orders.title': 'My Orders',
+  'orders.in_progress': 'In progress',
+  'orders.past': 'Past orders',
+  'orders.chat_cook': 'Chat with cook',
+  'orders.empty_title': 'No orders yet',
+  'orders.empty_body': 'Discover dishes for your next occasion.',
+  'orders.browse_cta': 'Browse dishes',
+  'filter.all': 'All',
+  'filter.halal': 'Halal',
+  'filter.light': 'Light (<500 cal)',
 } as const;
 
 export type MessageKey = keyof typeof en;
