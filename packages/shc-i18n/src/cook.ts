@@ -97,6 +97,7 @@ export function getCookListingsCopy(locale: ShcLocale) {
     defaultHeritage: t(locale, 'cook.listings.default_heritage'),
     defaultIngredientName: t(locale, 'cook.listings.default_ingredient'),
     defaultDishFallback: t(locale, 'cook.listings.default_dish_fallback'),
+    defaultOccasionId: t(locale, 'cook.listings.default_occasion_id'),
   };
 }
 
@@ -108,6 +109,8 @@ export function getCookComplianceCopy(locale: ShcLocale) {
     footerAdmin: t(locale, 'cook.compliance.footer_admin'),
     footerDev: t(locale, 'cook.compliance.footer_dev'),
     statusPendingReview: t(locale, 'cook.compliance.status_pending_review'),
+    sfaLabel: t(locale, 'cook.compliance.sfa_label'),
+    wsqLabel: t(locale, 'cook.compliance.wsq_label'),
   };
 }
 

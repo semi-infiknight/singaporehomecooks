@@ -57,11 +57,11 @@ import { useShcI18n, getCookListingsCopy } from '@shc/i18n';
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
+  borderColor: gourmeatColors.border,
   padding: shcSpacing.sm,
   marginBottom: shcSpacing.sm,
   borderRadius: shcRadii.md,
-  backgroundColor: shcColors.surface,
+  backgroundColor: gourmeatColors.surface,
   ...shcShadows.brutalSm,
 };
 
@@ -109,7 +109,7 @@ export default function CookListings() {
   const [price, setPrice] = useState(14);
   const [minQty, setMinQty] = useState(4);
   const [cuisine, setCuisine] = useState(copy.defaultCuisine);
-  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
+  const [occasionTags, setOccasionTags] = useState<string[]>([copy.defaultOccasionId]);
   const [ingredients, setIngredients] = useState([
     { name: copy.defaultIngredientName, quantity: 300, unit: 'g' },
   ]);
@@ -172,7 +172,7 @@ export default function CookListings() {
     setPrice(14);
     setMinQty(4);
     setCuisine(copy.defaultCuisine);
-    setOccasionTags(['Hari Raya']);
+    setOccasionTags([copy.defaultOccasionId]);
     setIngredients([{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]);
     setHeritage(copy.defaultHeritage);
     setPublished(null);
@@ -186,7 +186,7 @@ export default function CookListings() {
     setPrice(Number(listing.price) || 12);
     setMinQty(Number(listing.min_qty) || 4);
     setCuisine(listing.cuisine || copy.defaultCuisineFallback);
-    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
+    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [copy.defaultOccasionId]);
     setIngredients(
       listing.ingredients?.length
         ? listing.ingredients

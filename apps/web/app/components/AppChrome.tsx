@@ -6,6 +6,7 @@ import { AppFooter } from './AppFooter';
 import { AppMobileTabBar } from './AppMobileTabBar';
 import { CookMobileTabBar } from './CookMobileTabBar';
 import { DirectionalTabShell } from './DirectionalTabShell';
+import { WebDocumentMeta } from './WebDocumentMeta';
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
@@ -14,6 +15,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   if (isCookPortal) {
     return (
       <>
+        <WebDocumentMeta />
         <main className="flex-1 w-full pb-[100px] bg-background md:pb-0">
           <DirectionalTabShell mode="cook">{children}</DirectionalTabShell>
         </main>
@@ -24,6 +26,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <WebDocumentMeta />
       <div className="hidden md:block">
         <AppHeader />
       </div>

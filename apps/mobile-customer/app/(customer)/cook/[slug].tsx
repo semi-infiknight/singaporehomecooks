@@ -13,7 +13,6 @@ import {
   SHCFoodImage,
   type SHCDishCardData,
   gourmeatColors,
-  shcColors,
   shcRadii,
   shcSpacing,
 } from '@shc/ui';
@@ -74,6 +73,22 @@ export default function CookProfile() {
         avatarUri={getCookAvatarUrl(cook.id, cook.display_name)}
       />
 
+      {(cook.story || cook.collection_address || cook.collection_instructions) && (
+        <SHCCard variant="bento-peach" style={styles.storyCard}>
+          {!!cook.story && <Text style={styles.storyText}>{cook.story}</Text>}
+          {!!cook.collection_address && (
+            <Text style={styles.metaLine}>
+              <Text style={styles.metaLabel}>{copy.collectionArea}</Text> {cook.collection_address}
+            </Text>
+          )}
+          {!!cook.collection_instructions && (
+            <Text style={styles.metaLine}>
+              <Text style={styles.metaLabel}>{copy.instructions}</Text> {cook.collection_instructions}
+            </Text>
+          )}
+        </SHCCard>
+      )}
+
       {dishRows.length > 0 && (
         <SHCZomatoDishRowRail
           title={copy.menuHighlights}
@@ -82,7 +97,10 @@ export default function CookProfile() {
         />
       )}
 
-      <SHCSectionTitle>{copy.allListings}</SHCSectionTitle>
+      <View style={styles.sectionHeader}>
+        <SHCSectionTitle>{copy.allListings}</SHCSectionTitle>
+        <Text style={styles.sectionSubtitle}>{copy.menuSubtitle(listings.length)}</Text>
+      </View>
       {listings.length === 0 && (
         <SHCCard variant="bento-yellow" style={styles.emptyCard}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={72} rounded={shcRadii.md} />
@@ -97,9 +115,12 @@ export default function CookProfile() {
         ))}
       </View>
 
-      {archive.length > 0 && (
+      {archive.length > 0 ? (
         <>
-          <SHCSectionTitle>{copy.heritageTitle}</SHCSectionTitle>
+          <View style={styles.sectionHeader}>
+            <SHCSectionTitle>{copy.heritageTitle}</SHCSectionTitle>
+            <Text style={styles.sectionSubtitle}>{copy.heritageSubtitle}</Text>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.archiveRail}>
             {archive.map((a: any, i: number) => (
               <SHCCard key={i} variant="bento-peach" style={styles.archiveCard}>
@@ -109,6 +130,14 @@ export default function CookProfile() {
               </SHCCard>
             ))}
           </ScrollView>
+        </>
+      ) : (
+        <>
+          <View style={styles.sectionHeader}>
+            <SHCSectionTitle>{copy.heritageTitle}</SHCSectionTitle>
+            <Text style={styles.sectionSubtitle}>{copy.heritageSubtitle}</Text>
+          </View>
+          <Text style={styles.heritageEmpty}>{copy.heritageEmpty}</Text>
         </>
       )}
 
@@ -124,6 +153,13 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: shcSpacing.md },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: shcSpacing.xl },
   loadingText: { marginTop: shcSpacing.sm, fontWeight: '600', color: gourmeatColors.textMuted },
+  storyCard: { marginBottom: shcSpacing.md, padding: shcSpacing.md },
+  storyText: { fontSize: 14, lineHeight: 20, color: gourmeatColors.text, fontStyle: 'italic' },
+  metaLine: { fontSize: 12, color: gourmeatColors.textMuted, marginTop: shcSpacing.sm },
+  metaLabel: { fontWeight: '700', color: gourmeatColors.text },
+  heritageEmpty: { fontSize: 13, color: gourmeatColors.textMuted, marginBottom: shcSpacing.md },
+  sectionHeader: { marginBottom: shcSpacing.xs },
+  sectionSubtitle: { fontSize: 12, color: gourmeatColors.textMuted, marginBottom: shcSpacing.sm },
   emptyCard: { alignItems: 'center', padding: shcSpacing.lg },
   emptyText: { fontWeight: '700', color: gourmeatColors.textMuted, marginTop: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
@@ -131,7 +167,7 @@ const styles = StyleSheet.create({
   archiveRail: { gap: shcSpacing.sm, paddingBottom: shcSpacing.sm },
   archiveCard: { width: 200, minHeight: 120 },
   archiveIcon: { fontSize: 24 },
-  archiveTitle: { fontWeight: '800', color: shcColors.heritage, marginTop: 4 },
+  archiveTitle: { fontWeight: '800', color: gourmeatColors.primary, marginTop: 4 },
   archiveStory: { fontSize: 11, color: gourmeatColors.textMuted, marginTop: 4 },
   cartBtn: { marginTop: shcSpacing.lg },
 });

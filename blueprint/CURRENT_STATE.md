@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Overnight loop iter 28) — Web AppHeader/layout i18n; cook onboarding + chat sender labels.
+**Last Updated:** 2026-07-08 (Overnight loop iter 29) — Web metadata sync; cook profile parity; compliance/listings polish.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 

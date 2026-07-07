@@ -106,7 +106,7 @@ export default function ComplianceUpload() {
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.compliance}
                 iconKey="document"
-                label="SFA"
+                label={complianceCopy.sfaLabel}
                 badge={type === 'sfa' ? '✓' : undefined}
                 variant={type === 'sfa' ? 'bento-mint' : 'default'}
               />
@@ -117,7 +117,7 @@ export default function ComplianceUpload() {
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.listings}
                 iconKey="education"
-                label="WSQ"
+                label={complianceCopy.wsqLabel}
                 badge={type === 'wsq' ? '✓' : undefined}
                 variant={type === 'wsq' ? 'bento-yellow' : 'default'}
               />
@@ -129,7 +129,7 @@ export default function ComplianceUpload() {
       <SHCFadeIn delay={140}>
         <SHCCard style={styles.uploadCard}>
           <View style={styles.uploadHeader}>
-            <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
+            <SHCIcon name="compliance" size={22} color={gourmeatColors.primary} active />
             <SHCBadge variant="heritage">{complianceCopy.uploadBadge(type)}</SHCBadge>
           </View>
 

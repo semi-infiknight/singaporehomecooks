@@ -684,3 +684,30 @@
 - Cook compliance/listings polish
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 29 — 2026-07-08 ~03:54 IST
+
+### Implemented
+1. **Web metadata i18n** — `WebDocumentMeta` syncs title/description/OG/PWA short name from `getWebLayoutCopy` on locale change
+2. **CookMobileTabBar** — `cook.tab.*` labels + localized nav a11y
+3. **Mobile cook profile** — story/collection meta, menu/heritage subtitles, empty heritage state; `gourmeatColors` token fix
+4. **Cook compliance** — SFA/WSQ tile labels via `getCookComplianceCopy`; gourmeat icon token
+5. **Cook listings** — `defaultOccasionId` helper; wizard inputs use `gourmeatColors`
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web cook-portal page strings
+- Mobile customer onboarding/trust screens
+- Cook dashboard remaining hardcoded copy
+- Continue loop until 9:00 AM IST Jul 9
+

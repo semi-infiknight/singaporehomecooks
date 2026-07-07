@@ -2,19 +2,28 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
 import { LayoutDashboard, ClipboardList, UtensilsCrossed, FileCheck } from 'lucide-react';
+import { useShcI18n, getWebLayoutCopy } from '@shc/i18n';
 
-const TABS = [
-  { href: '/cook-portal/dashboard', label: 'Home', icon: LayoutDashboard, testID: 'tab-cook-dashboard' },
-  { href: '/cook-portal/orders', label: 'Orders', icon: ClipboardList, testID: 'tab-cook-orders' },
-  { href: '/cook-portal/listings', label: 'Listings', icon: UtensilsCrossed, testID: 'tab-cook-listings' },
-  { href: '/cook-portal/compliance', label: 'Docs', icon: FileCheck, testID: 'tab-cook-compliance' },
+const TAB_ROUTES = [
+  { href: '/cook-portal/dashboard', labelKey: 'cook.tab.home' as const, icon: LayoutDashboard, testID: 'tab-cook-dashboard' },
+  { href: '/cook-portal/orders', labelKey: 'cook.tab.orders' as const, icon: ClipboardList, testID: 'tab-cook-orders' },
+  { href: '/cook-portal/listings', labelKey: 'cook.tab.listings' as const, icon: UtensilsCrossed, testID: 'tab-cook-listings' },
+  { href: '/cook-portal/compliance', labelKey: 'cook.tab.docs' as const, icon: FileCheck, testID: 'tab-cook-compliance' },
 ];
 
 const HIDE_ON = [/^\/cook-portal\/orders\/[^/]+$/];
 
 export function CookMobileTabBar() {
   const pathname = usePathname();
+  const { t, locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
+  const tabs = useMemo(
+    () => TAB_ROUTES.map((tab) => ({ ...tab, label: t(tab.labelKey) })),
+    [t]
+  );
+
   if (HIDE_ON.some((re) => re.test(pathname))) return null;
 
   return (
@@ -22,10 +31,10 @@ export function CookMobileTabBar() {
       <nav
         className="pointer-events-auto rounded-[28px] bg-[var(--shc-gourmeat-nav)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] px-2 py-2"
         data-testid="cook-bottom-tab-bar"
-        aria-label="Cook navigation"
+        aria-label={layout.cookTabBarA11y}
       >
         <div className="flex items-stretch min-h-[52px]">
-          {TABS.map((tab) => {
+          {tabs.map((tab) => {
             const active = pathname === tab.href || pathname.startsWith(`${tab.href}/`);
             const Icon = tab.icon;
             return (

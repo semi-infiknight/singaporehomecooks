@@ -25,5 +25,11 @@ export function getWebLayoutCopy(locale: ShcLocale) {
     pwaDismissA11y: t(locale, 'web.layout.pwa_dismiss_a11y'),
     saveDishA11y: t(locale, 'web.layout.save_dish_a11y'),
     removeSavedA11y: t(locale, 'web.layout.remove_saved_a11y'),
+    cookTabBarA11y: t(locale, 'web.layout.cook_tab_bar_a11y'),
+    metaTitle: t(locale, 'web.meta.title'),
+    metaDescription: t(locale, 'web.meta.description'),
+    metaOgTitle: t(locale, 'web.meta.og_title'),
+    metaOgDescription: t(locale, 'web.meta.og_description'),
+    pwaShortName: t(locale, 'web.meta.pwa_short_name'),
   };
 }
