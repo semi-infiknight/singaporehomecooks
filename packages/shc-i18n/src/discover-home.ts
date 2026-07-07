@@ -31,5 +31,14 @@ export function getDiscoverHomeCopy(locale: ShcLocale) {
         .replace('{query}', query),
     searchClear: t(locale, 'search.clear_btn'),
     searchNoMatch: t(locale, 'search.no_match'),
+    whatsOnYourMind: t(locale, 'discover.whats_on_your_mind'),
+    categoryAll: t(locale, 'discover.category_all'),
+    exploreCuisines: t(locale, 'discover.explore_cuisines'),
+    fallbackCuisine: t(locale, 'discover.fallback_cuisine'),
+    hdbCollect: t(locale, 'discover.hdb_collect'),
+    heritageOffer: (label: string) =>
+      t(locale, 'discover.heritage_offer').replace('{label}', label),
+    halalBadge: t(locale, 'discover.halal_badge'),
+    dishAdd: t(locale, 'discover.dish_add'),
   };
 }

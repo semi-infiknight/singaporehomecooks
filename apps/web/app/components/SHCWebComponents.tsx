@@ -239,6 +239,11 @@ const bentoVariants: Record<string, string> = {
   default: 'bg-card',
 };
 
+/** Gourmeat customer discover chrome — soft elevation per brand.md */
+const gourmeatDiscoverBorder = 'border border-border';
+const gourmeatDiscoverShadow = 'shadow-[var(--shc-shadow-soft)]';
+const gourmeatDiscoverCardShadow = 'shadow-[var(--shc-shadow-card)]';
+
 export function BentoTile({ href, label, iconKey, imageKey = 'cart', variant = 'default', badge }: BentoTileProps) {
   const bgImage = BENTO_ACTION_IMAGES[imageKey];
   const Icon = WEB_BENTO_ICONS[iconKey];
@@ -306,8 +311,8 @@ function CategoryRailItem({
       data-testid={`category-chip-${occasion || 'all'}`}
     >
       <div
-        className={`w-16 h-16 rounded-full overflow-hidden border-2 shadow-[var(--shc-shadow-brutal-sm)] ${
-          active ? 'border-primary ring-2 ring-primary/30' : 'border-[var(--shc-border-brutal)]'
+        className={`w-16 h-16 rounded-full overflow-hidden border ${gourmeatDiscoverShadow} ${
+          active ? 'border-primary ring-2 ring-primary/30' : 'border-border'
         }`}
       >
         <Image
@@ -354,7 +359,7 @@ export function PromoRail({
           type="button"
           onClick={() => onPromoClick?.(promo.id)}
           data-testid={`promo-card-${promo.id}`}
-          className="shc-promo-enter relative shrink-0 w-[260px] h-[100px] rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-left"
+          className={`shc-promo-enter relative shrink-0 w-[260px] h-[100px] rounded-xl overflow-hidden ${gourmeatDiscoverBorder} ${gourmeatDiscoverShadow} text-left`}
           style={{ animationDelay: `${i * 60}ms` }}
         >
           <Image src={PROMO_BANNER_IMAGES[promo.imageKey]} alt="" fill className="object-cover" sizes="260px" />
@@ -362,7 +367,7 @@ export function PromoRail({
             <div className="flex justify-between items-start">
               {icons[promo.id] && (
                 <span
-                  className="w-7 h-7 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]"
+                  className={`w-7 h-7 rounded-full bg-card ${gourmeatDiscoverBorder} flex items-center justify-center ${gourmeatDiscoverShadow}`}
                   aria-hidden
                 >
                   {(() => {
@@ -372,7 +377,7 @@ export function PromoRail({
                 </span>
               )}
               {badge && (
-                <span className="text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded border border-[var(--shc-border-brutal)]">
+                <span className={`text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded ${gourmeatDiscoverBorder}`}>
                   {badge}
                 </span>
               )}
@@ -423,7 +428,7 @@ export function FilterChipRow({
           type="button"
           onClick={() => onChipClick(chip.id)}
           data-testid={chip.testID ?? `filter-chip-${chip.id}`}
-          className={`shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full border-2 text-xs shadow-[var(--shc-shadow-brutal-sm)] transition-colors ${
+          className={`shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full border text-xs ${gourmeatDiscoverShadow} transition-colors ${
             chip.active
               ? 'border-primary bg-[var(--shc-bento-peach)] text-primary font-extrabold'
               : 'border-border bg-card text-foreground font-semibold hover:bg-secondary'
@@ -448,7 +453,7 @@ export function FilterChipRow({
 
 export function ZomatoRatingPill({ rating = 4.8, reviewCount }: { rating?: number; reviewCount?: number }) {
   return (
-    <span className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--shc-success)] bg-[var(--shc-bento-mint)] px-1.5 py-0.5 rounded border border-[var(--shc-border-brutal)]">
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--shc-success)] bg-[var(--shc-bento-mint)] px-1.5 py-0.5 rounded ${gourmeatDiscoverBorder}`}>
       <Star className="w-3 h-3 fill-[var(--shc-success)]" aria-hidden />
       {rating}
       {reviewCount != null && <span className="font-semibold text-muted-foreground">({reviewCount}+)</span>}
@@ -511,13 +516,15 @@ export function ZomatoOrderRow({
 }
 
 export function ZomatoAddButton({ href }: { href: string }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   return (
     <Link
       href={href}
-      className="shrink-0 text-xs font-black text-primary bg-card px-3.5 py-1.5 rounded-lg border-2 border-primary shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow"
+      className={`shrink-0 text-xs font-black text-primary bg-card px-3.5 py-1.5 rounded-lg border border-primary ${gourmeatDiscoverShadow} hover:brightness-105 transition-shadow`}
       data-testid="dish-add-btn"
     >
-      ADD
+      {homeCopy.dishAdd}
     </Link>
   );
 }
@@ -535,19 +542,21 @@ export function DishRowCard({
   href?: string;
   onPress?: () => void;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const imageUrl =
     (product as { image_url?: string }).image_url ||
     getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   const slot = getCollectionSlotLabel(product.id);
   const className =
-    'shrink-0 w-[300px] flex flex-col border-2 border-[var(--shc-border-brutal)] rounded-xl overflow-hidden bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow text-left';
+    `shrink-0 w-[300px] flex flex-col ${gourmeatDiscoverBorder} rounded-xl overflow-hidden bg-card ${gourmeatDiscoverCardShadow} hover:brightness-[0.99] transition-shadow text-left`;
   const inner = (
     <>
       <div className="flex">
         <div className="relative w-[110px] h-[118px] shrink-0">
           <Image src={imageUrl} alt={product.name} fill className="object-cover" sizes="110px" />
           {offerLabel && (
-            <span className="absolute top-1.5 left-1.5 text-[9px] font-black bg-[var(--shc-accent)] text-foreground px-1.5 py-0.5 rounded border border-[var(--shc-border-brutal)]">
+            <span className={`absolute top-1.5 left-1.5 text-[9px] font-black bg-[var(--shc-accent)] text-foreground px-1.5 py-0.5 rounded ${gourmeatDiscoverBorder}`}>
               {offerLabel}
             </span>
           )}
@@ -556,7 +565,7 @@ export function DishRowCard({
           <div>
             <div className="font-extrabold text-sm leading-snug line-clamp-2">{product.name}</div>
             <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
-              {product.cuisine || 'Heritage'} · {product.cook_name}
+              {product.cuisine || homeCopy.fallbackCuisine} · {product.cook_name}
             </div>
           </div>
           <div className="flex items-center gap-2 mt-1.5">
@@ -570,13 +579,13 @@ export function DishRowCard({
             {slot}
             <span>·</span>
             <MapPin className="w-3 h-3" aria-hidden />
-            HDB collect
+            {homeCopy.hdbCollect}
           </div>
         </div>
       </div>
       {(offerText || offerLabel) && (
-        <div className="border-t border-[var(--shc-border-brutal)] bg-[var(--shc-bento-yellow)] px-3 py-1.5">
-          <p className="text-[10px] font-extrabold text-primary truncate">{offerText || `Heritage offer · ${offerLabel}`}</p>
+        <div className="border-t border-border bg-[var(--shc-bento-yellow)] px-3 py-1.5">
+          <p className="text-[10px] font-extrabold text-primary truncate">{offerText || homeCopy.heritageOffer(offerLabel || '')}</p>
         </div>
       )}
     </>
@@ -807,7 +816,7 @@ export function HeritageStoryBanner({
   return (
     <Link
       href={href}
-      className="block relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] shc-section-gap mb-5"
+      className={`block relative h-24 overflow-hidden rounded-xl ${gourmeatDiscoverBorder} ${gourmeatDiscoverShadow} shc-section-gap mb-5`}
       data-testid="heritage-story-banner"
     >
       <Image src={BENTO_ACTION_IMAGES[imageKey]} alt="" fill className="object-cover" sizes="100vw" />
@@ -827,11 +836,11 @@ export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
   const requestCopy = getRequestDishCopy(locale);
   return (
     <Link href={href} className="block group mt-8" data-testid="open-request-page-btn">
-      <div className="relative min-h-[180px] overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-transform group-hover:-translate-y-0.5">
+      <div className={`relative min-h-[180px] overflow-hidden rounded-xl ${gourmeatDiscoverBorder} ${gourmeatDiscoverShadow} transition-transform group-hover:-translate-y-0.5`}>
         <Image src={BENTO_ACTION_IMAGES.request} alt="" fill className="object-cover opacity-40 group-hover:opacity-50 transition-opacity" sizes="100vw" />
         <SHCCard className="relative z-10 m-4 bg-card/95 backdrop-blur-sm border-0 shadow-none">
           <div className="flex items-center gap-3">
-            <span className="w-12 h-12 rounded-full bg-primary/10 border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+            <span className={`w-12 h-12 rounded-full bg-primary/10 ${gourmeatDiscoverBorder} flex items-center justify-center`}>
               <ChefHat className="w-6 h-6 text-primary" aria-hidden />
             </span>
             <div className="flex-1">
@@ -892,18 +901,21 @@ export function CategoryRail({
   items,
   active,
   onSelect,
-  label = "What's on your mind?",
+  label,
 }: {
   items: string[];
   active: string;
   onSelect: (val: string) => void;
   label?: string;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
+  const sectionLabel = label ?? homeCopy.whatsOnYourMind;
   return (
     <div data-testid="category-rail">
-      <p className="text-base font-black text-foreground mb-2" data-testid="mind-section-title">{label}</p>
+      <p className="text-base font-black text-foreground mb-2" data-testid="mind-section-title">{sectionLabel}</p>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-        <CategoryRailItem occasion="" label="All" active={!active} onSelect={() => onSelect('')} />
+        <CategoryRailItem occasion="" label={homeCopy.categoryAll} active={!active} onSelect={() => onSelect('')} />
         {items.map((item) => (
           <CategoryRailItem
             key={item}
@@ -925,9 +937,11 @@ export function CuisineMindRail({
   active: string;
   onSelect: (val: string) => void;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   return (
     <div data-testid="cuisine-mind-rail">
-      <p className="text-base font-black text-foreground mb-2">Explore cuisines</p>
+      <p className="text-base font-black text-foreground mb-2">{homeCopy.exploreCuisines}</p>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
         {MIND_CUISINE_CATEGORIES.map((cat) => (
           <CategoryRailItem
@@ -969,6 +983,8 @@ export function DishCard({
   product: DishCardProduct;
   featured?: boolean;
 }) {
+  const { locale } = useShcI18n();
+  const homeCopy = getDiscoverHomeCopy(locale);
   const imageUrl = getDishImageUrl({
     id: product.id,
     cuisine: product.cuisine,
@@ -992,8 +1008,8 @@ export function DishCard({
           <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-2">
             <div className="flex justify-between items-start">
               {product.halal ? (
-                <span className="text-[9px] font-black bg-[var(--shc-bento-mint)] text-[var(--shc-success)] px-1.5 py-0.5 rounded border border-[var(--shc-border-brutal)]">
-                  HALAL
+                <span className={`text-[9px] font-black bg-[var(--shc-bento-mint)] text-[var(--shc-success)] px-1.5 py-0.5 rounded ${gourmeatDiscoverBorder}`}>
+                  {homeCopy.halalBadge}
                 </span>
               ) : (
                 <span />

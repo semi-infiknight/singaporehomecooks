@@ -8,5 +8,7 @@ describe('getDiscoverHomeCopy', () => {
     expect(en.calorieApprox(420)).toContain('420');
     const zh = getDiscoverHomeCopy('zh-Hans');
     expect(zh.guestBrowseTitle).toBe('访客浏览');
+    expect(en.categoryAll).toBe('All');
+    expect(en.halalBadge).toBe('HALAL');
   });
 });

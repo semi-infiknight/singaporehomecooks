@@ -33,7 +33,7 @@
 |----|------|----------------------|
 | BUG-01 | og:image localhost on production | Fixed in code — needs Railway deploy |
 | P1-03 | Homepage live social counters | Fixed in code — **prod audit:** og-image 200; `/store/shc/platform-stats` **404** on live Medusa (needs deploy) |
-| P2-03 | Mandarin i18n at launch | **In progress** — web `/request` wired to `getRequestDishCopy`; AppHeader/search Gourmeat borders; wallet + cook-portal done |
+| P2-03 | Mandarin i18n at launch | **In progress** — discover rails/cards + login Gourmeat; request-dish + wallet + cook-portal wired |
 | P1-02 | Dish synonym search depth | **Improved** — 20 SG heritage seeds + bidirectional expansion |
 | P1-09–11 | One-cook cart / PayNow / S$50 min E2E | **Improved** — S$50 min enforced (`SHC-CART-004`); one-cook `SHC-CART-001` fix + cart test |
 | P1-21 | Web push permission flow | **Improved** — permission states + post-order prompt banner |

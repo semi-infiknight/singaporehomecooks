@@ -852,3 +852,21 @@
 - Web login/onboarding Gourmeat border pass
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 36 — 2026-07-08 ~04:16 IST
+
+### Implemented
+1. **Discover Gourmeat sweep** — `CategoryRail`, `PromoRail`, `FilterChipRow`, `DishRowCard`/`ZomatoDishRowRail`, `HeritageStoryBanner`, `RequestDishHomeCTA`, `DishCard` halal badge, `ZomatoAddButton`: 1px borders + soft/card shadows (neo-brutalist removed from customer discover chrome)
+2. **Discover i18n** — `getDiscoverHomeCopy` extended (`whatsOnYourMind`, `categoryAll`, `exploreCuisines`, `fallbackCuisine`, `hdbCollect`, `heritageOffer`, `halalBadge`, `dishAdd`) en/zh-Hans
+3. **Web login Gourmeat** — `GourmeatCard` wrapper, soft guest-browse link, submit button without brutal offset
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- `SHCCard`/`SHCButton` customer variant or scoped soft overrides on orders/search PDP
+- Web product PDP remaining brutal borders
+- Continue loop until 9:00 AM IST Jul 9
+
