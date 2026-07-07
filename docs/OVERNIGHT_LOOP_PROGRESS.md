@@ -604,3 +604,30 @@
 - Cook listings/compliance screen strings
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 26 — 2026-07-08 ~03:45 IST
+
+### Implemented
+1. **Web orders list i18n** — `getOrdersListCopy` subtitle, localized status, active count, past-only header fix
+2. **Web order detail** — dispute status fallbacks via `orders.detail.dispute_*` keys
+3. **Cook compliance i18n** — `getCookComplianceCopy` (upload badge, file placeholder, footer badges)
+4. **Cook listings defaults** — wizard seed values localized via `getCookListingsCopy`
+5. **Mobile checkout** — corporate flag note + network error fallbacks
+
+### Tests
+- `@shc/i18n`: **29 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web homepage remaining hardcoded SHCWebComponents defaults
+- Cook orders/earnings screen strings
+- Mobile profile/wallet remaining copy
+- Continue loop until 9:00 AM IST Jul 9
+

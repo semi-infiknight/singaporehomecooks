@@ -111,7 +111,6 @@ export default function Checkout() {
   const { data: slots = [] } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
   const total = (cart.items || []).reduce((s: number, i: any) => s + i.price * i.qty, 0);
   const amountDue = Math.max(0, total - Math.floor(creditsToApply / 4));
-  const cookId = (cart as { cookId?: string; cook_id?: string }).cookId ?? (cart as { cook_id?: string }).cook_id;
   const handlePaymentSelect = (method: string) => {
     setPaymentMethod(method);
     if (method === 'credits' && creditBal > 0) setCreditsToApply(Math.min(80, creditBal));
@@ -165,10 +164,12 @@ export default function Checkout() {
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
       if (isCorporate && orderId) {
-        await flagCorporateOrder(orderId, `Group order for ${cookId} — multi dish note + invoice stub generated.`);
+        await flagCorporateOrder(orderId, checkoutCopy.corporateFlagNote);
       }
     } catch (e: any) {
-      setError({ code: e.code, message: e.message || SHCErrorCode });
+      const message =
+        e?.message === 'Failed to fetch' ? checkoutCopy.errorNetwork : e?.message || checkoutCopy.errorPlaceOrder;
+      setError({ code: e.code, message });
     } finally {
       setIsSubmitting(false);
     }

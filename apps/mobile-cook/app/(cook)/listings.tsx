@@ -105,13 +105,15 @@ export default function CookListings() {
       });
     }
   }, [step]);
-  const [name, setName] = useState('New Nyonya Dish');
+  const [name, setName] = useState(copy.defaultDishName);
   const [price, setPrice] = useState(14);
   const [minQty, setMinQty] = useState(4);
-  const [cuisine, setCuisine] = useState('Peranakan');
+  const [cuisine, setCuisine] = useState(copy.defaultCuisine);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
-  const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-  const [heritage, setHeritage] = useState('Family recipe from our HDB kitchen since 1978.');
+  const [ingredients, setIngredients] = useState([
+    { name: copy.defaultIngredientName, quantity: 300, unit: 'g' },
+  ]);
+  const [heritage, setHeritage] = useState(copy.defaultHeritage);
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
@@ -166,13 +168,13 @@ export default function CookListings() {
 
   const resetWizard = () => {
     setEditingId(null);
-    setName('New Nyonya Dish');
+    setName(copy.defaultDishName);
     setPrice(14);
     setMinQty(4);
-    setCuisine('Peranakan');
+    setCuisine(copy.defaultCuisine);
     setOccasionTags(['Hari Raya']);
-    setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setHeritage('Family recipe from our HDB kitchen since 1978.');
+    setIngredients([{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]);
+    setHeritage(copy.defaultHeritage);
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -180,15 +182,15 @@ export default function CookListings() {
 
   const startEdit = (listing: any) => {
     setEditingId(listing.id);
-    setName(listing.name || 'Dish');
+    setName(listing.name || copy.defaultDishFallback);
     setPrice(Number(listing.price) || 12);
     setMinQty(Number(listing.min_qty) || 4);
-    setCuisine(listing.cuisine || 'Singapore');
+    setCuisine(listing.cuisine || copy.defaultCuisineFallback);
     setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
     setIngredients(
       listing.ingredients?.length
         ? listing.ingredients
-        : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
+        : [{ name: copy.defaultIngredientName, quantity: 300, unit: 'g' }]
     );
     setHeritage(listing.heritage_note || '');
     setPublished(null);

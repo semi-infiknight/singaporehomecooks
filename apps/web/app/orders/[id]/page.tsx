@@ -195,7 +195,10 @@ export default function TrackOrder() {
         <SHCCard className="mt-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border" data-testid="order-dispute-submitted">
           <SHCSectionTitle>{t('orders.detail.issue_reported')}</SHCSectionTitle>
           <p className="mt-1 text-xs font-semibold text-muted-foreground">
-            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            {disputes[0].status === 'open'
+              ? t('orders.detail.dispute_open')
+              : disputes[0].status || t('orders.detail.dispute_open')}{' '}
+            · {disputes[0].type || t('orders.detail.dispute_other')}
           </p>
           {disputes[0].notes && <p className="mt-2 text-sm text-muted-foreground">{disputes[0].notes}</p>}
         </SHCCard>

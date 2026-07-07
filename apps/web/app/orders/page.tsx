@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { Package } from 'lucide-react';
-import { getActiveOrders, getOrderStatusLabel, isActiveOrderStatus } from '@shc/utils';
+import { getActiveOrders, isActiveOrderStatus } from '@shc/utils';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getOrdersListCopy, getLocalizedOrderStatus } from '@shc/i18n';
 import { GourmeatScreenHeader, GourmeatOrderRow, SHCEmptyState } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const listCopy = getOrdersListCopy(locale);
   const { user } = useAuth();
   const { data: orders = [], isLoading, isFetching } = useOrders();
   const activeOrders = getActiveOrders(orders as Record<string, unknown>[]);
@@ -21,16 +22,21 @@ export default function OrdersList() {
     <div className="max-w-2xl mx-auto px-4 py-8 pb-28 md:pb-10">
       <GourmeatScreenHeader
         title={t('orders.title')}
-        subtitle={`${user?.name?.split(' ')[0] || 'Guest'} · tap to track${isFetching && activeOrders.length > 0 ? ' · updating…' : ''}`}
+        subtitle={listCopy.subtitle(user?.name?.split(' ')[0] || listCopy.guest, isFetching && activeOrders.length > 0)}
       />
 
       {activeOrders.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-base font-extrabold text-foreground mb-3">{t('orders.in_progress')}</h2>
+          <h2 className="text-base font-extrabold text-foreground mb-3">
+            {activeOrders.length > 1
+              ? listCopy.inProgressLabel(activeOrders.length)
+              : t('orders.in_progress')}
+          </h2>
           <div className="space-y-3">
             {activeOrders.map((o) => {
               const status = String(o.shc_status || 'pending');
-              const dishName = (o.items as Array<{ name?: string; product_id?: string }>)?.[0]?.name || 'Order';
+              const dishName =
+                (o.items as Array<{ name?: string; product_id?: string }>)?.[0]?.name || listCopy.fallbackDish;
               const productId = (o.items as Array<{ product_id?: string }>)?.[0]?.product_id;
               return (
                 <GourmeatOrderRow
@@ -38,7 +44,7 @@ export default function OrdersList() {
                   orderId={String(o.id)}
                   dishName={dishName}
                   productId={productId}
-                  statusLabel={getOrderStatusLabel(status)}
+                  statusLabel={getLocalizedOrderStatus(locale, status)}
                   collectionDate={String(o.collection_date || '')}
                   collectionSlot={String(o.collection_slot || '')}
                   total={Number(o.total || 0)}
@@ -71,14 +77,15 @@ export default function OrdersList() {
         </div>
       )}
 
-      {pastOrders.length > 0 && activeOrders.length > 0 && (
+      {pastOrders.length > 0 && (
         <h2 className="text-base font-extrabold text-foreground mb-3">{t('orders.past')}</h2>
       )}
 
       <div className="space-y-3">
         {pastOrders.map((o) => {
           const status = String(o.shc_status || 'pending');
-          const dishName = (o.items as Array<{ name?: string; product_id?: string }>)?.[0]?.name || 'Order';
+          const dishName =
+            (o.items as Array<{ name?: string; product_id?: string }>)?.[0]?.name || listCopy.fallbackDish;
           const productId = (o.items as Array<{ product_id?: string }>)?.[0]?.product_id;
           return (
             <GourmeatOrderRow
@@ -86,7 +93,7 @@ export default function OrdersList() {
               orderId={String(o.id)}
               dishName={dishName}
               productId={productId}
-              statusLabel={getOrderStatusLabel(status)}
+              statusLabel={getLocalizedOrderStatus(locale, status)}
               collectionDate={String(o.collection_date || '')}
               collectionSlot={String(o.collection_slot || '')}
               total={String(o.total)}

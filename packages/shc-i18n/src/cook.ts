@@ -91,6 +91,23 @@ export function getCookListingsCopy(locale: ShcLocale) {
     badgePaused: t(locale, 'cook.listings.badge_paused'),
     badgeMin: t(locale, 'cook.listings.badge_min'),
     saveErrorGeneric: t(locale, 'cook.listings.save_error_generic'),
+    defaultDishName: t(locale, 'cook.listings.default_dish_name'),
+    defaultCuisine: t(locale, 'cook.listings.default_cuisine'),
+    defaultCuisineFallback: t(locale, 'cook.listings.default_cuisine_fallback'),
+    defaultHeritage: t(locale, 'cook.listings.default_heritage'),
+    defaultIngredientName: t(locale, 'cook.listings.default_ingredient'),
+    defaultDishFallback: t(locale, 'cook.listings.default_dish_fallback'),
+  };
+}
+
+export function getCookComplianceCopy(locale: ShcLocale) {
+  return {
+    uploadBadge: (type: string) =>
+      t(locale, 'cook.compliance.upload_badge').replace('{type}', type.toUpperCase()),
+    filePlaceholder: t(locale, 'cook.compliance.file_placeholder'),
+    footerAdmin: t(locale, 'cook.compliance.footer_admin'),
+    footerDev: t(locale, 'cook.compliance.footer_dev'),
+    statusPendingReview: t(locale, 'cook.compliance.status_pending_review'),
   };
 }
 

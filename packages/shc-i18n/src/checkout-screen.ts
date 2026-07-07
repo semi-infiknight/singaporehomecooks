@@ -15,6 +15,7 @@ export function getCheckoutScreenCopy(locale: ShcLocale) {
     tier1Typical: t(locale, 'checkout.tier1_typical'),
     errorNetwork: t(locale, 'checkout.error.network'),
     errorPlaceOrder: t(locale, 'checkout.error.place_order'),
+    corporateFlagNote: t(locale, 'checkout.corporate_flag_note'),
     itemsCount: (count: number) =>
       t(locale, count === 1 ? 'checkout.items_count' : 'checkout.items_count_plural').replace(
         '{count}',
@@ -30,5 +31,6 @@ export function getOrdersListCopy(locale: ShcLocale) {
       t(locale, updating ? 'orders.list_subtitle_updating' : 'orders.list_subtitle').replace('{name}', name),
     inProgressLabel: (count: number) =>
       t(locale, 'orders.in_progress_count').replace('{count}', String(count)),
+    fallbackDish: t(locale, 'orders.fallback_dish'),
   };
 }

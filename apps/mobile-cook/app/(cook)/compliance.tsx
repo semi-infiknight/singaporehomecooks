@@ -24,7 +24,7 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getCookComplianceCopy } from '@shc/i18n';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
 
 const milestoneStorage = {
@@ -35,7 +35,8 @@ const milestoneStorage = {
 export default function ComplianceUpload() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const complianceCopy = getCookComplianceCopy(locale);
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
   const [docs, setDocs] = useState<any[]>([]);
@@ -129,11 +130,11 @@ export default function ComplianceUpload() {
         <SHCCard style={styles.uploadCard}>
           <View style={styles.uploadHeader}>
             <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
-            <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
+            <SHCBadge variant="heritage">{complianceCopy.uploadBadge(type)}</SHCBadge>
           </View>
 
           <TextInput
-            placeholder="cert.pdf"
+            placeholder={complianceCopy.filePlaceholder}
             value={fileName}
             onChangeText={setFileName}
             style={styles.fileInput}
@@ -155,7 +156,11 @@ export default function ComplianceUpload() {
                 <SHCBadge variant="default">{result.type.toUpperCase()}</SHCBadge>
                 <Text style={styles.resultFile} numberOfLines={1}>{result.fileName}</Text>
               </View>
-              <SHCBadge variant="warning">{result.status.replace(/_/g, ' ')}</SHCBadge>
+              <SHCBadge variant="warning">
+                {result.status === 'pending_review'
+                  ? complianceCopy.statusPendingReview
+                  : result.status.replace(/_/g, ' ')}
+              </SHCBadge>
             </View>
           </SHCCard>
         </SHCFadeIn>
@@ -182,8 +187,8 @@ export default function ComplianceUpload() {
       )}
 
       <View style={styles.footerBadges}>
-        <SHCBadge variant="default">Admin review</SHCBadge>
-        <SHCBadge variant="success">DEV switcher</SHCBadge>
+        <SHCBadge variant="default">{complianceCopy.footerAdmin}</SHCBadge>
+        <SHCBadge variant="success">{complianceCopy.footerDev}</SHCBadge>
       </View>
     </ScrollView>
       <SHCCelebration

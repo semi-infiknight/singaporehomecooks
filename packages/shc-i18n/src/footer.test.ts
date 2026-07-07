@@ -21,5 +21,6 @@ describe('footer + web push copy', () => {
     const copy = getCartScreenCopy('zh-Hans');
     expect(copy.headerPortions(2)).toContain('2');
     expect(copy.keepBrowsing).toBe('继续浏览');
+    expect(getOrdersListCopy('en').fallbackDish).toBe('Order');
   });
 });
