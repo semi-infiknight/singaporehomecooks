@@ -1015,7 +1015,7 @@ export function DishCard({
 
   return (
     <div className="block" data-testid={`dish-card-${product.id}`}>
-      <SHCCard hover className="flex flex-col p-0 overflow-hidden">
+      <SHCCard hover className="flex flex-col p-0 overflow-hidden" variant="customer">
         <div className={`relative w-full ${featured ? 'h-48' : 'h-44'}`}>
           <Link href={`/product/${product.id}`} className="block absolute inset-0">
             <Image
@@ -1063,7 +1063,7 @@ export function DishCard({
           {product.cook_name && (
             <span className="text-[11px] font-semibold text-muted-foreground truncate flex-1">{product.cook_name}</span>
           )}
-          {product.cuisine && <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>}
+          {product.cuisine && <SHCBadge variant="heritage" soft>{product.cuisine}</SHCBadge>}
         </div>
       </SHCCard>
     </div>
@@ -1480,9 +1480,9 @@ export function TrustStrip({ counters }: { counters?: PlatformCounters }) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="text-center p-3 bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal-sm)]"
+          className={`text-center p-3 bg-card ${gourmeatDiscoverBorder} rounded-xl ${gourmeatDiscoverShadow}`}
         >
-          <div className={`w-8 h-8 mx-auto mb-2 rounded-full ${item.accent} border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]`} aria-hidden>
+          <div className={`w-8 h-8 mx-auto mb-2 rounded-full ${item.accent} ${gourmeatDiscoverBorder} flex items-center justify-center ${gourmeatDiscoverShadow}`} aria-hidden>
             <item.Icon className="w-4 h-4 text-primary" />
           </div>
           <div className="font-bold text-foreground text-xs">{item.label}</div>
@@ -1525,7 +1525,7 @@ export function OrderTimeline({
         return (
           <div key={step.id} className="flex gap-3">
             <div
-              className={`w-6 h-6 rounded-full border-2 border-[var(--shc-border-brutal)] flex items-center justify-center text-[10px] font-black shrink-0 ${
+              className={`w-6 h-6 rounded-full ${gourmeatDiscoverBorder} flex items-center justify-center text-[10px] font-black shrink-0 ${
                 done ? 'bg-primary text-primary-foreground' : active ? 'bg-[var(--shc-bento-peach)] text-primary' : 'bg-card text-muted-foreground'
               }`}
             >
@@ -1563,7 +1563,7 @@ export function ActiveOrderBanner({
     <Link
       href={href}
       data-testid={testID}
-      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-mint)] border-2 border-[var(--shc-border-brutal)] rounded-lg px-4 py-3 mb-[var(--shc-section-gap)] shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
+      className={`flex items-center justify-between gap-3 bg-[var(--shc-bento-mint)] ${gourmeatDiscoverBorder} rounded-lg px-4 py-3 mb-[var(--shc-section-gap)] ${gourmeatDiscoverShadow} hover:opacity-95`}
     >
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-extrabold text-[var(--shc-success)] flex items-center gap-2">

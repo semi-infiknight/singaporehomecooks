@@ -41,20 +41,20 @@ export default function CookProfile() {
       <SHCPageHeader title={cook.display_name} backHref="/" backLabel={copy.backLabel} />
 
       <div className="flex flex-wrap gap-2 mb-6">
-        <SHCBadge variant="heritage">
+        <SHCBadge variant="heritage" soft>
           <MapPin className="w-3 h-3 inline mr-1" aria-hidden />
           {cook.area}
         </SHCBadge>
-        {cook.status === 'active' && <SHCBadge variant="success">{copy.verified}</SHCBadge>}
+        {cook.status === 'active' && <SHCBadge variant="success" soft>{copy.verified}</SHCBadge>}
         {cook.sfa_reg_number && (
-          <SHCBadge>
+          <SHCBadge soft>
             <Shield className="w-3 h-3 inline mr-1" aria-hidden />
             {copy.sfaRegistered}
           </SHCBadge>
         )}
       </div>
 
-      <SHCCard className="mb-8">
+      <SHCCard className="mb-8" variant="customer">
         <p className="text-foreground leading-relaxed italic">{cook.story}</p>
         <div className="mt-4 pt-4 border-t border-border/60 text-sm text-muted-foreground space-y-1">
           <p>
@@ -70,7 +70,7 @@ export default function CookProfile() {
       <div className="grid gap-4 mb-10">
         {heritage.length > 0 ? (
           heritage.map((h, i) => (
-            <SHCCard key={i}>
+            <SHCCard key={i} variant="customer">
               <div className="font-medium text-foreground">{h.title}</div>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{h.story}</p>
               {h.created_at && (
@@ -89,14 +89,14 @@ export default function CookProfile() {
       <div className="grid sm:grid-cols-2 gap-4">
         {(cookProducts as Array<Record<string, unknown>>).map((p) => (
           <Link key={String(p.id)} href={`/product/${p.id}`}>
-            <SHCCard hover>
+            <SHCCard hover variant="customer">
               <div className="font-semibold text-foreground">{String(p.name)}</div>
               <div className="text-sm text-primary mt-1">
                 S${String(p.price)} {copy.perPortion}
               </div>
               <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{String(p.heritage_note)}</p>
               <div className="mt-3">
-                <SHCBadge variant="heritage">{String(p.cuisine)}</SHCBadge>
+                <SHCBadge variant="heritage" soft>{String(p.cuisine)}</SHCBadge>
               </div>
             </SHCCard>
           </Link>

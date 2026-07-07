@@ -941,3 +941,19 @@
 - Web `/cook/[slug]` profile Gourmeat pass
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 41 — 2026-07-08 ~04:30 IST
+
+### Implemented
+1. **Cook profile `/cook/[slug]`** — `SHCCard variant="customer"` story/heritage/menu cards; `SHCBadge soft` for area/verified/SFA/cuisine
+2. **Home customer chrome** — `TrustStrip`, `DishCard`, `OrderTimeline` steps, `ActiveOrderBanner` → Gourmeat 1px borders + soft shadows
+
+### Tests
+- web typecheck PASS
+
+### Next iteration
+- Cart page Gourmeat + i18n gaps
+- `SearchResultsDropdown` / `DishRowCard` remaining brutal if any
+- Continue loop until 9:00 AM IST Jul 9
+
