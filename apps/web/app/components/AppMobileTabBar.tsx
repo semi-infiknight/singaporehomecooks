@@ -48,7 +48,7 @@ export function AppMobileTabBar() {
           />
         )}
         <nav
-          className="rounded-[28px] bg-[var(--shc-gourmeat-nav)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] px-2 py-2"
+          className="rounded-[28px] bg-[var(--shc-gourmeat-nav)] border border-white/10 shadow-[var(--shc-shadow-soft)] px-2 py-2"
           data-testid="mobile-bottom-tab-bar"
           aria-label={layout.tabBarA11y}
         >

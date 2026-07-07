@@ -27,6 +27,7 @@ export const en = {
   'cart.total_label': 'Total',
   'cart.clear_cart': 'Clear cart',
   'cart.checkout_btn': 'Checkout',
+  'cart.processing': 'Processing…',
   'cart.loading': 'Loading…',
   'cart.keep_browsing': 'Keep browsing',
   'cart.header_portion': '{count} portion',
@@ -605,6 +606,8 @@ export const en = {
   'web.layout.save_dish_a11y': 'Save dish',
   'web.layout.remove_saved_a11y': 'Remove from saved dishes',
   'web.layout.cook_tab_bar_a11y': 'Cook navigation',
+  'web.layout.sticky_cart_subtitle': 'View cart · PayNow →',
+  'web.layout.sticky_cart_a11y': 'View cart, {count}, {total}',
   'web.meta.title': 'Singapore Home Cooks | Heritage HDB Recipes',
   'web.meta.description':
     'Discover and order authentic Singapore heritage home-cooked dishes from verified HDB cooks. Peranakan, Eurasian, festive occasions. One-cook orders, PayNow, address privacy protected.',

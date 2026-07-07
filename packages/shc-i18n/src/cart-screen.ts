@@ -19,6 +19,7 @@ export function getCartScreenCopy(locale: ShcLocale) {
     totalLabel: t(locale, 'cart.total_label'),
     clearCart: t(locale, 'cart.clear_cart'),
     checkoutBtn: t(locale, 'cart.checkout_btn'),
+    processing: t(locale, 'cart.processing'),
     minimumHint: t(locale, 'cart.minimum_hint'),
     loading: t(locale, 'cart.loading'),
     keepBrowsing: t(locale, 'cart.keep_browsing'),

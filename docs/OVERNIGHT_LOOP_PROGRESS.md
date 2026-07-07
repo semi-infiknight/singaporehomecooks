@@ -974,3 +974,21 @@
 - Orders list web Gourmeat pass
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 43 — 2026-07-08 ~04:31 IST
+
+### Implemented
+1. **StickyCartBar Gourmeat** — black pay chrome (`--shc-gourmeat-pay`), soft shadow, no brutal offset; `sticky_cart_subtitle` / `sticky_cart_a11y` i18n en/zh-Hans
+2. **GourmeatPayButton** — `cart.processing` i18n; subtle border per brand.md pay CTA
+3. **Bottom nav + orders** — `AppMobileTabBar` soft border/shadow; `GourmeatOrderRow` card borders; orders empty state `GourmeatPrimaryButton`
+
+### Tests
+- `@shc/i18n`: **32 tests** PASS
+- web typecheck PASS
+
+### Next iteration
+- Web checkout remaining brutal chrome (if any)
+- Mobile customer Gourmeat parity check (`@shc/ui` gourmeat.tsx)
+- Continue loop until 9:00 AM IST Jul 9
+

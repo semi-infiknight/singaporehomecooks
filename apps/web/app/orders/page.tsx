@@ -1,12 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { Package } from 'lucide-react';
 import { getActiveOrders, isActiveOrderStatus } from '@shc/utils';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
 import { useShcI18n, getOrdersListCopy, getLocalizedOrderStatus } from '@shc/i18n';
-import { GourmeatScreenHeader, GourmeatOrderRow, SHCEmptyState } from '../components/SHCWebComponents';
+import { GourmeatScreenHeader, GourmeatOrderRow, GourmeatPrimaryButton, SHCEmptyState } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
   const { t, locale } = useShcI18n();
@@ -65,13 +64,18 @@ export default function OrdersList() {
       )}
 
       {!isLoading && orders.length === 0 && (
-        <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] p-8 text-center">
+        <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-card)] p-8 text-center">
           <SHCEmptyState
             title={t('orders.empty_title')}
             action={
-              <Link href="/" className="inline-block mt-4 text-sm font-bold text-primary hover:underline">
-                {t('orders.browse_link')}
-              </Link>
+              <GourmeatPrimaryButton
+                label={t('orders.browse_link')}
+                onClick={() => {
+                  window.location.href = '/';
+                }}
+                className="mt-4"
+                testID="orders-browse-btn"
+              />
             }
           />
         </div>

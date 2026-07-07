@@ -8,5 +8,7 @@ describe('getWebLayoutCopy', () => {
     expect(en.cartA11yWithCount(3)).toContain('3');
     expect(en.metaTitle).toContain('Singapore');
     expect(getWebLayoutCopy('zh-Hans').pwaInstallTitle).toBe('安装 SHC');
+    expect(getWebLayoutCopy('en').stickyCartSubtitle).toContain('PayNow');
+    expect(getWebLayoutCopy('en').stickyCartA11y('2 items', 'S$24')).toContain('2 items');
   });
 });

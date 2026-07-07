@@ -26,6 +26,9 @@ export function getWebLayoutCopy(locale: ShcLocale) {
     saveDishA11y: t(locale, 'web.layout.save_dish_a11y'),
     removeSavedA11y: t(locale, 'web.layout.remove_saved_a11y'),
     cookTabBarA11y: t(locale, 'web.layout.cook_tab_bar_a11y'),
+    stickyCartSubtitle: t(locale, 'web.layout.sticky_cart_subtitle'),
+    stickyCartA11y: (count: string, total: string) =>
+      t(locale, 'web.layout.sticky_cart_a11y').replace('{count}', count).replace('{total}', total),
     metaTitle: t(locale, 'web.meta.title'),
     metaDescription: t(locale, 'web.meta.description'),
     metaOgTitle: t(locale, 'web.meta.og_title'),

@@ -29,6 +29,7 @@ export const zhHans: Record<MessageKey, string> = {
   'cart.total_label': '合计',
   'cart.clear_cart': '清空购物车',
   'cart.checkout_btn': '结账',
+  'cart.processing': '处理中…',
   'cart.loading': '加载中…',
   'cart.keep_browsing': '继续浏览',
   'cart.header_portion': '{count} 份',
@@ -606,6 +607,8 @@ export const zhHans: Record<MessageKey, string> = {
   'web.layout.save_dish_a11y': '收藏菜品',
   'web.layout.remove_saved_a11y': '取消收藏',
   'web.layout.cook_tab_bar_a11y': '家厨导航',
+  'web.layout.sticky_cart_subtitle': '查看购物车 · PayNow →',
+  'web.layout.sticky_cart_a11y': '查看购物车，{count}，{total}',
   'web.meta.title': '新加坡家厨 | 传承组屋美食',
   'web.meta.description':
     '发现并订购新加坡认证组屋家厨的正宗传承美食。土生华人、欧亚风味、节庆佳肴。单厨师订单、PayNow 支付、地址隐私保护。',

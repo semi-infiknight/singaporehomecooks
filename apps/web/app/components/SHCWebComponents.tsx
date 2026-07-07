@@ -43,7 +43,7 @@ import {
   LAUNCH_PLATFORM_COUNTERS,
   type PlatformCounters,
 } from '@shc/utils';
-import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, getCheckoutScreenCopy, getWalletCardCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
+import { formatTrustStripCopy, useShcI18n, getLocalizedPromo, getDiscoverHomeCopy, getRequestDishCopy, getWebLayoutCopy, getCheckoutScreenCopy, getWalletCardCopy, getCartScreenCopy, cookListingsWizardMorphOnStepEnter, cookListingsWizardMorphFromTransition, type CookListingsWizardCtaLabels } from '@shc/i18n';
 import {
   pushTray,
   popTray,
@@ -1363,29 +1363,31 @@ export function StickyCartBar({
   href?: string;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const layout = getWebLayoutCopy(locale);
   if (itemCount <= 0) return null;
   const badge = itemCount > 99 ? '99+' : String(itemCount);
   return (
     <Link
       href={href}
       data-testid={testID}
-      className="shc-btn-primary flex items-center justify-between gap-3 w-full rounded-xl border-[3px] border-[var(--shc-border-brutal)] px-4 py-3.5 min-h-[58px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:brightness-105 active:translate-x-px active:translate-y-px transition-all"
-      aria-label={`View cart, ${countLabel}, ${totalLabel}`}
+      className={`flex items-center justify-between gap-3 w-full rounded-xl border border-white/15 px-4 py-3.5 min-h-[58px] bg-[var(--shc-gourmeat-pay)] text-white shadow-[var(--shc-shadow-soft)] hover:opacity-95 transition-opacity`}
+      aria-label={layout.stickyCartA11y(countLabel, totalLabel)}
     >
       <span className="flex items-center gap-3 min-w-0 flex-1">
-        <span className="w-10 h-10 shrink-0 rounded-full bg-primary-foreground border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
-          <ShoppingBag className="w-5 h-5 text-primary" aria-hidden />
+        <span className="w-10 h-10 shrink-0 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+          <ShoppingBag className="w-5 h-5 text-white" aria-hidden />
         </span>
         <span className="min-w-0">
           <span className="block font-black text-[15px] leading-tight truncate">{countLabel}</span>
-          <span className="block text-xs font-bold opacity-95 truncate">View cart · PayNow →</span>
+          <span className="block text-xs font-bold opacity-95 truncate">{layout.stickyCartSubtitle}</span>
           {previewName ? (
             <span className="block text-[11px] font-semibold opacity-85 truncate">{previewName}</span>
           ) : null}
         </span>
       </span>
       <span className="flex items-center gap-2 shrink-0">
-        <span className="min-w-[26px] h-[26px] flex items-center justify-center rounded-full bg-[var(--shc-accent)] text-[11px] font-black text-foreground border-2 border-[var(--shc-border-brutal)] px-1.5">
+        <span className="min-w-[26px] h-[26px] flex items-center justify-center rounded-full bg-[var(--shc-gourmeat-primary)] text-[11px] font-black text-white border border-white/20 px-1.5">
           {badge}
         </span>
         <span className="font-black text-[17px] tabular-nums">{totalLabel}</span>
@@ -1994,9 +1996,9 @@ export function GourmeatOrderRow({
 }) {
   const imageUrl = getDishImageUrl({ id: productId, name: dishName });
   const card = (
-    <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden">
+    <div className="bg-card rounded-2xl border border-border shadow-[var(--shc-shadow-card)] overflow-hidden">
       <div className="flex gap-3 p-3">
-        <div className="relative w-[72px] h-[72px] shrink-0 rounded-xl overflow-hidden">
+        <div className={`relative w-[72px] h-[72px] shrink-0 rounded-xl overflow-hidden ${gourmeatDiscoverBorder}`}>
           <Image src={imageUrl} alt={dishName || 'Order'} fill className="object-cover" sizes="72px" />
         </div>
         <div className="flex-1 min-w-0">
@@ -2053,15 +2055,17 @@ export function GourmeatPayButton({
   loading?: boolean;
   testID?: string;
 }) {
+  const { locale } = useShcI18n();
+  const cartCopy = getCartScreenCopy(locale);
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
       data-testid={testID}
-      className="w-full flex items-center justify-center gap-2 bg-[var(--shc-gourmeat-pay)] text-white font-extrabold text-base py-4 rounded-xl shadow-[var(--shc-shadow-soft)] disabled:opacity-50 transition-opacity hover:opacity-90"
+      className="w-full flex items-center justify-center gap-2 bg-[var(--shc-gourmeat-pay)] text-white font-extrabold text-base py-4 rounded-xl border border-border/10 shadow-[var(--shc-shadow-soft)] disabled:opacity-50 transition-opacity hover:opacity-90"
     >
-      {loading ? 'Processing…' : label}
+      {loading ? cartCopy.processing : label}
       {amount && !loading ? <span>{amount}</span> : null}
     </button>
   );
