@@ -18,7 +18,7 @@ import {
 import {
   useShcI18n,
   getCookOrderTransitionActions,
-  getLocalizedOrderStatus,
+  getCookOrderStatusLabel,
   getCookOrderDetailCopy,
   getOrderChatCopy,
 } from '@shc/i18n';
@@ -121,6 +121,8 @@ export default function CookOrderDetailPage() {
   const status = String(order.shc_status || '');
   const actions = nextActions[status] || [];
   const dispute = disputes[0] as { status?: string; type?: string; notes?: string } | undefined;
+  const items = (order.items as { qty?: number; name?: string }[]) || [];
+  const dishName = items[0]?.name;
 
   const confirmTransition = (to: SHCOrderStatus, label: string) => {
     openTray(
@@ -149,19 +151,28 @@ export default function CookOrderDetailPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4">
       <GourmeatScreenHeader
-        title={getLocalizedOrderStatus(locale, status)}
-        subtitle={copy.orderSubtitle(id)}
+        title={copy.orderTitle(id, dishName)}
+        subtitle={getCookOrderStatusLabel(locale, status)}
         backHref="/cook-portal/orders"
         backLabel={copy.backOrders}
       />
 
       <GourmeatCard className="mb-4">
-        <p className="font-extrabold">{String((order.items as { name?: string }[])?.[0]?.name || copy.orderTitle(id))}</p>
+        <p className="font-extrabold">{copy.collection}</p>
         <p className="text-sm text-muted-foreground mt-1">
           {order.collection_date} · {order.collection_slot}
         </p>
-        <p className="text-lg font-extrabold text-primary mt-2">S${order.total}</p>
-        <p className="text-xs text-muted-foreground mt-2">{copy.cookLabel(String(order.cook_name || ''))}</p>
+        <p className="text-sm font-semibold text-foreground mt-2">
+          {copy.itemsMeta
+            .replace('{total}', String(order.total))
+            .replace('{count}', String(items.length || 1))}
+        </p>
+        {items.map((it, i) => (
+          <p key={i} className="text-sm text-muted-foreground mt-1">
+            {copy.itemLine(it.qty || 1, it.name || '')}
+          </p>
+        ))}
+        <p className="text-xs text-muted-foreground mt-3">{copy.hint}</p>
       </GourmeatCard>
 
       <div className="flex flex-wrap gap-2 mb-6">

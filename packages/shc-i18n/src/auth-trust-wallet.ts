@@ -41,6 +41,8 @@ export function getWalletProfileCopy(locale: ShcLocale) {
   };
   return {
     guest: t(locale, 'cart.guest'),
+    greeting: (firstName?: string) =>
+      t(locale, 'wallet.greeting').replace('{name}', firstName || t(locale, 'cart.guest')),
     subtitle: (tier: string) => t(locale, 'wallet.profile_subtitle').replace('{tier}', tier),
     notificationsA11y: t(locale, 'wallet.notifications'),
     unreadPrefix: t(locale, 'wallet.unread_prefix'),

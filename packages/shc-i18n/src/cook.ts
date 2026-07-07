@@ -293,6 +293,8 @@ export function getCookOrderDetailCopy(locale: ShcLocale) {
       t(locale, 'cook.order_detail.cook_label').replace('{name}', name),
     orderTitle: (id: string, dishName?: string) =>
       dishName || t(locale, 'cook.order_detail.fallback_title').replace('{id}', id),
+    itemLine: (qty: number, name: string) =>
+      t(locale, 'orders.detail.item_line').replace('{qty}', String(qty)).replace('{name}', name),
     disputeOpen: t(locale, 'orders.detail.dispute_open'),
     disputeOther: t(locale, 'orders.detail.dispute_other'),
   };

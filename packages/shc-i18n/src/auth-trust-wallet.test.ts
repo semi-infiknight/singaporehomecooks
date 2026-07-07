@@ -30,6 +30,8 @@ describe('getWalletProfileCopy', () => {
   it('returns localized profile header copy', () => {
     const copy = getWalletProfileCopy('en');
     expect(copy.guest).toBe('Guest');
+    expect(copy.greeting('Alex')).toBe('👋 Alex');
+    expect(copy.greeting()).toBe('👋 Guest');
     expect(copy.requestMeta(4, 8000)).toContain('4');
     expect(copy.requestStatusLabel('matched')).toBe('matched');
     expect(getWalletProfileCopy('zh-Hans').guest).toBe('访客');

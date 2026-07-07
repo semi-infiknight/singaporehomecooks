@@ -19,7 +19,7 @@ import {
 import { WebPushOptIn } from '../components/WebPushOptIn';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../../lib/useAuth';
-import { useShcI18n } from '@shc/i18n';
+import { useShcI18n, getWalletProfileCopy } from '@shc/i18n';
 
 type RequestRow = {
   id: string;
@@ -37,7 +37,8 @@ type BidRow = {
 };
 
 function MyRequestCard({ request }: { request: RequestRow }) {
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const profileCopy = getWalletProfileCopy(locale);
   const { data: bids = [] } = useBids(request.id);
   const acceptBid = useAcceptBid();
   const pendingBids = (bids as BidRow[]).filter((bid) => bid.status === 'pending');
@@ -47,21 +48,18 @@ function MyRequestCard({ request }: { request: RequestRow }) {
       <div className="flex items-start justify-between gap-3 mb-2">
         <p className="font-bold text-foreground flex-1">{request.body}</p>
         <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>
-          {request.status || 'open'}
+          {profileCopy.requestStatusLabel(request.status || 'open')}
         </SHCBadge>
       </div>
       <p className="text-xs text-muted-foreground font-semibold mb-3">
-        {request.party_size ? `${request.party_size} pax · ` : ''}
-        {request.budget_cents
-          ? `Budget S$${Math.round(request.budget_cents / 100)}`
-          : t('wallet.open_budget')}
+        {profileCopy.requestMeta(request.party_size, request.budget_cents)}
       </p>
       {pendingBids.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('wallet.no_pending_bids')}</p>
       ) : (
         <ul className="space-y-2">
           {pendingBids.map((bid) => (
-            <li key={bid.id} className="flex items-center justify-between gap-3 border-t-2 border-[var(--shc-border-brutal)] pt-2">
+            <li key={bid.id} className="flex items-center justify-between gap-3 border-t border-border pt-2">
               <div className="min-w-0">
                 <p className="font-black tabular-nums">S${Math.round((bid.price_cents || 0) / 100)}</p>
                 {bid.message && <p className="text-sm text-muted-foreground truncate">{bid.message}</p>}
@@ -83,7 +81,8 @@ function MyRequestCard({ request }: { request: RequestRow }) {
 }
 
 export default function Profile() {
-  const { t } = useShcI18n();
+  const { t, locale } = useShcI18n();
+  const profileCopy = getWalletProfileCopy(locale);
   const { user } = useAuth();
   const { data: credits } = useCredits();
   const redeem = useRedeemCredits();
@@ -97,12 +96,15 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <div className="flex items-start justify-between mb-6">
-        <SHCPageHeader title={`👋 ${user?.name?.split(' ')[0] || 'there'}`} />
+        <SHCPageHeader
+          title={profileCopy.greeting(user?.name?.split(' ')[0])}
+          subtitle={profileCopy.subtitle(tier)}
+        />
         <div className="relative mt-2">
           <button
             type="button"
             className="relative"
-            aria-label={t('wallet.notifications')}
+            aria-label={profileCopy.notificationsA11y}
             onClick={() => {
               const next = !showNotifs;
               setShowNotifs(next);
@@ -113,7 +115,7 @@ export default function Profile() {
           >
             <Bell className="w-6 h-6 text-muted-foreground" aria-hidden />
             {notifs.length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-black bg-primary text-primary-foreground border-2 border-[var(--shc-border-brutal)] rounded-full px-1">
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-black bg-primary text-primary-foreground border border-border rounded-full px-1">
                 {notifs.length}
               </span>
             )}
@@ -121,7 +123,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4 h-28">
+      <div className="relative overflow-hidden rounded-xl border border-border shadow-[var(--shc-shadow-soft)] mb-4 h-28">
         <Image src={BENTO_ACTION_IMAGES.credits} alt="" fill className="object-cover opacity-70" sizes="100vw" />
         <div className="relative z-10 flex items-center justify-between h-full px-5">
           <div>
@@ -130,7 +132,7 @@ export default function Profile() {
               {t('wallet.home_credits_tier').replace('{tier}', tier)}
             </div>
           </div>
-          <span className="w-12 h-12 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]" aria-hidden>
+          <span className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center shadow-[var(--shc-shadow-soft)]" aria-hidden>
             <Wallet className="w-6 h-6 text-primary" />
           </span>
         </div>
@@ -181,7 +183,7 @@ export default function Profile() {
             <p className="text-sm text-muted-foreground mt-2 font-semibold">{t('wallet.all_caught_up')}</p>
           </div>
         ) : (
-          <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
+          <ul className="divide-y divide-border">
             {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
               <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
                 <span aria-hidden>📬</span>

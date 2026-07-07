@@ -532,6 +532,7 @@ export const en = {
   'product.add_to_cart': 'Add to cart',
   'product.collection_slots': 'Collection slots',
   'product.add_cart_conflict': 'Unable to add to cart. You may already have items from another cook.',
+  'wallet.greeting': '👋 {name}',
   'wallet.profile_subtitle': '{tier} tier · HDB home cook lover',
   'chat.order_title': 'Chat for Order {id}',
   'chat.subtitle_customer': 'Message your cook about dietary needs or arrival time',

@@ -788,3 +788,28 @@
 - Cook portal order detail items meta + hint copy
 - Continue loop until 9:00 AM IST Jul 9
 
+---
+
+## Iteration 33 — 2026-07-08 ~04:10 IST
+
+### Implemented
+1. **Web wallet/profile i18n** — `getWalletProfileCopy` for greeting, subtitle, request status/meta; `wallet.greeting` en/zh-Hans; Gourmeat-soft borders (1px + `--shc-shadow-soft`) replacing neo-brutalist on credits hero and notification dividers
+2. **Cook-portal order detail** — collection label, items meta, per-line `itemLine`, fulfilment hint; header parity with mobile (`orderTitle` + `getCookOrderStatusLabel`)
+3. **Mobile customer Gourmeat sweep** — checkout PDPA/credits/corporate + profile bell/logout: `gourmeatRadii`, 1px borders (no `shcBorders.brutal`)
+
+### Tests
+- `@shc/i18n`: **31 tests** PASS
+- web + mobile-customer + mobile-cook typecheck PASS
+
+### Production audit
+- No Railway deploys; platform-stats **404** expected
+
+### EAS
+- APK at `SHC-customer-preview.apk` (~120MB)
+
+### Next iteration
+- Web customer checkout/cart remaining hardcoded strings
+- Mobile cook order detail `itemLine` helper parity
+- More customer web screens Gourmeat border audit
+- Continue loop until 9:00 AM IST Jul 9
+

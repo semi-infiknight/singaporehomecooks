@@ -22,9 +22,7 @@ import {
 
   shcSpacing,
 
-  shcBorders,
-
-  shcRadii,
+  gourmeatRadii,
 
   GourmeatScreenHeader,
 
@@ -532,11 +530,11 @@ const styles = StyleSheet.create({
 
     padding: shcSpacing.sm,
 
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
 
     borderColor: gourmeatColors.border,
 
-    borderRadius: shcRadii.md,
+    borderRadius: gourmeatRadii.md,
 
     backgroundColor: gourmeatColors.surface,
 
@@ -554,7 +552,7 @@ const styles = StyleSheet.create({
 
     backgroundColor: gourmeatColors.error,
 
-    borderRadius: shcRadii.pill,
+    borderRadius: gourmeatRadii.pill,
 
     minWidth: 16,
 
@@ -630,11 +628,11 @@ const styles = StyleSheet.create({
 
     paddingHorizontal: shcSpacing.lg,
 
-    borderWidth: shcBorders.brutal,
+    borderWidth: 1,
 
     borderColor: gourmeatColors.error,
 
-    borderRadius: shcRadii.md,
+    borderRadius: gourmeatRadii.md,
 
     backgroundColor: gourmeatColors.primaryLight,
 
