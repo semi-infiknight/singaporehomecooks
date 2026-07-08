@@ -4,9 +4,7 @@ node_modules
 apps/mobile-customer
 apps/mobile-cook
 apps/mobile
-apps/medusa
-apps/worker
-apps/minio
+# apps/medusa, apps/worker, apps/minio — must stay in archive for Dockerfile builds (medusa/worker/minio services)
 .backup-ios
 .metro-logs
 **/node_modules

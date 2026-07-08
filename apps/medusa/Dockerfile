@@ -7,7 +7,8 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
 COPY packages ./packages
 COPY apps/medusa ./apps/medusa
-RUN pnpm install --frozen-lockfile
+# Root postinstall syncs client .env locally — not needed in container build
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 RUN rm -f apps/medusa/medusa-config.js
