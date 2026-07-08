@@ -9,8 +9,8 @@
 - `.cursor/rules/testing-tiers.mdc`
 - `scripts/verify-tier.sh`
 
-**Last Updated:** 2026-07-08 — Generalized for all tracks and goals (not UI-only).
-**Owners:** All tracks — each agent owns picking the right `SCOPE` at goal close.
+**Last Updated:** 2026-07-08 — Flavours + experience ledger for strategic verify.
+**Owners:** All tracks — pick `SCOPE` + `FLAVOUR` at goal start (see [testing-flavours.md](./testing-flavours.md)).
 
 ## What is a goal?
 
@@ -32,9 +32,19 @@ A goal usually spans **multiple commits**. Tests run **once** when the goal is d
 | **Verify** | Goal complete | `SCOPE=<area> pnpm verify:goal` **once** | Same commit or immediate follow-up |
 | **Ship** | Milestone / stitch / TestFlight | `pnpm verify:full` | Stitching agent + INDEX update |
 
-## Pick `SCOPE` (required at verify)
+## Pick `SCOPE` + `FLAVOUR` (at goal start)
 
-Use the **primary surface** you changed. If multiple apply, use the most specific; set `TOUCHES_API=1` when Medusa routes or workflows changed alongside UI.
+**Flavours** (how much to verify): see [testing-flavours.md](./testing-flavours.md).
+
+| Flavour | Use when |
+|---------|----------|
+| `polish` | Visual/copy on already-wired screens — fastest verify |
+| `wiring` | Connecting UI → hook → API — one Maestro flow |
+| `feature` | New screen/flow (default) |
+| `tri-platform` | `@shc/ui` + web + both mobile apps |
+| `native` | Metro, babel, RN deps — set `TOUCHES_NATIVE=1` |
+
+Use the **primary surface** as `SCOPE`. Set `TOUCHES_API=1` when Medusa routes changed; `TOUCHES_NATIVE=1` when metro/babel/deps changed.
 
 | SCOPE | Track | Typical goal | `verify:goal` runs |
 |-------|-------|--------------|-------------------|
@@ -59,14 +69,15 @@ Use the **primary surface** you changed. If multiple apply, use the most specifi
 ## Commands
 
 ```bash
-# During goal — default: nothing
-pnpm verify:wip                              # explicit no-op
-FILTER=@shc/ui pnpm verify:wip               # optional ~30s typecheck
+# During goal — wiring checklist in testing-flavours.md; optional:
+FILTER=@shc/ui pnpm verify:wip
+RISK=native pnpm verify:wip                  # metro/babel/native dep touched
 
-# Goal done — pick SCOPE from table above
+# Goal done — SCOPE + FLAVOUR
+FLAVOUR=polish SCOPE=web pnpm verify:goal
+FLAVOUR=wiring SCOPE=checkout pnpm verify:goal
 SCOPE=api pnpm verify:goal
-SCOPE=web pnpm verify:goal
-SCOPE=tray pnpm verify:goal
+FLAVOUR=tri-platform SCOPE=tray pnpm verify:goal
 
 # Milestone / stitch / TestFlight
 pnpm verify:full

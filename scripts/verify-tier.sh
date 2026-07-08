@@ -1,21 +1,16 @@
 #!/usr/bin/env bash
-# Batch-build / batch-verify workflow (all goals — see blueprint/production/goal-workflow.md).
+# Batch-build / batch-verify workflow — see blueprint/production/goal-workflow.md
+# Experience-based flavours — see blueprint/production/testing-flavours.md
 #
-#   wip   — during goal: build freely, no tests (optional FILTER=pkg typecheck)
-#   goal  — goal done: one verification pass (SCOPE=* required)
-#   full  — milestone / stitch / pre-ship: goal + Maestro full tour + API smoke
-#   quick — standalone small fix outside a goal (~2–5 min)
+#   wip   — during goal: build freely (optional FILTER=pkg typecheck; RISK=native spot check)
+#   goal  — goal done: one pass (SCOPE=* required; FLAVOUR=* optional)
+#   full  — milestone: goal + Maestro full tour + API smoke
+#   quick — one-off fix outside a goal
 #
-# SCOPE values (pick primary surface changed):
-#   contracts | api|medusa|backend | infra | railway|deploy | web|pwa
-#   mobile|expo | ui|tray|family-values | auth | checkout | listings | orders
-#   money|payouts|credits | onboarding | content|seed | pdpa
-#
-# Examples:
-#   SCOPE=api pnpm verify:goal
-#   SCOPE=web pnpm verify:goal
-#   SCOPE=tray pnpm verify:goal
-#   FILTER=@shc/ui pnpm verify:wip
+# FLAVOUR: polish | wiring | feature (default) | tri-platform | native | api | deploy
+# TOUCHES_API=1    — add Railway API smoke
+# TOUCHES_NATIVE=1 — add mobile bundle export guard (~2-3 min)
+# SKIP_SEED=1      — skip seed validate (auto for FLAVOUR=polish)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -24,10 +19,45 @@ cd "$ROOT"
 TIER="${1:-wip}"
 SCOPE="${SCOPE:-}"
 FILTER="${FILTER:-}"
+FLAVOUR="${FLAVOUR:-feature}"
+RISK="${RISK:-}"
 
-log() { echo ""; echo "=== verify-tier [$TIER] $* ==="; }
+log() { echo ""; echo "=== verify-tier [$TIER] flavour=$FLAVOUR $* ==="; }
 
-# --- typecheck helpers (only packages relevant to SCOPE) ---
+should_run_seed() {
+  [[ "${SKIP_SEED:-}" == "1" ]] && return 1
+  [[ "$FLAVOUR" == "polish" ]] && return 1
+  return 0
+}
+
+should_run_mobile_bundles() {
+  [[ "${TOUCHES_NATIVE:-}" == "1" ]] && return 0
+  [[ "$FLAVOUR" == "native" ]] && return 0
+  [[ "$SCOPE" =~ ^(infra|mobile|expo)$ ]] && return 0
+  return 1
+}
+
+should_run_maestro_yaml() {
+  [[ "$FLAVOUR" == "polish" ]] && return 1
+  [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|expo|auth|checkout|listings|orders|money|payouts|credits|onboarding|pdpa|web)$ ]] && return 0
+  return 1
+}
+
+should_run_maestro_device() {
+  [[ "$FLAVOUR" == "polish" ]] && return 1
+  [[ "$FLAVOUR" == "deploy" ]] && return 1
+  [[ "$SCOPE" =~ ^(railway|deploy|infra|contracts|content|seed|api|medusa|backend)$ ]] && [[ "$FLAVOUR" != "wiring" ]] && return 1
+  return 0
+}
+
+should_run_api_smoke() {
+  [[ "$FLAVOUR" == "polish" ]] && [[ "${TOUCHES_API:-}" != "1" ]] && return 1
+  [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits)$ ]] && return 0
+  [[ "${TOUCHES_API:-}" == "1" ]] && return 0
+  return 1
+}
+
+# --- typecheck helpers ---
 typecheck_scope() {
   case "$SCOPE" in
     ui|tray|family-values)
@@ -71,11 +101,15 @@ typecheck_scope() {
 scope_unit_tests() {
   case "$SCOPE" in
     ui|tray|family-values)
-      log "UI unit tests"
-      pnpm --filter @shc/ui exec vitest run src/family-values-core.test.ts 2>/dev/null \
-        || pnpm --filter @shc/ui test 2>/dev/null \
-        || echo "WARN: @shc/ui tests skipped"
-      pnpm --filter @shc/utils test
+      if [[ "$FLAVOUR" != "polish" ]]; then
+        log "UI unit tests"
+        pnpm --filter @shc/ui exec vitest run src/family-values-core.test.ts 2>/dev/null \
+          || pnpm --filter @shc/ui test 2>/dev/null \
+          || echo "WARN: @shc/ui tests skipped"
+      fi
+      if [[ "$FLAVOUR" != "polish" ]]; then
+        pnpm --filter @shc/utils test
+      fi
       ;;
     web|pwa)
       log "web PWA guard"
@@ -87,7 +121,11 @@ scope_unit_tests() {
       ;;
     mobile|expo|auth|checkout|listings|orders|onboarding)
       bash scripts/verify-mobile-deps.sh
-      bash scripts/verify-mobile-bundles.sh
+      if should_run_mobile_bundles; then
+        bash scripts/verify-mobile-bundles.sh
+      else
+        log "skip mobile bundles (set TOUCHES_NATIVE=1 if metro/babel/deps changed)"
+      fi
       ;;
     money|payouts|credits)
       log "money / ledger tests"
@@ -101,7 +139,9 @@ scope_unit_tests() {
     infra)
       log "platform guards"
       bash scripts/verify-mobile-deps.sh
-      bash scripts/verify-mobile-bundles.sh
+      if should_run_mobile_bundles; then
+        bash scripts/verify-mobile-bundles.sh
+      fi
       bash scripts/verify-web-pwa.sh
       ;;
     railway|deploy)
@@ -116,13 +156,17 @@ scope_unit_tests() {
 }
 
 scope_maestro_yaml() {
-  if [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|expo|auth|checkout|listings|orders|money|payouts|credits|onboarding|pdpa|web)$ ]]; then
+  if should_run_maestro_yaml; then
     log "Maestro YAML validate"
     bash scripts/maestro-validate.sh
   fi
 }
 
 scope_maestro_device() {
+  if ! should_run_maestro_device; then
+    log "skip Maestro device (FLAVOUR=$FLAVOUR — see testing-flavours.md)"
+    return 0
+  fi
   export PATH="$PATH:$HOME/.maestro/bin"
   if ! command -v maestro >/dev/null 2>&1; then
     echo "SKIP: maestro CLI not installed"
@@ -134,10 +178,15 @@ scope_maestro_device() {
   fi
   case "$SCOPE" in
     ui|tray|family-values)
-      log "Maestro tray flows"
-      maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
-      maestro test apps/mobile-cook/e2e/listing-tray.yaml
-      maestro test apps/mobile-customer/e2e/order-tray.yaml
+      if [[ "$FLAVOUR" == "wiring" ]]; then
+        log "Maestro single flow (wiring — set SCOPE=checkout|listings|orders for specific flow)"
+        maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
+      elif [[ "$FLAVOUR" == "tri-platform" ]] || [[ "$FLAVOUR" == "feature" ]]; then
+        log "Maestro tray flows"
+        maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
+        maestro test apps/mobile-cook/e2e/listing-tray.yaml
+        maestro test apps/mobile-customer/e2e/order-tray.yaml
+      fi
       ;;
     checkout|pdpa)
       maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
@@ -164,17 +213,22 @@ scope_maestro_device() {
 }
 
 tier_wip() {
-  if [[ -n "$FILTER" ]]; then
+  if [[ "$RISK" == "native" ]] || [[ "${TOUCHES_NATIVE:-}" == "1" ]]; then
+    log "spot check: mobile native guards"
+    bash scripts/verify-mobile-deps.sh
+    bash scripts/verify-mobile-bundles.sh
+  elif [[ -n "$FILTER" ]]; then
     log "optional typecheck: $FILTER"
     pnpm --filter "$FILTER" typecheck
   else
-    log "WIP build — no tests (batch verify at goal end; see blueprint/production/goal-workflow.md)"
+    log "WIP build — no tests (see testing-flavours.md for wiring checklist)"
   fi
 }
 
 tier_quick() {
   log "seed validate"
   npx tsx scripts/seed.ts --validate
+  SCOPE="${SCOPE:-}"
   typecheck_scope
   pnpm --filter @shc/business-rules test
   pnpm --filter @shc/utils test
@@ -182,30 +236,35 @@ tier_quick() {
 
 tier_goal() {
   if [[ -z "$SCOPE" ]]; then
-    echo "ERROR: set SCOPE for goal verify (see blueprint/production/goal-workflow.md)"
+    echo "ERROR: set SCOPE for goal verify (see blueprint/production/testing-flavours.md)"
+    echo "  FLAVOUR=polish SCOPE=web pnpm verify:goal"
+    echo "  FLAVOUR=wiring SCOPE=checkout pnpm verify:goal"
     echo "  SCOPE=api pnpm verify:goal"
-    echo "  SCOPE=web pnpm verify:goal"
-    echo "  SCOPE=tray pnpm verify:goal"
     exit 1
   fi
-  log "batch verify for goal (SCOPE=$SCOPE)"
-  npx tsx scripts/seed.ts --validate
+  log "batch verify (SCOPE=$SCOPE FLAVOUR=$FLAVOUR)"
+  if should_run_seed; then
+    npx tsx scripts/seed.ts --validate
+  else
+    log "skip seed validate (polish / SKIP_SEED)"
+  fi
   typecheck_scope
   scope_unit_tests
   scope_maestro_yaml
   scope_maestro_device
-  if [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits)$ ]] || [[ "${TOUCHES_API:-}" == "1" ]]; then
-    log "API smoke (backend touched)"
+  if should_run_api_smoke; then
+    log "API smoke"
     pnpm verify:real-e2e
   else
-    log "skip API smoke (set TOUCHES_API=1 if routes changed)"
+    log "skip API smoke (SCOPE=$SCOPE FLAVOUR=$FLAVOUR — set TOUCHES_API=1 if routes changed)"
   fi
 }
 
 tier_full() {
+  FLAVOUR="${FLAVOUR:-feature}"
   SCOPE="${SCOPE:-mobile}"
   tier_goal
-  log "Maestro full tour"
+  log "Maestro full tour (milestone only)"
   bash scripts/run-maestro-full-tour.sh
   log "API smoke (milestone)"
   pnpm verify:real-e2e
@@ -216,7 +275,6 @@ case "$TIER" in
   quick) tier_quick ;;
   goal) tier_goal ;;
   full) tier_full ;;
-  # legacy aliases
   0|quick) tier_quick ;;
   1|area) SCOPE="${SCOPE:-ui}" tier_goal ;;
   2) tier_goal ;;
@@ -229,4 +287,4 @@ case "$TIER" in
 esac
 
 echo ""
-echo "✓ verify-tier [$TIER] complete${SCOPE:+ (SCOPE=$SCOPE)}"
+echo "✓ verify-tier [$TIER] complete${SCOPE:+ SCOPE=$SCOPE} flavour=$FLAVOUR"

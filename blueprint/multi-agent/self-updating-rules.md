@@ -45,9 +45,9 @@ After **any** change (code or docs):
    - New field → 05 + 06 + caller docs.
    - New feature → relevant phase + 10/12 if mobile/web.
 
-5. **Pre-Commit Verification (batch build / batch verify — [goal-workflow.md](../production/goal-workflow.md), `.cursor/rules/testing-tiers.mdc`)**
-   - **Mid-goal WIP commits:** no tests (optional `FILTER=<pkg> pnpm verify:wip`)
-   - **Goal finished:** `SCOPE=<area> pnpm verify:goal` once — pick SCOPE from goal-workflow table (`contracts`, `api`, `infra`, `web`, `mobile`, `tray`, `auth`, `checkout`, `listings`, `orders`, `money`, `onboarding`, `content`, `railway`, …)
+5. **Pre-Commit Verification ([testing-flavours.md](../production/testing-flavours.md), [goal-workflow.md](../production/goal-workflow.md))**
+   - **Mid-goal:** wiring checklist; optional `FILTER=<pkg> pnpm verify:wip` or `RISK=native pnpm verify:wip`
+   - **Goal finished:** `FLAVOUR=<polish|wiring|feature|…> SCOPE=<area> pnpm verify:goal` once — see flavour recipes (polish skips Maestro/seed/API; wiring runs one flow)
    - **Milestone / stitch / ship:** `pnpm verify:full`
    - **Small fix outside a goal:** `pnpm verify:quick`
    - Set `TOUCHES_API=1` when UI/infra goals also changed Medusa routes

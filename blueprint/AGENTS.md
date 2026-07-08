@@ -34,12 +34,12 @@ When integration state changes, update **`CURRENT_STATE.md`** + `INDEX.md` (Last
 
 ## Goal Workflow (Mandatory — Every Goal)
 
-**Canonical:** [production/goal-workflow.md](./production/goal-workflow.md) + `.cursor/rules/testing-tiers.mdc`
+**Canonical:** [production/testing-flavours.md](./production/testing-flavours.md) + [goal-workflow.md](./production/goal-workflow.md) + `.cursor/rules/testing-tiers.mdc`
 
 Every bounded task is a **goal** with three phases:
 
-1. **Build** — Many commits, **zero tests** (optional `FILTER=<pkg> pnpm verify:wip`).
-2. **Verify** — Goal done → `SCOPE=<area> pnpm verify:goal` **once** (pick SCOPE from goal-workflow table).
+1. **Build** — Many commits; use **wiring checklist** (testing-flavours.md); optional `FILTER=<pkg> pnpm verify:wip` or `RISK=native pnpm verify:wip` for high-risk edits only.
+2. **Verify** — Goal done → `FLAVOUR=<polish|wiring|feature|…> SCOPE=<area> pnpm verify:goal` **once** (right-sized — not always full Maestro/API).
 3. **Ship** — Milestone / stitch → `pnpm verify:full`.
 
 **Rules:**

@@ -13,6 +13,7 @@
 
 ## Batch build, batch verify (all goals)
 
+**Strategic verify:** [testing-flavours.md](./testing-flavours.md) (experience ledger — what to skip vs never skip)
 **Canonical workflow:** [goal-workflow.md](./goal-workflow.md)
 
 During any goal, ship many commits with **no tests**. Verify **once** when the goal is done with `SCOPE=<area> pnpm verify:goal`.

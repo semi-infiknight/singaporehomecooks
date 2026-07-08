@@ -35,7 +35,7 @@ When you change colors, typography, spacing, shadows, borders, component APIs, o
 4. **Update screens** on every platform affected by the change (do not ship web-only or mobile-only visual updates)
 5. **Update `brand.md`** if palette, patterns, or voice change
 6. **Update blueprint:** `blueprint/12-shared-components/12-shared-components.md` + `CURRENT_STATE.md` if integration status changes
-7. **Preserve Maestro `testID`s** — run `bash scripts/run-maestro-full-tour.sh` after layout refactors
+7. **Preserve Maestro `testID`s** — at goal close: `FLAVOUR=tri-platform SCOPE=tray pnpm verify:goal` (not full tour per commit)
 
 ## Forbidden
 

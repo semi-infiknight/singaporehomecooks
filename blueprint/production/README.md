@@ -1,6 +1,7 @@
 # Production Layer — Overview
 
 **Related Files:**
+- [testing-flavours.md](./testing-flavours.md) — strategic verify (experience ledger, FLAVOUR recipes)
 - [goal-workflow.md](./goal-workflow.md) — batch build / batch verify (all goals)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 - [testing-strategy.md](./testing-strategy.md)

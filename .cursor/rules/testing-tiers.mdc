@@ -1,5 +1,5 @@
 ---
-description: Batch build during goals, batch verify once — all tracks, all goals
+description: Strategic batch verify — flavours, experience ledger, wiring care
 globs:
   - apps/**
   - packages/**
@@ -9,71 +9,75 @@ globs:
 alwaysApply: true
 ---
 
-# Testing: Batch Build, Batch Verify (All Goals)
+# Testing: Strategic Batch Verify (SHC)
 
-**Canonical doc:** `blueprint/production/goal-workflow.md`
+**Canonical:** `blueprint/production/testing-flavours.md` (experience ledger + recipes)
+**Workflow:** `blueprint/production/goal-workflow.md`
 
-Ship fast during any goal. Test **once** when the goal is done — not after every commit.
+Polish-and-ship mode: build fast, verify once, **right-sized** for what you changed.
 
-## Two phases per goal
+## Start every goal
 
-### 1. Build phase (many commits, no tests)
+1. Name the goal.
+2. Pick **SCOPE** (surface) + **FLAVOUR** (how risky).
 
-- Implement the full slice for the goal (all screens, routes, web parity, infra wiring)
-- **No** Maestro, **no** `verify:real-e2e`, **no** `verify:quick` on each commit
-- Optional sanity: `FILTER=<package> pnpm verify:wip` (~30s typecheck)
-- Blueprint updates: batch into final commit(s), not every WIP commit
-
-### 2. Verify phase (once, when goal is done)
+| Flavour | When | Goal verify |
+|---------|------|-------------|
+| `polish` | Visual/copy on wired screens | Typecheck + guards only — **no Maestro, no seed, no API** |
+| `wiring` | Connect UI → hook → api-client | Typecheck + **one** Maestro flow for that `SCOPE` |
+| `feature` | New screen/flow (default) | Full scoped verify |
+| `tri-platform` | `@shc/ui` + web + both apps | Typecheck all 4 + tray/unit tests + tray Maestro |
+| `native` | Metro/babel/RN dep/pod | `TOUCHES_NATIVE=1` + infra guards + bundles |
+| `api` / `deploy` | Medusa / Railway | `SCOPE=api` or `SCOPE=railway` |
 
 ```bash
-SCOPE=<area> pnpm verify:goal
+FLAVOUR=polish SCOPE=web pnpm verify:goal
+FLAVOUR=wiring SCOPE=checkout TOUCHES_API=1 pnpm verify:goal
+FLAVOUR=tri-platform SCOPE=tray pnpm verify:goal
 ```
 
-Pick `SCOPE` from the table below. Script **errors** if `SCOPE` is unset.
+## Build phase — wiring care (prevents emulator breakage)
 
-## Tier summary
+Before committing navigation/wiring work, confirm (no test runner):
 
-| Tier | When | Command | Tests? |
-|------|------|---------|--------|
-| **wip** | Each commit **during** a goal | `pnpm verify:wip` or **nothing** | No (optional `FILTER=pkg`) |
-| **goal** | Goal **finished** | `SCOPE=* pnpm verify:goal` | Yes — full batch for scope |
-| **full** | Milestone / stitch / TestFlight | `pnpm verify:full` | Yes — goal + full tour + API |
-| **quick** | Small fix **outside** a goal | `pnpm verify:quick` | Light typecheck + unit |
+- Route file exists (`app/` or `apps/web/app/`)
+- CTA `onPress`/`href` calls real hook or `router.push` — **not a stub**
+- `@shc/api-client` method imported (not local mock)
+- If `@shc/ui` changed → web mirror updated (`SHCTrayWeb`, `SHCWebComponents`)
+- Maestro `testID`s preserved
+- Maps/motion via subpath import — not `@shc/ui` barrel
 
-## SCOPE → what `verify:goal` runs
+**Optional spot checks** (high-risk only):
 
-| SCOPE | Includes |
-|-------|----------|
-| `contracts` | `@shc/types` + `@shc/business-rules` build & test |
-| `api` / `medusa` / `backend` | Medusa typecheck + tests + **Railway API smoke** |
-| `infra` | `verify-mobile-deps` + `verify-mobile-bundles` + `verify-web-pwa` |
-| `railway` / `deploy` | `pnpm railway:verify-pwa` |
-| `web` / `pwa` | Web typecheck + `verify:web-pwa` |
-| `mobile` / `expo` | Both apps typecheck + mobile guards + auth Maestro |
-| `ui` / `tray` / `family-values` | UI + mobile + web typecheck, ui tests, tray Maestro flows |
-| `auth` | Mobile typecheck + `customer-auth` + `cook-auth` Maestro |
-| `checkout` | Customer typecheck + `checkout-allergen-tray` Maestro |
-| `listings` | Cook typecheck + `listing-tray` Maestro |
-| `orders` | Order typecheck + `order-tray` Maestro |
-| `money` / `payouts` / `credits` | business-rules + medusa tests + `credits-earnings-payout` Maestro |
-| `onboarding` | Both apps onboarding Maestro |
-| `content` / `seed` | `seed.ts --validate` |
-| `pdpa` | Seed validate + checkout Maestro (consent path) |
+```bash
+FILTER=@shc/ui pnpm verify:wip                    # types unsure
+RISK=native pnpm verify:wip                       # metro/babel/deps touched
+TOUCHES_NATIVE=1 bash scripts/verify-mobile-bundles.sh
+```
 
-Set `TOUCHES_API=1` when a non-API scope also changed Medusa routes → adds API smoke.
+## Experience ledger — skip vs never skip
 
-## Skip rules
+**Skip at goal close (stable / slow):** full Maestro tour, `verify:real-e2e`, seed validate, mobile bundles, all 3 tray flows — unless flavour/flags say otherwise.
 
-| Change | Tests |
-|--------|-------|
-| WIP commit mid-goal | **None** |
-| Blueprint-only | None |
-| Goal complete | `SCOPE=* verify:goal` **required** |
-| Milestone ship / stitch | `verify:full` |
+**Never skip (recurring agent mistakes):** typecheck on touched packages; one Maestro for wired flows; medusa typecheck for API edits; `TOUCHES_API=1` after route/CORS changes; `TOUCHES_NATIVE=1` bundles after metro/native edits; web PWA guard after `next.config`/sw changes.
+
+## Tiers
+
+| Tier | When | Command |
+|------|------|---------|
+| wip | Mid-goal | nothing, or `FILTER=pkg verify:wip`, or `RISK=native verify:wip` |
+| goal | Goal done | `FLAVOUR=* SCOPE=* pnpm verify:goal` |
+| full | Milestone / TestFlight | `pnpm verify:full` |
+| quick | One-off outside goal | `pnpm verify:quick` |
+
+## Flags
+
+- `TOUCHES_API=1` — add Railway API smoke
+- `TOUCHES_NATIVE=1` — add mobile bundle export guard
+- `SKIP_SEED=1` — skip seed (auto for `FLAVOUR=polish`)
 
 ## Never during build batch
 
 - `run-maestro-full-tour.sh`
-- `verify:real-e2e` (unless `SCOPE=api` or `TOUCHES_API=1` at goal end)
-- Per-commit area audits (`family-values-audit.sh`, legacy `verify:area`)
+- `verify:real-e2e` (unless goal-close with `TOUCHES_API=1` / `SCOPE=api`)
+- Per-commit area audits

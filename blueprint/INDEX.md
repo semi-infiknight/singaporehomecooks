@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Generalized goal workflow + tiered testing + Railway-only client backend) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
+**Last Updated:** 2026-07-08 (Testing flavours + experience ledger + Railway-only client backend) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
@@ -11,9 +11,9 @@
 
 **Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
 
-## Progress Update (2026-07-08 — Generalized goal workflow)
+## Progress Update (2026-07-08 — Testing flavours + experience ledger)
 
-Tiered testing is now **track-agnostic**: [production/goal-workflow.md](./production/goal-workflow.md) defines build → verify → ship for every goal. `SCOPE` maps to all tracks (`api`, `contracts`, `infra`, `web`, `mobile`, `tray`, `auth`, `checkout`, `listings`, `orders`, `money`, `onboarding`, `content`, `railway`). Wired into `AGENTS.md`, multi-agent README, stitching-protocol, `scripts/verify-tier.sh`, `.cursor/rules/testing-tiers.mdc`.
+[production/testing-flavours.md](./production/testing-flavours.md) records **what we miss vs skip** from prior runs (unwired CTAs, CORS, Metro crash, tri-platform drift). `FLAVOUR=polish|wiring|feature|tri-platform|native` right-sizes `verify:goal`; `TOUCHES_NATIVE=1` / `TOUCHES_API=1` flags for bundle/API guards. Wiring checklist prevents emulator breakage without per-commit E2E.
 
 ## Progress Update (2026-07-08 — Blueprint Full Sync, zero drift)
 
@@ -75,6 +75,7 @@ Start here → follow links. Each file contains:
 
 **Production & Quality Layer:**
 - [production/README.md](./production/README.md)
+- [production/testing-flavours.md](./production/testing-flavours.md) — **strategic verify** (experience ledger + FLAVOUR recipes)
 - [production/goal-workflow.md](./production/goal-workflow.md) — batch build / batch verify (mandatory for all agents)
 - [production/testing-strategy.md](./production/testing-strategy.md)
 - [production/observability.md](./production/observability.md)
