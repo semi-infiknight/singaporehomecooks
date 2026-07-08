@@ -117,11 +117,11 @@ Medusa must use **explicit** `STORE_CORS` and `AUTH_CORS` origins (web + localho
 ```bash
 pnpm install          # writes Railway .env.local via postinstall
 pnpm verify:real-e2e  # smoke against Railway Medusa (seed cook rose@)
-pnpm verify:cook-wiring  # new cook register → listing → customer order → accept/decline
+REQUIRE_RAILWAY=1 pnpm verify:cook-wiring  # new cook register → listing → customer order → accept/decline (Railway HTTP)
 # optional: pnpm bootstrap:medusa  # refresh publishable key + demo customer on Railway
 ```
 
-**Cook ↔ customer wiring (`verify:cook-wiring`):** Registers a fresh cook, publishes a listing, confirms `GET /store/shc/products?cook_id=…` includes it, customer checkout, cook `GET /store/shc/orders?role=cook`, then accept + decline transitions. Falls back to in-process handler test when Railway has not yet deployed `POST /store/shc/auth/cook/register`.
+**Cook ↔ customer wiring (`verify:cook-wiring`):** `REQUIRE_RAILWAY=1` gates goal verify (`SCOPE=onboarding`). Registers a fresh cook on Railway, publishes a listing, confirms `GET /store/shc/products?cook_id=…` includes it, customer checkout with matching `cook_id`, cook `GET /store/shc/orders?role=cook`, then accept + decline transitions. Local `:9000` optional when flag unset (dev only).
 
 **`scripts/verify-real-e2e.ts` covers:**
 
