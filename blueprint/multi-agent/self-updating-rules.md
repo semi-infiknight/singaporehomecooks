@@ -45,11 +45,12 @@ After **any** change (code or docs):
    - New field → 05 + 06 + caller docs.
    - New feature → relevant phase + 10/12 if mobile/web.
 
-5. **Pre-Commit Verification (batch build / batch verify — `.cursor/rules/testing-tiers.mdc`)**
-   - **Mid-goal WIP commits:** no tests (optional `FILTER=@shc/ui pnpm verify:wip`)
-   - **Goal finished:** `SCOPE=<area> pnpm verify:goal` once (unit + maestro + flows; API if backend touched)
-   - **Milestone / ship:** `pnpm verify:full`
+5. **Pre-Commit Verification (batch build / batch verify — [goal-workflow.md](../production/goal-workflow.md), `.cursor/rules/testing-tiers.mdc`)**
+   - **Mid-goal WIP commits:** no tests (optional `FILTER=<pkg> pnpm verify:wip`)
+   - **Goal finished:** `SCOPE=<area> pnpm verify:goal` once — pick SCOPE from goal-workflow table (`contracts`, `api`, `infra`, `web`, `mobile`, `tray`, `auth`, `checkout`, `listings`, `orders`, `money`, `onboarding`, `content`, `railway`, …)
+   - **Milestone / stitch / ship:** `pnpm verify:full`
    - **Small fix outside a goal:** `pnpm verify:quick`
+   - Set `TOUCHES_API=1` when UI/infra goals also changed Medusa routes
    - Never per-commit Maestro or `verify:real-e2e` during a multi-commit goal
    - `grep -r "TODO\|FIXME\|placeholder\|stub" blueprint/ | cat` — clean stale notes you introduced.
    - Check links are valid relative markdown.

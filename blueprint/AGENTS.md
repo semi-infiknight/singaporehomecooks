@@ -32,6 +32,22 @@ See the full protocol + commit checklist in multi-agent/self-updating-rules.md.
 
 When integration state changes, update **`CURRENT_STATE.md`** + `INDEX.md` (Last Updated line) + primary section. Do not only update `STATUS.md` or phase files.
 
+## Goal Workflow (Mandatory — Every Goal)
+
+**Canonical:** [production/goal-workflow.md](./production/goal-workflow.md) + `.cursor/rules/testing-tiers.mdc`
+
+Every bounded task is a **goal** with three phases:
+
+1. **Build** — Many commits, **zero tests** (optional `FILTER=<pkg> pnpm verify:wip`).
+2. **Verify** — Goal done → `SCOPE=<area> pnpm verify:goal` **once** (pick SCOPE from goal-workflow table).
+3. **Ship** — Milestone / stitch → `pnpm verify:full`.
+
+**Rules:**
+- Never run Maestro or `verify:real-e2e` on each WIP commit.
+- Always set `SCOPE` at goal close; use `TOUCHES_API=1` if UI work also changed Medusa routes.
+- Batch blueprint + `CURRENT_STATE.md` updates into goal-close commits, not every WIP commit.
+- Outside a goal (one-off fix): `pnpm verify:quick` only.
+
 ## No Divergence Allowed
 - The old `Singapore_Home_Cooks_Builder_Blueprint.md` has been removed.
 - The `.hermes/plans/` version has been removed.

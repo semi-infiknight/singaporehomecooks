@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Batch-build / batch-verify workflow.
+# Batch-build / batch-verify workflow (all goals — see blueprint/production/goal-workflow.md).
 #
 #   wip   — during goal: build freely, no tests (optional FILTER=pkg typecheck)
-#   goal  — goal done: one verification pass for everything built (SCOPE=*)
-#   full  — milestone / pre-ship: goal + Maestro full tour
+#   goal  — goal done: one verification pass (SCOPE=* required)
+#   full  — milestone / stitch / pre-ship: goal + Maestro full tour + API smoke
 #   quick — standalone small fix outside a goal (~2–5 min)
 #
-# Examples:
-#   # Family Values: ship 5 tray commits with zero tests, then once:
-#   SCOPE=tray pnpm verify:goal
+# SCOPE values (pick primary surface changed):
+#   contracts | api|medusa|backend | infra | railway|deploy | web|pwa
+#   mobile|expo | ui|tray|family-values | auth | checkout | listings | orders
+#   money|payouts|credits | onboarding | content|seed | pdpa
 #
-#   # Optional mid-batch sanity (seconds):
+# Examples:
+#   SCOPE=api pnpm verify:goal
+#   SCOPE=web pnpm verify:goal
+#   SCOPE=tray pnpm verify:goal
 #   FILTER=@shc/ui pnpm verify:wip
 set -euo pipefail
 
@@ -35,16 +39,23 @@ typecheck_scope() {
     web|pwa)
       pnpm --filter web typecheck
       ;;
-    api|medusa|backend)
+    api|medusa|backend|money|payouts|credits)
       pnpm --filter medusa typecheck
+      pnpm --filter @shc/business-rules build
       ;;
-    mobile|expo)
+    mobile|expo|auth|onboarding|listings|orders)
       pnpm --filter mobile-customer typecheck
       pnpm --filter mobile-cook typecheck
+      ;;
+    checkout)
+      pnpm --filter mobile-customer typecheck
+      pnpm --filter web typecheck
       ;;
     contracts)
       pnpm --filter @shc/types build
       pnpm --filter @shc/business-rules build
+      ;;
+    infra|railway|deploy|content|seed|pdpa)
       ;;
     *)
       pnpm --filter @shc/types build
@@ -74,19 +85,38 @@ scope_unit_tests() {
       log "medusa route tests"
       pnpm --filter medusa test 2>/dev/null || echo "WARN: medusa tests skipped"
       ;;
-    mobile|expo)
+    mobile|expo|auth|checkout|listings|orders|onboarding)
       bash scripts/verify-mobile-deps.sh
       bash scripts/verify-mobile-bundles.sh
+      ;;
+    money|payouts|credits)
+      log "money / ledger tests"
+      pnpm --filter @shc/business-rules test
+      pnpm --filter medusa test 2>/dev/null || echo "WARN: medusa tests skipped"
       ;;
     contracts)
       pnpm --filter @shc/types test
       pnpm --filter @shc/business-rules test
       ;;
+    infra)
+      log "platform guards"
+      bash scripts/verify-mobile-deps.sh
+      bash scripts/verify-mobile-bundles.sh
+      bash scripts/verify-web-pwa.sh
+      ;;
+    railway|deploy)
+      log "live Railway PWA verify"
+      pnpm railway:verify-pwa
+      ;;
+    content|seed|pdpa)
+      log "seed validate"
+      npx tsx scripts/seed.ts --validate
+      ;;
   esac
 }
 
 scope_maestro_yaml() {
-  if [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|checkout|listings|web)$ ]]; then
+  if [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|expo|auth|checkout|listings|orders|money|payouts|credits|onboarding|pdpa|web)$ ]]; then
     log "Maestro YAML validate"
     bash scripts/maestro-validate.sh
   fi
@@ -104,20 +134,31 @@ scope_maestro_device() {
   fi
   case "$SCOPE" in
     ui|tray|family-values)
-      log "Maestro tray flows (batch verify)"
+      log "Maestro tray flows"
       maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
       maestro test apps/mobile-cook/e2e/listing-tray.yaml
       maestro test apps/mobile-customer/e2e/order-tray.yaml
       ;;
-    checkout)
+    checkout|pdpa)
       maestro test apps/mobile-customer/e2e/checkout-allergen-tray.yaml
       ;;
     listings)
       maestro test apps/mobile-cook/e2e/listing-tray.yaml
       ;;
-    mobile|expo)
+    orders)
+      maestro test apps/mobile-customer/e2e/order-tray.yaml
+      ;;
+    mobile|expo|auth)
       maestro test apps/mobile-customer/e2e/customer-auth.yaml
       maestro test apps/mobile-cook/e2e/cook-auth.yaml
+      ;;
+    money|payouts|credits)
+      maestro test apps/mobile-customer/e2e/credits-earnings-payout.yaml
+      maestro test apps/mobile-cook/e2e/credits-earnings-payout.yaml
+      ;;
+    onboarding)
+      maestro test apps/mobile-customer/e2e/onboarding.yaml
+      maestro test apps/mobile-cook/e2e/onboarding.yaml
       ;;
   esac
 }
@@ -127,7 +168,7 @@ tier_wip() {
     log "optional typecheck: $FILTER"
     pnpm --filter "$FILTER" typecheck
   else
-    log "WIP build — no tests (batch verify at goal end)"
+    log "WIP build — no tests (batch verify at goal end; see blueprint/production/goal-workflow.md)"
   fi
 }
 
@@ -141,7 +182,9 @@ tier_quick() {
 
 tier_goal() {
   if [[ -z "$SCOPE" ]]; then
-    echo "ERROR: set SCOPE for goal verify (e.g. SCOPE=tray, SCOPE=api, SCOPE=web)"
+    echo "ERROR: set SCOPE for goal verify (see blueprint/production/goal-workflow.md)"
+    echo "  SCOPE=api pnpm verify:goal"
+    echo "  SCOPE=web pnpm verify:goal"
     echo "  SCOPE=tray pnpm verify:goal"
     exit 1
   fi
@@ -151,11 +194,11 @@ tier_goal() {
   scope_unit_tests
   scope_maestro_yaml
   scope_maestro_device
-  if [[ "$SCOPE" =~ ^(api|medusa|backend)$ ]] || [[ "${TOUCHES_API:-}" == "1" ]]; then
+  if [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits)$ ]] || [[ "${TOUCHES_API:-}" == "1" ]]; then
     log "API smoke (backend touched)"
     pnpm verify:real-e2e
   else
-    log "skip API smoke (pure UI goal — set TOUCHES_API=1 if routes changed)"
+    log "skip API smoke (set TOUCHES_API=1 if routes changed)"
   fi
 }
 

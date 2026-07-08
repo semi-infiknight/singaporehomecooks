@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Tiered testing policy + Railway-only client backend) — Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline (`railway:ship`, `X-SHC-Railway-Build-Id`); worker + minio on Railway; explicit CORS via `railway:wire`. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
+**Last Updated:** 2026-07-08 (Generalized goal workflow + tiered testing + Railway-only client backend) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
@@ -10,6 +10,10 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+
+## Progress Update (2026-07-08 — Generalized goal workflow)
+
+Tiered testing is now **track-agnostic**: [production/goal-workflow.md](./production/goal-workflow.md) defines build → verify → ship for every goal. `SCOPE` maps to all tracks (`api`, `contracts`, `infra`, `web`, `mobile`, `tray`, `auth`, `checkout`, `listings`, `orders`, `money`, `onboarding`, `content`, `railway`). Wired into `AGENTS.md`, multi-agent README, stitching-protocol, `scripts/verify-tier.sh`, `.cursor/rules/testing-tiers.mdc`.
 
 ## Progress Update (2026-07-08 — Blueprint Full Sync, zero drift)
 
@@ -71,6 +75,7 @@ Start here → follow links. Each file contains:
 
 **Production & Quality Layer:**
 - [production/README.md](./production/README.md)
+- [production/goal-workflow.md](./production/goal-workflow.md) — batch build / batch verify (mandatory for all agents)
 - [production/testing-strategy.md](./production/testing-strategy.md)
 - [production/observability.md](./production/observability.md)
 - [production/compliance-pdpa.md](./production/compliance-pdpa.md)

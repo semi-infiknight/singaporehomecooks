@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Goal-close only. During build: no tests. When done: SCOPE=tray pnpm verify:goal
+# Goal-close only (legacy UI audit). During build: no tests.
+# Prefer: SCOPE=tray pnpm verify:goal — see blueprint/production/goal-workflow.md
 # Family Values UI verification gate — alert grep, shared-press audit, builds.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

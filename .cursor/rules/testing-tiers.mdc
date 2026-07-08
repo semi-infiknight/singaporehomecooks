@@ -1,37 +1,36 @@
 ---
-description: Batch build during goals, batch verify once — no per-commit E2E
+description: Batch build during goals, batch verify once — all tracks, all goals
 globs:
   - apps/**
   - packages/**
   - scripts/verify*
-  - blueprint/production/testing-strategy.md
+  - blueprint/**
+  - .cursor/rules/**
 alwaysApply: true
 ---
 
-# Testing: Batch Build, Batch Verify
+# Testing: Batch Build, Batch Verify (All Goals)
 
-**Taste:** Ship fast during goals. Test once when the goal is done — not after every tray.
+**Canonical doc:** `blueprint/production/goal-workflow.md`
 
-Family Values mistake: running `SCOPE=ui verify:area` (~5 min) on each of 15+ tray commits. Correct pattern: **5–10 build commits with zero tests → one `verify:goal`.**
+Ship fast during any goal. Test **once** when the goal is done — not after every commit.
 
 ## Two phases per goal
 
 ### 1. Build phase (many commits, no tests)
 
-- Implement the whole slice: all trays, all screens, web parity, blueprint sync at the end
+- Implement the full slice for the goal (all screens, routes, web parity, infra wiring)
 - **No** Maestro, **no** `verify:real-e2e`, **no** `verify:quick` on each commit
-- Optional sanity only: `FILTER=@shc/ui pnpm verify:wip` (~30s typecheck) if you're unsure about types
-- Blueprint updates: batch into the final commit(s) of the goal, not every WIP commit
+- Optional sanity: `FILTER=<package> pnpm verify:wip` (~30s typecheck)
+- Blueprint updates: batch into final commit(s), not every WIP commit
 
 ### 2. Verify phase (once, when goal is done)
 
 ```bash
-SCOPE=tray pnpm verify:goal    # UI goal — typecheck + unit + maestro yaml + tray flows
-SCOPE=api pnpm verify:goal    # backend — includes Railway API smoke
-SCOPE=web pnpm verify:goal     # PWA — includes verify:web-pwa
+SCOPE=<area> pnpm verify:goal
 ```
 
-`verify:goal` runs everything relevant to SCOPE in **one pass** — that is the verification step where you confirm each area works as described.
+Pick `SCOPE` from the table below. Script **errors** if `SCOPE` is unset.
 
 ## Tier summary
 
@@ -39,19 +38,30 @@ SCOPE=web pnpm verify:goal     # PWA — includes verify:web-pwa
 |------|------|---------|--------|
 | **wip** | Each commit **during** a goal | `pnpm verify:wip` or **nothing** | No (optional `FILTER=pkg`) |
 | **goal** | Goal **finished** | `SCOPE=* pnpm verify:goal` | Yes — full batch for scope |
-| **full** | Milestone / TestFlight / ship | `pnpm verify:full` | Yes — goal + full tour + API |
+| **full** | Milestone / stitch / TestFlight | `pnpm verify:full` | Yes — goal + full tour + API |
 | **quick** | Small fix **outside** a goal | `pnpm verify:quick` | Light typecheck + unit |
 
 ## SCOPE → what `verify:goal` runs
 
 | SCOPE | Includes |
 |-------|----------|
-| `tray` / `ui` / `family-values` | Scoped typecheck, `@shc/ui` tests, Maestro YAML validate, tray device flows (if Metro up) |
-| `api` / `medusa` | Medusa tests + **Railway API smoke** |
+| `contracts` | `@shc/types` + `@shc/business-rules` build & test |
+| `api` / `medusa` / `backend` | Medusa typecheck + tests + **Railway API smoke** |
+| `infra` | `verify-mobile-deps` + `verify-mobile-bundles` + `verify-web-pwa` |
+| `railway` / `deploy` | `pnpm railway:verify-pwa` |
 | `web` / `pwa` | Web typecheck + `verify:web-pwa` |
-| `checkout` / `listings` | Single Maestro flow + typecheck |
+| `mobile` / `expo` | Both apps typecheck + mobile guards + auth Maestro |
+| `ui` / `tray` / `family-values` | UI + mobile + web typecheck, ui tests, tray Maestro flows |
+| `auth` | Mobile typecheck + `customer-auth` + `cook-auth` Maestro |
+| `checkout` | Customer typecheck + `checkout-allergen-tray` Maestro |
+| `listings` | Cook typecheck + `listing-tray` Maestro |
+| `orders` | Order typecheck + `order-tray` Maestro |
+| `money` / `payouts` / `credits` | business-rules + medusa tests + `credits-earnings-payout` Maestro |
+| `onboarding` | Both apps onboarding Maestro |
+| `content` / `seed` | `seed.ts --validate` |
+| `pdpa` | Seed validate + checkout Maestro (consent path) |
 
-Set `TOUCHES_API=1` on a UI goal if you also changed Medusa routes → adds API smoke.
+Set `TOUCHES_API=1` when a non-API scope also changed Medusa routes → adds API smoke.
 
 ## Skip rules
 
@@ -60,10 +70,10 @@ Set `TOUCHES_API=1` on a UI goal if you also changed Medusa routes → adds API 
 | WIP commit mid-goal | **None** |
 | Blueprint-only | None |
 | Goal complete | `SCOPE=* verify:goal` **required** |
-| Milestone ship | `verify:full` |
+| Milestone ship / stitch | `verify:full` |
 
 ## Never during build batch
 
 - `run-maestro-full-tour.sh`
-- `verify:real-e2e` (unless `SCOPE=api` at goal end)
-- `family-values-audit.sh` / per-commit area tests
+- `verify:real-e2e` (unless `SCOPE=api` or `TOUCHES_API=1` at goal end)
+- Per-commit area audits (`family-values-audit.sh`, legacy `verify:area`)

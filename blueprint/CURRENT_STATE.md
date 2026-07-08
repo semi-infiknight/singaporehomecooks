@@ -194,9 +194,9 @@ bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb 
 bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
 bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
 
-pnpm verify:wip                   # Mid-goal: no tests (optional FILTER=@shc/ui)
-SCOPE=tray pnpm verify:goal       # Goal done: batch verify (typecheck + unit + maestro + flows)
-pnpm verify:full                  # Milestone: goal + full tour + API smoke
+pnpm verify:wip                   # Mid-goal: no tests (optional FILTER=<pkg>)
+SCOPE=<area> pnpm verify:goal     # Goal done — see blueprint/production/goal-workflow.md
+pnpm verify:full                  # Milestone / stitch: goal + full tour + API smoke
 pnpm verify:quick                 # Small fix outside a goal
 pnpm verify:local                 # Seed validate + typecheck (legacy alias)
 pnpm verify:web-pwa               # PWA assets + build fingerprint (local)

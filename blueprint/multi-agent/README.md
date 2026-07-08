@@ -5,6 +5,7 @@
 - [stitching-protocol.md](./stitching-protocol.md)
 - [production-hardening.md](./production-hardening.md)
 - [self-updating-rules.md](./self-updating-rules.md)
+- [../production/goal-workflow.md](../production/goal-workflow.md)
 - [../INDEX.md](../INDEX.md)
 - [../13-implementation-phases/README.md](../13-implementation-phases/README.md)
 
@@ -23,13 +24,13 @@
 
 ```markdown
 0. Read ../CURRENT_STATE.md — current project state (real Medusa vs mock, routes, commands, gaps)
-1. Read this file + tracks.md
+1. Read this file + tracks.md + ../production/goal-workflow.md
 2. Read the phase file for your current phase (e.g. ../13-implementation-phases/phase-5.md)
 3. Read the specific section files your task touches (use "Related Files" headers)
-4. Implement using TDD + contracts
-5. Run verification commands from the phase file
+4. Build the goal (many commits, no per-commit E2E — contracts-first for schemas/APIs)
+5. Goal done: SCOPE=<area> pnpm verify:goal once (see goal-workflow SCOPE table)
 6. Patch CURRENT_STATE.md (if integration changed) + section file(s) per self-updating-rules.md
-7. Notify stitching agent
+7. Label PR "Ready for Integration" — stitching agent runs pnpm verify:full
 ```
 
 This structure ensures agents always have the latest context without hallucinating or duplicating work.

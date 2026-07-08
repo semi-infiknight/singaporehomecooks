@@ -20,7 +20,8 @@
 1. **Preparation (all feature agents)**
    - Push feature branches
    - Open PRs labeled "Ready for Integration"
-   - Run local `turbo lint && turbo test && turbo build`
+   - Each agent ran `SCOPE=<area> pnpm verify:goal` once at goal close (see [goal-workflow.md](../production/goal-workflow.md))
+   - No per-commit Maestro or `verify:real-e2e` during the build batch
 
 2. **Stitching Agent Creates Integration Branch**
    ```bash
@@ -37,11 +38,13 @@
    ```bash
    pnpm install --frozen-lockfile
    turbo lint
-   turbo test -- --coverage --threshold 80
+   turbo typecheck
+   turbo test
    turbo build
-   pnpm --filter mobile maestro test:e2e   # Phase 5+ critical flows
+   SCOPE=mobile pnpm verify:full   # goal batch + Maestro full tour + Railway API smoke
    node scripts/security-scan.js || echo "Manual review required"
    ```
+   - `verify:full` is the stitch milestone tier — not run on every feature commit.
    - Expected: All pass. Any failure → create fix task and re-run.
 
 5. **Conflict Resolution Rules (Deterministic)**
