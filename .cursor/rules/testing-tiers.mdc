@@ -11,8 +11,8 @@ alwaysApply: true
 
 # Testing: Strategic Batch Verify (SHC)
 
-**Canonical:** `blueprint/production/testing-flavours.md` (experience ledger + recipes)
-**Workflow:** `blueprint/production/goal-workflow.md`
+**Canonical (blueprint):** `blueprint/BUILDER_GUIDE.md` → `blueprint/builder/how-to-test.md` → `blueprint/production/testing-flavours.md`
+**This file mirrors blueprint** — on conflict, blueprint wins.
 
 Polish-and-ship mode: build fast, verify once, **right-sized** for what you changed.
 

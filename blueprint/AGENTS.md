@@ -6,51 +6,56 @@ This is the canonical navigation and update guide. Every agent must read this be
 
 **Picking up the repo cold?** Read in this order:
 
-1. **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Current project state (what's real vs mock, routes, commands, gaps). **Authoritative for "what works today."**
-2. **[INDEX.md](./INDEX.md)** — Full blueprint table of contents + progress history.
-3. **[multi-agent/README.md](./multi-agent/README.md)** — Parallel execution rules.
+1. **[CURRENT_STATE.md](./CURRENT_STATE.md)** — What works today (routes, commands, gaps). **Authoritative for integration reality.**
+2. **[BUILDER_GUIDE.md](./BUILDER_GUIDE.md)** — **How to build, taste, and test** (blueprint playbook).
+3. **[INDEX.md](./INDEX.md)** — Full table of contents + progress history.
+4. **[multi-agent/README.md](./multi-agent/README.md)** — Parallel execution rules (if multi-track work).
 
-Do **not** rely on root `STATUS.md` alone for integration status — it predates the 2026-06-14/15 Medusa wiring wave. Use `CURRENT_STATE.md` instead.
+Do **not** rely on root `STATUS.md` alone — use `CURRENT_STATE.md` instead.
+
+**Blueprint is source of truth.** `.cursor/rules/*.mdc` and `.agents/skills/*` mirror blueprint — on conflict, blueprint wins.
+
+## Builder playbook (mandatory)
+
+| Topic | Blueprint file |
+|-------|----------------|
+| Hub | [BUILDER_GUIDE.md](./BUILDER_GUIDE.md) |
+| How to build | [builder/how-to-build.md](./builder/how-to-build.md) |
+| Taste & design | [builder/taste-and-design.md](./builder/taste-and-design.md) |
+| How to test | [builder/how-to-test.md](./builder/how-to-test.md) |
 
 ## Navigation Pattern (Efficient Context Retrieval)
-1. Read `CURRENT_STATE.md` + `INDEX.md` + `multi-agent/README.md`
+
+1. Read `CURRENT_STATE.md` + `BUILDER_GUIDE.md` + `INDEX.md`
 2. Identify your track (see `multi-agent/tracks.md`)
 3. Open the phase file for your current phase
-4. Follow "Related Files" and "See also" links at the top of every file
-5. When you need schema or route definitions, go to `05-data-model.md` or `06-api-surface.md`
-6. When you need production rules, go to `multi-agent/production-hardening.md` or the `production/` folder
+4. Follow "Related Files" links at the top of every file
+5. Schema/routes → `05-data-model.md` or `06-api-surface.md`
+6. Production rules → `multi-agent/production-hardening.md` or `production/`
 
 ## Self-Updating Rules (STRICT — WITH EVERY CHANGE)
 
 **MANDATORY:** Follow `multi-agent/self-updating-rules.md` **for every single code change**.
 
-- If your change touches a route, module, column, contract (types/business-rules), screen, flow, or config → you **must** patch the corresponding blueprint doc(s) + CURRENT_STATE.md + INDEX "Last Updated" **in the same commit**.
+- Route, module, contract, screen, flow, or config change → patch blueprint + `CURRENT_STATE.md` + `INDEX.md` **in the same commit**.
 - Never ship code-only deltas that make blueprint stale.
-- Primary places: 05-data-model, 06-api-surface, 07/08/09, 10/11/12, CURRENT_STATE, INDEX.
+- Primary places: 05-data-model, 06-api-surface, 07/08/09, 10/11/12, CURRENT_STATE, INDEX, builder docs if build/test/taste rules change.
 
-See the full protocol + commit checklist in multi-agent/self-updating-rules.md.
-
-When integration state changes, update **`CURRENT_STATE.md`** + `INDEX.md` (Last Updated line) + primary section. Do not only update `STATUS.md` or phase files.
+See full protocol in `multi-agent/self-updating-rules.md`.
 
 ## Goal Workflow (Mandatory — Every Goal)
 
-**Canonical:** [production/testing-flavours.md](./production/testing-flavours.md) + [goal-workflow.md](./production/goal-workflow.md) + `.cursor/rules/testing-tiers.mdc`
+**Canonical:** [builder/how-to-test.md](./builder/how-to-test.md) → links to [production/testing-flavours.md](./production/testing-flavours.md) + [goal-workflow.md](./production/goal-workflow.md).
 
-Every bounded task is a **goal** with three phases:
+Every bounded task is a **goal**:
 
-1. **Build** — Many commits; use **wiring checklist** (testing-flavours.md); optional `FILTER=<pkg> pnpm verify:wip` or `RISK=native pnpm verify:wip` for high-risk edits only.
-2. **Verify** — Goal done → `FLAVOUR=<polish|wiring|feature|…> SCOPE=<area> pnpm verify:goal` **once** (right-sized — not always full Maestro/API).
-3. **Ship** — Milestone / stitch → `pnpm verify:full`.
-
-**Rules:**
-- Never run Maestro or `verify:real-e2e` on each WIP commit.
-- Always set `SCOPE` at goal close; use `TOUCHES_API=1` if UI work also changed Medusa routes.
-- Batch blueprint + `CURRENT_STATE.md` updates into goal-close commits, not every WIP commit.
-- Outside a goal (one-off fix): `pnpm verify:quick` only.
+1. **Build** — Many commits; wiring checklist ([how-to-build.md](./builder/how-to-build.md)); optional `FILTER=<pkg> pnpm verify:wip` or `RISK=native pnpm verify:wip`.
+2. **Verify** — `FLAVOUR=<polish|wiring|feature|…> SCOPE=<area> pnpm verify:goal` **once**.
+3. **Ship** — Milestone → `pnpm verify:full`.
 
 ## No Divergence Allowed
-- The old `Singapore_Home_Cooks_Builder_Blueprint.md` has been removed.
-- The `.hermes/plans/` version has been removed.
-- All future work happens inside `blueprint/`.
 
-This web is designed so agents can quickly load only the relevant context for their task while always having access to the full picture via links. It supports true parallel development with deterministic stitching.
+- All future work happens inside `blueprint/`.
+- Old single-file blueprint and `.hermes/plans/` are removed.
+
+This web lets agents load only relevant context while keeping the full picture via links. It supports parallel development with deterministic stitching.

@@ -9,6 +9,10 @@ globs:
 alwaysApply: true
 ---
 
+# Tri-Platform UI Sync (mirrors blueprint)
+
+**Canonical:** `blueprint/builder/taste-and-design.md` + `brand.md` — blueprint wins on conflict.
+
 # Tri-Platform UI Sync (Web + Mobile Customer + Mobile Cook)
 
 Singapore Home Cooks has **three client surfaces** that must look and behave as one product:

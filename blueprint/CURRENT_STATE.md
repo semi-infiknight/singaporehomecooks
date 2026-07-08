@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-07-08 (Railway-only backend enforced for all clients) — Family Values v4 trays/morph across tri-platform; full web cook PWA portal (TestFlight parity); cook listings PATCH/DELETE + mobile long-press edit/delete; web checkout auth guard (guest→login, cart refresh post-sign-in, PDP add-to-cart requires auth); `@shc/api-client` propagates `ShcRequestError` with `SHCErrorCode`; Railway topology includes worker + minio; `pnpm railway:ship` / `railway:verify-pwa` PWA deploy pipeline with `X-SHC-Railway-Build-Id` fingerprint; PWA assets served via Next.js route handlers (`/sw.js`, `/icon*.png`); explicit `STORE_CORS`/`AUTH_CORS` via `pnpm railway:wire` (fixes wildcard CORS breaking web login). Prior launch-readiness (2026-06-29): disputes, feature flags, `/ops`, web push, worker internal routes, commission rules, search synonyms — all still live.
 **Audience:** Any builder (human or AI) picking up this repo cold  
-**Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
+**Read order:** `INDEX.md` → **this file** → **[BUILDER_GUIDE.md](./BUILDER_GUIDE.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 

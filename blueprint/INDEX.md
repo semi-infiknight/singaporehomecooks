@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Testing flavours + experience ledger + Railway-only client backend) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
+**Last Updated:** 2026-07-08 (Builder Guide in blueprint — build, taste, test playbook) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
@@ -9,7 +9,11 @@
 
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
-**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → **[BUILDER_GUIDE.md](./BUILDER_GUIDE.md)** (how to build, taste, test) → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+
+## Progress Update (2026-07-08 — Builder Guide in blueprint)
+
+[BUILDER_GUIDE.md](./BUILDER_GUIDE.md) + [builder/](./builder/) consolidate **how to build**, **taste & design**, and **how to test** into blueprint (canonical). Cursor rules mirror blueprint. Sub-docs: [how-to-build.md](./builder/how-to-build.md), [taste-and-design.md](./builder/taste-and-design.md), [how-to-test.md](./builder/how-to-test.md).
 
 ## Progress Update (2026-07-08 — Testing flavours + experience ledger)
 
@@ -65,6 +69,12 @@ Start here → follow links. Each file contains:
 - [FEATURE_FLAGS.md](./FEATURE_FLAGS.md)
 - [CRON_JOBS.md](./CRON_JOBS.md)
 - [INSURANCE_LIABILITY.md](./INSURANCE_LIABILITY.md)
+
+**Builder Playbook (read after CURRENT_STATE):**
+- [BUILDER_GUIDE.md](./BUILDER_GUIDE.md) — hub: build, taste, test
+- [builder/how-to-build.md](./builder/how-to-build.md) — monorepo, Railway-only, wiring
+- [builder/taste-and-design.md](./builder/taste-and-design.md) — Gourmeat, Family Values, tri-platform
+- [builder/how-to-test.md](./builder/how-to-test.md) — FLAVOUR + SCOPE strategic verify
 
 **Multi-Agent Execution Layer (read before starting parallel work):**
 - [multi-agent/README.md](./multi-agent/README.md) — Tracks, branch strategy, delegation rules

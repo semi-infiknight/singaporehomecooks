@@ -5,6 +5,9 @@
 - [stitching-protocol.md](./stitching-protocol.md)
 - [production-hardening.md](./production-hardening.md)
 - [self-updating-rules.md](./self-updating-rules.md)
+- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
+- [../builder/how-to-build.md](../builder/how-to-build.md)
+- [../builder/how-to-test.md](../builder/how-to-test.md)
 - [../production/goal-workflow.md](../production/goal-workflow.md)
 - [../INDEX.md](../INDEX.md)
 - [../13-implementation-phases/README.md](../13-implementation-phases/README.md)
@@ -23,14 +26,15 @@
 ## Quick Start for a New Agent
 
 ```markdown
-0. Read ../CURRENT_STATE.md — current project state (real Medusa vs mock, routes, commands, gaps)
-1. Read this file + tracks.md + ../production/goal-workflow.md
-2. Read the phase file for your current phase (e.g. ../13-implementation-phases/phase-5.md)
-3. Read the specific section files your task touches (use "Related Files" headers)
-4. Build the goal (many commits, no per-commit E2E — contracts-first for schemas/APIs)
-5. Goal done: SCOPE=<area> pnpm verify:goal once (see goal-workflow SCOPE table)
-6. Patch CURRENT_STATE.md (if integration changed) + section file(s) per self-updating-rules.md
-7. Label PR "Ready for Integration" — stitching agent runs pnpm verify:full
+0. Read ../CURRENT_STATE.md — current project state
+1. Read ../BUILDER_GUIDE.md + builder/how-to-build.md + builder/how-to-test.md
+2. Read this file + tracks.md
+3. Read the phase file for your current phase (e.g. ../13-implementation-phases/phase-5.md)
+4. Read section files your task touches; if UI → ../builder/taste-and-design.md
+5. Build the goal (wiring checklist in builder/how-to-build.md; no per-commit E2E)
+6. Goal done: FLAVOUR=* SCOPE=* pnpm verify:goal (builder/how-to-test.md)
+7. Patch CURRENT_STATE + blueprint per self-updating-rules.md
+8. Label PR "Ready for Integration" — stitching agent runs pnpm verify:full
 ```
 
 This structure ensures agents always have the latest context without hallucinating or duplicating work.
