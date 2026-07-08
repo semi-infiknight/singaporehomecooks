@@ -13,7 +13,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | Layer | Status | Notes |
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings; listings search/filters + long-press edit/delete; Family Values trays; Expo `:8082` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Sign-up + 4-step onboarding; dashboard/orders (accept/decline)/earnings/compliance/listings; listings search/filters + long-press edit/delete; Family Values trays; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops | Customer marketplace (TestFlight parity discover); **full `/cook-portal`** (dashboard, orders, listings, compliance, earnings, separate cook session + tab bar); `/ops` (health/ledger/payouts/disputes); PWA via route handlers + manifest; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
@@ -87,7 +87,9 @@ Bootstrap creates auth identity **and** Medusa store customer profile (required 
 |-------|---------|
 | `POST /store/shc/auth/customer/login` | Medusa email/pass → JWT + user |
 | `POST /store/shc/auth/customer/register` | Register + auto-create store customer |
+| `POST /store/shc/auth/cook/register` | New cook sign-up → `shc_cook` + SHC JWT |
 | `POST /store/shc/auth/cook/login` | SHC JWT; verifies cook exists in `shc_cook` |
+| `PATCH /store/shc/auth/cook/profile` | Cook JWT; onboarding story, collection instructions, PDPA |
 | `GET /store/shc/auth/me` | Current user from Bearer token |
 
 Protected routes use `getCustomerId` / `getCookId` from JWT — **not** `x-shc-*` headers.
@@ -114,9 +116,12 @@ Medusa must use **explicit** `STORE_CORS` and `AUTH_CORS` origins (web + localho
 
 ```bash
 pnpm install          # writes Railway .env.local via postinstall
-pnpm verify:real-e2e  # smoke against Railway Medusa
+pnpm verify:real-e2e  # smoke against Railway Medusa (seed cook rose@)
+pnpm verify:cook-wiring  # new cook register → listing → customer order → accept/decline
 # optional: pnpm bootstrap:medusa  # refresh publishable key + demo customer on Railway
 ```
+
+**Cook ↔ customer wiring (`verify:cook-wiring`):** Registers a fresh cook, publishes a listing, confirms `GET /store/shc/products?cook_id=…` includes it, customer checkout, cook `GET /store/shc/orders?role=cook`, then accept + decline transitions. Falls back to in-process handler test when Railway has not yet deployed `POST /store/shc/auth/cook/register`.
 
 **`scripts/verify-real-e2e.ts` covers:**
 
@@ -143,7 +148,9 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 |------|---------|
 | `/store/shc/auth/customer/login` | POST |
 | `/store/shc/auth/customer/register` | POST |
+| `/store/shc/auth/cook/register` | POST |
 | `/store/shc/auth/cook/login` | POST |
+| `/store/shc/auth/cook/profile` | PATCH |
 | `/store/shc/auth/me` | GET |
 
 ### Store (`apps/medusa/src/api/store/shc/`)

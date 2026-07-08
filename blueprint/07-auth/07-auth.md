@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/compliance-pdpa.md](../production/compliance-pdpa.md)
 
-**Last Updated:** 2026-07-08 (Blueprint sync) — Web checkout/PDP auth guards; `ShcRequestError` in api-client; separate cook portal session; Railway explicit CORS. Cook: scrypt password_hash + SHC JWT. Customer: Medusa + ensureStoreCustomer.
+**Last Updated:** 2026-07-08 — Cook mobile sign-up (`POST /store/shc/auth/cook/register`) + onboarding profile (`PATCH /store/shc/auth/cook/profile`); web checkout/PDP auth guards; `ShcRequestError` in api-client; separate cook portal session; Railway explicit CORS. Cook: scrypt password_hash + SHC JWT. Customer: Medusa + ensureStoreCustomer.
 **Owner:** Backend Track
 
 ## Overview
@@ -26,11 +26,19 @@ Authentication and authorization are built on Medusa's native `auth_identity` sy
 ## Authentication Flows
 
 ### Customer & Cook Onboarding (Mobile)
+
+**Cook (implemented 2026-07-08):**
+1. Auth screen toggle: **Sign in** or **Create account** (`apps/mobile-cook/app/(shared)/auth`).
+2. Register → `POST /store/shc/auth/cook/register` (email, password, display_name, area, optional story) → creates `shc_cook` with scrypt `password_hash`, returns SHC JWT.
+3. New accounts route to **4-step onboarding** (`/(shared)/onboarding`): welcome → heritage story → collection instructions → PDPA consent.
+4. Finish → `PATCH /store/shc/auth/cook/profile` (story, collection_instructions, pdpa_consent) → cook dashboard.
+5. Returning logins skip onboarding if `hasSeenCookOnboarding()` in SecureStore.
+
+**Customer (target / partial):**
 1. User enters mobile number or email.
 2. OTP sent via Twilio / Singapore SMS provider (or magic link for email).
 3. On verification, `auth_identity` is created or linked.
-4. For cooks: additional step to create `shc_cook` record + upload compliance docs.
-5. Push notification token is registered on successful login (`expo_push_token` on `shc_cook`).
+4. Push notification token registered on successful login.
 
 ### Session & Token Management
 - Medusa issues JWT or session tokens.
@@ -42,7 +50,9 @@ Authentication and authorization are built on Medusa's native `auth_identity` sy
 Cooks must complete:
 - SFA + WSQ certs (shc_compliance_doc)
 
-**Current login impl (2026-06-20):** 
+**Current cook auth impl (2026-07-08):**
+- POST /store/shc/auth/cook/register → creates cook + issues JWT (rate-limited; duplicate email → 409).
+- PATCH /store/shc/auth/cook/profile → cook JWT; onboarding fields (story, collection_instructions, pdpa_consent).
 - POST /store/shc/auth/cook/login → verifies via `findByLoginEmail` + verifyCookPassword (scrypt) against password_hash (or dev fallback if not disabled).
 - Token issued with issueCookToken (HS256 JWT).
 - Seed populates login_email + password_hash for demo cooks.

@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-08 (blueprint sync) — listings GET/PATCH/DELETE on `/store/shc/listings/:id`; `@shc/api-client` `ShcRequestError` + `SHCErrorCode` propagation; web checkout/PDP auth guards documented in 07-auth.
+**Last Updated:** 2026-07-08 — cook register + profile onboarding routes; listings GET/PATCH/DELETE on `/store/shc/listings/:id`; `@shc/api-client` `ShcRequestError` + `SHCErrorCode` propagation; web checkout/PDP auth guards documented in 07-auth.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -22,7 +22,7 @@
 | Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
 | Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); persist name/price/description/heritage; compliance DB-backed; notifications via shc-notification; push wired |
 | Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
-| Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook (SHC JWT + scrypt hash on shc_cook) + /me |
+| Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook register/login/profile (SHC JWT + scrypt hash on shc_cook) + /me |
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
 | Media upload (MinIO/S3) | ✅ Full server upload (base64 -> backend putObject to MinIO with auth) + presigned mode + 400px WebP derivative via Sharp. POST /store/shc/upload supports mode=server or presigned. Integrated with listings. | done (core) |
 | Reviews | ✅ Implemented | GET/POST /orders/:id/review (customer post-collection only) |
@@ -43,7 +43,15 @@ Client methods: `getCookListings`, `createCookListing`, `updateCookListing`, `de
 
 ## Cook Auth Actor Routes
 
+| Route | Method | Auth | Purpose |
+|-------|--------|------|---------|
+| `/store/shc/auth/cook/register` | POST | Public | New cook sign-up → `shc_cook` + JWT |
+| `/store/shc/auth/cook/login` | POST | Public | Existing cook login |
+| `/store/shc/auth/cook/profile` | PATCH | Cook JWT | Onboarding/profile (story, collection_instructions, pdpa_consent) |
+
 Cook login uses SHC JWT (issueCookToken) verifying against `shc_cook.login_email` + `password_hash` (scrypt). Dev plaintext fallback behind `SHC_COOK_ALLOW_DEV_PLAINTEXT`. Customer uses Medusa auth + ensureStoreCustomer. See 07-auth.md + shc-auth.ts + seed.
+
+**Wiring verification:** `pnpm verify:cook-wiring` — Railway HTTP when register route deployed; falls back to in-process handler test (`wiring.integration.test.ts`) until deploy.
 
 ## SHC Store API (`/store/shc/*`)
 

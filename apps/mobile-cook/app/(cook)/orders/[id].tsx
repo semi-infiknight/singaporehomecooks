@@ -51,8 +51,11 @@ function CookOrderDisputeTrayContent({
   );
 }
 
-const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
-  paid: [{ to: 'accepted', label: 'Accept' }],
+const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string; variant?: 'primary' | 'outline' | 'danger' }[]> = {
+  paid: [
+    { to: 'accepted', label: 'Accept order' },
+    { to: 'cancelled', label: 'Decline order', variant: 'danger' },
+  ],
   accepted: [{ to: 'preparing', label: 'Prepare' }],
   preparing: [{ to: 'ready_for_collection', label: 'Ready' }],
   ready_for_collection: [{ to: 'collected', label: 'Collected' }],
@@ -109,16 +112,21 @@ export default function CookManageOrder() {
   };
 
   const confirmTransition = (to: SHCOrderStatus, label: string) => {
+    const isDecline = to === 'cancelled';
     openTray(
       { id: 'order-status-confirm', title: label, height: 'compact' },
       <SHCTrayAction
-        message={`Advance this order to “${label}”? The customer will see the update immediately.`}
-        primaryLabel={label}
+        message={
+          isDecline
+            ? 'Decline this order? The customer will be notified and the order will not be fulfilled.'
+            : `Advance this order to “${label}”? The customer will see the update immediately.`
+        }
+        primaryLabel={isDecline ? 'Decline' : label}
         onPrimary={() => {
           dismiss();
           doTransition(to);
         }}
-        secondaryLabel="Cancel"
+        secondaryLabel="Go back"
         onSecondary={dismiss}
         testID="order-status-confirm-tray"
       />
@@ -180,6 +188,7 @@ export default function CookManageOrder() {
             <GourmeatPrimaryButton
               key={a.to}
               label={transMut.isPending ? 'Updating…' : a.label}
+              variant={a.variant === 'danger' ? 'outline' : a.variant || 'primary'}
               onPress={() => confirmTransition(a.to, a.label)}
               disabled={transMut.isPending}
               testID={`cook-order-transition-${a.to}`}

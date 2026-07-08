@@ -57,6 +57,20 @@ export async function clearSession() {
 }
 
 export const login = (email: string, password: string) => client.loginCook(email, password);
+export const register = (
+  email: string,
+  password: string,
+  display_name: string,
+  area: string,
+  story?: string
+) => client.registerCook(email, password, display_name, area, story);
+export const updateCookProfile = (input: {
+  display_name?: string;
+  area?: string;
+  story?: string;
+  collection_instructions?: string;
+  pdpa_consent?: boolean;
+}) => client.updateCookProfile(input);
 export const getMe = () => client.getMe();
 export const getCurrentUser = () => client.getCurrentUser();
 export const logout = () => clearSession();

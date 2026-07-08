@@ -52,6 +52,7 @@ should_run_maestro_device() {
 
 should_run_api_smoke() {
   [[ "$FLAVOUR" == "polish" ]] && [[ "${TOUCHES_API:-}" != "1" ]] && return 1
+  [[ "$SCOPE" == "onboarding" ]] && return 0
   [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits)$ ]] && return 0
   [[ "${TOUCHES_API:-}" == "1" ]] && return 0
   return 1
@@ -120,6 +121,11 @@ scope_unit_tests() {
       pnpm --filter medusa test 2>/dev/null || echo "WARN: medusa tests skipped"
       ;;
     mobile|expo|auth|checkout|listings|orders|onboarding)
+      if [[ "$SCOPE" == "onboarding" && "${TOUCHES_API:-}" == "1" ]]; then
+        log "medusa typecheck + tests (onboarding TOUCHES_API)"
+        pnpm --filter medusa typecheck
+        pnpm --filter medusa test
+      fi
       bash scripts/verify-mobile-deps.sh
       if should_run_mobile_bundles; then
         bash scripts/verify-mobile-bundles.sh
@@ -253,8 +259,13 @@ tier_goal() {
   scope_maestro_yaml
   scope_maestro_device
   if should_run_api_smoke; then
-    log "API smoke"
-    pnpm verify:real-e2e
+    if [[ "$SCOPE" == "onboarding" ]]; then
+      log "cook-customer wiring (register → listing → order → accept/decline)"
+      pnpm verify:cook-wiring
+    else
+      log "API smoke"
+      pnpm verify:real-e2e
+    fi
   else
     log "skip API smoke (SCOPE=$SCOPE FLAVOUR=$FLAVOUR — set TOUCHES_API=1 if routes changed)"
   fi

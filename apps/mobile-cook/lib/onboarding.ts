@@ -10,3 +10,7 @@ export async function hasSeenCookOnboarding(): Promise<boolean> {
 export async function markCookOnboardingSeen(): Promise<void> {
   await SecureStore.setItemAsync(COOK_ONBOARDING_SEEN_KEY, 'true');
 }
+
+export async function clearCookOnboardingSeen(): Promise<void> {
+  await SecureStore.deleteItemAsync(COOK_ONBOARDING_SEEN_KEY);
+}

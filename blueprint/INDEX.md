@@ -11,6 +11,10 @@
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
 
+## Progress Update (2026-07-08 — Cook sign-up + onboarding wiring)
+
+Cook mobile app: sign-up (`POST /store/shc/auth/cook/register`), 4-step onboarding (`PATCH /store/shc/auth/cook/profile`), order detail accept/decline. Shared Medusa data — listings via `POST /store/shc/listings` appear on customer `GET /store/shc/products`; customer checkout orders surface on cook `GET /store/shc/orders?role=cook`. Verification: `pnpm verify:cook-wiring` (+ in-process fallback until Railway deploy).
+
 ## Progress Update (2026-07-08 — Agent brain)
 
 [README.md](./README.md): `blueprint/` is canonical agent brain (agents-only repo). [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) + [agent/](./agent/) protocols: [build-protocol.md](./agent/build-protocol.md), [design-taste.md](./agent/design-taste.md), [verify-protocol.md](./agent/verify-protocol.md). Root `AGENTS.md` points here; code comments reference blueprint.

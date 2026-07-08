@@ -41,7 +41,6 @@ describe("POST /store/shc/listings", () => {
         occasion_tags: ["Birthday"],
         ingredients: [{ name: "Prawn", quantity: 6, unit: "pcs" }],
         allergen_tiers: { tier1: ["Shellfish"], tier2: [], tier3: [] },
-        heritage_note: "Katong weekend special",
         image_url: "https://picsum.photos/seed/laksa/400/300",
       },
       scope: {

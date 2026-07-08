@@ -16,22 +16,49 @@ import { useAuth } from '../../../hooks/useAuth';
 import { hasSeenCookOnboarding } from '../../../lib/onboarding';
 
 export default function CookAuthScreen() {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
-  const [email, setEmail] = useState('rose@shc.local');
-  const [password, setPassword] = useState('cooksecret');
+  const displayNameRef = useRef<TextInput>(null);
+  const areaRef = useRef<TextInput>(null);
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [area, setArea] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const afterAuth = async (isNewAccount: boolean) => {
+    if (isNewAccount) {
+      router.replace('/(shared)/onboarding');
+      return;
+    }
+    const seenOnboarding = await hasSeenCookOnboarding();
+    router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
+  };
 
   const submit = async () => {
     if (busy) return;
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || password.length < 6) {
+      Alert.alert('Missing details', 'Enter a valid email and password (6+ characters).');
+      return;
+    }
+    if (mode === 'register' && (!displayName.trim() || !area.trim())) {
+      Alert.alert('Missing details', 'Add your kitchen name and HDB area for customers to find you.');
+      return;
+    }
     setBusy(true);
     try {
-      await login(email.trim(), password);
-      const seenOnboarding = await hasSeenCookOnboarding();
-      router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
+      if (mode === 'login') {
+        await login(trimmedEmail, password);
+        await afterAuth(false);
+      } else {
+        await register(trimmedEmail, password, displayName.trim(), area.trim());
+        await afterAuth(true);
+      }
     } catch (e) {
-      Alert.alert('Sign in failed', (e as Error).message);
+      Alert.alert(mode === 'login' ? 'Sign in failed' : 'Sign up failed', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -48,7 +75,38 @@ export default function CookAuthScreen() {
         bounces={false}
       >
         <Text style={styles.title}>SHC Cook Portal</Text>
-        <Text style={styles.subtitle}>Sign in to manage listings, orders, and earnings.</Text>
+        <Text style={styles.subtitle}>
+          {mode === 'login'
+            ? 'Sign in to manage listings, orders, and earnings.'
+            : 'Create your home kitchen account — list dishes customers can book.'}
+        </Text>
+
+        {mode === 'register' && (
+          <>
+            <TextInput
+              ref={displayNameRef}
+              value={displayName}
+              onChangeText={setDisplayName}
+              placeholder="Kitchen / display name (e.g. Auntie Mei)"
+              placeholderTextColor={shcColors.textLight}
+              style={styles.input}
+              testID="auth-display-name-input"
+              returnKeyType="next"
+              onSubmitEditing={() => areaRef.current?.focus()}
+            />
+            <TextInput
+              ref={areaRef}
+              value={area}
+              onChangeText={setArea}
+              placeholder="HDB area (e.g. Tampines, Bedok)"
+              placeholderTextColor={shcColors.textLight}
+              style={styles.input}
+              testID="auth-area-input"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+            />
+          </>
+        )}
 
         <TextInput
           value={email}
@@ -60,7 +118,7 @@ export default function CookAuthScreen() {
           returnKeyType="next"
           blurOnSubmit={false}
           onSubmitEditing={() => passwordRef.current?.focus()}
-          placeholder="Cook email"
+          placeholder="Email"
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-email-input"
@@ -70,10 +128,10 @@ export default function CookAuthScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          textContentType="password"
+          textContentType={mode === 'register' ? 'newPassword' : 'password'}
           returnKeyType="go"
           onSubmitEditing={submit}
-          placeholder="Password"
+          placeholder="Password (6+ characters)"
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="auth-password-input"
@@ -82,14 +140,32 @@ export default function CookAuthScreen() {
         <Pressable
           onPress={submit}
           disabled={busy}
-          style={({ pressed }) => [styles.submitBtn, pressed && !busy && styles.submitBtnPressed, busy && styles.submitBtnDisabled]}
+          style={({ pressed }) => [
+            styles.submitBtn,
+            pressed && !busy && styles.submitBtnPressed,
+            busy && styles.submitBtnDisabled,
+          ]}
           testID="auth-submit-btn"
           accessibilityRole="button"
         >
-          <Text style={styles.submitBtnText}>{busy ? 'Please wait…' : 'Sign in as cook'}</Text>
+          <Text style={styles.submitBtnText}>
+            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in as cook' : 'Create cook account'}
+          </Text>
         </Pressable>
 
-        <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret</Text>
+        <Pressable
+          onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
+          style={styles.modeToggle}
+          testID="auth-mode-toggle"
+        >
+          <Text style={styles.modeToggleText}>
+            {mode === 'login' ? 'New home cook? Create an account' : 'Have an account? Sign in'}
+          </Text>
+        </Pressable>
+
+        {mode === 'login' && (
+          <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret</Text>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -127,5 +203,7 @@ const styles = StyleSheet.create({
   submitBtnPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
-  demoHint: { textAlign: 'center', marginTop: shcSpacing.lg, fontSize: 11, color: shcColors.textLight },
+  modeToggle: { marginTop: shcSpacing.lg, paddingVertical: shcSpacing.sm },
+  modeToggleText: { textAlign: 'center', fontSize: 14, fontWeight: '600', color: shcColors.primary },
+  demoHint: { textAlign: 'center', marginTop: shcSpacing.md, fontSize: 11, color: shcColors.textLight },
 });

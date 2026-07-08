@@ -4,9 +4,11 @@ import {
   getCurrentUser,
   hydrateSession,
   login as apiLogin,
+  register as apiRegister,
   logout as apiLogout,
   persistSession,
 } from '../lib/api-client';
+import { clearCookOnboardingSeen } from '../lib/onboarding';
 
 type CurrentUser = ReturnType<typeof getCurrentUser>;
 
@@ -36,10 +38,22 @@ export function useAuth() {
     return u;
   }, []);
 
+  const register = useCallback(
+    async (email: string, password: string, display_name: string, area: string, story?: string) => {
+      const { token, user: u } = await apiRegister(email, password, display_name, area, story);
+      await persistSession(token, u);
+      await clearCookOnboardingSeen();
+      setUser(u);
+      if (u?.id) scheduleCookPushRegistration(u.id);
+      return u;
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     await clearSession();
     setUser(null);
   }, []);
 
-  return { user, loading, login, logout, isAuthenticated: !!user };
+  return { user, loading, login, register, logout, isAuthenticated: !!user };
 }

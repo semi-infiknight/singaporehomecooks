@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-08 (Blueprint sync) — listings edit/delete + search/filters; Family Values trays; iOS TestFlight verified; Maestro tray flows (`checkout-allergen-tray`, `listing-tray`).
+**Last Updated:** 2026-07-08 — cook sign-up + 4-step onboarding; order detail accept/decline; listings edit/delete + search/filters; Family Values trays; Maestro `onboarding.yaml` covers register flow.
 **Owner:** Mobile Track
 
 ## Overview
@@ -96,8 +96,10 @@ apps/mobile-cook/app/
 - **Order Tracking:** Status, chat, collection instructions (post-payment), post-collection review form.
 
 ### Cook Flow
+- **Auth:** Login or **Create account** (email, password, kitchen name, HDB area) → `registerCook` API.
+- **Onboarding (new cooks):** Welcome → heritage story → collection instructions → PDPA consent → dashboard.
 - **Dashboard:** Earnings hero, photo bento quick actions (vector icons), collaboration board.
-- **Orders / Earnings:** `SHCCookPageHero` + order cards with state-machine actions.
+- **Orders / Earnings:** `SHCCookPageHero` + order cards; order detail **Accept** (`paid`→`accepted`) and **Decline** (`paid`→`cancelled`).
 - **Listings:** Multi-step wizard with photo tips, AI calorie stub; search + filter hero; long-press edit/delete (PATCH/DELETE `/store/shc/listings/:id`); Family Values trays for confirm flows.
 - **Compliance:** Document upload cards persist SFA/WSQ references through Medusa `shc_compliance_doc` for admin review.
 

@@ -92,6 +92,35 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return data;
     },
 
+    async registerCook(
+      email: string,
+      password: string,
+      display_name: string,
+      area: string,
+      story?: string
+    ) {
+      const data = await request<{ token: string; user: ShcUser }>("/store/shc/auth/cook/register", {
+        method: "POST",
+        body: JSON.stringify({ email, password, display_name, area, story }),
+      });
+      config.setAccessToken?.(data.token);
+      cachedUser = data.user;
+      return data;
+    },
+
+    async updateCookProfile(input: {
+      display_name?: string;
+      area?: string;
+      story?: string;
+      collection_instructions?: string;
+      pdpa_consent?: boolean;
+    }) {
+      return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
+    },
+
     async getMe() {
       const data = await request<{ user: ShcUser }>("/store/shc/auth/me", { method: "GET" });
       cachedUser = data.user;
