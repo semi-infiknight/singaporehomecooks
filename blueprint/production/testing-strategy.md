@@ -7,34 +7,29 @@
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-07-08 — Tiered verification policy: targeted tests on normal commits, full E2E only at goal completion / stitch. See `.cursor/rules/testing-tiers.mdc` + `scripts/verify-tier.sh`.
+**Last Updated:** 2026-07-08 — Batch build / batch verify: zero tests during goal WIP, one `SCOPE=* verify:goal` at end.
 **Owners:** Infra Track (backend & CI), Mobile Track (E2E & Maestro)
 
-## Tiered verification (agents + humans)
+## Batch build, batch verify
 
-**Problem:** Running full Maestro tours + `verify:real-e2e` on every incremental commit (e.g. Family Values sub-commits) wastes 30–60 min and hits live Railway with throwaway orders.
+**Taste:** During a goal (e.g. Family Values trays), ship many commits with **no tests**. Verify **once** when the goal is done.
 
-**Policy:** Match test depth to change scope.
+| Phase | Commits | Tests |
+|-------|---------|-------|
+| **Build** | All trays, screens, web parity | **None** (optional `FILTER=@shc/ui pnpm verify:wip` ~30s) |
+| **Verify** | Goal complete | `SCOPE=tray pnpm verify:goal` — one pass |
+| **Ship** | Milestone | `pnpm verify:full` |
 
-| Tier | When | Command |
-|------|------|---------|
-| 0 quick | Every commit; tiny predictable fixes | `bash scripts/verify-tier.sh quick` |
-| 1 area | Normal change — affected surface only | `SCOPE=ui\|api\|web\|mobile bash scripts/verify-tier.sh area` |
-| 2 goal | Multi-file goal **fully done** | `bash scripts/verify-tier.sh goal` |
-| 3 stitch | Goal + device UI proof (Metro running) | `SCOPE=tray bash scripts/verify-tier.sh stitch` |
-| 4 full | Milestone / pre-TestFlight / pre-ship | `bash scripts/verify-tier.sh full` |
+| Tier | Command | When |
+|------|---------|------|
+| wip | `pnpm verify:wip` | Mid-goal — skip by default |
+| goal | `SCOPE=tray pnpm verify:goal` | Goal done — typecheck + unit + maestro + flows |
+| full | `pnpm verify:full` | Pre-TestFlight / stitch |
+| quick | `pnpm verify:quick` | Small fix outside a goal |
 
-**Skip allowed:** blueprint-only, comments, single-line fixes when typecheck already green.
+**`verify:goal` bundles** (by SCOPE): scoped typecheck, unit tests, Maestro YAML validate, device flows (if Metro up). API smoke only for `SCOPE=api` or `TOUCHES_API=1`.
 
-**Maestro flow map (targeted):**
-
-| Flow | File | Run when |
-|------|------|----------|
-| Checkout allergen tray | `mobile-customer/e2e/checkout-allergen-tray.yaml` | Checkout / tray changes |
-| Listing tray | `mobile-cook/e2e/listing-tray.yaml` | Cook listings / tray |
-| Order tray | `mobile-customer/e2e/order-tray.yaml` | Order review / dispute trays |
-| Auth smoke | `customer-auth.yaml`, `cook-auth.yaml` | Auth changes |
-| Full tour | `customer-full-tour.yaml`, `cook-full-tour.yaml` | Tier 4 only |
+**Maestro at goal verify (SCOPE=tray):** `checkout-allergen-tray.yaml`, `listing-tray.yaml`, `order-tray.yaml`. Full tour: `verify:full` only.
 
 ## Testing Pyramid
 

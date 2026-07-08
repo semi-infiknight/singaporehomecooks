@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Goal-close audit only — do not run on every incremental commit.
-# Normal tray/UI work: SCOPE=ui bash scripts/verify-tier.sh area
-# Goal done: bash scripts/verify-tier.sh goal
+# Goal-close only. During build: no tests. When done: SCOPE=tray pnpm verify:goal
 # Family Values UI verification gate — alert grep, shared-press audit, builds.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
