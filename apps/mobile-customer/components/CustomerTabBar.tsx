@@ -69,6 +69,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
           bottom: 0,
           backgroundColor: 'transparent',
           paddingBottom: Math.max(insets.bottom, 8),
+          zIndex: 20,
         }}
       >
         <GourmeatStickyCartBar
@@ -92,6 +93,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         bottom: 0,
         backgroundColor: 'transparent',
         paddingBottom: Math.max(insets.bottom, 8),
+        zIndex: 20,
       }}
     >
       {showCartBar && (

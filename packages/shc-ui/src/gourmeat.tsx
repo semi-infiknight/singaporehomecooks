@@ -2,7 +2,9 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+
+export { gourmeatLayout };
 import { SHCIcon, type SHCTabIconKey } from './icons';
 import { SHCFoodImage } from './visuals';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
@@ -280,19 +282,21 @@ export function GourmeatDiscountBadge({ percent, testID }: { percent: number; te
 
 export function GourmeatAddButton({ onPress, testID }: { onPress?: () => void; testID?: string }) {
   return (
-    <Pressable
-      onPress={onPress}
-      testID={testID}
-      style={({ pressed }) => ({
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-      })}
-    >
-      <Text style={{ color: gourmeatColors.onPrimary, fontSize: 18, fontWeight: '700', lineHeight: 20 }}>+</Text>
+    <Pressable onPress={onPress} testID={testID} accessibilityRole="button">
+      {({ pressed }) => (
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: gourmeatColors.onPrimary, fontSize: 18, fontWeight: '700', lineHeight: 20 }}>+</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -539,70 +543,74 @@ export function GourmeatStickyCartBar({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={`View cart, ${countLabel}, ${totalLabel}`}
-      style={({ pressed }) => ({
-        marginHorizontal: shcSpacing.sm,
-        marginBottom: shcSpacing.sm,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
-        borderRadius: gourmeatRadii.lg,
-        borderWidth: 3,
-        borderColor: gourmeatColors.borderDark,
-        paddingVertical: shcSpacing.md,
-        paddingHorizontal: shcSpacing.md,
-        minHeight: 58,
-        ...gourmeatShadows.nav,
-      })}
+      style={{ marginHorizontal: shcSpacing.sm, marginBottom: shcSpacing.sm }}
     >
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, minWidth: 0 }}>
+      {({ pressed }) => (
         <View
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: gourmeatColors.onPrimary,
-            borderWidth: 2,
-            borderColor: gourmeatColors.borderDark,
+            flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
+            borderRadius: gourmeatRadii.lg,
+            borderWidth: 3,
+            borderColor: gourmeatColors.borderDark,
+            paddingVertical: shcSpacing.md,
+            paddingHorizontal: shcSpacing.md,
+            minHeight: 58,
+            ...gourmeatShadows.nav,
           }}
         >
-          <SHCIcon name="cart" size={20} color={gourmeatColors.primary} active />
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, minWidth: 0 }}>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: gourmeatColors.onPrimary,
+                borderWidth: 2,
+                borderColor: gourmeatColors.borderDark,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <SHCIcon name="cart" size={20} color={gourmeatColors.primary} active />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: gourmeatColors.onPrimary }} numberOfLines={1}>
+                {countLabel}
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.95)', marginTop: 1 }} numberOfLines={1}>
+                View cart · PayNow →
+              </Text>
+              {previewName ? (
+                <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)', marginTop: 2 }} numberOfLines={1}>
+                  {previewName}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View
+              style={{
+                minWidth: 26,
+                height: 26,
+                borderRadius: 13,
+                backgroundColor: gourmeatColors.accent,
+                borderWidth: 2,
+                borderColor: gourmeatColors.borderDark,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 5,
+              }}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.text }}>{badge}</Text>
+            </View>
+            <Text style={{ fontSize: 17, fontWeight: '900', color: gourmeatColors.onPrimary }}>{totalLabel}</Text>
+            <Text style={{ fontSize: 20, fontWeight: '900', color: gourmeatColors.onPrimary }}>›</Text>
+          </View>
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ fontSize: 15, fontWeight: '900', color: gourmeatColors.onPrimary }} numberOfLines={1}>
-            {countLabel}
-          </Text>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.95)', marginTop: 1 }} numberOfLines={1}>
-            View cart · PayNow →
-          </Text>
-          {previewName ? (
-            <Text style={{ fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.85)', marginTop: 2 }} numberOfLines={1}>
-              {previewName}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View
-          style={{
-            minWidth: 26,
-            height: 26,
-            borderRadius: 13,
-            backgroundColor: gourmeatColors.accent,
-            borderWidth: 2,
-            borderColor: gourmeatColors.borderDark,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingHorizontal: 5,
-          }}
-        >
-          <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.text }}>{badge}</Text>
-        </View>
-        <Text style={{ fontSize: 17, fontWeight: '900', color: gourmeatColors.onPrimary }}>{totalLabel}</Text>
-        <Text style={{ fontSize: 20, fontWeight: '900', color: gourmeatColors.onPrimary }}>›</Text>
-      </View>
+      )}
     </Pressable>
   );
 }
@@ -623,29 +631,32 @@ export function GourmeatPayButton({
   testID?: string;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
-      testID={testID}
-      style={({ pressed }) => ({
-        backgroundColor: disabled ? gourmeatColors.textMuted : pressed ? gourmeatColors.payPressed : gourmeatColors.pay,
-        borderRadius: gourmeatRadii.md,
-        paddingVertical: 16,
-        paddingHorizontal: shcSpacing.lg,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: shcSpacing.sm,
-        opacity: disabled ? 0.6 : 1,
-        ...gourmeatShadows.soft,
-      })}
-    >
-      <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>
-        {loading ? 'Processing…' : label}
-      </Text>
-      {amount && !loading ? (
-        <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>{amount}</Text>
-      ) : null}
+    <Pressable onPress={onPress} disabled={disabled || loading} testID={testID} accessibilityRole="button">
+      {({ pressed }) => (
+        <View
+          style={{
+            backgroundColor: disabled ? gourmeatColors.textMuted : pressed ? gourmeatColors.payPressed : gourmeatColors.pay,
+            borderRadius: gourmeatRadii.md,
+            paddingVertical: 16,
+            paddingHorizontal: shcSpacing.lg,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: shcSpacing.sm,
+            opacity: disabled ? 0.6 : 1,
+            minHeight: 52,
+            alignSelf: 'stretch',
+            ...gourmeatShadows.soft,
+          }}
+        >
+          <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>
+            {loading ? 'Processing…' : label}
+          </Text>
+          {amount && !loading ? (
+            <Text style={{ fontSize: 16, fontWeight: '800', color: gourmeatColors.onDark }}>{amount}</Text>
+          ) : null}
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -891,32 +902,35 @@ export function GourmeatPrimaryButton({
 }) {
   const isOutline = variant === 'outline';
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
-      testID={testID}
-      style={({ pressed }) => ({
-        backgroundColor: isOutline
-          ? gourmeatColors.surface
-          : disabled
-            ? gourmeatColors.textMuted
-            : pressed
-              ? gourmeatColors.primaryDark
-              : gourmeatColors.primary,
-        borderRadius: gourmeatRadii.md,
-        paddingVertical: 14,
-        paddingHorizontal: shcSpacing.lg,
-        alignItems: 'center',
-        borderWidth: isOutline ? 1 : 0,
-        borderColor: gourmeatColors.border,
-        opacity: disabled ? 0.6 : 1,
-        ...gourmeatShadows.soft,
-        ...(style || {}),
-      })}
-    >
-      <Text style={{ fontSize: 15, fontWeight: '800', color: isOutline ? gourmeatColors.text : gourmeatColors.onPrimary }}>
-        {loading ? 'Please wait…' : label}
-      </Text>
+    <Pressable onPress={onPress} disabled={disabled || loading} testID={testID} accessibilityRole="button">
+      {({ pressed }) => (
+        <View
+          style={{
+            backgroundColor: isOutline
+              ? gourmeatColors.surface
+              : disabled
+                ? gourmeatColors.textMuted
+                : pressed
+                  ? gourmeatColors.primaryDark
+                  : gourmeatColors.primary,
+            borderRadius: gourmeatRadii.md,
+            paddingVertical: 14,
+            paddingHorizontal: shcSpacing.lg,
+            alignItems: 'center',
+            borderWidth: isOutline ? 1 : 0,
+            borderColor: gourmeatColors.border,
+            opacity: disabled ? 0.6 : 1,
+            minHeight: 48,
+            alignSelf: 'stretch',
+            ...gourmeatShadows.soft,
+            ...(style || {}),
+          }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: '800', color: isOutline ? gourmeatColors.text : gourmeatColors.onPrimary }}>
+            {loading ? 'Please wait…' : label}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -976,17 +990,24 @@ export function GourmeatProductStickyBar({
         testID="add-to-cart-btn"
         accessibilityRole="button"
         hitSlop={12}
-        style={({ pressed }) => ({
-          backgroundColor: disabled ? gourmeatColors.textMuted : pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
-          borderRadius: gourmeatRadii.md,
-          paddingVertical: 12,
-          paddingHorizontal: shcSpacing.md,
-          opacity: disabled ? 0.6 : 1,
-        })}
       >
-        <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.onPrimary }}>
-          {loading ? 'Adding…' : 'Add'}
-        </Text>
+        {({ pressed }) => (
+          <View
+            style={{
+              backgroundColor: disabled ? gourmeatColors.textMuted : pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
+              borderRadius: gourmeatRadii.md,
+              paddingVertical: 12,
+              paddingHorizontal: shcSpacing.md,
+              opacity: disabled ? 0.6 : 1,
+              minWidth: 72,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.onPrimary }}>
+              {loading ? 'Adding…' : 'Add'}
+            </Text>
+          </View>
+        )}
       </Pressable>
     </View>
   );

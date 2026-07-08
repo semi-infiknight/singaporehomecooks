@@ -48,6 +48,8 @@ const pinnedModules = [
   'react-native-gesture-handler',
   'react-native-safe-area-context',
   'react-native-screens',
+  'react-native-css-interop',
+  'nativewind',
 ];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
@@ -76,7 +78,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v16-fusebox-shim';
+config.cacheVersion = 'mobile-customer-v19-button-surfaces';
 
 const expoLocationRoot = resolvePackageRoot('expo-location');
 const expoLocationEntry = expoLocationRoot
@@ -108,6 +110,11 @@ function resolveFromApp(name) {
   }
 }
 
+function matchesPinnedModule(name) {
+  if (typeof name !== 'string') return false;
+  return pinnedModules.some((mod) => name === mod || name.startsWith(`${mod}/`));
+}
+
 const fuseboxShim = path.join(projectRoot, 'fusebox-shim.js');
 
 const defaultResolveRequest = config.resolver.resolveRequest;
@@ -118,12 +125,7 @@ config.resolver.resolveRequest = (context, realModuleName, platform, moduleName)
   ) {
     return { type: 'sourceFile', filePath: fuseboxShim };
   }
-  if (
-    realModuleName === 'react' ||
-    realModuleName.startsWith('react/') ||
-    realModuleName === 'react-native' ||
-    realModuleName.startsWith('react-native/')
-  ) {
+  if (matchesPinnedModule(realModuleName)) {
     const resolved = resolveFromApp(realModuleName);
     if (resolved) return resolved;
   }

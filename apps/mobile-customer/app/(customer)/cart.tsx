@@ -11,6 +11,8 @@ import {
   GourmeatPayButton,
   GourmeatEmptyState,
   gourmeatColors,
+  gourmeatLayout,
+  gourmeatShadows,
   shcSpacing,
   SHCFadeIn,
   DirectionalTabScreen,
@@ -52,7 +54,13 @@ export default function Cart() {
     <View style={styles.screen} testID="cart-screen">
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: hasItems ? 100 : 80 }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: insets.top + shcSpacing.md,
+            paddingBottom: hasItems ? gourmeatLayout.tabBarClearance + 88 : gourmeatLayout.tabBarClearance + shcSpacing.lg,
+          },
+        ]}
       >
         <GourmeatScreenHeader
           title="Your Cart"
@@ -106,7 +114,12 @@ export default function Cart() {
       </ScrollView>
 
       {hasItems && (
-        <View style={{ paddingHorizontal: shcSpacing.md, paddingBottom: Math.max(insets.bottom, shcSpacing.md) }}>
+        <View
+          style={[
+            styles.checkoutFooter,
+            { bottom: gourmeatLayout.tabBarClearance + Math.max(insets.bottom, shcSpacing.sm) },
+          ]}
+        >
           <GourmeatPayButton label="Checkout" amount={`S$${total.toFixed(2)}`} onPress={goCheckout} testID="proceed-checkout" />
         </View>
       )}
@@ -118,6 +131,18 @@ export default function Cart() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
+  checkoutFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    paddingHorizontal: shcSpacing.md,
+    paddingVertical: shcSpacing.sm,
+    backgroundColor: gourmeatColors.surface,
+    borderTopWidth: 1,
+    borderTopColor: gourmeatColors.border,
+    zIndex: 12,
+    ...gourmeatShadows.soft,
+  },
   loadingInline: { padding: shcSpacing.lg, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: shcSpacing.md },
   summaryRow: { flexDirection: 'row', marginBottom: shcSpacing.md },

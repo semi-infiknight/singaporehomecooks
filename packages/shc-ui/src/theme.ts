@@ -170,10 +170,19 @@ export const gourmeatShadows = {
   },
 };
 
+/** Bottom inset for content/CTAs above the floating customer tab bar (+ optional sticky cart). */
+export const gourmeatLayout = {
+  /** Floating nav pill + margins (no sticky cart). */
+  tabBarClearance: 88,
+  /** Sticky cart bar + floating nav + margins. */
+  tabBarWithCartClearance: 156,
+};
+
 export const gourmeatTheme = {
   colors: gourmeatColors,
   radii: gourmeatRadii,
   shadows: gourmeatShadows,
   spacing: shcSpacing,
   typography: shcTypography,
+  layout: gourmeatLayout,
 };
