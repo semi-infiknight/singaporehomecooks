@@ -48,6 +48,8 @@ const pinnedModules = [
   'react-native-svg',
   'react-native-maps',
   'react-native-worklets',
+  'react-native-css-interop',
+  'nativewind',
   'moti',
   '@shopify/react-native-skia',
 ];
@@ -77,7 +79,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook-v11-fusebox-shim2';
+config.cacheVersion = 'mobile-cook-v13-onboarding-flow';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;
@@ -102,6 +104,11 @@ function resolveFromApp(name) {
   }
 }
 
+function matchesPinnedModule(name) {
+  if (typeof name !== 'string') return false;
+  return pinnedModules.some((mod) => name === mod || name.startsWith(`${mod}/`));
+}
+
 const fuseboxShim = path.join(projectRoot, 'fusebox-shim.js');
 
 const defaultResolveRequest = config.resolver.resolveRequest;
@@ -112,12 +119,7 @@ config.resolver.resolveRequest = (context, realModuleName, platform, moduleName)
   ) {
     return { type: 'sourceFile', filePath: fuseboxShim };
   }
-  if (
-    realModuleName === 'react' ||
-    realModuleName.startsWith('react/') ||
-    realModuleName === 'react-native' ||
-    realModuleName.startsWith('react-native/')
-  ) {
+  if (matchesPinnedModule(realModuleName)) {
     const resolved = resolveFromApp(realModuleName);
     if (resolved) return resolved;
   }

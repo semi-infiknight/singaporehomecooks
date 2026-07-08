@@ -1,155 +1,131 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  SHCCard,
-  SHCIcon,
-  SHCFoodImage,
-  shcColors,
-  shcSpacing,
-  shcBorders,
-  shcRadii,
-  shcShadows,
-  type SHCIconKey,
-} from '@shc/ui';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { SHCOnboardingFlowScreen, shcColors, shcSpacing } from '@shc/ui';
+import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES } from '@shc/utils';
+import type { SHCIconKey } from '@shc/ui';
 
-const TRUST_LAYERS: { iconKey: SHCIconKey; title: string; body: string }[] = [
+const TRUST_LAYERS: { iconKey: SHCIconKey; title: string; body: string; imageUri: string }[] = [
   {
     iconKey: 'compliance',
     title: 'Kitchen transparency',
     body: 'Cooks share dish demos and kitchen intros so you see the real HDB workspace before you order.',
+    imageUri: BENTO_ACTION_IMAGES.compliance,
   },
   {
     iconKey: 'leaf',
     title: 'Tasting portions',
     body: 'New cooks offer S$3–5 tasting sizes — try once before committing to a full occasion order.',
+    imageUri: PROMO_BANNER_IMAGES.newCook,
   },
   {
     iconKey: 'credits',
     title: 'Clear receipts',
     body: 'Itemised totals, platform fee, and cook earnings shown at every step. Corporate tax invoices supported.',
+    imageUri: BENTO_ACTION_IMAGES.credits,
   },
   {
     iconKey: 'orders',
     title: 'Occasion guarantee',
     body: 'Orders over S$150: tiered platform-backed refund (up to 50%, capped at S$100) for verified quality issues.',
+    imageUri: BENTO_ACTION_IMAGES.orders,
   },
   {
     iconKey: 'discover',
     title: 'Safe HDB collection',
     body: 'Exact block and unit released 2h before your slot. Collection-only — no delivery, no stranger at your door.',
+    imageUri: PROMO_BANNER_IMAGES.family,
   },
 ];
 
+const POLICY_STEP = {
+  title: 'Allergens, refunds & privacy',
+  subtitle: 'Plain-language policies — no fine print.',
+  imageUri: BENTO_ACTION_IMAGES.listings,
+  body: [
+    'Every dish lists Tier 1 allergens. You acknowledge them before checkout.',
+    '72+ hours before collection → full refund · 24–72h → 50% · Under 24h → no refund.',
+    'PDPA consent at checkout. Cook addresses hidden until 2h before your slot.',
+  ],
+};
+
+const FINAL_STEP = {
+  title: 'Ready to discover?',
+  subtitle: 'Heritage home cooks across Singapore — Hari Raya, CNY, birthdays, and everyday meals.',
+  imageUri: PROMO_BANNER_IMAGES.hariRaya,
+};
+
+const TOTAL_STEPS = TRUST_LAYERS.length + 2;
+
 export default function TrustAndSafetyScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
+  const [step, setStep] = useState(0);
+
+  const isPolicy = step === TRUST_LAYERS.length;
+  const isFinal = step === TRUST_LAYERS.length + 1;
+
+  const goNext = () => {
+    if (isFinal) {
+      router.replace('/(customer)');
+      return;
+    }
+    setStep((s) => s + 1);
+  };
+
+  const skipToBrowse = () => router.replace('/(customer)');
+
+  let imageUri = TRUST_LAYERS[step]?.imageUri ?? FINAL_STEP.imageUri;
+  let title = TRUST_LAYERS[step]?.title ?? '';
+  let subtitle = TRUST_LAYERS[step]?.body ?? '';
+
+  if (isPolicy) {
+    imageUri = POLICY_STEP.imageUri;
+    title = POLICY_STEP.title;
+    subtitle = POLICY_STEP.subtitle;
+  } else if (isFinal) {
+    imageUri = FINAL_STEP.imageUri;
+    title = FINAL_STEP.title;
+    subtitle = FINAL_STEP.subtitle;
+  }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: insets.bottom + 32 }]}
-      testID="trust-safety-screen"
+    <SHCOnboardingFlowScreen
+      imageUri={imageUri}
+      title={title}
+      subtitle={subtitle}
+      stepIndex={step}
+      totalSteps={TOTAL_STEPS}
+      onNext={goNext}
+      onSkip={!isFinal ? skipToBrowse : undefined}
+      nextLabel={isFinal ? 'Browse dishes' : 'Continue'}
+      nextTestID={isFinal ? 'trust-browse-cta' : 'trust-onboarding-next-btn'}
+      screenTestID="trust-safety-screen"
     >
-      <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={120} rounded={shcRadii.lg} />
+      {isPolicy && (
+        <View style={styles.policyList}>
+          {POLICY_STEP.body.map((line) => (
+            <Text key={line} style={styles.policyLine}>
+              · {line}
+            </Text>
+          ))}
+        </View>
+      )}
 
-      <Text style={styles.title}>Trust & Safety</Text>
-      <Text style={styles.subtitle}>
-        Five layers of protection for customers and cooks — built for Singapore home kitchens, not generic delivery.
-      </Text>
-
-      {TRUST_LAYERS.map((layer) => (
-        <SHCCard key={layer.title} style={styles.layerCard}>
-          <View style={styles.layerRow}>
-            <View style={styles.layerIcon}>
-              <SHCIcon name={layer.iconKey} size={22} color={shcColors.primary} active />
-            </View>
-            <View style={styles.layerCopy}>
-              <Text style={styles.layerTitle}>{layer.title}</Text>
-              <Text style={styles.layerBody}>{layer.body}</Text>
-            </View>
-          </View>
-        </SHCCard>
-      ))}
-
-      <SHCCard variant="bento-peach" style={styles.policyCard}>
-        <Text style={styles.policyTitle}>Allergen disclosure</Text>
-        <Text style={styles.policyBody}>
-          Every dish lists Tier 1 allergens. You must acknowledge them before checkout. Home kitchens carry cross-contamination
-          risk — we state that plainly, not in fine print.
-        </Text>
-      </SHCCard>
-
-      <SHCCard style={styles.policyCard}>
-        <Text style={styles.policyTitle}>Cancellation</Text>
-        <Text style={styles.policyLine}>· 72+ hours before collection → full refund</Text>
-        <Text style={styles.policyLine}>· 24–72 hours → 50% refund</Text>
-        <Text style={styles.policyLine}>· Under 24 hours → no refund (food is prepped)</Text>
-      </SHCCard>
-
-      <SHCCard variant="bento-mint" style={styles.policyCard}>
-        <Text style={styles.policyTitle}>PDPA & collection privacy</Text>
-        <Text style={styles.policyBody}>
-          Consent captured at checkout. Cook addresses stay hidden until 2 hours before your slot. Request data deletion from
-          Profile any time.
-        </Text>
-      </SHCCard>
-
-      <Pressable
-        onPress={() => router.replace('/(customer)')}
-        style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-        testID="trust-browse-cta"
-        accessibilityRole="button"
-      >
-        <Text style={styles.ctaText}>Browse dishes</Text>
-      </Pressable>
-
-      <Pressable onPress={() => router.push('/(customer)/cook/auntie-rose-tampines' as any)} style={styles.secondaryCta}>
-        <Text style={styles.secondaryCtaText}>Meet Auntie Rose (Katong heritage cook) →</Text>
-      </Pressable>
-    </ScrollView>
+      {isFinal && (
+        <Pressable
+          onPress={() => router.push('/(customer)/cook/auntie-rose-tampines' as any)}
+          style={styles.secondaryCta}
+        >
+          <Text style={styles.secondaryCtaText}>Meet Auntie Rose (Katong heritage cook) →</Text>
+        </Pressable>
+      )}
+    </SHCOnboardingFlowScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
-  content: { paddingHorizontal: shcSpacing.md },
-  title: { fontSize: 26, fontWeight: '900', color: shcColors.text, marginTop: shcSpacing.md },
-  subtitle: { fontSize: 14, color: shcColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.md, lineHeight: 20 },
-  layerCard: { marginBottom: shcSpacing.sm },
-  layerRow: { flexDirection: 'row', gap: shcSpacing.sm },
-  layerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: shcColors.bentoMint,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  layerCopy: { flex: 1 },
-  layerTitle: { fontSize: 15, fontWeight: '800', color: shcColors.text },
-  layerBody: { fontSize: 13, color: shcColors.textLight, marginTop: 4, lineHeight: 18 },
-  policyCard: { marginBottom: shcSpacing.sm },
-  policyTitle: { fontSize: 15, fontWeight: '800', color: shcColors.text, marginBottom: 6 },
-  policyBody: { fontSize: 13, color: shcColors.textLight, lineHeight: 18 },
-  policyLine: { fontSize: 13, color: shcColors.textLight, marginTop: 4 },
-  cta: {
-    marginTop: shcSpacing.lg,
-    backgroundColor: shcColors.primary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    paddingVertical: shcSpacing.md,
-    alignItems: 'center',
-    minHeight: 52,
-    ...shcShadows.brutalSm,
-  },
-  ctaPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
-  ctaText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
-  secondaryCta: { marginTop: shcSpacing.md, paddingVertical: shcSpacing.sm, alignItems: 'center' },
-  secondaryCtaText: { color: shcColors.primary, fontWeight: '700', fontSize: 14 },
+  policyList: { gap: shcSpacing.sm },
+  policyLine: { fontSize: 15, color: shcColors.textLight, lineHeight: 22 },
+  secondaryCta: { marginTop: shcSpacing.sm, paddingVertical: shcSpacing.sm },
+  secondaryCtaText: { color: shcColors.primary, fontWeight: '700', fontSize: 15, textAlign: 'center' },
 });
