@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-04 — iOS TestFlight production verified (Customer #18, Cook #10); guard scripts + CI gates lock dependency/bundle invariants; new-device setup documented.
+**Last Updated:** 2026-07-08 (Blueprint sync) — listings edit/delete + search/filters; Family Values trays; iOS TestFlight verified; Maestro tray flows (`checkout-allergen-tray`, `listing-tray`).
 **Owner:** Mobile Track
 
 ## Overview
@@ -65,7 +65,7 @@ apps/mobile-customer/app/
 |---|---|---|
 | Dashboard | `dashboard` | `SHCCookPageHero`, photo bento quick actions, collaboration board |
 | Orders | `orders.tsx` | State-machine order cards |
-| Listings | `listings.tsx` | Listing wizard + cards |
+| Listings | `listings.tsx` | Listing wizard + cards; search/filters hero; long-press edit/delete |
 | Compliance | `compliance.tsx` | SFA/WSQ upload cards |
 
 **Hidden from tab bar**: `orders/[id]`, `earnings` (`SHCCookPageHero`).
@@ -98,7 +98,7 @@ apps/mobile-cook/app/
 ### Cook Flow
 - **Dashboard:** Earnings hero, photo bento quick actions (vector icons), collaboration board.
 - **Orders / Earnings:** `SHCCookPageHero` + order cards with state-machine actions.
-- **Listings:** Multi-step wizard with photo tips, AI calorie stub.
+- **Listings:** Multi-step wizard with photo tips, AI calorie stub; search + filter hero; long-press edit/delete (PATCH/DELETE `/store/shc/listings/:id`); Family Values trays for confirm flows.
 - **Compliance:** Document upload cards persist SFA/WSQ references through Medusa `shc_compliance_doc` for admin review.
 
 ### Shared Experiences
@@ -179,19 +179,16 @@ Prereqs: Node 22+, pnpm 11, Xcode, CocoaPods, EAS account (`pnpm dlx eas-cli log
 ## Multi-Agent Notes
 
 - **Mobile Track** owns `apps/mobile-customer`, `apps/mobile-cook`, and `packages/shc-ui`.
-- **Web parity** maintained via tri-platform sync skill — same discover layout (halal/light filter chips, proximity sort hint, promo rail), checkout stepper, search ADD, location picker (`/location`), heritage banner on profile, request-dish footer CTA, PWA install banner + service worker.
+- **Web parity** maintained via tri-platform sync skill — discover (halal/light chips, proximity hint, Zomato dish rails), checkout stepper + auth guard, search ADD, location picker (`/location`), heritage on profile, request-dish footer CTA, full `/cook-portal`, Family Values trays (`SHCTrayWeb`), PWA route handlers + install banner.
 - No direct HTTP in screens; all data via hooks + `@shc/api-client`.
 
-## Gaps (mobile-specific) — post full audit 2026-06-20
+## Gaps (mobile-specific) — post sync 2026-07-08
 
 | Gap | Notes |
 |---|---|
-| Web review UI | Mobile has it; web has form now (audit confirmed) |
-| iOS Maestro full tours | Android PASS; re-verify after rebuilds |
-| Saved dietary prefs | Persisted via SecureStore (mobile) / localStorage (web PWA) in `useDiscoverPrefs` (halal/light/maxCal) |
-| Web PWA icons | Branded assets from iOS app icon; run `pnpm verify:web-pwa` before deploy |
-| In-app notifications persistence | DB module + per-type limits + read state (mark all on open, unread badge/UI) | done |
-| Order items snapshot | Fixed (persisted + fallback for legacy) |
-| Media for listings | image_url support added to create + meta + shape |
+| iOS Maestro full tours | Android PASS; re-verify after native rebuilds |
+| Cook full Medusa auth actor | Hybrid SHC JWT + scrypt; full Medusa cook actor pending |
+| Real PayNow / PayU | Simulated; manual ops confirm |
+| Worker cron automation | Service on Railway; some jobs still manual (`weekly-payout.ts` sim) |
 
-**Web Parity (2026-06-19):** `apps/web` mirrors Zomato discover, `AppMobileTabBar`, `SearchResultsDropdown`, `HeritageStoryBanner`, `CheckoutStepper`, Lucide bento icons. Gap: review form on order detail.
+**Resolved since 2026-06-20:** web review UI, order items snapshot, notifications persistence, listings image_url, web cook portal, listings edit/delete, Family Values trays, checkout auth guard, PWA deploy pipeline.

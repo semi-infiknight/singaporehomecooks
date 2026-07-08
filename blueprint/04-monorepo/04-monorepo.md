@@ -8,7 +8,7 @@
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — split apps (mobile-customer/cook primary), packages/@shc/* (api-client real, shc-ui tri, types+rules), legacy mobile deprecated. Real wiring confirmed.
+**Last Updated:** 2026-07-08 (Blueprint sync) — split apps (mobile-customer/cook), web cook PWA portal, Family Values `@shc/ui`, medusa-only api-client with `ShcRequestError`, Railway scripts (`railway:ship`, `railway:wire`). Legacy `apps/mobile` deprecated.
 **Owner:** Infra Track
 
 ## Overview
@@ -28,14 +28,14 @@ SingaporeHomeCooks/
 │   │   ├── src/api/admin/shc/   # Custom Admin widgets & routes
 │   │   ├── src/workflows/       # Order state machine, payout, compliance workflows
 │   │   └── src/subscribers/     # Event-driven side effects (notifications, ledger)
-│   ├── mobile/                 # Expo SDK 51 + Expo Router v3 app
-│   │   ├── app/                 # File-based routing (customer/, cook/, shared/)
-│   │   ├── components/          # Screen-specific + shared UI
-│   │   ├── hooks/               # TanStack Query + domain hooks
-│   │   └── lib/                 # Thin wrapper → @shc/api-client + mock-service
-│   └── web/                    # Next.js web app (port 3001, Peach Comfort brand)
-│       ├── app/                 # App Router pages (marketplace, cook portal, checkout)
-│       └── lib/                 # Thin wrapper → @shc/api-client + mock-service
+│   ├── mobile-customer/        # Expo customer app (:8081)
+│   ├── mobile-cook/            # Expo cook app (:8082)
+│   ├── mobile/                 # DEPRECATED — use mobile-customer + mobile-cook
+│   ├── worker/                 # Railway cron / background jobs
+│   ├── minio/                  # Railway object storage service
+│   └── web/                    # Next.js PWA (port 3001, Family Values brand)
+│       ├── app/                 # Marketplace, /cook-portal, /ops, PWA route handlers
+│       └── lib/                 # @shc/api-client, cook-api-client, useAuth, useCookAuth
 ├── packages/
 │   ├── shc-types/              # Canonical Zod schemas, error codes, TypeScript interfaces
 │   │   └── src/                 # cook.schema.ts, order.schema.ts, api-contracts.ts, etc.
@@ -58,12 +58,13 @@ SingaporeHomeCooks/
 |-----------------|-------------------|----------------------------------------------------------------------------------|-------------|
 | shc-types       | Contracts Track   | All business contracts, Zod validation, error codes, shared DTOs                 | cookSchema, orderMetaSchema, apiErrorCodes |
 | business-rules  | Contracts Track   | Marketplace rule enforcement (one-cook, transitions, commission)                 | validateCart, canTransitionOrder |
-| shc-api-client  | Contracts + Backend | Shared HTTP client: real Medusa first, mock fallback; actor headers            | createShcApiClient |
+| shc-api-client  | Contracts + Backend | Medusa-only HTTP client; `ShcRequestError` + `SHCErrorCode`; listings CRUD       | createShcApiClient, ShcRequestError |
 | shc-ui          | Mobile Track      | Reusable UI primitives, theme tokens, accessibility components                   | SHCButton, OrderCard, AllergenBadge, PayNowQR |
 | shc-utils       | Contracts Track   | Domain-agnostic helpers (Singapore date formats, PayNow reference generation)    | formatCurrency, generatePayNowRef, isValidCollectionSlot |
 | apps/medusa     | Backend + Infra   | Commerce engine, custom modules, workflows, Admin customizations                 | shcCookModule, orderStateMachine |
-| apps/mobile     | Mobile Track      | Customer and Cook experiences; uses `@shc/api-client`                           | useOrderChat, ListingWizard, PayNowPanel |
-| apps/web        | Web Track         | Next.js marketplace + cook portal; uses `@shc/api-client`                      | AppHeader, DevRoleSwitcher, Peach Comfort UI |
+| apps/mobile-customer | Mobile Track | Customer Expo app; `@shc/api-client`                                           | useCart, useOrders, Family Values trays |
+| apps/mobile-cook     | Mobile Track | Cook Expo app; listings edit/delete                                              | ListingWizard, useCookPortal hooks |
+| apps/web             | Web Track    | Next.js marketplace + cook PWA + ops; `@shc/api-client` + `cook-api-client`    | SHCTrayWeb, CookMobileTabBar, AppChrome |
 
 ## Turborepo Configuration Highlights
 

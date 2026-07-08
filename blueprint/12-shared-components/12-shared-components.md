@@ -9,7 +9,7 @@
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-04 (Family Values UI) — `family-values-core.ts`, `tray.tsx`, `family-values-ui.tsx`, `tab-direction.tsx`; web mirrors `SHCTrayWeb`, `SHCMorphingLabelWeb`, `SHCCelebrationWeb`; Maestro tray flows in `apps/mobile-*/e2e/`.
+**Last Updated:** 2026-07-08 (Blueprint sync) — Family Values v4: `tray.tsx`, `family-values-ui.tsx`, `tab-direction.tsx`, `useOrderTrayTracking`; web `SHCTrayWeb` + `order-tray-tracking` module; morph evidence tests; Maestro `checkout-allergen-tray.yaml`, `listing-tray.yaml`.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview

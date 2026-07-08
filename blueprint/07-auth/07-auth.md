@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/compliance-pdpa.md](../production/compliance-pdpa.md)
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — Cook login now uses real password_hash (scrypt) + login_email on shc_cook. Hybrid with dev fallback. Customer via Medusa. shc-auth.ts + shc-password.ts + seed updated. See CURRENT_STATE auth row + 06.
+**Last Updated:** 2026-07-08 (Blueprint sync) — Web checkout/PDP auth guards; `ShcRequestError` in api-client; separate cook portal session; Railway explicit CORS. Cook: scrypt password_hash + SHC JWT. Customer: Medusa + ensureStoreCustomer.
 **Owner:** Backend Track
 
 ## Overview
@@ -48,6 +48,31 @@ Cooks must complete:
 - Seed populates login_email + password_hash for demo cooks.
 - Controlled by `SHC_COOK_ALLOW_DEV_PLAINTEXT` (default allows for local; set false in prod).
 See shc-auth.ts, shc-password.ts, cook model, auth/cook/login/route.ts, seed.ts.
+
+### Web customer auth guards (2026-07-07)
+
+Implemented in `apps/web` (not Medusa middleware — client-side route protection):
+
+| Screen | Guard |
+|--------|-------|
+| `/checkout` | Redirect to `/login?returnTo=/checkout` if no customer JWT; refresh cart after sign-in |
+| `/product/[id]` | Add-to-cart blocked until customer authenticated |
+
+Hooks: `useAuth.ts`, `useOrder.ts`. Errors surfaced via `ShcRequestError.code` from api-client.
+
+### Web cook portal session (2026-07-04)
+
+Cook portal (`/cook-portal/*`) uses a **separate** auth session from customer:
+
+- `useCookAuth.ts` — cook JWT in dedicated storage
+- `cook-api-client.ts` — cook-scoped api-client instance
+- `CookLoginGate` — wraps cook portal routes
+
+Customer and cook sessions can coexist in the same browser (different localStorage keys).
+
+### Railway CORS (2026-07-07)
+
+Production web PWA login requires explicit `STORE_CORS` and `AUTH_CORS` on medusa (web domain + localhost dev ports). Do not mix wildcard `*` with explicit origins. `pnpm railway:wire` sets correct values.
 
 ## Authorization Rules (Enforced in Middleware)
 

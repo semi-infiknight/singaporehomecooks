@@ -40,4 +40,14 @@
 
 **Launch / Final Polish + Stitch (2026-06-14):** EAS.json + build scripts/instructions (internal TestFlight/Play); /store/shc/push-token + enhanced registration in shc_cook + subscriber real push on key events (ready_for_collection etc) + mobile api + docs (Expo service for prod); .github/workflows/ci.yml + Maestro E2E enhanced + testing-strategy update; 03-railway enhanced (Railway/EAS/PayU-stub-KYC-deferred + tunnel); edge polish real cart/checkout-credits/demo-complete + complete route (pdpa/credits/corporate match mock via toggle); root package fixed + configs; full `pnpm turbo...` + verify:local + tsc/vitest ran (green); LOCAL_TESTING final all-done + tunnel how-to; INDEX/phase-10/phase-7 closure + new STATUS.md "Fully Built". All listed gaps closed. "Ready for user to host on tunnel and share." Final Polish + Stitch Wave complete - all items from previous summary now addressed.
 
-**Launch-readiness pass (2026-06-29):** `/cook-portal` now supports cook login and order-list fallback instead of redirecting to mobile only. `/ops` dashboard added for health, ledger, and payout batch visibility. PWA service worker added (`public/sw.js`) with app-shell cache and push notification display handler; root layout registers it through `PWARegistration`. Full enterprise admin/cook portals remain a larger post-launch track, but Phase 10.2/10.3 now have launchable basics.
+**Launch-readiness pass (2026-06-29):** `/cook-portal` cook login + order list; `/ops` dashboard for health, ledger, payouts, disputes. PWA service worker with app-shell cache + push display handler via `PWARegistration`.
+
+**TestFlight parity + cook PWA portal (2026-07-04, `1c0ee76`):** Full `/cook-portal` with Gourmeat UI — dashboard, orders (list + `[id]`), listings wizard, compliance, earnings, `CookMobileTabBar`, `CookLoginGate`, separate cook session (`useCookAuth`, `cook-api-client.ts`). Discover pixel-matched to Customer TestFlight (halal/light chips, Zomato dish rails, proximity hint).
+
+**Family Values web parity (2026-07-05, `de91419` + follow-ups):** Trays replace Alert confirms on cart, checkout, orders, cook listings; `SHCTrayWeb` mirrors mobile; checkout allergen gate via tray.
+
+**Web checkout auth guards (2026-07-07, `02a1f53`):** Guests redirected from `/checkout` to `/login?returnTo=/checkout`; cart refreshed post-sign-in; PDP add-to-cart requires customer JWT.
+
+**PWA deploy on Railway (2026-07-06–07):** Assets served via Next.js route handlers (`apps/web/app/sw.js/route.ts`, `icon*.png/route.ts`) — **not** `public/sw.js`. `X-SHC-Railway-Build-Id` header on PWA responses for deploy proof. Operator commands: `pnpm railway:ship`, `pnpm railway:verify-pwa`. See `03-railway.md`.
+
+**Phase 10 status (2026-07-08):** 10.1 ✅ public marketplace parity. 10.2 ✅ cook portal (mobile parity); `/ops` for ops (not full CEO analytics). 10.3 ✅ PWA installable + service worker. 10.4 🟡 SEO/sitemap present; Core Web Vitals audit pending. 10.5 🟡 web listing upload via cook portal (matches mobile wizard; browser-native upload).

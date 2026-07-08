@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-06-29 (Launch-readiness loop) — web push subscription + PayNow→paid parity + My Requests accept-bid on web; feature-flag gating (`request_dish`, `corporate_orders`) with admin API and `/ops` toggles; `/ops` surfaces disputes, commission rules, cook expenses, search synonyms, platform stats, and payout batches; `/ops` can resolve disputes and approve pending payout batches; worker health reports last job results and supports protected manual `POST /run/:job`; worker internal Medusa routes wired for order escalation and notification retry; customer/cook order dispute reporting API added and wired into web, mobile customer, and mobile cook order tracking; opening disputes marks orders `disputed`, ops resolution marks them `resolved`; product search now applies `shc_search_synonym` expansions; cook-authenticated expense tracker API and mobile cook earnings UI added for IRAS records; ledger commission posting now uses active `shc_commission_rule` rates and fixed idempotency filters; payout batch lookup/approval filters fixed; server web-push on order transitions; bid accept creates full `shc_order_meta` (customer_id, total, items, notifications); corporate/group order notes persist to order meta; route coverage gate expanded (store + admin launch routes).
+**Last Updated:** 2026-07-08 (Blueprint full sync to `main` @ `02a1f53`) — Family Values v4 trays/morph across tri-platform; full web cook PWA portal (TestFlight parity); cook listings PATCH/DELETE + mobile long-press edit/delete; web checkout auth guard (guest→login, cart refresh post-sign-in, PDP add-to-cart requires auth); `@shc/api-client` propagates `ShcRequestError` with `SHCErrorCode`; Railway topology includes worker + minio; `pnpm railway:ship` / `railway:verify-pwa` PWA deploy pipeline with `X-SHC-Railway-Build-Id` fingerprint; PWA assets served via Next.js route handlers (`/sw.js`, `/icon*.png`); explicit `STORE_CORS`/`AUTH_CORS` via `pnpm railway:wire` (fixes wildcard CORS breaking web login). Prior launch-readiness (2026-06-29): disputes, feature flags, `/ops`, web push, worker internal routes, commission rules, search synonyms — all still live.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -13,8 +13,8 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | Layer | Status | Notes |
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings polished; photo bento + vector icons; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + launch portals | Customer marketplace plus lightweight `/cook-portal` (cook login/order list) and `/ops` (health/ledger/payouts); PWA service worker + manifest |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Dashboard/orders/earnings/compliance/listings; listings search/filters + long-press edit/delete; Family Values trays; Expo `:8082` |
+| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops | Customer marketplace (TestFlight parity discover); **full `/cook-portal`** (dashboard, orders, listings, compliance, earnings, separate cook session + tab bar); `/ops` (health/ledger/payouts/disputes); PWA via route handlers + manifest; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
@@ -24,11 +24,11 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
-| **Production deploy** | ✅ Staging live | Railway `homecooks`: Medusa + web online; see `RAILWAY_DEPLOY.md` |
+| **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint fully synced 2026-06-20; see commit history for code changes)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-08; HEAD `02a1f53`)
 
 ---
 
@@ -92,6 +92,22 @@ Bootstrap creates auth identity **and** Medusa store customer profile (required 
 
 Protected routes use `getCustomerId` / `getCookId` from JWT — **not** `x-shc-*` headers.
 
+### Web customer auth guards (2026-07-07)
+
+| Flow | Behavior |
+|------|----------|
+| `/checkout` | Guests redirected to `/login?returnTo=/checkout`; cart refreshed after sign-in |
+| `/product/[id]` add-to-cart | Requires customer JWT; unauthenticated users sent to login |
+| API errors | `@shc/api-client` throws `ShcRequestError` with `SHCErrorCode` from Medusa `{ error: { code, message } }` |
+
+### Web cook portal auth
+
+Cook portal uses a **separate session** from customer auth (`useCookAuth` + `cook-api-client.ts`). Routes under `/cook-portal/*` gated by `CookLoginGate`.
+
+### Railway CORS (production)
+
+Medusa must use **explicit** `STORE_CORS` and `AUTH_CORS` origins (web + localhost ports). Mixing wildcard `*` with explicit origins prevents `Access-Control-Allow-Origin` from being emitted. Run `pnpm railway:wire` after env changes.
+
 ---
 
 ## 4. E2E Verification
@@ -149,8 +165,9 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/orders/:id/review` | GET, POST | POST: customer JWT (post-collection) |
 | `/store/shc/earnings` | GET | cook JWT |
 | `/store/shc/notifications` | GET | customer or cook JWT |
-| `/store/shc/listings` | POST | cook JWT |
-| …growth routes (credits, requests, bids, heritage, ai) | various | partial |
+| `/store/shc/listings` | GET, POST | cook JWT |
+| `/store/shc/listings/:id` | PATCH, DELETE | cook JWT (owner only) |
+| …growth routes (credits, requests, bids, heritage, ai, compliance, upload, feature-flags, disputes) | various | ✅ implemented |
 
 ### Server libs (`apps/medusa/src/lib/`)
 
@@ -183,10 +200,16 @@ bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro
 
 pnpm verify:real-e2e              # Full smoke (auth + checkout + transitions)
 pnpm verify:local                 # Seed validate + typecheck
+pnpm verify:web-pwa               # PWA assets + build fingerprint (local)
 
 # Railway (after railway login + railway link)
 pnpm railway:configure-web        # Point web service at railway.web.toml
+pnpm railway:configure-worker     # Worker cron service
+pnpm railway:configure-minio      # Object storage service
+pnpm railway:wire                 # Wire ${{Service.VAR}} refs + explicit CORS origins
 MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
+pnpm railway:ship                 # Single-pass PWA deploy + evidence capture
+pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 ```
 
 ---
@@ -203,6 +226,9 @@ MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 8. **Railway bootstrap** — use `MEDUSA_URL=https://...`; do not `railway run medusa user` from laptop (internal DB URL).
 9. **iOS `RNGestureHandlerModule`** — stale native binary without gesture-handler pods; run `scripts/rebuild-ios-apps.sh` after adding Reanimated/Gesture Handler.
 10. **Cook Metro port** — cook app must hit `:8082`; `scripts/start-mobile-dev.sh` starts both; cook `AppDelegate` rewrites `:8081` → `:8082` deep links.
+11. **Railway web CORS** — web PWA login fails with "Failed to fetch" if medusa `STORE_CORS` mixes wildcard with explicit origins; run `pnpm railway:wire`.
+12. **PWA assets** — `/sw.js` and icons are served by Next.js route handlers (`apps/web/app/sw.js/route.ts`, etc.), not `public/sw.js`. Responses include `X-SHC-Railway-Build-Id` for deploy verification.
+13. **Web checkout** — unauthenticated users cannot reach checkout or add-to-cart; redirect to `/login` with `returnTo`.
 
 ---
 
@@ -212,7 +238,7 @@ MEDUSA_URL=https://<medusa>.up.railway.app pnpm railway:init
 |------|-----|----------|
 | Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
-| Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, full cron worker | Founder |
+| Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |
 
 All 4 + MinIO auth hardening + notifications deeper (read UI, per-type limits, mark-all, types) completed. See §9.
 

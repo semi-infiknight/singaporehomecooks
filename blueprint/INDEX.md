@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-06-29 (Launch-readiness wiring) — cook listing publish now persists real dish name/price/description/heritage for customer discovery; 7 missing SHC DB modules added; compliance upload route + cook screen wired; customer My Requests bid acceptance added; web cook/ops portal + PWA service worker; Sharp WebP upload derivative; auth rate-limit/production hardening; Medusa route coverage gate.
+**Last Updated:** 2026-07-08 (Blueprint full sync to `main` @ `02a1f53`) — Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline (`railway:ship`, `X-SHC-Railway-Build-Id`); worker + minio on Railway; explicit CORS via `railway:wire`. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
 
@@ -10,6 +10,19 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+
+## Progress Update (2026-07-08 — Blueprint Full Sync, zero drift)
+
+Reconciled blueprint to `main` @ `02a1f53` after 57 commits since 2026-06-29 launch-readiness. Key code reality now documented:
+
+- **Family Values v4** (`de91419` + follow-ups): `@shc/ui` tray stack, morphing labels, directional tabs, order-tray tracking; web `SHCTrayWeb` mirrors; Maestro tray flows (`checkout-allergen-tray.yaml`, `listing-tray.yaml`).
+- **Web TestFlight parity** (`151d00e`, `c740dfb`, `1c0ee76`): discover halal/light chips, Zomato dish rails, PWA install banner; full `/cook-portal` (dashboard, orders, listings, compliance, earnings, `CookMobileTabBar`, separate cook auth).
+- **Cook listings CRUD** (`9e3ca15`, `0419de9`): `PATCH`/`DELETE /store/shc/listings/:id`; mobile long-press edit/delete; listings screen search + filters.
+- **Railway PWA pipeline** (`4c50c15`–`55352ac`): `pnpm railway:ship`, `pnpm railway:verify-pwa`; PWA assets via route handlers; runtime `X-SHC-Railway-Build-Id` from `.railway-build-id`.
+- **Web auth hardening** (`02a1f53`, `5deaffe`): checkout/PDP auth guards; `ShcRequestError` + `SHCErrorCode` in api-client; explicit CORS via `pnpm railway:wire`.
+- **Infra on Railway**: worker + minio deployed (see `03-railway.md`, `RAILWAY_DEPLOY.md`).
+
+Files patched: `CURRENT_STATE.md`, `INDEX.md`, `03-railway.md`, `04-monorepo.md`, `06-api-surface.md`, `07-auth.md`, `10-mobile.md`, `12-shared-components.md`, `13-implementation-phases/phase-10.md`.
 
 ## Navigation for AI Agents (Efficient Web)
 

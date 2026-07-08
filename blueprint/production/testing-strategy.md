@@ -41,14 +41,15 @@
 | Job | Script | Catches |
 |---|---|---|
 | `mobile-ios-guard` | `verify-mobile-deps.sh` + `verify-mobile-bundles.sh` | Wrong RN/expo-modules-core, global RN override, tiny Metro bundle, `.easignore` excluding `ios/` |
-| `web-pwa-guard` | `verify-web-pwa.sh` | Missing manifest/icons/sw, failed `next build` |
+| `web-pwa-guard` | `verify-web-pwa.sh` | Missing manifest/icons/sw, failed `next build`, build-fingerprint unit tests |
 
 ### Local verify commands (fresh clone)
 
 ```bash
 pnpm verify:mobile-deps      # dependency invariants
 pnpm verify:mobile-bundles   # expo export bundle > 5MB
-pnpm verify:web-pwa          # PWA assets + production build
+pnpm verify:web-pwa          # PWA assets + production build (local)
+pnpm railway:verify-pwa      # Live Railway PWA — checks X-SHC-Railway-Build-Id header
 pnpm setup:ios-dev           # macOS: install + all mobile guards + pod rebuild
 ```
 

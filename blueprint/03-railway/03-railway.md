@@ -7,7 +7,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/observability.md](../production/observability.md)
 
-**Last Updated:** 2026-06-20 (Blueprint Sync) — railway.toml (medusa), railway.web.toml, bootstrap supports HTTPS, pnpm railway:configure-web. Matches CURRENT_STATE + RAILWAY_DEPLOY.md.
+**Last Updated:** 2026-07-08 (Blueprint sync) — worker + minio on Railway; `pnpm railway:wire`/`railway:ship`/`railway:verify-pwa`; explicit CORS; PWA route handlers + `X-SHC-Railway-Build-Id`. Matches CURRENT_STATE + RAILWAY_DEPLOY.md.
 **Owner:** Infra Track
 
 ## Overview
@@ -16,29 +16,33 @@ Railway hosts the **staging/production API and web** for Singapore Home Cooks. M
 
 **Operator guide:** [`RAILWAY_DEPLOY.md`](../../RAILWAY_DEPLOY.md) at repo root.
 
-## Live staging topology (2026-06-15)
+## Live staging topology (2026-07-08)
 
 | Service | Config file | Dockerfile | Healthcheck | Purpose |
 |---------|-------------|------------|-------------|---------|
-| **medusa** | `railway.toml` (repo root) | `apps/medusa/Dockerfile` | `/health` | Medusa API + SHC custom routes |
-| **web** | `railway.web.toml` (**required**) | `apps/web/Dockerfile` | `/` | Next.js customer web |
+| **medusa** | `railway.toml` (repo root) | `apps/medusa/Dockerfile` | `/health` | Medusa API + SHC custom routes + admin `/app` |
+| **web** | `railway.web.toml` (**required**) | `apps/web/Dockerfile` | `/` | Next.js customer + cook PWA + ops |
+| **worker** | `railway.worker.toml` | `apps/worker/Dockerfile` | `/health` | Cron jobs, payout sim, internal Medusa calls |
+| **minio** | `railway.minio.toml` | `apps/minio/Dockerfile` | — | Object storage for listing images |
 | **Postgres** | — | Railway template | — | Primary DB |
-| **Redis** | — | Railway template | — | Cache / sessions (wire `REDIS_URL` on medusa) |
+| **Redis** | — | Railway template | — | Cache / sessions |
 
 ```
-┌─────────────┐     ┌─────────────┐
-│  web        │────▶│  medusa     │
-│  (Next.js)  │     │  (API)      │
-└─────────────┘     └──────┬──────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  web        │────▶│  medusa     │────▶│   minio     │
+│  (Next.js)  │     │  (API)      │     │  (storage)  │
+└─────────────┘     └──────┬──────┘     └─────────────┘
                            │
-                    ┌──────┴──────┐
-                    │             │
-               ┌────▼────┐   ┌────▼────┐
-               │ Postgres│   │  Redis  │
-               └─────────┘   └─────────┘
+              ┌────────────┼────────────┐
+              │            │            │
+         ┌────▼────┐  ┌────▼────┐  ┌────▼────┐
+         │ Postgres│  │  Redis  │  │ worker  │
+         └─────────┘  └─────────┘  └─────────┘
 ```
 
 Mobile (Expo) → Medusa public URL directly.
+
+**Service references:** Run `pnpm railway:wire` so Railway canvas shows linked deps (`${{Postgres.DATABASE_URL}}`, `${{Redis.REDIS_URL}}`, minio vars). Hardcoded internal URLs work at runtime but break the visual graph.
 
 ## Critical: two config files
 
@@ -77,6 +81,8 @@ If the **web** service uses root `railway.toml`, it will:
 | `MEDUSA_PUBLIC_URL` | `https://<medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<medusa-domain>.up.railway.app` |
 | `RAILWAY_RUN_SEED` | `true` once, then remove |
+| `STORE_CORS` | Explicit origins: web domain + `http://localhost:3001` + mobile dev ports — **no wildcard mix** |
+| `AUTH_CORS` | Same as `STORE_CORS` |
 
 ### Web service
 
@@ -113,6 +119,12 @@ Copy the publishable key into Railway web vars, then redeploy web.
 | `pnpm railway:init` | Bootstrap against remote Medusa (`MEDUSA_URL` required) |
 | `pnpm railway:bootstrap` | Same bootstrap script (local or remote) |
 | `pnpm railway:configure-web` | Set web service `railwayConfigFile` + redeploy |
+| `pnpm railway:configure-worker` | Add/configure worker service |
+| `pnpm railway:configure-minio` | Add/configure minio service |
+| `pnpm railway:wire` | Wire `${{Service.VAR}}` refs + explicit CORS on medusa |
+| `pnpm railway:cleanup` | Remove orphaned Railway artifacts |
+| `pnpm railway:ship` | Single-pass PWA deploy pipeline + evidence capture |
+| `pnpm railway:verify-pwa` | Verify live PWA build fingerprint without redeploy |
 
 ## Smoke test (remote)
 
@@ -137,15 +149,27 @@ MEDUSA_URL=https://<medusa-domain>.up.railway.app pnpm verify:real-e2e
 | Admin login 401 on Railway | Redeploy medusa (entrypoint creates admin) |
 | Empty products | `RAILWAY_RUN_SEED=true` or `railway run pnpm seed` on medusa |
 | Web stale API URL | Redeploy web after `NEXT_PUBLIC_*` change |
-| CORS from web | Set `STORE_CORS` / `AUTH_CORS` on medusa |
+| CORS from web / "Failed to fetch" on login | Run `pnpm railway:wire` — explicit origins only, no wildcard mix |
+| PWA stale after deploy | Run `pnpm railway:ship`; verify with `pnpm railway:verify-pwa` (checks `X-SHC-Railway-Build-Id`) |
+| Web Docker build fails on @shc/ui vitest | Vitest skipped in Railway Docker (mobile apps excluded from image context) |
+
+## PWA asset serving (web)
+
+PWA files are **not** in `public/sw.js`. Next.js route handlers serve them with correct cache headers:
+
+| Path | Handler |
+|------|---------|
+| `/sw.js` | `apps/web/app/sw.js/route.ts` |
+| `/icon.png`, `/icon-512.png`, `/apple-touch-icon.png` | `apps/web/app/icon*.png/route.ts` |
+
+Static source files live in `apps/web/public/pwa-assets/`. Responses include `X-SHC-Railway-Build-Id` (read from `.railway-build-id` at build time) for deploy verification.
 
 ## Future / not on Railway yet
 
 | Service | Notes |
 |---------|-------|
-| worker | Cron / payouts / push — Phase 7+ |
-| minio | Object storage — local/dev or S3 later |
-| dedicated admin UI | Served on medusa at `/app` (`MEDUSA_DISABLE_ADMIN=false`) |
+| dedicated admin UI beyond `/app` | Medusa admin at `/app` is live; separate ops UI is `/ops` on web |
+| custom domains | Railway `*.up.railway.app` defaults; custom domain TBD |
 
 ## Environment groups
 
