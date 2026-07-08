@@ -39,7 +39,12 @@ const QUICK_ACTIONS = [
 export default function CookDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/(shared)/auth' as any);
+  };
   const { data: orders = [] } = useMyOrders();
   const { data: openReqs = [] } = useRequests();
   const createBidMut = useCreateBid();
@@ -275,6 +280,16 @@ export default function CookDashboard() {
       <View style={styles.footerBadge}>
         <SHCBadge variant="success">SFA/WSQ verified</SHCBadge>
       </View>
+
+      <Pressable
+        onPress={handleLogout}
+        style={styles.logoutBtn}
+        testID="logout-btn"
+        accessibilityRole="button"
+        accessibilityLabel="Logout"
+      >
+        <Text style={styles.logoutText}>Logout</Text>
+      </Pressable>
     </ScrollView>
   
     </DirectionalTabScreen>
@@ -351,5 +366,17 @@ const styles = StyleSheet.create({
   orderDish: { fontWeight: '700', fontSize: 14, color: shcColors.text, flex: 1 },
   orderBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   orderChevron: { fontSize: 22, fontWeight: '800', color: shcColors.primary },
-  footerBadge: { marginTop: shcSpacing.md, marginBottom: shcSpacing.md, alignItems: 'flex-start' },
+  footerBadge: { marginTop: shcSpacing.md, marginBottom: shcSpacing.sm, alignItems: 'flex-start' },
+  logoutBtn: {
+    marginTop: shcSpacing.sm,
+    marginBottom: shcSpacing.lg,
+    paddingVertical: shcSpacing.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.md,
+    backgroundColor: shcColors.surface,
+    alignItems: 'center',
+    ...shcShadows.brutalSm,
+  },
+  logoutText: { color: shcColors.error, textAlign: 'center', fontWeight: '800', fontSize: 15 },
 });
