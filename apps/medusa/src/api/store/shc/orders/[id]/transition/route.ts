@@ -40,7 +40,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json({ error: createSHCError("SHC-ORDER-001", result.error || "Transition failed") });
   }
   await orderStateTransitionWorkflow.run({
-    input: { orderId: id, to, container: req.scope },
+    input: { orderId: id, to, actor: cookId, container: req.scope },
   } as any).catch(() => null);
 
   if (to === "completed") {

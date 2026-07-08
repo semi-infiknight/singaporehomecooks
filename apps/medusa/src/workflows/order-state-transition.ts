@@ -23,9 +23,14 @@ export const validateTransitionStep = createStep(
 // Step: perform transition via module service (injected)
 export const transitionStateStep = createStep(
   "transition-state-step",
-  async (input: { orderId: string; to: SHCOrderStatus; container: any }) => {
-    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMeta"); // module service name derived from registration
-    const result = await orderMetaService.transitionOrderState(input.orderId, input.to);
+  async (input: { orderId: string; to: SHCOrderStatus; actor?: string; container: any }) => {
+    const orderMetaService: ShcOrderMetaModuleService = input.container.resolve("shcOrderMeta");
+    const [metas] = await orderMetaService.listAndCountOrderMetas({ order_id: input.orderId } as any, { take: 1 });
+    const current = metas?.[0] as any;
+    if (current?.shc_status === input.to) {
+      return new StepResponse(current);
+    }
+    const result = await orderMetaService.transitionOrderState(input.orderId, input.to, input.actor);
     if (!result.valid) {
       const err = createSHCError("SHC-ORDER-001", result.error || "Transition failed");
       throw err;
@@ -83,6 +88,7 @@ export const orderStateTransitionWorkflow = createWorkflow(
     const updatedMeta = transitionStateStep({
       orderId: input.orderId,
       to: input.to,
+      actor: input.actor,
       container: input.container,
     } as any);
 
