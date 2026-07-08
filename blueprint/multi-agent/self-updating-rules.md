@@ -45,7 +45,12 @@ After **any** change (code or docs):
    - New field → 05 + 06 + caller docs.
    - New feature → relevant phase + 10/12 if mobile/web.
 
-5. **Pre-Commit Verification**
+5. **Pre-Commit Verification (tiered — see `.cursor/rules/testing-tiers.mdc`)**
+   - Normal commit: `pnpm verify:quick` or `SCOPE=<area> pnpm verify:area`
+   - Goal done: `pnpm verify:goal` (includes Railway API smoke)
+   - UI flow goal: `SCOPE=tray pnpm verify:stitch` (Metro + emulator)
+   - Milestone / ship: `pnpm verify:full` only
+   - Do **not** run full Maestro tour or `verify:real-e2e` on every incremental commit
    - `grep -r "TODO\|FIXME\|placeholder\|stub" blueprint/ | cat` — clean stale notes you introduced.
    - Check links are valid relative markdown.
    - Run relevant verify (typecheck, seed, pnpm verify:local) if contracts touched.

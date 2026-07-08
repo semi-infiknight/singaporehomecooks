@@ -1,0 +1,61 @@
+---
+description: Tiered testing — targeted by default, full E2E only at goal completion
+globs:
+  - apps/**
+  - packages/**
+  - scripts/verify*
+  - blueprint/production/testing-strategy.md
+alwaysApply: true
+---
+
+# Testing Tiers (fast by default, E2E when it matters)
+
+**Do not run full Maestro tours or `verify:real-e2e` on every small change.** Family Values ran too much full E2E during incremental commits — avoid that.
+
+## Tier guide
+
+| Tier | When | Command | ~Time |
+|------|------|---------|-------|
+| **0 quick** | Every commit; docs-only; tiny predictable fix | `bash scripts/verify-tier.sh quick` | 2–5 min |
+| **1 area** | Normal code change — test **affected surface only** | `SCOPE=ui bash scripts/verify-tier.sh area` | 3–8 min |
+| **2 goal** | Multi-file goal **finished** (e.g. tray parity done) | `bash scripts/verify-tier.sh goal` | 8–15 min |
+| **3 stitch** | Goal + device UI proof (Metro + emulator) | `SCOPE=tray bash scripts/verify-tier.sh stitch` | 15–25 min |
+| **4 full** | Milestone / pre-TestFlight / pre-ship only | `bash scripts/verify-tier.sh full` | 30–60 min |
+
+## SCOPE values (tier 1 / 3)
+
+| SCOPE | Use when you changed |
+|-------|----------------------|
+| `ui` / `tray` / `family-values` | `@shc/ui`, trays, morph, tabs, web SHCTrayWeb |
+| `web` / `pwa` | `apps/web`, PWA routes, Next build |
+| `api` / `medusa` / `backend` | Medusa routes, modules, workflows |
+| `mobile` / `expo` | Native/Metro/EAS, bundle size |
+| `contracts` | `@shc/types`, `@shc/business-rules` |
+| `checkout` / `listings` | Single Maestro flow for that flow |
+
+## Skip rules (allowed)
+
+- **Blueprint-only** or comment/copy: no tests required
+- **Single-line fix** you are confident about: tier 0 quick OR skip if typecheck already green
+- **Mid-goal WIP commits**: tier 0 or tier 1 with matching SCOPE only — **not** tier 2–4
+
+## Required gates
+
+| Event | Minimum tier |
+|-------|----------------|
+| Normal PR / commit | **0** or **1** with SCOPE |
+| Goal declared done | **2** (`verify:real-e2e`) |
+| UI flow goal (trays, checkout, listings) | **3** with matching SCOPE |
+| Phase stitch / TestFlight / Railway ship | **4** |
+
+## What NOT to run during incremental work
+
+- `bash scripts/run-maestro-full-tour.sh` — only tier 4
+- `pnpm verify:real-e2e` — only tier 2+ (creates real orders on Railway)
+- `family-values-audit.sh` / `family-values-evidence.sh` with `MAESTRO_RUN_DEVICE=true` — only at goal close
+
+## CI alignment
+
+- Every push: `build-test-typecheck` + guards (fast)
+- `medusa-real-e2e`: `integrate/*` branches + manual dispatch only — not every `main` push
+- Maestro device runs: optional (`MAESTRO_RUN_DEVICE`), validate YAML only by default

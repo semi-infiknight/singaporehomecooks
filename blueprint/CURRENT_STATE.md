@@ -194,8 +194,12 @@ bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb 
 bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
 bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
 
-pnpm verify:real-e2e              # Full smoke (auth + checkout + transitions)
-pnpm verify:local                 # Seed validate + typecheck
+pnpm verify:quick                 # Tier 0 — every commit (typecheck + unit tests)
+SCOPE=ui pnpm verify:area         # Tier 1 — targeted (ui|api|web|mobile)
+pnpm verify:goal                  # Tier 2 — goal done (adds Railway API smoke)
+SCOPE=tray pnpm verify:stitch     # Tier 3 — tray Maestro flows (Metro required)
+pnpm verify:full                  # Tier 4 — milestone only (API + full Maestro tour)
+pnpm verify:local                 # Seed validate + typecheck (legacy alias)
 pnpm verify:web-pwa               # PWA assets + build fingerprint (local)
 
 # Railway (after railway login + railway link)

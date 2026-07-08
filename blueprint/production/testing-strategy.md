@@ -7,8 +7,34 @@
 - [../10-mobile/10-mobile.md](../10-mobile/10-mobile.md)
 - [ERROR_CODES.md](../ERROR_CODES.md)
 
-**Last Updated:** 2026-07-04 — iOS TestFlight guard jobs (`mobile-ios-guard`) and web PWA guard (`web-pwa-guard`) added to CI; local verify scripts for fresh-clone parity.
+**Last Updated:** 2026-07-08 — Tiered verification policy: targeted tests on normal commits, full E2E only at goal completion / stitch. See `.cursor/rules/testing-tiers.mdc` + `scripts/verify-tier.sh`.
 **Owners:** Infra Track (backend & CI), Mobile Track (E2E & Maestro)
+
+## Tiered verification (agents + humans)
+
+**Problem:** Running full Maestro tours + `verify:real-e2e` on every incremental commit (e.g. Family Values sub-commits) wastes 30–60 min and hits live Railway with throwaway orders.
+
+**Policy:** Match test depth to change scope.
+
+| Tier | When | Command |
+|------|------|---------|
+| 0 quick | Every commit; tiny predictable fixes | `bash scripts/verify-tier.sh quick` |
+| 1 area | Normal change — affected surface only | `SCOPE=ui\|api\|web\|mobile bash scripts/verify-tier.sh area` |
+| 2 goal | Multi-file goal **fully done** | `bash scripts/verify-tier.sh goal` |
+| 3 stitch | Goal + device UI proof (Metro running) | `SCOPE=tray bash scripts/verify-tier.sh stitch` |
+| 4 full | Milestone / pre-TestFlight / pre-ship | `bash scripts/verify-tier.sh full` |
+
+**Skip allowed:** blueprint-only, comments, single-line fixes when typecheck already green.
+
+**Maestro flow map (targeted):**
+
+| Flow | File | Run when |
+|------|------|----------|
+| Checkout allergen tray | `mobile-customer/e2e/checkout-allergen-tray.yaml` | Checkout / tray changes |
+| Listing tray | `mobile-cook/e2e/listing-tray.yaml` | Cook listings / tray |
+| Order tray | `mobile-customer/e2e/order-tray.yaml` | Order review / dispute trays |
+| Auth smoke | `customer-auth.yaml`, `cook-auth.yaml` | Auth changes |
+| Full tour | `customer-full-tour.yaml`, `cook-full-tour.yaml` | Tier 4 only |
 
 ## Testing Pyramid
 
@@ -30,11 +56,12 @@
 
 ## CI Pipeline Requirements
 
-- `turbo test` must pass on every PR.
-- Typecheck (`turbo typecheck`) is blocking.
-- E2E Maestro suite runs on `integrate/phase-N` branches before merge.
-- Coverage thresholds enforced (core contracts > 90%).
-- Medusa route coverage gate: `pnpm --filter medusa test` runs handler-level integration tests with coverage thresholds (80%+ line/function/statement for the initially covered launch-critical route surface).
+- `turbo test` + `turbo typecheck` — **every push** (fast gate).
+- Platform guards (`mobile-ios-guard`, `web-pwa-guard`) — **every push**.
+- `verify:real-e2e` (Railway API smoke) — **`integrate/*` branches + manual `workflow_dispatch` only**, not every `main` commit.
+- Maestro YAML validate — every push on macOS job; **device Maestro optional** (`MAESTRO_RUN_DEVICE`).
+- Full Maestro tour — **local tier 4** before TestFlight / major ship; not CI on every commit.
+- Medusa route tests — on API/backend changes (tier 1 `SCOPE=api`).
 
 ### Platform guard jobs (blocking on `main`)
 

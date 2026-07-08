@@ -28,6 +28,8 @@ jobs:
       - run: pnpm verify:local
 
   medusa-real-e2e:
+    # Full API smoke hits live Railway — run on integrate branches or manual dispatch, not every main push.
+    if: startsWith(github.ref, 'refs/heads/integrate/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
