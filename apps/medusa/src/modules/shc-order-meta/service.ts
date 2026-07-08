@@ -71,6 +71,10 @@ class ShcOrderMetaModuleService extends MedusaService({
     const current = metas[0] as unknown as SHCOrderMeta;
     const from = current.shc_status as SHCOrderStatus;
 
+    if (actor && (current as any).cook_id && (current as any).cook_id !== actor) {
+      return { meta: current, valid: false, error: "Cook does not own this order" };
+    }
+
     // Use business rule + contract validate
     const businessValid = canTransition(from, to);
     const contractRes = validateOrderTransition(from, to);

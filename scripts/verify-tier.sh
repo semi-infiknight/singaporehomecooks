@@ -122,9 +122,9 @@ scope_unit_tests() {
       ;;
     mobile|expo|auth|checkout|listings|orders|onboarding)
       if [[ "$SCOPE" == "onboarding" && "${TOUCHES_API:-}" == "1" ]]; then
-        log "medusa typecheck + tests (onboarding TOUCHES_API)"
+        log "medusa typecheck + tests (onboarding TOUCHES_API, no coverage — keeps local dev server stable)"
         pnpm --filter medusa typecheck
-        pnpm --filter medusa test
+        pnpm --filter medusa exec vitest run
       fi
       bash scripts/verify-mobile-deps.sh
       if should_run_mobile_bundles; then

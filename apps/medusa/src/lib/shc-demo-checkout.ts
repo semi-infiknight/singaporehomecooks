@@ -34,7 +34,10 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     creditsApplied = r.used || 0;
   }
 
-  const cookId = cart.cookId || "cook_rose_tampines_001";
+  const cookId = cart.cookId || cart.items[0]?.cook_id;
+  if (!cookId) {
+    throw new Error("Cart has no cook — add items from a published listing first");
+  }
   const total = cart.items.reduce((s, i) => s + i.price * i.qty * 100, 0) || 4500;
   const orderId = `SHC-${Date.now().toString().slice(-8)}`;
 

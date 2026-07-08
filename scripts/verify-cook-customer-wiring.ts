@@ -4,7 +4,6 @@
  * Blueprint: blueprint/agent/build-protocol.md
  * Capture: {SCRATCH}/cook-customer-wiring.log
  */
-import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -35,8 +34,54 @@ function loadPubKey(): string {
 }
 
 async function shcFetch(pathname: string, init?: RequestInit, token?: string) {
-  const pubKey = loadPubKey();
-  const res = await fetch(`${BASE}${pathname}`, {
+  return shcFetchAt(activeBase, pathname, init, token);
+}
+
+const LOCAL_BASE = process.env.MEDUSA_LOCAL_URL || 'http://127.0.0.1:9000';
+const LOCAL_PUBLISHABLE_KEY =
+  process.env.MEDUSA_LOCAL_PUBLISHABLE_KEY ||
+  'pk_a280a2ded375fcb01bdfdaf852ed0fc0110f261ca0e3e4ac20930e773346d1b3';
+
+async function probeRegister(base: string, pubKey: string): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const r = await shcFetchAt(
+    base,
+    '/store/shc/auth/cook/register',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email: `probe_${RUN_ID}@shc.test`,
+        password: NEW_COOK_PASS,
+        display_name: 'Probe',
+        area: 'Probe',
+      }),
+    },
+    undefined,
+    pubKey
+  );
+  return { ok: r.status === 201 && !!r.body?.token, status: r.status, body: r.body };
+}
+
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 5) {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw lastErr;
+}
+
+async function shcFetchAt(
+  base: string,
+  pathname: string,
+  init?: RequestInit,
+  token?: string,
+  pubKey = activePubKey
+) {
+  const res = await fetchWithRetry(`${base}${pathname}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -49,20 +94,30 @@ async function shcFetch(pathname: string, init?: RequestInit, token?: string) {
   return { status: res.status, body };
 }
 
-function runInProcessWiringFallback(reason: string) {
-  console.warn(`\n⚠️  Railway live wiring skipped: ${reason}`);
-  console.warn('   Running in-process handler chain (register → profile → listing → orders → accept/decline)…');
-  execSync(
-    'pnpm --filter medusa exec vitest run src/api/store/shc/auth/cook/wiring.integration.test.ts',
-    { stdio: 'inherit', cwd: path.join(__dirname, '..') }
-  );
-  console.log(
-    '\n✅ In-process cook-customer wiring passed (deploy Medusa to Railway for live HTTP proof)'
-  );
-}
+let activeBase = BASE;
+let activePubKey = loadPubKey();
 
 async function registerCook() {
-  const r = await shcFetch('/store/shc/auth/cook/register', {
+  const railwayProbe = await probeRegister(BASE, loadPubKey());
+  if (railwayProbe.ok) {
+    activeBase = BASE;
+    activePubKey = loadPubKey();
+    console.log('Using Railway Medusa:', BASE);
+  } else {
+    const localProbe = await probeRegister(LOCAL_BASE, LOCAL_PUBLISHABLE_KEY);
+    if (localProbe.ok) {
+      activeBase = LOCAL_BASE;
+      activePubKey = LOCAL_PUBLISHABLE_KEY;
+      console.log('Railway register unavailable; using local Medusa:', LOCAL_BASE);
+    } else {
+      throw new Error(
+        `Cook register unavailable. Railway ${railwayProbe.status}; local ${localProbe.status}. ` +
+          'Deploy medusa to Railway or run `pnpm docker:up && pnpm --filter medusa dev`.'
+      );
+    }
+  }
+
+  const r = await shcFetchAt(activeBase, '/store/shc/auth/cook/register', {
     method: 'POST',
     body: JSON.stringify({
       email: NEW_COOK_EMAIL,
@@ -72,10 +127,6 @@ async function registerCook() {
       story: 'E2E wiring test kitchen',
     }),
   });
-  if (r.status === 404) {
-    runInProcessWiringFallback('POST /store/shc/auth/cook/register not deployed yet (404)');
-    process.exit(0);
-  }
   if (r.status !== 201 || !r.body?.token) {
     throw new Error(`Cook register failed ${r.status}: ${JSON.stringify(r.body)}`);
   }
@@ -131,7 +182,7 @@ async function assertProductVisible(productId: string, cookId: string) {
   console.log(`✅ customer products include new listing (${products.length} for cook)`);
 }
 
-async function checkoutOrder(customerToken: string, productId: string) {
+async function checkoutOrder(customerToken: string, productId: string, expectedCookId: string) {
   await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);
   const add = await shcFetch(
     '/store/shc/cart',
@@ -158,7 +209,10 @@ async function checkoutOrder(customerToken: string, productId: string) {
   }
   const orderId = checkout.body.order.id as string;
   const orderCookId = checkout.body.order.cook_id ?? checkout.body.order.meta?.cook_id;
-  console.log(`✅ customer checkout order_id=${orderId} cook_id=${orderCookId ?? '?'}`);
+  if (orderCookId !== expectedCookId) {
+    throw new Error(`Order cook_id mismatch: expected ${expectedCookId}, got ${orderCookId ?? 'null'}`);
+  }
+  console.log(`✅ customer checkout order_id=${orderId} cook_id=${orderCookId}`);
   return orderId;
 }
 
@@ -193,14 +247,14 @@ async function transitionOrder(orderId: string, to: string, cookToken: string) {
 
 async function main() {
   console.log('=== Cook ↔ Customer Medusa Wiring ===');
-  console.log('Base:', BASE);
 
   const { token: cookToken, cookId } = await registerCook();
+  console.log('Active base:', activeBase);
   const { productId } = await publishListing(cookToken, cookId);
   await assertProductVisible(productId, cookId);
 
   const customerToken = await loginCustomer();
-  const acceptOrderId = await checkoutOrder(customerToken, productId);
+  const acceptOrderId = await checkoutOrder(customerToken, productId, cookId);
   const statusBeforeAccept = await assertCookSeesOrder(cookToken, acceptOrderId, cookId);
   if (statusBeforeAccept !== 'paid') {
     console.warn(`⚠️  expected paid before accept, got ${statusBeforeAccept}`);
@@ -208,7 +262,7 @@ async function main() {
   const afterAccept = await transitionOrder(acceptOrderId, 'accepted', cookToken);
   if (afterAccept !== 'accepted') throw new Error(`Expected accepted, got ${afterAccept}`);
 
-  const declineOrderId = await checkoutOrder(customerToken, productId);
+  const declineOrderId = await checkoutOrder(customerToken, productId, cookId);
   await assertCookSeesOrder(cookToken, declineOrderId, cookId);
   const afterDecline = await transitionOrder(declineOrderId, 'cancelled', cookToken);
   if (afterDecline !== 'cancelled') throw new Error(`Expected cancelled, got ${afterDecline}`);

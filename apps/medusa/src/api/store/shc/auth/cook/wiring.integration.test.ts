@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { canTransition } from "@shc/business-rules";
+import { enforceOneCookOnAdd } from "@shc/business-rules";
+import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
+import { signShcToken } from "../../../../../lib/shc-auth";
 import { POST as registerCook } from "./register/route";
 import { PATCH as patchProfile } from "./profile/route";
 import { POST as createListing } from "../../listings/route";
-import { POST as transitionOrder } from "../../orders/[id]/transition/route";
+import { POST as addToCart, DELETE as clearCart } from "../../cart/route";
+import { POST as demoComplete } from "../../carts/demo-complete/route";
+import { GET as listProducts } from "../../products/route";
 import { GET as listCookOrders } from "../../orders/route";
+import { POST as transitionOrder } from "../../orders/[id]/transition/route";
 
 function makeRes() {
   const res: any = {
@@ -22,80 +27,121 @@ function makeRes() {
   return res;
 }
 
-describe("cook ↔ customer wiring (in-process handlers)", () => {
-  it("register → profile → listing → cook orders → accept and decline", async () => {
-    const cooks: any[] = [];
-    const metas: any[] = [];
-    const orders: Record<string, any> = {
-      ord_accept: { order_id: "ord_accept", cook_id: "", shc_status: "paid", customer_id: "cust_1" },
-      ord_decline: { order_id: "ord_decline", cook_id: "", shc_status: "paid", customer_id: "cust_1" },
-    };
+type CartItem = { product_id: string; name: string; qty: number; price: number; cook_id: string };
 
-    const cookService = {
-      findByLoginEmail: async () => null,
-      createCook: async (data: any) => {
-        cooks.push(data);
-        return data;
-      },
-      updateCooks: async ({ selector, data }: any) => {
-        const row = cooks.find((c) => c.id === selector.id);
-        if (row) Object.assign(row, data);
-      },
-      listAndCountCooks: async (filters: any) => {
-        const row = cooks.find((c) => c.id === filters.id);
-        return [row ? [row] : [], row ? 1 : 0];
-      },
-    };
+function buildInMemoryWiringScope() {
+  const cooks: any[] = [];
+  const metas: any[] = [];
+  const carts: Record<string, { cook_id: string | null; items: CartItem[] }> = {};
+  const orders: Record<string, any> = {};
+  const messages: any[] = [];
 
-    const metaService = {
-      upsertProductMeta: async (meta: any) => {
-        metas.push(meta);
-        return meta;
-      },
-      listAndCountProductMetas: async (where: any) => {
-        const rows = metas.filter((m) => !where.cook_id || m.cook_id === where.cook_id);
-        return [rows, rows.length];
-      },
-      listAndCountOrderMetas: async (where: any) => {
-        let rows = Object.values(orders) as any[];
-        if (where.order_id) rows = rows.filter((o) => o.order_id === where.order_id);
-        if (where.cook_id) rows = rows.filter((o) => o.cook_id === where.cook_id);
-        return [rows, rows.length];
-      },
-      transitionOrderState: async (orderId: string, to: string, actor?: string) => {
-        const current = orders[orderId];
-        if (!current) return { meta: null, valid: false, error: "not found" };
-        if (actor && current.cook_id !== actor) return { meta: current, valid: false, error: "wrong cook" };
-        const from = current.shc_status;
-        if (!canTransition(from, to as any)) {
-          return { meta: current, valid: false, error: `Invalid ${from}->${to}` };
-        }
-        current.shc_status = to;
-        return { meta: current, valid: true };
-      },
-      getOrderMetaWithMessages: async (orderId: string) => {
-        const meta = orders[orderId];
-        return { meta, messages: [] };
-      },
-    };
+  const cookService = {
+    findByLoginEmail: async () => null,
+    createCook: async (data: any) => {
+      cooks.push(data);
+      return data;
+    },
+    updateCooks: async ({ selector, data }: any) => {
+      const row = cooks.find((c) => c.id === selector.id);
+      if (row) Object.assign(row, data);
+    },
+    listAndCountCooks: async (filters: any) => {
+      const row = cooks.find((c) => c.id === filters.id);
+      return [row ? [row] : [], row ? 1 : 0];
+    },
+  };
 
-    const scope = {
-      resolve(name: string) {
-        if (name === "shcCook") return cookService;
-        if (name === "shcProductMeta") return metaService;
-        if (name === "shcAvailability") {
-          return { upsertAvailability: async () => ({}), getAvailability: async () => null };
-        }
-        if (name === "shcOrderMeta") return metaService;
-        if (name === "shcLedger") {
-          return { getLedgerSummaryForOrders: async () => ({ totalCookEarnings: 0, totalPlatformFees: 0, entries: [] }) };
-        }
-        if (name === "shcNotification") return { createNotifications: async () => [], push: async () => [] };
-        if (name === "shcCreditWallet") return { awardCredits: async () => ({}), awardCreditsOnComplete: async () => ({}) };
-        if (name === "logger") return console;
-        throw new Error(`Unknown ${name}`);
-      },
-    };
+  const productMetaService = {
+    upsertProductMeta: async (meta: any) => {
+      const idx = metas.findIndex((m) => m.product_id === meta.product_id);
+      if (idx >= 0) metas[idx] = { ...metas[idx], ...meta };
+      else metas.push(meta);
+      return meta;
+    },
+    getMetaForProduct: async (productId: string) => metas.find((m) => m.product_id === productId) || null,
+    listAndCountProductMetas: async (where: any) => {
+      const rows = metas.filter((m) => !where.cook_id || m.cook_id === where.cook_id);
+      return [rows, rows.length];
+    },
+  };
+
+  const cartService = {
+    getCart: async (customerId: string) => {
+      const row = carts[customerId];
+      return row ? { items: [...row.items], cookId: row.cook_id } : { items: [], cookId: null };
+    },
+    clearCart: async (customerId: string) => {
+      carts[customerId] = { cook_id: null, items: [] };
+      return { items: [], cookId: null };
+    },
+    addToCart: async (customerId: string, item: CartItem) => {
+      const row = carts[customerId] || { cook_id: null, items: [] };
+      const conflict = enforceOneCookOnAdd(row.cook_id, item.cook_id);
+      if (!conflict.valid) throw new Error(conflict.error || "One cook per cart");
+      if (!row.cook_id) row.cook_id = item.cook_id;
+      const existing = row.items.find((i) => i.product_id === item.product_id);
+      if (existing) existing.qty += item.qty;
+      else row.items.push({ ...item });
+      carts[customerId] = row;
+      return { items: [...row.items], cookId: row.cook_id };
+    },
+  };
+
+  const orderMetaProto = Object.create(ShcOrderMetaModuleService.prototype);
+  const orderMetaService = Object.assign(orderMetaProto, {
+    createOrUpdateMeta: async (data: any) => {
+      orders[data.order_id] = { ...data, shc_status: data.shc_status || "paid" };
+      return orders[data.order_id];
+    },
+    listAndCountOrderMetas: async (where: any) => {
+      let rows = Object.values(orders) as any[];
+      if (where.order_id) rows = rows.filter((o) => o.order_id === where.order_id);
+      if (where.cook_id) rows = rows.filter((o) => o.cook_id === where.cook_id);
+      return [rows, rows.length];
+    },
+    updateOrderMetas: async ({ selector, data }: any) => {
+      const row = orders[selector.order_id];
+      if (row) Object.assign(row, data);
+      return [row];
+    },
+    addOrderMessage: async (orderId: string, senderActor: string, senderId: string, body: string) => {
+      messages.push({ order_id: orderId, sender_actor: senderActor, sender_id: senderId, body });
+      return messages[messages.length - 1];
+    },
+    getOrderMetaWithMessages: async (orderId: string) => ({
+      meta: orders[orderId],
+      messages: messages.filter((m) => m.order_id === orderId),
+    }),
+  });
+
+  const scope = {
+    resolve(name: string) {
+      if (name === "shcCook") return cookService;
+      if (name === "shcProductMeta") return productMetaService;
+      if (name === "shcCart") return cartService;
+      if (name === "shcAvailability") {
+        return { upsertAvailability: async () => ({}), getAvailability: async () => null };
+      }
+      if (name === "shcOrderMeta") return orderMetaService;
+      if (name === "shcLedger") {
+        return { getLedgerSummaryForOrders: async () => ({ totalCookEarnings: 0, totalPlatformFees: 0, entries: [] }) };
+      }
+      if (name === "shcNotification") return { createNotifications: async () => [], push: async () => [] };
+      if (name === "shcCreditWallet") return { awardCredits: async () => ({}), awardCreditsOnComplete: async () => ({}) };
+      if (name === "logger") return console;
+      throw new Error(`Unknown ${name}`);
+    },
+  };
+
+  return { scope, cooks, metas, carts, orders, orderMetaService };
+}
+
+describe("cook ↔ customer wiring (handler chain)", () => {
+  it("register → listing → cart checkout → cook orders → accept/decline with cook_id propagation", async () => {
+    const { scope, orders } = buildInMemoryWiringScope();
+    const customerId = "cust_wiring_1";
+    const customerToken = signShcToken({ actor_type: "customer", actor_id: customerId, shc: true });
 
     const regRes = makeRes();
     await registerCook(
@@ -136,10 +182,74 @@ describe("cook ↔ customer wiring (in-process handlers)", () => {
       listRes
     );
     expect(listRes.statusCode).toBe(201);
+    const productId = listRes.body.product.id as string;
     expect(listRes.body.product.cook_id).toBe(cookId);
 
-    orders.ord_accept.cook_id = cookId;
-    orders.ord_decline.cook_id = cookId;
+    const productsRes = makeRes();
+    await listProducts(
+      { query: { cook_id: cookId, limit: "20" }, scope } as any,
+      productsRes
+    );
+    expect(productsRes.statusCode).toBe(200);
+    expect(productsRes.body.products.some((p: { id: string }) => p.id === productId)).toBe(true);
+
+    await clearCart({ headers: { authorization: `Bearer ${customerToken}` }, scope } as any, makeRes());
+
+    const cartRes = makeRes();
+    await addToCart(
+      {
+        body: { product_id: productId, qty: 5 },
+        headers: { authorization: `Bearer ${customerToken}` },
+        scope,
+      } as any,
+      cartRes
+    );
+    expect(cartRes.statusCode).toBe(200);
+    expect(cartRes.body.cart.cookId).toBe(cookId);
+
+    const checkoutRes = makeRes();
+    await demoComplete(
+      {
+        body: {
+          collection_date: "2026-08-15",
+          collection_slot: "18:00-19:00",
+          allergen_acked: true,
+          pdpa_consent: true,
+        },
+        headers: { authorization: `Bearer ${customerToken}` },
+        scope,
+      } as any,
+      checkoutRes
+    );
+    expect(checkoutRes.statusCode, JSON.stringify(checkoutRes.body)).toBe(200);
+    const acceptOrderId = checkoutRes.body.order.id as string;
+    expect(checkoutRes.body.order.cook_id).toBe(cookId);
+
+    const checkoutRes2 = makeRes();
+    await addToCart(
+      {
+        body: { product_id: productId, qty: 5 },
+        headers: { authorization: `Bearer ${customerToken}` },
+        scope,
+      } as any,
+      makeRes()
+    );
+    await demoComplete(
+      {
+        body: {
+          collection_date: "2026-08-16",
+          collection_slot: "18:00-19:00",
+          allergen_acked: true,
+          pdpa_consent: true,
+        },
+        headers: { authorization: `Bearer ${customerToken}` },
+        scope,
+      } as any,
+      checkoutRes2
+    );
+    expect(checkoutRes2.statusCode).toBe(200);
+    const declineOrderId = checkoutRes2.body.order.id as string;
+    expect(checkoutRes2.body.order.cook_id).toBe(cookId);
 
     const ordersRes = makeRes();
     await listCookOrders(
@@ -156,7 +266,7 @@ describe("cook ↔ customer wiring (in-process handlers)", () => {
     const acceptRes = makeRes();
     await transitionOrder(
       {
-        params: { id: "ord_accept" },
+        params: { id: acceptOrderId },
         body: { to: "accepted" },
         headers: { authorization: `Bearer ${cookToken}` },
         scope,
@@ -164,12 +274,30 @@ describe("cook ↔ customer wiring (in-process handlers)", () => {
       acceptRes
     );
     expect(acceptRes.statusCode).toBe(200);
-    expect(orders.ord_accept.shc_status).toBe("accepted");
+    expect(orders[acceptOrderId].shc_status).toBe("accepted");
+
+    const wrongCookToken = signShcToken({
+      actor_type: "cook",
+      actor_id: "cook_intruder",
+      email: "intruder@test.local",
+      shc: true,
+    });
+    const intruderRes = makeRes();
+    await transitionOrder(
+      {
+        params: { id: declineOrderId },
+        body: { to: "accepted" },
+        headers: { authorization: `Bearer ${wrongCookToken}` },
+        scope,
+      } as any,
+      intruderRes
+    );
+    expect(intruderRes.statusCode).toBe(400);
 
     const declineRes = makeRes();
     await transitionOrder(
       {
-        params: { id: "ord_decline" },
+        params: { id: declineOrderId },
         body: { to: "cancelled" },
         headers: { authorization: `Bearer ${cookToken}` },
         scope,
@@ -177,6 +305,6 @@ describe("cook ↔ customer wiring (in-process handlers)", () => {
       declineRes
     );
     expect(declineRes.statusCode).toBe(200);
-    expect(orders.ord_decline.shc_status).toBe("cancelled");
+    expect(orders[declineOrderId].shc_status).toBe("cancelled");
   });
 });
