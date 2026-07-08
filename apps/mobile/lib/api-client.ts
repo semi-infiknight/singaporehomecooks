@@ -1,10 +1,11 @@
 // apps/mobile/lib/api-client.ts — wired to Medusa via @shc/api-client (real-first, mock fallback)
 import { createShcApiClient, resolveActorFromUser } from '@shc/api-client';
+import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 import { api, mockFetch, MockAPI } from './mock-service';
 
 const client = createShcApiClient({
-  medusaBase: process.env.EXPO_PUBLIC_MEDUSA_BASE || 'http://localhost:9000',
-  publishableKey: process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
+  medusaBase: resolveRailwayMedusaBase(process.env.EXPO_PUBLIC_MEDUSA_BASE),
+  publishableKey: resolveRailwayPublishableKey(process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   useReal: process.env.EXPO_PUBLIC_USE_REAL_MEDUSA !== 'false',
   getActor: () => resolveActorFromUser(api.getCurrentUser()),
   mockApi: api,

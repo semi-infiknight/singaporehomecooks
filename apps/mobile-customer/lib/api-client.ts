@@ -1,5 +1,5 @@
 import { createShcApiClient } from '@shc/api-client';
-import { isMaestroE2eOrderId } from '@shc/utils';
+import { isMaestroE2eOrderId, resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 import * as SecureStore from 'expo-secure-store';
 
 const TOKEN_KEY = 'shc_customer_token';
@@ -8,8 +8,8 @@ const USER_KEY = 'shc_customer_user';
 let accessToken: string | null = null;
 
 export const client = createShcApiClient({
-  medusaBase: process.env.EXPO_PUBLIC_MEDUSA_BASE || 'http://localhost:9000',
-  publishableKey: process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
+  medusaBase: resolveRailwayMedusaBase(process.env.EXPO_PUBLIC_MEDUSA_BASE),
+  publishableKey: resolveRailwayPublishableKey(process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   appRole: 'customer',
   getAccessToken: () => accessToken,
   setAccessToken: (token) => {

@@ -40,7 +40,7 @@ if command -v adb >/dev/null 2>&1 && adb devices 2>/dev/null | grep -q emulator;
   echo "adb reverse configured for 8081 + 8082"
 fi
 
-echo "Mobile dev ready. Railway backend wired via each app .env.local"
+echo "Mobile dev ready. All clients use Railway Medusa (config/railway-client.json / .env.local)."
 
 # Auto-launch debug builds on the booted simulator (bare workflow, not expo-dev-client).
 SIM_NAME="${IOS_SIMULATOR:-iPhone 16 Pro}"

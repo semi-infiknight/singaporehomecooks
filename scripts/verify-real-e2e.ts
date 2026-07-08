@@ -1,13 +1,18 @@
 #!/usr/bin/env npx tsx
 /**
- * Smoke test: real Medusa /store/shc/* with publishable key + auth.
+ * Smoke test: Railway Medusa /store/shc/* with publishable key + auth.
  * Tier 1 E2E: core order → messages → collected/completed → credits → review → growth flow.
- * Run after: docker:up, medusa:dev:admin, bootstrap:medusa, seed:medusa
+ * Run after: pnpm env:sync (or pnpm bootstrap:medusa against Railway)
  */
 import fs from 'fs';
 import path from 'path';
+import {
+  RAILWAY_MEDUSA_PUBLISHABLE_KEY,
+  resolveRailwayMedusaBase,
+  resolveRailwayPublishableKey,
+} from '@shc/utils';
 
-const BASE = process.env.MEDUSA_URL || process.env.EXPO_PUBLIC_MEDUSA_BASE || 'http://localhost:9000';
+const BASE = resolveRailwayMedusaBase(process.env.MEDUSA_URL || process.env.EXPO_PUBLIC_MEDUSA_BASE);
 const CUSTOMER_EMAIL = process.env.SEED_CUSTOMER_EMAIL || 'customer@shc.local';
 const CUSTOMER_PASS = process.env.SEED_CUSTOMER_PASS || 'customersecret';
 const COOK_EMAIL = 'rose@shc.local';
@@ -17,16 +22,16 @@ const ADMIN_PASS = process.env.SEED_ADMIN_PASS || 'supersecret';
 
 function loadPubKey(): string {
   if (process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY) {
-    return process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY;
+    return resolveRailwayPublishableKey(process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY);
   }
   for (const rel of ['apps/mobile-customer/.env.local', 'apps/web/.env.local']) {
     const envLocal = path.join(__dirname, '..', rel);
     if (fs.existsSync(envLocal)) {
       const m = fs.readFileSync(envLocal, 'utf8').match(/(?:EXPO_PUBLIC_|NEXT_PUBLIC_)?MEDUSA_PUBLISHABLE_KEY=(.+)/);
-      if (m) return m[1].trim();
+      if (m) return resolveRailwayPublishableKey(m[1].trim());
     }
   }
-  throw new Error('No publishable key. Run: pnpm bootstrap:medusa');
+  return RAILWAY_MEDUSA_PUBLISHABLE_KEY;
 }
 
 async function shcFetch(pathname: string, init?: RequestInit, token?: string) {

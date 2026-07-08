@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { resolveRailwayMedusaBase } from '@shc/utils';
 import { SHCButton, SHCCard, SHCPageHeader, SHCBadge } from '../components/SHCWebComponents';
 
-const API_BASE = process.env.NEXT_PUBLIC_SHC_API_BASE || 'http://localhost:9000';
+const API_BASE = resolveRailwayMedusaBase(process.env.NEXT_PUBLIC_SHC_API_BASE);
 
 async function fetchJson(path: string, init?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, init);

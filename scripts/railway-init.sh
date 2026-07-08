@@ -7,10 +7,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-MEDUSA_URL="${MEDUSA_URL:-${MEDUSA_PUBLIC_URL:-}}"
-if [ -z "$MEDUSA_URL" ]; then
-  echo "ERROR: Set MEDUSA_URL to your Railway Medusa public URL."
-  echo "  Example: MEDUSA_URL=https://shc-medusa.up.railway.app ./scripts/railway-init.sh"
+DEFAULT_MEDUSA_URL="$(node -e "console.log(require('./config/railway-client.json').medusaBase)")"
+MEDUSA_URL="${MEDUSA_URL:-${MEDUSA_PUBLIC_URL:-$DEFAULT_MEDUSA_URL}}"
+if echo "$MEDUSA_URL" | grep -qE 'localhost|127\.0\.0\.1'; then
+  echo "ERROR: Local Medusa is disabled. Use Railway: $DEFAULT_MEDUSA_URL"
   exit 1
 fi
 

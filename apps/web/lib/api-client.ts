@@ -1,4 +1,5 @@
 import { createShcApiClient } from '@shc/api-client';
+import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 
 const TOKEN_KEY = 'shc_web_token';
 const USER_KEY = 'shc_web_user';
@@ -11,8 +12,8 @@ function readToken() {
 }
 
 export const client = createShcApiClient({
-  medusaBase: process.env.NEXT_PUBLIC_SHC_API_BASE || 'http://localhost:9000',
-  publishableKey: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
+  medusaBase: resolveRailwayMedusaBase(process.env.NEXT_PUBLIC_SHC_API_BASE),
+  publishableKey: resolveRailwayPublishableKey(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   appRole: 'customer',
   getAccessToken: readToken,
   setAccessToken: (token) => {

@@ -13,6 +13,7 @@
     "docker:up": "docker compose up -d postgres redis",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
+    "env:sync": "node scripts/sync-railway-env.mjs",
     "bootstrap:medusa": "node scripts/bootstrap-medusa.js",
     "verify:real-e2e": "npx tsx scripts/verify-real-e2e.ts",
     "eas:setup": "bash scripts/eas-setup.sh",
@@ -29,11 +30,11 @@
     "verify:mobile-bundles": "bash scripts/verify-mobile-bundles.sh",
     "verify:web-pwa": "bash scripts/verify-web-pwa.sh",
     "setup:ios-dev": "bash scripts/setup-ios-dev.sh",
-    "dev:full": "echo 'Start: pnpm docker:up && pnpm medusa:dev:admin && pnpm bootstrap:medusa && pnpm customer:dev & pnpm cook:dev & pnpm web:dev'",
+    "dev:full": "pnpm env:sync && echo 'Start: bash scripts/start-mobile-dev.sh && pnpm web:dev  (all clients use Railway Medusa)'",
     "medusa:seed:validate": "cd apps/medusa && npx tsx scripts/seed.ts || true",
     "eas:customer:preview": "pnpm --filter mobile-customer eas:build:preview",
     "eas:cook:preview": "pnpm --filter mobile-cook eas:build:preview",
-    "tunnel:medusa": "cloudflared tunnel --url http://localhost:9000",
+
     "start:full": "echo 'See LOCAL_TESTING.md and the instructions below. Run in separate terminals.'",
     "customer:dev": "pnpm --filter mobile-customer start",
     "cook:dev": "pnpm --filter mobile-cook start",
@@ -52,7 +53,8 @@
     "railway:wire": "node scripts/railway-wire-references.mjs",
     "railway:cleanup": "node scripts/railway-cleanup.mjs",
     "railway:ship": "bash scripts/railway-ship-pwa.sh",
-    "railway:verify-pwa": "bash scripts/railway-verify-pwa-evidence.sh"
+    "railway:verify-pwa": "bash scripts/railway-verify-pwa-evidence.sh",
+    "postinstall": "node scripts/sync-railway-env.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

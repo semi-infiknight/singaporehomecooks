@@ -1,5 +1,6 @@
 import { createShcApiClient } from '@shc/api-client';
 import type { SHCOrderStatus } from '@shc/types';
+import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 
 export const COOK_TOKEN_KEY = 'shc_cook_token';
 export const COOK_USER_KEY = 'shc_cook_user';
@@ -12,8 +13,8 @@ function readCookToken() {
 }
 
 export const cookClient = createShcApiClient({
-  medusaBase: process.env.NEXT_PUBLIC_SHC_API_BASE || 'http://localhost:9000',
-  publishableKey: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || '',
+  medusaBase: resolveRailwayMedusaBase(process.env.NEXT_PUBLIC_SHC_API_BASE),
+  publishableKey: resolveRailwayPublishableKey(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   appRole: 'cook',
   getAccessToken: readCookToken,
   setAccessToken: (token) => {

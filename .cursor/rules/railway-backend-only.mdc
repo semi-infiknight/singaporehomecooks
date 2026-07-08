@@ -1,0 +1,48 @@
+---
+description: All client apps use Railway Medusa only — local backend is disabled
+globs:
+  - apps/mobile-customer/**
+  - apps/mobile-cook/**
+  - apps/web/**
+  - packages/shc-api-client/**
+  - packages/shc-utils/**
+  - config/railway-client.json
+  - scripts/*env*
+  - scripts/bootstrap-medusa.js
+alwaysApply: true
+---
+
+# Railway-Only Backend (No Local Medusa for Clients)
+
+All client surfaces talk to **Railway Medusa** only:
+
+- URL: `config/railway-client.json` → `medusaBase`
+- Helpers: `@shc/utils` → `resolveRailwayMedusaBase()`, `resolveRailwayPublishableKey()`
+- Localhost / `127.0.0.1` URLs **throw** — never add `localhost:9000` fallbacks
+
+## On every clone / install
+
+`pnpm install` runs `postinstall` → `pnpm env:sync` → writes Railway URLs to:
+- `apps/mobile-customer/.env.local`
+- `apps/mobile-cook/.env.local`
+- `apps/web/.env.local`
+
+## Dev workflow (emulator, simulator, PWA)
+
+```bash
+bash scripts/start-mobile-dev.sh   # Metro :8081 + :8082 → Railway API
+pnpm web:dev                       # :3001 → Railway API
+```
+
+Same backend as TestFlight/APK/Railway PWA — only the JS bundle packaging differs.
+
+## Forbidden
+
+- `EXPO_PUBLIC_MEDUSA_BASE=http://localhost:9000`
+- `NEXT_PUBLIC_SHC_API_BASE=http://localhost:9000`
+- Docs/scripts telling users to run `docker:up && medusa:dev` for client testing
+- `USE_REAL_MEDUSA` toggles or mock fallbacks in runtime api-clients
+
+## Medusa app code (`apps/medusa`)
+
+Backend source still lives in-repo for Railway deploys. `pnpm medusa:dev` is for **server development only**, not for pointing clients at localhost.

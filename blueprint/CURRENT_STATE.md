@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Blueprint full sync to `main` @ `02a1f53`) — Family Values v4 trays/morph across tri-platform; full web cook PWA portal (TestFlight parity); cook listings PATCH/DELETE + mobile long-press edit/delete; web checkout auth guard (guest→login, cart refresh post-sign-in, PDP add-to-cart requires auth); `@shc/api-client` propagates `ShcRequestError` with `SHCErrorCode`; Railway topology includes worker + minio; `pnpm railway:ship` / `railway:verify-pwa` PWA deploy pipeline with `X-SHC-Railway-Build-Id` fingerprint; PWA assets served via Next.js route handlers (`/sw.js`, `/icon*.png`); explicit `STORE_CORS`/`AUTH_CORS` via `pnpm railway:wire` (fixes wildcard CORS breaking web login). Prior launch-readiness (2026-06-29): disputes, feature flags, `/ops`, web push, worker internal routes, commission rules, search synonyms — all still live.
+**Last Updated:** 2026-07-08 (Railway-only backend enforced for all clients) — Family Values v4 trays/morph across tri-platform; full web cook PWA portal (TestFlight parity); cook listings PATCH/DELETE + mobile long-press edit/delete; web checkout auth guard (guest→login, cart refresh post-sign-in, PDP add-to-cart requires auth); `@shc/api-client` propagates `ShcRequestError` with `SHCErrorCode`; Railway topology includes worker + minio; `pnpm railway:ship` / `railway:verify-pwa` PWA deploy pipeline with `X-SHC-Railway-Build-Id` fingerprint; PWA assets served via Next.js route handlers (`/sw.js`, `/icon*.png`); explicit `STORE_CORS`/`AUTH_CORS` via `pnpm railway:wire` (fixes wildcard CORS breaking web login). Prior launch-readiness (2026-06-29): disputes, feature flags, `/ops`, web push, worker internal routes, commission rules, search synonyms — all still live.
 **Audience:** Any builder (human or AI) picking up this repo cold  
 **Read order:** `INDEX.md` → **this file** → `AGENTS.md` → track-specific file from `multi-agent/tracks.md`
 
@@ -79,7 +79,7 @@ Bootstrap creates auth identity **and** Medusa store customer profile (required 
 | Mobile Cook | `apps/mobile-cook/.env.local` | same |
 | Web | `apps/web/.env.local` | `NEXT_PUBLIC_SHC_API_BASE`, `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` |
 
-**No `USE_REAL_MEDUSA` toggle** — clients always call Medusa.
+**Railway-only backend** — all clients (web, mobile-customer, mobile-cook, emulators, TestFlight, PWA) call `https://medusa-production-d2ba.up.railway.app`. Local Medusa (`localhost:9000`) is disabled; `resolveRailwayMedusaBase()` throws on localhost. Source: `config/railway-client.json`; env files written by `pnpm env:sync` (runs on `pnpm install`).
 
 ### Auth routes
 
@@ -113,11 +113,9 @@ Medusa must use **explicit** `STORE_CORS` and `AUTH_CORS` origins (web + localho
 ## 4. E2E Verification
 
 ```bash
-pnpm docker:up
-pnpm medusa:dev:admin
-pnpm bootstrap:medusa
-cd apps/medusa && pnpm seed
-pnpm verify:real-e2e
+pnpm install          # writes Railway .env.local via postinstall
+pnpm verify:real-e2e  # smoke against Railway Medusa
+# optional: pnpm bootstrap:medusa  # refresh publishable key + demo customer on Railway
 ```
 
 **`scripts/verify-real-e2e.ts` covers:**
@@ -184,13 +182,11 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 ## 6. Commands
 
 ```bash
-pnpm install
-pnpm docker:up                    # Postgres + Redis
-pnpm medusa:dev:admin             # API + admin at :9000/app
-pnpm bootstrap:medusa             # Admin, API keys, demo customer, .env.local
-cd apps/medusa && pnpm seed
+pnpm install                      # Railway .env.local for all clients (postinstall)
+pnpm env:sync                     # re-write client env from config/railway-client.json
+pnpm bootstrap:medusa             # optional: refresh Railway publishable key + demo customer
 
-pnpm customer:dev                 # Mobile customer :8081
+pnpm customer:dev                 # Mobile customer :8081 → Railway
 pnpm cook:dev                     # Mobile cook :8082
 pnpm web:dev                      # Web :3001
 
@@ -216,7 +212,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 
 ## 7. Known Gotchas
 
-1. **`pnpm medusa:start` disables admin** — use `pnpm medusa:dev:admin`.
+1. **Railway-only clients** — do not point `EXPO_PUBLIC_MEDUSA_BASE` or `NEXT_PUBLIC_SHC_API_BASE` at localhost; use `pnpm env:sync`.
 2. **Store customer profile required** — bootstrap/register/login call `ensureStoreCustomer`; without it JWT `actor_id` is empty and cart returns 401.
 3. **Product IDs** — canonical `dish_*` from seed; re-run `pnpm seed` after migrate.
 4. **Cook login** — scrypt `password_hash` on `shc_cook`; seed sets hashes; `SHC_COOK_ALLOW_DEV_PLAINTEXT=false` disables env fallback in prod.

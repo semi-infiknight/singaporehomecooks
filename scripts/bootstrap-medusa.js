@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * Automated Medusa bootstrap for local + staging.
- * Creates admin (if missing), region, sales channel, stock location, publishable API key.
- * Writes apps/mobile/.env.local with EXPO_PUBLIC_* vars for real-backend toggle.
+ * Bootstrap against Railway Medusa (remote only — local Medusa is disabled for clients).
+ * Creates admin (if missing), publishable API key, demo customer; writes client .env.local files.
  *
- * Prereqs: docker compose up -d && medusa running on :9000
+ * Prereqs: Railway Medusa reachable (default from config/railway-client.json).
  */
 const { execSync } = require('child_process');
 const fs = require('fs');
@@ -14,7 +13,17 @@ const https = require('https');
 
 const ROOT = path.join(__dirname, '..');
 const MEDUSA_DIR = path.join(ROOT, 'apps', 'medusa');
-const BASE_URL = process.env.MEDUSA_URL || 'http://localhost:9000';
+const RAILWAY_CFG = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/railway-client.json'), 'utf8'));
+
+function rejectLocalMedusa(url) {
+  if (/localhost|127\.0\.0\.1/i.test(url)) {
+    console.error('ERROR: Local Medusa is disabled. Use Railway:', RAILWAY_CFG.medusaBase);
+    process.exit(1);
+  }
+}
+
+const BASE_URL = process.env.MEDUSA_URL || RAILWAY_CFG.medusaBase;
+rejectLocalMedusa(BASE_URL);
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@shc.local';
 const ADMIN_PASS = process.env.SEED_ADMIN_PASS || 'supersecret';
 const CUSTOMER_ENV_OUT = path.join(ROOT, 'apps', 'mobile-customer', '.env.local');
@@ -151,22 +160,16 @@ function writeEnvFiles(pubKey) {
   console.log(`  ✓ Wrote ${WEB_ENV_OUT}`);
 
   const example = [
-    '# Copy to apps/mobile-customer/.env.local after pnpm bootstrap:medusa',
-    'EXPO_PUBLIC_MEDUSA_BASE=http://localhost:9000',
-    'EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_from_bootstrap',
+    '# Client apps — Railway only (see config/railway-client.json)',
+    `EXPO_PUBLIC_MEDUSA_BASE=${RAILWAY_CFG.medusaBase}`,
+    'EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_from_bootstrap_or_config',
+    `NEXT_PUBLIC_SHC_API_BASE=${RAILWAY_CFG.medusaBase}`,
+    'NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_from_bootstrap_or_config',
     '',
-    '# Medusa backend',
-    'DATABASE_URL=postgres://shc:shc_dev@localhost:5432/shc_medusa',
-    'REDIS_URL=redis://localhost:6379',
-    'JWT_SECRET=change-me-in-production',
-    'COOKIE_SECRET=change-me-in-production',
-    'MEDUSA_DISABLE_ADMIN=true',
+    '# Medusa server secrets — Railway dashboard only (never commit)',
+    '# DATABASE_URL, REDIS_URL, JWT_SECRET, COOKIE_SECRET, STORE_CORS, AUTH_CORS',
     '',
-    '# Railway staging (set in Railway dashboard)',
-    'STORE_CORS=https://your-tunnel.trycloudflare.com,http://localhost:8081',
-    'ADMIN_CORS=https://your-admin.example.com',
-    '',
-    '# EAS preview builds',
+    '# EAS / mobile builds',
     'EXPO_PUBLIC_MEDUSA_BASE=https://your-medusa.up.railway.app',
     '',
     '# Maestro Cloud (optional CI)',
@@ -244,7 +247,8 @@ async function main() {
   console.log('[1/6] Waiting for Medusa at', BASE_URL);
   const up = await waitForServer();
   if (!up) {
-    console.error('ERROR: Medusa not reachable. Run: pnpm docker:up && pnpm medusa:dev');
+    console.error(`ERROR: Medusa not reachable at ${BASE_URL}. Check Railway deploy or VPN.`);
+    console.error('  Quick fix: pnpm env:sync  (writes Railway URLs to client .env.local)');
     process.exit(1);
   }
   console.log('  ✓ Server healthy');
@@ -270,10 +274,10 @@ async function main() {
   console.log(`  Customer: ${DEMO_CUSTOMER_EMAIL} / ${DEMO_CUSTOMER_PASS}`);
   console.log('  Cook: rose@shc.local / cooksecret');
   console.log('Next:');
-  console.log('  cd apps/medusa && pnpm seed');
-  console.log('  pnpm customer:dev   # mobile customer');
-  console.log('  pnpm cook:dev       # mobile cook');
-  console.log('  pnpm web:dev        # web customer');
+  console.log('  pnpm customer:dev   # mobile customer → Railway');
+  console.log('  pnpm cook:dev       # mobile cook → Railway');
+  console.log('  pnpm web:dev        # web PWA → Railway');
+  console.log('  pnpm verify:real-e2e');
 }
 
 main().catch((e) => {
