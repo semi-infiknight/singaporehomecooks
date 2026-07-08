@@ -1,3 +1,4 @@
+/** AGENT: Cook runtime client — Railway only. appRole cook. blueprint/agent/build-protocol.md */
 import { createShcApiClient } from '@shc/api-client';
 import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 import * as SecureStore from 'expo-secure-store';

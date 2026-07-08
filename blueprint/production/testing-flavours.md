@@ -1,6 +1,9 @@
 # Testing Flavours — SHC Experience Ledger
 
 **Related Files:**
+- [../README.md](../README.md) — canonical agent brain
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
+- [../agent/verify-protocol.md](../agent/verify-protocol.md)
 - [goal-workflow.md](./goal-workflow.md)
 - [testing-strategy.md](./testing-strategy.md)
 - `scripts/verify-tier.sh`

@@ -1,6 +1,9 @@
-// @shc/ui - Singapore Home Cooks design system + reusable components
-// Theme tokens and components per 12-shared-components.md
-// All inline styles in mobile must be replaced with these. TestIDs included for E2E.
+/**
+ * AGENT: Shared UI barrel — tri-platform sync required on token/component changes.
+ * Blueprint: blueprint/agent/design-taste.md · blueprint/12-shared-components/
+ * DO NOT export location-map here (native crash) — use @shc/ui/location-ux subpath.
+ * Preserve testIDs for Maestro. FLAVOUR=tri-platform SCOPE=tray at goal verify.
+ */
 
 export * from './theme';
 export * from './native';

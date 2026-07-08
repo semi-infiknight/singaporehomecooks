@@ -5,8 +5,8 @@
 - [../CURRENT_STATE.md](../CURRENT_STATE.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../03-railway/03-railway.md](../03-railway/03-railway.md)
-- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
-- [../builder/how-to-build.md](../builder/how-to-build.md)
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
+- [../agent/build-protocol.md](../agent/build-protocol.md)
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 

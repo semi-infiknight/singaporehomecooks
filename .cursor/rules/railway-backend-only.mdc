@@ -14,7 +14,7 @@ alwaysApply: true
 
 # Railway-Only Backend (mirrors blueprint)
 
-**Canonical:** `blueprint/builder/how-to-build.md` § Railway-only backend
+**Canonical:** `blueprint/agent/build-protocol.md` § Railway-only backend
 
 # Railway-Only Backend (No Local Medusa for Clients)
 

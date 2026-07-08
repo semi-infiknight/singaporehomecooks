@@ -1,12 +1,12 @@
-# Taste & Design — How SHC Should Look and Feel
+# Agent Design Taste
 
 **Related Files:**
-- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
 - [../../brand.md](../../brand.md)
 - [../12-shared-components/12-shared-components.md](../12-shared-components/12-shared-components.md)
 - [../13-design-system/WIREFRAMES.md](../13-design-system/WIREFRAMES.md)
-- [how-to-build.md](./how-to-build.md)
-- [how-to-test.md](./how-to-test.md)
+- [build-protocol.md](./build-protocol.md)
+- [verify-protocol.md](./verify-protocol.md)
 
 **Last Updated:** 2026-07-08
 **Owner:** Mobile + Web tracks

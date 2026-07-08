@@ -1,3 +1,4 @@
+/** AGENT: Web customer client — auth-gate checkout/PDP. CORS via pnpm railway:wire. blueprint/agent/build-protocol.md */
 import { createShcApiClient } from '@shc/api-client';
 import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 

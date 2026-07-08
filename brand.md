@@ -335,7 +335,7 @@ Any UI/brand/token change **must** update all of:
 5. `blueprint/12-shared-components/12-shared-components.md`
 6. `blueprint/13-design-system/WIREFRAMES.md` (when layout changes)
 
-See `blueprint/builder/taste-and-design.md` (canonical), `.cursor/rules/tri-platform-ui-sync.mdc`, and `.agents/skills/tri-platform-ui-sync/SKILL.md`.
+See `blueprint/agent/design-taste.md` (canonical), `.cursor/rules/tri-platform-ui-sync.mdc`, and `.agents/skills/tri-platform-ui-sync/SKILL.md`.
 
 ---
 

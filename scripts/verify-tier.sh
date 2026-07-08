@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Batch-build / batch-verify workflow — see blueprint/production/goal-workflow.md
-# Experience-based flavours — see blueprint/production/testing-flavours.md
+# AGENT: Batch verify tiers — canonical brain: blueprint/agent/verify-protocol.md
+# FLAVOUR + SCOPE — see blueprint/production/testing-flavours.md
 #
 #   wip   — during goal: build freely (optional FILTER=pkg typecheck; RISK=native spot check)
 #   goal  — goal done: one pass (SCOPE=* required; FLAVOUR=* optional)

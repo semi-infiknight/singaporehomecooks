@@ -1,3 +1,4 @@
+/** AGENT: Web cook-portal client — separate session from customer. Railway only. blueprint/agent/build-protocol.md */
 import { createShcApiClient } from '@shc/api-client';
 import type { SHCOrderStatus } from '@shc/types';
 import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';

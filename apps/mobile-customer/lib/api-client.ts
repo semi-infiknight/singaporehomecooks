@@ -1,3 +1,4 @@
+/** AGENT: Customer runtime client — Railway only. Wire hooks here, not inline fetch. blueprint/agent/build-protocol.md */
 import { createShcApiClient } from '@shc/api-client';
 import { isMaestroE2eOrderId, resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 import * as SecureStore from 'expo-secure-store';

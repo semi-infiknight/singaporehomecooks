@@ -1,19 +1,19 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Builder Guide in blueprint — build, taste, test playbook) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
+**Last Updated:** 2026-07-08 (Agent Playbook in blueprint — build, taste, test playbook) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
 **Location:** `blueprint/` (monorepo root)  
-**Purpose:** One canonical, self-updating source of truth for all builders (human or AI agents). No information lost. All decisions, data models, APIs, phases, production requirements, and parallel execution rules live here.
+**Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
 ## Current State (read this first if picking up the repo cold)
 
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
-**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → **[BUILDER_GUIDE.md](./BUILDER_GUIDE.md)** (how to build, taste, test) → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** (how to build, taste, test) → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
 
-## Progress Update (2026-07-08 — Builder Guide in blueprint)
+## Progress Update (2026-07-08 — Agent Playbook in blueprint)
 
-[BUILDER_GUIDE.md](./BUILDER_GUIDE.md) + [builder/](./builder/) consolidate **how to build**, **taste & design**, and **how to test** into blueprint (canonical). Cursor rules mirror blueprint. Sub-docs: [how-to-build.md](./builder/how-to-build.md), [taste-and-design.md](./builder/taste-and-design.md), [how-to-test.md](./builder/how-to-test.md).
+[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) + [agent/](./agent/) consolidate **how to build**, **taste & design**, and **how to test** into blueprint (canonical). Cursor rules mirror blueprint. Sub-docs: [how-to-build.md](./agent/build-protocol.md), [taste-and-design.md](./agent/design-taste.md), [how-to-test.md](./agent/verify-protocol.md).
 
 ## Progress Update (2026-07-08 — Testing flavours + experience ledger)
 
@@ -70,11 +70,11 @@ Start here → follow links. Each file contains:
 - [CRON_JOBS.md](./CRON_JOBS.md)
 - [INSURANCE_LIABILITY.md](./INSURANCE_LIABILITY.md)
 
-**Builder Playbook (read after CURRENT_STATE):**
-- [BUILDER_GUIDE.md](./BUILDER_GUIDE.md) — hub: build, taste, test
-- [builder/how-to-build.md](./builder/how-to-build.md) — monorepo, Railway-only, wiring
-- [builder/taste-and-design.md](./builder/taste-and-design.md) — Gourmeat, Family Values, tri-platform
-- [builder/how-to-test.md](./builder/how-to-test.md) — FLAVOUR + SCOPE strategic verify
+**Agent Playbook (read after CURRENT_STATE):**
+- [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) — hub: build, taste, test
+- [agent/build-protocol.md](./agent/build-protocol.md) — monorepo, Railway-only, wiring
+- [agent/design-taste.md](./agent/design-taste.md) — Gourmeat, Family Values, tri-platform
+- [agent/verify-protocol.md](./agent/verify-protocol.md) — FLAVOUR + SCOPE strategic verify
 
 **Multi-Agent Execution Layer (read before starting parallel work):**
 - [multi-agent/README.md](./multi-agent/README.md) — Tracks, branch strategy, delegation rules
@@ -154,7 +154,7 @@ Every table, decision, route, task, acceptance criterion, and production require
 - Real mode default after `pnpm bootstrap:medusa` (writes `.env.local` for web + mobile).
 - Admin UI fixes: `medusa:dev:admin`, `backendUrl: "/"`, CORS for localhost/127.0.0.1; docs in `apps/medusa/ADMIN.md`.
 - Web: Peach Comfort brand (`brand.md`), `AppHeader`/`AppFooter`, DevRoleSwitcher Medusa toggle.
-- **Current state doc:** [CURRENT_STATE.md](./CURRENT_STATE.md) — authoritative project snapshot for cold-start builders.
+- **Current state doc:** [CURRENT_STATE.md](./CURRENT_STATE.md) — authoritative snapshot for agent cold-start.
 - Cross-links: `INDEX.md`, `AGENTS.md`, `04-monorepo.md`, `06-api-surface.md`, `multi-agent/README.md`, `STATUS.md` disclaimer.
 - **Still open:** real JWT auth, persistent cart, product ID alignment (`dish_*` vs `prod_*`), commit uncommitted wiring wave.
 

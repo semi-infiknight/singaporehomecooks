@@ -1,14 +1,14 @@
-# How to Test — Strategic Verify for SHC
+# Agent Verify Protocol
 
 **Related Files:**
-- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
 - [../production/testing-flavours.md](../production/testing-flavours.md)
 - [../production/goal-workflow.md](../production/goal-workflow.md)
 - [../production/testing-strategy.md](../production/testing-strategy.md)
-- [how-to-build.md](./how-to-build.md)
+- [build-protocol.md](./build-protocol.md)
 
 **Last Updated:** 2026-07-08
-**Owner:** All tracks
+**Owner:** All agent tracks
 
 Blueprint is canonical. `.cursor/rules/testing-tiers.mdc` mirrors this.
 
@@ -134,7 +134,7 @@ pnpm verify:full
 
 ## Build-phase checks (no test runner)
 
-From [how-to-build.md](./how-to-build.md) — run mentally before wiring commits:
+From [build-protocol.md](./build-protocol.md) — run mentally before wiring commits:
 
 1. Route exists
 2. CTA → real hook

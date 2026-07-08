@@ -1,4 +1,7 @@
-/** Canonical Railway Medusa — sole client backend. Local Medusa is not supported. */
+/**
+ * AGENT: Client backend URL guard — Railway only. Localhost throws.
+ * Config: config/railway-client.json · blueprint/agent/build-protocol.md · config/AGENT.md
+ */
 export const RAILWAY_MEDUSA_BASE = 'https://medusa-production-d2ba.up.railway.app' as const;
 
 export const RAILWAY_MEDUSA_PUBLISHABLE_KEY =

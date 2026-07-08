@@ -1,3 +1,7 @@
+/**
+ * AGENT: Cook Metro :8082 — separate cache from customer :8081. entry = expo-router/entry only.
+ * AppDelegate rewrites :8081→:8082 for deep links. blueprint/10-mobile/10-mobile.md
+ */
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 const { FileStore } = require('metro-cache');

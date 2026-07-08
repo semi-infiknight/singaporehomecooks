@@ -7,7 +7,7 @@
 - [../../brand.md](../../brand.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [packages/shc-ui](../04-monorepo/04-monorepo.md)
-- [../builder/taste-and-design.md](../builder/taste-and-design.md)
+- [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
 **Last Updated:** 2026-07-08 (Blueprint sync) — Family Values v4: `tray.tsx`, `family-values-ui.tsx`, `tab-direction.tsx`, `useOrderTrayTracking`; web `SHCTrayWeb` + `order-tray-tracking` module; morph evidence tests; Maestro `checkout-allergen-tray.yaml`, `listing-tray.yaml`.

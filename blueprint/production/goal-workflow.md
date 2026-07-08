@@ -5,8 +5,8 @@
 - [../multi-agent/README.md](../multi-agent/README.md)
 - [../multi-agent/stitching-protocol.md](../multi-agent/stitching-protocol.md)
 - [../multi-agent/self-updating-rules.md](../multi-agent/self-updating-rules.md)
-- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
-- [../builder/how-to-test.md](../builder/how-to-test.md)
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
+- [../agent/verify-protocol.md](../agent/verify-protocol.md)
 - [../AGENTS.md](../AGENTS.md)
 - `.cursor/rules/testing-tiers.mdc`
 - `scripts/verify-tier.sh`

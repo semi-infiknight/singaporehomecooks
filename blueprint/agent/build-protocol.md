@@ -1,15 +1,15 @@
-# How to Build on Singapore Home Cooks
+# Agent Build Protocol
 
 **Related Files:**
-- [../BUILDER_GUIDE.md](../BUILDER_GUIDE.md)
+- [../AGENT_PLAYBOOK.md](../AGENT_PLAYBOOK.md)
 - [../CURRENT_STATE.md](../CURRENT_STATE.md)
 - [../04-monorepo/04-monorepo.md](../04-monorepo/04-monorepo.md)
 - [../03-railway/03-railway.md](../03-railway/03-railway.md)
-- [taste-and-design.md](./taste-and-design.md)
-- [how-to-test.md](./how-to-test.md)
+- [design-taste.md](./design-taste.md)
+- [verify-protocol.md](./verify-protocol.md)
 
 **Last Updated:** 2026-07-08
-**Owner:** All tracks
+**Owner:** All agent tracks
 
 ## What you're building
 
@@ -94,8 +94,8 @@ Screen (expo-router / Next page)
 ### 1. Plan
 
 - Name the goal (one feature or polish slice)
-- Pick `FLAVOUR` + `SCOPE` upfront ([how-to-test.md](./how-to-test.md))
-- Read [taste-and-design.md](./taste-and-design.md) if UI
+- Pick `FLAVOUR` + `SCOPE` upfront ([verify-protocol.md](./verify-protocol.md))
+- Read [design-taste.md](./design-taste.md) if UI
 
 ### 2. Build (many commits, no E2E)
 

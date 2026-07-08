@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Write Railway-only client env files for web + both mobile apps.
- * No local Medusa — config/railway-client.json is the source of truth.
+ * AGENT: Railway-only client env — blueprint/agent/build-protocol.md
+ * Source: config/railway-client.json → apps/*/.env.local via pnpm env:sync
+ * Never point clients at localhost:9000.
  */
 import fs from 'node:fs';
 import path from 'node:path';

@@ -1,3 +1,8 @@
+/**
+ * AGENT: Customer Metro :8081 — entry MUST be expo-router/entry (not entry-classic).
+ * Wrong entry → ~125KB bundle → TestFlight crash. verify-mobile-bundles catches this.
+ * Blueprint: blueprint/10-mobile/10-mobile.md · TOUCHES_NATIVE=1 after edits here.
+ */
 const { getDefaultConfig } = require('expo/metro-config');
 const { withNativeWind } = require('nativewind/metro');
 const { FileStore } = require('metro-cache');

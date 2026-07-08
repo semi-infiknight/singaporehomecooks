@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Start both Expo Metro servers (customer 8081, cook 8082). Processes survive script exit (nohup).
+# AGENT: Start Metro :8081 (customer) + :8082 (cook) → Railway API (not local Medusa).
+# Ports invariant — see blueprint/10-mobile/10-mobile.md. blueprint/agent/build-protocol.md
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG_DIR="${ROOT}/.metro-logs"
