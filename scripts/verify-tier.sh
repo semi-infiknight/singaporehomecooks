@@ -260,8 +260,8 @@ tier_goal() {
   scope_maestro_device
   if should_run_api_smoke; then
     if [[ "$SCOPE" == "onboarding" ]]; then
-      log "cook-customer wiring (register → listing → order → accept/decline)"
-      pnpm verify:cook-wiring
+      log "cook-customer wiring (register → listing → order → accept/decline) — Railway required"
+      REQUIRE_RAILWAY=1 pnpm verify:cook-wiring
     else
       log "API smoke"
       pnpm verify:real-e2e

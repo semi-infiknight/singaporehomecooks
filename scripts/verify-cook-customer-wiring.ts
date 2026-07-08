@@ -103,6 +103,11 @@ async function registerCook() {
     activeBase = BASE;
     activePubKey = loadPubKey();
     console.log('Using Railway Medusa:', BASE);
+  } else if (process.env.REQUIRE_RAILWAY === '1') {
+    throw new Error(
+      `REQUIRE_RAILWAY=1 but cook register failed on Railway (${railwayProbe.status}). ` +
+        'Deploy medusa to Railway (see apps/medusa/Dockerfile + .railwayignore).'
+    );
   } else {
     const localProbe = await probeRegister(LOCAL_BASE, LOCAL_PUBLISHABLE_KEY);
     if (localProbe.ok) {
