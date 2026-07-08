@@ -9,11 +9,11 @@
 
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
-**Cold-start read order:** `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** (how to build, taste, test) → track file from [multi-agent/tracks.md](./multi-agent/tracks.md) → phase/section for your task.
+**Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
 
-## Progress Update (2026-07-08 — Agent Playbook in blueprint)
+## Progress Update (2026-07-08 — Agent brain)
 
-[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) + [agent/](./agent/) consolidate **how to build**, **taste & design**, and **how to test** into blueprint (canonical). Cursor rules mirror blueprint. Sub-docs: [how-to-build.md](./agent/build-protocol.md), [taste-and-design.md](./agent/design-taste.md), [how-to-test.md](./agent/verify-protocol.md).
+[README.md](./README.md): `blueprint/` is canonical agent brain (agents-only repo). [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) + [agent/](./agent/) protocols: [build-protocol.md](./agent/build-protocol.md), [design-taste.md](./agent/design-taste.md), [verify-protocol.md](./agent/verify-protocol.md). Root `AGENTS.md` points here; code comments reference blueprint.
 
 ## Progress Update (2026-07-08 — Testing flavours + experience ledger)
 
