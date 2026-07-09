@@ -26,7 +26,7 @@ import {
   DirectionalTabScreen,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
-import { useMyOrders } from '../../hooks/useOrder';
+import { useMyOrders, useRequests } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
 
@@ -48,6 +48,8 @@ export default function CookDashboard() {
     router.replace('/(shared)/auth' as any);
   };
   const { data: orders = [] } = useMyOrders();
+  const { data: openReqs = [] } = useRequests();
+  const reqCount = Array.isArray(openReqs) ? openReqs.length : 0;
 
   const earnings = orders
     .filter((o: any) => o.shc_status === 'completed')
@@ -124,7 +126,7 @@ export default function CookDashboard() {
         </SHCBentoCell>
         <SHCBentoCell variant="bento-peach">
           <SHCBentoIconBadge iconKey="request" size={24} />
-          <Text style={styles.statNum}>{openReqs.length}</Text>
+          <Text style={styles.statNum}>{reqCount}</Text>
           <Text style={styles.statLabel}>Requests</Text>
         </SHCBentoCell>
       </SHCBentoGrid>
