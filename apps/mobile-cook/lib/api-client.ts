@@ -113,6 +113,11 @@ export const createCookExpense = (input: { amount_cents: number; category: strin
 export const getTiffinCookConfig = () => client.getTiffinCookConfig();
 export const updateTiffinCookConfig = (input: Parameters<typeof client.updateTiffinCookConfig>[0]) =>
   client.updateTiffinCookConfig(input);
+export const kitchenCancelTiffinDay = (collectionDate: string, reason?: string) =>
+  client.kitchenCancelTiffinDay(collectionDate, reason);
+export const publishTiffinDayMenu = (collectionDate: string, productIds: string[], note?: string) =>
+  client.publishTiffinDayMenu(collectionDate, productIds, note);
+export const getTiffinDayMenu = (date: string) => client.getTiffinDayMenu(date);
 
 // Full server upload helper (sends base64 for server to upload to MinIO)
 export async function uploadImageToServer(imageBase64: string, objectName: string, cookId: string, contentType = 'image/jpeg') {

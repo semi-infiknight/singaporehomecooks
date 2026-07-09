@@ -68,8 +68,9 @@ export function useSubscribeTiffin() {
 export function useCancelTiffin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (reason?: string) => {
       await hydrateSession();
+      if (reason) return client.cancelTiffinSubscriptionWithReason(reason);
       return client.cancelTiffinSubscription();
     },
     onSuccess: () => {
@@ -131,5 +132,68 @@ export function useUpdateTiffinCookConfig() {
       qc.invalidateQueries({ queryKey: ['tiffin', 'cook-config'] });
       qc.invalidateQueries({ queryKey: ['tiffin', 'kitchens'] });
     },
+  });
+}
+
+export function useTiffinMealOrders(from?: string, to?: string) {
+  const { user, loading } = useAuth();
+  return useQuery({
+    queryKey: ['tiffin', 'meals', from, to],
+    queryFn: async () => {
+      await hydrateSession();
+      return client.getTiffinMealOrders(from, to);
+    },
+    enabled: Boolean(user || isAuthenticated()) && !loading,
+  });
+}
+
+export function usePauseTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (days: number) => {
+      await hydrateSession();
+      return client.pauseTiffinSubscription(days);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useResumeTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await hydrateSession();
+      return client.resumeTiffinSubscription();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useSkipTiffinMeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { collectionDate: string; collectionSlot?: string }) => {
+      await hydrateSession();
+      return client.skipTiffinMeal(input.collectionDate, input.collectionSlot);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useKitchenCancelTiffinDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { collectionDate: string; reason?: string }) =>
+      cookClient.kitchenCancelTiffinDay(input.collectionDate, input.reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function usePublishTiffinDayMenu() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { collectionDate: string; productIds: string[]; note?: string }) =>
+      cookClient.publishTiffinDayMenu(input.collectionDate, input.productIds, input.note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });
 }

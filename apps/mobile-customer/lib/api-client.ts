@@ -136,6 +136,13 @@ export const getTiffinSubscription = () => client.getTiffinSubscription();
 export const subscribeTiffin = (cookId: string, mealsPerWeek: 2 | 3 | 4) =>
   client.subscribeTiffin(cookId, mealsPerWeek);
 export const cancelTiffinSubscription = () => client.cancelTiffinSubscription();
+export const cancelTiffinSubscriptionWithReason = (reason?: string) =>
+  client.cancelTiffinSubscriptionWithReason(reason);
+export const pauseTiffinSubscription = (days?: number) => client.pauseTiffinSubscription(days);
+export const resumeTiffinSubscription = () => client.resumeTiffinSubscription();
+export const getTiffinMealOrders = (from?: string, to?: string) => client.getTiffinMealOrders(from, to);
+export const skipTiffinMeal = (collectionDate: string, collectionSlot?: string) =>
+  client.skipTiffinMeal(collectionDate, collectionSlot);
 export const getTiffinWeeklyPlan = (weekStart?: string) => client.getTiffinWeeklyPlan(weekStart);
 export const saveTiffinWeeklyPlan = (input: Parameters<typeof client.saveTiffinWeeklyPlan>[0]) =>
   client.saveTiffinWeeklyPlan(input);

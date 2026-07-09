@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTiffinCookConfig, updateTiffinCookConfig } from '../lib/api-client';
+import {
+  getTiffinCookConfig,
+  updateTiffinCookConfig,
+  kitchenCancelTiffinDay,
+  publishTiffinDayMenu,
+} from '../lib/api-client';
 
 export function useTiffinCookConfig() {
   return useQuery({
@@ -16,5 +21,30 @@ export function useUpdateTiffinCookConfig() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tiffin'] });
     },
+  });
+}
+
+export function useKitchenCancelTiffinDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ collectionDate, reason }: { collectionDate: string; reason?: string }) =>
+      kitchenCancelTiffinDay(collectionDate, reason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function usePublishTiffinDayMenu() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      collectionDate,
+      productIds,
+      note,
+    }: {
+      collectionDate: string;
+      productIds: string[];
+      note?: string;
+    }) => publishTiffinDayMenu(collectionDate, productIds, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });
 }

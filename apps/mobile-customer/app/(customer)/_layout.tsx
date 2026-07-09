@@ -56,6 +56,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="tiffin/planner" options={{ href: null, title: 'Weekly Plan', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="tiffin/menu" options={{ href: null, title: 'Tiffin Menu', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="tiffin/manage" options={{ href: null, title: 'Manage Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/calendar" options={{ href: null, title: 'Tiffin Calendar', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
     </CustomerTabIndexSync>
     </TabDirectionProvider>

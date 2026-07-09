@@ -5,6 +5,12 @@ import {
   resolvePlanForWeek,
   validateWeeklyPlanSlots,
   weekStartMonday,
+  canSkipTiffinMeal,
+  canPauseSubscription,
+  canResumeSubscription,
+  applyPause,
+  projectMealInstances,
+  defaultFlexQuota,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 import { TiffinKitchenConfig } from "./models/kitchen-config";
@@ -14,6 +20,15 @@ import {
   pgGetKitchenConfig,
   pgListEnabledKitchens,
   pgUpsertKitchenConfig,
+  pgEnsureSubMeta,
+  pgUpdateSubMeta,
+  pgListSkips,
+  pgAddSkip,
+  pgListKitchenCancels,
+  pgAddKitchenCancel,
+  pgUpsertDayMenu,
+  pgGetDayMenu,
+  pgCountActiveSubscribers,
 } from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
@@ -133,17 +148,158 @@ class ShcTiffinModuleService extends MedusaService({
         updated_at: new Date(),
       } as any,
     ]);
+    try {
+      await pgEnsureSubMeta(id, mealsPerWeek);
+    } catch {
+      /* meta optional if DATABASE_URL missing in unit tests */
+    }
     return created;
   }
 
-  async cancelSubscription(customerId: string) {
+  async cancelSubscription(customerId: string, reason?: string) {
     const active = await this.getActiveSubscription(customerId);
     if (!active) return null;
     await this.updateTiffinSubscriptions({
       selector: { id: active.id },
       data: { status: "cancelled", updated_at: new Date() } as any,
     });
+    try {
+      await pgEnsureSubMeta(active.id, active.meals_per_week);
+      await pgUpdateSubMeta(active.id, { cancel_reason: reason || null, paused_until: null });
+    } catch {
+      /* ignore */
+    }
     return active;
+  }
+
+  async getSubscriptionOsFields(sub: { id: string; meals_per_week: number; status: string; cook_id: string }) {
+    let meta = {
+      flex_quota: defaultFlexQuota(sub.meals_per_week),
+      flex_remaining: defaultFlexQuota(sub.meals_per_week),
+      paused_until: null as string | null,
+      expires_on: null as string | null,
+      cancel_reason: null as string | null,
+    };
+    try {
+      const m = await pgEnsureSubMeta(sub.id, sub.meals_per_week);
+      meta = {
+        flex_quota: m.flex_quota,
+        flex_remaining: m.flex_remaining,
+        paused_until: m.paused_until,
+        expires_on: m.expires_on,
+        cancel_reason: m.cancel_reason,
+      };
+    } catch {
+      /* defaults */
+    }
+    const status =
+      sub.status === "cancelled"
+        ? "canceled"
+        : meta.paused_until && meta.paused_until >= new Date().toISOString().slice(0, 10)
+          ? "paused"
+          : "active";
+    return { ...meta, status, deliveries_left: Math.max(0, (meta.flex_quota || 0) + 8) };
+  }
+
+  async pauseSubscription(customerId: string, pauseDays: number) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
+    const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+    const gate = canPauseSubscription({
+      status: meta.paused_until ? "paused" : "active",
+      flexRemaining: meta.flex_remaining,
+      pauseDays,
+    });
+    if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
+    const applied = applyPause({
+      flexRemaining: meta.flex_remaining,
+      pauseDays,
+      expiresOn: meta.expires_on,
+    });
+    await pgUpdateSubMeta(active.id, {
+      flex_remaining: applied.flexRemaining,
+      paused_until: applied.pausedUntil,
+      expires_on: applied.expiresOn,
+    });
+    return { ...active, ...applied, status: "paused" };
+  }
+
+  async resumeSubscription(customerId: string) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
+    const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+    const gate = canResumeSubscription(meta.paused_until ? "paused" : "active");
+    if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
+    await pgUpdateSubMeta(active.id, { paused_until: null });
+    return { ...active, status: "active", paused_until: null };
+  }
+
+  async skipMeal(customerId: string, collectionDate: string, collectionSlot?: string) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
+    const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+    const skips = await pgListSkips(active.id);
+    const gate = canSkipTiffinMeal({
+      flexRemaining: meta.flex_remaining,
+      collectionDate,
+      collectionSlot,
+      alreadySkipped: skips.includes(collectionDate),
+    });
+    if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
+    await pgAddSkip(active.id, collectionDate);
+    await pgUpdateSubMeta(active.id, {
+      flex_remaining: Math.max(0, meta.flex_remaining - 1),
+      expires_on: meta.expires_on ? applyPause({ flexRemaining: 1, pauseDays: 1, expiresOn: meta.expires_on }).expiresOn : meta.expires_on,
+    });
+    return { ok: true, collection_date: collectionDate };
+  }
+
+  async listMealInstances(customerId: string, fromIso: string, toIso: string) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) return { subscription: null, meals: [] as any[] };
+    const plans = await this.listPlans(active.id);
+    const config = await this.getKitchenConfig(active.cook_id);
+    let skipped = new Set<string>();
+    let kitchenCanceled = new Set<string>();
+    try {
+      skipped = new Set(await pgListSkips(active.id));
+      kitchenCanceled = new Set(await pgListKitchenCancels(active.cook_id));
+    } catch {
+      /* empty */
+    }
+    const meals = projectMealInstances({
+      subscriptionId: active.id,
+      cookId: active.cook_id,
+      fromIso,
+      toIso,
+      plans,
+      defaultSlot: config?.default_collection_slot,
+      skippedDates: skipped,
+      kitchenCanceledDates: kitchenCanceled,
+    });
+    return { subscription: active, meals };
+  }
+
+  async kitchenCancelDay(cookId: string, collectionDate: string, reason?: string) {
+    await pgAddKitchenCancel(cookId, collectionDate, reason);
+    return { ok: true, collection_date: collectionDate };
+  }
+
+  async publishDayMenu(cookId: string, collectionDate: string, productIds: string[], note?: string) {
+    await pgUpsertDayMenu(cookId, collectionDate, productIds, note);
+    return { ok: true, collection_date: collectionDate, product_ids: productIds };
+  }
+
+  async getDayMenu(cookId: string, collectionDate: string) {
+    return pgGetDayMenu(cookId, collectionDate);
+  }
+
+  async subscriberCount(cookId: string) {
+    try {
+      return await pgCountActiveSubscribers(cookId);
+    } catch {
+      return 0;
+    }
   }
 
   async listPlans(subscriptionId: string) {

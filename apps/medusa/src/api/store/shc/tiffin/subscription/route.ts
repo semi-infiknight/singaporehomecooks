@@ -21,12 +21,19 @@ async function subscriptionPayload(tiffin: ShcTiffinModuleService, sub: any, sco
   const slotsCurrent = tiffin.resolveSlotsForWeek(plans, currentWeek);
   const slotsNext = tiffin.resolveSlotsForWeek(plans, nextWeek);
   const kitchen = config ? await shapeTiffinKitchen(config, scope) : null;
+  const os = await tiffin.getSubscriptionOsFields(sub);
   return {
     subscription: {
       id: sub.id,
       cook_id: sub.cook_id,
       meals_per_week: sub.meals_per_week,
-      status: sub.status,
+      status: os.status,
+      flex_quota: os.flex_quota,
+      flex_remaining: os.flex_remaining,
+      paused_until: os.paused_until,
+      expires_on: os.expires_on,
+      cancel_reason: os.cancel_reason,
+      deliveries_left: os.deliveries_left,
     },
     kitchen,
     plans,
@@ -69,7 +76,9 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
-    await tiffin.cancelSubscription(customerId);
+    const reason =
+      typeof (req.body as any)?.reason === "string" ? (req.body as any).reason : undefined;
+    await tiffin.cancelSubscription(customerId, reason);
     res.json({ ok: true });
   } catch {
     return unauthorized(res, "Customer login required");

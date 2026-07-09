@@ -3,7 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCookListings } from '../../../lib/useCookPortal';
-import { useTiffinCookConfig, useUpdateTiffinCookConfig, TIFFIN_DAY_LABELS } from '../../../lib/useTiffin';
+import {
+  useTiffinCookConfig,
+  useUpdateTiffinCookConfig,
+  useKitchenCancelTiffinDay,
+  usePublishTiffinDayMenu,
+  TIFFIN_DAY_LABELS,
+} from '../../../lib/useTiffin';
+import { weekStartMonday } from '@shc/business-rules';
 import {
   GourmeatCookHeader,
   GourmeatCard,
@@ -16,6 +23,8 @@ export default function CookTiffinConfigPage() {
   const { data: configData, isLoading } = useTiffinCookConfig();
   const { data: listings = [] } = useCookListings();
   const updateMut = useUpdateTiffinCookConfig();
+  const cancelDayMut = useKitchenCancelTiffinDay();
+  const publishMenuMut = usePublishTiffinDayMenu();
 
   const config = (configData as any)?.config;
   const [enabled, setEnabled] = useState(false);
@@ -166,6 +175,30 @@ export default function CookTiffinConfigPage() {
       )}
 
       {savedMsg ? <p className="text-sm font-bold text-primary mb-3">{savedMsg}</p> : null}
+
+      <p className="font-extrabold text-sm mb-2 mt-4">Menu publish & day cancel</p>
+      <div className="flex flex-col gap-2 mb-4">
+        <GourmeatPrimaryButton
+          label="Publish menu for next Mon"
+          onClick={() => {
+            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
+            publishMenuMut.mutate({ collectionDate: date, productIds: eligible, note: 'Weekly tiffin menu' });
+          }}
+          loading={publishMenuMut.isPending}
+          testID="cook-tiffin-publish-menu-btn"
+          className="w-full"
+        />
+        <GourmeatPrimaryButton
+          label="Cancel kitchen day (next Mon)"
+          onClick={() => {
+            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
+            cancelDayMut.mutate({ collectionDate: date, reason: 'Kitchen unavailable' });
+          }}
+          loading={cancelDayMut.isPending}
+          testID="cook-tiffin-cancel-day-btn"
+          className="w-full"
+        />
+      </div>
 
       <GourmeatPrimaryButton
         label={updateMut.isPending ? 'Saving…' : 'Save tiffin settings'}

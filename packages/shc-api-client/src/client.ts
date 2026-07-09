@@ -506,6 +506,57 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         body: JSON.stringify(input),
       });
     },
+
+    async pauseTiffinSubscription(days = 1) {
+      return request("/store/shc/tiffin/subscription/pause", {
+        method: "POST",
+        body: JSON.stringify({ days }),
+      });
+    },
+
+    async resumeTiffinSubscription() {
+      return request("/store/shc/tiffin/subscription/resume", { method: "POST", body: "{}" });
+    },
+
+    async cancelTiffinSubscriptionWithReason(reason?: string) {
+      return request("/store/shc/tiffin/subscription", {
+        method: "DELETE",
+        body: JSON.stringify({ reason }),
+      });
+    },
+
+    async getTiffinMealOrders(from?: string, to?: string) {
+      const qs = new URLSearchParams();
+      if (from) qs.set("from", from);
+      if (to) qs.set("to", to);
+      const q = qs.toString();
+      return request(`/store/shc/tiffin/orders${q ? `?${q}` : ""}`, { method: "GET" });
+    },
+
+    async skipTiffinMeal(collectionDate: string, collectionSlot?: string) {
+      return request("/store/shc/tiffin/orders/skip", {
+        method: "POST",
+        body: JSON.stringify({ collection_date: collectionDate, collection_slot: collectionSlot }),
+      });
+    },
+
+    async kitchenCancelTiffinDay(collectionDate: string, reason?: string) {
+      return request("/store/shc/tiffin/orders/kitchen-cancel", {
+        method: "POST",
+        body: JSON.stringify({ collection_date: collectionDate, reason }),
+      });
+    },
+
+    async publishTiffinDayMenu(collectionDate: string, productIds: string[], note?: string) {
+      return request("/store/shc/tiffin/cook/menu", {
+        method: "PUT",
+        body: JSON.stringify({ collection_date: collectionDate, product_ids: productIds, note }),
+      });
+    },
+
+    async getTiffinDayMenu(date: string) {
+      return request(`/store/shc/tiffin/cook/menu?date=${encodeURIComponent(date)}`, { method: "GET" });
+    },
   };
 
   return api;

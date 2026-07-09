@@ -6,6 +6,7 @@ import {
   GourmeatScreenHeader,
   SHCTiffinHeroBanner,
   SHCTiffinKitchenCard,
+  SHCTiffinEmptyState,
   gourmeatColors,
   shcSpacing,
   GourmeatPrimaryButton,
@@ -50,7 +51,10 @@ export default function TiffinBrowseScreen() {
       {isLoading ? (
         <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: shcSpacing.xl }} />
       ) : kitchens.length === 0 ? (
-        <Text style={styles.empty}>No kitchens offer tiffin yet. Check back soon!</Text>
+        <SHCTiffinEmptyState
+          title="No tiffin kitchens yet"
+          subtitle="Home cooks are enabling weekly plans. Check back soon or ask your favourite auntie to turn on tiffin."
+        />
       ) : (
         kitchens.map((k: any) => (
           <SHCTiffinKitchenCard

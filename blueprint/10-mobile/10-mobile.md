@@ -195,9 +195,10 @@ Prereqs: Node 22+, pnpm 11, Xcode, CocoaPods, EAS account (`pnpm dlx eas-cli log
 | Confirm | `confirm.tsx` | `tiffin-confirm-screen`, `tiffin-pick-meals-btn` |
 | Weekly planner | `planner.tsx` | `tiffin-planner-screen`, `tiffin-save-plan-btn` |
 | Full menu | `menu.tsx` | `tiffin-menu-screen` |
-| Manage | `manage.tsx` | `tiffin-manage-screen` |
+| Manage | `manage.tsx` | `tiffin-manage-screen`, pause/resume/cancel reasons, plan metrics |
+| Meal calendar | `calendar.tsx` | `tiffin-calendar-screen`, skip day |
 
-Entry: discover promo rail (`Weekly tiffin`) + profile tile `profile-tiffin-tile`.
+Entry: discover promo rail (`Weekly tiffin`) + profile tile `profile-tiffin-tile`. Web: `/tiffin/*` + `/tiffin/calendar`.
 
 **Cook** (`apps/mobile-cook/app/(cook)/tiffin/index.tsx`): `cook-tiffin-config-screen`, enabled switch, tagline, collection days, dish toggles, save. Dashboard bento quick action **Tiffin**.
 

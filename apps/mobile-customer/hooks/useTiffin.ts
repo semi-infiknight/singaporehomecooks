@@ -5,6 +5,11 @@ import {
   getTiffinSubscription,
   subscribeTiffin,
   cancelTiffinSubscription,
+  cancelTiffinSubscriptionWithReason,
+  pauseTiffinSubscription,
+  resumeTiffinSubscription,
+  getTiffinMealOrders,
+  skipTiffinMeal,
   saveTiffinWeeklyPlan,
   saveTiffinNextWeekPlan,
   hydrateSession,
@@ -40,6 +45,18 @@ export function useTiffinSubscription() {
   });
 }
 
+export function useTiffinMealOrders(from?: string, to?: string) {
+  const { user, loading } = useAuth();
+  return useQuery({
+    queryKey: ['tiffin', 'meals', from, to],
+    queryFn: async () => {
+      await hydrateSession();
+      return getTiffinMealOrders(from, to);
+    },
+    enabled: (!!user || isAuthenticated()) && !loading,
+  });
+}
+
 export function useSubscribeTiffin() {
   const qc = useQueryClient();
   return useMutation({
@@ -56,13 +73,53 @@ export function useSubscribeTiffin() {
 export function useCancelTiffin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async (reason?: string) => {
       await hydrateSession();
+      if (reason) return cancelTiffinSubscriptionWithReason(reason);
       return cancelTiffinSubscription();
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tiffin'] });
     },
+  });
+}
+
+export function usePauseTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (days: number) => {
+      await hydrateSession();
+      return pauseTiffinSubscription(days);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useResumeTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await hydrateSession();
+      return resumeTiffinSubscription();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useSkipTiffinMeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      collectionDate,
+      collectionSlot,
+    }: {
+      collectionDate: string;
+      collectionSlot?: string;
+    }) => {
+      await hydrateSession();
+      return skipTiffinMeal(collectionDate, collectionSlot);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });
 }
 

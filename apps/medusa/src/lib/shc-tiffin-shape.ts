@@ -10,6 +10,13 @@ export async function shapeTiffinKitchen(
 ) {
   const cookService: ShcCookModuleService = scope.resolve("shcCook") as any;
   const metaService: ShcProductMetaModuleService = scope.resolve("shcProductMeta") as any;
+  let subscriber_count = 0;
+  try {
+    const tiffin: any = scope.resolve("shcTiffin");
+    if (tiffin?.subscriberCount) subscriber_count = await tiffin.subscriberCount(config.cook_id);
+  } catch {
+    /* optional */
+  }
   const [cooks] = await cookService.listAndCountCooks({ id: config.cook_id } as any, { take: 1 }).catch(() => [[]]);
   const cook = (cooks as any[])?.[0];
   const dishes = await Promise.all(
@@ -21,6 +28,7 @@ export async function shapeTiffinKitchen(
   );
   return {
     ...config,
+    subscriber_count,
     cook: cook
       ? {
           id: cook.id,

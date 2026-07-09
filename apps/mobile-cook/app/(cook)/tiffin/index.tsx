@@ -10,8 +10,9 @@ import {
   shcSpacing,
   TIFFIN_DAY_LABELS,
 } from '@shc/ui';
-import { useTiffinCookConfig, useUpdateTiffinCookConfig } from '../../../hooks/useTiffin';
+import { useTiffinCookConfig, useUpdateTiffinCookConfig, useKitchenCancelTiffinDay, usePublishTiffinDayMenu } from '../../../hooks/useTiffin';
 import { useCookListings } from '../../../hooks/useProducts';
+import { weekStartMonday } from '@shc/business-rules';
 
 export default function CookTiffinConfigScreen() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function CookTiffinConfigScreen() {
   const { data: configData, isLoading } = useTiffinCookConfig();
   const { data: listings = [] } = useCookListings();
   const updateMut = useUpdateTiffinCookConfig();
+  const cancelDayMut = useKitchenCancelTiffinDay();
+  const publishMenuMut = usePublishTiffinDayMenu();
 
   const config = (configData as any)?.config;
   const [enabled, setEnabled] = useState(false);
@@ -129,6 +132,31 @@ export default function CookTiffinConfigScreen() {
             onToggle={() => toggleDish(d.id)}
           />
         ))}
+
+        <Text style={styles.sectionTitle}>Today&apos;s menu & day cancel</Text>
+        <Text style={styles.hint}>Publish eligible dishes for a collection date, or cancel the kitchen day (notifies calendar status).</Text>
+        <GourmeatPrimaryButton
+          label="Publish menu for next Mon"
+          variant="outline"
+          onPress={() => {
+            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
+            publishMenuMut.mutate({ collectionDate: date, productIds: eligible, note: 'Weekly tiffin menu' });
+          }}
+          loading={publishMenuMut.isPending}
+          testID="cook-tiffin-publish-menu-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
+        <GourmeatPrimaryButton
+          label="Cancel kitchen day (next Mon)"
+          variant="outline"
+          onPress={() => {
+            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
+            cancelDayMut.mutate({ collectionDate: date, reason: 'Kitchen unavailable' });
+          }}
+          loading={cancelDayMut.isPending}
+          testID="cook-tiffin-cancel-day-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]}>

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — Tiffin seed folded into **uniform** `seed.ts` / medusa boot (removed separate `seed:tiffin`). HomelyEats redesign plan locked.
+**Last Updated:** 2026-07-09 — **HomelyEats tiffin OS wave shipped**: flex/skip/pause/cancel-reason + meal calendar API; `@shc/ui` calendar/status/metrics/empty; customer calendar screens mobile+web; cook day menu + kitchen cancel. Refs `references/homelyeats-case-study/`.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 

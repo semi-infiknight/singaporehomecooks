@@ -703,7 +703,238 @@ export function SHCTiffinCookDishToggle({
   );
 }
 
+/** HomelyEats ref 25 — horizontal day calendar strip */
+export function SHCTiffinCalendarStrip({
+  days,
+  selectedDate,
+  onSelect,
+  testID = 'tiffin-calendar-strip',
+}: {
+  days: { date: string; label: string; hasMeal?: boolean }[];
+  selectedDate: string;
+  onSelect: (date: string) => void;
+  testID?: string;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      testID={testID}
+      contentContainerStyle={styles.calStrip}
+    >
+      {days.map((d) => {
+        const active = d.date === selectedDate;
+        return (
+          <Pressable
+            key={d.date}
+            onPress={() => onSelect(d.date)}
+            testID={`tiffin-cal-day-${d.date}`}
+            style={[styles.calDay, active && styles.calDayActive, d.hasMeal && styles.calDayHasMeal]}
+          >
+            <Text style={[styles.calDayLabel, active && styles.calDayLabelActive]}>{d.label}</Text>
+            <Text style={[styles.calDayNum, active && styles.calDayLabelActive]}>
+              {d.date.slice(8, 10)}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+export type TiffinOrderCardStatus =
+  | 'indeterminate'
+  | 'scheduled'
+  | 'delivered'
+  | 'skipped'
+  | 'canceled_by_kitchen';
+
+/** HomelyEats ref 25 — order card status variants */
+export function SHCTiffinOrderStatusCard({
+  cookName,
+  planTitle,
+  status,
+  timeslot,
+  menuLines,
+  customizable,
+  menuPending,
+  onSkip,
+  onManage,
+  testID,
+}: {
+  cookName: string;
+  planTitle?: string;
+  status: TiffinOrderCardStatus;
+  timeslot?: string;
+  menuLines?: string[];
+  customizable?: boolean;
+  menuPending?: boolean;
+  onSkip?: () => void;
+  onManage?: () => void;
+  testID?: string;
+}) {
+  const chip =
+    status === 'delivered'
+      ? { bg: '#E8F5E9', text: 'Delivered', color: '#2E7D32' }
+      : status === 'skipped'
+        ? { bg: '#FFF3E0', text: 'Skipped', color: '#E65100' }
+        : status === 'canceled_by_kitchen'
+          ? { bg: '#FFEBEE', text: 'Canceled by kitchen', color: '#C62828' }
+          : status === 'indeterminate'
+            ? { bg: '#F5F5F5', text: 'Upcoming', color: '#616161' }
+            : { bg: '#E3F2FD', text: 'Scheduled', color: '#1565C0' };
+  return (
+    <View testID={testID || `tiffin-order-card-${status}`} style={styles.orderStatusCard}>
+      <View style={styles.orderStatusHeader}>
+        <View style={[styles.statusChip, { backgroundColor: chip.bg }]}>
+          <Text style={[styles.statusChipText, { color: chip.color }]}>{chip.text}</Text>
+        </View>
+        {timeslot ? <Text style={styles.orderTimeslot}>{timeslot}</Text> : null}
+        {customizable ? (
+          <Text style={styles.customizableTag} testID="tiffin-customizable-tag">
+            CUSTOMIZABLE
+          </Text>
+        ) : null}
+      </View>
+      <Text style={styles.orderCookName}>{cookName}</Text>
+      {planTitle ? <Text style={styles.orderPlanTitle}>{planTitle}</Text> : null}
+      {menuPending ? (
+        <Text style={styles.menuPending}>Menu yet to be updated</Text>
+      ) : (
+        (menuLines || []).map((line) => (
+          <Text key={line} style={styles.menuLine}>
+            · {line}
+          </Text>
+        ))
+      )}
+      <View style={styles.orderCardActions}>
+        {onManage ? (
+          <GourmeatPrimaryButton label="Manage" variant="outline" onPress={onManage} testID="tiffin-order-manage-btn" />
+        ) : null}
+        {onSkip && status === 'scheduled' ? (
+          <GourmeatPrimaryButton label="Skip day" variant="outline" onPress={onSkip} testID="tiffin-order-skip-btn" />
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+/** HomelyEats ref 29 — plan metrics row */
+export function SHCTiffinPlanMetrics({
+  deliveriesLeft,
+  flexLeft,
+  flexQuota,
+  expiresOn,
+  balanceLabel,
+  testID = 'tiffin-plan-metrics',
+}: {
+  deliveriesLeft?: number | string;
+  flexLeft?: number;
+  flexQuota?: number;
+  expiresOn?: string | null;
+  balanceLabel?: string;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.metricsRow}>
+      {balanceLabel != null ? (
+        <View style={styles.metricCell}>
+          <Text style={styles.metricValue}>{balanceLabel}</Text>
+          <Text style={styles.metricLabel}>Plan</Text>
+        </View>
+      ) : null}
+      <View style={styles.metricCell}>
+        <Text style={styles.metricValue}>{deliveriesLeft ?? '—'}</Text>
+        <Text style={styles.metricLabel}>Deliveries left</Text>
+      </View>
+      <View style={styles.metricCell}>
+        <Text style={styles.metricValue}>
+          {flexLeft != null ? `${flexLeft}${flexQuota != null ? `/${flexQuota}` : ''}` : '—'}
+        </Text>
+        <Text style={styles.metricLabel}>Flex days</Text>
+      </View>
+      <View style={styles.metricCell}>
+        <Text style={styles.metricValue}>{expiresOn ? expiresOn.slice(5) : '—'}</Text>
+        <Text style={styles.metricLabel}>Expires</Text>
+      </View>
+    </View>
+  );
+}
+
+/** HomelyEats ref 34 — empty state */
+export function SHCTiffinEmptyState({
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+  testID = 'tiffin-empty-state',
+}: {
+  title: string;
+  subtitle?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.emptyState}>
+      <Text style={styles.emptyEmoji}>🍱</Text>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.emptySubtitle}>{subtitle}</Text> : null}
+      {actionLabel && onAction ? (
+        <GourmeatPrimaryButton label={actionLabel} onPress={onAction} testID="tiffin-empty-action" style={{ marginTop: shcSpacing.md }} />
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  calStrip: { gap: 8, paddingVertical: shcSpacing.sm },
+  calDay: {
+    width: 52,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: gourmeatColors.surface,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+  },
+  calDayActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  calDayHasMeal: { borderColor: gourmeatColors.primary },
+  calDayLabel: { fontSize: 10, fontWeight: '700', color: gourmeatColors.textLight },
+  calDayLabelActive: { color: '#fff' },
+  calDayNum: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginTop: 2 },
+  orderStatusCard: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+    ...gourmeatShadows.soft,
+  },
+  orderStatusHeader: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  statusChip: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  statusChipText: { fontSize: 11, fontWeight: '800' },
+  orderTimeslot: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight },
+  customizableTag: { fontSize: 10, fontWeight: '800', color: gourmeatColors.primary },
+  orderCookName: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
+  orderPlanTitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 2 },
+  menuPending: { fontSize: 12, fontStyle: 'italic', color: gourmeatColors.textLight, marginTop: 8 },
+  menuLine: { fontSize: 13, color: gourmeatColors.text, marginTop: 4 },
+  orderCardActions: { flexDirection: 'row', gap: 8, marginTop: shcSpacing.md },
+  metricsRow: {
+    flexDirection: 'row',
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.md,
+    ...gourmeatShadows.soft,
+  },
+  metricCell: { flex: 1, alignItems: 'center' },
+  metricValue: { fontSize: 15, fontWeight: '800', color: gourmeatColors.primary },
+  metricLabel: { fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2, textAlign: 'center' },
+  emptyState: { alignItems: 'center', paddingVertical: shcSpacing.xl * 1.5, paddingHorizontal: shcSpacing.lg },
+  emptyEmoji: { fontSize: 40, marginBottom: shcSpacing.sm },
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: gourmeatColors.text, textAlign: 'center' },
+  emptySubtitle: { fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center', marginTop: 6, lineHeight: 18 },
   heroBanner: {
     backgroundColor: gourmeatColors.primaryLight,
     borderRadius: gourmeatRadii.lg,

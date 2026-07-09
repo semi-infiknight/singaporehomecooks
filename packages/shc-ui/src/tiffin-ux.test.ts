@@ -19,6 +19,10 @@ describe('tiffin subscription UX', () => {
     expect(src).toContain('export function SHCTiffinOrderSummary');
     expect(src).toContain('export function SHCTiffinOrderLineItem');
     expect(src).toContain('export function SHCTiffinMenuListItem');
+    expect(src).toContain('export function SHCTiffinCalendarStrip');
+    expect(src).toContain('export function SHCTiffinOrderStatusCard');
+    expect(src).toContain('export function SHCTiffinPlanMetrics');
+    expect(src).toContain('export function SHCTiffinEmptyState');
     expect(src).toContain("saveTestID = 'tiffin-save-plan-btn'");
   });
 

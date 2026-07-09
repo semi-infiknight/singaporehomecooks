@@ -38,6 +38,12 @@
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
 | `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT | Enable kitchen, eligible products, collection days |
+| `/store/shc/tiffin/subscription/pause` | POST | customer JWT | Pause N flex days (HomelyEats) |
+| `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
+| `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |
+| `/store/shc/tiffin/orders/skip` | POST | customer JWT | Skip one collection day (8h cutoff + flex) |
+| `/store/shc/tiffin/orders/kitchen-cancel` | POST | cook JWT | Cancel kitchen day for all subs |
+| `/store/shc/tiffin/cook/menu` | GET, PUT | cook JWT | Publish/read day menu |
 
 Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`.
 
