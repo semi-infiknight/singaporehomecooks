@@ -16,6 +16,8 @@ import {
   subscriptionCardCopy,
   pauseDayOptions,
   rechargeWeekOptions,
+  tiffinRechargeAmountCents,
+  formatTiffinLedgerAmount,
   canResumeSubscription,
   subscriptionCardKind,
   projectMealInstances,
@@ -169,6 +171,14 @@ describe("tiffin business rules", () => {
     expect(subscriptionCardCopy("paused").primaryCta).toMatch(/Resume/i);
     expect(pauseDayOptions(3)).toEqual([1, 2, 3]);
     expect(rechargeWeekOptions()).toEqual([1, 2, 4]);
+  });
+
+  it("recharge amount cents and ledger amount format", () => {
+    // 3 meals × S$11 × 4 weeks = 132 → 13200 cents
+    expect(tiffinRechargeAmountCents(3, 4)).toBe(13200);
+    expect(formatTiffinLedgerAmount(13200, "recharge")).toBe("S$132.00");
+    expect(formatTiffinLedgerAmount(-500, "meal")).toBe("−S$5.00");
+    expect(formatTiffinLedgerAmount(0, "flex")).toBe("—");
   });
 
   it("projects calendar meal instances from weekly plans", () => {

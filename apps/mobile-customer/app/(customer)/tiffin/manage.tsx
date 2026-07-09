@@ -13,7 +13,7 @@ import {
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
-import { subscriptionLedgerPreview } from '@shc/utils';
+import { shapeTiffinLedgerForUi } from '@shc/utils';
 import {
   useTiffinSubscription,
   useCancelTiffin,
@@ -83,7 +83,7 @@ export default function TiffinManageScreen() {
   const currentSlots = (subData as any)?.slots_current_week || [];
   const nextSlots = (subData as any)?.slots_next_week || [];
   const isPaused = sub.status === 'paused';
-  const ledger = subscriptionLedgerPreview(sub);
+  const ledger = shapeTiffinLedgerForUi((subData as any)?.ledger, sub);
 
   return (
     <ScrollView
@@ -207,7 +207,7 @@ export default function TiffinManageScreen() {
         </>
       ) : null}
 
-      <Text style={styles.section}>Recent activity</Text>
+      <Text style={styles.section}>Recent transactions</Text>
       <View style={styles.ledger} testID="tiffin-ledger-preview">
         {ledger.map((row) => (
           <View key={row.id} style={styles.ledgerRow}>
@@ -219,8 +219,14 @@ export default function TiffinManageScreen() {
           </View>
         ))}
         <Text style={[styles.hint, { marginTop: 8 }]}>
-          Full PayNow ledger lands with billing. Recharge extends deliveries + flex.
+          PayNow recharges post here. Skip/pause use flex (no charge).
         </Text>
+        <GourmeatPrimaryButton
+          label="Recharge again"
+          onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
+          style={{ marginTop: shcSpacing.sm }}
+          testID="tiffin-ledger-recharge-btn"
+        />
       </View>
 
       <Text style={[styles.section, { marginTop: shcSpacing.xl }]}>Danger zone</Text>

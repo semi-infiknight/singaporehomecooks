@@ -1,27 +1,42 @@
 'use client';
 
 /**
- * HomelyEats Recharge plan — extend period before expiry.
+ * HomelyEats Recharge plan — weeks picker → PayNow confirm → ledger write.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   rechargeWeekOptions,
   applyRecharge,
   defaultFlexQuota,
+  tiffinRechargeAmountCents,
 } from '@shc/business-rules';
 import { tiffinWeeklySubtotal, useTiffinSubscription, useRechargeTiffin } from '../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader, SHCErrorBanner } from '../../components/SHCWebComponents';
+import {
+  SHCButton,
+  SHCCard,
+  SHCPageHeader,
+  SHCErrorBanner,
+  PayNowPanel,
+} from '../../components/SHCWebComponents';
 
 export default function TiffinRechargePage() {
   const router = useRouter();
   const { data: subData, isLoading } = useTiffinSubscription();
   const rechargeMut = useRechargeTiffin();
   const [weeks, setWeeks] = useState(4);
+  const [phase, setPhase] = useState<'pick' | 'paynow' | 'done'>('pick');
   const [error, setError] = useState('');
+  const [payRef, setPayRef] = useState('');
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
+
+  const amountCents = useMemo(
+    () => (sub ? tiffinRechargeAmountCents(sub.meals_per_week, weeks) : 0),
+    [sub, weeks]
+  );
+  const amountDollars = amountCents / 100;
 
   if (isLoading) {
     return (
@@ -48,7 +63,63 @@ export default function TiffinRechargePage() {
     deliveriesLeft: sub.deliveries_left ?? 0,
     expiresOn: sub.expires_on,
   });
-  const estimate = tiffinWeeklySubtotal(sub.meals_per_week) * weeks;
+  const defaultRef = payRef || `TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`;
+
+  const confirmPay = async (ref: string) => {
+    setError('');
+    try {
+      await rechargeMut.mutateAsync({ weeks, paynowRef: ref || defaultRef });
+      setPhase('done');
+      window.setTimeout(() => router.replace('/tiffin/manage'), 900);
+    } catch (e: any) {
+      setError(e?.message || 'Recharge failed. Try again.');
+      throw e;
+    }
+  };
+
+  if (phase === 'done') {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center" data-testid="tiffin-recharge-done">
+        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl text-green-700 mx-auto mb-4">
+          ✓
+        </div>
+        <h1 className="text-xl font-black mb-2">Recharge recorded</h1>
+        <p className="text-sm font-semibold text-muted-foreground mb-6">
+          +{preview.mealsAdded} meals · flex reset · ledger updated
+        </p>
+        <SHCButton onClick={() => router.replace('/tiffin/manage')}>Back to manage</SHCButton>
+      </div>
+    );
+  }
+
+  if (phase === 'paynow') {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-recharge-paynow">
+        <SHCPageHeader
+          title="PayNow recharge"
+          subtitle={`${kitchen?.cook?.display_name || 'Kitchen'} · ${weeks} week${weeks > 1 ? 's' : ''}`}
+          backHref="/tiffin/recharge"
+          backLabel="Change weeks"
+        />
+        <PayNowPanel
+          amount={amountDollars}
+          reference={defaultRef}
+          onRefChange={setPayRef}
+          onConfirmPay={confirmPay}
+          confirmLabel={`I've paid · S$${amountDollars.toFixed(2)}`}
+          busy={rechargeMut.isPending}
+        />
+        {error ? (
+          <div className="mt-3">
+            <SHCErrorBanner message={error} />
+          </div>
+        ) : null}
+        <p className="text-xs font-semibold text-muted-foreground mt-3">
+          Demo PayNow — confirm writes ledger + extends your plan. No real bank transfer.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-recharge-screen">
@@ -65,8 +136,11 @@ export default function TiffinRechargePage() {
           {sub.meals_per_week} meals/wk · expires {sub.expires_on?.slice(0, 10) || '—'}
         </p>
         <p className="text-xs font-semibold text-muted-foreground mt-2">
-          Deliveries left {sub.deliveries_left ?? '—'} · Flex {sub.flex_remaining ?? '—'}/
+          Deliveries {sub.deliveries_left ?? '—'} · Flex {sub.flex_remaining ?? '—'}/
           {sub.flex_quota ?? '—'}
+          {sub.balance_cents != null
+            ? ` · Wallet S$${(Number(sub.balance_cents) / 100).toFixed(2)}`
+            : ''}
         </p>
       </SHCCard>
 
@@ -96,7 +170,11 @@ export default function TiffinRechargePage() {
           <li>Flex days reset to {preview.flexRemaining}</li>
           <li>New expiry {preview.expiresOn}</li>
           <li className="text-foreground font-black pt-1">
-            Estimate S${estimate.toFixed(2)} · PayNow
+            PayNow S${amountDollars.toFixed(2)}
+            <span className="text-muted-foreground font-semibold">
+              {' '}
+              (~S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk × {weeks})
+            </span>
           </li>
         </ul>
       </SHCCard>
@@ -106,19 +184,14 @@ export default function TiffinRechargePage() {
       <SHCButton
         className="w-full"
         size="lg"
-        testID="recharge-confirm-btn"
-        disabled={rechargeMut.isPending}
-        onClick={async () => {
+        testID="recharge-continue-paynow"
+        onClick={() => {
           setError('');
-          try {
-            await rechargeMut.mutateAsync(weeks);
-            router.replace('/tiffin/manage');
-          } catch (e: any) {
-            setError(e?.message || 'Recharge failed. Try again.');
-          }
+          setPayRef(`TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`);
+          setPhase('paynow');
         }}
       >
-        {rechargeMut.isPending ? 'Recharging…' : `Recharge ${weeks} week${weeks > 1 ? 's' : ''}`}
+        Continue to PayNow · S${amountDollars.toFixed(2)}
       </SHCButton>
       <p className="text-xs font-semibold text-muted-foreground mt-3 text-center">
         Preferences for new weeks apply after current balance is used.

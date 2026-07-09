@@ -22,6 +22,18 @@ async function subscriptionPayload(tiffin: ShcTiffinModuleService, sub: any, sco
   const slotsNext = tiffin.resolveSlotsForWeek(plans, nextWeek);
   const kitchen = config ? await shapeTiffinKitchen(config, scope) : null;
   const os = await tiffin.getSubscriptionOsFields(sub);
+  let ledger: any[] = [];
+  try {
+    const led = await tiffin.listLedger(
+      // listLedger re-fetches active by customer — use direct pg via service method with sub id path
+      // Service listLedger needs customerId; GET has it via outer. Pass through below for GET only.
+      (sub as any).__customerId || sub.customer_id,
+      40
+    );
+    ledger = led.entries || [];
+  } catch {
+    ledger = [];
+  }
   return {
     subscription: {
       id: sub.id,
@@ -34,9 +46,11 @@ async function subscriptionPayload(tiffin: ShcTiffinModuleService, sub: any, sco
       expires_on: os.expires_on,
       cancel_reason: os.cancel_reason,
       deliveries_left: os.deliveries_left,
+      balance_cents: os.balance_cents ?? 0,
     },
     kitchen,
     plans,
+    ledger,
     current_week: currentWeek,
     next_week: nextWeek,
     slots_current_week: slotsCurrent,
@@ -49,7 +63,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
     const sub = await tiffin.getActiveSubscription(customerId);
-    if (!sub) return res.json({ subscription: null });
+    if (!sub) return res.json({ subscription: null, ledger: [] });
+    (sub as any).__customerId = customerId;
     res.json(await subscriptionPayload(tiffin, sub, req.scope));
   } catch {
     return unauthorized(res, "Customer login required");
@@ -65,6 +80,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
     const sub = await tiffin.createSubscription(customerId, parse.data.cook_id, parse.data.meals_per_week);
+    (sub as any).__customerId = customerId;
     res.status(201).json(await subscriptionPayload(tiffin, sub, req.scope));
   } catch (e: any) {
     if (e?.code) return res.status(400).json({ error: e });

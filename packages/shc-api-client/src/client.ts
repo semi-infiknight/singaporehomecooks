@@ -518,10 +518,10 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/tiffin/subscription/resume", { method: "POST", body: "{}" });
     },
 
-    async rechargeTiffinSubscription(weeks = 4) {
+    async rechargeTiffinSubscription(weeks = 4, paynowRef?: string) {
       return request("/store/shc/tiffin/subscription/recharge", {
         method: "POST",
-        body: JSON.stringify({ weeks }),
+        body: JSON.stringify({ weeks, paynow_ref: paynowRef }),
       });
     },
 

@@ -15,6 +15,7 @@ import {
   defaultFlexQuota,
   effectiveSubscriptionStatus,
   isPauseWindowActive,
+  tiffinRechargeAmountCents,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 import { TiffinKitchenConfig } from "./models/kitchen-config";
@@ -33,6 +34,8 @@ import {
   pgUpsertDayMenu,
   pgGetDayMenu,
   pgCountActiveSubscribers,
+  pgAddTiffinLedger,
+  pgListTiffinLedger,
 } from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
@@ -154,6 +157,17 @@ class ShcTiffinModuleService extends MedusaService({
     ]);
     try {
       await pgEnsureSubMeta(id, mealsPerWeek);
+      const openCents = tiffinRechargeAmountCents(mealsPerWeek, 4);
+      await pgUpdateSubMeta(id, { balance_cents: openCents, deliveries_left: mealsPerWeek * 4 });
+      await pgAddTiffinLedger({
+        subscriptionId: id,
+        kind: "opening",
+        label: `Plan opened · ${mealsPerWeek} meals/wk · 4 weeks`,
+        amountCents: openCents,
+        deltaDeliveries: mealsPerWeek * 4,
+        deltaFlex: defaultFlexQuota(mealsPerWeek),
+        paynowRef: `OPEN-${id.slice(-8)}`,
+      });
     } catch {
       /* meta optional if DATABASE_URL missing in unit tests */
     }
@@ -184,6 +198,7 @@ class ShcTiffinModuleService extends MedusaService({
       expires_on: null as string | null,
       cancel_reason: null as string | null,
       deliveries_left: sub.meals_per_week * 4 as number | null,
+      balance_cents: 0,
     };
     try {
       const m = await pgEnsureSubMeta(sub.id, sub.meals_per_week);
@@ -194,6 +209,7 @@ class ShcTiffinModuleService extends MedusaService({
         expires_on: m.expires_on,
         cancel_reason: m.cancel_reason,
         deliveries_left: m.deliveries_left,
+        balance_cents: m.balance_cents ?? 0,
       };
       // Clear stale pause window so gates + UI stay consistent
       if (meta.paused_until && !isPauseWindowActive(meta.paused_until)) {
@@ -211,7 +227,23 @@ class ShcTiffinModuleService extends MedusaService({
       meta.deliveries_left != null
         ? Math.max(0, meta.deliveries_left)
         : Math.max(0, (meta.flex_quota || 0) + 8);
-    return { ...meta, status, deliveries_left: deliveries };
+    return {
+      ...meta,
+      status,
+      deliveries_left: deliveries,
+      balance_cents: meta.balance_cents ?? 0,
+    };
+  }
+
+  async listLedger(customerId: string, limit = 40) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) return { subscription_id: null, entries: [] as any[] };
+    try {
+      const entries = await pgListTiffinLedger(active.id, limit);
+      return { subscription_id: active.id, entries };
+    } catch {
+      return { subscription_id: active.id, entries: [] as any[] };
+    }
   }
 
   async pauseSubscription(customerId: string, pauseDays: number) {
@@ -243,6 +275,17 @@ class ShcTiffinModuleService extends MedusaService({
       paused_until: applied.pausedUntil,
       expires_on: applied.expiresOn,
     });
+    try {
+      await pgAddTiffinLedger({
+        subscriptionId: active.id,
+        kind: "pause",
+        label: `Paused ${pauseDays} day${pauseDays > 1 ? "s" : ""} · flex used`,
+        amountCents: 0,
+        deltaFlex: -pauseDays,
+      });
+    } catch {
+      /* non-fatal */
+    }
     return { ...active, ...applied, status: "paused" };
   }
 
@@ -260,8 +303,12 @@ class ShcTiffinModuleService extends MedusaService({
     return { ...active, status: "active", paused_until: null };
   }
 
-  /** HomelyEats recharge — extend expiry, reset flex, add meal deliveries. */
-  async rechargeSubscription(customerId: string, weeks: number) {
+  /** HomelyEats recharge — extend expiry, reset flex, add meal deliveries + ledger. */
+  async rechargeSubscription(
+    customerId: string,
+    weeks: number,
+    opts?: { paynowRef?: string | null }
+  ) {
     const active = await this.getActiveSubscription(customerId);
     if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
     const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
@@ -280,13 +327,30 @@ class ShcTiffinModuleService extends MedusaService({
       deliveriesLeft: os.deliveries_left ?? 0,
       expiresOn: meta.expires_on,
     });
+    const amountCents = tiffinRechargeAmountCents(active.meals_per_week, weeks);
+    const paynowRef = opts?.paynowRef || `TIFFIN-${active.id.slice(-8)}-${Date.now().toString(36).toUpperCase()}`;
+    const nextBalance = Math.max(0, (meta.balance_cents || 0) + amountCents);
     await pgUpdateSubMeta(active.id, {
       flex_quota: applied.flexQuota,
       flex_remaining: applied.flexRemaining,
       expires_on: applied.expiresOn,
       deliveries_left: applied.deliveriesLeft,
+      balance_cents: nextBalance,
       paused_until: null,
     });
+    try {
+      await pgAddTiffinLedger({
+        subscriptionId: active.id,
+        kind: "recharge",
+        label: `PayNow recharge · ${weeks} week${weeks > 1 ? "s" : ""} · +${applied.mealsAdded} meals`,
+        amountCents,
+        deltaDeliveries: applied.mealsAdded,
+        deltaFlex: applied.flexRemaining - (meta.flex_remaining || 0),
+        paynowRef,
+      });
+    } catch {
+      /* ledger non-fatal */
+    }
     // Ensure sub is active (un-expire path)
     if (active.status === "expired" || active.status === "paused") {
       try {
@@ -305,7 +369,10 @@ class ShcTiffinModuleService extends MedusaService({
       flex_remaining: applied.flexRemaining,
       expires_on: applied.expiresOn,
       deliveries_left: applied.deliveriesLeft,
+      balance_cents: nextBalance,
       meals_added: applied.mealsAdded,
+      amount_cents: amountCents,
+      paynow_ref: paynowRef,
       weeks,
     };
   }
@@ -327,6 +394,17 @@ class ShcTiffinModuleService extends MedusaService({
       flex_remaining: Math.max(0, meta.flex_remaining - 1),
       expires_on: meta.expires_on ? applyPause({ flexRemaining: 1, pauseDays: 1, expiresOn: meta.expires_on }).expiresOn : meta.expires_on,
     });
+    try {
+      await pgAddTiffinLedger({
+        subscriptionId: active.id,
+        kind: "flex",
+        label: `Skipped meal · ${collectionDate}`,
+        amountCents: 0,
+        deltaFlex: -1,
+      });
+    } catch {
+      /* non-fatal */
+    }
     return { ok: true, collection_date: collectionDate };
   }
 

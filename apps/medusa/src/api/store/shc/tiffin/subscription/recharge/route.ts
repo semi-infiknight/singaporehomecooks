@@ -7,12 +7,13 @@ import ShcTiffinModuleService from "../../../../../../modules/shc-tiffin/service
 const BodySchema = z
   .object({
     weeks: z.number().int().min(1).max(12).default(4),
+    paynow_ref: z.string().max(80).optional(),
   })
   .strict();
 
 /**
  * POST /store/shc/tiffin/subscription/recharge
- * HomelyEats recharge plan — extend period + restore flex + add deliveries.
+ * HomelyEats recharge plan — PayNow ref + ledger + extend period.
  */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const parse = BodySchema.safeParse(req.body || {});
@@ -24,7 +25,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
-    const result = await tiffin.rechargeSubscription(customerId, parse.data.weeks);
+    const result = await tiffin.rechargeSubscription(customerId, parse.data.weeks, {
+      paynowRef: parse.data.paynow_ref,
+    });
     res.json({ subscription: result, ok: true });
   } catch (e: any) {
     if (e?.code) return res.status(400).json({ error: e });

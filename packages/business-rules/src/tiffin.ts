@@ -315,6 +315,41 @@ export function rechargeWeekOptions(): number[] {
   return [1, 2, 4];
 }
 
+/** Volume pricing (SGD dollars) — align with tiffinPricePerServing on clients. */
+export function tiffinPricePerMealDollars(mealsPerWeek: number): number {
+  if (mealsPerWeek >= 4) return 10;
+  if (mealsPerWeek >= 3) return 11;
+  return 12;
+}
+
+/** PayNow recharge amount in cents for weeks × meals/wk. */
+export function tiffinRechargeAmountCents(mealsPerWeek: number, weeks: number): number {
+  const m = Math.max(2, Math.floor(mealsPerWeek || 3));
+  const w = Math.max(1, Math.floor(weeks || 1));
+  return Math.round(m * tiffinPricePerMealDollars(m) * w * 100);
+}
+
+export type TiffinLedgerKind = "recharge" | "meal" | "flex" | "pause" | "adjust" | "opening";
+
+export type TiffinLedgerEntryInput = {
+  kind: TiffinLedgerKind;
+  label: string;
+  amountCents?: number;
+  deltaDeliveries?: number;
+  deltaFlex?: number;
+  paynowRef?: string | null;
+};
+
+/** Format cents → "S$12.00" or "—" for zero cosmetic rows. */
+export function formatTiffinLedgerAmount(amountCents: number, kind: TiffinLedgerKind): string {
+  if (!Number.isFinite(amountCents) || amountCents === 0) {
+    if (kind === "flex" || kind === "pause" || kind === "meal") return "—";
+    return "S$0";
+  }
+  const sign = amountCents < 0 ? "−" : "";
+  return `${sign}S$${Math.abs(amountCents / 100).toFixed(2)}`;
+}
+
 export function assertOneKitchenSubscription(
   existingCookId: string | null | undefined,
   nextCookId: string

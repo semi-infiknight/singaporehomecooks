@@ -80,8 +80,7 @@ export type LedgerTxn = {
 };
 
 /**
- * Demo ledger rows for Manage “Recent transactions” until PayU ledger exists.
- * Seeded from subscription fields so UI is never empty when sub is active.
+ * Fallback rows when ledger API is empty (new sub before first recharge write).
  */
 export function subscriptionLedgerPreview(sub?: {
   meals_per_week?: number;
@@ -89,16 +88,21 @@ export function subscriptionLedgerPreview(sub?: {
   expires_on?: string | null;
   flex_remaining?: number | null;
   status?: string | null;
+  balance_cents?: number | null;
 } | null): LedgerTxn[] {
   if (!sub) return [];
   const meals = Number(sub.meals_per_week) || 3;
   const left = sub.deliveries_left != null ? Number(sub.deliveries_left) : meals * 4;
   const exp = sub.expires_on ? String(sub.expires_on).slice(0, 10) : '—';
+  const bal =
+    sub.balance_cents != null && Number(sub.balance_cents) > 0
+      ? `S$${(Number(sub.balance_cents) / 100).toFixed(2)}`
+      : `S$${(meals * 11 * 4).toFixed(0)} est.`;
   return [
     {
-      id: 'txn_recharge',
-      label: 'Plan period · weekly tiffin',
-      amountLabel: `S$${(meals * 11).toFixed(0)} est.`,
+      id: 'txn_balance',
+      label: 'Plan wallet balance',
+      amountLabel: bal,
       dateLabel: exp !== '—' ? `Period to ${exp}` : 'Current period',
       kind: 'recharge',
     },
@@ -117,4 +121,36 @@ export function subscriptionLedgerPreview(sub?: {
       kind: 'flex',
     },
   ];
+}
+
+/** Map API ledger rows → manage UI rows. Falls back to preview when empty. */
+export function shapeTiffinLedgerForUi(
+  entries: Array<Record<string, unknown>> | null | undefined,
+  sub?: Parameters<typeof subscriptionLedgerPreview>[0]
+): LedgerTxn[] {
+  if (entries && entries.length > 0) {
+    return entries.map((e, i) => {
+      const cents = Number(e.amount_cents || 0);
+      const kind = String(e.kind || 'adjust') as LedgerTxn['kind'];
+      const created = e.created_at ? String(e.created_at).slice(0, 10) : '';
+      const ref = e.paynow_ref ? String(e.paynow_ref) : '';
+      let amountLabel = '—';
+      if (cents !== 0) {
+        const sign = cents < 0 ? '−' : '';
+        amountLabel = `${sign}S$${Math.abs(cents / 100).toFixed(2)}`;
+      } else if (Number(e.delta_deliveries || 0) !== 0) {
+        amountLabel = `${Number(e.delta_deliveries) > 0 ? '+' : ''}${e.delta_deliveries} meals`;
+      } else if (Number(e.delta_flex || 0) !== 0) {
+        amountLabel = `${Number(e.delta_flex) > 0 ? '+' : ''}${e.delta_flex} flex`;
+      }
+      return {
+        id: String(e.id || `led_${i}`),
+        label: String(e.label || kind),
+        amountLabel,
+        dateLabel: ref ? `${created} · ${ref}` : created || kind,
+        kind: (['recharge', 'meal', 'flex', 'adjust'].includes(kind) ? kind : 'adjust') as LedgerTxn['kind'],
+      };
+    });
+  }
+  return subscriptionLedgerPreview(sub);
 }

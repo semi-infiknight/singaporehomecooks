@@ -70,6 +70,27 @@ async function ensureMetaTables(pg: Client) {
       UNIQUE (cook_id, collection_date)
     );
   `);
+  // Wave 5 — customer plan ledger (recharge / flex / meal activity)
+  await pg.query(`
+    CREATE TABLE IF NOT EXISTS shc_tiffin_ledger (
+      id text PRIMARY KEY,
+      subscription_id text NOT NULL,
+      kind text NOT NULL,
+      label text NOT NULL,
+      amount_cents integer NOT NULL DEFAULT 0,
+      delta_deliveries integer NOT NULL DEFAULT 0,
+      delta_flex integer NOT NULL DEFAULT 0,
+      paynow_ref text,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+  `);
+  await pg.query(`
+    CREATE INDEX IF NOT EXISTS idx_shc_tiffin_ledger_sub
+      ON shc_tiffin_ledger (subscription_id, created_at DESC);
+  `);
+  await pg.query(`
+    ALTER TABLE shc_tiffin_sub_meta ADD COLUMN IF NOT EXISTS balance_cents integer DEFAULT 0;
+  `);
 }
 
 function shapeRow(row: any): TiffinKitchenConfigDTO {
@@ -158,6 +179,19 @@ export type TiffinSubMeta = {
   expires_on: string | null;
   cancel_reason: string | null;
   deliveries_left: number | null;
+  balance_cents: number;
+};
+
+export type TiffinLedgerRow = {
+  id: string;
+  subscription_id: string;
+  kind: string;
+  label: string;
+  amount_cents: number;
+  delta_deliveries: number;
+  delta_flex: number;
+  paynow_ref: string | null;
+  created_at: string;
 };
 
 function shapeSubMeta(row: any): TiffinSubMeta {
@@ -169,6 +203,7 @@ function shapeSubMeta(row: any): TiffinSubMeta {
     expires_on: row.expires_on,
     cancel_reason: row.cancel_reason,
     deliveries_left: row.deliveries_left != null ? Number(row.deliveries_left) : null,
+    balance_cents: row.balance_cents != null ? Number(row.balance_cents) : 0,
   };
 }
 
@@ -212,11 +247,17 @@ export async function pgUpdateSubMeta(
       cancel_reason: patch.cancel_reason !== undefined ? patch.cancel_reason : prev.cancel_reason,
       deliveries_left:
         patch.deliveries_left !== undefined ? patch.deliveries_left : prev.deliveries_left ?? null,
+      balance_cents:
+        patch.balance_cents !== undefined
+          ? patch.balance_cents
+          : prev.balance_cents != null
+            ? Number(prev.balance_cents)
+            : 0,
     };
     await pg.query(
       `UPDATE shc_tiffin_sub_meta SET
         flex_quota = $2, flex_remaining = $3, paused_until = $4, expires_on = $5, cancel_reason = $6,
-        deliveries_left = $7, updated_at = now()
+        deliveries_left = $7, balance_cents = $8, updated_at = now()
        WHERE subscription_id = $1`,
       [
         subscriptionId,
@@ -226,9 +267,80 @@ export async function pgUpdateSubMeta(
         next.expires_on,
         next.cancel_reason,
         next.deliveries_left,
+        next.balance_cents,
       ]
     );
     return { subscription_id: subscriptionId, ...next };
+  });
+}
+
+export async function pgAddTiffinLedger(input: {
+  subscriptionId: string;
+  kind: string;
+  label: string;
+  amountCents?: number;
+  deltaDeliveries?: number;
+  deltaFlex?: number;
+  paynowRef?: string | null;
+}): Promise<TiffinLedgerRow> {
+  return withPg(async (pg) => {
+    await ensureMetaTables(pg);
+    const id = `tiffin_led_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    await pg.query(
+      `INSERT INTO shc_tiffin_ledger
+        (id, subscription_id, kind, label, amount_cents, delta_deliveries, delta_flex, paynow_ref, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now())`,
+      [
+        id,
+        input.subscriptionId,
+        input.kind,
+        input.label,
+        input.amountCents ?? 0,
+        input.deltaDeliveries ?? 0,
+        input.deltaFlex ?? 0,
+        input.paynowRef ?? null,
+      ]
+    );
+    const r = await pg.query(`SELECT * FROM shc_tiffin_ledger WHERE id = $1`, [id]);
+    const row = r.rows[0];
+    return {
+      id: row.id,
+      subscription_id: row.subscription_id,
+      kind: row.kind,
+      label: row.label,
+      amount_cents: Number(row.amount_cents),
+      delta_deliveries: Number(row.delta_deliveries),
+      delta_flex: Number(row.delta_flex),
+      paynow_ref: row.paynow_ref,
+      created_at: row.created_at?.toISOString?.() || String(row.created_at),
+    };
+  });
+}
+
+export async function pgListTiffinLedger(
+  subscriptionId: string,
+  limit = 40
+): Promise<TiffinLedgerRow[]> {
+  return withPg(async (pg) => {
+    await ensureMetaTables(pg);
+    const r = await pg.query(
+      `SELECT * FROM shc_tiffin_ledger
+       WHERE subscription_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [subscriptionId, Math.min(100, Math.max(1, limit))]
+    );
+    return r.rows.map((row: any) => ({
+      id: row.id,
+      subscription_id: row.subscription_id,
+      kind: row.kind,
+      label: row.label,
+      amount_cents: Number(row.amount_cents),
+      delta_deliveries: Number(row.delta_deliveries),
+      delta_flex: Number(row.delta_flex),
+      paynow_ref: row.paynow_ref,
+      created_at: row.created_at?.toISOString?.() || String(row.created_at),
+    }));
   });
 }
 

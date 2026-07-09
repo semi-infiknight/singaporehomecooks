@@ -4,6 +4,7 @@ import {
   subscribeConfirmSteps,
   kitchenSubscriberLabel,
   subscriptionLedgerPreview,
+  shapeTiffinLedgerForUi,
 } from './subscribe-funnel';
 
 describe('subscribe-funnel (wave 4)', () => {
@@ -27,7 +28,7 @@ describe('subscribe-funnel (wave 4)', () => {
     expect(kitchenSubscriberLabel(42)).toBe('42 subscribers');
   });
 
-  it('ledger preview has recharge + meals + flex when sub present', () => {
+  it('ledger preview has balance + meals + flex when sub present', () => {
     const rows = subscriptionLedgerPreview({
       meals_per_week: 3,
       deliveries_left: 10,
@@ -36,5 +37,21 @@ describe('subscribe-funnel (wave 4)', () => {
     });
     expect(rows.map((r) => r.kind)).toEqual(['recharge', 'meal', 'flex']);
     expect(subscriptionLedgerPreview(null)).toEqual([]);
+  });
+
+  it('shapeTiffinLedgerForUi prefers API rows', () => {
+    const shaped = shapeTiffinLedgerForUi([
+      {
+        id: 'x1',
+        kind: 'recharge',
+        label: 'PayNow recharge · 4 weeks',
+        amount_cents: 13200,
+        created_at: '2026-07-09T12:00:00.000Z',
+        paynow_ref: 'PAY-1',
+      },
+    ]);
+    expect(shaped).toHaveLength(1);
+    expect(shaped[0]!.amountLabel).toBe('S$132.00');
+    expect(shaped[0]!.dateLabel).toMatch(/PAY-1/);
   });
 });

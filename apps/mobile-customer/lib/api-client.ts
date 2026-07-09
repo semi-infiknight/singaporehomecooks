@@ -140,7 +140,8 @@ export const cancelTiffinSubscriptionWithReason = (reason?: string) =>
   client.cancelTiffinSubscriptionWithReason(reason);
 export const pauseTiffinSubscription = (days?: number) => client.pauseTiffinSubscription(days);
 export const resumeTiffinSubscription = () => client.resumeTiffinSubscription();
-export const rechargeTiffinSubscription = (weeks?: number) => client.rechargeTiffinSubscription(weeks);
+export const rechargeTiffinSubscription = (weeks?: number, paynowRef?: string) =>
+  client.rechargeTiffinSubscription(weeks, paynowRef);
 export const getTiffinMealOrders = (from?: string, to?: string) => client.getTiffinMealOrders(from, to);
 export const skipTiffinMeal = (collectionDate: string, collectionSlot?: string) =>
   client.skipTiffinMeal(collectionDate, collectionSlot);

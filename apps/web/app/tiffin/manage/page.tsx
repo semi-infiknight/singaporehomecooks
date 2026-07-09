@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { subscriptionLedgerPreview } from '@shc/utils';
+import { shapeTiffinLedgerForUi } from '@shc/utils';
 import {
   useTiffinSubscription,
   useCancelTiffin,
@@ -50,7 +50,7 @@ export default function TiffinManagePage() {
 
   const isPaused = sub.status === 'paused';
   const cookName = kitchen?.cook?.display_name || 'Kitchen';
-  const ledger = subscriptionLedgerPreview(sub);
+  const ledger = shapeTiffinLedgerForUi((subData as any)?.ledger, sub);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-manage-screen">
@@ -70,6 +70,14 @@ export default function TiffinManagePage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center" data-testid="tiffin-plan-metrics">
           <div>
+            <p className="font-black text-primary text-lg tabular-nums">
+              {sub.balance_cents != null
+                ? `S$${(Number(sub.balance_cents) / 100).toFixed(0)}`
+                : '—'}
+            </p>
+            <p className="text-[10px] font-bold text-muted-foreground">Wallet</p>
+          </div>
+          <div>
             <p className="font-black text-primary text-lg">{sub.deliveries_left ?? '—'}</p>
             <p className="text-[10px] font-bold text-muted-foreground">Deliveries left</p>
           </div>
@@ -82,10 +90,6 @@ export default function TiffinManagePage() {
           <div>
             <p className="font-black text-primary text-lg">{sub.expires_on?.slice(5) ?? '—'}</p>
             <p className="text-[10px] font-bold text-muted-foreground">Expires</p>
-          </div>
-          <div>
-            <p className="font-black text-primary text-lg">{sub.meals_per_week}</p>
-            <p className="text-[10px] font-bold text-muted-foreground">Meals / wk</p>
           </div>
         </div>
         {isPaused && sub.paused_until ? (
@@ -214,8 +218,8 @@ export default function TiffinManagePage() {
         ) : null}
       </ul>
 
-      {/* Recent transactions — Wave 4/5 ledger shell (ref manage 29) */}
-      <p className="font-extrabold text-sm mb-2">Recent activity</p>
+      {/* Recent transactions — Wave 5 ledger (ref manage 29) */}
+      <p className="font-extrabold text-sm mb-2">Recent transactions</p>
       <SHCCard className="mb-6" data-testid="tiffin-ledger-preview">
         <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
           {ledger.map((row) => (
@@ -229,8 +233,16 @@ export default function TiffinManagePage() {
           ))}
         </ul>
         <p className="text-[11px] font-semibold text-muted-foreground mt-3 pt-2 border-t border-[var(--shc-border-brutal)]/40">
-          Full PayNow ledger lands with billing. Recharge extends deliveries + flex.
+          PayNow recharges post to this ledger. Skip/pause use flex (no charge).
         </p>
+        <SHCButton
+          size="sm"
+          className="mt-3"
+          onClick={() => router.push('/tiffin/recharge')}
+          testID="tiffin-ledger-recharge-btn"
+        >
+          Recharge again
+        </SHCButton>
       </SHCCard>
 
       {/* Danger zone last */}

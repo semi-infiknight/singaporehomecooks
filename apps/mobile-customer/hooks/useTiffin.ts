@@ -110,9 +110,11 @@ export function useResumeTiffin() {
 export function useRechargeTiffin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (weeks: number) => {
+    mutationFn: async (input: number | { weeks: number; paynowRef?: string }) => {
       await hydrateSession();
-      return rechargeTiffinSubscription(weeks);
+      const weeks = typeof input === 'number' ? input : input.weeks;
+      const paynowRef = typeof input === 'number' ? undefined : input.paynowRef;
+      return rechargeTiffinSubscription(weeks, paynowRef);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });
