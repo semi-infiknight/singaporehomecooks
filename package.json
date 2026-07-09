@@ -30,8 +30,6 @@
     "medusa:build": "turbo build --filter=medusa",
     "verify:phase0": "pnpm turbo build && pnpm turbo test && pnpm turbo typecheck && pnpm turbo lint && echo 'Phase 0 verification passed'",
     "seed:medusa": "cd apps/medusa && pnpm seed || echo 'run bootstrap first'",
-    "seed:tiffin": "cd apps/medusa && pnpm seed:tiffin",
-    "railway:seed-tiffin": "cd apps/medusa && railway run --service medusa pnpm exec tsx scripts/seed-tiffin.ts",
     "verify:local": "echo '=== Seed validate ===' && npx tsx scripts/seed.ts --validate && echo '=== Typecheck ===' && pnpm --filter mobile-customer typecheck && pnpm --filter mobile-cook typecheck && pnpm --filter web typecheck && echo '=== verify:local PASSED ==='",
     "verify:mobile-deps": "bash scripts/verify-mobile-deps.sh",
     "verify:mobile-bundles": "bash scripts/verify-mobile-bundles.sh",

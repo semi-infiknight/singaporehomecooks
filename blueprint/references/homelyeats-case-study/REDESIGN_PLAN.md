@@ -120,7 +120,7 @@ Tracked as **definition of done** for this programme — not optional polish.
 
 | # | Issue | Fix criteria |
 |---|--------|--------------|
-| I1 | Railway kitchens empty / MikroORM blind | ✅ seed-tiffin on boot + `shc-tiffin-pg` (done 2026-07-09); keep greening in CI smoke |
+| I1 | Railway kitchens empty / MikroORM blind | ✅ Full `seed.ts` on boot (includes tiffin) + kitchen API via module/`shc-tiffin-pg`; keep greening in CI smoke |
 | I2 | Web tiffin missing | ✅ routes shipped; must stay wired + visually overhauled with mobile |
 | I3 | Customer Maestro skipped when kitchens 404 | Re-enable full `tiffin-subscribe` when kitchens ≥1 live |
 | I4 | Unwired CTAs / empty shells | Every tiffin button hits api-client; no dead “coming soon” |

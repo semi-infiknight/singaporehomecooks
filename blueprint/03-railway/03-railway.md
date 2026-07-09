@@ -64,7 +64,7 @@ If the **web** service uses root `railway.toml`, it will:
 1. `NODE_OPTIONS=--import tsx` — load TypeScript custom modules in production
 2. `medusa db:migrate`
 3. `medusa user -e admin@shc.local -p supersecret` (idempotent)
-4. `seed.ts` when `RAILWAY_RUN_SEED=true` (first deploy only)
+4. Idempotent `seed.ts` every boot (cooks, dishes, growth, tiffin kitchen — one pipeline). Opt out: `RAILWAY_SKIP_SEED=true`
 5. `medusa start` on `$PORT` (Railway injects, typically 8080)
 
 ## Required Railway variables
@@ -80,7 +80,7 @@ If the **web** service uses root `railway.toml`, it will:
 | `MEDUSA_DISABLE_ADMIN` | `false` (admin UI at `/app`; Dockerfile uses `build:admin`) |
 | `MEDUSA_PUBLIC_URL` | `https://<medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<medusa-domain>.up.railway.app` |
-| `RAILWAY_RUN_SEED` | `true` once, then remove |
+| `RAILWAY_SKIP_SEED` | `true` only to skip demo seed (default: seed on boot) |
 | `STORE_CORS` | Explicit origins: web domain + `http://localhost:3001` + mobile dev ports — **no wildcard mix** |
 | `AUTH_CORS` | Same as `STORE_CORS` |
 
@@ -147,7 +147,7 @@ MEDUSA_URL=https://<medusa-domain>.up.railway.app pnpm verify:real-e2e
 | Web logs show `[shc-medusa]` / Postgres retries | Web using wrong config — `pnpm railway:configure-web` |
 | Bootstrap "Medusa not reachable" on HTTPS | Fixed in `bootstrap-medusa.js` (uses `https` module) |
 | Admin login 401 on Railway | Redeploy medusa (entrypoint creates admin) |
-| Empty products | `RAILWAY_RUN_SEED=true` or `railway run pnpm seed` on medusa |
+| Empty products / tiffin kitchens | Redeploy medusa (entrypoint runs `seed.ts`) or `railway run --service medusa pnpm seed` |
 | Web stale API URL | Redeploy web after `NEXT_PUBLIC_*` change |
 | CORS from web / "Failed to fetch" on login | Run `pnpm railway:wire` — explicit origins only, no wildcard mix |
 | PWA stale after deploy | Run `pnpm railway:ship`; verify with `pnpm railway:verify-pwa` (checks `X-SHC-Railway-Build-Id`) |

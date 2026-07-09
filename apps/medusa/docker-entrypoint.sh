@@ -10,15 +10,15 @@ echo "[shc-medusa] Running database migrations..."
 echo "[shc-medusa] Ensuring admin user (idempotent)..."
 "$MEDUSA_BIN" user -e admin@shc.local -p supersecret 2>/dev/null || true
 
-if [ "$RAILWAY_RUN_SEED" = "true" ]; then
-  echo "[shc-medusa] Seeding demo data (RAILWAY_RUN_SEED=true)..."
+# Single idempotent seed for the whole SHC demo DB (cooks, dishes, growth, tiffin, …).
+# Opt out only with RAILWAY_SKIP_SEED=true (e.g. future locked prod data).
+# RAILWAY_RUN_SEED=true is obsolete — seed is the normal path, not a special flag.
+if [ "$RAILWAY_SKIP_SEED" = "true" ]; then
+  echo "[shc-medusa] Skipping seed (RAILWAY_SKIP_SEED=true)"
+else
+  echo "[shc-medusa] Seeding demo data (idempotent — includes tiffin kitchen config)..."
   node --import tsx ./scripts/seed.ts || echo "[shc-medusa] Seed skipped or partial — check logs"
 fi
-
-# Always ensure demo tiffin kitchen (Auntie Rose) — idempotent, safe every deploy.
-# Fixes GET /store/shc/tiffin/kitchens returning [] when full seed was never re-run.
-echo "[shc-medusa] Ensuring tiffin kitchen seed..."
-node --import tsx ./scripts/seed-tiffin.ts || echo "[shc-medusa] Tiffin seed skipped or partial — check logs"
 
 echo "[shc-medusa] Starting API on port ${PORT:-9000}..."
 exec "$MEDUSA_BIN" start

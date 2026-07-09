@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats redesign plan locked** (UI/flow overhaul, no feature removal, tri-platform simultaneous): `references/homelyeats-case-study/REDESIGN_PLAN.md`. Prior: tiffin seed + web parity live (kitchens ≥1 on Railway).
+**Last Updated:** 2026-07-09 — Tiffin seed folded into **uniform** `seed.ts` / medusa boot (removed separate `seed:tiffin`). HomelyEats redesign plan locked.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -202,7 +202,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `shc_tiffin_weekly_plan` | `week_start` null = recurring template; dated row = next-week override |
 
 **Scripts:** `apps/medusa/scripts/tiffin-weekly-orders.ts` — manual or worker cron.  
-**Seed:** `scripts/seed-tiffin.ts` + **docker-entrypoint always** (not only `RAILWAY_RUN_SEED`); also in full `seed.ts`. Kitchen config read/write via `src/lib/shc-tiffin-pg.ts` (MikroORM list was empty on Railway despite SQL rows).  
+**Seed:** Tiffin kitchen config is part of **one** `apps/medusa/scripts/seed.ts` pass (same as cooks/dishes/growth). Entrypoint runs full seed every boot (opt out `RAILWAY_SKIP_SEED=true`). No separate tiffin seed command. Kitchen config API uses `src/lib/shc-tiffin-pg.ts` behind the same Medusa module/routes.  
 **UI:** `packages/shc-ui/src/tiffin-ux.tsx` (mobile) + web `apps/web/app/tiffin/*` + `apps/web/app/cook-portal/tiffin`.
 
 ---
@@ -213,8 +213,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 pnpm install                      # Railway .env.local for all clients (postinstall)
 pnpm env:sync                     # re-write client env from config/railway-client.json
 pnpm bootstrap:medusa             # optional: refresh Railway publishable key + demo customer
-pnpm seed:tiffin                  # local DATABASE_URL tiffin kitchen upsert
-pnpm railway:seed-tiffin          # railway run seed-tiffin (needs public DB or use entrypoint on deploy)
+pnpm seed:medusa                  # full demo seed (cooks, dishes, growth, tiffin kitchen, …)
 
 pnpm customer:dev                 # Mobile customer :8081 → Railway
 pnpm cook:dev                     # Mobile cook :8082
@@ -262,7 +261,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 12. **PWA assets** — `/sw.js` and icons are served by Next.js route handlers (`apps/web/app/sw.js/route.ts`, etc.), not `public/sw.js`. Responses include `X-SHC-Railway-Build-Id` for deploy verification.
 13. **Web checkout** — unauthenticated users cannot reach checkout or add-to-cart; redirect to `/login` with `returnTo`.
 14. **Railway deploy requires `git push origin main`** — local commits do not deploy; `railway redeploy` restarts old image; use GitHub push or `railway up` for fresh build. API-touching goals: push → CI green → curl live route before declaring done.
-15. **Tiffin kitchens on Railway** — entrypoint runs `seed-tiffin.ts` every boot; kitchen list uses pg (`shc-tiffin-pg`). If empty after deploy, `pnpm railway:seed-tiffin` or cook app **Save tiffin settings**.
+15. **Tiffin kitchens on Railway** — filled by normal `seed.ts` on medusa boot (same seed as cooks/dishes). If empty: cook **Save tiffin settings** or re-deploy so entrypoint seed runs.
 16. **SecureStore milestone keys** — use `shc_milestone_*` (no colons); `milestoneStorageKey()` in `@shc/ui` family-values-core.
 17. **Cook Maestro E2E** — set `EXPO_PUBLIC_MAESTRO_E2E=1` in `apps/mobile-cook/.env.local` to skip onboarding during device tests.
 
@@ -276,7 +275,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
 | **Tiffin HomelyEats redesign** | UI/flow overhaul + additive subscription OS; **no feature removal**; web + both apps iOS/Android same waves — [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md) | P0 (product) |
 | **Tiffin web parity** | Customer `/tiffin/*` + cook `/cook-portal/tiffin` shipped | done |
-| **Tiffin seed on Railway** | Always-on `seed-tiffin` + pg kitchen config | done |
+| **Tiffin seed on Railway** | Part of uniform `seed.ts` / entrypoint (not a separate command) | done |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |
 
 All 4 + MinIO auth hardening + notifications deeper (read UI, per-type limits, mark-all, types) completed. See §9.

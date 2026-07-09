@@ -70,9 +70,9 @@ This sets `${{Service.VAR}}` references on medusa, worker, and web so Postgres, 
 | `MEDUSA_DISABLE_ADMIN` | `false` (admin dashboard at `/app`) |
 | `MEDUSA_PUBLIC_URL` | `https://<your-medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<your-medusa-domain>.up.railway.app` (no `https://`) |
-| `RAILWAY_RUN_SEED` | `true` (first deploy only — remove after seed succeeds) |
+| `RAILWAY_SKIP_SEED` | Optional. Set `true` only to skip demo seed. Default: run full idempotent `seed.ts` on every boot (cooks, dishes, tiffin, growth). |
 
-4. Deploy. The entrypoint runs `db:migrate` then starts the server. With `RAILWAY_RUN_SEED=true`, demo cooks/products are seeded automatically.
+4. Deploy. The entrypoint runs `db:migrate`, then **one** `seed.ts` pass (includes tiffin kitchen config — not a separate command), then starts the server.
 
 5. Verify: `curl https://<medusa-domain>/health`
 
@@ -88,11 +88,11 @@ MEDUSA_URL=https://<medusa-domain>.up.railway.app ./scripts/railway-init.sh
 
 This writes local `.env.local` files and prints the **publishable API key** to copy into Railway.
 
-If you skipped `RAILWAY_RUN_SEED`, seed manually:
+To re-seed demo data without a full redeploy:
 
 ```bash
 railway link   # select medusa service
-railway run pnpm seed
+railway run --service medusa pnpm seed
 ```
 
 ---
@@ -171,7 +171,7 @@ Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). N
 |---------|-----|
 | Build fails Node/pnpm | Dockerfile uses Node 22 + pnpm 11 |
 | CORS errors from web | Set `STORE_CORS` / `AUTH_CORS` with web URL |
-| Empty products | Run seed: `RAILWAY_RUN_SEED=true` or `railway run pnpm seed` |
+| Empty products / tiffin kitchens | Redeploy medusa or `railway run --service medusa pnpm seed` |
 | Cart 401 | Run `./scripts/railway-init.sh` (demo customer profile) |
 | Web shows stale API | Redeploy web after changing `NEXT_PUBLIC_*` |
 | Web runs Medusa / Postgres errors in web logs | Set web **Config file** to `railway.web.toml` (see §5) |
@@ -185,4 +185,4 @@ Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). N
 - [ ] Custom domains + HTTPS
 - [ ] PayU / PayNow KYC keys
 - [ ] Expo push credentials (`expo-server-sdk`)
-- [ ] Remove `RAILWAY_RUN_SEED` after first seed
+- [ ] Seed runs on boot by default (`RAILWAY_SKIP_SEED` only if you must opt out)

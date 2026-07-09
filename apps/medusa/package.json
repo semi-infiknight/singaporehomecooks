@@ -19,8 +19,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "pnpm exec medusa db:generate || echo 'generate after DB ready'",
     "db:migrate": "pnpm exec medusa db:migrate || echo 'migrate after DB ready'",
-    "seed": "tsx ./scripts/seed.ts",
-    "seed:tiffin": "tsx ./scripts/seed-tiffin.ts"
+    "seed": "tsx ./scripts/seed.ts"
   },
   "dependencies": {
     "@medusajs/admin-sdk": "^2.15.5",

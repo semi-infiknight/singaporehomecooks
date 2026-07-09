@@ -401,15 +401,46 @@ async function seed() {
     await pg2.end().catch(() => {});
   }
 
-  // Tiffin subscription: seed Rose kitchen with eligible dishes (also via scripts/seed-tiffin.ts on every boot)
+  // Tiffin kitchen config — same seed pass as cooks/products (not a separate pipeline)
+  const pgTiffin = new Client({ connectionString: dbUrl });
   try {
-    // node16 resolution requires .js extension for relative ESM imports
-    const { seedTiffinKitchenConfig } = await import("./seed-tiffin.js");
-    const tiffin = await seedTiffinKitchenConfig(dbUrl);
-    if (tiffin.ok) console.log("  ✓", tiffin.message);
-    else console.log("[SEED][TIFFIN] partial:", tiffin.message);
+    await pgTiffin.connect();
+    await pgTiffin.query(`
+      CREATE TABLE IF NOT EXISTS "shc_tiffin_kitchen_config" (
+        "id" text PRIMARY KEY,
+        "cook_id" text NOT NULL UNIQUE,
+        "enabled" boolean NOT NULL DEFAULT false,
+        "tagline" text,
+        "eligible_product_ids" jsonb NOT NULL DEFAULT '[]',
+        "meals_per_week_options" jsonb NOT NULL DEFAULT '[2,3,4]',
+        "collection_days" jsonb NOT NULL DEFAULT '[1,2,3,4,5]',
+        "default_collection_slot" text NOT NULL DEFAULT '18:00-19:00',
+        "created_at" timestamptz NOT NULL DEFAULT now(),
+        "updated_at" timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    await pgTiffin.query(
+      `INSERT INTO shc_tiffin_kitchen_config (
+        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, collection_days, default_collection_slot, created_at, updated_at
+      ) VALUES (
+        'tiffin_cfg_rose', 'cook_rose_tampines_001', true,
+        'Peranakan comfort — weekly tiffin from our Tampines HDB kitchen',
+        '["dish_nasi_lemak_prawn_001","dish_ayam_buah_keluak_002"]'::jsonb,
+        '[2,3,4]'::jsonb, '[1,2,3,4,5]'::jsonb, '18:00-19:00', now(), now()
+      ) ON CONFLICT (cook_id) DO UPDATE SET
+        enabled = EXCLUDED.enabled,
+        tagline = EXCLUDED.tagline,
+        eligible_product_ids = EXCLUDED.eligible_product_ids,
+        meals_per_week_options = EXCLUDED.meals_per_week_options,
+        collection_days = EXCLUDED.collection_days,
+        default_collection_slot = EXCLUDED.default_collection_slot,
+        updated_at = now()`
+    );
+    console.log("  ✓ shc_tiffin_kitchen_config seeded for Auntie Rose (same pass as cooks/dishes)");
   } catch (e: any) {
-    console.log("[SEED][TIFFIN] Tiffin seed partial (migrate first?):", e.message);
+    console.log("[SEED] Tiffin kitchen config partial (migrate first?):", e.message);
+  } finally {
+    await pgTiffin.end().catch(() => {});
   }
 
   console.log("[SEED] Done.");

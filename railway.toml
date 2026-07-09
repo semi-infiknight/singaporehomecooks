@@ -19,6 +19,7 @@ restartPolicyMaxRetries = 3
 # MEDUSA_DISABLE_ADMIN=false  (admin UI at /app; Dockerfile builds with build:admin)
 # MEDUSA_PUBLIC_URL=https://<service>.up.railway.app
 # RAILWAY_PUBLIC_DOMAIN=<service>.up.railway.app
-# RAILWAY_RUN_SEED=true (first deploy only)
+# Seed runs on every boot via docker-entrypoint (idempotent seed.ts, includes tiffin).
+# Opt out: RAILWAY_SKIP_SEED=true
 # WEB_PUBLIC_URL=https://<web-service>.up.railway.app (optional CORS auto-append)
 # See RAILWAY_DEPLOY.md for full setup + web service (railway.web.toml)
