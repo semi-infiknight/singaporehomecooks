@@ -25,6 +25,7 @@ import {
   cardsForDate,
   collectOrderDates,
   monthLabelForDate,
+  buildManageOrderQuery,
   type DayOrderCard,
 } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
@@ -98,6 +99,10 @@ export default function MyOrdersList() {
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
   const onManage = (card: DayOrderCard) => {
+    if (card.status === 'scheduled' || card.status === 'indeterminate') {
+      router.push(`/(customer)/orders/manage?${buildManageOrderQuery(card)}` as any);
+      return;
+    }
     if (card.managePath === 'tiffin') {
       router.push('/(customer)/tiffin/manage' as any);
       return;

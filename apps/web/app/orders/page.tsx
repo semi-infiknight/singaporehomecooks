@@ -18,6 +18,7 @@ import {
   monthLabelForDate,
   dayOrderStatusChip,
   primaryActionLabel,
+  buildManageOrderQuery,
   type DayOrderCard,
 } from '@shc/utils';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
@@ -91,6 +92,11 @@ export default function OrdersList() {
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
   const onManage = (card: DayOrderCard) => {
+    // HomelyEats: Manage opens upcoming-order screen (skip / add items / slot / notes)
+    if (card.status === 'scheduled' || card.status === 'indeterminate') {
+      router.push(`/orders/manage?${buildManageOrderQuery(card)}`);
+      return;
+    }
     if (card.managePath === 'tiffin') {
       router.push('/tiffin/manage');
       return;
