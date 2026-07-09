@@ -12,6 +12,9 @@ describe('tiffin subscription UX', () => {
   it('exports kitchen browse, meals picker, and weekly planner', () => {
     const src = readFileSync(TIFFIN_UX, 'utf8');
     expect(src).toContain('export function SHCTiffinKitchenCard');
+    expect(src).toContain('export function SHCTiffinFilterChips');
+    expect(src).toContain('export function SHCTiffinCategoryRow');
+    expect(src).toContain('Explore tiffin plans');
     expect(src).toContain('export function SHCTiffinMealsPicker');
     expect(src).toContain('export function SHCTiffinPlannerScreen');
     expect(src).toContain('export function SHCTiffinManageCard');

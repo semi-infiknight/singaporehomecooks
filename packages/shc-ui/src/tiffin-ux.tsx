@@ -35,23 +35,111 @@ export function tiffinWeeklySubtotal(mealsPerWeek: number, servings = 1): number
   return mealsPerWeek * servings * tiffinPricePerServing(mealsPerWeek);
 }
 
+/** HomelyEats homepage ref — promo banner “No time to cook? Explore subscriptions” */
 export function SHCTiffinHeroBanner({
-  title = 'Weekly Tiffin',
-  subtitle = 'Subscribe to home-cooked meals from one kitchen — pick 2, 3, or 4 days a week.',
+  title = 'No time to cook?',
+  highlight = 'Explore tiffin plans',
+  bullets = [
+    'Nutritious home-cooked meals from HDB kitchens',
+    'Heritage cuisines — Peranakan, Malay, Indian & more',
+    'Flexible 2 · 3 · 4 meals per week',
+  ],
   testID = 'tiffin-hero-banner',
 }: {
   title?: string;
-  subtitle?: string;
+  highlight?: string;
+  bullets?: string[];
   testID?: string;
 }) {
   return (
     <View testID={testID} style={styles.heroBanner}>
       <Text style={styles.heroTitle}>{title}</Text>
-      <Text style={styles.heroSubtitle}>{subtitle}</Text>
+      <Text style={styles.heroHighlight}>{highlight}</Text>
+      {bullets.map((b) => (
+        <Text key={b} style={styles.heroBullet}>
+          · {b}
+        </Text>
+      ))}
     </View>
   );
 }
 
+/** HomelyEats filter chips — Sort / nearest / cuisine */
+export function SHCTiffinFilterChips({
+  chips,
+  activeId,
+  onSelect,
+  testID = 'tiffin-filter-chips',
+}: {
+  chips: { id: string; label: string }[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      testID={testID}
+      contentContainerStyle={styles.filterRow}
+    >
+      {chips.map((c) => {
+        const active = c.id === activeId;
+        return (
+          <Pressable
+            key={c.id}
+            onPress={() => onSelect(c.id)}
+            testID={`tiffin-filter-${c.id}`}
+            style={[styles.filterChip, active && styles.filterChipActive]}
+          >
+            <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{c.label}</Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+/** HomelyEats category circles — Explore by categories */
+export function SHCTiffinCategoryRow({
+  categories,
+  activeId,
+  onSelect,
+  testID = 'tiffin-category-row',
+}: {
+  categories: { id: string; label: string; emoji?: string }[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID}>
+      <Text style={styles.sectionEyebrow}>Explore by categories</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
+        {categories.map((c) => {
+          const active = c.id === activeId;
+          return (
+            <Pressable
+              key={c.id}
+              onPress={() => onSelect(c.id)}
+              testID={`tiffin-cat-${c.id}`}
+              style={styles.catItem}
+            >
+              <View style={[styles.catCircle, active && styles.catCircleActive]}>
+                <Text style={styles.catEmoji}>{c.emoji || '🍲'}</Text>
+              </View>
+              <Text style={[styles.catLabel, active && styles.catLabelActive]} numberOfLines={1}>
+                {c.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+/** HomelyEats kitchen list card — cover, rating, open, price, subscribers */
 export function SHCTiffinKitchenCard({
   cookName,
   area,
@@ -59,7 +147,17 @@ export function SHCTiffinKitchenCard({
   mealsOptions,
   dishCount,
   cookId,
+  coverUri,
+  rating = 4.8,
+  reviewCount,
+  subscriberCount,
+  priceFrom,
+  priceTo,
+  isOpen = true,
+  closesAt = 'Collection evening',
   onPress,
+  onFavorite,
+  favorited,
   testID,
 }: {
   cookName: string;
@@ -68,29 +166,79 @@ export function SHCTiffinKitchenCard({
   mealsOptions?: number[];
   dishCount?: number;
   cookId: string;
+  coverUri?: string;
+  rating?: number;
+  reviewCount?: number;
+  subscriberCount?: number;
+  priceFrom?: number;
+  priceTo?: number;
+  isOpen?: boolean;
+  closesAt?: string;
   onPress: () => void;
+  onFavorite?: () => void;
+  favorited?: boolean;
   testID?: string;
 }) {
-  const avatar = getCookAvatarUrl(cookId, cookName);
+  const avatar = coverUri || getCookAvatarUrl(cookId, cookName);
+  const priceLabel =
+    priceFrom != null && priceTo != null
+      ? `S$${priceFrom}–${priceTo}/meal`
+      : priceFrom != null
+        ? `from S$${priceFrom}/meal`
+        : `${(mealsOptions || [2, 3, 4]).join(' · ')} meals/wk`;
   return (
     <Pressable onPress={onPress} testID={testID || `tiffin-kitchen-${cookId}`} accessibilityRole="button">
       {({ pressed }) => (
-        <View style={[styles.kitchenCard, pressed && { opacity: 0.92 }]}>
-          <Image source={{ uri: avatar }} style={styles.kitchenAvatar} />
-          <View style={styles.kitchenBody}>
-            <Text style={styles.kitchenName}>{cookName}</Text>
-            {area ? <Text style={styles.kitchenArea}>{area}</Text> : null}
-            {tagline ? <Text style={styles.kitchenTagline} numberOfLines={2}>{tagline}</Text> : null}
-            <View style={styles.kitchenMetaRow}>
-              <Text style={styles.kitchenMeta}>
-                {(mealsOptions || [2, 3, 4]).join(' · ')} meals/wk
+        <View style={[styles.kitchenCardFeatured, pressed && { opacity: 0.94 }]}>
+          <View style={styles.kitchenCoverWrap}>
+            <Image source={{ uri: avatar }} style={styles.kitchenCover} resizeMode="cover" />
+            {onFavorite ? (
+              <Pressable
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  onFavorite();
+                }}
+                style={styles.favBtn}
+                testID={`tiffin-kitchen-fav-${cookId}`}
+                hitSlop={8}
+              >
+                <Text style={styles.favIcon}>{favorited ? '♥' : '♡'}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          <View style={styles.kitchenBodyPad}>
+            <View style={styles.kitchenTitleRow}>
+              <Text style={styles.kitchenName} numberOfLines={1}>
+                {cookName}
               </Text>
-              {dishCount != null ? (
-                <Text style={styles.kitchenMeta}>{dishCount} dishes</Text>
+              <View style={styles.ratingPill}>
+                <Text style={styles.ratingStar}>★</Text>
+                <Text style={styles.ratingText}>
+                  {rating.toFixed(1)}
+                  {reviewCount != null ? ` (${reviewCount})` : ''}
+                </Text>
+              </View>
+            </View>
+            {tagline || area ? (
+              <Text style={styles.kitchenTagline} numberOfLines={1}>
+                {[tagline, area].filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
+            <View style={styles.openRow}>
+              <Text style={[styles.openDot, { color: isOpen ? '#2E7D32' : '#C62828' }]}>
+                {isOpen ? 'Open' : 'Closed'}
+              </Text>
+              {closesAt ? <Text style={styles.closesAt}> · {closesAt}</Text> : null}
+            </View>
+            <View style={styles.kitchenMetaRow}>
+              <Text style={styles.kitchenMetaPrice}>{priceLabel}</Text>
+              {subscriberCount != null ? (
+                <Text style={styles.kitchenMetaSubs}>👤 {subscriberCount} subscribers</Text>
+              ) : dishCount != null ? (
+                <Text style={styles.kitchenMetaSubs}>{dishCount} dishes</Text>
               ) : null}
             </View>
           </View>
-          <Text style={styles.kitchenChevron}>›</Text>
         </View>
       )}
     </Pressable>
@@ -936,13 +1084,75 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 17, fontWeight: '800', color: gourmeatColors.text, textAlign: 'center' },
   emptySubtitle: { fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center', marginTop: 6, lineHeight: 18 },
   heroBanner: {
-    backgroundColor: gourmeatColors.primaryLight,
+    backgroundColor: gourmeatColors.primary,
     borderRadius: gourmeatRadii.lg,
     padding: shcSpacing.lg,
     marginBottom: shcSpacing.md,
+    ...gourmeatShadows.soft,
   },
-  heroTitle: { fontSize: 22, fontWeight: '800', color: gourmeatColors.text },
+  heroTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  heroHighlight: { fontSize: 18, fontWeight: '800', color: '#FFF8F0', marginTop: 4, marginBottom: 8 },
+  heroBullet: { fontSize: 13, color: 'rgba(255,255,255,0.92)', lineHeight: 20, marginTop: 2 },
   heroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 6, lineHeight: 18 },
+  filterRow: { gap: 8, paddingBottom: shcSpacing.sm },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: gourmeatColors.surface,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+  },
+  filterChipActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  filterChipText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text },
+  filterChipTextActive: { color: '#fff' },
+  sectionEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: gourmeatColors.textLight,
+    marginBottom: shcSpacing.sm,
+    textAlign: 'center',
+  },
+  catRow: { gap: 14, paddingBottom: shcSpacing.md },
+  catItem: { alignItems: 'center', width: 72 },
+  catCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: gourmeatColors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    ...gourmeatShadows.soft,
+  },
+  catCircleActive: { borderColor: gourmeatColors.primary, borderWidth: 2 },
+  catEmoji: { fontSize: 28 },
+  catLabel: { fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 6, textAlign: 'center' },
+  catLabelActive: { color: gourmeatColors.primary, fontWeight: '800' },
+  kitchenCardFeatured: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    marginBottom: shcSpacing.md,
+    overflow: 'hidden',
+    ...gourmeatShadows.soft,
+  },
+  kitchenCoverWrap: { position: 'relative' },
+  kitchenCover: { width: '100%', height: 160, backgroundColor: gourmeatColors.border },
+  favBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favIcon: { fontSize: 18, color: gourmeatColors.primary },
+  kitchenBodyPad: { padding: shcSpacing.md },
+  kitchenTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   kitchenCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -954,10 +1164,24 @@ const styles = StyleSheet.create({
   },
   kitchenAvatar: { width: 56, height: 56, borderRadius: 28, marginRight: shcSpacing.md },
   kitchenBody: { flex: 1 },
-  kitchenName: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
+  kitchenName: { fontSize: 17, fontWeight: '800', color: gourmeatColors.text, flex: 1 },
   kitchenArea: { fontSize: 12, color: gourmeatColors.textLight, marginTop: 2 },
-  kitchenTagline: { fontSize: 12, color: gourmeatColors.textLight, marginTop: 4 },
-  kitchenMetaRow: { flexDirection: 'row', gap: shcSpacing.md, marginTop: 6 },
+  kitchenTagline: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 },
+  openRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  openDot: { fontSize: 13, fontWeight: '800' },
+  closesAt: { fontSize: 12, color: gourmeatColors.textLight, fontWeight: '600' },
+  ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  ratingStar: { color: '#F5A623', fontSize: 13, fontWeight: '800' },
+  ratingText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
+  kitchenMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: shcSpacing.md,
+  },
+  kitchenMetaPrice: { fontSize: 13, fontWeight: '800', color: gourmeatColors.text },
+  kitchenMetaSubs: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight },
   kitchenMeta: { fontSize: 11, fontWeight: '600', color: gourmeatColors.primary },
   kitchenChevron: { fontSize: 22, color: gourmeatColors.textMuted, marginLeft: shcSpacing.sm },
   sectionQuestion: { fontSize: 18, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
