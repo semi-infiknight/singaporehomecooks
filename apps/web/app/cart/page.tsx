@@ -1,18 +1,29 @@
 'use client';
 
-import React, { useCallback } from 'react';
+/**
+ * One-time order cart (HomelyEats cart IA).
+ * Kitchen · collection location · items · instructions · summary · Proceed to pay.
+ */
+import React, { useCallback, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
-import { getDishImageUrl } from '@shc/utils';
+import { Trash2, MapPin } from 'lucide-react';
+import {
+  getDishImageUrl,
+  computeOneTimeOrderSummary,
+  cartKitchenLabel,
+  cartCollectionHint,
+} from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
 import { useAuth } from '../../lib/useAuth';
+import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import {
   GourmeatScreenHeader,
   GourmeatPayButton,
   SHCEmptyState,
+  SHCButton,
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../components/SHCWebComponents';
@@ -23,6 +34,7 @@ type CartItem = {
   price: number;
   product_id?: string;
   productId?: string;
+  cook_name?: string;
 };
 
 export default function CartPage() {
@@ -31,8 +43,15 @@ export default function CartPage() {
   const { openTray, dismiss } = useSHCTrayWeb();
   const { data: cart = { items: [] }, isLoading } = useCart();
   const clear = useClearCart();
-  const total = (cart.items || []).reduce((s: number, i: CartItem) => s + i.price * i.qty, 0);
-  const itemCount = (cart.items || []).reduce((s: number, i: CartItem) => s + i.qty, 0);
+  const { locationLabel, active: collectionLocation } = useCustomerLocation();
+  const [cookingNotes, setCookingNotes] = useState('');
+  const [collectionNotes, setCollectionNotes] = useState('');
+  const [showCooking, setShowCooking] = useState(false);
+  const [showCollection, setShowCollection] = useState(false);
+
+  const items = (cart.items || []) as CartItem[];
+  const summary = computeOneTimeOrderSummary(items);
+  const kitchen = cartKitchenLabel(items as Array<Record<string, unknown>>);
 
   const showGuestAuthTray = useCallback(() => {
     openTray(
@@ -42,7 +61,7 @@ export default function CartPage() {
         primaryLabel="Sign in"
         onPrimary={() => {
           dismiss();
-          router.push('/login');
+          router.push('/login?next=/checkout');
         }}
         secondaryLabel="Keep browsing"
         onSecondary={dismiss}
@@ -59,14 +78,12 @@ export default function CartPage() {
     );
   }
 
-  const items = (cart.items || []) as CartItem[];
-
   return (
-    <div className={`max-w-2xl mx-auto px-4 py-8 ${items.length > 0 ? 'pb-28' : ''}`}>
-      <GourmeatScreenHeader
-        title="Your Cart"
-        subtitle={`${itemCount} portion${itemCount !== 1 ? 's' : ''}`}
-      />
+    <div
+      className={`max-w-2xl mx-auto px-4 py-6 ${items.length > 0 ? 'pb-32' : 'pb-28'}`}
+      data-testid="cart-screen"
+    >
+      <GourmeatScreenHeader title="Cart" subtitle={cartCollectionHint()} />
 
       {items.length === 0 ? (
         <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] p-8">
@@ -81,19 +98,32 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-soft)] p-4 text-center">
-              <div className="text-2xl font-extrabold tabular-nums">{itemCount}</div>
-              <div className="text-xs font-semibold text-muted-foreground mt-1">Portions</div>
-            </div>
-            <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-soft)] p-4 text-center">
-              <div className="text-2xl font-extrabold tabular-nums text-primary">S${total.toFixed(2)}</div>
-              <div className="text-xs font-semibold text-muted-foreground mt-1">Subtotal</div>
+          {/* Kitchen + collection location */}
+          <div
+            className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-4"
+            data-testid="cart-kitchen-banner"
+          >
+            <p className="text-xs font-bold text-muted-foreground">Collecting from</p>
+            <p className="font-black text-lg" data-testid="cart-kitchen-name">
+              {kitchen}
+            </p>
+            <div className="flex items-start gap-2 mt-2 text-sm font-semibold text-muted-foreground">
+              <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-primary" aria-hidden />
+              <div className="flex-1 min-w-0">
+                <p data-testid="cart-collection-location">
+                  {collectionLocation ? locationLabel : 'Set collection location'}
+                </p>
+                <Link href="/location" className="text-primary font-bold text-xs">
+                  Change
+                </Link>
+              </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] overflow-hidden mb-4">
-            <ul className="divide-y divide-border">
+          {/* Your items */}
+          <p className="text-sm font-extrabold mb-2">Your items</p>
+          <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden mb-3">
+            <ul className="divide-y divide-border" data-testid="cart-items-list">
               {items.map((it, idx) => {
                 const pid = it.product_id || it.productId;
                 const imgUrl = getDishImageUrl({ id: pid, name: it.name });
@@ -105,7 +135,7 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-bold truncate text-sm">{it.name}</div>
                       <div className="text-xs text-muted-foreground font-medium tabular-nums">
-                        {it.qty} × S${it.price.toFixed(2)}
+                        {it.qty} × S${Number(it.price).toFixed(2)}
                       </div>
                     </div>
                     <div className="font-extrabold text-primary tabular-nums shrink-0 text-sm">
@@ -115,33 +145,115 @@ export default function CartPage() {
                 );
               })}
             </ul>
-            <div className="px-4 py-4 border-t border-border flex justify-between items-center bg-secondary/50">
-              <span className="font-extrabold text-base">Total</span>
-              <span className="text-xl font-extrabold tabular-nums text-primary">S${total.toFixed(2)}</span>
+          </div>
+
+          <Link
+            href="/"
+            className="block w-full text-center rounded-xl border-2 border-dashed border-[var(--shc-border-brutal)] py-3 text-sm font-bold text-primary mb-3"
+            data-testid="cart-add-more"
+          >
+            + Add more items
+          </Link>
+
+          <button
+            type="button"
+            className="w-full text-left rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-4 py-3 mb-2 text-sm font-bold"
+            onClick={() => setShowCooking((v) => !v)}
+            data-testid="cart-cooking-notes-toggle"
+          >
+            Add cooking instructions
+          </button>
+          {showCooking && (
+            <textarea
+              className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 text-sm font-semibold mb-2 min-h-[72px]"
+              placeholder="e.g. less spicy · no peanuts"
+              value={cookingNotes}
+              onChange={(e) => setCookingNotes(e.target.value)}
+              data-testid="cart-cooking-notes"
+            />
+          )}
+
+          <button
+            type="button"
+            className="w-full text-left rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-4 py-3 mb-4 text-sm font-bold"
+            onClick={() => setShowCollection((v) => !v)}
+            data-testid="cart-collection-notes-toggle"
+          >
+            Add collection instructions
+          </button>
+          {showCollection && (
+            <textarea
+              className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 text-sm font-semibold mb-4 min-h-[72px]"
+              placeholder="e.g. call when ready · leave at unit 12-34"
+              value={collectionNotes}
+              onChange={(e) => setCollectionNotes(e.target.value)}
+              data-testid="cart-collection-notes"
+            />
+          )}
+
+          {/* Order summary */}
+          <div
+            className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-3"
+            data-testid="cart-order-summary"
+          >
+            <p className="font-extrabold mb-3">Order summary</p>
+            <div className="flex justify-between text-sm font-semibold mb-1">
+              <span className="text-muted-foreground">Item total</span>
+              <span className="tabular-nums">{summary.itemTotalLabel}</span>
             </div>
+            <div className="flex justify-between text-sm font-semibold mb-1">
+              <span className="text-muted-foreground">Service fee</span>
+              <span className="tabular-nums">{summary.serviceFeeLabel}</span>
+            </div>
+            <div className="flex justify-between text-sm font-semibold mb-2">
+              <span className="text-muted-foreground">HDB collection</span>
+              <span className="tabular-nums text-green-700">{summary.collectionFeeLabel}</span>
+            </div>
+            <div className="flex justify-between font-black text-base border-t-2 border-[var(--shc-border-brutal)] pt-2">
+              <span>Total amount</span>
+              <span className="text-primary tabular-nums" data-testid="cart-total">
+                {summary.totalLabel}
+              </span>
+            </div>
+            <p className="text-[11px] font-semibold text-muted-foreground mt-3 bg-secondary/60 rounded-lg p-2">
+              {summary.cancelNote}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={() => clear.mutate()}
-            className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-6"
+            className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-4"
           >
             <Trash2 className="w-4 h-4" aria-hidden />
             Clear cart
           </button>
 
-          <GourmeatPayButton
-            label="Checkout"
-            amount={`S$${total.toFixed(2)}`}
-            testID="proceed-checkout-web"
-            onClick={() => {
-              if (!user && !isAuthenticated()) {
-                showGuestAuthTray();
-                return;
-              }
-              router.push('/checkout');
-            }}
-          />
+          <div className="fixed bottom-0 left-0 right-0 md:static p-4 md:p-0 bg-card/95 md:bg-transparent border-t-2 md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),72px)] md:pb-0 z-30">
+            <div className="max-w-2xl mx-auto">
+              <GourmeatPayButton
+                label={summary.proceedLabel}
+                amount={summary.totalLabel}
+                testID="proceed-checkout-web"
+                onClick={() => {
+                  if (!user && !isAuthenticated()) {
+                    showGuestAuthTray();
+                    return;
+                  }
+                  // Persist notes for checkout session
+                  try {
+                    sessionStorage.setItem(
+                      'shc_cart_notes',
+                      JSON.stringify({ cookingNotes, collectionNotes, kitchen })
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                  router.push('/checkout');
+                }}
+              />
+            </div>
+          </div>
         </>
       )}
     </div>

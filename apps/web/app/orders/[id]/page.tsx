@@ -24,6 +24,8 @@ import {
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
+  orderTrackingBanner,
+  orderDeliveredRateCopy,
 } from '@shc/utils';
 import type { SHCOrderStatus } from '@shc/types';
 
@@ -70,6 +72,12 @@ export default function TrackOrder() {
   }
 
   const status = (order.shc_status || 'pending') as SHCOrderStatus;
+  const trackBanner = orderTrackingBanner(
+    String(status),
+    order.collection_slot ? String(order.collection_slot) : undefined
+  );
+  const rateCopy = orderDeliveredRateCopy();
+  const isDelivered = status === 'collected' || status === 'completed';
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
@@ -80,6 +88,22 @@ export default function TrackOrder() {
         backLabel="← All orders"
       />
 
+      <div
+        className={`rounded-2xl px-4 py-3 mb-4 font-extrabold text-sm ${
+          trackBanner.tone === 'done'
+            ? 'bg-green-600 text-white'
+            : trackBanner.tone === 'active'
+              ? 'bg-green-600 text-white'
+              : 'bg-secondary text-foreground'
+        }`}
+        data-testid="order-tracking-banner"
+      >
+        {trackBanner.title}
+        {trackBanner.subtitle ? (
+          <p className="text-xs font-semibold opacity-90 mt-0.5">{trackBanner.subtitle}</p>
+        ) : null}
+      </div>
+
       {isActiveOrderStatus(status) && isFetching && (
         <p className="text-[11px] font-bold text-[var(--shc-success)] mb-3">Refreshing status…</p>
       )}
@@ -87,6 +111,23 @@ export default function TrackOrder() {
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <OrderTimeline status={status} live={isActiveOrderStatus(status)} />
       </SHCCard>
+
+      {isDelivered && (
+        <SHCCard className="mb-6" data-testid="order-delivered-rate">
+          <p className="font-black text-lg mb-1">{rateCopy.title}</p>
+          <p className="text-sm font-semibold text-muted-foreground mb-3">{rateCopy.subtitle}</p>
+          <div className="flex gap-2 text-2xl mb-4" aria-hidden>
+            {'★☆☆☆☆'.split('').map((s, i) => (
+              <span key={i} className="text-primary opacity-40">
+                ★
+              </span>
+            ))}
+          </div>
+          <SHCButton onClick={() => (window.location.href = '/')} testID="order-continue-browsing">
+            {rateCopy.cta}
+          </SHCButton>
+        </SHCCard>
+      )}
 
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <div className="grid sm:grid-cols-2 gap-4 text-sm">

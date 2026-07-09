@@ -16,6 +16,7 @@ export * from './kitchen';
 export * from './kitchen-order';
 export * from './my-orders';
 export * from './order-manage';
+export * from './one-time-order';
 export * from './cook-listings';
 export * from './e2e-cart';
 export * from './e2e-order';

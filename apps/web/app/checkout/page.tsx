@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BENTO_ACTION_IMAGES, getFirstCartProductId } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getFirstCartProductId, orderSuccessfulCopy, computeOneTimeOrderSummary } from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
 import { useCheckout, useTransitionOrder } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
@@ -47,6 +47,7 @@ export default function CheckoutPage() {
   const [paynowRef, setPaynowRef] = useState('');
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
+  const [processingFlash, setProcessingFlash] = useState(false);
   const { openTray, dismiss } = useSHCTrayWeb();
   const {
     show: showFirstOrderCelebration,
@@ -56,9 +57,10 @@ export default function CheckoutPage() {
 
   const firstPid = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
-  const total = (cart.items || []).reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
+  const oneTime = computeOneTimeOrderSummary(cart.items || []);
+  const total = oneTime.itemTotal;
   const creditBal = creditsData?.balance || 0;
-  const amountDue = Math.max(0, total - Math.floor(creditsApply / 4));
+  const amountDue = Math.max(0, oneTime.total - Math.floor(creditsApply / 4));
 
   const openAllergenTray = useCallback(() => {
     openTray(
@@ -128,24 +130,43 @@ export default function CheckoutPage() {
   };
 
   if (orderId) {
+    const okCopy = orderSuccessfulCopy();
     return (
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
-          <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
-          <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
-            <h1 className="text-xl font-black text-white">Order placed</h1>
-            <p className="text-xs font-semibold text-white/90">Ref {orderId} — complete PayNow to confirm</p>
+      <div className="max-w-xl mx-auto px-4 py-8" data-testid="order-success-screen">
+        {processingFlash ? (
+          <div className="min-h-[50vh] flex flex-col items-center justify-center text-center" data-testid="order-processing">
+            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl text-green-700 mb-4">
+              ✓
+            </div>
+            <h1 className="text-2xl font-black mb-2">{okCopy.title}</h1>
+            <p className="text-sm font-semibold text-muted-foreground mb-6">{okCopy.subtitle}</p>
+            <p className="text-xs text-muted-foreground">Ref {orderId}</p>
           </div>
-        </div>
-        <PayNowPanel
-          amount={amountDue}
-          reference={paynowRef || orderId}
-          onRefChange={setPaynowRef}
-          onConfirmPay={confirmPay}
-        />
-        <p className="mt-3 text-xs font-medium text-muted-foreground">
-          Address released 2h before slot. Chat opens after payment confirm.
-        </p>
+        ) : (
+          <>
+            <div className="min-h-[20vh] flex flex-col items-center justify-center text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl text-green-700 mb-3">
+                ✓
+              </div>
+              <h1 className="text-xl font-black">{okCopy.title}</h1>
+              <p className="text-sm font-semibold text-muted-foreground mt-1">
+                Complete PayNow to confirm · Ref {orderId}
+              </p>
+            </div>
+            <PayNowPanel
+              amount={amountDue}
+              reference={paynowRef || orderId}
+              onRefChange={setPaynowRef}
+              onConfirmPay={async (ref) => {
+                setProcessingFlash(true);
+                await confirmPay(ref);
+              }}
+            />
+            <p className="mt-3 text-xs font-medium text-muted-foreground">
+              Address released 2h before slot. Chat opens after payment confirm.
+            </p>
+          </>
+        )}
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
           message="Your first heritage order — thank you for supporting local home cooks!"

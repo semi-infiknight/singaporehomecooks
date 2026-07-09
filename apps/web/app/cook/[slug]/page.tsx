@@ -31,6 +31,7 @@ import {
   lineQtyForProduct,
   formatKitchenOrderCta,
   formatKitchenSubscribeCta,
+  cartItemsAddedLabel,
   type KitchenReviewSort,
   type KitchenOrderLine,
 } from '@shc/utils';
@@ -568,8 +569,12 @@ export default function KitchenPage() {
           data-testid="kitchen-order-sticky"
         >
           <div className="max-w-2xl mx-auto flex flex-col gap-2">
-            <div className="flex items-center justify-between text-sm font-bold">
-              <span data-testid="kitchen-order-item-label">{orderCta.itemLabel}</span>
+            <div className="flex items-center justify-between text-sm font-bold mb-1">
+              <span data-testid="kitchen-order-item-label">
+                {cartItemsAddedLabel(
+                  orderLines.reduce((s, l) => s + l.qty, 0)
+                )}
+              </span>
               <span className="tabular-nums text-primary" data-testid="kitchen-order-total">
                 {orderCta.totalLabel}
               </span>
@@ -580,7 +585,7 @@ export default function KitchenPage() {
                 onClick={() => router.push('/cart')}
                 testID="kitchen-order-cta"
               >
-                {orderCta.ctaLabel}
+                View cart {orderCta.totalLabel}
               </SHCButton>
               <SHCButton
                 variant="outline"
