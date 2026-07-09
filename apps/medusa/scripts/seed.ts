@@ -403,7 +403,8 @@ async function seed() {
 
   // Tiffin subscription: seed Rose kitchen with eligible dishes (also via scripts/seed-tiffin.ts on every boot)
   try {
-    const { seedTiffinKitchenConfig } = await import("./seed-tiffin");
+    // node16 resolution requires .js extension for relative ESM imports
+    const { seedTiffinKitchenConfig } = await import("./seed-tiffin.js");
     const tiffin = await seedTiffinKitchenConfig(dbUrl);
     if (tiffin.ok) console.log("  ✓", tiffin.message);
     else console.log("[SEED][TIFFIN] partial:", tiffin.message);
