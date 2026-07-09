@@ -437,4 +437,129 @@ export async function pgSetSubscriptionStatus(subscriptionId: string, status: st
   });
 }
 
+export type PgTiffinSubscription = {
+  id: string;
+  customer_id: string;
+  cook_id: string;
+  meals_per_week: number;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+/** Direct Postgres active subscription — MikroORM list is unreliable on Railway. */
+export async function pgGetActiveSubscription(customerId: string): Promise<PgTiffinSubscription | null> {
+  return withPg(async (pg) => {
+    const r = await pg.query(
+      `SELECT * FROM shc_tiffin_subscription
+       WHERE customer_id = $1 AND status = 'active'
+       ORDER BY updated_at DESC NULLS LAST, created_at DESC
+       LIMIT 1`,
+      [customerId]
+    );
+    const row = r.rows[0];
+    if (!row) return null;
+    return {
+      id: row.id,
+      customer_id: row.customer_id,
+      cook_id: row.cook_id,
+      meals_per_week: Number(row.meals_per_week),
+      status: row.status,
+      created_at: row.created_at?.toISOString?.() || row.created_at,
+      updated_at: row.updated_at?.toISOString?.() || row.updated_at,
+    };
+  });
+}
+
+export async function pgUpsertSubscription(input: {
+  id: string;
+  customerId: string;
+  cookId: string;
+  mealsPerWeek: number;
+  status?: string;
+}): Promise<PgTiffinSubscription> {
+  return withPg(async (pg) => {
+    await pg.query(
+      `INSERT INTO shc_tiffin_subscription (id, customer_id, cook_id, meals_per_week, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, now(), now())
+       ON CONFLICT (id) DO UPDATE SET
+         cook_id = EXCLUDED.cook_id,
+         meals_per_week = EXCLUDED.meals_per_week,
+         status = EXCLUDED.status,
+         updated_at = now()`,
+      [input.id, input.customerId, input.cookId, input.mealsPerWeek, input.status || "active"]
+    );
+    // If reusing active row by customer, update existing active
+    await pg.query(
+      `UPDATE shc_tiffin_subscription
+       SET cook_id = $2, meals_per_week = $3, status = 'active', updated_at = now()
+       WHERE customer_id = $1 AND status = 'active' AND id <> $4`,
+      [input.customerId, input.cookId, input.mealsPerWeek, input.id]
+    );
+    const r = await pg.query(`SELECT * FROM shc_tiffin_subscription WHERE id = $1`, [input.id]);
+    const row = r.rows[0];
+    return {
+      id: row.id,
+      customer_id: row.customer_id,
+      cook_id: row.cook_id,
+      meals_per_week: Number(row.meals_per_week),
+      status: row.status,
+    };
+  });
+}
+
+/** Prefer updating existing active sub for customer (one-kitchen rule). */
+export async function pgCreateOrUpdateSubscription(input: {
+  customerId: string;
+  cookId: string;
+  mealsPerWeek: number;
+}): Promise<PgTiffinSubscription> {
+  return withPg(async (pg) => {
+    const existing = await pg.query(
+      `SELECT * FROM shc_tiffin_subscription
+       WHERE customer_id = $1 AND status = 'active' LIMIT 1`,
+      [input.customerId]
+    );
+    if (existing.rows[0]) {
+      await pg.query(
+        `UPDATE shc_tiffin_subscription
+         SET cook_id = $2, meals_per_week = $3, updated_at = now()
+         WHERE id = $1`,
+        [existing.rows[0].id, input.cookId, input.mealsPerWeek]
+      );
+      const r = await pg.query(`SELECT * FROM shc_tiffin_subscription WHERE id = $1`, [existing.rows[0].id]);
+      const row = r.rows[0];
+      return {
+        id: row.id,
+        customer_id: row.customer_id,
+        cook_id: row.cook_id,
+        meals_per_week: Number(row.meals_per_week),
+        status: row.status,
+      };
+    }
+    const id = `tiffin_sub_${Date.now()}`;
+    await pg.query(
+      `INSERT INTO shc_tiffin_subscription (id, customer_id, cook_id, meals_per_week, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, 'active', now(), now())`,
+      [id, input.customerId, input.cookId, input.mealsPerWeek]
+    );
+    const planId = `tiffin_plan_tpl_${id}`;
+    const existsPlan = await pg.query(`SELECT 1 FROM shc_tiffin_weekly_plan WHERE id = $1 LIMIT 1`, [planId]);
+    if (!existsPlan.rows[0]) {
+      await pg.query(
+        `INSERT INTO shc_tiffin_weekly_plan (id, subscription_id, week_start, slots, created_at, updated_at)
+         VALUES ($1, $2, NULL, '[]'::jsonb, now(), now())`,
+        [planId, id]
+      );
+    }
+    return {
+      id,
+      customer_id: input.customerId,
+      cook_id: input.cookId,
+      meals_per_week: input.mealsPerWeek,
+      status: "active",
+    };
+  });
+}
+
 export type { TiffinPlanSlot };

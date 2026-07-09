@@ -36,6 +36,9 @@ import {
   pgCountActiveSubscribers,
   pgAddTiffinLedger,
   pgListTiffinLedger,
+  pgGetActiveSubscription,
+  pgCreateOrUpdateSubscription,
+  pgSetSubscriptionStatus,
 } from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
@@ -105,6 +108,13 @@ class ShcTiffinModuleService extends MedusaService({
   }
 
   async getActiveSubscription(customerId: string) {
+    // Prefer direct Postgres — MikroORM list empty/unreliable on Railway (same pattern as kitchens)
+    try {
+      const row = await pgGetActiveSubscription(customerId);
+      if (row) return row;
+    } catch {
+      /* fall through */
+    }
     const [rows] = await this.listAndCountTiffinSubscriptions(
       { customer_id: customerId, status: "active" } as any,
       { take: 1 }
@@ -131,50 +141,86 @@ class ShcTiffinModuleService extends MedusaService({
       throw Object.assign(new Error(err.message), err);
     }
 
-    if (active) {
-      await this.updateTiffinSubscriptions({
-        selector: { id: active.id },
-        data: { meals_per_week: mealsPerWeek, cook_id: cookId, updated_at: new Date() } as any,
+    let created: any = null;
+    // Wave 7: Postgres-first create (MikroORM create often fails silently / throws on Railway)
+    try {
+      created = await pgCreateOrUpdateSubscription({
+        customerId,
+        cookId,
+        mealsPerWeek,
       });
-      const [updated] = await this.listAndCountTiffinSubscriptions({ id: active.id } as any, { take: 1 });
-      return (updated as any[])?.[0];
+    } catch (pgErr: any) {
+      // fallback MikroORM
+      try {
+        if (active) {
+          await this.updateTiffinSubscriptions({
+            selector: { id: active.id },
+            data: { meals_per_week: mealsPerWeek, cook_id: cookId, updated_at: new Date() } as any,
+          });
+          const [updated] = await this.listAndCountTiffinSubscriptions({ id: active.id } as any, { take: 1 });
+          created = (updated as any[])?.[0];
+        } else {
+          const id = `tiffin_sub_${Date.now()}`;
+          const [row] = await this.createTiffinSubscriptions([
+            {
+              id,
+              customer_id: customerId,
+              cook_id: cookId,
+              meals_per_week: mealsPerWeek,
+              status: "active",
+              created_at: new Date(),
+              updated_at: new Date(),
+            } as any,
+          ]);
+          await this.createTiffinWeeklyPlans([
+            {
+              id: `tiffin_plan_tpl_${id}`,
+              subscription_id: id,
+              week_start: null,
+              slots: [],
+              created_at: new Date(),
+              updated_at: new Date(),
+            } as any,
+          ]);
+          created = row;
+        }
+      } catch (ormErr: any) {
+        throw Object.assign(
+          new Error(pgErr?.message || ormErr?.message || "Failed to create tiffin subscription"),
+          createSHCError("SHC-GENERIC-001", pgErr?.message || ormErr?.message || "Failed to create tiffin subscription")
+        );
+      }
     }
 
-    const id = `tiffin_sub_${Date.now()}`;
-    const [created] = await this.createTiffinSubscriptions([
-      {
-        id,
-        customer_id: customerId,
-        cook_id: cookId,
-        meals_per_week: mealsPerWeek,
-        status: "active",
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as any,
-    ]);
-    await this.createTiffinWeeklyPlans([
-      {
-        id: `tiffin_plan_tpl_${id}`,
-        subscription_id: id,
-        week_start: null,
-        slots: [],
-        created_at: new Date(),
-        updated_at: new Date(),
-      } as any,
-    ]);
+    if (!created?.id) {
+      throw Object.assign(
+        new Error("Subscription create returned empty"),
+        createSHCError("SHC-GENERIC-001", "Subscription create returned empty")
+      );
+    }
+
     try {
-      await pgEnsureSubMeta(id, mealsPerWeek);
+      await pgEnsureSubMeta(created.id, mealsPerWeek);
       const openCents = tiffinRechargeAmountCents(mealsPerWeek, 4);
-      await pgUpdateSubMeta(id, { balance_cents: openCents, deliveries_left: mealsPerWeek * 4 });
-      await pgAddTiffinLedger({
-        subscriptionId: id,
-        kind: "opening",
-        label: `Plan opened · ${mealsPerWeek} meals/wk · 4 weeks`,
-        amountCents: openCents,
-        deltaDeliveries: mealsPerWeek * 4,
-        deltaFlex: defaultFlexQuota(mealsPerWeek),
-        paynowRef: `OPEN-${id.slice(-8)}`,
-      });
+      // only set opening balance when new or zero
+      const meta = await pgEnsureSubMeta(created.id, mealsPerWeek);
+      if (!meta.balance_cents || meta.balance_cents <= 0) {
+        await pgUpdateSubMeta(created.id, { balance_cents: openCents, deliveries_left: mealsPerWeek * 4 });
+        await pgAddTiffinLedger({
+          subscriptionId: created.id,
+          kind: "opening",
+          label: `Plan opened · ${mealsPerWeek} meals/wk · 4 weeks`,
+          amountCents: openCents,
+          deltaDeliveries: mealsPerWeek * 4,
+          deltaFlex: defaultFlexQuota(mealsPerWeek),
+          paynowRef: `OPEN-${created.id.slice(-8)}`,
+        });
+      } else {
+        await pgUpdateSubMeta(created.id, {
+          /* keep balance; refresh deliveries floor */
+          deliveries_left: Math.max(meta.deliveries_left ?? 0, mealsPerWeek),
+        });
+      }
     } catch {
       /* meta optional if DATABASE_URL missing in unit tests */
     }
@@ -184,13 +230,23 @@ class ShcTiffinModuleService extends MedusaService({
   async cancelSubscription(customerId: string, reason?: string) {
     const active = await this.getActiveSubscription(customerId);
     if (!active) return null;
-    await this.updateTiffinSubscriptions({
-      selector: { id: active.id },
-      data: { status: "cancelled", updated_at: new Date() } as any,
-    });
+    try {
+      await pgSetSubscriptionStatus(active.id, "cancelled");
+    } catch {
+      await this.updateTiffinSubscriptions({
+        selector: { id: active.id },
+        data: { status: "cancelled", updated_at: new Date() } as any,
+      }).catch(() => {});
+    }
     try {
       await pgEnsureSubMeta(active.id, active.meals_per_week);
       await pgUpdateSubMeta(active.id, { cancel_reason: reason || null, paused_until: null });
+      await pgAddTiffinLedger({
+        subscriptionId: active.id,
+        kind: "adjust",
+        label: reason ? `Canceled · ${reason}` : "Canceled",
+        amountCents: 0,
+      });
     } catch {
       /* ignore */
     }

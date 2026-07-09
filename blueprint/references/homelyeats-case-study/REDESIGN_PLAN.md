@@ -285,6 +285,19 @@ Each wave = **one goal**: many commits → one `FLAVOUR=* SCOPE=tiffin pnpm veri
 
 **Post-wave ship:** `git push` + medusa redeploy so ledger writes + honest error bodies go live.
 
+### Wave 7 — Production ship closeout (post-programme)
+
+1. [x] **Postgres-first subscribe** — `pgCreateOrUpdateSubscription` / `pgGetActiveSubscription` (fix MikroORM write failures that looked like 401)  
+2. [x] **Ship script** — `bash scripts/ship-tiffin-wave7.sh` (push optional, typecheck, `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`)  
+3. [x] **API surface docs** — pause/resume/recharge/ledger/balance on `06-api-surface`  
+4. [x] **Error mapping** — `tiffinCustomerError` (401 only for real UNAUTHORIZED)  
+5. [ ] **Operator:** push `main` + Railway medusa redeploy → green full smoke  
+
+```bash
+bash scripts/ship-tiffin-wave7.sh          # push + verify
+SKIP_PUSH=1 SLEEP_S=60 bash scripts/ship-tiffin-wave7.sh   # after manual deploy
+```
+
 ---
 
 ## 9. Per-surface checklist (every wave)

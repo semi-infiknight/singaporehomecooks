@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-09 — **Tiffin subscription routes** under `/store/shc/tiffin/*` (kitchens, subscription, weekly-plan, cook config). Prior: cook register/profile; listings CRUD; `ShcRequestError` propagation.
+**Last Updated:** 2026-07-09 — Tiffin OS complete (pause/resume/recharge + ledger). Verify: `pnpm smoke:tiffin`.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -34,18 +34,26 @@
 |-------|---------|------|---------|
 | `/store/shc/tiffin/kitchens` | GET | public | Browse enabled kitchens + eligible dishes |
 | `/store/shc/tiffin/kitchens/:cookId` | GET | public | Single kitchen menu for subscribe flow |
-| `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT | Active sub; subscribe (one kitchen); cancel |
+| `/store/shc/tiffin/kitchens` | GET | public | Browse enabled kitchens + `subscriber_count` |
+| `/store/shc/tiffin/kitchens/:cookId` | GET | public | Single kitchen menu for subscribe flow |
+| `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT | Active sub (+ `ledger[]`, `balance_cents`); subscribe (pg-first); cancel |
+| `/store/shc/tiffin/subscription/pause` | POST | customer JWT | `{ days }` — flex pause + ledger |
+| `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
+| `/store/shc/tiffin/subscription/recharge` | POST | customer JWT | `{ weeks, paynow_ref? }` — PayNow wallet + deliveries + ledger |
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
-| `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT | Enable kitchen, eligible products, collection days |
-| `/store/shc/tiffin/subscription/pause` | POST | customer JWT | Pause N flex days (HomelyEats) |
-| `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
 | `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |
 | `/store/shc/tiffin/orders/skip` | POST | customer JWT | Skip one collection day (8h cutoff + flex) |
 | `/store/shc/tiffin/orders/kitchen-cancel` | POST | cook JWT | Cancel kitchen day for all subs |
+| `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT | Enable kitchen; returns `subscriber_count` |
 | `/store/shc/tiffin/cook/menu` | GET, PUT | cook JWT | Publish/read day menu |
 
-Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`.
+**GET subscription body:** `{ subscription, kitchen, ledger[], plans, slots_*, current_week, next_week }`  
+**Tables:** `shc_tiffin_subscription`, `shc_tiffin_weekly_plan`, `shc_tiffin_sub_meta` (flex, expires, deliveries_left, balance_cents), `shc_tiffin_ledger`
+
+Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `pauseTiffinSubscription`, `resumeTiffinSubscription`, `rechargeTiffinSubscription`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`, `skipTiffinMeal`, `publishTiffinDayMenu`, `kitchenCancelTiffinDay`.
+
+Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
 

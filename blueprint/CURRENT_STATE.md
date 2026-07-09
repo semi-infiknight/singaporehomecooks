@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats Wave 6 harden:** `pnpm smoke:tiffin` + Maestro flex OS; tiffin route error masking fixed (no more false 401).
+**Last Updated:** 2026-07-09 — **HomelyEats Wave 7 ship closeout:** pg-first subscribe; `scripts/ship-tiffin-wave7.sh`; API surface docs.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -26,7 +26,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
-| **Paper wireframe IA** | ✅ Wave 1–6 | **W6 harden:** smoke suite, Maestro flex OS, verify-tier tiffin hook, blueprint sync; redeploy medusa for full write smoke |
+| **Paper wireframe IA** | ✅ Wave 1–7 | **W7 ship:** Postgres-first subscribe create; ship script; 06-api-surface ledger/recharge; operator must push + redeploy medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).

@@ -18,6 +18,7 @@
     "verify:real-e2e": "npx tsx scripts/verify-real-e2e.ts",
     "smoke:tiffin": "npx tsx scripts/smoke-tiffin-routes.ts",
     "e2e:tiffin": "bash scripts/run-tiffin-e2e.sh",
+    "ship:tiffin": "bash scripts/ship-tiffin-wave7.sh",
     "verify:cook-wiring": "npx tsx scripts/verify-cook-customer-wiring.ts",
     "verify:wip": "bash scripts/verify-tier.sh wip",
     "verify:quick": "bash scripts/verify-tier.sh quick",
