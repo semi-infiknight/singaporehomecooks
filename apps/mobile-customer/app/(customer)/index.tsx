@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -22,6 +22,7 @@ import {
   SHCFilterChipRow,
   SHCPromoRail,
   SHCRequestDishHomeCTA,
+  SHCTiffinHeroBanner,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -187,6 +188,7 @@ export default function CustomerDiscover() {
 
   const ListHeader = (
     <>
+      {/* HomelyEats homepage chrome: location + search first */}
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
         locationLabel={headerLocationLabel}
@@ -199,7 +201,7 @@ export default function CustomerDiscover() {
       <GourmeatSearchBar
         value={query}
         onChangeText={setQuery}
-        placeholder="Search dishes, cooks, occasions…"
+        placeholder="Search kitchen, dish or cuisine"
         onFilterPress={() => router.push('/(customer)/search' as any)}
         testID="search-input"
       />
@@ -220,18 +222,36 @@ export default function CustomerDiscover() {
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
       )}
 
+      {/* HomelyEats #1 — primary subscription promo (tiffin is SHC subscription) */}
+      {!query && (
+        <Pressable
+          onPress={() => router.push('/(customer)/tiffin' as any)}
+          style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}
+          testID="home-tiffin-promo"
+        >
+          <SHCTiffinHeroBanner
+            title="No time to cook?"
+            highlight="Explore tiffin plans"
+            bullets={[
+              'Nutritious home-cooked meals from HDB kitchens',
+              'Heritage cuisines across Singapore',
+              'Flexible 2 · 3 · 4 meals per week',
+            ]}
+          />
+        </Pressable>
+      )}
+
+      {/* Secondary promo rail — occasions / credits / trust */}
       {!query && (
         <View style={{ paddingHorizontal: shcSpacing.md }}>
           <SHCPromoRail
             promos={[
-              { id: 'tiffin', title: 'Weekly tiffin', subtitle: '2–4 meals from one kitchen', imageUrl: PROMO_BANNER_IMAGES.paynow, badge: 'Subscribe', iconKey: 'home' },
               { id: 'hari-raya', title: 'Hari Raya specials', subtitle: 'Order 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Festive', iconKey: 'people' },
               { id: 'credits', title: 'Earn credits', subtitle: '4 credits ≈ S$1 off', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Wallet', iconKey: 'profile' },
               { id: 'paynow', title: 'PayNow collection', subtitle: 'HDB pickup · no delivery', imageUrl: PROMO_BANNER_IMAGES.paynow, iconKey: 'cart' },
             ]}
             onPromoPress={(id) => {
-              if (id === 'tiffin') router.push('/(customer)/tiffin' as any);
-              else if (id === 'hari-raya') setOccasionFilter('Hari Raya');
+              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
               else if (id === 'credits') router.push('/(customer)/profile' as any);
               else router.push('/(shared)/onboarding' as any);
             }}
@@ -239,15 +259,18 @@ export default function CustomerDiscover() {
         </View>
       )}
 
+      {/* HomelyEats sort/filter chips */}
       <View style={{ paddingHorizontal: shcSpacing.md }}>
         <SHCFilterChipRow
           chips={[
             { id: 'halal', label: 'Halal', active: halalOnly },
             { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+            { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
           ]}
           onChipPress={(id) => {
             if (id === 'halal') toggleHalalOnly();
             if (id === 'light') toggleLight();
+            if (id === 'nearest') router.push('/(customer)/location' as any);
           }}
           testID="discover-filter-chips"
         />
@@ -270,20 +293,38 @@ export default function CustomerDiscover() {
 
       {collectionLocation && (
         <Text style={{ paddingHorizontal: shcSpacing.md, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginBottom: shcSpacing.xs }}>
-          Showing cooks near your collection point first
+          {gridProducts.length} dishes near {locationLabel || 'you'}
         </Text>
       )}
-      <GourmeatSectionTitle title="Categories" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
+
+      {/* HomelyEats #2 — explore by categories (cuisines first, then occasions) */}
+      <GourmeatSectionTitle title="Explore by cuisine" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
+      <GourmeatCategoryRow
+        categories={cuisineCategories}
+        selectedId={cuisineFilter}
+        onSelect={setCuisineFilter}
+        testID="cuisine-gourmeat-row"
+      />
+
+      <GourmeatSectionTitle title="Occasions" />
       <GourmeatCategoryRow
         categories={occasionCategories}
         selectedId={occasionFilter}
         onSelect={setOccasionFilter}
       />
 
+      {/* HomelyEats offer card */}
+      {!query && (
+        <View style={styles.offerCard} testID="home-offer-card">
+          <Text style={styles.offerTitle}>Get more with Home Credits</Text>
+          <Text style={styles.offerSub}>Earn on every order · redeem at checkout. Valid on heritage dishes.</Text>
+        </View>
+      )}
+
       {!query && reorderDishes.length > 0 && (
         <SHCFadeIn delay={80}>
           <View style={{ marginBottom: shcSpacing.section }}>
-            <GourmeatSectionTitle title="Order again" />
+            <GourmeatSectionTitle title="Most popular · order again" />
             <SHCZomatoDishRowRail title="" dishes={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
           </View>
         </SHCFadeIn>
@@ -297,14 +338,6 @@ export default function CustomerDiscover() {
           </View>
         </SHCFadeIn>
       )}
-
-      <GourmeatSectionTitle title="Explore cuisines" />
-      <GourmeatCategoryRow
-        categories={cuisineCategories}
-        selectedId={cuisineFilter}
-        onSelect={setCuisineFilter}
-        testID="cuisine-gourmeat-row"
-      />
 
       <GourmeatSectionTitle
         title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
@@ -352,4 +385,13 @@ const styles = StyleSheet.create({
   loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
+  offerCard: {
+    marginHorizontal: shcSpacing.md,
+    marginBottom: shcSpacing.md,
+    backgroundColor: '#1E3A5F',
+    borderRadius: 14,
+    padding: shcSpacing.md,
+  },
+  offerTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  offerSub: { fontSize: 12, color: 'rgba(255,255,255,0.88)', marginTop: 4, lineHeight: 17 },
 });

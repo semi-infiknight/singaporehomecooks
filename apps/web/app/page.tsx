@@ -197,6 +197,25 @@ export default function DiscoverHome() {
         </div>
       )}
 
+      {/* HomelyEats homepage #1 — subscription promo (SHC tiffin) */}
+      {!query.trim() && (
+        <button
+          type="button"
+          onClick={() => router.push('/tiffin')}
+          data-testid="home-tiffin-promo"
+          className="w-full text-left rounded-2xl p-4 mb-4 text-white shadow-[var(--shc-shadow-brutal-sm)]"
+          style={{ background: 'var(--shc-gourmeat-primary, #F87048)' }}
+        >
+          <p className="font-black text-lg">No time to cook?</p>
+          <p className="font-extrabold text-base opacity-95 mb-2">Explore tiffin plans</p>
+          <ul className="text-sm font-semibold space-y-0.5 opacity-90">
+            <li>· Nutritious home-cooked meals from HDB kitchens</li>
+            <li>· Heritage cuisines across Singapore</li>
+            <li>· Flexible 2 · 3 · 4 meals per week</li>
+          </ul>
+        </button>
+      )}
+
       {!query.trim() && (
         <div className="shc-section-gap mb-4">
           <PromoRail
@@ -210,14 +229,17 @@ export default function DiscoverHome() {
         </div>
       )}
 
+      {/* HomelyEats sort chips */}
       <FilterChipRow
         chips={[
           { id: 'halal', label: 'Halal', active: halalOnly },
           { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
+          { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
         ]}
         onChipClick={(id) => {
           if (id === 'halal') toggleHalalOnly();
           if (id === 'light') toggleLight();
+          if (id === 'nearest') router.push('/location');
         }}
         testID="discover-filter-chips"
       />
@@ -239,18 +261,34 @@ export default function DiscoverHome() {
 
       {collectionLocation && (
         <p className="text-xs font-bold text-primary mb-2">
-          Showing cooks near your collection point first
+          {gridProducts.length} dishes near {locationLabel || 'you'}
         </p>
       )}
 
-      <GourmeatSectionTitle title="Categories" actionLabel="See all" actionHref="/search" />
+      {/* HomelyEats #2 — cuisine categories first */}
+      <GourmeatSectionTitle title="Explore by cuisine" actionLabel="See all" actionHref="/search" />
+      <div className="shc-section-gap">
+        <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
+      </div>
+
+      <GourmeatSectionTitle title="Occasions" actionLabel="See all" actionHref="/search" />
       <div className="shc-section-gap">
         <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
       </div>
 
+      {/* HomelyEats offer card */}
+      {!query.trim() && (
+        <div className="rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4" data-testid="home-offer-card">
+          <p className="font-black text-base">Get more with Home Credits</p>
+          <p className="text-xs font-semibold opacity-90 mt-1">
+            Earn on every order · redeem at checkout. Valid on heritage dishes.
+          </p>
+        </div>
+      )}
+
       {!query.trim() && reorderDishes.length > 0 && (
         <div className="shc-section-gap">
-          <GourmeatSectionTitle title="Order again" />
+          <GourmeatSectionTitle title="Most popular · order again" />
           <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
         </div>
       )}
@@ -261,11 +299,6 @@ export default function DiscoverHome() {
           <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </div>
       )}
-
-      <GourmeatSectionTitle title="Explore cuisines" />
-      <div className="shc-section-gap">
-        <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
-      </div>
 
       {evidenceMode && productList.length > 0 && (
         <div className="mb-4" data-testid="evidence-dish-card">
