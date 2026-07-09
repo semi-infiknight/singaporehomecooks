@@ -8,7 +8,9 @@ import {
   canSkipTiffinMeal,
   canPauseSubscription,
   canResumeSubscription,
+  canRechargeSubscription,
   applyPause,
+  applyRecharge,
   projectMealInstances,
   defaultFlexQuota,
   effectiveSubscriptionStatus,
@@ -181,6 +183,7 @@ class ShcTiffinModuleService extends MedusaService({
       paused_until: null as string | null,
       expires_on: null as string | null,
       cancel_reason: null as string | null,
+      deliveries_left: sub.meals_per_week * 4 as number | null,
     };
     try {
       const m = await pgEnsureSubMeta(sub.id, sub.meals_per_week);
@@ -190,6 +193,7 @@ class ShcTiffinModuleService extends MedusaService({
         paused_until: m.paused_until,
         expires_on: m.expires_on,
         cancel_reason: m.cancel_reason,
+        deliveries_left: m.deliveries_left,
       };
       // Clear stale pause window so gates + UI stay consistent
       if (meta.paused_until && !isPauseWindowActive(meta.paused_until)) {
@@ -203,7 +207,11 @@ class ShcTiffinModuleService extends MedusaService({
       dbStatus: sub.status,
       pausedUntil: meta.paused_until,
     });
-    return { ...meta, status, deliveries_left: Math.max(0, (meta.flex_quota || 0) + 8) };
+    const deliveries =
+      meta.deliveries_left != null
+        ? Math.max(0, meta.deliveries_left)
+        : Math.max(0, (meta.flex_quota || 0) + 8);
+    return { ...meta, status, deliveries_left: deliveries };
   }
 
   async pauseSubscription(customerId: string, pauseDays: number) {
@@ -250,6 +258,56 @@ class ShcTiffinModuleService extends MedusaService({
     if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
     await pgUpdateSubMeta(active.id, { paused_until: null });
     return { ...active, status: "active", paused_until: null };
+  }
+
+  /** HomelyEats recharge — extend expiry, reset flex, add meal deliveries. */
+  async rechargeSubscription(customerId: string, weeks: number) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
+    const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+    const osStatus = effectiveSubscriptionStatus({
+      dbStatus: active.status,
+      pausedUntil: meta.paused_until,
+    });
+    const gate = canRechargeSubscription({ status: osStatus, weeks });
+    if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
+    const os = await this.getSubscriptionOsFields(active);
+    const applied = applyRecharge({
+      mealsPerWeek: active.meals_per_week,
+      weeks,
+      flexQuota: meta.flex_quota,
+      flexRemaining: meta.flex_remaining,
+      deliveriesLeft: os.deliveries_left ?? 0,
+      expiresOn: meta.expires_on,
+    });
+    await pgUpdateSubMeta(active.id, {
+      flex_quota: applied.flexQuota,
+      flex_remaining: applied.flexRemaining,
+      expires_on: applied.expiresOn,
+      deliveries_left: applied.deliveriesLeft,
+      paused_until: null,
+    });
+    // Ensure sub is active (un-expire path)
+    if (active.status === "expired" || active.status === "paused") {
+      try {
+        await this.updateTiffinSubscriptions({
+          selector: { id: active.id },
+          data: { status: "active", updated_at: new Date() } as any,
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    return {
+      ...active,
+      status: "active",
+      flex_quota: applied.flexQuota,
+      flex_remaining: applied.flexRemaining,
+      expires_on: applied.expiresOn,
+      deliveries_left: applied.deliveriesLeft,
+      meals_added: applied.mealsAdded,
+      weeks,
+    };
   }
 
   async skipMeal(customerId: string, collectionDate: string, collectionSlot?: string) {

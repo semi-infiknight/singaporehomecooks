@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * Manage subscription — HomelyEats 29.png hierarchy:
+ * metrics → Pause/Recharge → secondary settings → cancel last.
+ */
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -7,7 +11,6 @@ import {
   useTiffinSubscription,
   useCancelTiffin,
   useSubscribeTiffin,
-  usePauseTiffin,
   useResumeTiffin,
   TIFFIN_DAY_LABELS,
   tiffinWeeklySubtotal,
@@ -21,9 +24,11 @@ export default function TiffinManagePage() {
   const { data: subData, isLoading } = useTiffinSubscription();
   const cancelMut = useCancelTiffin();
   const subscribeMut = useSubscribeTiffin();
-  const pauseMut = usePauseTiffin();
   const resumeMut = useResumeTiffin();
   const [showReasons, setShowReasons] = useState(false);
+  const [cookingNotes, setCookingNotes] = useState('');
+  const [collectionNotes, setCollectionNotes] = useState('');
+  const [reminders, setReminders] = useState(true);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -43,46 +48,85 @@ export default function TiffinManagePage() {
   }
 
   const isPaused = sub.status === 'paused';
+  const cookName = kitchen?.cook?.display_name || 'Kitchen';
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-manage-screen">
-      <SHCPageHeader title="Manage tiffin" subtitle="Subscription settings · HomelyEats manage IA" />
+      <SHCPageHeader
+        title="Manage subscription"
+        subtitle={cookName}
+        backHref="/tiffin/subscriptions"
+        backLabel="My Subscriptions"
+      />
 
-      <SHCCard className="mb-4">
-        <p className="font-black text-lg">{kitchen?.cook?.display_name || 'Kitchen'}</p>
-        <div className="flex flex-wrap gap-2 mt-2">
+      {/* Metrics — top priority */}
+      <SHCCard className="mb-4" data-testid="tiffin-plan-metrics-card">
+        <div className="flex flex-wrap gap-2 mb-3">
           <SHCBadge variant="heritage">{sub.meals_per_week} meals/wk</SHCBadge>
           <SHCBadge variant="default">S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk</SHCBadge>
           <SHCBadge variant={isPaused ? 'warning' : 'success'}>{sub.status}</SHCBadge>
         </div>
-
-        <div className="grid grid-cols-3 gap-2 mt-4 text-center" data-testid="tiffin-plan-metrics">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center" data-testid="tiffin-plan-metrics">
           <div>
-            <p className="font-black text-primary">{sub.deliveries_left ?? '—'}</p>
+            <p className="font-black text-primary text-lg">{sub.deliveries_left ?? '—'}</p>
             <p className="text-[10px] font-bold text-muted-foreground">Deliveries left</p>
           </div>
           <div>
-            <p className="font-black text-primary">
+            <p className="font-black text-primary text-lg">
               {sub.flex_remaining ?? '—'}/{sub.flex_quota ?? '—'}
             </p>
             <p className="text-[10px] font-bold text-muted-foreground">Flex days</p>
           </div>
           <div>
-            <p className="font-black text-primary">{sub.expires_on?.slice(5) ?? '—'}</p>
+            <p className="font-black text-primary text-lg">{sub.expires_on?.slice(5) ?? '—'}</p>
             <p className="text-[10px] font-bold text-muted-foreground">Expires</p>
           </div>
+          <div>
+            <p className="font-black text-primary text-lg">{sub.meals_per_week}</p>
+            <p className="text-[10px] font-bold text-muted-foreground">Meals / wk</p>
+          </div>
         </div>
+        {isPaused && sub.paused_until ? (
+          <p className="text-xs font-bold text-[var(--shc-warning)] mt-3">
+            Paused till {String(sub.paused_until).slice(0, 10)}
+          </p>
+        ) : null}
+      </SHCCard>
 
-        <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-4">
-          {isPaused ? (
-            <SHCButton size="sm" onClick={() => resumeMut.mutate()} disabled={resumeMut.isPending} testID="tiffin-resume-btn">
-              Resume
-            </SHCButton>
-          ) : (
-            <SHCButton size="sm" variant="outline" onClick={() => pauseMut.mutate(1)} disabled={pauseMut.isPending} testID="tiffin-pause-btn">
-              Pause 1 flex day
-            </SHCButton>
-          )}
+      {/* Primary: Pause · Recharge */}
+      <div className="grid grid-cols-2 gap-2 mb-4" data-testid="tiffin-primary-actions">
+        {isPaused ? (
+          <SHCButton
+            className="w-full"
+            onClick={() => resumeMut.mutate()}
+            disabled={resumeMut.isPending}
+            testID="tiffin-resume-btn"
+          >
+            Resume
+          </SHCButton>
+        ) : (
+          <SHCButton
+            className="w-full"
+            variant="outline"
+            onClick={() => router.push('/tiffin/pause')}
+            testID="tiffin-pause-btn"
+          >
+            Pause
+          </SHCButton>
+        )}
+        <SHCButton
+          className="w-full"
+          onClick={() => router.push('/tiffin/recharge')}
+          testID="tiffin-recharge-btn"
+        >
+          Recharge
+        </SHCButton>
+      </div>
+
+      {/* Secondary settings */}
+      <p className="font-extrabold text-sm mb-2">Plan settings</p>
+      <SHCCard className="mb-4 space-y-3">
+        <div className="flex flex-wrap gap-2">
           <SHCButton size="sm" onClick={() => router.push('/tiffin/planner')} testID="tiffin-manage-planner-btn">
             Edit weekly plan
           </SHCButton>
@@ -91,32 +135,71 @@ export default function TiffinManagePage() {
               Meal calendar
             </SHCButton>
           </Link>
+          <Link href="/location">
+            <SHCButton size="sm" variant="outline" testID="tiffin-change-address">
+              Collection address
+            </SHCButton>
+          </Link>
         </div>
 
-        <p className="text-sm font-bold mt-4 mb-2">Meals per week</p>
-        <div className="flex gap-2 mb-2">
+        <p className="text-xs font-bold text-muted-foreground">Meals per week</p>
+        <div className="flex gap-2">
           {(kitchen?.meals_per_week_options || [2, 3, 4]).map((n: number) => (
             <button
               key={n}
               type="button"
-              onClick={() => sub.cook_id && subscribeMut.mutate({ cookId: sub.cook_id, mealsPerWeek: n as 2 | 3 | 4 })}
+              onClick={() =>
+                sub.cook_id && subscribeMut.mutate({ cookId: sub.cook_id, mealsPerWeek: n as 2 | 3 | 4 })
+              }
               className={`flex-1 rounded-lg border-2 py-2 font-black ${
-                n === sub.meals_per_week ? 'border-primary bg-primary text-primary-foreground' : 'border-[var(--shc-border-brutal)] bg-card'
+                n === sub.meals_per_week
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-[var(--shc-border-brutal)] bg-card'
               }`}
             >
               {n}
             </button>
           ))}
         </div>
+
+        <label className="block text-xs font-bold text-muted-foreground">Cooking instructions</label>
+        <textarea
+          className="shc-input w-full text-sm min-h-[64px]"
+          placeholder="e.g. less spicy · no peanuts"
+          value={cookingNotes}
+          onChange={(e) => setCookingNotes(e.target.value)}
+          data-testid="manage-cooking-notes"
+        />
+        <label className="block text-xs font-bold text-muted-foreground">Collection instructions</label>
+        <textarea
+          className="shc-input w-full text-sm min-h-[64px]"
+          placeholder="e.g. call when ready · unit 12-34"
+          value={collectionNotes}
+          onChange={(e) => setCollectionNotes(e.target.value)}
+          data-testid="manage-collection-notes"
+        />
+        <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+          <input
+            type="checkbox"
+            checked={reminders}
+            onChange={(e) => setReminders(e.target.checked)}
+            className="accent-primary"
+            data-testid="manage-reminders-toggle"
+          />
+          Reminder before subscription ends
+        </label>
       </SHCCard>
 
       <p className="font-extrabold text-sm mb-2">This week</p>
-      <ul className="space-y-2 mb-4">
+      <ul className="space-y-2 mb-6">
         {currentSlots.map((slot: any) => {
           const dish = dishes.find((d: any) => d.id === slot.product_id);
           if (!dish) return null;
           return (
-            <li key={slot.day_of_week} className="flex justify-between rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2">
+            <li
+              key={slot.day_of_week}
+              className="flex justify-between rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2"
+            >
               <div>
                 <p className="text-xs font-bold text-primary">{TIFFIN_DAY_LABELS[slot.day_of_week]}</p>
                 <p className="font-bold text-sm">{dish.name}</p>
@@ -124,32 +207,39 @@ export default function TiffinManagePage() {
             </li>
           );
         })}
+        {currentSlots.length === 0 ? (
+          <li className="text-sm font-semibold text-muted-foreground">No meals planned — edit weekly plan.</li>
+        ) : null}
       </ul>
 
-      {!showReasons ? (
-        <SHCButton size="sm" variant="outline" onClick={() => setShowReasons(true)} testID="tiffin-cancel-btn">
-          Cancel subscription
-        </SHCButton>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-muted-foreground">Why cancel?</p>
-          {CANCEL_REASONS.map((r) => (
-            <SHCButton
-              key={r}
-              size="sm"
-              variant="outline"
-              className="w-full"
-              disabled={cancelMut.isPending}
-              onClick={async () => {
-                await cancelMut.mutateAsync(r);
-                router.replace('/tiffin');
-              }}
-            >
-              {r}
-            </SHCButton>
-          ))}
-        </div>
-      )}
+      {/* Danger zone last */}
+      <div className="border-t-2 border-[var(--shc-border-brutal)] pt-4" data-testid="tiffin-danger-zone">
+        <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Danger zone</p>
+        {!showReasons ? (
+          <SHCButton size="sm" variant="outline" onClick={() => setShowReasons(true)} testID="tiffin-cancel-btn">
+            Cancel subscription
+          </SHCButton>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-muted-foreground">Why cancel?</p>
+            {CANCEL_REASONS.map((r) => (
+              <SHCButton
+                key={r}
+                size="sm"
+                variant="outline"
+                className="w-full"
+                disabled={cancelMut.isPending}
+                onClick={async () => {
+                  await cancelMut.mutateAsync(r);
+                  router.replace('/tiffin/subscriptions');
+                }}
+              >
+                {r}
+              </SHCButton>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

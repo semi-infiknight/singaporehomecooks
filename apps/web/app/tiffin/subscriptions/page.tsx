@@ -1,14 +1,20 @@
 'use client';
 
 /**
- * My Subscriptions — HomelyEats Active / Past tabs + empty screens.
+ * My Subscriptions — Active/Past tabs + 5 card states (HomelyEats 28.png).
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { emptyActiveSubscriptionsCopy, emptyPastSubscriptionsCopy } from '@shc/utils';
-import { useTiffinSubscription } from '../../../lib/useTiffin';
-import { tiffinWeeklySubtotal } from '../../../lib/useTiffin';
+import {
+  emptyActiveSubscriptionsCopy,
+  emptyPastSubscriptionsCopy,
+} from '@shc/utils';
+import {
+  subscriptionCardKind,
+  subscriptionCardCopy,
+} from '@shc/business-rules';
+import { useTiffinSubscription, useResumeTiffin, tiffinWeeklySubtotal } from '../../../lib/useTiffin';
 import {
   SHCButton,
   SHCCard,
@@ -24,12 +30,23 @@ export default function MySubscriptionsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data: subData, isLoading } = useTiffinSubscription();
+  const resumeMut = useResumeTiffin();
   const [tab, setTab] = useState<Tab>('active');
 
   const sub = (subData as { subscription?: Record<string, unknown> } | undefined)?.subscription;
   const kitchen = (subData as { kitchen?: { cook?: { display_name?: string } } } | undefined)?.kitchen;
-  const isActive = sub && String(sub.status || '') !== 'cancelled' && String(sub.status || '') !== 'canceled';
-  const isPast = sub && (String(sub.status || '') === 'cancelled' || String(sub.status || '') === 'canceled');
+
+  const kind = useMemo(() => {
+    if (!sub) return null;
+    return subscriptionCardKind({
+      status: String(sub.status || 'active'),
+      pausedUntil: sub.paused_until as string | null,
+      expiresOn: sub.expires_on as string | null,
+    });
+  }, [sub]);
+
+  const isPastKind = kind === 'canceled' || kind === 'expired';
+  const isActiveKind = kind && !isPastKind;
 
   if (authLoading || isLoading) {
     return (
@@ -58,6 +75,13 @@ export default function MySubscriptionsPage() {
 
   const activeCopy = emptyActiveSubscriptionsCopy();
   const pastCopy = emptyPastSubscriptionsCopy();
+  const copy =
+    kind != null
+      ? subscriptionCardCopy(kind, {
+          pausedUntil: sub?.paused_until as string,
+          expiresOn: sub?.expires_on as string,
+        })
+      : null;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="my-subscriptions-screen">
@@ -73,7 +97,6 @@ export default function MySubscriptionsPage() {
         <h1 className="flex-1 text-center text-lg font-extrabold -ml-6">My Subscriptions</h1>
       </div>
 
-      {/* Active / Past tabs */}
       <div
         className="flex border-b-2 border-[var(--shc-border-brutal)]/30 mb-2"
         role="tablist"
@@ -107,31 +130,59 @@ export default function MySubscriptionsPage() {
       </div>
 
       {tab === 'active' ? (
-        isActive && sub ? (
-          <SHCCard className="mt-4" data-testid="subscription-active-card">
-            <p className="font-black text-lg">
-              {kitchen?.cook?.display_name || 'Tiffin kitchen'}
-            </p>
-            <div className="flex flex-wrap gap-2 mt-2">
+        isActiveKind && sub && copy ? (
+          <SHCCard className="mt-4" data-testid={`subscription-card-${kind}`}>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <p className="font-black text-lg">
+                {kitchen?.cook?.display_name || 'Tiffin kitchen'}
+              </p>
+              <SHCBadge
+                variant={
+                  kind === 'paused' ? 'warning' : kind === 'expires_soon' ? 'warning' : 'success'
+                }
+              >
+                {copy.badge}
+              </SHCBadge>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-3">
               <SHCBadge variant="heritage">{String(sub.meals_per_week || '')} meals/wk</SHCBadge>
               <SHCBadge variant="default">
                 S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3).toFixed(2)}/wk
               </SHCBadge>
-              <SHCBadge variant={sub.status === 'paused' ? 'warning' : 'success'}>
-                {String(sub.status || 'active')}
-              </SHCBadge>
             </div>
-            <div className="mt-4 flex gap-2">
-              <SHCButton size="sm" onClick={() => router.push('/tiffin/manage')} testID="sub-manage-btn">
-                Manage plan
-              </SHCButton>
+            <p className="text-xs font-semibold text-muted-foreground mb-3">
+              Deliveries {String(sub.deliveries_left ?? '—')} · Flex {String(sub.flex_remaining ?? '—')}/
+              {String(sub.flex_quota ?? '—')}
+              {sub.expires_on ? ` · Exp ${String(sub.expires_on).slice(0, 10)}` : ''}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {kind === 'paused' ? (
+                <SHCButton
+                  size="sm"
+                  onClick={() => resumeMut.mutate()}
+                  disabled={resumeMut.isPending}
+                  testID="sub-resume-btn"
+                >
+                  {copy.primaryCta}
+                </SHCButton>
+              ) : copy.showRecharge ? (
+                <SHCButton size="sm" onClick={() => router.push('/tiffin/recharge')} testID="sub-recharge-btn">
+                  {copy.primaryCta}
+                </SHCButton>
+              ) : (
+                <SHCButton size="sm" onClick={() => router.push('/tiffin/manage')} testID="sub-manage-btn">
+                  {copy.primaryCta}
+                </SHCButton>
+              )}
               <SHCButton
                 size="sm"
                 variant="outline"
-                onClick={() => router.push('/tiffin/calendar')}
-                testID="sub-calendar-btn"
+                onClick={() =>
+                  router.push(copy.showRecharge || kind === 'paused' ? '/tiffin/manage' : '/tiffin/calendar')
+                }
+                testID="sub-secondary-btn"
               >
-                Meal calendar
+                {copy.secondaryCta}
               </SHCButton>
             </div>
           </SHCCard>
@@ -150,20 +201,29 @@ export default function MySubscriptionsPage() {
             }
           />
         )
-      ) : isPast && sub ? (
-        <SHCCard className="mt-4" data-testid="subscription-past-card">
-          <p className="font-black text-lg">
-            {kitchen?.cook?.display_name || 'Tiffin kitchen'}
-          </p>
-          <div className="mt-2">
-            <SHCBadge variant="default">Ended</SHCBadge>
+      ) : isPastKind && sub && copy ? (
+        <SHCCard className="mt-4" data-testid={`subscription-card-${kind}`}>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <p className="font-black text-lg">
+              {kitchen?.cook?.display_name || 'Tiffin kitchen'}
+            </p>
+            <SHCBadge variant="default">{copy.badge}</SHCBadge>
           </div>
-          <p className="text-sm text-muted-foreground mt-2 font-semibold">
-            Subscribe again anytime from Browse kitchens.
+          <p className="text-sm text-muted-foreground font-semibold mb-3">
+            {kind === 'expired'
+              ? 'Balance depleted — recharge to continue without a gap.'
+              : 'Ended. Subscribe again from Browse kitchens anytime.'}
           </p>
-          <SHCButton className="mt-4" size="sm" onClick={() => router.push('/tiffin')}>
-            Browse kitchens
-          </SHCButton>
+          <div className="flex flex-wrap gap-2">
+            {copy.showRecharge ? (
+              <SHCButton size="sm" onClick={() => router.push('/tiffin/recharge')} testID="sub-recharge-btn">
+                Recharge now
+              </SHCButton>
+            ) : null}
+            <SHCButton size="sm" variant="outline" onClick={() => router.push('/tiffin')}>
+              Browse kitchens
+            </SHCButton>
+          </div>
         </SHCCard>
       ) : (
         <IllustratedEmptyState kind="no_past_sub" title={pastCopy.title} />

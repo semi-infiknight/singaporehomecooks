@@ -11,6 +11,11 @@ import {
   canCustomizeTiffinMeal,
   canPauseSubscription,
   applyPause,
+  applyRecharge,
+  canRechargeSubscription,
+  subscriptionCardCopy,
+  pauseDayOptions,
+  rechargeWeekOptions,
   canResumeSubscription,
   subscriptionCardKind,
   projectMealInstances,
@@ -141,6 +146,29 @@ describe("tiffin business rules", () => {
         now: new Date("2026-07-09T12:00:00.000Z"),
       })
     ).toBe("expires_soon");
+  });
+
+  it("recharge extends expiry, restores flex, adds meals", () => {
+    expect(canRechargeSubscription({ status: "active", weeks: 4 }).ok).toBe(true);
+    expect(canRechargeSubscription({ status: "canceled", weeks: 1 }).ok).toBe(false);
+    expect(canRechargeSubscription({ status: "active", weeks: 0 }).ok).toBe(false);
+    const r = applyRecharge({
+      mealsPerWeek: 3,
+      weeks: 4,
+      flexQuota: 2,
+      flexRemaining: 0,
+      deliveriesLeft: 2,
+      expiresOn: "2026-08-01",
+      now: new Date("2026-07-09T12:00:00.000Z"),
+    });
+    expect(r.mealsAdded).toBe(12);
+    expect(r.deliveriesLeft).toBe(14);
+    expect(r.flexRemaining).toBe(defaultFlexQuota(3));
+    expect(r.expiresOn).toBe("2026-08-29");
+    expect(subscriptionCardCopy("expires_soon").showRecharge).toBe(true);
+    expect(subscriptionCardCopy("paused").primaryCta).toMatch(/Resume/i);
+    expect(pauseDayOptions(3)).toEqual([1, 2, 3]);
+    expect(rechargeWeekOptions()).toEqual([1, 2, 4]);
   });
 
   it("projects calendar meal instances from weekly plans", () => {

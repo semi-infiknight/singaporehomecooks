@@ -32,8 +32,13 @@ async function ensureMetaTables(pg: Client) {
       paused_until text,
       expires_on text,
       cancel_reason text,
+      deliveries_left integer,
       updated_at timestamptz NOT NULL DEFAULT now()
     );
+  `);
+  // Additive column for HomelyEats recharge balance (safe on existing DBs)
+  await pg.query(`
+    ALTER TABLE shc_tiffin_sub_meta ADD COLUMN IF NOT EXISTS deliveries_left integer;
   `);
   await pg.query(`
     CREATE TABLE IF NOT EXISTS shc_tiffin_skip (
@@ -152,28 +157,34 @@ export type TiffinSubMeta = {
   paused_until: string | null;
   expires_on: string | null;
   cancel_reason: string | null;
+  deliveries_left: number | null;
 };
+
+function shapeSubMeta(row: any): TiffinSubMeta {
+  return {
+    subscription_id: row.subscription_id,
+    flex_quota: row.flex_quota,
+    flex_remaining: row.flex_remaining,
+    paused_until: row.paused_until,
+    expires_on: row.expires_on,
+    cancel_reason: row.cancel_reason,
+    deliveries_left: row.deliveries_left != null ? Number(row.deliveries_left) : null,
+  };
+}
 
 export async function pgEnsureSubMeta(subscriptionId: string, mealsPerWeek: number): Promise<TiffinSubMeta> {
   return withPg(async (pg) => {
     await ensureMetaTables(pg);
     const quota = defaultFlexQuota(mealsPerWeek);
+    const defaultDeliveries = mealsPerWeek * 4; // ~1 month
     await pg.query(
-      `INSERT INTO shc_tiffin_sub_meta (subscription_id, flex_quota, flex_remaining, expires_on, updated_at)
-       VALUES ($1, $2, $2, $3, now())
+      `INSERT INTO shc_tiffin_sub_meta (subscription_id, flex_quota, flex_remaining, expires_on, deliveries_left, updated_at)
+       VALUES ($1, $2, $2, $3, $4, now())
        ON CONFLICT (subscription_id) DO NOTHING`,
-      [subscriptionId, quota, addDaysIso(new Date().toISOString().slice(0, 10), 28)]
+      [subscriptionId, quota, addDaysIso(new Date().toISOString().slice(0, 10), 28), defaultDeliveries]
     );
     const r = await pg.query(`SELECT * FROM shc_tiffin_sub_meta WHERE subscription_id = $1`, [subscriptionId]);
-    const row = r.rows[0];
-    return {
-      subscription_id: row.subscription_id,
-      flex_quota: row.flex_quota,
-      flex_remaining: row.flex_remaining,
-      paused_until: row.paused_until,
-      expires_on: row.expires_on,
-      cancel_reason: row.cancel_reason,
-    };
+    return shapeSubMeta(r.rows[0]);
   });
 }
 
@@ -199,10 +210,13 @@ export async function pgUpdateSubMeta(
       paused_until: patch.paused_until !== undefined ? patch.paused_until : prev.paused_until,
       expires_on: patch.expires_on !== undefined ? patch.expires_on : prev.expires_on,
       cancel_reason: patch.cancel_reason !== undefined ? patch.cancel_reason : prev.cancel_reason,
+      deliveries_left:
+        patch.deliveries_left !== undefined ? patch.deliveries_left : prev.deliveries_left ?? null,
     };
     await pg.query(
       `UPDATE shc_tiffin_sub_meta SET
-        flex_quota = $2, flex_remaining = $3, paused_until = $4, expires_on = $5, cancel_reason = $6, updated_at = now()
+        flex_quota = $2, flex_remaining = $3, paused_until = $4, expires_on = $5, cancel_reason = $6,
+        deliveries_left = $7, updated_at = now()
        WHERE subscription_id = $1`,
       [
         subscriptionId,
@@ -211,6 +225,7 @@ export async function pgUpdateSubMeta(
         next.paused_until,
         next.expires_on,
         next.cancel_reason,
+        next.deliveries_left,
       ]
     );
     return { subscription_id: subscriptionId, ...next };

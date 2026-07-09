@@ -1,7 +1,7 @@
 /**
- * My Subscriptions — HomelyEats Active / Past tabs + empty screens.
+ * My Subscriptions — Active/Past + card states (HomelyEats 28).
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,8 @@ import {
   tiffinWeeklySubtotal,
 } from '@shc/ui';
 import { emptyActiveSubscriptionsCopy, emptyPastSubscriptionsCopy } from '@shc/utils';
-import { useTiffinSubscription } from '../../../hooks/useTiffin';
+import { subscriptionCardKind, subscriptionCardCopy } from '@shc/business-rules';
+import { useTiffinSubscription, useResumeTiffin } from '../../../hooks/useTiffin';
 import { useAuth } from '../../../hooks/useAuth';
 
 type Tab = 'active' | 'past';
@@ -24,13 +25,27 @@ export default function MySubscriptionsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: subData, isLoading } = useTiffinSubscription();
+  const resumeMut = useResumeTiffin();
   const [tab, setTab] = useState<Tab>('active');
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
-  const status = String(sub?.status || '');
-  const isActive = sub && status !== 'cancelled' && status !== 'canceled';
-  const isPast = sub && (status === 'cancelled' || status === 'canceled');
+
+  const kind = useMemo(() => {
+    if (!sub) return null;
+    return subscriptionCardKind({
+      status: String(sub.status || 'active'),
+      pausedUntil: sub.paused_until,
+      expiresOn: sub.expires_on,
+    });
+  }, [sub]);
+
+  const isPastKind = kind === 'canceled' || kind === 'expired';
+  const isActiveKind = Boolean(kind && !isPastKind);
+  const copy =
+    kind != null
+      ? subscriptionCardCopy(kind, { pausedUntil: sub?.paused_until, expiresOn: sub?.expires_on })
+      : null;
 
   const activeCopy = emptyActiveSubscriptionsCopy();
   const pastCopy = emptyPastSubscriptionsCopy();
@@ -91,25 +106,52 @@ export default function MySubscriptionsScreen() {
           testID="subscriptions-guest-empty"
         />
       ) : tab === 'active' ? (
-        isActive ? (
+        isActiveKind && sub && copy ? (
           <View style={styles.cardPad}>
-            <GourmeatCard testID="subscription-active-card">
+            <GourmeatCard testID={`subscription-card-${kind}`}>
               <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Tiffin kitchen'}</Text>
+              <Text style={styles.badge}>{copy.badge}</Text>
               <Text style={styles.meta}>
                 {sub.meals_per_week} meals/wk · S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}
-                /wk · {status || 'active'}
+                /wk
               </Text>
+              <Text style={styles.meta}>
+                Deliveries {sub.deliveries_left ?? '—'} · Flex {sub.flex_remaining ?? '—'}/
+                {sub.flex_quota ?? '—'}
+              </Text>
+              {kind === 'paused' ? (
+                <GourmeatPrimaryButton
+                  label={copy.primaryCta}
+                  onPress={() => resumeMut.mutate()}
+                  loading={resumeMut.isPending}
+                  testID="sub-resume-btn"
+                  style={{ marginTop: shcSpacing.md }}
+                />
+              ) : copy.showRecharge ? (
+                <GourmeatPrimaryButton
+                  label={copy.primaryCta}
+                  onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
+                  testID="sub-recharge-btn"
+                  style={{ marginTop: shcSpacing.md }}
+                />
+              ) : (
+                <GourmeatPrimaryButton
+                  label={copy.primaryCta}
+                  onPress={() => router.push('/(customer)/tiffin/manage' as any)}
+                  testID="sub-manage-btn"
+                  style={{ marginTop: shcSpacing.md }}
+                />
+              )}
               <GourmeatPrimaryButton
-                label="Manage plan"
-                onPress={() => router.push('/(customer)/tiffin/manage' as any)}
-                testID="sub-manage-btn"
-                style={{ marginTop: shcSpacing.md }}
-              />
-              <GourmeatPrimaryButton
-                label="Meal calendar"
+                label={copy.secondaryCta}
                 variant="outline"
-                onPress={() => router.push('/(customer)/tiffin/calendar' as any)}
-                testID="sub-calendar-btn"
+                onPress={() =>
+                  router.push(
+                    (copy.showRecharge || kind === 'paused'
+                      ? '/(customer)/tiffin/manage'
+                      : '/(customer)/tiffin/calendar') as any
+                  )
+                }
                 style={{ marginTop: shcSpacing.sm }}
               />
             </GourmeatCard>
@@ -123,15 +165,26 @@ export default function MySubscriptionsScreen() {
             testID="subscriptions-active-empty"
           />
         )
-      ) : isPast ? (
+      ) : isPastKind && sub && copy ? (
         <View style={styles.cardPad}>
-          <GourmeatCard testID="subscription-past-card">
+          <GourmeatCard testID={`subscription-card-${kind}`}>
             <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Tiffin kitchen'}</Text>
-            <Text style={styles.meta}>Ended · Subscribe again anytime</Text>
+            <Text style={styles.badge}>{copy.badge}</Text>
+            <Text style={styles.meta}>
+              {kind === 'expired' ? 'Recharge to continue without a gap.' : 'Ended — subscribe again anytime.'}
+            </Text>
+            {copy.showRecharge ? (
+              <GourmeatPrimaryButton
+                label="Recharge now"
+                onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
+                style={{ marginTop: shcSpacing.md }}
+              />
+            ) : null}
             <GourmeatPrimaryButton
               label="Browse kitchens"
+              variant="outline"
               onPress={() => router.push('/(customer)/tiffin' as any)}
-              style={{ marginTop: shcSpacing.md }}
+              style={{ marginTop: shcSpacing.sm }}
             />
           </GourmeatCard>
         </View>
@@ -181,5 +234,6 @@ const styles = StyleSheet.create({
   tabLabelOn: { color: gourmeatColors.text },
   cardPad: { padding: shcSpacing.md },
   kitchenName: { fontSize: 18, fontWeight: '900', color: gourmeatColors.text },
+  badge: { fontSize: 12, fontWeight: '800', color: gourmeatColors.primary, marginTop: 6 },
   meta: { fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 6 },
 });

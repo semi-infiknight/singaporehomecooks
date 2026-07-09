@@ -213,6 +213,108 @@ export function subscriptionCardKind(input: {
   return "active";
 }
 
+/** HomelyEats recharge — extend period, restore flex, add meal deliveries. */
+export function canRechargeSubscription(input: {
+  status: string;
+  weeks: number;
+}): { ok: true } | { ok: false; message: string } {
+  if (!Number.isInteger(input.weeks) || input.weeks < 1 || input.weeks > 12) {
+    return { ok: false, message: "Recharge 1–12 weeks." };
+  }
+  const st = normalizeSubStatus(input.status);
+  // Canceled plans re-subscribe via subscribe, not recharge
+  if (st === "canceled") {
+    return { ok: false, message: "This plan was canceled. Subscribe again from the kitchen." };
+  }
+  return { ok: true };
+}
+
+export function applyRecharge(input: {
+  mealsPerWeek: number;
+  weeks: number;
+  flexQuota: number;
+  flexRemaining: number;
+  deliveriesLeft: number;
+  expiresOn?: string | null;
+  now?: Date;
+}): {
+  flexQuota: number;
+  flexRemaining: number;
+  deliveriesLeft: number;
+  expiresOn: string;
+  mealsAdded: number;
+} {
+  const weeks = Math.max(1, Math.floor(input.weeks));
+  const meals = Math.max(2, Math.floor(input.mealsPerWeek || 3));
+  const mealsAdded = meals * weeks;
+  const newFlex = defaultFlexQuota(meals);
+  const today = (input.now ?? new Date()).toISOString().slice(0, 10);
+  const base =
+    input.expiresOn && input.expiresOn >= today
+      ? input.expiresOn
+      : today;
+  return {
+    flexQuota: newFlex,
+    flexRemaining: newFlex, // new period resets flex (HomelyEats period grant)
+    deliveriesLeft: Math.max(0, input.deliveriesLeft) + mealsAdded,
+    expiresOn: addDaysIso(base, weeks * 7),
+    mealsAdded,
+  };
+}
+
+/** Display labels for My Subscriptions cards (paper wireframe + 28.png). */
+export function subscriptionCardCopy(
+  kind: ReturnType<typeof subscriptionCardKind>,
+  opts: { pausedUntil?: string | null; expiresOn?: string | null } = {}
+): { badge: string; primaryCta: string; secondaryCta: string; showRecharge: boolean } {
+  switch (kind) {
+    case "paused":
+      return {
+        badge: opts.pausedUntil ? `Paused till ${opts.pausedUntil}` : "Paused",
+        primaryCta: "Resume",
+        secondaryCta: "Manage",
+        showRecharge: false,
+      };
+    case "expires_soon":
+      return {
+        badge: opts.expiresOn ? `Expires ${opts.expiresOn}` : "Expiring soon",
+        primaryCta: "Recharge now",
+        secondaryCta: "Manage",
+        showRecharge: true,
+      };
+    case "canceled":
+      return {
+        badge: "Canceled",
+        primaryCta: "View",
+        secondaryCta: "Browse kitchens",
+        showRecharge: false,
+      };
+    case "expired":
+      return {
+        badge: "Expired",
+        primaryCta: "Recharge now",
+        secondaryCta: "Manage",
+        showRecharge: true,
+      };
+    default:
+      return {
+        badge: "Active",
+        primaryCta: "Manage",
+        secondaryCta: "Calendar",
+        showRecharge: false,
+      };
+  }
+}
+
+export function pauseDayOptions(flexRemaining: number): number[] {
+  const max = Math.max(0, Math.min(7, Math.floor(flexRemaining)));
+  return Array.from({ length: max }, (_, i) => i + 1);
+}
+
+export function rechargeWeekOptions(): number[] {
+  return [1, 2, 4];
+}
+
 export function assertOneKitchenSubscription(
   existingCookId: string | null | undefined,
   nextCookId: string

@@ -142,8 +142,10 @@ export default function LocationPage() {
       <button type="button" onClick={() => (step === 2 ? setStep(1) : router.back())} className="mb-4 font-bold" data-testid="location-back-btn">
         ← Back
       </button>
-      <h1 className="text-2xl font-black">Where will you collect?</h1>
-      <p className="text-sm text-muted-foreground font-medium mt-1">HDB collection — cooks near your pin shown first.</p>
+      <h1 className="text-2xl font-black">Collection address</h1>
+      <p className="text-sm text-muted-foreground font-medium mt-1">
+        Wireframe Delivery tab → HDB collection point. Cooks near your pin first · address shared 2h before slot.
+      </p>
 
       {step === 1 && (
         <div data-testid="location-step-find" className="mt-6 space-y-4">

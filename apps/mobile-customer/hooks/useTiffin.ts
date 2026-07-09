@@ -8,6 +8,7 @@ import {
   cancelTiffinSubscriptionWithReason,
   pauseTiffinSubscription,
   resumeTiffinSubscription,
+  rechargeTiffinSubscription,
   getTiffinMealOrders,
   skipTiffinMeal,
   saveTiffinWeeklyPlan,
@@ -101,6 +102,17 @@ export function useResumeTiffin() {
     mutationFn: async () => {
       await hydrateSession();
       return resumeTiffinSubscription();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useRechargeTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (weeks: number) => {
+      await hydrateSession();
+      return rechargeTiffinSubscription(weeks);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });

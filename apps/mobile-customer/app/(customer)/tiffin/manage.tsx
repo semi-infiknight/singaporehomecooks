@@ -17,7 +17,6 @@ import {
   useTiffinSubscription,
   useCancelTiffin,
   useSubscribeTiffin,
-  usePauseTiffin,
   useResumeTiffin,
 } from '../../../hooks/useTiffin';
 
@@ -35,7 +34,6 @@ export default function TiffinManageScreen() {
   const { data: subData, isLoading } = useTiffinSubscription();
   const cancelMut = useCancelTiffin();
   const subscribeMut = useSubscribeTiffin();
-  const pauseMut = usePauseTiffin();
   const resumeMut = useResumeTiffin();
   const [showReasons, setShowReasons] = useState(false);
 
@@ -91,7 +89,11 @@ export default function TiffinManageScreen() {
       contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: 120 }}
       testID="tiffin-manage-screen"
     >
-      <GourmeatScreenHeader title="Manage tiffin" subtitle="Subscription settings" onBack={() => router.back()} />
+      <GourmeatScreenHeader
+        title="Manage subscription"
+        subtitle={kitchen?.cook?.display_name || 'Kitchen'}
+        onBack={() => router.push('/(customer)/tiffin/subscriptions' as any)}
+      />
 
       <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Kitchen'}</Text>
       <Text style={styles.meta}>
@@ -106,40 +108,48 @@ export default function TiffinManageScreen() {
         balanceLabel={`${sub.meals_per_week}/wk`}
       />
 
+      {/* Primary: Pause · Recharge */}
       <View style={styles.actions}>
         {isPaused ? (
           <GourmeatPrimaryButton
-            label="Resume subscription"
+            label="Resume"
             onPress={() => resumeMut.mutate()}
             loading={resumeMut.isPending}
             testID="tiffin-resume-btn"
           />
         ) : (
           <GourmeatPrimaryButton
-            label="Pause 1 flex day"
+            label="Pause"
             variant="outline"
-            onPress={() => pauseMut.mutate(1)}
-            loading={pauseMut.isPending}
+            onPress={() => router.push('/(customer)/tiffin/pause' as any)}
             testID="tiffin-pause-btn"
           />
         )}
         <GourmeatPrimaryButton
+          label="Recharge"
+          onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
+          testID="tiffin-recharge-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
+        <GourmeatPrimaryButton
           label="Edit weekly plan"
+          variant="outline"
           onPress={() => router.push('/(customer)/tiffin/planner' as any)}
           testID="tiffin-manage-planner-btn"
           style={{ marginTop: shcSpacing.sm }}
         />
         <GourmeatPrimaryButton
-          label="Override next week"
-          variant="outline"
-          onPress={() => router.push('/(customer)/tiffin/planner?mode=next-week' as any)}
-          style={{ marginTop: shcSpacing.sm }}
-        />
-        <GourmeatPrimaryButton
-          label="View meal calendar"
+          label="Meal calendar"
           variant="outline"
           onPress={() => router.push('/(customer)/tiffin/calendar' as any)}
           testID="tiffin-open-calendar-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
+        <GourmeatPrimaryButton
+          label="Collection address"
+          variant="outline"
+          onPress={() => router.push('/(customer)/location' as any)}
+          testID="tiffin-change-address"
           style={{ marginTop: shcSpacing.sm }}
         />
       </View>

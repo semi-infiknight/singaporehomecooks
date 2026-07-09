@@ -169,6 +169,17 @@ export function useResumeTiffin() {
   });
 }
 
+export function useRechargeTiffin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (weeks: number) => {
+      await hydrateSession();
+      return client.rechargeTiffinSubscription(weeks);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
 export function useSkipTiffinMeal() {
   const qc = useQueryClient();
   return useMutation({
