@@ -21,6 +21,9 @@ import {
   kitchenOpenStatus,
   kitchenTagList,
   kitchenTiffinPlanRows,
+  tiffinPlanDurationOptions,
+  tiffinPlanDurationTotal,
+  type TiffinPlanDurationId,
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
 import { useTiffinKitchen, useSubscribeTiffin } from '../../../../hooks/useTiffin';
@@ -34,6 +37,14 @@ export default function TiffinKitchenScreen() {
 
   const mealsOptions: number[] = kitchen?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(mealsOptions[1] || 3);
+  const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
+  const durationOpts = tiffinPlanDurationOptions();
+  const selectedDuration = durationOpts.find((d) => d.id === planDuration) || durationOpts[0];
+  const durationTotal = tiffinPlanDurationTotal(
+    mealsPerWeek,
+    uiTiffinPrice(mealsPerWeek),
+    selectedDuration.weeks
+  );
 
   React.useEffect(() => {
     if (kitchen?.meals_per_week_options?.length) {
@@ -139,6 +150,30 @@ export default function TiffinKitchenScreen() {
             </Text>
           ))}
         </View>
+
+        <Text style={styles.sectionHint}>Select plan duration</Text>
+        <View style={styles.durationRow} testID="tiffin-plan-duration">
+          {durationOpts.map((d) => {
+            const active = d.id === planDuration;
+            return (
+              <Pressable
+                key={d.id}
+                onPress={() => setPlanDuration(d.id)}
+                style={[styles.durationChip, active && styles.durationChipOn]}
+                testID={`tiffin-duration-${d.id}`}
+              >
+                <Text style={[styles.durationLabel, active && styles.durationLabelOn]}>{d.label}</Text>
+                <Text style={[styles.durationHint, active && styles.durationLabelOn]} numberOfLines={2}>
+                  {d.hint}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.durationTotal} testID="tiffin-duration-total">
+          Plan estimate · {selectedDuration.label}: S${durationTotal.toFixed(2)}
+        </Text>
+
         <SHCTiffinOrderSummary mealsPerWeek={mealsPerWeek} />
 
         <GourmeatSectionTitle
@@ -191,6 +226,34 @@ const styles = StyleSheet.create({
   topTitle: { flex: 1, textAlign: 'center', fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
   sectionHint: { fontSize: 12, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
   planMeta: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: 2 },
+  durationRow: { flexDirection: 'row', gap: 8, marginBottom: shcSpacing.sm },
+  durationChip: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    padding: 10,
+    backgroundColor: gourmeatColors.surface,
+  },
+  durationChipOn: {
+    borderColor: gourmeatColors.primary,
+    backgroundColor: gourmeatColors.primary,
+  },
+  durationLabel: { fontSize: 13, fontWeight: '900', color: gourmeatColors.text, textAlign: 'center' },
+  durationLabelOn: { color: '#fff' },
+  durationHint: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  durationTotal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: gourmeatColors.primary,
+    marginBottom: shcSpacing.sm,
+  },
   collectionHint: {
     fontSize: 12,
     color: gourmeatColors.primary,

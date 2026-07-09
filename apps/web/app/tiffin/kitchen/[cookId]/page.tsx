@@ -18,9 +18,14 @@ import {
   kitchenRatingSummary,
   kitchenCollectionHours,
   kitchenAboutPoints,
+  kitchenChefBackground,
+  kitchenTrustCerts,
   kitchenDemoReviews,
   sortKitchenReviews,
   kitchenRatingBuckets,
+  tiffinPlanDurationOptions,
+  tiffinPlanDurationTotal,
+  type TiffinPlanDurationId,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
 import {
@@ -30,7 +35,13 @@ import {
   tiffinWeeklySubtotal,
   TIFFIN_DAY_LABELS,
 } from '../../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCBadge, GourmeatSectionTitle } from '../../../components/SHCWebComponents';
+import {
+  SHCButton,
+  SHCCard,
+  SHCBadge,
+  GourmeatSectionTitle,
+  KitchenTrustCertsList,
+} from '../../../components/SHCWebComponents';
 
 export default function TiffinKitchenPage() {
   const params = useParams();
@@ -41,6 +52,7 @@ export default function TiffinKitchenPage() {
   const subscribeMut = useSubscribeTiffin();
   const mealsOptions: number[] = (kitchen as any)?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(3);
+  const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
 
   useEffect(() => {
@@ -80,6 +92,18 @@ export default function TiffinKitchenPage() {
     collection_instructions: (kitchen as any)?.cook?.collection_instructions,
   });
   const aboutPoints = kitchenAboutPoints(cookMeta);
+  const trustCerts = kitchenTrustCerts({
+    ...cookMeta,
+    sfa_reg_number: (kitchen as any)?.cook?.sfa_reg_number,
+  });
+  const chefBg = kitchenChefBackground(cookMeta);
+  const durationOpts = tiffinPlanDurationOptions();
+  const selectedDuration = durationOpts.find((d) => d.id === planDuration) || durationOpts[0];
+  const durationTotal = tiffinPlanDurationTotal(
+    mealsPerWeek,
+    tiffinPricePerServing(mealsPerWeek),
+    selectedDuration.weeks
+  );
   const reviews = sortKitchenReviews(kitchenDemoReviews(cookId), 'recent');
   const buckets = kitchenRatingBuckets(ratingSum.rating);
   const avatar = getCookAvatarUrl(cookId, cookName);
@@ -234,6 +258,30 @@ export default function TiffinKitchenPage() {
             ))}
           </div>
 
+          {/* Wireframe: Select plan duration (7 days · 1 month · custom) */}
+          <p className="text-xs font-semibold text-muted-foreground mb-2">Select plan duration</p>
+          <div className="flex gap-2 mb-3" data-testid="tiffin-plan-duration">
+            {durationOpts.map((d) => {
+              const active = d.id === planDuration;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  data-testid={`tiffin-duration-${d.id}`}
+                  onClick={() => setPlanDuration(d.id)}
+                  className={`flex-1 rounded-xl border-2 px-2 py-3 text-center ${
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-[var(--shc-border-brutal)] bg-card'
+                  }`}
+                >
+                  <div className="font-black text-sm">{d.label}</div>
+                  <div className="text-[10px] font-bold opacity-90 mt-0.5">{d.hint}</div>
+                </button>
+              );
+            })}
+          </div>
+
           <SHCCard className="mb-4">
             <div className="flex justify-between items-center">
               <span className="font-bold text-sm">Weekly total</span>
@@ -241,7 +289,15 @@ export default function TiffinKitchenPage() {
                 S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Collection from HDB kitchen · PayNow on first cycle</p>
+            <div className="flex justify-between items-center mt-2">
+              <span className="font-bold text-sm">Plan estimate · {selectedDuration.label}</span>
+              <span className="font-black tabular-nums text-primary" data-testid="tiffin-duration-total">
+                S${durationTotal.toFixed(2)}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Collection from HDB kitchen · PayNow on first cycle · manage anytime
+            </p>
           </SHCCard>
 
           <GourmeatSectionTitle
@@ -289,6 +345,12 @@ export default function TiffinKitchenPage() {
 
       {tab === 'about' && (
         <div className="space-y-3 mb-8" data-testid="kitchen-tab-panel-about">
+          <SHCCard data-testid="kitchen-chef-background">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+              Chef&apos;s background
+            </p>
+            <p className="text-sm font-semibold mt-2 leading-relaxed">{chefBg}</p>
+          </SHCCard>
           <ul className="space-y-2">
             {aboutPoints.map((p) => (
               <li key={p} className="text-sm font-semibold">
@@ -296,6 +358,7 @@ export default function TiffinKitchenPage() {
               </li>
             ))}
           </ul>
+          <KitchenTrustCertsList certs={trustCerts} />
           <SHCCard>
             <p className="text-xs font-bold text-muted-foreground">Location</p>
             <p className="font-bold mt-1">{(kitchen as any).cook?.area || 'Singapore'}</p>

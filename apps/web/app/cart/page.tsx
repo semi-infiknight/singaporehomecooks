@@ -14,6 +14,7 @@ import {
   computeOneTimeOrderSummary,
   cartKitchenLabel,
   cartCollectionHint,
+  CART_WIREFRAME_LABELS,
 } from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
@@ -48,6 +49,8 @@ export default function CartPage() {
   const [collectionNotes, setCollectionNotes] = useState('');
   const [showCooking, setShowCooking] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+  const [coupon, setCoupon] = useState('');
+  const [couponMsg, setCouponMsg] = useState('');
 
   const items = (cart.items || []) as CartItem[];
   const summary = computeOneTimeOrderSummary(items);
@@ -98,12 +101,12 @@ export default function CartPage() {
         </div>
       ) : (
         <>
-          {/* Kitchen + collection location */}
+          {/* Wireframe: Delivery/collection address */}
           <div
             className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-4"
             data-testid="cart-kitchen-banner"
           >
-            <p className="text-xs font-bold text-muted-foreground">Collecting from</p>
+            <p className="text-xs font-bold text-muted-foreground">{CART_WIREFRAME_LABELS.collection}</p>
             <p className="font-black text-lg" data-testid="cart-kitchen-name">
               {kitchen}
             </p>
@@ -120,8 +123,8 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* Your items */}
-          <p className="text-sm font-extrabold mb-2">Your items</p>
+          {/* Wireframe: Itemize */}
+          <p className="text-sm font-extrabold mb-2">{CART_WIREFRAME_LABELS.items}</p>
           <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden mb-3">
             <ul className="divide-y divide-border" data-testid="cart-items-list">
               {items.map((it, idx) => {
@@ -191,12 +194,53 @@ export default function CartPage() {
             />
           )}
 
-          {/* Order summary */}
+          {/* Wireframe: Apply coupon */}
+          <div
+            className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-3"
+            data-testid="cart-coupon-row"
+          >
+            <p className="font-extrabold mb-2 text-sm">{CART_WIREFRAME_LABELS.coupon}</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={coupon}
+                onChange={(e) => setCoupon(e.target.value)}
+                placeholder="Enter code or Home Credits"
+                className="shc-input flex-1 py-2 text-sm"
+                data-testid="cart-coupon-input"
+              />
+              <SHCButton
+                size="sm"
+                variant="outline"
+                testID="cart-coupon-apply"
+                onClick={() => {
+                  const code = coupon.trim().toUpperCase();
+                  if (!code) {
+                    setCouponMsg('Enter a code to apply.');
+                    return;
+                  }
+                  // Credits redeem at checkout — coupon shell for wireframe parity
+                  setCouponMsg(
+                    code === 'WELCOME' || code === 'SHC5'
+                      ? 'Code noted — confirm at checkout with PayNow.'
+                      : 'Unknown code. Use Home Credits at checkout instead.'
+                  );
+                }}
+              >
+                Apply
+              </SHCButton>
+            </div>
+            {couponMsg ? (
+              <p className="text-xs font-semibold text-muted-foreground mt-2">{couponMsg}</p>
+            ) : null}
+          </div>
+
+          {/* Wireframe: Bill summary */}
           <div
             className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-3"
             data-testid="cart-order-summary"
           >
-            <p className="font-extrabold mb-3">Order summary</p>
+            <p className="font-extrabold mb-3">{CART_WIREFRAME_LABELS.bill}</p>
             <div className="flex justify-between text-sm font-semibold mb-1">
               <span className="text-muted-foreground">Item total</span>
               <span className="tabular-nums">{summary.itemTotalLabel}</span>
@@ -217,6 +261,18 @@ export default function CartPage() {
             </div>
             <p className="text-[11px] font-semibold text-muted-foreground mt-3 bg-secondary/60 rounded-lg p-2">
               {summary.cancelNote}
+            </p>
+          </div>
+
+          {/* Wireframe: Payment method */}
+          <div
+            className="rounded-2xl border-2 border-primary bg-[var(--shc-bento-yellow)]/40 p-4 mb-3"
+            data-testid="cart-payment-method"
+          >
+            <p className="text-xs font-bold text-muted-foreground mb-1">{CART_WIREFRAME_LABELS.payment}</p>
+            <p className="font-black text-sm">{CART_WIREFRAME_LABELS.paynow}</p>
+            <p className="text-xs font-semibold text-muted-foreground mt-1">
+              Transfer after placing order · confirm with reference
             </p>
           </div>
 

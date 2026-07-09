@@ -338,6 +338,16 @@ export function kitchenAboutPoints(cook?: KitchenIdentity | null): string[] {
   return points;
 }
 
+/** Wireframe kitchen details — short chef background blurb. */
+export function kitchenChefBackground(cook?: KitchenIdentity | null): string {
+  const name = cook?.display_name || cook?.name || 'This cook';
+  const area = cook?.area ? ` in ${cook.area}` : '';
+  const cuisine = cook?.primary_cuisine || cook?.cuisine;
+  const cu = cuisine ? ` Specialises in ${cuisine}.` : '';
+  if (cook?.story && String(cook.story).trim()) return String(cook.story).trim();
+  return `${name} cooks from a home kitchen${area}.${cu} Heritage recipes, HDB collection, PayNow escrow.`;
+}
+
 /** Group dishes into expandable meal sections (occasion / cuisine). */
 export function kitchenMenuSections(
   products: Record<string, unknown>[]

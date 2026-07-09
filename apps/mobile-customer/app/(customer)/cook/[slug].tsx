@@ -35,6 +35,8 @@ import {
   sortKitchenReviews,
   kitchenCollectionHours,
   kitchenAboutPoints,
+  kitchenChefBackground,
+  kitchenTrustCerts,
   kitchenMenuSections,
   kitchenDishPriceLabel,
   kitchenMenuFilterChips,
@@ -172,6 +174,8 @@ export default function KitchenPage() {
     [cook?.collection_instructions]
   );
   const aboutPoints = useMemo(() => kitchenAboutPoints(cook as any), [cook]);
+  const trustCerts = useMemo(() => kitchenTrustCerts(cook as any), [cook]);
+  const chefBg = useMemo(() => kitchenChefBackground(cook as any), [cook]);
 
   if (isLoading || !cook) {
     return (
@@ -347,11 +351,21 @@ export default function KitchenPage() {
               </Text>
             </View>
             <View style={styles.infoCard} testID="kitchen-about-chef">
-              <Text style={styles.infoLabel}>About the cook</Text>
+              <Text style={styles.infoLabel}>Chef&apos;s background</Text>
               <Text style={styles.infoBody}>{cook.display_name}</Text>
-              <Text style={styles.infoMuted}>
-                {cook.story || 'Home cook sharing heritage recipes from an HDB kitchen.'}
-              </Text>
+              <Text style={styles.infoMuted}>{chefBg}</Text>
+            </View>
+            <View testID="kitchen-trust-certs" style={{ marginTop: shcSpacing.sm }}>
+              <Text style={styles.infoLabel}>Licenses & safety</Text>
+              {trustCerts.map((c) => (
+                <View key={c.id} style={styles.infoCard} testID={`kitchen-trust-${c.id}`}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={styles.infoBody}>{c.label}</Text>
+                    <Text style={styles.infoMuted}>{c.status}</Text>
+                  </View>
+                  <Text style={styles.infoMuted}>{c.detail}</Text>
+                </View>
+              ))}
             </View>
             {archive.map((a: any, i: number) => (
               <View key={i} style={styles.infoCard}>

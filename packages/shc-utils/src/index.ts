@@ -18,6 +18,7 @@ export * from './my-orders';
 export * from './order-manage';
 export * from './one-time-order';
 export * from './empty-screens';
+export * from './wireframe-ia';
 export * from './cook-listings';
 export * from './e2e-cart';
 export * from './e2e-order';

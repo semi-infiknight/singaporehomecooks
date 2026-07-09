@@ -21,7 +21,9 @@ import {
   sortKitchenReviews,
   kitchenCollectionHours,
   kitchenAboutPoints,
+  kitchenChefBackground,
   kitchenMenuSections,
+  kitchenTrustCerts,
   kitchenDishPriceLabel,
   kitchenMenuFilterChips,
   filterKitchenMenuDishes,
@@ -42,6 +44,7 @@ import {
   SHCButton,
   SHCBadge,
   SHCLoading,
+  KitchenTrustCertsList,
 } from '../../components/SHCWebComponents';
 import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
 import { getHeritageArchive } from '../../../lib/api-client';
@@ -126,6 +129,8 @@ export default function KitchenPage() {
     [cook?.collection_instructions]
   );
   const aboutPoints = useMemo(() => kitchenAboutPoints(cook as any), [cook]);
+  const trustCerts = useMemo(() => kitchenTrustCerts(cook as any), [cook]);
+  const chefBg = useMemo(() => kitchenChefBackground(cook as any), [cook]);
 
   const openCustomize = useCallback(
     (dish: Record<string, unknown>) => {
@@ -441,19 +446,20 @@ export default function KitchenPage() {
             )}
           </SHCCard>
           <SHCCard data-testid="kitchen-about-chef">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">About the cook</p>
-            <div className="flex gap-3 mt-2 items-center">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+              Chef&apos;s background
+            </p>
+            <div className="flex gap-3 mt-2 items-start">
               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
                 <Image src={avatar} alt="" fill className="object-cover" sizes="48px" />
               </div>
               <div>
                 <p className="font-black">{cook.display_name}</p>
-                <p className="text-sm text-muted-foreground font-semibold line-clamp-3">
-                  {cook.story || 'Home cook sharing heritage recipes from an HDB kitchen.'}
-                </p>
+                <p className="text-sm text-muted-foreground font-semibold line-clamp-4">{chefBg}</p>
               </div>
             </div>
           </SHCCard>
+          <KitchenTrustCertsList certs={trustCerts} />
           {heritage.length > 0 && (
             <div data-testid="kitchen-heritage">
               <p className="font-black mb-2">Heritage stories</p>

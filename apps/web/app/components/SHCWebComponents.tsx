@@ -1072,6 +1072,73 @@ export function SHCEmptyState({
   );
 }
 
+/** Wireframe Account menu list */
+export function AccountMenuList({
+  items,
+}: {
+  items: Array<{ id: string; label: string; href: string; testID: string }>;
+}) {
+  return (
+    <ul
+      className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] divide-y-2 divide-[var(--shc-border-brutal)]"
+      data-testid="account-menu-list"
+    >
+      {items.map((item) => (
+        <li key={item.id}>
+          <a
+            href={item.href}
+            data-testid={item.testID}
+            className="flex items-center justify-between px-4 py-3.5 text-sm font-bold hover:bg-secondary/60 transition-colors"
+          >
+            <span>{item.label}</span>
+            <span className="text-muted-foreground font-light text-lg" aria-hidden>
+              ›
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Wireframe kitchen trust certs — Licenses · Food safety · Hygiene */
+export function KitchenTrustCertsList({
+  certs,
+}: {
+  certs: Array<{ id: string; label: string; detail: string; status: string }>;
+}) {
+  return (
+    <div className="space-y-2" data-testid="kitchen-trust-certs">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+        Licenses & safety
+      </p>
+      {certs.map((c) => (
+        <div
+          key={c.id}
+          className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2.5"
+          data-testid={`kitchen-trust-${c.id}`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-extrabold">{c.label}</p>
+            <span
+              className={`text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-md ${
+                c.status === 'verified'
+                  ? 'bg-[var(--shc-bento-mint)] text-[var(--shc-success)]'
+                  : c.status === 'pending'
+                    ? 'bg-[var(--shc-bento-yellow)] text-[var(--shc-warning)]'
+                    : 'bg-secondary text-muted-foreground'
+              }`}
+            >
+              {c.status}
+            </span>
+          </div>
+          <p className="text-xs font-semibold text-muted-foreground mt-1 leading-snug">{c.detail}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** HomelyEats empty screens — plate (orders) / open box (subscriptions) */
 export function IllustratedEmptyState({
   kind,

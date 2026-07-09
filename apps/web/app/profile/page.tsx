@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, Wallet } from 'lucide-react';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, accountMenuItemsSignedIn, accountMenuItemsGuest } from '@shc/utils';
 import { useCredits, useRedeemCredits } from '../../lib/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../lib/useOrder';
 import {
@@ -15,6 +15,7 @@ import {
   SHCPageHeader,
   HeritageStoryBanner,
   SHCBadge,
+  AccountMenuList,
 } from '../components/SHCWebComponents';
 import { WebPushOptIn } from '../components/WebPushOptIn';
 import { useAuth } from '../../lib/useAuth';
@@ -90,30 +91,21 @@ export default function Profile() {
   const balance = credits?.balance || 0;
   const tier = credits?.tier || 'Silver';
 
-  // Guest browse: no wallet / orders chrome — sign in or keep exploring home
+  // Guest — wireframe Account: Sign Up / Log In
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
-        <SHCPageHeader
-          title="Browse as guest"
-          subtitle="Sign in for orders, credits, and wallet"
-        />
+        <SHCPageHeader title="Account" subtitle="Sign in for orders, credits, and wallet" />
         <SHCCard className="mb-4" data-testid="guest-profile-gate">
           <p className="font-black text-foreground mb-2">You are exploring freely</p>
-          <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+          <p className="text-sm font-semibold text-muted-foreground leading-relaxed mb-4">
             Discover kitchens and dishes on Home. Wallet, orders, and account tools only appear after you sign in.
           </p>
-        </SHCCard>
-        <div className="flex flex-col gap-3">
           <Link href="/login" data-testid="guest-profile-signin">
-            <SHCButton className="w-full">Sign in / Create account</SHCButton>
+            <SHCButton className="w-full">Sign Up / Log In</SHCButton>
           </Link>
-          <Link href="/" data-testid="guest-profile-home">
-            <SHCButton variant="outline" className="w-full">
-              Back to home
-            </SHCButton>
-          </Link>
-        </div>
+        </SHCCard>
+        <AccountMenuList items={accountMenuItemsGuest().filter((i) => i.id !== 'login')} />
       </div>
     );
   }
@@ -121,7 +113,7 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
       <div className="flex items-start justify-between mb-6">
-        <SHCPageHeader title={`👋 ${user.name?.split(' ')[0] || 'there'}`} />
+        <SHCPageHeader title="Account" subtitle={`👋 ${user.name?.split(' ')[0] || 'there'}`} />
         <div className="relative mt-2">
           <button
             type="button"
@@ -145,7 +137,10 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4 h-28">
+      {/* Wireframe Account menu */}
+      <AccountMenuList items={accountMenuItemsSignedIn()} />
+
+      <div id="credits" className="relative overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] my-4 h-28">
         <Image src={BENTO_ACTION_IMAGES.credits} alt="" fill className="object-cover opacity-70" sizes="100vw" />
         <div className="relative z-10 flex items-center justify-between h-full px-5">
           <div>
@@ -159,37 +154,14 @@ export default function Profile() {
       </div>
 
       <WalletCard balance={balance} tier={tier} />
-
-      <div className="mt-4 mb-2">
-        <HeritageStoryBanner href="/content/trust" />
-      </div>
-
-      <SHCSectionTitle>Tiffin</SHCSectionTitle>
-      <SHCCard className="mb-4">
-        <p className="text-sm text-muted-foreground font-semibold mb-3">
-          Weekly home-cooked meals from one kitchen — pick 2, 3, or 4 collection days.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/tiffin" data-testid="profile-tiffin-link">
-            <SHCButton size="sm">Browse tiffin kitchens</SHCButton>
-          </Link>
-          <Link href="/tiffin/subscriptions" data-testid="profile-subscriptions-link">
-            <SHCButton size="sm" variant="outline">
-              My Subscriptions
-            </SHCButton>
-          </Link>
-        </div>
-      </SHCCard>
-
-      <div className="mt-3">
-        <SHCButton
-          size="sm"
-          variant="outline"
-          onClick={() => redeem.mutate(20)}
-          disabled={balance < 20}
-        >
+      <div className="mt-3 mb-4">
+        <SHCButton size="sm" variant="outline" onClick={() => redeem.mutate(20)} disabled={balance < 20}>
           Redeem 20 credits
         </SHCButton>
+      </div>
+
+      <div className="mt-2 mb-4">
+        <HeritageStoryBanner href="/content/trust" />
       </div>
 
       <SHCSectionTitle>My requests</SHCSectionTitle>
@@ -210,29 +182,33 @@ export default function Profile() {
         </div>
       )}
 
-      <SHCSectionTitle>Notifications</SHCSectionTitle>
-      <SHCCard>
-        {notifs.length === 0 ? (
-          <div className="text-center py-6">
-            <span className="text-3xl" aria-hidden>
-              🛎️
-            </span>
-            <p className="text-sm text-muted-foreground mt-2 font-semibold">All caught up</p>
-          </div>
-        ) : (
-          <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
-            {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
-              <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
-                <span aria-hidden>📬</span>
-                <span className="text-foreground font-medium flex-1">{n.body}</span>
-                {n.created_at && (
-                  <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </SHCCard>
+      {showNotifs && (
+        <>
+          <SHCSectionTitle>Notifications</SHCSectionTitle>
+          <SHCCard>
+            {notifs.length === 0 ? (
+              <div className="text-center py-6">
+                <span className="text-3xl" aria-hidden>
+                  🛎️
+                </span>
+                <p className="text-sm text-muted-foreground mt-2 font-semibold">All caught up</p>
+              </div>
+            ) : (
+              <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
+                {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
+                  <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
+                    <span aria-hidden>📬</span>
+                    <span className="text-foreground font-medium flex-1">{n.body}</span>
+                    {n.created_at && (
+                      <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SHCCard>
+        </>
+      )}
 
       <WebPushOptIn />
 

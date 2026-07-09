@@ -17,7 +17,12 @@ import {
   SHCHeritageStoryBanner,
   DirectionalTabScreen,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, favoritesToReorderDishes } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  favoritesToReorderDishes,
+  accountMenuItemsSignedIn,
+  accountMenuItemsGuest,
+} from '@shc/utils';
 import { useFavorites } from '../../../hooks/useFavorites';
 import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
@@ -109,7 +114,7 @@ export default function Profile() {
             ]}
           >
             <GourmeatScreenHeader
-              title="Browse as guest"
+              title="Account"
               subtitle="Sign in for orders, credits, and wallet"
             />
             <SHCCard variant="bento-peach" style={styles.trustCard} testID="guest-profile-gate">
@@ -124,16 +129,27 @@ export default function Profile() {
               onPress={() => router.push('/(shared)/auth' as any)}
               testID="guest-profile-signin"
             >
-              <SHCButtonText>Sign in / Create account</SHCButtonText>
+              <SHCButtonText>Sign Up / Log In</SHCButtonText>
             </SHCButton>
-            <SHCButton
-              variant="outline"
-              style={styles.actionBtn}
-              onPress={() => router.replace('/(customer)' as any)}
-              testID="guest-profile-home"
-            >
-              <SHCButtonText variant="outline">Back to home</SHCButtonText>
-            </SHCButton>
+            <View style={styles.accountMenu} testID="account-menu-list">
+              {accountMenuItemsGuest()
+                .filter((i) => i.id !== 'login')
+                .map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.accountMenuRow}
+                    onPress={() => {
+                      if (item.id === 'browse') router.replace('/(customer)' as any);
+                      else if (item.id === 'tiffin') router.push('/(customer)/tiffin' as any);
+                      else if (item.id === 'support') router.push('/(shared)/onboarding' as any);
+                    }}
+                    testID={item.testID}
+                  >
+                    <Text style={styles.accountMenuLabel}>{item.label}</Text>
+                    <Text style={styles.accountMenuChevron}>›</Text>
+                  </Pressable>
+                ))}
+            </View>
           </ScrollView>
         </View>
       </DirectionalTabScreen>
@@ -151,8 +167,8 @@ export default function Profile() {
       <View style={styles.headerRow}>
         <View style={styles.heroWrap}>
           <GourmeatScreenHeader
-            title={user.name || 'You'}
-            subtitle={`${tier} tier · HDB home cook lover`}
+            title="Account"
+            subtitle={`${user.name || 'You'} · ${tier} tier`}
           />
         </View>
         <Pressable
@@ -174,6 +190,32 @@ export default function Profile() {
             </View>
           )}
         </Pressable>
+      </View>
+
+      {/* Wireframe Account menu */}
+      <View style={styles.accountMenu} testID="account-menu-list">
+        {accountMenuItemsSignedIn().map((item) => (
+          <Pressable
+            key={item.id}
+            style={styles.accountMenuRow}
+            onPress={() => {
+              const map: Record<string, string> = {
+                profile: '/(customer)/profile',
+                subscriptions: '/(customer)/tiffin/subscriptions',
+                orders: '/(customer)/orders',
+                address: '/(customer)/location',
+                credits: '/(customer)/profile',
+                requests: '/(customer)/request',
+                support: '/(shared)/onboarding',
+              };
+              router.push((map[item.id] || '/(customer)/profile') as any);
+            }}
+            testID={item.testID}
+          >
+            <Text style={styles.accountMenuLabel}>{item.label}</Text>
+            <Text style={styles.accountMenuChevron}>›</Text>
+          </Pressable>
+        ))}
       </View>
 
       <View style={styles.tilesRow}>
@@ -327,6 +369,25 @@ const styles = StyleSheet.create({
   bellCount: { fontSize: 9, color: '#fff', fontWeight: '800' },
   tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   tileCol: { flex: 1 },
+  accountMenu: {
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.lg,
+    backgroundColor: shcColors.surface,
+    marginBottom: shcSpacing.md,
+    overflow: 'hidden',
+  },
+  accountMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: shcSpacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: shcColors.border,
+  },
+  accountMenuLabel: { fontSize: 14, fontWeight: '700', color: shcColors.text },
+  accountMenuChevron: { fontSize: 18, fontWeight: '300', color: shcColors.textLight },
   trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },
   requestsSection: { marginTop: shcSpacing.md },
   requestCard: { marginTop: shcSpacing.sm },
