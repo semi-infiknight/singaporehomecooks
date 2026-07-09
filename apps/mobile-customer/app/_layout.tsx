@@ -6,7 +6,6 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SHCTrayProvider } from '@shc/ui';
 import { shcColors } from '@shc/ui/theme';
@@ -23,7 +22,6 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
           <StatusBar style="dark" />
           <ErrorBoundary>
             <SHCTrayProvider queryClient={queryClient}>
@@ -46,12 +44,11 @@ export default function RootLayout() {
                   headerTitleStyle: { fontWeight: '800', color: shcColors.onPrimary },
                 }}
               />
-              <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Trust & Safety' }} />
+              <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome', headerShown: false }} />
               <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
             </Stack>
             </SHCTrayProvider>
           </ErrorBoundary>
-        </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

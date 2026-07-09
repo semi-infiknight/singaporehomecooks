@@ -1,11 +1,11 @@
-// Blue Apron–style onboarding shell: hero image, dot progress, sticky bottom CTA.
+// HomelyEats-style onboarding shell: warm hero, dots, primary CTA + guest explore.
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, Image, ScrollView, StyleSheet, Dimensions, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { shcColors, shcSpacing, shcRadii } from './theme';
+import { shcColors, shcSpacing, shcRadii, gourmeatColors } from './theme';
 
-const HERO_RATIO = 0.44;
+const HERO_RATIO = 0.48;
 
 export function SHCOnboardingDots({
   total,
@@ -32,6 +32,12 @@ export function SHCOnboardingDots({
   );
 }
 
+/**
+ * Onboarding carousel shell (HomelyEats case study §Onboarding).
+ * - Warm hero illustration
+ * - Dot progress
+ * - Primary CTA + optional guest explore (low barrier)
+ */
 export function SHCOnboardingFlowScreen({
   imageUri,
   title,
@@ -40,9 +46,16 @@ export function SHCOnboardingFlowScreen({
   totalSteps,
   onNext,
   onSkip,
+  onGuest,
   nextLabel = 'Continue',
+  guestLabel = 'Continue as guest',
+  skipLabel = 'Skip',
   nextTestID = 'onboarding-next-btn',
   skipTestID = 'onboarding-skip-btn',
+  guestTestID = 'onboarding-guest-btn',
+  secondaryLabel,
+  onSecondary,
+  secondaryTestID = 'onboarding-secondary-btn',
   disabled,
   loading,
   children,
@@ -56,9 +69,18 @@ export function SHCOnboardingFlowScreen({
   totalSteps: number;
   onNext: () => void;
   onSkip?: () => void;
+  /** HomelyEats: explore without account */
+  onGuest?: () => void;
   nextLabel?: string;
+  guestLabel?: string;
+  skipLabel?: string;
   nextTestID?: string;
   skipTestID?: string;
+  guestTestID?: string;
+  /** Optional mid-footer CTA e.g. Sign in */
+  secondaryLabel?: string;
+  onSecondary?: () => void;
+  secondaryTestID?: string;
   disabled?: boolean;
   loading?: boolean;
   children?: React.ReactNode;
@@ -73,6 +95,9 @@ export function SHCOnboardingFlowScreen({
       <View style={[styles.hero, { height: heroHeight }]}>
         <Image source={{ uri: imageUri }} style={styles.heroImage} resizeMode="cover" accessibilityIgnoresInvertColors />
         <View style={styles.heroOverlay} />
+        <View style={[styles.heroBrand, { top: insets.top + shcSpacing.sm }]}>
+          <Text style={styles.heroBrandText}>Singapore Home Cooks</Text>
+        </View>
         {onSkip ? (
           <Pressable
             onPress={onSkip}
@@ -80,9 +105,9 @@ export function SHCOnboardingFlowScreen({
             style={[styles.skipBtn, { top: insets.top + shcSpacing.sm }]}
             testID={skipTestID}
             accessibilityRole="button"
-            accessibilityLabel="Skip"
+            accessibilityLabel={skipLabel}
           >
-            <Text style={styles.skipText}>Skip</Text>
+            <Text style={styles.skipText}>{skipLabel}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -127,23 +152,55 @@ export function SHCOnboardingFlowScreen({
             </View>
           )}
         </Pressable>
+
+        {onSecondary && secondaryLabel ? (
+          <Pressable
+            onPress={onSecondary}
+            testID={secondaryTestID}
+            accessibilityRole="button"
+            style={styles.secondaryBtn}
+          >
+            <Text style={styles.secondaryText}>{secondaryLabel}</Text>
+          </Pressable>
+        ) : null}
+
+        {onGuest ? (
+          <Pressable
+            onPress={onGuest}
+            testID={guestTestID}
+            accessibilityRole="button"
+            accessibilityLabel={guestLabel}
+            style={styles.guestBtn}
+          >
+            <Text style={styles.guestText}>{guestLabel}</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFFFF' },
-  hero: { width: '100%', backgroundColor: shcColors.surfaceAlt, overflow: 'hidden' },
+  screen: { flex: 1, backgroundColor: '#FFFBF7' },
+  hero: { width: '100%', backgroundColor: gourmeatColors.primaryLight || '#FFE8DE', overflow: 'hidden' },
   heroImage: { width: '100%', height: '100%' },
   heroOverlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 72,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    height: 80,
+    backgroundColor: 'rgba(255,251,247,0.55)',
   },
+  heroBrand: {
+    position: 'absolute',
+    left: shcSpacing.md,
+    paddingHorizontal: shcSpacing.sm,
+    paddingVertical: 6,
+    borderRadius: shcRadii.pill,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+  },
+  heroBrandText: { fontSize: 12, fontWeight: '800', color: gourmeatColors.primary || shcColors.primary },
   skipBtn: {
     position: 'absolute',
     right: shcSpacing.md,
@@ -157,6 +214,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.lg,
+    backgroundColor: '#FFFBF7',
   },
   dotsRow: {
     flexDirection: 'row',
@@ -166,8 +224,8 @@ const styles = StyleSheet.create({
     marginBottom: shcSpacing.md,
   },
   dot: { height: 8, borderRadius: 4 },
-  dotInactive: { width: 8, backgroundColor: '#E5E5E5' },
-  dotActive: { width: 24, backgroundColor: shcColors.text },
+  dotInactive: { width: 8, backgroundColor: '#E8DDD4' },
+  dotActive: { width: 24, backgroundColor: gourmeatColors.primary || shcColors.primary },
   title: {
     fontSize: 28,
     fontWeight: '800',
@@ -190,11 +248,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#EBEBEB',
-    backgroundColor: '#FFFFFF',
+    borderTopColor: '#F0E6DC',
+    backgroundColor: '#FFFBF7',
+    gap: 4,
   },
   cta: {
-    backgroundColor: shcColors.text,
+    backgroundColor: gourmeatColors.primary || shcColors.primary,
     borderRadius: shcRadii.lg,
     minHeight: 54,
     alignItems: 'center',
@@ -204,4 +263,30 @@ const styles = StyleSheet.create({
   ctaPressed: { opacity: 0.88 },
   ctaDisabled: { opacity: 0.45 },
   ctaText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  secondaryBtn: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: shcRadii.lg,
+    borderWidth: 2,
+    borderColor: gourmeatColors.primary || shcColors.primary,
+    marginTop: 8,
+  },
+  secondaryText: {
+    color: gourmeatColors.primary || shcColors.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  guestBtn: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  guestText: {
+    color: shcColors.textLight,
+    fontSize: 15,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
 });
