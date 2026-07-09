@@ -919,6 +919,8 @@ export function SHCTiffinCalendarStrip({
       showsHorizontalScrollIndicator={false}
       testID={testID}
       contentContainerStyle={styles.calStrip}
+      keyboardShouldPersistTaps="handled"
+      nestedScrollEnabled
     >
       {days.map((d) => {
         const active = d.date === selectedDate;
@@ -927,7 +929,12 @@ export function SHCTiffinCalendarStrip({
             key={d.date}
             onPress={() => onSelect(d.date)}
             testID={`tiffin-cal-day-${d.date}`}
-            style={[styles.calDay, active && styles.calDayActive, d.hasMeal && styles.calDayHasMeal]}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`${d.label} ${d.date.slice(8, 10)}`}
+            // hasMeal before active so selection always wins visually + press works
+            style={[styles.calDay, d.hasMeal && styles.calDayHasMeal, active && styles.calDayActive]}
           >
             <Text style={[styles.calDayLabel, active && styles.calDayLabelActive]}>{d.label}</Text>
             <Text style={[styles.calDayNum, active && styles.calDayLabelActive]}>

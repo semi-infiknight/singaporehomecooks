@@ -4,7 +4,7 @@
  * My Orders — HomelyEats day calendar + five status card variants.
  * One-time orders + tiffin meal instances by collection date.
  */
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -29,7 +29,9 @@ import { GourmeatScreenHeader, SHCEmptyState, SHCButton, SHCCard } from '../comp
 export default function OrdersList() {
   const router = useRouter();
   const { user } = useAuth();
-  const today = toIsoDate(new Date());
+  // Stable "today" for the session so calendar days don't thrash every render
+  const todayRef = useRef(toIsoDate(new Date()));
+  const today = todayRef.current;
   const from = addDaysIso(weekStartMonday(), -7);
   const to = addDaysIso(weekStartMonday(), 21);
 
@@ -64,15 +66,27 @@ export default function OrdersList() {
   }, [today, dateSet]);
 
   const [selected, setSelected] = useState(today);
+  /** Once the user taps a day, never auto-reset selection on data refetch. */
+  const userPickedRef = useRef(false);
+  const didInitSelectRef = useRef(false);
 
+  const selectDay = useCallback((date: string) => {
+    userPickedRef.current = true;
+    setSelected(date);
+  }, []);
+
+  // Initial auto-select only (today if has meals, else first day with meals) — do not fight user taps
   useEffect(() => {
+    if (userPickedRef.current || didInitSelectRef.current) return;
+    if (isLoading || mealsLoading) return;
+    didInitSelectRef.current = true;
     if (dateSet.has(today)) {
       setSelected(today);
       return;
     }
     const next = calendarDays.find((d) => d.hasOrder);
     if (next) setSelected(next.date);
-  }, [dateSet, today, calendarDays]);
+  }, [dateSet, today, calendarDays, isLoading, mealsLoading]);
 
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
@@ -117,13 +131,13 @@ export default function OrdersList() {
                   key={d.date}
                   type="button"
                   data-testid={`orders-cal-day-${d.date}`}
-                  onClick={() => setSelected(d.date)}
-                  className={`shrink-0 w-12 rounded-xl border-2 py-2 text-center ${
+                  onClick={() => selectDay(d.date)}
+                  className={`shrink-0 w-12 min-w-[3rem] rounded-xl border-2 py-2 text-center cursor-pointer touch-manipulation relative z-10 ${
                     active
                       ? 'border-primary bg-primary text-primary-foreground'
                       : d.hasOrder
-                        ? 'border-primary/40 bg-card'
-                        : 'border-[var(--shc-border-brutal)] bg-card'
+                        ? 'border-primary/40 bg-card hover:border-primary'
+                        : 'border-[var(--shc-border-brutal)] bg-card hover:border-primary/50'
                   }`}
                 >
                   <div className="text-[10px] font-bold opacity-80">{d.label}</div>

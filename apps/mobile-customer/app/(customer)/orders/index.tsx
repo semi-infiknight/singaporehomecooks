@@ -2,7 +2,7 @@
  * My Orders — HomelyEats day calendar + status card variants.
  * One-time orders + tiffin meal instances per collection date.
  */
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -36,7 +36,8 @@ export default function MyOrdersList() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const today = toIsoDate(new Date());
+  const todayRef = useRef(toIsoDate(new Date()));
+  const today = todayRef.current;
   const from = addDaysIso(weekStartMonday(), -7);
   const to = addDaysIso(weekStartMonday(), 21);
 
@@ -65,25 +66,34 @@ export default function MyOrdersList() {
   const dateSet = useMemo(() => collectOrderDates(allCards), [allCards]);
 
   const calendarDays = useMemo(() => {
-    const base = calendarRangeAround(today, 3, 14).map((d) => ({
+    return calendarRangeAround(today, 3, 14).map((d) => ({
       date: d.date,
       label: d.label,
       hasMeal: dateSet.has(d.date),
     }));
-    return base;
   }, [today, dateSet]);
 
   const [selected, setSelected] = useState(today);
+  const userPickedRef = useRef(false);
+  const didInitSelectRef = useRef(false);
 
+  const selectDay = useCallback((date: string) => {
+    userPickedRef.current = true;
+    setSelected(date);
+  }, []);
+
+  // Initial auto-select only — never snap back after user taps a day
   useEffect(() => {
-    // Prefer first day that has orders near today
+    if (userPickedRef.current || didInitSelectRef.current) return;
+    if (mealsLoading) return;
+    didInitSelectRef.current = true;
     if (dateSet.has(today)) {
       setSelected(today);
       return;
     }
     const next = calendarDays.find((d) => d.hasMeal);
     if (next) setSelected(next.date);
-  }, [dateSet, today, calendarDays]);
+  }, [dateSet, today, calendarDays, mealsLoading]);
 
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
@@ -126,7 +136,7 @@ export default function MyOrdersList() {
             <SHCTiffinCalendarStrip
               days={calendarDays}
               selectedDate={selected}
-              onSelect={setSelected}
+              onSelect={selectDay}
               testID="orders-calendar-strip"
             />
 
