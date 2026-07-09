@@ -130,5 +130,17 @@ export const submitOrderDispute = (orderId: string, input: { type?: string; note
 export const registerPushToken = (token: string, opts?: { cookId?: string; role?: 'cook' | 'customer' }) =>
   client.registerPushToken(token, opts);
 
+export const getTiffinKitchens = () => client.getTiffinKitchens();
+export const getTiffinKitchen = (cookId: string) => client.getTiffinKitchen(cookId);
+export const getTiffinSubscription = () => client.getTiffinSubscription();
+export const subscribeTiffin = (cookId: string, mealsPerWeek: 2 | 3 | 4) =>
+  client.subscribeTiffin(cookId, mealsPerWeek);
+export const cancelTiffinSubscription = () => client.cancelTiffinSubscription();
+export const getTiffinWeeklyPlan = (weekStart?: string) => client.getTiffinWeeklyPlan(weekStart);
+export const saveTiffinWeeklyPlan = (input: Parameters<typeof client.saveTiffinWeeklyPlan>[0]) =>
+  client.saveTiffinWeeklyPlan(input);
+export const saveTiffinNextWeekPlan = (slots: Parameters<typeof client.saveTiffinNextWeekPlan>[0]) =>
+  client.saveTiffinNextWeekPlan(slots);
+
 export { createSHCError } from '@shc/types';
 export type { SHCError, SHCErrorCode } from '@shc/types';

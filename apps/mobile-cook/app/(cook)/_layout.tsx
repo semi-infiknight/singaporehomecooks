@@ -45,6 +45,7 @@ export default function CookLayout() {
 
       <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Manage Order', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="earnings" options={{ href: null, title: 'Earnings', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/index" options={{ href: null, title: 'Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
     </CookTabIndexSync>
     </TabDirectionProvider>

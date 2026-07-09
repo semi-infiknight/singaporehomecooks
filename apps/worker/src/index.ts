@@ -7,6 +7,7 @@ import cron from "node-cron";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../../..");
 const MEDUSA_SCRIPT = path.join(ROOT, "apps/medusa/scripts/weekly-payout.ts");
+const TIFFIN_ORDERS_SCRIPT = "scripts/tiffin-weekly-orders.ts";
 
 const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -94,8 +95,16 @@ async function notificationRetry(): Promise<JobResult> {
   return result;
 }
 
+async function tiffinWeeklyOrders(): Promise<JobResult> {
+  log("tiffin-weekly-orders", "starting");
+  const result = await runMedusaScript(TIFFIN_ORDERS_SCRIPT);
+  log("tiffin-weekly-orders", result.ok ? "done" : `failed: ${result.detail}`);
+  return result;
+}
+
 const jobs: Record<string, () => Promise<JobResult>> = {
   "weekly-payout": weeklyPayout,
+  "tiffin-weekly-orders": tiffinWeeklyOrders,
   "order-escalation": orderEscalation,
   "notification-retry": notificationRetry,
 };
@@ -124,6 +133,7 @@ async function runJob(name: string): Promise<JobResult> {
 
 // Schedules from blueprint/CRON_JOBS.md (UTC)
 cron.schedule("0 9 * * 1", () => runJob("weekly-payout")); // Monday 09:00 UTC
+cron.schedule("0 8 * * 1", () => runJob("tiffin-weekly-orders")); // Monday 08:00 UTC — before payout
 cron.schedule("*/15 * * * *", () => runJob("order-escalation"));
 cron.schedule("*/5 * * * *", () => runJob("notification-retry"));
 

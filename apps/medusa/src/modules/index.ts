@@ -18,6 +18,7 @@ import ShcCookExpenseModule from "./shc-cook-expense";
 import ShcFeatureFlagModule from "./shc-feature-flag";
 import ShcSearchSynonymModule from "./shc-search-synonym";
 import ShcPlatformStatModule from "./shc-platform-stat";
+import ShcTiffinModule from "./shc-tiffin";
 
 // Register custom SHC modules. Links are defined separately in src/links/*
 // Phase 6: added shc-ledger (double-entry) + shc-payout-batch (weekly)
@@ -43,6 +44,7 @@ export const modules = [
   { resolve: "./src/modules/shc-feature-flag" },
   { resolve: "./src/modules/shc-search-synonym" },
   { resolve: "./src/modules/shc-platform-stat" },
+  { resolve: "./src/modules/shc-tiffin" },
 ];
 
 export {
@@ -66,4 +68,5 @@ export {
   ShcFeatureFlagModule,
   ShcSearchSynonymModule,
   ShcPlatformStatModule,
+  ShcTiffinModule,
 };

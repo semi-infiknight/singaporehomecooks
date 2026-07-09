@@ -27,6 +27,7 @@ import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../..
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
+  { iconKey: 'home' as const, label: 'Tiffin', image: BENTO_ACTION_IMAGES.checkout, href: '/(customer)/tiffin', testID: 'profile-tiffin-tile' },
   { iconKey: 'search' as const, label: 'Search', image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
 ];
 

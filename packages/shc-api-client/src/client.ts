@@ -439,6 +439,73 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
       return (r as any).dispute;
     },
+
+    // --- Tiffin subscription ---
+    async getTiffinKitchens() {
+      const r = await request("/store/shc/tiffin/kitchens", { method: "GET" });
+      return (r as any).kitchens || [];
+    },
+
+    async getTiffinKitchen(cookId: string) {
+      const r = await request(`/store/shc/tiffin/kitchens/${encodeURIComponent(cookId)}`, { method: "GET" });
+      return (r as any).kitchen;
+    },
+
+    async getTiffinSubscription() {
+      return request("/store/shc/tiffin/subscription", { method: "GET" });
+    },
+
+    async subscribeTiffin(cookId: string, mealsPerWeek: 2 | 3 | 4) {
+      return request("/store/shc/tiffin/subscription", {
+        method: "POST",
+        body: JSON.stringify({ cook_id: cookId, meals_per_week: mealsPerWeek }),
+      });
+    },
+
+    async cancelTiffinSubscription() {
+      return request("/store/shc/tiffin/subscription", { method: "DELETE" });
+    },
+
+    async getTiffinWeeklyPlan(weekStart?: string) {
+      const qs = weekStart ? `?week_start=${encodeURIComponent(weekStart)}` : "";
+      return request(`/store/shc/tiffin/weekly-plan${qs}`, { method: "GET" });
+    },
+
+    async saveTiffinWeeklyPlan(input: {
+      slots: { day_of_week: number; product_id: string; collection_slot?: string }[];
+      week_start?: string | null;
+      as_recurring_template?: boolean;
+    }) {
+      return request("/store/shc/tiffin/weekly-plan", {
+        method: "PUT",
+        body: JSON.stringify(input),
+      });
+    },
+
+    async saveTiffinNextWeekPlan(slots: { day_of_week: number; product_id: string; collection_slot?: string }[]) {
+      return request("/store/shc/tiffin/weekly-plan/next-week", {
+        method: "PUT",
+        body: JSON.stringify({ slots }),
+      });
+    },
+
+    async getTiffinCookConfig() {
+      return request("/store/shc/tiffin/cook/config", { method: "GET" });
+    },
+
+    async updateTiffinCookConfig(input: {
+      enabled?: boolean;
+      tagline?: string;
+      eligible_product_ids?: string[];
+      meals_per_week_options?: (2 | 3 | 4)[];
+      collection_days?: number[];
+      default_collection_slot?: string;
+    }) {
+      return request("/store/shc/tiffin/cook/config", {
+        method: "PUT",
+        body: JSON.stringify(input),
+      });
+    },
   };
 
   return api;

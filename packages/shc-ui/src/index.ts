@@ -25,6 +25,7 @@ export * from './zomato';
 export * from './food-ux';
 export * from './delivery-ux';
 export * from './onboarding-ux';
+export * from './tiffin-ux';
 export * from './gourmeat';
 export * from './request-ux';
 // Location map UX is exported via @shc/ui/location-ux (pulls react-native-maps; keep off barrel).

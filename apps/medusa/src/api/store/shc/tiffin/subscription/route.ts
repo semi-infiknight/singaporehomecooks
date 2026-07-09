@@ -1,0 +1,77 @@
+import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
+import { z } from "zod";
+import { createSHCError } from "@shc/types";
+import { weekStartMonday } from "@shc/business-rules";
+import { getCustomerId, unauthorized } from "../../../../../lib/shc-actors";
+import ShcTiffinModuleService from "../../../../../modules/shc-tiffin/service";
+import { shapeTiffinKitchen } from "../../../../../lib/shc-tiffin-shape";
+
+const SubscribeSchema = z
+  .object({
+    cook_id: z.string(),
+    meals_per_week: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+  })
+  .strict();
+
+async function subscriptionPayload(tiffin: ShcTiffinModuleService, sub: any, scope: any) {
+  const config = await tiffin.getKitchenConfig(sub.cook_id);
+  const plans = await tiffin.listPlans(sub.id);
+  const currentWeek = weekStartMonday();
+  const nextWeek = weekStartMonday(new Date(Date.now() + 7 * 86400000));
+  const slotsCurrent = tiffin.resolveSlotsForWeek(plans, currentWeek);
+  const slotsNext = tiffin.resolveSlotsForWeek(plans, nextWeek);
+  const kitchen = config ? await shapeTiffinKitchen(config, scope) : null;
+  return {
+    subscription: {
+      id: sub.id,
+      cook_id: sub.cook_id,
+      meals_per_week: sub.meals_per_week,
+      status: sub.status,
+    },
+    kitchen,
+    plans,
+    current_week: currentWeek,
+    next_week: nextWeek,
+    slots_current_week: slotsCurrent,
+    slots_next_week: slotsNext,
+  };
+}
+
+export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  try {
+    const customerId = getCustomerId(req);
+    const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+    const sub = await tiffin.getActiveSubscription(customerId);
+    if (!sub) return res.json({ subscription: null });
+    res.json(await subscriptionPayload(tiffin, sub, req.scope));
+  } catch {
+    return unauthorized(res, "Customer login required");
+  }
+}
+
+export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  const parse = SubscribeSchema.safeParse(req.body || {});
+  if (!parse.success) {
+    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid subscribe body", parse.error.format() as any) });
+  }
+  try {
+    const customerId = getCustomerId(req);
+    const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+    const sub = await tiffin.createSubscription(customerId, parse.data.cook_id, parse.data.meals_per_week);
+    res.status(201).json(await subscriptionPayload(tiffin, sub, req.scope));
+  } catch (e: any) {
+    if (e?.code) return res.status(400).json({ error: e });
+    return unauthorized(res, "Customer login required");
+  }
+}
+
+export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
+  try {
+    const customerId = getCustomerId(req);
+    const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+    await tiffin.cancelSubscription(customerId);
+    res.json({ ok: true });
+  } catch {
+    return unauthorized(res, "Customer login required");
+  }
+}

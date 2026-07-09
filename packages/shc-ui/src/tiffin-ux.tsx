@@ -1,0 +1,973 @@
+// Tiffin subscription UX — kitchen browse, meals/week picker, weekly planner grid.
+// @ts-nocheck
+import React from 'react';
+import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+import { SHCFoodImage } from './visuals';
+import { GourmeatPrimaryButton } from './gourmeat';
+import { getDishImageUrl, getCookAvatarUrl } from '@shc/utils';
+
+export const TIFFIN_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+export type TiffinDishOption = {
+  id: string;
+  name: string;
+  price?: number;
+  cuisine?: string;
+  cook_name?: string;
+};
+
+export type TiffinPlanSlotDraft = {
+  day_of_week: number;
+  product_id: string;
+  collection_slot?: string;
+};
+
+/** Volume pricing — more meals/week → lower per-serving (Mobbin ref). */
+export function tiffinPricePerServing(mealsPerWeek: number): number {
+  if (mealsPerWeek >= 4) return 10;
+  if (mealsPerWeek >= 3) return 11;
+  return 12;
+}
+
+export function tiffinWeeklySubtotal(mealsPerWeek: number, servings = 1): number {
+  return mealsPerWeek * servings * tiffinPricePerServing(mealsPerWeek);
+}
+
+export function SHCTiffinHeroBanner({
+  title = 'Weekly Tiffin',
+  subtitle = 'Subscribe to home-cooked meals from one kitchen — pick 2, 3, or 4 days a week.',
+  testID = 'tiffin-hero-banner',
+}: {
+  title?: string;
+  subtitle?: string;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.heroBanner}>
+      <Text style={styles.heroTitle}>{title}</Text>
+      <Text style={styles.heroSubtitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
+export function SHCTiffinKitchenCard({
+  cookName,
+  area,
+  tagline,
+  mealsOptions,
+  dishCount,
+  cookId,
+  onPress,
+  testID,
+}: {
+  cookName: string;
+  area?: string;
+  tagline?: string;
+  mealsOptions?: number[];
+  dishCount?: number;
+  cookId: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const avatar = getCookAvatarUrl(cookId, cookName);
+  return (
+    <Pressable onPress={onPress} testID={testID || `tiffin-kitchen-${cookId}`} accessibilityRole="button">
+      {({ pressed }) => (
+        <View style={[styles.kitchenCard, pressed && { opacity: 0.92 }]}>
+          <Image source={{ uri: avatar }} style={styles.kitchenAvatar} />
+          <View style={styles.kitchenBody}>
+            <Text style={styles.kitchenName}>{cookName}</Text>
+            {area ? <Text style={styles.kitchenArea}>{area}</Text> : null}
+            {tagline ? <Text style={styles.kitchenTagline} numberOfLines={2}>{tagline}</Text> : null}
+            <View style={styles.kitchenMetaRow}>
+              <Text style={styles.kitchenMeta}>
+                {(mealsOptions || [2, 3, 4]).join(' · ')} meals/wk
+              </Text>
+              {dishCount != null ? (
+                <Text style={styles.kitchenMeta}>{dishCount} dishes</Text>
+              ) : null}
+            </View>
+          </View>
+          <Text style={styles.kitchenChevron}>›</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+export function SHCTiffinKitchenHero({
+  cookName,
+  tagline,
+  imageUri,
+  testID = 'tiffin-kitchen-hero',
+}: {
+  cookName: string;
+  tagline?: string;
+  imageUri?: string;
+  testID?: string;
+}) {
+  const uri = imageUri || getCookAvatarUrl('tiffin', cookName);
+  return (
+    <View testID={testID} style={styles.kitchenHero}>
+      <Image source={{ uri }} style={styles.kitchenHeroImage} resizeMode="cover" />
+      <View style={styles.kitchenHeroBody}>
+        <Text style={styles.kitchenHeroTitle}>{cookName}</Text>
+        <Text style={styles.kitchenHeroSubtitle}>
+          {tagline || 'Home-cooked tiffin — collection from one HDB kitchen each week.'}
+        </Text>
+        <Text style={styles.kitchenHeroNote}>
+          This is your default kitchen. Adjust your weekly order anytime from the full menu.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+export function SHCTiffinMealsPicker({
+  options,
+  selected,
+  onSelect,
+  testID = 'tiffin-meals-picker',
+}: {
+  options: number[];
+  selected: number;
+  onSelect: (n: number) => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID}>
+      <Text style={styles.sectionQuestion}>How many meals would you like each week?</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mealsPickerRow}>
+        {options.map((n) => {
+          const active = n === selected;
+          const price = tiffinPricePerServing(n);
+          return (
+            <Pressable
+              key={n}
+              onPress={() => onSelect(n)}
+              testID={`tiffin-meals-${n}`}
+              style={[styles.mealsPill, active && styles.mealsPillActive]}
+            >
+              <Text style={[styles.mealsPillNum, active && styles.mealsPillNumActive]}>{n} meals</Text>
+              <Text style={[styles.mealsPillPrice, active && styles.mealsPillPriceActive]}>
+                S${price.toFixed(2)}/meal
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+export function SHCTiffinOrderSummary({
+  mealsPerWeek,
+  servings = 1,
+  testID = 'tiffin-order-summary',
+}: {
+  mealsPerWeek: number;
+  servings?: number;
+  testID?: string;
+}) {
+  const perServing = tiffinPricePerServing(mealsPerWeek);
+  const subtotal = tiffinWeeklySubtotal(mealsPerWeek, servings);
+  return (
+    <View testID={testID} style={styles.orderSummary}>
+      <Text style={styles.orderSummaryTitle}>Order Summary</Text>
+      <View style={styles.orderSummaryRow}>
+        <Text style={styles.orderSummaryLabel}>Price per meal</Text>
+        <Text style={styles.orderSummaryValue}>S${perServing.toFixed(2)}</Text>
+      </View>
+      <View style={styles.orderSummaryRow}>
+        <Text style={styles.orderSummaryLabel}>Meals per week</Text>
+        <Text style={styles.orderSummaryValue}>{mealsPerWeek}</Text>
+      </View>
+      <View style={[styles.orderSummaryRow, styles.orderSummaryTotal]}>
+        <Text style={styles.orderSummaryTotalLabel}>Weekly subtotal</Text>
+        <Text style={styles.orderSummaryTotalValue}>S${subtotal.toFixed(2)}</Text>
+      </View>
+      <Text style={styles.orderSummaryNote}>PayNow charged each week when orders generate.</Text>
+    </View>
+  );
+}
+
+export function SHCTiffinConfirmBanner({
+  title = 'Your first collection is scheduled!',
+  subtitle,
+  testID = 'tiffin-confirm-banner',
+}: {
+  title?: string;
+  subtitle?: string;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.confirmBanner}>
+      <Text style={styles.confirmTitle}>{title}</Text>
+      <Text style={styles.confirmSubtitle}>
+        {subtitle || 'You can change meals until midnight before each collection day.'}
+      </Text>
+    </View>
+  );
+}
+
+export function SHCTiffinUpcomingWeeks({
+  weeks,
+  onSelectWeek,
+  selectedWeek,
+  testID = 'tiffin-upcoming-weeks',
+}: {
+  weeks: { week_start: string; label: string }[];
+  onSelectWeek?: (weekStart: string) => void;
+  selectedWeek?: string;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID}>
+      <Text style={styles.upcomingTitle}>Your upcoming collections</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.upcomingRow}>
+        {weeks.map((w) => {
+          const active = w.week_start === selectedWeek;
+          return (
+            <Pressable
+              key={w.week_start}
+              onPress={() => onSelectWeek?.(w.week_start)}
+              testID={`tiffin-week-card-${w.week_start}`}
+              style={[styles.upcomingCard, active && styles.upcomingCardActive]}
+            >
+              <Text style={styles.upcomingCardLabel}>{w.label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+export function SHCTiffinWeekTabBar({
+  tabs,
+  activeIndex,
+  onSelect,
+  testID = 'tiffin-week-tabs',
+}: {
+  tabs: { key: string; label: string; sublabel?: string }[];
+  activeIndex: number;
+  onSelect: (index: number) => void;
+  testID?: string;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      testID={testID}
+      contentContainerStyle={styles.weekTabRow}
+    >
+      {tabs.map((tab, i) => {
+        const active = i === activeIndex;
+        return (
+          <Pressable key={tab.key} onPress={() => onSelect(i)} testID={`tiffin-week-tab-${tab.key}`}>
+            <View style={styles.weekTabItem}>
+              <Text style={[styles.weekTabLabel, active && styles.weekTabLabelActive]}>{tab.label}</Text>
+              {active ? <View style={styles.weekTabUnderline} /> : null}
+            </View>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+export function SHCTiffinOrderLineItem({
+  dish,
+  dayLabel,
+  price,
+  onEdit,
+  onRemove,
+  testID,
+}: {
+  dish: TiffinDishOption;
+  dayLabel?: string;
+  price?: number;
+  onEdit?: () => void;
+  onRemove?: () => void;
+  testID?: string;
+}) {
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  const unit = price ?? dish.price ?? tiffinPricePerServing(3);
+  return (
+    <View testID={testID || `tiffin-order-line-${dish.id}`} style={styles.orderLine}>
+      <SHCFoodImage uri={imageUrl} style={styles.orderLineImage} />
+      <View style={styles.orderLineBody}>
+        {dayLabel ? <Text style={styles.orderLineDay}>{dayLabel}</Text> : null}
+        <Text style={styles.orderLineName}>{dish.name}</Text>
+        <Text style={styles.orderLinePrice}>
+          1 serving · <Text style={styles.orderLinePriceStrike}>S${(unit + 1).toFixed(2)}</Text>{' '}
+          <Text style={styles.orderLinePriceSale}>S${Number(unit).toFixed(2)}</Text>
+        </Text>
+        <View style={styles.orderLineActions}>
+          {onEdit ? (
+            <Pressable onPress={onEdit} testID={`tiffin-edit-${dish.id}`}>
+              <Text style={styles.orderLineAction}>Edit</Text>
+            </Pressable>
+          ) : null}
+          {onRemove ? (
+            <Pressable onPress={onRemove} testID={`tiffin-remove-${dish.id}`}>
+              <Text style={styles.orderLineAction}>Remove</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function SHCTiffinMenuListItem({
+  dish,
+  subtitle,
+  onPress,
+  testID,
+}: {
+  dish: TiffinDishOption;
+  subtitle?: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  return (
+    <Pressable onPress={onPress} testID={testID || `tiffin-menu-item-${dish.id}`}>
+      <View style={styles.menuListItem}>
+        <SHCFoodImage uri={imageUrl} style={styles.menuListImage} />
+        <View style={styles.menuListBody}>
+          <Text style={styles.menuListName}>{dish.name}</Text>
+          {subtitle ? <Text style={styles.menuListSubtitle} numberOfLines={2}>{subtitle}</Text> : null}
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+export function SHCTiffinManageSettings({
+  cookName,
+  mealsPerWeek,
+  mealsOptions,
+  collectionDayLabel,
+  weeklyTotal,
+  onChangeMeals,
+  onManage,
+  onCancel,
+  testID = 'tiffin-manage-settings',
+}: {
+  cookName: string;
+  mealsPerWeek: number;
+  mealsOptions: number[];
+  collectionDayLabel: string;
+  weeklyTotal: string;
+  onChangeMeals: (n: number) => void;
+  onManage: () => void;
+  onCancel: () => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.manageSettings}>
+      <Text style={styles.manageSettingsTitle}>Meals</Text>
+      <Text style={styles.manageSettingsNote}>
+        Changes apply to collections on or after your next cycle. Your default plan repeats weekly unless you change next week.
+      </Text>
+      <Text style={styles.manageSettingsLabel}>KITCHEN</Text>
+      <Text style={styles.manageSettingsValue}>{cookName}</Text>
+      <Text style={styles.manageSettingsLabel}>MEALS PER WEEK</Text>
+      <View style={styles.manageMealsRow}>
+        {mealsOptions.map((n) => (
+          <Pressable
+            key={n}
+            onPress={() => onChangeMeals(n)}
+            testID={`tiffin-manage-meals-${n}`}
+            style={[styles.manageMealsChip, n === mealsPerWeek && styles.manageMealsChipActive]}
+          >
+            <Text style={[styles.manageMealsChipText, n === mealsPerWeek && styles.manageMealsChipTextActive]}>{n}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.manageSettingsLabel}>WEEKLY TOTAL</Text>
+      <Text style={styles.manageSettingsValue}>{weeklyTotal}</Text>
+      <Text style={styles.manageSettingsLabel}>COLLECTION DAYS</Text>
+      <Text style={styles.manageSettingsValue}>{collectionDayLabel}</Text>
+      <Pressable onPress={onManage} testID="tiffin-manage-plan-link">
+        <Text style={styles.manageLink}>MANAGE WEEKLY PLAN</Text>
+      </Pressable>
+      <Pressable onPress={onCancel} testID="tiffin-cancel-sub-btn">
+        <Text style={styles.manageCancelLink}>Pause / Cancel subscription</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export function SHCTiffinDishChip({
+  dish,
+  selected,
+  onPress,
+  testID,
+}: {
+  dish: TiffinDishOption;
+  selected?: boolean;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  return (
+    <Pressable onPress={onPress} testID={testID || `tiffin-dish-${dish.id}`}>
+      {({ pressed }) => (
+        <View style={[styles.dishChip, selected && styles.dishChipSelected, pressed && { opacity: 0.9 }]}>
+          <SHCFoodImage uri={imageUrl} style={styles.dishChipImage} />
+          <Text style={styles.dishChipName} numberOfLines={2}>{dish.name}</Text>
+          {dish.price != null ? (
+            <Text style={styles.dishChipPrice}>S${Number(dish.price).toFixed(2)}</Text>
+          ) : null}
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+export function SHCTiffinWeeklyDayRow({
+  dayOfWeek,
+  dish,
+  allowed,
+  onPickDay,
+  onPickDish,
+  testID,
+}: {
+  dayOfWeek: number;
+  dish?: TiffinDishOption | null;
+  allowed: boolean;
+  onPickDay: () => void;
+  onPickDish: () => void;
+  testID?: string;
+}) {
+  const label = TIFFIN_DAY_LABELS[dayOfWeek];
+  return (
+    <View
+      testID={testID || `tiffin-day-row-${dayOfWeek}`}
+      style={[styles.dayRow, !allowed && styles.dayRowDisabled]}
+    >
+      <Pressable
+        onPress={allowed ? onPickDay : undefined}
+        style={[styles.dayBadge, dish && styles.dayBadgeActive]}
+        testID={`tiffin-day-badge-${dayOfWeek}`}
+      >
+        <Text style={[styles.dayBadgeText, dish && styles.dayBadgeTextActive]}>{label}</Text>
+      </Pressable>
+      <Pressable
+        onPress={allowed ? onPickDish : undefined}
+        style={styles.dayDishArea}
+        testID={`tiffin-day-dish-${dayOfWeek}`}
+      >
+        {dish ? (
+          <>
+            <Text style={styles.dayDishName} numberOfLines={1}>{dish.name}</Text>
+            <Text style={styles.dayDishHint}>Tap to change</Text>
+          </>
+        ) : (
+          <Text style={styles.dayDishEmpty}>{allowed ? 'Choose a meal' : 'Not available'}</Text>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
+export function SHCTiffinDishPickerSheet({
+  dishes,
+  selectedId,
+  onSelect,
+  onClose,
+  testID = 'tiffin-dish-picker',
+}: {
+  dishes: TiffinDishOption[];
+  selectedId?: string;
+  onSelect: (id: string) => void;
+  onClose: () => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.pickerSheet}>
+      <View style={styles.pickerHeader}>
+        <Text style={styles.pickerTitle}>Pick a dish</Text>
+        <Pressable onPress={onClose} testID="tiffin-dish-picker-close">
+          <Text style={styles.pickerClose}>Done</Text>
+        </Pressable>
+      </View>
+      <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={styles.pickerScroll}>
+        {dishes.map((d) => (
+          <SHCTiffinMenuListItem
+            key={d.id}
+            dish={d}
+            subtitle={d.cuisine ? `${d.cuisine} · S$${Number(d.price || 0).toFixed(2)}` : undefined}
+            onPress={() => onSelect(d.id)}
+            testID={d.id === selectedId ? `tiffin-dish-selected-${d.id}` : undefined}
+          />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+export function SHCTiffinPlannerScreen({
+  title,
+  subtitle,
+  weekLabel,
+  mealsPerWeek,
+  collectionDays,
+  slots,
+  dishes,
+  editingDay,
+  onSelectDay,
+  onSelectDish,
+  onClosePicker,
+  onSave,
+  saveLabel = 'Save weekly plan',
+  saveTestID = 'tiffin-save-plan-btn',
+  saving,
+  mode = 'template',
+  testID = 'tiffin-planner-screen',
+}: {
+  title: string;
+  subtitle?: string;
+  weekLabel?: string;
+  mealsPerWeek: number;
+  collectionDays: number[];
+  slots: TiffinPlanSlotDraft[];
+  dishes: TiffinDishOption[];
+  editingDay: number | null;
+  onSelectDay: (day: number) => void;
+  onSelectDish: (day: number, productId: string) => void;
+  onClosePicker: () => void;
+  onSave: () => void;
+  saveLabel?: string;
+  saveTestID?: string;
+  saving?: boolean;
+  mode?: 'template' | 'next-week';
+  testID?: string;
+}) {
+  const insets = useSafeAreaInsets();
+  const filled = slots.length;
+  const dishMap = Object.fromEntries(dishes.map((d) => [d.id, d]));
+  const sortedSlots = [...slots].sort((a, b) => a.day_of_week - b.day_of_week);
+  const weekTotal = sortedSlots.reduce((s, slot) => s + (dishMap[slot.product_id]?.price ?? tiffinPricePerServing(mealsPerWeek)), 0);
+
+  return (
+    <View testID={testID} style={styles.plannerScreen}>
+      <ScrollView contentContainerStyle={[styles.plannerScroll, { paddingBottom: 120 + insets.bottom }]}>
+        <Text style={styles.plannerScheduled}>{mode === 'next-week' ? 'NEXT WEEK' : 'SCHEDULED'}</Text>
+        <Text style={styles.plannerTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.plannerSubtitle}>{subtitle}</Text> : null}
+        {weekLabel ? <Text style={styles.plannerWeek}>{weekLabel}</Text> : null}
+        <Text style={styles.plannerProgress}>
+          My Order · {filled} of {mealsPerWeek} meals
+          {mode === 'template' ? ' · repeats weekly' : ''}
+        </Text>
+
+        {sortedSlots.map((slot) => {
+          const dish = dishMap[slot.product_id];
+          if (!dish) return null;
+          return (
+            <SHCTiffinOrderLineItem
+              key={slot.day_of_week}
+              dish={dish}
+              dayLabel={TIFFIN_DAY_LABELS[slot.day_of_week]}
+              price={dish.price}
+              onEdit={() => onSelectDay(slot.day_of_week)}
+              onRemove={() => onSelectDay(slot.day_of_week)}
+            />
+          );
+        })}
+
+        {filled < mealsPerWeek ? (
+          <Pressable onPress={() => {
+            const openDay = collectionDays.find((d) => !slots.find((s) => s.day_of_week === d));
+            if (openDay != null) onSelectDay(openDay);
+          }} testID="tiffin-add-meal-slot">
+            <View style={styles.addMealRow}>
+              <Text style={styles.addMealPlus}>+</Text>
+              <Text style={styles.addMealText}>Add a meal · pick from kitchen menu</Text>
+            </View>
+          </Pressable>
+        ) : null}
+
+        {TIFFIN_DAY_LABELS.map((_, dayOfWeek) => {
+          if (!collectionDays.includes(dayOfWeek) || slots.find((s) => s.day_of_week === dayOfWeek)) return null;
+          return (
+            <SHCTiffinWeeklyDayRow
+              key={dayOfWeek}
+              dayOfWeek={dayOfWeek}
+              dish={null}
+              allowed
+              onPickDay={() => onSelectDay(dayOfWeek)}
+              onPickDish={() => onSelectDay(dayOfWeek)}
+            />
+          );
+        })}
+      </ScrollView>
+
+      {editingDay != null ? (
+        <SHCTiffinDishPickerSheet
+          dishes={dishes}
+          selectedId={slots.find((s) => s.day_of_week === editingDay)?.product_id}
+          onSelect={(id) => onSelectDish(editingDay, id)}
+          onClose={onClosePicker}
+        />
+      ) : null}
+
+      <View style={[styles.plannerFooter, { paddingBottom: insets.bottom + shcSpacing.md }]}>
+        <GourmeatPrimaryButton
+          label={filled === mealsPerWeek ? `${saveLabel}${weekTotal > 0 ? ` · S$${weekTotal.toFixed(2)}` : ''}` : saveLabel}
+          onPress={onSave}
+          disabled={filled !== mealsPerWeek || saving}
+          loading={saving}
+          testID={saveTestID}
+        />
+      </View>
+    </View>
+  );
+}
+
+export function SHCTiffinManageCard({
+  cookName,
+  mealsPerWeek,
+  status,
+  currentWeekLabel,
+  nextWeekLabel,
+  onEditPlan,
+  onEditNextWeek,
+  onCancel,
+  testID = 'tiffin-manage-card',
+}: {
+  cookName: string;
+  mealsPerWeek: number;
+  status: string;
+  currentWeekLabel?: string;
+  nextWeekLabel?: string;
+  onEditPlan: () => void;
+  onEditNextWeek: () => void;
+  onCancel: () => void;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={styles.manageCard}>
+      <Text style={styles.manageTitle}>{cookName}</Text>
+      <Text style={styles.manageMeta}>{mealsPerWeek} meals/week · {status}</Text>
+      {currentWeekLabel ? <Text style={styles.manageWeek}>This week: {currentWeekLabel}</Text> : null}
+      {nextWeekLabel ? <Text style={styles.manageWeek}>Next week: {nextWeekLabel}</Text> : null}
+      <View style={styles.manageActions}>
+        <GourmeatPrimaryButton label="Edit weekly plan" onPress={onEditPlan} testID="tiffin-edit-plan-btn" />
+        <GourmeatPrimaryButton
+          label="Change next week"
+          variant="outline"
+          onPress={onEditNextWeek}
+          testID="tiffin-edit-next-week-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
+        <Pressable onPress={onCancel} testID="tiffin-cancel-sub-btn" style={styles.cancelLink}>
+          <Text style={styles.cancelText}>Cancel subscription</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+export function SHCTiffinCookDishToggle({
+  dish,
+  enabled,
+  onToggle,
+  testID,
+}: {
+  dish: TiffinDishOption;
+  enabled: boolean;
+  onToggle: () => void;
+  testID?: string;
+}) {
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  return (
+    <Pressable onPress={onToggle} testID={testID || `tiffin-cook-dish-${dish.id}`}>
+      <View style={[styles.cookDishRow, enabled && styles.cookDishRowOn]}>
+        <SHCFoodImage uri={imageUrl} style={styles.cookDishThumb} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cookDishName}>{dish.name}</Text>
+          {dish.price != null ? <Text style={styles.cookDishPrice}>S${Number(dish.price).toFixed(2)}</Text> : null}
+        </View>
+        <View style={[styles.cookToggle, enabled && styles.cookToggleOn]}>
+          <Text style={styles.cookToggleText}>{enabled ? '✓' : ''}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  heroBanner: {
+    backgroundColor: gourmeatColors.primaryLight,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.lg,
+    marginBottom: shcSpacing.md,
+  },
+  heroTitle: { fontSize: 22, fontWeight: '800', color: gourmeatColors.text },
+  heroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 6, lineHeight: 18 },
+  kitchenCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+    ...gourmeatShadows.soft,
+  },
+  kitchenAvatar: { width: 56, height: 56, borderRadius: 28, marginRight: shcSpacing.md },
+  kitchenBody: { flex: 1 },
+  kitchenName: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
+  kitchenArea: { fontSize: 12, color: gourmeatColors.textLight, marginTop: 2 },
+  kitchenTagline: { fontSize: 12, color: gourmeatColors.textLight, marginTop: 4 },
+  kitchenMetaRow: { flexDirection: 'row', gap: shcSpacing.md, marginTop: 6 },
+  kitchenMeta: { fontSize: 11, fontWeight: '600', color: gourmeatColors.primary },
+  kitchenChevron: { fontSize: 22, color: gourmeatColors.textMuted, marginLeft: shcSpacing.sm },
+  sectionQuestion: { fontSize: 18, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
+  kitchenHero: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    overflow: 'hidden',
+    marginBottom: shcSpacing.md,
+    ...gourmeatShadows.soft,
+  },
+  kitchenHeroImage: { width: '100%', height: 140 },
+  kitchenHeroBody: { padding: shcSpacing.md },
+  kitchenHeroTitle: { fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
+  kitchenHeroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4, lineHeight: 18 },
+  kitchenHeroNote: { fontSize: 11, color: gourmeatColors.textMuted, marginTop: shcSpacing.sm, lineHeight: 16 },
+  mealsPickerRow: { flexDirection: 'row', gap: shcSpacing.sm, paddingVertical: shcSpacing.sm },
+  mealsPill: {
+    minWidth: 108,
+    paddingVertical: shcSpacing.md,
+    paddingHorizontal: shcSpacing.md,
+    borderRadius: gourmeatRadii.md,
+    backgroundColor: gourmeatColors.surface,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    marginRight: shcSpacing.sm,
+  },
+  mealsPillActive: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight },
+  mealsPillNum: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text },
+  mealsPillNumActive: { color: gourmeatColors.primary },
+  mealsPillPrice: { fontSize: 11, color: gourmeatColors.textLight, marginTop: 4 },
+  mealsPillPriceActive: { color: gourmeatColors.primary, fontWeight: '600' },
+  orderSummary: {
+    backgroundColor: gourmeatColors.surfaceAlt,
+    borderRadius: gourmeatRadii.md,
+    padding: shcSpacing.md,
+    marginTop: shcSpacing.md,
+  },
+  orderSummaryTitle: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
+  orderSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  orderSummaryLabel: { fontSize: 13, color: gourmeatColors.textLight },
+  orderSummaryValue: { fontSize: 13, fontWeight: '600', color: gourmeatColors.text },
+  orderSummaryTotal: { marginTop: shcSpacing.sm, paddingTop: shcSpacing.sm, borderTopWidth: 1, borderTopColor: gourmeatColors.border },
+  orderSummaryTotalLabel: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text },
+  orderSummaryTotalValue: { fontSize: 14, fontWeight: '800', color: gourmeatColors.primary },
+  orderSummaryNote: { fontSize: 11, color: gourmeatColors.textMuted, marginTop: shcSpacing.sm },
+  confirmBanner: { alignItems: 'center', paddingVertical: shcSpacing.lg },
+  confirmTitle: { fontSize: 22, fontWeight: '800', color: gourmeatColors.primary, textAlign: 'center' },
+  confirmSubtitle: { fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center', marginTop: shcSpacing.sm, lineHeight: 18 },
+  upcomingTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
+  upcomingRow: { gap: shcSpacing.sm, paddingBottom: shcSpacing.sm },
+  upcomingCard: {
+    minWidth: 120,
+    padding: shcSpacing.md,
+    borderRadius: gourmeatRadii.md,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    alignItems: 'center',
+    marginRight: shcSpacing.sm,
+  },
+  upcomingCardActive: { backgroundColor: gourmeatColors.primaryLight, borderWidth: 2, borderColor: gourmeatColors.primary },
+  upcomingCardLabel: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text, textAlign: 'center' },
+  weekTabRow: { paddingVertical: shcSpacing.sm, gap: shcSpacing.lg, paddingHorizontal: shcSpacing.xs },
+  weekTabItem: { alignItems: 'center', minWidth: 56 },
+  weekTabLabel: { fontSize: 12, fontWeight: '700', color: gourmeatColors.textMuted },
+  weekTabLabelActive: { color: gourmeatColors.primary },
+  weekTabUnderline: { height: 3, width: '100%', backgroundColor: gourmeatColors.primary, borderRadius: 2, marginTop: 4 },
+  orderLine: {
+    flexDirection: 'row',
+    paddingVertical: shcSpacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: gourmeatColors.border,
+  },
+  orderLineImage: { width: 72, height: 72, borderRadius: gourmeatRadii.sm, marginRight: shcSpacing.md },
+  orderLineBody: { flex: 1 },
+  orderLineDay: { fontSize: 11, fontWeight: '700', color: gourmeatColors.primary, marginBottom: 2 },
+  orderLineName: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text },
+  orderLinePrice: { fontSize: 12, color: gourmeatColors.textLight, marginTop: 4 },
+  orderLinePriceStrike: { textDecorationLine: 'line-through' },
+  orderLinePriceSale: { color: gourmeatColors.primary, fontWeight: '700' },
+  orderLineActions: { flexDirection: 'row', gap: shcSpacing.md, marginTop: shcSpacing.sm },
+  orderLineAction: { fontSize: 13, fontWeight: '700', color: gourmeatColors.primary },
+  menuListItem: {
+    flexDirection: 'row',
+    paddingVertical: shcSpacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: gourmeatColors.border,
+  },
+  menuListImage: { width: 88, height: 88, borderRadius: gourmeatRadii.sm, marginRight: shcSpacing.md },
+  menuListBody: { flex: 1, justifyContent: 'center' },
+  menuListName: { fontSize: 16, fontWeight: '800', color: gourmeatColors.primary },
+  menuListSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 },
+  manageSettings: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.lg,
+    ...gourmeatShadows.soft,
+  },
+  manageSettingsTitle: { fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
+  manageSettingsNote: { fontSize: 12, color: gourmeatColors.textLight, marginTop: shcSpacing.sm, lineHeight: 18 },
+  manageSettingsLabel: { fontSize: 11, fontWeight: '800', color: gourmeatColors.textMuted, marginTop: shcSpacing.md, letterSpacing: 0.5 },
+  manageSettingsValue: { fontSize: 15, fontWeight: '600', color: gourmeatColors.text, marginTop: 4 },
+  manageMealsRow: { flexDirection: 'row', gap: shcSpacing.sm, marginTop: shcSpacing.sm },
+  manageMealsChip: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  manageMealsChipActive: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight },
+  manageMealsChipText: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text },
+  manageMealsChipTextActive: { color: gourmeatColors.primary },
+  manageLink: { fontSize: 13, fontWeight: '800', color: gourmeatColors.primary, marginTop: shcSpacing.lg, letterSpacing: 0.3 },
+  manageCancelLink: { fontSize: 13, fontWeight: '700', color: '#c0392b', marginTop: shcSpacing.md },
+  dishChip: {
+    width: 120,
+    marginRight: shcSpacing.sm,
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.md,
+    padding: shcSpacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    ...gourmeatShadows.soft,
+  },
+  dishChipSelected: { borderColor: gourmeatColors.primary },
+  dishChipImage: { width: '100%', height: 72, borderRadius: gourmeatRadii.sm },
+  dishChipName: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text, marginTop: 6 },
+  dishChipPrice: { fontSize: 11, color: gourmeatColors.primary, fontWeight: '700', marginTop: 2 },
+  dayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.md,
+    padding: shcSpacing.sm,
+    marginBottom: shcSpacing.sm,
+    ...gourmeatShadows.soft,
+  },
+  dayRowDisabled: { opacity: 0.45 },
+  dayBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: gourmeatColors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: shcSpacing.sm,
+  },
+  dayBadgeActive: { backgroundColor: gourmeatColors.primary },
+  dayBadgeText: { fontSize: 12, fontWeight: '800', color: gourmeatColors.textLight },
+  dayBadgeTextActive: { color: gourmeatColors.onPrimary },
+  dayDishArea: { flex: 1 },
+  dayDishName: { fontSize: 14, fontWeight: '700', color: gourmeatColors.text },
+  dayDishHint: { fontSize: 11, color: gourmeatColors.textLight, marginTop: 2 },
+  dayDishEmpty: { fontSize: 13, color: gourmeatColors.textMuted, fontWeight: '600' },
+  pickerSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 88,
+    backgroundColor: gourmeatColors.surface,
+    borderTopLeftRadius: gourmeatRadii.lg,
+    borderTopRightRadius: gourmeatRadii.lg,
+    paddingVertical: shcSpacing.md,
+    ...gourmeatShadows.lift,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+  },
+  pickerTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text },
+  pickerClose: { fontSize: 14, fontWeight: '700', color: gourmeatColors.primary },
+  pickerScroll: { paddingHorizontal: shcSpacing.md },
+  plannerScreen: { flex: 1, backgroundColor: gourmeatColors.background },
+  plannerScroll: { padding: shcSpacing.md },
+  plannerScheduled: { fontSize: 11, fontWeight: '800', color: '#2d8a4e', letterSpacing: 0.5 },
+  plannerTitle: { fontSize: 26, fontWeight: '800', color: gourmeatColors.text },
+  addMealRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: shcSpacing.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: gourmeatColors.border,
+    borderRadius: gourmeatRadii.md,
+    marginTop: shcSpacing.sm,
+  },
+  addMealPlus: { fontSize: 22, fontWeight: '700', color: gourmeatColors.primary, marginRight: shcSpacing.sm },
+  addMealText: { fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight },
+  plannerSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 },
+  plannerWeek: { fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginTop: shcSpacing.sm },
+  plannerProgress: { fontSize: 12, color: gourmeatColors.textLight, marginVertical: shcSpacing.md },
+  plannerFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: shcSpacing.md,
+    paddingTop: shcSpacing.md,
+    backgroundColor: gourmeatColors.surface,
+    borderTopWidth: 1,
+    borderTopColor: gourmeatColors.border,
+  },
+  manageCard: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.lg,
+    padding: shcSpacing.lg,
+    ...gourmeatShadows.soft,
+  },
+  manageTitle: { fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
+  manageMeta: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 },
+  manageWeek: { fontSize: 12, color: gourmeatColors.text, marginTop: shcSpacing.sm },
+  manageActions: { marginTop: shcSpacing.lg },
+  cancelLink: { alignItems: 'center', marginTop: shcSpacing.md, padding: shcSpacing.sm },
+  cancelText: { fontSize: 13, fontWeight: '700', color: '#c0392b' },
+  cookDishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: gourmeatRadii.md,
+    padding: shcSpacing.sm,
+    marginBottom: shcSpacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  cookDishRowOn: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight },
+  cookDishThumb: { width: 48, height: 48, borderRadius: gourmeatRadii.sm, marginRight: shcSpacing.sm },
+  cookDishName: { fontSize: 14, fontWeight: '700', color: gourmeatColors.text },
+  cookDishPrice: { fontSize: 12, color: gourmeatColors.primary, fontWeight: '600' },
+  cookToggle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cookToggleOn: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  cookToggleText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 14 },
+});

@@ -110,6 +110,10 @@ export const listCookExpenses = () => client.listCookExpenses();
 export const createCookExpense = (input: { amount_cents: number; category: string; receipt_key?: string; date: string }) =>
   client.createCookExpense(input);
 
+export const getTiffinCookConfig = () => client.getTiffinCookConfig();
+export const updateTiffinCookConfig = (input: Parameters<typeof client.updateTiffinCookConfig>[0]) =>
+  client.updateTiffinCookConfig(input);
+
 // Full server upload helper (sends base64 for server to upload to MinIO)
 export async function uploadImageToServer(imageBase64: string, objectName: string, cookId: string, contentType = 'image/jpeg') {
   return client.getUploadUrl(objectName, cookId, {

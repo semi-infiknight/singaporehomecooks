@@ -32,6 +32,7 @@ import { useAuth } from '../../hooks/useAuth';
 const QUICK_ACTIONS = [
   { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
   { href: '/(cook)/orders', iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
+  { href: '/(cook)/tiffin', iconKey: 'home' as const, label: 'Tiffin', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-yellow' as const },
   { href: '/(cook)/earnings', iconKey: 'earnings' as const, label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
   { href: '/(cook)/compliance', iconKey: 'compliance' as const, label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
 ];

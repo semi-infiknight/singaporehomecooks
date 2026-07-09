@@ -224,12 +224,14 @@ export default function CustomerDiscover() {
         <View style={{ paddingHorizontal: shcSpacing.md }}>
           <SHCPromoRail
             promos={[
+              { id: 'tiffin', title: 'Weekly tiffin', subtitle: '2–4 meals from one kitchen', imageUrl: PROMO_BANNER_IMAGES.paynow, badge: 'Subscribe', iconKey: 'home' },
               { id: 'hari-raya', title: 'Hari Raya specials', subtitle: 'Order 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Festive', iconKey: 'people' },
               { id: 'credits', title: 'Earn credits', subtitle: '4 credits ≈ S$1 off', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Wallet', iconKey: 'profile' },
               { id: 'paynow', title: 'PayNow collection', subtitle: 'HDB pickup · no delivery', imageUrl: PROMO_BANNER_IMAGES.paynow, iconKey: 'cart' },
             ]}
             onPromoPress={(id) => {
-              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
+              if (id === 'tiffin') router.push('/(customer)/tiffin' as any);
+              else if (id === 'hari-raya') setOccasionFilter('Hari Raya');
               else if (id === 'credits') router.push('/(customer)/profile' as any);
               else router.push('/(shared)/onboarding' as any);
             }}

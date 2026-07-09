@@ -50,6 +50,12 @@ export default function CustomerLayout() {
       <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Your Order', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="request" options={{ href: null, title: 'Request a Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="location" options={{ href: null, title: 'Collection location', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/index" options={{ href: null, title: 'Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/kitchen/[cookId]" options={{ href: null, title: 'Tiffin Kitchen', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/confirm" options={{ href: null, title: 'Tiffin Confirmed', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/planner" options={{ href: null, title: 'Weekly Plan', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/menu" options={{ href: null, title: 'Tiffin Menu', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/manage" options={{ href: null, title: 'Manage Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
     </CustomerTabIndexSync>
     </TabDirectionProvider>
