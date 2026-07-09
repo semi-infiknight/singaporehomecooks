@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — Tiffin seed always-on + web parity (`/tiffin/*`, `/cook-portal/tiffin`, `seed-tiffin` + `shc-tiffin-pg`). Prior: HomelyEats case-study pack; mobile tiffin. See [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-09 — HomelyEats redesign plan locked (UI overhaul, keep all features, tri-platform waves): [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Prior: tiffin seed + web parity. See [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 

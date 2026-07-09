@@ -1,326 +1,356 @@
-# Redesign Plan — HomelyEats → Singapore Home Cooks Tiffin
+# Redesign Plan — HomelyEats × Singapore Home Cooks
 
-**Goal:** Use HomelyEats case study ([CASE_STUDY.md](./CASE_STUDY.md) + `images/`) to redesign SHC **UI, flows, backend, and states** for subscription/tiffin — without abandoning SHC lock-ins.
-
+**Source case study:** [How I simplified ordering home-cooked meals…](https://medium.com/design-bootcamp/how-i-simplified-ordering-home-cooked-meals-with-a-subscription-centric-app-a-product-design-521a82b219be)  
+**Distilled:** [CASE_STUDY.md](./CASE_STUDY.md) · **Assets:** [IMAGE_INDEX.md](./IMAGE_INDEX.md) + `images/`  
 **Last Updated:** 2026-07-09  
-**FLAVOUR (when building):** `feature` then `wiring` · **SCOPE:** `tiffin`  
-**Tri-platform:** customer mobile first → cook mobile → web (`tri-platform-ui-sync` for shared components)
+**Status:** Canonical execution brief for agents (UI/flow overhaul + additive subscription OS)
 
 ---
 
-## 0. North star
+## 0. Founder constraints (non-negotiable)
 
-| HomelyEats | SHC today | Target |
-|------------|-----------|--------|
-| Subscription-first OS (balance, flex, calendar orders) | Weekly tiffin: 2/3/4 meals, one kitchen, template + next-week override | **Subscription OS on SHC rails**: prepaid/weekly plan + flex + calendar meal instances + manage surfaces, **collection-first** |
-| Multi concurrent kitchen subs | **One** active kitchen (`assertOneKitchenSubscription`) | Keep **one active kitchen** (SHC lock-in) unless founder unlocks multi |
-| Delivery 1–2 km | Collection / HDB | Keep **collection slots**; optional delivery later |
-| Orange brand | Family Values / Gourmeat | Keep SHC visual system; reuse **IA + states + components** |
+These override any earlier draft of this plan that implied rip-and-replace.
 
----
+| Rule | Meaning for agents |
+|------|---------------------|
+| **No feature removal** | Every existing SHC capability stays (marketplace cart/checkout, one-cook cart, allergens, listings CRUD, cook portal, ops, credits, requests/bids, heritage, push, PayNow path, compliance, earnings, etc.). |
+| **No drastic feature rewrites** | Prefer **re-skin + re-flow + wire** over re-architecting working domains. Change behaviour only when fixing a real bug or closing a documented gap. |
+| **Adding is welcome** | New screens, states, and flows from HomelyEats (calendar orders, flex/skip, pause, recharge UX, empty states, richer manage) are **in scope**. |
+| **UI is the weakest part** | Prioritise layout, hierarchy, components, empty states, status chips, calendar IA, and tri-platform visual parity. |
+| **UI + flows overhaul is #1** | Success = users *feel* a subscription-centric home-cook product; not a pile of disconnected screens. |
+| **Condense / restructure OK** | Merging thin screens, elevating secondary actions into trays, and new entry points are allowed **if** no capability is lost. |
+| **New pages/flows OK** | e.g. tiffin calendar, subscription manage OS, cook menu-publish — allowed. |
+| **Stack stays the same** | Turborepo + Expo (customer + cook) + Next web PWA + Medusa on **Railway** (Postgres, Redis, worker, MinIO). No new repos, no localhost backend for clients, no mock runtime. |
+| **Simultaneous surfaces** | Implement **web + mobile-customer + mobile-cook** together (iOS *and* Android via Expo). No “mobile-only then maybe web”. Use `@shc/ui` + `tri-platform-ui-sync`. |
+| **All issues fixed properly** | Known gaps (seed, empty kitchens, unwired CTAs, auth guards, Maestro skips, missing empty states) are **close**, not paper over. |
 
-## 1. Gap analysis (current vs HomelyEats)
+### What “nothing breaks” means
 
-### 1.1 Customer UI routes (mobile)
-
-| HomelyEats surface | SHC today | Gap |
-|--------------------|-----------|-----|
-| Onboarding guest + warm illustrations | Existing app onboarding | Optional tiffin-specific education rail |
-| Home promo + kitchen discovery | Discover promo → `/(customer)/tiffin` kitchen list | Homepage denser: categories, meal-type filters, subscriber social proof |
-| Kitchen page (Jakob’s Law) | `tiffin/kitchen/[cookId]` | Richer plan cards, price/meal, open hours, story |
-| Subscribe funnel | Kitchen → meals_per_week → confirm | Need day pattern, slot, prepaid package, flex quota display |
-| My Orders calendar + 5 states | Shared orders list (not tiffin-calendar-first) | **New:** day calendar of materialised tiffin meals |
-| Customize extras ≥8h | Not in tiffin | New flow + payment delta |
-| Skip day + flex | Not modelled | New |
-| My Subscriptions Active/Past + 5 card states | `tiffin/manage` single active only | Multi-status cards; past subs history |
-| Manage: balance, deliveries left, flex, pause, recharge, cancel reasons | Manage: plan + cancel + planner | Expand manage screen |
-| One-time order from kitchen | Marketplace one-off already exists | Deep-link kitchen “order once” alongside subscribe |
-| Empty states | Basic empty copy | Designed empty set (`34`) |
-
-### 1.2 Backend / data (Medusa `shc-tiffin`)
-
-| Entity / concept | SHC today | HomelyEats need |
-|------------------|-----------|-----------------|
-| `shc_tiffin_kitchen_config` | enable, tagline, days, eligible products | + meal windows (breakfast/lunch/dinner), plan SKUs, flex quota defaults, menu publish lead time |
-| `shc_tiffin_subscription` | one active; cook_id; meals_per_week 2/3/4 | + status enum, balance_cents, deliveries_left, flex_remaining, flex_quota, expires_on, paused_until, cancel_reason, package_id |
-| `shc_tiffin_weekly_plan` | template + next-week override slots | Keep; also support pattern presets (weekdays/weekends) |
-| Meal instances | Worker materialises `shc_order_meta` weekly (`TIFFIN-…`) | Persist **order status** for tiffin: indeterminate / scheduled / delivered / skipped / canceled_by_kitchen; customizable_until |
-| Ledger | — | `shc_tiffin_ledger` (recharge, meal debit, extra item) |
-| Flex ledger | — | fields on sub + audit events |
-| Cutoff | — | business rule: skip/customize only if `now < slot_start - 8h` |
-
-### 1.3 Business rules package
-
-Today (`packages/business-rules/src/tiffin.ts`):
-
-- `assertOneKitchenSubscription`  
-- `validateWeeklyPlanSlots` (2–4 meals, one per day, eligible products)  
-- week helpers  
-
-**Add:**
-
-- `TIFFIN_CUSTOMIZE_CUTOFF_HOURS = 8`  
-- `canSkipTiffinOrder`, `canCustomizeTiffinOrder`  
-- `applyFlexDay`, `pauseSubscription`, `resumeSubscription`  
-- `rechargePackage`, `cancelSubscription`  
-- subscription status transitions  
-- order instance status transitions  
-
-### 1.4 Cook side (out of HomelyEats UI but required)
-
-| Need | SHC |
-|------|-----|
-| Publish daily menu for upcoming slots | New cook UI + API |
-| Cancel a day’s meal for kitchen reasons | Transition + notify |
-| See subscriber count | Aggregate on kitchen DTO |
-| Config meal windows + flex defaults | Extend cook tiffin config |
-
-### 1.5 Web
-
-HomelyEats is mobile-only case study. SHC gap already: **tiffin web parity P2**. After mobile redesign, mirror manage + calendar on web customer + cook portal.
+1. Existing Maestro flows and `verify:real-e2e` keep greening (or get updated in the same goal).  
+2. Railway live routes keep working after every `TOUCHES_API=1` push.  
+3. `testID`s for critical paths preserved or dual-supported during migration.  
+4. Feature flags only for *new* subscription OS pieces that need staged rollout — not to hide broken old paths.
 
 ---
 
-## 2. Product decisions to lock before coding
+## 1. North star (product)
 
-Agents must not invent these — confirm with founder / mark as proposed defaults:
+Ship a **full-fledged** SHC where:
 
-| # | Decision | Proposed default (HomelyEats-aligned) | SHC conflict? |
-|---|----------|----------------------------------------|---------------|
-| D1 | Multi-kitchen concurrent subs? | **No** — keep one active kitchen | Matches SHC |
-| D2 | Prepaid balance vs pure weekly billing? | **Hybrid:** weekly plan price + optional recharge packages | New |
-| D3 | Flex days quota | e.g. `meals_per_week`-scaled or fixed 2 skips / week | New |
-| D4 | Cutoff hours | **8h** before collection slot | New |
-| D5 | Fulfillment | **Collection** (not kitchen delivery radius) | SHC lock-in |
-| D6 | Materialisation horizon | Keep Mon cron for next week + ensure calendar shows template-projected days | Extend |
-| D7 | Debit timing | Debit on **ready_for_collection / completed** | Align with order state |
-| D8 | One-time from tiffin kitchen | Reuse cart/checkout with cook lock | Existing |
+1. **Marketplace one-off orders** remain first-class (discover → PDP → cart → checkout → track).  
+2. **Tiffin / subscription** becomes a **first-class OS** inspired by HomelyEats (browse kitchens → subscribe → calendar meal instances → skip/customize/pause/manage) — **collection-first**, Singapore heritage, Family Values + Gourmeat skin.  
+3. UI density, trust signals, empty states, and status clarity match case-study quality **without** copying orange brand or INR/delivery model.
 
-Until founder confirms D2–D4, implement **states + UI shells** behind feature flags (`FEATURE_FLAGS.md`).
+| Keep (SHC lock-ins) | Borrow (HomelyEats) | Explicitly do not adopt |
+|---------------------|---------------------|-------------------------|
+| One active tiffin kitchen per customer | Calendar “My orders” for meal instances | Multi concurrent kitchen subs (unless later unlocked) |
+| HDB collection slots | 5 order-card states + CUSTOMIZABLE tag | Pure delivery-radius logistics |
+| Family Values / Gourmeat | Flex days + pause + manage metrics | HomelyEats orange as brand |
+| Railway Medusa only | Subscribe conversion funnel clarity | Guest checkout (browse guest OK) |
+| Full marketplace + growth features | Empty states, social proof, plan cards | Removing any marketplace screen |
 
 ---
 
-## 3. Target information architecture (customer mobile)
+## 2. Platform matrix (simultaneous)
+
+Every UI goal in this plan touches **all** of:
+
+| Surface | Package / app | Runtime |
+|---------|---------------|---------|
+| Customer mobile | `apps/mobile-customer` | Expo · iOS + Android |
+| Cook mobile | `apps/mobile-cook` | Expo · iOS + Android |
+| Web customer + cook | `apps/web` | Next PWA · Railway web service |
+| Shared UI | `packages/shc-ui` | RN components + web mirrors in `SHCWebComponents` |
+| API / rules | `apps/medusa`, `@shc/api-client`, `@shc/business-rules`, `@shc/types` | Railway medusa + worker |
+
+**Agent rule:** Do not merge a customer-mobile-only tiffin redesign. Prefer vertical slices:
+
+```
+@shc/ui component → customer mobile + cook mobile (if cook) + web mirror → api-client → Medusa → blueprint
+```
+
+---
+
+## 3. Inventory — keep, elevate, add
+
+### 3.1 Keep (must still work after overhaul)
+
+| Domain | Surfaces |
+|--------|----------|
+| Auth customer + cook JWT | all |
+| Discover / search / PDP / cart / checkout / allergen | customer mobile + web |
+| Orders track, chat, review | customer + cook + web |
+| Listings CRUD, compliance, earnings | cook + cook portal |
+| Credits, requests/bids, heritage, notifications | existing routes |
+| Tiffin browse / subscribe / planner / manage (current) | all (already parity-started) |
+| Ops admin surfaces | web `/ops` |
+| Push registration | mobile + web |
+
+### 3.2 Elevate (UI/flow overhaul — no capability drop)
+
+| Area | Today weakness | HomelyEats ref | Target |
+|------|----------------|----------------|--------|
+| Discover + tiffin entry | Promo only | `18` | Richer tiffin rail; kitchen cards with social proof |
+| Kitchen / subscribe | Functional, thin | `23`–`24` | Jakob’s Law kitchen; clear plan picker + trust copy |
+| Manage subscription | Minimal cancel/planner | `28`–`32` | Metrics bar, pause/recharge/cancel-reason shells |
+| Orders | Generic list | `25` | Calendar strip + status variants when tiffin active |
+| Empty / error | Sparse copy | `34` | Designed empty states everywhere |
+| Cook tiffin config | Form-only | — | Dashboard metrics + menu publish entry |
+| Web mirrors | Functional | same | Match mobile IA 1:1 |
+
+### 3.3 Add (welcome — subscription OS)
+
+| Capability | Notes |
+|------------|--------|
+| Flex days + skip meal instance | 8h cutoff default |
+| Pause / resume subscription | Extends period (HomelyEats rule) |
+| Recharge / extend plan UX | Even if billing stays weekly at first |
+| Cancel with reason chips | Feedback loop |
+| Order instance statuses | indeterminate / scheduled / delivered / skipped / canceled_by_kitchen |
+| Cook day menu publish | “Menu yet to be updated” on cards |
+| Cook cancel day | Notifies customer |
+| Subscriber count on kitchen DTO | Social proof |
+| Past subscription history | Active / Past tabs |
+
+---
+
+## 4. Issues to close (must fix, not defer)
+
+Tracked as **definition of done** for this programme — not optional polish.
+
+| # | Issue | Fix criteria |
+|---|--------|--------------|
+| I1 | Railway kitchens empty / MikroORM blind | ✅ seed-tiffin on boot + `shc-tiffin-pg` (done 2026-07-09); keep greening in CI smoke |
+| I2 | Web tiffin missing | ✅ routes shipped; must stay wired + visually overhauled with mobile |
+| I3 | Customer Maestro skipped when kitchens 404 | Re-enable full `tiffin-subscribe` when kitchens ≥1 live |
+| I4 | Unwired CTAs / empty shells | Every tiffin button hits api-client; no dead “coming soon” |
+| I5 | Order list lacks tiffin calendar mode | Calendar strip + instance cards on customer orders |
+| I6 | No skip/pause/flex | Business rules + API + UI all three surfaces |
+| I7 | Manage lacks metrics / history | Deliveries left, flex, expiry, past subs |
+| I8 | Cook cannot publish menu / cancel day | Cook mobile + portal + API |
+| I9 | Empty states look unfinished | `34`-grade empties on browse, orders, manage, cook config |
+| I10 | Tri-platform drift | Same IA + `@shc/ui` tokens on web + both apps |
+| I11 | API goals without Railway push | `TOUCHES_API=1` → push main → curl live |
+| I12 | CI/web build regressions (`@shc/types`, etc.) | Fix properly so ship path stays green |
+
+---
+
+## 5. Target IA (customer) — overhaul, not replacement
+
+Keep existing tabs; **elevate** tiffin inside them.
 
 ```
 Discover
-  └─ Promo "Weekly tiffin" ──► TiffinBrowse (kitchens)
-Account / Profile tile ─────► same
+  ├─ Marketplace rails (unchanged capability)
+  └─ Tiffin promo / category entry ──► TiffinBrowse
 
 TiffinBrowse
-  ├─ KitchenCard ──► TiffinKitchen
-  │                    ├─ Subscribe funnel
-  │                    └─ Order once (marketplace)
-  └─ Active banner ──► MyTiffinSubscriptions (or Manage if single)
+  ├─ KitchenCard ──► Kitchen
+  │                    ├─ Subscribe funnel (meals/week → confirm → planner)
+  │                    └─ Order once (existing cart, same cook)
+  └─ Active plan banner ──► Manage / Subscriptions
 
-MyTiffinSubscriptions
-  Active | Past
-  └─ card ──► ManageSubscription
-                 ├─ Pause / Recharge / Cancel
-                 ├─ Edit pattern / slots / instructions
-                 └─ Open planner (week template)
+Orders (enhanced when sub active)
+  ├─ One-off orders (existing)
+  └─ Calendar strip + TiffinOrderCards (new layer, same tab)
 
-Orders tab (enhanced)
-  └─ Calendar strip + TiffinOrderCards (5 states)
-        ├─ Customize extras
-        └─ Skip (flex)
+Profile
+  └─ Tiffin tile ──► Browse or Manage
 ```
 
-**Bottom nav:** do **not** force HomelyEats four-tab rename; integrate into existing SHC tabs (Discover / Orders / Profile + hidden tiffin stack). Optionally add Orders calendar mode when user has active tiffin.
+Cook:
 
----
-
-## 4. Implementation phases (PR plan)
-
-### Phase A — Spec freeze (docs only)
-
-- [x] Extract case study + images (this folder)  
-- [ ] Patch `05-data-model`, `06-api-surface`, `09-order-state` (or tiffin subsection) with proposed states  
-- [ ] Add decision tree `DECISION_TREES/tiffin-subscription-homelyeats.md` if needed  
-- [ ] Lock D1–D8 in `00-locked-decisions` or tiffin section  
-
-### Phase B — Domain + API
-
-| Work | Files (approx) |
-|------|----------------|
-| Migration: subscription columns + order instance fields + ledger table | `apps/medusa/src/modules/shc-tiffin/` |
-| Business rules | `packages/business-rules/src/tiffin.ts` + tests |
-| API | `GET/POST` skip, pause, resume, recharge, cancel-with-reason; order customize |
-| Materialiser | set initial status `scheduled`/`indeterminate`; honour skips |
-| DTOs | kitchen subscriber_count; flex/balance fields |
-| Api-client | methods + types in `packages/shc-api-client`, `shc-types` |
-
-**Verify:** `TOUCHES_API=1` → push main → curl Railway routes.
-
-### Phase C — Customer UI (mobile)
-
-| Screen | HomelyEats ref | SHC path |
-|--------|----------------|----------|
-| Browse + cards | `18`, `22` | `tiffin/index.tsx` |
-| Kitchen | `23` | `tiffin/kitchen/[cookId].tsx` |
-| Subscribe | `24` | kitchen + confirm |
-| Manage | `29` | `tiffin/manage.tsx` |
-| Subscriptions list | `28` | new or manage if single-only |
-| Orders calendar | `25` | orders index mode or `tiffin/orders.tsx` |
-| Customize | `26` | order detail tray |
-| Skip | `27` | order card action |
-| Pause / Recharge / Cancel | `30`–`32` | manage sheets |
-| Empty | `34` | all of above |
-
-Shared: extend `@shc/ui` `tiffin-ux.tsx` (status chips, calendar strip, plan metrics). **Family Values**, not orange.
-
-**Verify:** `FLAVOUR=wiring SCOPE=tiffin pnpm verify:goal` + Maestro tiffin flows.
-
-### Phase D — Cook UI
-
-- Menu publish for upcoming collection days  
-- Cancel day reason  
-- Config: windows, flex defaults, plan taglines  
-- Dashboard metrics: active subscribers  
-
-**Verify:** cook Maestro `tiffin-config` extended.
-
-### Phase E — Web parity
-
-- Customer: browse / manage / calendar  
-- Cook portal: config + menu  
-
-### Phase F — Polish
-
-- Empty states, copy, push notifications on cancel/skip/menu ready  
-- Feature flags off → on  
-- `pnpm verify:full` milestone  
-
----
-
-## 5. State model to implement
-
-### SubscriptionStatus
-
-```ts
-type TiffinSubscriptionStatus =
-  | "active"
-  | "paused"
-  | "expired"
-  | "canceled";
+```
+Dashboard
+  └─ Tiffin quick action ──► Config + Menu publish + Subscriber metrics
+Orders
+  └─ Tiffin instances appear with kitchen cancel when applicable
 ```
 
-Card presentation layer derives:
-
-- `active` + `expires_on - now <= 3d` → **Expires soon** chip  
-- `paused` → **Paused till date**  
-- `canceled` / `expired` → Past tab  
-
-### TiffinOrderInstanceStatus
-
-```ts
-type TiffinOrderInstanceStatus =
-  | "indeterminate"
-  | "scheduled"
-  | "delivered"      // map to SHC completed / collected as product decides
-  | "skipped"
-  | "canceled_by_kitchen";
-```
-
-Map onto existing `shc_order_meta` status machine carefully — either:
-
-- **Option 1 (preferred):** tiffin-specific status field parallel to marketplace order status  
-- **Option 2:** reuse marketplace states with skip as terminal side-state  
-
-Document choice in `09-order-state.md`.
-
-### Cutoff helper
-
-```ts
-function canMutateTiffinOrder(slotStart: Date, now = new Date(), hours = 8) {
-  return now.getTime() <= slotStart.getTime() - hours * 3600_000;
-}
-```
+Web mirrors paths 1:1: `/tiffin/*`, `/orders` calendar mode, `/cook-portal/tiffin`.
 
 ---
 
-## 6. API sketch (additive)
+## 6. Visual system (UI overhaul rules)
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| GET | `/store/shc/tiffin/subscription` | customer | Expand DTO (status, balance, flex, expires) |
-| POST | `/store/shc/tiffin/subscription/pause` | customer | body: until_date |
-| POST | `/store/shc/tiffin/subscription/resume` | customer | |
-| POST | `/store/shc/tiffin/subscription/recharge` | customer | body: package_id |
-| POST | `/store/shc/tiffin/subscription/cancel` | customer | body: reason |
-| GET | `/store/shc/tiffin/orders?from&to` | customer | Calendar range of meal instances |
-| POST | `/store/shc/tiffin/orders/:id/skip` | customer | flex |
-| POST | `/store/shc/tiffin/orders/:id/customize` | customer | extras + pay |
-| PUT | `/store/shc/tiffin/cook/menu` | cook | publish day menu |
-| POST | `/store/shc/tiffin/orders/:id/kitchen-cancel` | cook | reason |
-
-Existing routes remain; expand, don’t break.
+1. **Do not** restyle the product to HomelyEats orange.  
+2. **Do** match HomelyEats **structure**: annotated hierarchy, card variants, horizontal calendar, metric rows, bottom sticky CTAs, empty illustrations.  
+3. Tokens: Family Values + Gourmeat (`brand.md`, `design-taste.md`, `@shc/ui/theme`).  
+4. Motion: trays, morph labels, directional tabs — existing Family Values stack.  
+5. Reference images while building: open `images/semantic-*.png` for the screen under work.  
+6. **Tri-platform:** change component once in `@shc/ui` (or paired web export), then all surfaces.
 
 ---
 
-## 7. UI component checklist (`@shc/ui`)
+## 7. Domain + API (additive only)
 
-| Component | HomelyEats ref | Notes |
-|-----------|----------------|-------|
-| `TiffinCalendarStrip` | `25` | horizontal days |
-| `TiffinOrderCard` + variants | `25` | 5 states + CUSTOMIZABLE tag |
-| `TiffinSubscriptionCard` | `28` | 5 variants |
-| `TiffinPlanMetrics` | `29` | balance / deliveries / flex / expiry |
-| `TiffinKitchenCard` | `18`/`22` | rating, price band, subscriber count |
-| `TiffinPromoBanner` | `18` | discover |
-| `TiffinEmptyState` | `34` | |
-| Status chips | — | map to Family Values colours |
+### 7.1 Defaults (implement without waiting)
+
+| # | Decision | Default |
+|---|----------|---------|
+| D1 | Multi-kitchen concurrent | **No** (keep one active) |
+| D2 | Billing model v1 | Keep weekly price display; add **fields** for balance/recharge UI (can be cosmetic until PayU) |
+| D3 | Flex quota | `max(2, meals_per_week - 1)` per period (adjustable) |
+| D4 | Cutoff | **8 hours** before collection slot start |
+| D5 | Fulfillment | **Collection** |
+| D6 | Materialise | Keep Mon worker + project calendar from template |
+| D7 | Debit / complete | Align with existing order state machine |
+| D8 | One-time | Existing cart/checkout |
+
+### 7.2 Additive API (do not break existing)
+
+Existing routes stay. Expand DTOs; add:
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/store/shc/tiffin/subscription` | + status, flex, expires, deliveries_left |
+| POST | `…/subscription/pause` · `resume` · `recharge` · `cancel` | Manage OS |
+| GET | `/store/shc/tiffin/orders?from&to` | Calendar instances |
+| POST | `…/orders/:id/skip` · `customize` | Flex + extras |
+| PUT | `/store/shc/tiffin/cook/menu` | Day menu publish |
+| POST | `…/orders/:id/kitchen-cancel` | Kitchen cancel |
+
+Kitchen list continues via pg path (`shc-tiffin-pg`) until MikroORM is proven.
+
+### 7.3 States
+
+**Subscription:** `active` | `paused` | `expired` | `canceled` (+ UI chips: expires soon, paused till).
+
+**Meal instance:** `indeterminate` | `scheduled` | `delivered` | `skipped` | `canceled_by_kitchen`  
+Prefer **parallel field** on tiffin-backed `shc_order_meta` rather than breaking marketplace order SM.
 
 ---
 
-## 8. What NOT to copy
+## 8. Implementation waves (tri-platform each wave)
 
-1. Orange primary brand  
-2. Pure delivery-radius model without founder OK  
-3. Multi concurrent kitchen subscriptions (unless D1 unlocked)  
-4. INR / Indian meal taxonomy as default (map to SG heritage cuisines)  
-5. Guest checkout against SHC auth guards — guest **browse** OK; subscribe still JWT  
+Each wave = **one goal**: many commits → one `FLAVOUR=* SCOPE=tiffin pnpm verify:goal` → blueprint patch → push if API.
+
+### Wave 0 — Baseline green (in progress / done)
+
+- [x] Case study extract + images  
+- [x] Railway seed + kitchens live  
+- [x] Web tiffin routes scaffold  
+- [ ] Maestro customer tiffin re-enabled against live kitchens  
+- [ ] CI blockers that break ship (I12) fixed  
+
+### Wave 1 — UI foundation (highest priority)
+
+**Flavour:** `polish` + `tri-platform` · **No API required first**
+
+1. `@shc/ui` tiffin kit: calendar strip, order card variants, subscription cards, plan metrics, kitchen card, empty states (refs `18`–`25`, `28`–`29`, `34`).  
+2. Restyle existing customer tiffin screens (mobile + web) to kit.  
+3. Restyle cook tiffin config (mobile + portal).  
+4. Discover/profile entry polish (promo, active-plan banner).  
+5. Empty states everywhere tiffin can be empty.
+
+**Done when:** Visual parity web + both apps; no new dead ends; screenshots match structure of case study (not palette).
+
+### Wave 2 — Orders calendar + instance presentation
+
+**Flavour:** `feature` + `wiring`
+
+1. API: list tiffin meal instances for date range (even if thin wrapper over materialised orders).  
+2. Customer Orders tab: calendar mode when sub active (mobile + web).  
+3. Card states + “menu not updated” / CUSTOMIZABLE tag (cutoff-aware once rules land).  
+4. Preserve one-off order list.
+
+### Wave 3 — Flexibility OS (skip / pause / cancel reasons)
+
+**Flavour:** `feature` + `wiring` · **TOUCHES_API=1**
+
+1. Business rules: flex, 8h cutoff, pause extend.  
+2. API: skip, pause, resume, cancel+reason.  
+3. UI: manage metrics + actions (mobile + web).  
+4. Cook: kitchen-cancel day + notify.  
+5. Push copy for skip/cancel.
+
+### Wave 4 — Cook menu + trust + social proof
+
+1. Cook publish menu for day.  
+2. Kitchen DTO: subscriber_count, open hours if available.  
+3. Subscribe funnel trust copy (allergens, collection, one kitchen).  
+
+### Wave 5 — Recharge / ledger UX (additive)
+
+1. Schema fields for balance/deliveries if not present.  
+2. Recharge UI (can post to stub/ledger until real PayU).  
+3. Transaction list on manage (ref `29`).  
+
+### Wave 6 — Harden + ship
+
+1. Maestro Android + iOS: cook config, customer subscribe, skip, pause.  
+2. `pnpm verify:full`.  
+3. Railway smoke curl suite for all new routes.  
+4. Blueprint full sync (05/06/09/10/12/CURRENT/INDEX).
 
 ---
 
-## 9. Verification matrix
+## 9. Per-surface checklist (every wave)
 
-| Phase | Command |
-|-------|---------|
-| Mid-build domain | `FILTER=business-rules pnpm verify:wip` |
+| Check | Customer mobile | Cook mobile | Web |
+|-------|-----------------|-------------|-----|
+| Screen exists | ✓ | ✓ | ✓ |
+| Wired to `@shc/api-client` | ✓ | ✓ | ✓ |
+| Family Values / Gourmeat | ✓ | ✓ | ✓ |
+| testIDs stable | ✓ | ✓ | data-testid |
+| Empty + error | ✓ | ✓ | ✓ |
+| iOS + Android | Expo both | Expo both | PWA |
+| Blueprint notes | same commit | same | same |
+
+---
+
+## 10. What NOT to do
+
+1. Remove marketplace, cart, credits, requests, heritage, ops, or compliance.  
+2. Swap stack or point clients at localhost Medusa.  
+3. Copy HomelyEats orange / multi-kitchen / delivery-only model.  
+4. Ship mobile-only redesigns that leave web or cook portal behind.  
+5. Swallow API errors into empty arrays without logging (lessons from tiffin kitchen list).  
+6. Declare API goals done without `git push origin main` + live curl.  
+7. “Temporary” unwired CTAs.  
+8. Delete old routes before clients migrate (expand → dual-read → switch).
+
+---
+
+## 11. Verification
+
+| Wave | Command |
+|------|---------|
+| UI | `FLAVOUR=polish SCOPE=tiffin pnpm verify:goal` |
+| Wiring | `FLAVOUR=wiring SCOPE=tiffin pnpm verify:goal` |
 | API | `TOUCHES_API=1` + Railway curl after push |
-| Mobile wiring | `FLAVOUR=wiring SCOPE=tiffin pnpm verify:goal` |
-| UI polish | `FLAVOUR=polish SCOPE=tiffin pnpm verify:goal` |
+| Native | `RISK=native` / Maestro Android + iOS |
 | Milestone | `pnpm verify:full` |
 
-Maestro: extend `tiffin-subscribe.yaml` with skip/pause; cook menu publish.
+Device:
+
+```bash
+bash scripts/start-mobile-dev.sh   # :8081 + :8082 → Railway
+pnpm web:dev                       # :3001
+bash scripts/run-tiffin-e2e.sh
+```
 
 ---
 
-## 10. Agent execution order (when building)
+## 12. Success criteria (programme)
 
-1. Read this plan + open referenced images for the screen you touch  
-2. Update blueprint data/API/state sections **same PR** as schema  
-3. Rules + tests first  
-4. API + materialiser  
-5. `@shc/ui` components  
-6. Customer screens  
-7. Cook screens  
-8. Web  
-9. `CURRENT_STATE.md` + `INDEX.md` Last Updated  
+- [ ] No existing SHC feature regressed or removed.  
+- [ ] Tiffin feels **subscription-centric** on **web + customer app + cook app** (iOS and Android).  
+- [ ] Calendar meal management + flex/skip + pause + cancel reasons live.  
+- [ ] Cook can configure kitchen, publish menu, cancel a day.  
+- [ ] Empty states and status chips match case-study clarity (SHC brand).  
+- [ ] Railway seed keeps kitchens non-empty; smoke never skips for 404.  
+- [ ] Blueprint + CURRENT_STATE accurate; CI ship path healthy.  
 
 ---
 
-## 11. Success criteria
+## 13. Agent start order (next goal)
 
-- Customer can subscribe, see **calendar of upcoming tiffin meals**, **skip** with flex, **pause**, **recharge**, **cancel with reason**.  
-- Order cards show HomelyEats-equivalent states with SHC collection language.  
-- Manage screen shows deliveries left / flex / expiry (and balance if D2 prepaid).  
-- Cook can publish menu + cancel a day.  
-- One-kitchen rule enforced.  
-- Family Values visual system.  
-- Blueprint synced; Railway live if API touched.
+1. Read this file + open priority images in [IMAGE_INDEX.md](./IMAGE_INDEX.md).  
+2. **Wave 1** first (UI foundation tri-platform) unless blocked by I12 CI.  
+3. Then Wave 2 → 3 (calendar + flex) with API.  
+4. Self-update blueprint every behaviour change.
 
 ---
 
-*References: [CASE_STUDY.md](./CASE_STUDY.md) · [IMAGE_INDEX.md](./IMAGE_INDEX.md) · SHC [CURRENT_STATE.md](../../CURRENT_STATE.md) · `packages/business-rules/src/tiffin.ts`*
+*Related: [CASE_STUDY.md](./CASE_STUDY.md) · [CURRENT_STATE.md](../../CURRENT_STATE.md) · [agent/design-taste.md](../../agent/design-taste.md) · [agent/verify-protocol.md](../../agent/verify-protocol.md) · `.agents/skills/tri-platform-ui-sync/`*

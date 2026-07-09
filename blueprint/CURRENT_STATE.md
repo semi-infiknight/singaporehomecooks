@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Tiffin seed + web parity live**: Railway kitchens returns Auntie Rose (`GET /store/shc/tiffin/kitchens` ≥1); `seed-tiffin` on boot + `shc-tiffin-pg`; customer `/tiffin/*` + cook `/cook-portal/tiffin`. HEAD `e5aa34a`.
+**Last Updated:** 2026-07-09 — **HomelyEats redesign plan locked** (UI/flow overhaul, no feature removal, tri-platform simultaneous): `references/homelyeats-case-study/REDESIGN_PLAN.md`. Prior: tiffin seed + web parity live (kitchens ≥1 on Railway).
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -274,7 +274,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 |------|-----|----------|
 | Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
-| **Tiffin HomelyEats redesign** | Subscription OS (flex days, calendar order states, pause/recharge/manage IA) — brief ready in `references/homelyeats-case-study/REDESIGN_PLAN.md` | P1 (product) |
+| **Tiffin HomelyEats redesign** | UI/flow overhaul + additive subscription OS; **no feature removal**; web + both apps iOS/Android same waves — [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md) | P0 (product) |
 | **Tiffin web parity** | Customer `/tiffin/*` + cook `/cook-portal/tiffin` shipped | done |
 | **Tiffin seed on Railway** | Always-on `seed-tiffin` + pg kitchen config | done |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |

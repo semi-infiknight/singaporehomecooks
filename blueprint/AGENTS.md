@@ -4,7 +4,7 @@
 
 **Start:** [README.md](./README.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)
 
-**Latest (2026-07-09):** Tiffin weekly subscription live on mobile + Railway `/store/shc/tiffin/*`. See `CURRENT_STATE.md` §tiffin + `10-mobile/10-mobile.md`. API goals require `git push origin main` before done.
+**Latest (2026-07-09):** HomelyEats redesign plan locked — UI/flow overhaul, **no feature removal**, simultaneous web + customer + cook (iOS/Android). See `references/homelyeats-case-study/REDESIGN_PLAN.md` + `CURRENT_STATE.md`. API goals require `git push origin main` before done.
 
 ## Cold-start order
 
