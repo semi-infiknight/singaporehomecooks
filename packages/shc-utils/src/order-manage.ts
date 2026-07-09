@@ -72,9 +72,10 @@ export type AddItemSuccess = {
 };
 
 export function menuUpdatedSuccessCopy(addedLabel: string): AddItemSuccess {
+  const display = formatMenuLineDisplay(addedLabel);
   return {
     title: 'Menu Updated!',
-    subtitle: addedLabel.startsWith('+') ? addedLabel : `+ ${addedLabel}`,
+    subtitle: display.startsWith('+') ? display : `+${display.startsWith('1 ') ? display.slice(2) : display}`,
   };
 }
 
@@ -94,6 +95,20 @@ export function computeAddItemsExtraTotal(
   return Math.max(0, full - baseOnly);
 }
 
+/** Prefix so UI can show EXTRA ITEM badge (HomelyEats manage menu). */
+export const EXTRA_MENU_LINE_PREFIX = 'extra:';
+
+export function isExtraMenuLine(line: string): boolean {
+  return String(line || '').startsWith(EXTRA_MENU_LINE_PREFIX);
+}
+
+/** Display label without internal prefix, e.g. "1 Ghee Tawa Roti". */
+export function formatMenuLineDisplay(line: string): string {
+  const raw = String(line || '');
+  if (isExtraMenuLine(raw)) return raw.slice(EXTRA_MENU_LINE_PREFIX.length);
+  return raw;
+}
+
 export function describeAddedExtras(
   draft: KitchenMealCustomizeDraft,
   extras: KitchenMealOption[],
@@ -107,7 +122,25 @@ export function describeAddedExtras(
     if (a) parts.push(a.label);
   }
   if (!parts.length) return 'Menu preferences saved';
-  return parts.map((p) => `+1 ${p}`).join(', ');
+  // One primary extra line for success + menu (qty on first selected add)
+  const label = parts[0];
+  return `${EXTRA_MENU_LINE_PREFIX}${draft.qty} ${label}`;
+}
+
+/** All extra lines to append when multiple add-ons selected. */
+export function describeAddedExtraLines(
+  draft: KitchenMealCustomizeDraft,
+  extras: KitchenMealOption[],
+  addons: KitchenMealOption[]
+): string[] {
+  const lines: string[] = [];
+  const ex = extras.find((e) => e.id === draft.extraId && e.priceDelta > 0);
+  if (ex) lines.push(`${EXTRA_MENU_LINE_PREFIX}${draft.qty} ${ex.label}`);
+  for (const id of draft.addonIds) {
+    const a = addons.find((x) => x.id === id);
+    if (a) lines.push(`${EXTRA_MENU_LINE_PREFIX}${draft.qty} ${a.label}`);
+  }
+  return lines;
 }
 
 export function kitchenExtrasForDish(dish: Record<string, unknown>): KitchenMealOption[] {
@@ -146,10 +179,15 @@ export function buildManageViewFromDayCard(card: {
 
 export function mergeMenuLinesWithAdd(
   existing: string[],
-  addedDescription: string
+  addedDescription: string | string[]
 ): string[] {
-  if (!addedDescription || addedDescription === 'Menu preferences saved') return existing;
-  return [...existing, addedDescription];
+  const adds = Array.isArray(addedDescription) ? addedDescription : [addedDescription];
+  const next = [...existing];
+  for (const a of adds) {
+    if (!a || a === 'Menu preferences saved') continue;
+    next.push(a);
+  }
+  return next;
 }
 
 export function defaultAddItemDishFromMenu(menuLines: string[], cookName: string): Record<string, unknown> {

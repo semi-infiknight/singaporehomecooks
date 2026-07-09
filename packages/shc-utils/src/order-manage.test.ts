@@ -8,10 +8,14 @@ import {
   menuUpdatedSuccessCopy,
   computeAddItemsExtraTotal,
   describeAddedExtras,
+  describeAddedExtraLines,
   mergeMenuLinesWithAdd,
   buildManageViewFromDayCard,
   addItemsProceedLabel,
   buildManageOrderQuery,
+  isExtraMenuLine,
+  formatMenuLineDisplay,
+  EXTRA_MENU_LINE_PREFIX,
 } from './order-manage';
 import { buildCustomizeDraft, kitchenMealExtraOptions, kitchenMealAddonOptions } from './kitchen-order';
 
@@ -44,11 +48,28 @@ describe('order manage flow helpers', () => {
     expect(describeAddedExtras(draft, extras, addons)).toMatch(/Coconut|sambal/i);
   });
 
-  it('builds success copy and merges menu lines', () => {
-    const ok = menuUpdatedSuccessCopy('+1 Ghee Tawa Roti');
+  it('builds success copy and merges menu lines with EXTRA ITEM prefix', () => {
+    const line = `${EXTRA_MENU_LINE_PREFIX}1 Ghee Tawa Roti`;
+    expect(isExtraMenuLine(line)).toBe(true);
+    expect(formatMenuLineDisplay(line)).toBe('1 Ghee Tawa Roti');
+    const ok = menuUpdatedSuccessCopy(line);
     expect(ok.title).toBe('Menu Updated!');
-    expect(ok.subtitle).toContain('Ghee');
-    expect(mergeMenuLinesWithAdd(['3 roti'], '+1 pickle')).toEqual(['3 roti', '+1 pickle']);
+    expect(ok.subtitle).toMatch(/Ghee/i);
+    expect(mergeMenuLinesWithAdd(['3 roti'], line)).toEqual(['3 roti', line]);
+  });
+
+  it('describeAddedExtraLines tags paid extras for menu UI', () => {
+    const dish = { id: 'd1', name: 'Nasi', price: 12, cuisine: 'Malay', halal: true };
+    const draft = buildCustomizeDraft(dish);
+    draft.extraId = 'coconut-rice';
+    draft.addonIds = ['sambal'];
+    const lines = describeAddedExtraLines(
+      draft,
+      kitchenMealExtraOptions(dish),
+      kitchenMealAddonOptions(dish)
+    );
+    expect(lines.every(isExtraMenuLine)).toBe(true);
+    expect(formatMenuLineDisplay(lines[0]!)).toMatch(/1 /);
   });
 
   it('maps day card to manage view and query string', () => {

@@ -23,7 +23,10 @@ import {
   menuUpdatedSuccessCopy,
   computeAddItemsExtraTotal,
   describeAddedExtras,
+  describeAddedExtraLines,
   mergeMenuLinesWithAdd,
+  formatMenuLineDisplay,
+  isExtraMenuLine,
   addItemsProceedLabel,
   defaultAddItemDishFromMenu,
   dayOrderStatusChip,
@@ -92,8 +95,9 @@ export default function ManageOrderScreen() {
 
   const confirmAddItems = useCallback(() => {
     if (!draft) return;
+    const addedLines = describeAddedExtraLines(draft, extras, addons);
     const added = describeAddedExtras(draft, extras, addons);
-    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, added));
+    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, addedLines.length ? addedLines : added));
     setShowAddItems(false);
     setDraft(null);
     setSuccess(menuUpdatedSuccessCopy(added));
@@ -162,11 +166,24 @@ export default function ManageOrderScreen() {
           {menuPending && menuLines.length === 0 ? (
             <Text style={styles.menuPending}>Menu yet to be updated</Text>
           ) : (
-            menuLines.map((line) => (
-              <Text key={line} style={styles.menuLine}>
-                · {line}
-              </Text>
-            ))
+            menuLines.map((line, idx) => {
+              const extra = isExtraMenuLine(line);
+              const label = formatMenuLineDisplay(line);
+              return (
+                <View
+                  key={`${line}-${idx}`}
+                  style={[styles.menuLineRow, extra && styles.menuLineRowExtra]}
+                  testID={extra ? 'order-menu-extra-line' : 'order-menu-base-line'}
+                >
+                  <Text style={styles.menuLine}>· {label}</Text>
+                  {extra ? (
+                    <Text style={styles.extraTag} testID="order-menu-extra-tag">
+                      EXTRA ITEM
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })
           )}
           {customizable && effectiveStatus === 'scheduled' ? (
             <Text style={styles.customTag}>CUSTOMIZABLE</Text>
@@ -336,7 +353,32 @@ const styles = StyleSheet.create({
   },
   menuLabel: { fontSize: 11, fontWeight: '800', color: gourmeatColors.textLight, marginBottom: 6 },
   menuPending: { fontStyle: 'italic', fontWeight: '600', color: gourmeatColors.textLight },
-  menuLine: { fontSize: 14, fontWeight: '600', marginTop: 4 },
+  menuLineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 6,
+  },
+  menuLineRowExtra: {
+    backgroundColor: '#E8F5E9',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+  },
+  menuLine: { fontSize: 14, fontWeight: '600', flex: 1, color: gourmeatColors.text },
+  extraTag: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#2E7D32',
+    backgroundColor: '#C8E6C9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
   customTag: { marginTop: 8, fontSize: 10, fontWeight: '900', color: gourmeatColors.primary },
   rowCard: {
     borderWidth: 2,

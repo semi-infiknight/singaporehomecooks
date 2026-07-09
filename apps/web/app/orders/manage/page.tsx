@@ -16,7 +16,10 @@ import {
   menuUpdatedSuccessCopy,
   computeAddItemsExtraTotal,
   describeAddedExtras,
+  describeAddedExtraLines,
   mergeMenuLinesWithAdd,
+  formatMenuLineDisplay,
+  isExtraMenuLine,
   addItemsProceedLabel,
   defaultAddItemDishFromMenu,
   dayOrderStatusChip,
@@ -80,12 +83,12 @@ function ManageOrderInner() {
   const confirmAddItems = useCallback(() => {
     if (!draft) return;
     const extraTotal = computeAddItemsExtraTotal(draft, extras, addons);
+    const addedLines = describeAddedExtraLines(draft, extras, addons);
     const added = describeAddedExtras(draft, extras, addons);
-    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, added));
+    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, addedLines.length ? addedLines : added));
     setShowAddItems(false);
     setDraft(null);
     setSuccess(menuUpdatedSuccessCopy(added));
-    // Pay-on-spot for paid extras is simulated: real checkout can deep-link later
     void extraTotal;
   }, [draft, extras, addons]);
 
@@ -186,12 +189,30 @@ function ManageOrderInner() {
         {menuPending && menuLines.length === 0 ? (
           <p className="text-sm font-semibold text-muted-foreground italic">Menu yet to be updated</p>
         ) : (
-          <ul className="space-y-1">
-            {menuLines.map((line) => (
-              <li key={line} className="text-sm font-semibold">
-                · {line}
-              </li>
-            ))}
+          <ul className="space-y-2" data-testid="order-manage-menu-list">
+            {menuLines.map((line, idx) => {
+              const extra = isExtraMenuLine(line);
+              const label = formatMenuLineDisplay(line);
+              return (
+                <li
+                  key={`${line}-${idx}`}
+                  className={`flex items-center justify-between gap-2 text-sm font-semibold ${
+                    extra ? 'rounded-lg border border-green-200 bg-green-50 px-2 py-1.5' : ''
+                  }`}
+                  data-testid={extra ? 'order-menu-extra-line' : 'order-menu-base-line'}
+                >
+                  <span>· {label}</span>
+                  {extra ? (
+                    <span
+                      className="shrink-0 text-[10px] font-black uppercase tracking-wide text-green-700 bg-green-100 px-2 py-0.5 rounded"
+                      data-testid="order-menu-extra-tag"
+                    >
+                      Extra item
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         )}
         {customizable && effectiveStatus === 'scheduled' && (
