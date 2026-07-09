@@ -612,6 +612,28 @@ export async function pgUpsertMealCustom(input: {
   });
 }
 
+export async function pgGetMealCustom(
+  subscriptionId: string,
+  collectionDate: string
+): Promise<TiffinMealCustom | null> {
+  return withPg(async (pg) => {
+    await ensureMetaTables(pg);
+    const r = await pg.query(
+      `SELECT * FROM shc_tiffin_meal_custom WHERE subscription_id = $1 AND collection_date = $2 LIMIT 1`,
+      [subscriptionId, collectionDate]
+    );
+    const row = r.rows[0];
+    if (!row) return null;
+    return {
+      subscription_id: row.subscription_id,
+      collection_date: row.collection_date,
+      extra_lines: Array.isArray(row.extra_lines) ? row.extra_lines : row.extra_lines || [],
+      amount_cents: Number(row.amount_cents || 0),
+      paynow_ref: row.paynow_ref,
+    };
+  });
+}
+
 export async function pgListMealCustoms(
   subscriptionId: string,
   fromIso?: string,

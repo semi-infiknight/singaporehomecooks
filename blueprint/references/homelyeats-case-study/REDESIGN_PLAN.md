@@ -308,8 +308,10 @@ Gap audit vs CASE_STUDY + image specs closed implementable leftovers (no rebuild
 4. [x] **Plan duration weeks** — subscribe body `weeks` → opening balance / deliveries / expires_on  
 5. [x] **Past subscription history** — `past_subscriptions` on GET + Active/Past tabs  
 6. [x] **Kitchen Order once** CTA → PDP (mobile + web)  
-7. [x] **Manage notes persist** — `PATCH /subscription/notes` cooking + collection  
+7. [x] **Manage notes persist (tri-platform)** — `PATCH /subscription/notes`; **web + mobile** cooking/collection fields + Save  
 8. [x] Unit + smoke extended (customize + notes); redeploy medusa for live write path  
+9. [x] **Honest order-manage errors** — skip/customize failures surface error (no fake success) mobile + web  
+10. [x] **Customize wallet delta** — re-customize same date debits only `customizeWalletAdjustCents` delta (no double-charge)  
 
 **Explicit non-goals (still):** HomelyEats orange; delivery radius; multi-kitchen concurrent subs; full guest OTP redesign; real PayU rails; per-order slot persistence (local UX ok); WhatsApp reminder network (device toggle only).
 

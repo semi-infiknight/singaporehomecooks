@@ -18,6 +18,20 @@ export type TiffinMealInstanceStatus =
 /** HomelyEats: customize/skip only if ≥ 8h before collection slot. */
 export const TIFFIN_CUSTOMIZE_CUTOFF_HOURS = 8;
 
+/**
+ * Wallet adjust for re-customize on the same collection date.
+ * `amount_cents` is the **absolute** extras total for that meal (upsert replaces lines).
+ * Positive result = debit; negative = credit (refund when extras reduced).
+ */
+export function customizeWalletAdjustCents(
+  newAmountCents: number,
+  priorAmountCents: number
+): number {
+  const next = Math.max(0, Math.floor(Number(newAmountCents) || 0));
+  const prior = Math.max(0, Math.floor(Number(priorAmountCents) || 0));
+  return next - prior;
+}
+
 /** Flex days per period: max(2, meals_per_week - 1). */
 export function defaultFlexQuota(mealsPerWeek: number): number {
   const n = Number.isFinite(mealsPerWeek) ? Math.floor(mealsPerWeek) : 3;

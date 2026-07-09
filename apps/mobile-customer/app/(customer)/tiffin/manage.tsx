@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -19,6 +19,7 @@ import {
   useCancelTiffin,
   useSubscribeTiffin,
   useResumeTiffin,
+  useUpdateTiffinNotes,
 } from '../../../hooks/useTiffin';
 
 const CANCEL_REASONS = [
@@ -36,15 +37,40 @@ export default function TiffinManageScreen() {
   const cancelMut = useCancelTiffin();
   const subscribeMut = useSubscribeTiffin();
   const resumeMut = useResumeTiffin();
+  const notesMut = useUpdateTiffinNotes();
   const [showReasons, setShowReasons] = useState(false);
+  const [cookingNotes, setCookingNotes] = useState('');
+  const [collectionNotes, setCollectionNotes] = useState('');
+  const [notesSaved, setNotesSaved] = useState(false);
+  const [notesError, setNotesError] = useState('');
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
   const dishes = kitchen?.dishes || [];
 
+  useEffect(() => {
+    if (sub?.cooking_notes != null) setCookingNotes(String(sub.cooking_notes || ''));
+    if (sub?.collection_notes != null) setCollectionNotes(String(sub.collection_notes || ''));
+  }, [sub?.id, sub?.cooking_notes, sub?.collection_notes]);
+
   const handleCancel = async (reason: string) => {
     await cancelMut.mutateAsync(reason);
     router.replace('/(customer)/tiffin' as any);
+  };
+
+  const handleSaveNotes = async () => {
+    setNotesError('');
+    setNotesSaved(false);
+    try {
+      await notesMut.mutateAsync({
+        cooking_notes: cookingNotes || null,
+        collection_notes: collectionNotes || null,
+      });
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2000);
+    } catch (e: any) {
+      setNotesError(e?.message || 'Could not save instructions.');
+    }
   };
 
   if (isLoading) {
@@ -176,6 +202,41 @@ export default function TiffinManageScreen() {
         ))}
       </View>
 
+      <Text style={styles.section}>Plan settings</Text>
+      <Text style={styles.hint}>Cooking instructions</Text>
+      <TextInput
+        style={styles.notesInput}
+        placeholder="e.g. less spicy · no peanuts"
+        placeholderTextColor={gourmeatColors.textLight}
+        value={cookingNotes}
+        onChangeText={setCookingNotes}
+        multiline
+        testID="manage-cooking-notes"
+      />
+      <Text style={styles.hint}>Collection instructions</Text>
+      <TextInput
+        style={styles.notesInput}
+        placeholder="e.g. call when ready · unit 12-34"
+        placeholderTextColor={gourmeatColors.textLight}
+        value={collectionNotes}
+        onChangeText={setCollectionNotes}
+        multiline
+        testID="manage-collection-notes"
+      />
+      {notesError ? (
+        <Text style={styles.notesError} testID="manage-notes-error">
+          {notesError}
+        </Text>
+      ) : null}
+      <GourmeatPrimaryButton
+        label={notesMut.isPending ? 'Saving…' : notesSaved ? 'Saved' : 'Save instructions'}
+        variant="outline"
+        onPress={handleSaveNotes}
+        loading={notesMut.isPending}
+        testID="manage-save-notes"
+        style={{ marginTop: shcSpacing.xs }}
+      />
+
       <Text style={styles.section}>This week</Text>
       {currentSlots.length === 0 ? (
         <Text style={styles.hint}>No meals planned — pick your weekly menu.</Text>
@@ -269,6 +330,20 @@ const styles = StyleSheet.create({
   meta: { fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.md, marginTop: 4 },
   section: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginTop: shcSpacing.lg, marginBottom: shcSpacing.sm },
   hint: { fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
+  notesInput: {
+    minHeight: 64,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: gourmeatColors.text,
+    backgroundColor: gourmeatColors.surface,
+    marginBottom: shcSpacing.sm,
+    textAlignVertical: 'top',
+  },
+  notesError: { fontSize: 13, fontWeight: '700', color: '#b91c1c', marginBottom: 8 },
   actions: { marginBottom: shcSpacing.md },
   mealsRow: { flexDirection: 'row', gap: 8 },
   reasons: { marginTop: shcSpacing.sm },

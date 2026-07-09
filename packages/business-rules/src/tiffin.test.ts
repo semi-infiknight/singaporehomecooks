@@ -9,6 +9,7 @@ import {
   canMutateTiffinOrder,
   canSkipTiffinMeal,
   canCustomizeTiffinMeal,
+  customizeWalletAdjustCents,
   canPauseSubscription,
   applyPause,
   applyRecharge,
@@ -117,6 +118,19 @@ describe("tiffin business rules", () => {
       now: tooLate,
     });
     expect(customizeLate.ok).toBe(false);
+  });
+
+  it("customize wallet charges only delta on re-customize (absolute amount upsert)", () => {
+    // first extras S$2.00
+    expect(customizeWalletAdjustCents(200, 0)).toBe(200);
+    // same total again → no double charge
+    expect(customizeWalletAdjustCents(200, 200)).toBe(0);
+    // increase to S$3.50 → debit 150
+    expect(customizeWalletAdjustCents(350, 200)).toBe(150);
+    // reduce to S$1.00 → credit 100
+    expect(customizeWalletAdjustCents(100, 200)).toBe(-100);
+    // floor negatives / floats
+    expect(customizeWalletAdjustCents(-5, 50)).toBe(-50);
   });
 
   it("pause consumes flex and extends expiry", () => {

@@ -74,6 +74,7 @@ export default function ManageOrderScreen() {
   const menuPending = p.menuPending === '1';
   const [showAddItems, setShowAddItems] = useState(false);
   const [success, setSuccess] = useState<{ title: string; subtitle: string } | null>(null);
+  const [actionError, setActionError] = useState('');
   const [draft, setDraft] = useState<KitchenMealCustomizeDraft | null>(null);
   const [skipped, setSkipped] = useState(status === 'skipped');
 
@@ -96,6 +97,7 @@ export default function ManageOrderScreen() {
 
   const confirmAddItems = useCallback(async () => {
     if (!draft) return;
+    setActionError('');
     const extraTotal = computeAddItemsExtraTotal(draft, extras, addons);
     const addedLines = describeAddedExtraLines(draft, extras, addons);
     const added = describeAddedExtras(draft, extras, addons);
@@ -109,8 +111,9 @@ export default function ManageOrderScreen() {
           amountCents: Math.round(extraTotal * 100),
           paynowRef: extraTotal > 0 ? `EXTRA-${date}` : null,
         });
-      } catch {
-        /* still show local success for offline resilience */
+      } catch (e: any) {
+        setActionError(e?.message || 'Could not save extras. Try again.');
+        return;
       }
     }
     setMenuLines((prev) => mergeMenuLinesWithAdd(prev, nextLines.length ? nextLines : added));
@@ -121,11 +124,13 @@ export default function ManageOrderScreen() {
 
   const handleSkip = async () => {
     if (!canSkipManageOrder(effectiveStatus)) return;
+    setActionError('');
     if (kind === 'tiffin' && date) {
       try {
         await skipMut.mutateAsync({ collectionDate: date, collectionSlot: timeslot });
-      } catch {
-        /* local */
+      } catch (e: any) {
+        setActionError(e?.message || 'Could not skip this meal.');
+        return;
       }
     }
     setSkipped(true);
@@ -163,6 +168,11 @@ export default function ManageOrderScreen() {
           {cookName}
         </Text>
         <Text style={styles.plan}>{planTitle}</Text>
+        {actionError ? (
+          <Text style={styles.actionError} testID="order-manage-error">
+            {actionError}
+          </Text>
+        ) : null}
 
         <View style={styles.actionsRow}>
           {canSkipManageOrder(effectiveStatus) && (
@@ -341,6 +351,7 @@ const styles = StyleSheet.create({
   slot: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight },
   cook: { fontSize: 20, fontWeight: '900', color: gourmeatColors.text },
   plan: { fontSize: 14, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: 16 },
+  actionError: { fontSize: 13, fontWeight: '700', color: '#b91c1c', marginBottom: 12 },
   actionsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   outlineBtn: {
     flex: 1,

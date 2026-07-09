@@ -58,6 +58,7 @@ function ManageOrderInner() {
   );
   const [showAddItems, setShowAddItems] = useState(false);
   const [success, setSuccess] = useState<{ title: string; subtitle: string } | null>(null);
+  const [actionError, setActionError] = useState('');
   const [draft, setDraft] = useState<KitchenMealCustomizeDraft | null>(null);
   const [skipped, setSkipped] = useState(status === 'skipped');
 
@@ -83,6 +84,7 @@ function ManageOrderInner() {
 
   const confirmAddItems = useCallback(async () => {
     if (!draft) return;
+    setActionError('');
     const extraTotal = computeAddItemsExtraTotal(draft, extras, addons);
     const addedLines = describeAddedExtraLines(draft, extras, addons);
     const added = describeAddedExtras(draft, extras, addons);
@@ -96,8 +98,10 @@ function ManageOrderInner() {
           amountCents: Math.round(extraTotal * 100),
           paynowRef: extraTotal > 0 ? `EXTRA-${date}` : null,
         });
-      } catch {
-        /* local success still */
+      } catch (e: unknown) {
+        const err = e as { message?: string };
+        setActionError(err?.message || 'Could not save extras. Try again.');
+        return;
       }
     }
     setMenuLines((prev) => mergeMenuLinesWithAdd(prev, nextLines.length ? nextLines : added));
@@ -108,11 +112,14 @@ function ManageOrderInner() {
 
   const handleSkip = async () => {
     if (!canSkipManageOrder(effectiveStatus)) return;
+    setActionError('');
     if (kind === 'tiffin' && date) {
       try {
         await skipMut.mutateAsync({ collectionDate: date, collectionSlot: timeslot });
-      } catch {
-        /* still mark local skip for UX */
+      } catch (e: unknown) {
+        const err = e as { message?: string };
+        setActionError(err?.message || 'Could not skip this meal.');
+        return;
       }
     }
     setSkipped(true);
@@ -176,6 +183,11 @@ function ManageOrderInner() {
         {cookName}
       </p>
       <p className="text-sm font-semibold text-muted-foreground mb-4">{planTitle}</p>
+      {actionError ? (
+        <p className="text-sm font-bold text-red-600 mb-3" data-testid="order-manage-error">
+          {actionError}
+        </p>
+      ) : null}
 
       {canSkipManageOrder(effectiveStatus) || canAddItemsToOrder(effectiveStatus, customizable) ? (
         <div className="flex gap-2 mb-4">

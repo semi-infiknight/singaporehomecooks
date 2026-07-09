@@ -18,6 +18,7 @@ import {
   isPauseWindowActive,
   tiffinRechargeAmountCents,
   addDaysIso,
+  customizeWalletAdjustCents,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 import { TiffinKitchenConfig } from "./models/kitchen-config";
@@ -44,6 +45,7 @@ import {
   pgListPastSubscriptions,
   pgUpsertMealCustom,
   pgListMealCustoms,
+  pgGetMealCustom,
 } from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
@@ -588,6 +590,10 @@ class ShcTiffinModuleService extends MedusaService({
     }
     const amount = Math.max(0, Math.floor(Number(input.amount_cents) || 0));
     const lines = (input.extra_lines || []).map((l) => String(l).trim()).filter(Boolean);
+    // Absolute amount upsert — wallet only moves by delta vs prior customize on same date
+    const prior = await pgGetMealCustom(active.id, collectionDate).catch(() => null);
+    const priorAmount = prior?.amount_cents ?? 0;
+    const walletDelta = customizeWalletAdjustCents(amount, priorAmount);
     const saved = await pgUpsertMealCustom({
       subscriptionId: active.id,
       collectionDate,
@@ -595,23 +601,33 @@ class ShcTiffinModuleService extends MedusaService({
       amountCents: amount,
       paynowRef: input.paynow_ref || null,
     });
-    if (amount > 0) {
+    if (walletDelta !== 0) {
       try {
         const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
-        const nextBal = Math.max(0, (meta.balance_cents || 0) - amount);
+        // walletDelta > 0 → debit; < 0 → credit refund
+        const nextBal = Math.max(0, (meta.balance_cents || 0) - walletDelta);
         await pgUpdateSubMeta(active.id, { balance_cents: nextBal });
         await pgAddTiffinLedger({
           subscriptionId: active.id,
           kind: "customize",
-          label: `Extras · ${collectionDate}`,
-          amountCents: -amount,
+          label:
+            walletDelta > 0
+              ? `Extras · ${collectionDate}`
+              : `Extras adjust · ${collectionDate}`,
+          amountCents: -walletDelta,
           paynowRef: input.paynow_ref || null,
         });
       } catch {
         /* non-fatal wallet */
       }
     }
-    return { ok: true, ...saved, collection_date: collectionDate };
+    return {
+      ok: true,
+      ...saved,
+      collection_date: collectionDate,
+      wallet_delta_cents: walletDelta,
+      prior_amount_cents: priorAmount,
+    };
   }
 
   async updateSubscriptionNotes(
