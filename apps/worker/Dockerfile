@@ -9,7 +9,8 @@ COPY packages ./packages
 COPY apps/medusa/package.json ./apps/medusa/package.json
 COPY apps/medusa/scripts ./apps/medusa/scripts
 COPY apps/worker ./apps/worker
-RUN pnpm install --frozen-lockfile
+# Root postinstall (env:sync) is local-only — not available in container context.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 RUN pnpm --filter @shc/types build

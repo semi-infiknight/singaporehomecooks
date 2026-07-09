@@ -8,7 +8,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
 COPY apps/web/.railway-build-id ./apps/web/.railway-build-id
-RUN pnpm install --frozen-lockfile
+# Root postinstall runs scripts/sync-railway-env.mjs (local client .env) — not in this image context.
+# Match medusa Dockerfile: skip lifecycle scripts during install.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 # Bust Railway Docker layer cache when redeploying PWA/asset fixes.
