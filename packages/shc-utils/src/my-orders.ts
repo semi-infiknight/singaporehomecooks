@@ -137,8 +137,23 @@ export function tiffinMealToDayCard(
   const status = mapTiffinStatusToDayCard(String(meal.status || 'scheduled'));
   const collectionDate = String(meal.collection_date || '');
   const productId = String(meal.product_id || '');
+  const fromApi = Array.isArray(meal.menu_lines)
+    ? (meal.menu_lines as unknown[]).map((x) => String(x)).filter(Boolean)
+    : null;
   const dishName = opts?.dishName || (productId ? `Meal · ${productId.slice(0, 12)}` : '');
-  const menuPending = !dishName || !productId;
+  // Prefer API-joined day menu + extras; HomelyEats menu_pending when kitchen has not published
+  const menuPending =
+    typeof meal.menu_pending === 'boolean'
+      ? meal.menu_pending
+      : !fromApi?.length && (!dishName || !productId);
+  const menuLines =
+    fromApi != null
+      ? fromApi
+      : menuPending
+        ? []
+        : dishName
+          ? [dishName]
+          : [];
   return {
     id: String(meal.id || `tiffin_${collectionDate}`),
     kind: 'tiffin',
@@ -147,7 +162,7 @@ export function tiffinMealToDayCard(
     status,
     timeslot: formatTimeslot(String(meal.collection_slot || '18:00-19:00')),
     collectionDate,
-    menuLines: menuPending ? [] : [dishName],
+    menuLines,
     customizable: Boolean(meal.customizable) || isOrderCustomizable(status, collectionDate),
     menuPending,
     managePath: 'tiffin',

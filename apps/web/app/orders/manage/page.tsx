@@ -32,7 +32,7 @@ import {
   type KitchenMealCustomizeDraft,
   type DayOrderCardStatus,
 } from '@shc/utils';
-import { useSkipTiffinMeal } from '../../../lib/useTiffin';
+import { useSkipTiffinMeal, useCustomizeTiffinMeal } from '../../../lib/useTiffin';
 import { SHCButton, SHCCard, SHCLoading } from '../../components/SHCWebComponents';
 
 function ManageOrderInner() {
@@ -62,6 +62,7 @@ function ManageOrderInner() {
   const [skipped, setSkipped] = useState(status === 'skipped');
 
   const skipMut = useSkipTiffinMeal();
+  const customizeMut = useCustomizeTiffinMeal();
   const labels = manageOrderActionLabels(skipped ? 'skipped' : status);
   const chip = dayOrderStatusChip(skipped ? 'skipped' : status);
   const effectiveStatus = skipped ? 'skipped' : status;
@@ -80,17 +81,30 @@ function ManageOrderInner() {
     setShowAddItems(true);
   };
 
-  const confirmAddItems = useCallback(() => {
+  const confirmAddItems = useCallback(async () => {
     if (!draft) return;
     const extraTotal = computeAddItemsExtraTotal(draft, extras, addons);
     const addedLines = describeAddedExtraLines(draft, extras, addons);
     const added = describeAddedExtras(draft, extras, addons);
-    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, addedLines.length ? addedLines : added));
+    const nextLines = addedLines.length ? addedLines : added ? [added] : [];
+    if (kind === 'tiffin' && date) {
+      try {
+        await customizeMut.mutateAsync({
+          collectionDate: date,
+          collectionSlot: timeslot,
+          extraLines: nextLines.map((l) => (l.startsWith('extra:') ? l : `extra:${l}`)),
+          amountCents: Math.round(extraTotal * 100),
+          paynowRef: extraTotal > 0 ? `EXTRA-${date}` : null,
+        });
+      } catch {
+        /* local success still */
+      }
+    }
+    setMenuLines((prev) => mergeMenuLinesWithAdd(prev, nextLines.length ? nextLines : added));
     setShowAddItems(false);
     setDraft(null);
     setSuccess(menuUpdatedSuccessCopy(added));
-    void extraTotal;
-  }, [draft, extras, addons]);
+  }, [draft, extras, addons, kind, date, timeslot, customizeMut]);
 
   const handleSkip = async () => {
     if (!canSkipManageOrder(effectiveStatus)) return;

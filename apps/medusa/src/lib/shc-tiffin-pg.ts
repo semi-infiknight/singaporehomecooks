@@ -91,6 +91,25 @@ async function ensureMetaTables(pg: Client) {
   await pg.query(`
     ALTER TABLE shc_tiffin_sub_meta ADD COLUMN IF NOT EXISTS balance_cents integer DEFAULT 0;
   `);
+  // Residual: cooking/collection notes + meal customize extras (HomelyEats manage/customize)
+  await pg.query(`
+    ALTER TABLE shc_tiffin_sub_meta ADD COLUMN IF NOT EXISTS cooking_notes text;
+  `);
+  await pg.query(`
+    ALTER TABLE shc_tiffin_sub_meta ADD COLUMN IF NOT EXISTS collection_notes text;
+  `);
+  await pg.query(`
+    CREATE TABLE IF NOT EXISTS shc_tiffin_meal_custom (
+      id text PRIMARY KEY,
+      subscription_id text NOT NULL,
+      collection_date text NOT NULL,
+      extra_lines jsonb NOT NULL DEFAULT '[]',
+      amount_cents integer NOT NULL DEFAULT 0,
+      paynow_ref text,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (subscription_id, collection_date)
+    );
+  `);
 }
 
 function shapeRow(row: any): TiffinKitchenConfigDTO {
@@ -180,6 +199,8 @@ export type TiffinSubMeta = {
   cancel_reason: string | null;
   deliveries_left: number | null;
   balance_cents: number;
+  cooking_notes: string | null;
+  collection_notes: string | null;
 };
 
 export type TiffinLedgerRow = {
@@ -204,6 +225,8 @@ function shapeSubMeta(row: any): TiffinSubMeta {
     cancel_reason: row.cancel_reason,
     deliveries_left: row.deliveries_left != null ? Number(row.deliveries_left) : null,
     balance_cents: row.balance_cents != null ? Number(row.balance_cents) : 0,
+    cooking_notes: row.cooking_notes ?? null,
+    collection_notes: row.collection_notes ?? null,
   };
 }
 
@@ -253,11 +276,17 @@ export async function pgUpdateSubMeta(
           : prev.balance_cents != null
             ? Number(prev.balance_cents)
             : 0,
+      cooking_notes:
+        patch.cooking_notes !== undefined ? patch.cooking_notes : prev.cooking_notes ?? null,
+      collection_notes:
+        patch.collection_notes !== undefined
+          ? patch.collection_notes
+          : prev.collection_notes ?? null,
     };
     await pg.query(
       `UPDATE shc_tiffin_sub_meta SET
         flex_quota = $2, flex_remaining = $3, paused_until = $4, expires_on = $5, cancel_reason = $6,
-        deliveries_left = $7, balance_cents = $8, updated_at = now()
+        deliveries_left = $7, balance_cents = $8, cooking_notes = $9, collection_notes = $10, updated_at = now()
        WHERE subscription_id = $1`,
       [
         subscriptionId,
@@ -268,6 +297,8 @@ export async function pgUpdateSubMeta(
         next.cancel_reason,
         next.deliveries_left,
         next.balance_cents,
+        next.cooking_notes,
+        next.collection_notes,
       ]
     );
     return { subscription_id: subscriptionId, ...next };
@@ -505,6 +536,108 @@ export async function pgUpsertSubscription(input: {
       meals_per_week: Number(row.meals_per_week),
       status: row.status,
     };
+  });
+}
+
+/** Past / cancelled subscriptions for My Subscriptions Past tab. */
+export async function pgListPastSubscriptions(customerId: string): Promise<PgTiffinSubscription[]> {
+  return withPg(async (pg) => {
+    const r = await pg.query(
+      `SELECT * FROM shc_tiffin_subscription
+       WHERE customer_id = $1 AND status = 'cancelled'
+       ORDER BY updated_at DESC NULLS LAST, created_at DESC
+       LIMIT 20`,
+      [customerId]
+    );
+    return r.rows.map((row: any) => ({
+      id: row.id,
+      customer_id: row.customer_id,
+      cook_id: row.cook_id,
+      meals_per_week: Number(row.meals_per_week),
+      status: row.status,
+      created_at: row.created_at?.toISOString?.() || row.created_at,
+      updated_at: row.updated_at?.toISOString?.() || row.updated_at,
+    }));
+  });
+}
+
+export type TiffinMealCustom = {
+  subscription_id: string;
+  collection_date: string;
+  extra_lines: string[];
+  amount_cents: number;
+  paynow_ref: string | null;
+};
+
+export async function pgUpsertMealCustom(input: {
+  subscriptionId: string;
+  collectionDate: string;
+  extraLines: string[];
+  amountCents?: number;
+  paynowRef?: string | null;
+}): Promise<TiffinMealCustom> {
+  return withPg(async (pg) => {
+    await ensureMetaTables(pg);
+    const id = `tiffin_cust_${input.subscriptionId}_${input.collectionDate}`;
+    await pg.query(
+      `INSERT INTO shc_tiffin_meal_custom
+        (id, subscription_id, collection_date, extra_lines, amount_cents, paynow_ref, updated_at)
+       VALUES ($1, $2, $3, $4::jsonb, $5, $6, now())
+       ON CONFLICT (subscription_id, collection_date) DO UPDATE SET
+         extra_lines = EXCLUDED.extra_lines,
+         amount_cents = EXCLUDED.amount_cents,
+         paynow_ref = COALESCE(EXCLUDED.paynow_ref, shc_tiffin_meal_custom.paynow_ref),
+         updated_at = now()`,
+      [
+        id,
+        input.subscriptionId,
+        input.collectionDate,
+        JSON.stringify(input.extraLines || []),
+        input.amountCents ?? 0,
+        input.paynowRef ?? null,
+      ]
+    );
+    const r = await pg.query(
+      `SELECT * FROM shc_tiffin_meal_custom WHERE subscription_id = $1 AND collection_date = $2`,
+      [input.subscriptionId, input.collectionDate]
+    );
+    const row = r.rows[0];
+    return {
+      subscription_id: row.subscription_id,
+      collection_date: row.collection_date,
+      extra_lines: row.extra_lines || [],
+      amount_cents: Number(row.amount_cents || 0),
+      paynow_ref: row.paynow_ref,
+    };
+  });
+}
+
+export async function pgListMealCustoms(
+  subscriptionId: string,
+  fromIso?: string,
+  toIso?: string
+): Promise<TiffinMealCustom[]> {
+  return withPg(async (pg) => {
+    await ensureMetaTables(pg);
+    let sql = `SELECT * FROM shc_tiffin_meal_custom WHERE subscription_id = $1`;
+    const params: any[] = [subscriptionId];
+    if (fromIso) {
+      params.push(fromIso);
+      sql += ` AND collection_date >= $${params.length}`;
+    }
+    if (toIso) {
+      params.push(toIso);
+      sql += ` AND collection_date <= $${params.length}`;
+    }
+    sql += ` ORDER BY collection_date`;
+    const r = await pg.query(sql, params);
+    return r.rows.map((row: any) => ({
+      subscription_id: row.subscription_id,
+      collection_date: row.collection_date,
+      extra_lines: Array.isArray(row.extra_lines) ? row.extra_lines : row.extra_lines || [],
+      amount_cents: Number(row.amount_cents || 0),
+      paynow_ref: row.paynow_ref,
+    }));
   });
 }
 

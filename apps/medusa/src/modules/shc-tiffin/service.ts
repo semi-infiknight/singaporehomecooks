@@ -6,6 +6,7 @@ import {
   validateWeeklyPlanSlots,
   weekStartMonday,
   canSkipTiffinMeal,
+  canCustomizeTiffinMeal,
   canPauseSubscription,
   canResumeSubscription,
   canRechargeSubscription,
@@ -16,6 +17,7 @@ import {
   effectiveSubscriptionStatus,
   isPauseWindowActive,
   tiffinRechargeAmountCents,
+  addDaysIso,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 import { TiffinKitchenConfig } from "./models/kitchen-config";
@@ -39,6 +41,9 @@ import {
   pgGetActiveSubscription,
   pgCreateOrUpdateSubscription,
   pgSetSubscriptionStatus,
+  pgListPastSubscriptions,
+  pgUpsertMealCustom,
+  pgListMealCustoms,
 } from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
@@ -122,7 +127,13 @@ class ShcTiffinModuleService extends MedusaService({
     return (rows as any[])?.[0] || null;
   }
 
-  async createSubscription(customerId: string, cookId: string, mealsPerWeek: number) {
+  async createSubscription(
+    customerId: string,
+    cookId: string,
+    mealsPerWeek: number,
+    weeks = 4
+  ) {
+    const periodWeeks = Math.min(12, Math.max(1, Math.floor(Number(weeks) || 4)));
     const active = await this.getActiveSubscription(customerId);
     const gate = assertOneKitchenSubscription(active?.cook_id, cookId);
     if (!gate.ok) {
@@ -201,17 +212,23 @@ class ShcTiffinModuleService extends MedusaService({
 
     try {
       await pgEnsureSubMeta(created.id, mealsPerWeek);
-      const openCents = tiffinRechargeAmountCents(mealsPerWeek, 4);
+      const openCents = tiffinRechargeAmountCents(mealsPerWeek, periodWeeks);
+      const openDeliveries = mealsPerWeek * periodWeeks;
+      const today = new Date().toISOString().slice(0, 10);
       // only set opening balance when new or zero
       const meta = await pgEnsureSubMeta(created.id, mealsPerWeek);
       if (!meta.balance_cents || meta.balance_cents <= 0) {
-        await pgUpdateSubMeta(created.id, { balance_cents: openCents, deliveries_left: mealsPerWeek * 4 });
+        await pgUpdateSubMeta(created.id, {
+          balance_cents: openCents,
+          deliveries_left: openDeliveries,
+          expires_on: addDaysIso(today, periodWeeks * 7),
+        });
         await pgAddTiffinLedger({
           subscriptionId: created.id,
           kind: "opening",
-          label: `Plan opened · ${mealsPerWeek} meals/wk · 4 weeks`,
+          label: `Plan opened · ${mealsPerWeek} meals/wk · ${periodWeeks} week${periodWeeks === 1 ? "" : "s"}`,
           amountCents: openCents,
-          deltaDeliveries: mealsPerWeek * 4,
+          deltaDeliveries: openDeliveries,
           deltaFlex: defaultFlexQuota(mealsPerWeek),
           paynowRef: `OPEN-${created.id.slice(-8)}`,
         });
@@ -225,6 +242,14 @@ class ShcTiffinModuleService extends MedusaService({
       /* meta optional if DATABASE_URL missing in unit tests */
     }
     return created;
+  }
+
+  async listPastSubscriptions(customerId: string) {
+    try {
+      return await pgListPastSubscriptions(customerId);
+    } catch {
+      return [];
+    }
   }
 
   async cancelSubscription(customerId: string, reason?: string) {
@@ -262,6 +287,8 @@ class ShcTiffinModuleService extends MedusaService({
       cancel_reason: null as string | null,
       deliveries_left: sub.meals_per_week * 4 as number | null,
       balance_cents: 0,
+      cooking_notes: null as string | null,
+      collection_notes: null as string | null,
     };
     try {
       const m = await pgEnsureSubMeta(sub.id, sub.meals_per_week);
@@ -273,6 +300,8 @@ class ShcTiffinModuleService extends MedusaService({
         cancel_reason: m.cancel_reason,
         deliveries_left: m.deliveries_left,
         balance_cents: m.balance_cents ?? 0,
+        cooking_notes: m.cooking_notes ?? null,
+        collection_notes: m.collection_notes ?? null,
       };
       // Clear stale pause window so gates + UI stay consistent
       if (meta.paused_until && !isPauseWindowActive(meta.paused_until)) {
@@ -478,9 +507,14 @@ class ShcTiffinModuleService extends MedusaService({
     const config = await this.getKitchenConfig(active.cook_id);
     let skipped = new Set<string>();
     let kitchenCanceled = new Set<string>();
+    let customs = new Map<string, string[]>();
     try {
       skipped = new Set(await pgListSkips(active.id));
       kitchenCanceled = new Set(await pgListKitchenCancels(active.cook_id));
+      const customRows = await pgListMealCustoms(active.id, fromIso, toIso);
+      for (const c of customRows) {
+        customs.set(c.collection_date, c.extra_lines || []);
+      }
     } catch {
       /* empty */
     }
@@ -494,7 +528,105 @@ class ShcTiffinModuleService extends MedusaService({
       skippedDates: skipped,
       kitchenCanceledDates: kitchenCanceled,
     });
-    return { subscription: active, meals };
+    // Join cook day menu + customer customize extras (HomelyEats card truth)
+    const enriched = [];
+    for (const m of meals) {
+      let published: { product_ids: string[]; note: string | null } | null = null;
+      try {
+        published = await pgGetDayMenu(active.cook_id, m.collection_date);
+      } catch {
+        published = null;
+      }
+      const publishedIds = published?.product_ids || [];
+      // HomelyEats: "Menu yet to be updated" until cook publishes day menu
+      const menu_pending = publishedIds.length === 0;
+      const publishedLines = publishedIds.map((pid) =>
+        pid.startsWith("dish_") ? pid.replace(/^dish_/, "").replace(/_/g, " ") : `Dish · ${pid}`
+      );
+      const extra_lines = customs.get(m.collection_date) || [];
+      const menu_lines = menu_pending ? [...extra_lines] : [...publishedLines, ...extra_lines];
+      enriched.push({
+        ...m,
+        menu_lines,
+        extra_lines,
+        menu_pending,
+        menu_note: published?.note || null,
+        product_ids: publishedIds.length ? publishedIds : m.product_id ? [m.product_id] : [],
+      });
+    }
+    return { subscription: active, meals: enriched };
+  }
+
+  /** HomelyEats customize / add extras (≥8h cutoff). Persists lines + optional wallet debit. */
+  async customizeMeal(
+    customerId: string,
+    collectionDate: string,
+    input: {
+      extra_lines: string[];
+      amount_cents?: number;
+      paynow_ref?: string | null;
+      collection_slot?: string;
+    }
+  ) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) {
+      throw Object.assign(new Error("No active subscription"), createSHCError("SHC-GENERIC-001", "No active subscription"));
+    }
+    const skips = await pgListSkips(active.id).catch(() => [] as string[]);
+    if (skips.includes(collectionDate)) {
+      throw Object.assign(
+        new Error("Cannot customize a skipped meal"),
+        createSHCError("SHC-GENERIC-001", "Cannot customize a skipped meal")
+      );
+    }
+    const gate = canCustomizeTiffinMeal({
+      collectionDate,
+      collectionSlot: input.collection_slot,
+    });
+    if (!gate.ok) {
+      throw Object.assign(new Error(gate.message), createSHCError("SHC-GENERIC-001", gate.message));
+    }
+    const amount = Math.max(0, Math.floor(Number(input.amount_cents) || 0));
+    const lines = (input.extra_lines || []).map((l) => String(l).trim()).filter(Boolean);
+    const saved = await pgUpsertMealCustom({
+      subscriptionId: active.id,
+      collectionDate,
+      extraLines: lines,
+      amountCents: amount,
+      paynowRef: input.paynow_ref || null,
+    });
+    if (amount > 0) {
+      try {
+        const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+        const nextBal = Math.max(0, (meta.balance_cents || 0) - amount);
+        await pgUpdateSubMeta(active.id, { balance_cents: nextBal });
+        await pgAddTiffinLedger({
+          subscriptionId: active.id,
+          kind: "customize",
+          label: `Extras · ${collectionDate}`,
+          amountCents: -amount,
+          paynowRef: input.paynow_ref || null,
+        });
+      } catch {
+        /* non-fatal wallet */
+      }
+    }
+    return { ok: true, collection_date: collectionDate, ...saved };
+  }
+
+  async updateSubscriptionNotes(
+    customerId: string,
+    notes: { cooking_notes?: string | null; collection_notes?: string | null }
+  ) {
+    const active = await this.getActiveSubscription(customerId);
+    if (!active) {
+      throw Object.assign(new Error("No active subscription"), createSHCError("SHC-GENERIC-001", "No active subscription"));
+    }
+    await pgEnsureSubMeta(active.id, active.meals_per_week);
+    const patch: any = {};
+    if (notes.cooking_notes !== undefined) patch.cooking_notes = notes.cooking_notes;
+    if (notes.collection_notes !== undefined) patch.collection_notes = notes.collection_notes;
+    return pgUpdateSubMeta(active.id, patch);
   }
 
   async kitchenCancelDay(cookId: string, collectionDate: string, reason?: string) {

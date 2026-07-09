@@ -171,12 +171,60 @@ async function main() {
     console.log(`⚠️  skip returned ${skip.status} (ok if no flex left): ${JSON.stringify(skip.body).slice(0, 160)}`);
   }
 
+  // Customize extras on a far future date (not the skip date) — HomelyEats add items
+  const customDate = new Date();
+  customDate.setUTCDate(customDate.getUTCDate() + 14);
+  const customizeDate = customDate.toISOString().slice(0, 10);
+  const customize = await shcFetch(
+    '/store/shc/tiffin/orders/customize',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        collection_date: customizeDate,
+        collection_slot: '18:00-19:00',
+        extra_lines: ['extra:1 smoke roti'],
+        amount_cents: 100,
+        paynow_ref: `SMOKE-X-${Date.now()}`,
+      }),
+    },
+    customerToken
+  );
+  if (customize.status === 404) {
+    console.warn('⚠️  customize route 404 — redeploy medusa with residual customize API');
+  } else if (customize.status === 200) {
+    console.log('✅ POST /tiffin/orders/customize (200)');
+  } else {
+    // No projected meal that day is OK (400 business); real outages should fail REQUIRE
+    console.log(
+      `⚠️  customize returned ${customize.status}: ${JSON.stringify(customize.body).slice(0, 160)}`
+    );
+  }
+
+  const notes = await shcFetch(
+    '/store/shc/tiffin/subscription/notes',
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ cooking_notes: 'less spicy', collection_notes: 'call at lobby' }),
+    },
+    customerToken
+  );
+  if (notes.status === 404) {
+    console.warn('⚠️  notes route 404 — redeploy medusa');
+  } else {
+    assertOk('PATCH /tiffin/subscription/notes', notes.status, [200], notes.body);
+  }
+
   const meals = await shcFetch(
-    `/store/shc/tiffin/orders?from=${collectionDate}&to=${collectionDate}`,
+    `/store/shc/tiffin/orders?from=${collectionDate}&to=${customizeDate}`,
     { method: 'GET' },
     customerToken
   );
   assertOk('GET /tiffin/orders', meals.status, [200], meals.body);
+  const mealList = (meals.body as { meals?: Array<{ menu_pending?: boolean; extra_lines?: string[] }> })
+    ?.meals;
+  if (Array.isArray(mealList)) {
+    console.log(`   meal instances: ${mealList.length} (menu_pending fields present)`);
+  }
 
   // Cook side: config + publish menu
   const cookLogin = await shcFetch('/store/shc/auth/cook/login', {

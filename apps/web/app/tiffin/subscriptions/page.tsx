@@ -35,6 +35,9 @@ export default function MySubscriptionsPage() {
 
   const sub = (subData as { subscription?: Record<string, unknown> } | undefined)?.subscription;
   const kitchen = (subData as { kitchen?: { cook?: { display_name?: string } } } | undefined)?.kitchen;
+  const pastList =
+    ((subData as { past_subscriptions?: Array<Record<string, unknown>> } | undefined)
+      ?.past_subscriptions || []) as Array<Record<string, unknown>>;
 
   const kind = useMemo(() => {
     if (!sub) return null;
@@ -201,30 +204,44 @@ export default function MySubscriptionsPage() {
             }
           />
         )
-      ) : isPastKind && sub && copy ? (
-        <SHCCard className="mt-4" data-testid={`subscription-card-${kind}`}>
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="font-black text-lg">
-              {kitchen?.cook?.display_name || 'Tiffin kitchen'}
-            </p>
-            <SHCBadge variant="default">{copy.badge}</SHCBadge>
-          </div>
-          <p className="text-sm text-muted-foreground font-semibold mb-3">
-            {kind === 'expired'
-              ? 'Balance depleted — recharge to continue without a gap.'
-              : 'Ended. Subscribe again from Browse kitchens anytime.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {copy.showRecharge ? (
-              <SHCButton size="sm" onClick={() => router.push('/tiffin/recharge')} testID="sub-recharge-btn">
-                Recharge now
+      ) : pastList.length > 0 || (isPastKind && sub && copy) ? (
+        <div className="mt-4 space-y-3" data-testid="past-subscriptions-list">
+          {pastList.map((p) => (
+            <SHCCard key={String(p.id)} data-testid="subscription-card-canceled">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <p className="font-black text-lg">Past kitchen plan</p>
+                <SHCBadge variant="default">
+                  Canceled
+                  {p.canceled_at ? ` on ${String(p.canceled_at).slice(0, 10)}` : ''}
+                </SHCBadge>
+              </div>
+              <p className="text-sm text-muted-foreground font-semibold mb-3">
+                {String(p.meals_per_week || '')} meals/wk · Ended — subscribe again anytime.
+              </p>
+              <SHCButton size="sm" variant="outline" onClick={() => router.push('/tiffin')}>
+                Browse kitchens
               </SHCButton>
-            ) : null}
-            <SHCButton size="sm" variant="outline" onClick={() => router.push('/tiffin')}>
-              Browse kitchens
-            </SHCButton>
-          </div>
-        </SHCCard>
+            </SHCCard>
+          ))}
+          {pastList.length === 0 && isPastKind && sub && copy ? (
+            <SHCCard data-testid={`subscription-card-${kind}`}>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <p className="font-black text-lg">
+                  {kitchen?.cook?.display_name || 'Tiffin kitchen'}
+                </p>
+                <SHCBadge variant="default">{copy.badge}</SHCBadge>
+              </div>
+              <p className="text-sm text-muted-foreground font-semibold mb-3">
+                {kind === 'expired'
+                  ? 'Balance depleted — recharge to continue without a gap.'
+                  : 'Ended. Subscribe again from Browse kitchens anytime.'}
+              </p>
+              <SHCButton size="sm" variant="outline" onClick={() => router.push('/tiffin')}>
+                Browse kitchens
+              </SHCButton>
+            </SHCCard>
+          ) : null}
+        </div>
       ) : (
         <IllustratedEmptyState kind="no_past_sub" title={pastCopy.title} />
       )}

@@ -107,7 +107,11 @@ export default function TiffinManageScreen() {
         flexLeft={sub.flex_remaining}
         flexQuota={sub.flex_quota}
         expiresOn={sub.expires_on}
-        balanceLabel={`${sub.meals_per_week}/wk`}
+        balanceLabel={
+          sub.balance_cents != null
+            ? `S$${(Number(sub.balance_cents) / 100).toFixed(0)}`
+            : `S$${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(0)}`
+        }
         testID="tiffin-plan-metrics"
       />
 

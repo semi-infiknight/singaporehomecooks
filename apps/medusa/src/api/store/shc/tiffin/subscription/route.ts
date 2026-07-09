@@ -10,6 +10,8 @@ const SubscribeSchema = z
   .object({
     cook_id: z.string(),
     meals_per_week: z.union([z.literal(2), z.literal(3), z.literal(4)]),
+    /** Plan duration weeks (HomelyEats prepaid period) — defaults to 4 */
+    weeks: z.number().int().min(1).max(12).optional(),
   })
   .strict();
 
@@ -47,6 +49,8 @@ async function subscriptionPayload(tiffin: ShcTiffinModuleService, sub: any, sco
       cancel_reason: os.cancel_reason,
       deliveries_left: os.deliveries_left,
       balance_cents: os.balance_cents ?? 0,
+      cooking_notes: os.cooking_notes ?? null,
+      collection_notes: os.collection_notes ?? null,
     },
     kitchen,
     plans,
@@ -62,10 +66,21 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+    const pastRaw = await tiffin.listPastSubscriptions(customerId);
+    const past_subscriptions = pastRaw.map((p: any) => ({
+      id: p.id,
+      cook_id: p.cook_id,
+      meals_per_week: p.meals_per_week,
+      status: "canceled",
+      canceled_at: p.updated_at || p.created_at || null,
+    }));
     const sub = await tiffin.getActiveSubscription(customerId);
-    if (!sub) return res.json({ subscription: null, ledger: [] });
+    if (!sub) {
+      return res.json({ subscription: null, ledger: [], past_subscriptions });
+    }
     (sub as any).__customerId = customerId;
-    res.json(await subscriptionPayload(tiffin, sub, req.scope));
+    const payload = await subscriptionPayload(tiffin, sub, req.scope);
+    res.json({ ...payload, past_subscriptions });
   } catch {
     return unauthorized(res, "Customer login required");
   }
@@ -79,7 +94,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
-    const sub = await tiffin.createSubscription(customerId, parse.data.cook_id, parse.data.meals_per_week);
+    const sub = await tiffin.createSubscription(
+      customerId,
+      parse.data.cook_id,
+      parse.data.meals_per_week,
+      parse.data.weeks ?? 4
+    );
     (sub as any).__customerId = customerId;
     res.status(201).json(await subscriptionPayload(tiffin, sub, req.scope));
   } catch (e: any) {

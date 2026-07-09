@@ -44,6 +44,8 @@
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
 | `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |
 | `/store/shc/tiffin/orders/skip` | POST | customer JWT | Skip one collection day (8h cutoff + flex) |
+| `/store/shc/tiffin/orders/customize` | POST | customer JWT | `{ collection_date, extra_lines[], amount_cents? }` — HomelyEats add extras (≥8h) |
+| `/store/shc/tiffin/subscription/notes` | PATCH | customer JWT | `{ cooking_notes?, collection_notes? }` |
 | `/store/shc/tiffin/orders/kitchen-cancel` | POST | cook JWT | Cancel kitchen day for all subs |
 | `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT | Enable kitchen; returns `subscriber_count` |
 | `/store/shc/tiffin/cook/menu` | GET, PUT | cook JWT | Publish/read day menu |

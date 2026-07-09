@@ -133,8 +133,8 @@ export const registerPushToken = (token: string, opts?: { cookId?: string; role?
 export const getTiffinKitchens = () => client.getTiffinKitchens();
 export const getTiffinKitchen = (cookId: string) => client.getTiffinKitchen(cookId);
 export const getTiffinSubscription = () => client.getTiffinSubscription();
-export const subscribeTiffin = (cookId: string, mealsPerWeek: 2 | 3 | 4) =>
-  client.subscribeTiffin(cookId, mealsPerWeek);
+export const subscribeTiffin = (cookId: string, mealsPerWeek: 2 | 3 | 4, weeks?: number) =>
+  client.subscribeTiffin(cookId, mealsPerWeek, weeks);
 export const cancelTiffinSubscription = () => client.cancelTiffinSubscription();
 export const cancelTiffinSubscriptionWithReason = (reason?: string) =>
   client.cancelTiffinSubscriptionWithReason(reason);
@@ -145,6 +145,17 @@ export const rechargeTiffinSubscription = (weeks?: number, paynowRef?: string) =
 export const getTiffinMealOrders = (from?: string, to?: string) => client.getTiffinMealOrders(from, to);
 export const skipTiffinMeal = (collectionDate: string, collectionSlot?: string) =>
   client.skipTiffinMeal(collectionDate, collectionSlot);
+export const customizeTiffinMeal = (input: {
+  collectionDate: string;
+  collectionSlot?: string;
+  extraLines: string[];
+  amountCents?: number;
+  paynowRef?: string | null;
+}) => client.customizeTiffinMeal(input);
+export const updateTiffinSubscriptionNotes = (input: {
+  cooking_notes?: string | null;
+  collection_notes?: string | null;
+}) => client.updateTiffinSubscriptionNotes(input);
 export const getTiffinWeeklyPlan = (weekStart?: string) => client.getTiffinWeeklyPlan(weekStart);
 export const saveTiffinWeeklyPlan = (input: Parameters<typeof client.saveTiffinWeeklyPlan>[0]) =>
   client.saveTiffinWeeklyPlan(input);

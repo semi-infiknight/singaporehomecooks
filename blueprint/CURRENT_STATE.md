@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats Waves 1–7 closed:** pg-first subscribe shipped; push + medusa `--from-source` redeploy; full tiffin smoke.
+**Last Updated:** 2026-07-09 — **HomelyEats Waves 1–8:** residual customize/menu-join/past-history/duration honesty; full tiffin smoke.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -21,7 +21,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
 | **Maestro device E2E** | ✅ Android + iOS | Cook `tiffin-config.yaml`; customer `tiffin-subscribe.yaml` + **`tiffin-flex-os.yaml`** (pause/recharge/calendar); `pnpm e2e:tiffin` |
-| **Tiffin subscription** | ✅ Mobile + API + **Wave 7** | Ledger + recharge PayNow; pause/skip/resume; **pg-first** create/list; `pnpm smoke:tiffin` + `pnpm ship:tiffin`; worker Mon materialize; honest errors (no false 401) |
+| **Tiffin subscription** | ✅ Mobile + API + **Wave 8** | Ledger + recharge; pause/skip/resume/**customize extras**; day-menu join; past history; plan duration weeks; pg-first create; `pnpm smoke:tiffin` + `pnpm ship:tiffin` |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |

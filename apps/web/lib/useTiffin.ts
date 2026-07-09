@@ -55,13 +55,49 @@ export function useTiffinSubscription() {
 export function useSubscribeTiffin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ cookId, mealsPerWeek }: { cookId: string; mealsPerWeek: 2 | 3 | 4 }) => {
+    mutationFn: async ({
+      cookId,
+      mealsPerWeek,
+      weeks,
+    }: {
+      cookId: string;
+      mealsPerWeek: 2 | 3 | 4;
+      weeks?: number;
+    }) => {
       await hydrateSession();
-      return client.subscribeTiffin(cookId, mealsPerWeek);
+      return client.subscribeTiffin(cookId, mealsPerWeek, weeks);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tiffin'] });
     },
+  });
+}
+
+export function useCustomizeTiffinMeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      collectionDate: string;
+      collectionSlot?: string;
+      extraLines: string[];
+      amountCents?: number;
+      paynowRef?: string | null;
+    }) => {
+      await hydrateSession();
+      return client.customizeTiffinMeal(input);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
+  });
+}
+
+export function useUpdateTiffinNotes() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { cooking_notes?: string | null; collection_notes?: string | null }) => {
+      await hydrateSession();
+      return client.updateTiffinSubscriptionNotes(input);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tiffin'] }),
   });
 }
 

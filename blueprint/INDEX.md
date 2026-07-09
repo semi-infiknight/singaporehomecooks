@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — HomelyEats Waves 1–7 programme closed (UI + flex OS + ledger + harden + pg-first ship). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-09 — HomelyEats Waves 1–8 closed (UI + flex OS + ledger + pg-first + residual customize/menu/history). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -24,6 +24,7 @@ Paper-wireframe / HomelyEats programme delivered tri-platform + production close
 | 5 | `shc_tiffin_ledger`, balance_cents, PayNow recharge confirm, real transactions |
 | 6 | `pnpm smoke:tiffin`, Maestro flex OS, error-masking fix, verify-tier hooks |
 | 7 | Postgres-first subscribe create/list; `pnpm ship:tiffin`; 06-api-surface ledger/recharge docs |
+| 8 | Customize extras API; day-menu join; past history; duration weeks; order-once CTA; notes persist |
 
 **Commands:** `pnpm smoke:tiffin` · `pnpm e2e:tiffin` · `pnpm ship:tiffin` · `FLAVOUR=wiring SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal`  
 **Ship:** `git push origin main` → `railway redeploy -s medusa --from-source -y` → `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`

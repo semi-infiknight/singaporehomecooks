@@ -72,6 +72,30 @@ describe('my-orders calendar + status variants', () => {
     });
     expect(pending.menuPending).toBe(true);
 
+    // API-joined day menu (cook published) + extras
+    const published = tiffinMealToDayCard({
+      id: 'meal_3',
+      status: 'scheduled',
+      collection_date: '2026-07-12',
+      product_id: 'dish_x',
+      menu_pending: false,
+      menu_lines: ['nasi lemak', 'extra:1 sambal'],
+      customizable: true,
+    });
+    expect(published.menuPending).toBe(false);
+    expect(published.menuLines).toEqual(['nasi lemak', 'extra:1 sambal']);
+
+    const waitPublish = tiffinMealToDayCard({
+      id: 'meal_4',
+      status: 'scheduled',
+      collection_date: '2026-07-13',
+      product_id: 'dish_x',
+      menu_pending: true,
+      menu_lines: [],
+    });
+    expect(waitPublish.menuPending).toBe(true);
+    expect(waitPublish.menuLines).toEqual([]);
+
     const all = mergeDayOrderCards([one], [tif]);
     expect(cardsForDate(all, '2026-07-10')).toHaveLength(2);
     expect(cardsForDate(all, '2026-07-11')).toHaveLength(0);

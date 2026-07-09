@@ -30,6 +30,12 @@ export default function MySubscriptionsScreen() {
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
+  const pastList = ((subData as any)?.past_subscriptions || []) as Array<{
+    id?: string;
+    meals_per_week?: number;
+    status?: string;
+    canceled_at?: string | null;
+  }>;
 
   const kind = useMemo(() => {
     if (!sub) return null;
@@ -165,28 +171,40 @@ export default function MySubscriptionsScreen() {
             testID="subscriptions-active-empty"
           />
         )
-      ) : isPastKind && sub && copy ? (
-        <View style={styles.cardPad}>
-          <GourmeatCard testID={`subscription-card-${kind}`}>
-            <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Tiffin kitchen'}</Text>
-            <Text style={styles.badge}>{copy.badge}</Text>
-            <Text style={styles.meta}>
-              {kind === 'expired' ? 'Recharge to continue without a gap.' : 'Ended — subscribe again anytime.'}
-            </Text>
-            {copy.showRecharge ? (
+      ) : pastList.length > 0 || (isPastKind && sub && copy) ? (
+        <View style={styles.cardPad} testID="past-subscriptions-list">
+          {pastList.map((p) => (
+            <GourmeatCard key={String(p.id)} testID="subscription-card-canceled">
+              <Text style={styles.kitchenName}>Past kitchen plan</Text>
+              <Text style={styles.badge}>
+                Canceled{p.canceled_at ? ` on ${String(p.canceled_at).slice(0, 10)}` : ''}
+              </Text>
+              <Text style={styles.meta}>
+                {p.meals_per_week || '—'} meals/wk · Ended — subscribe again anytime.
+              </Text>
               <GourmeatPrimaryButton
-                label="Recharge now"
-                onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
-                style={{ marginTop: shcSpacing.md }}
+                label="Browse kitchens"
+                variant="outline"
+                onPress={() => router.push('/(customer)/tiffin' as any)}
+                style={{ marginTop: shcSpacing.sm }}
               />
-            ) : null}
-            <GourmeatPrimaryButton
-              label="Browse kitchens"
-              variant="outline"
-              onPress={() => router.push('/(customer)/tiffin' as any)}
-              style={{ marginTop: shcSpacing.sm }}
-            />
-          </GourmeatCard>
+            </GourmeatCard>
+          ))}
+          {pastList.length === 0 && isPastKind && sub && copy ? (
+            <GourmeatCard testID={`subscription-card-${kind}`}>
+              <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Tiffin kitchen'}</Text>
+              <Text style={styles.badge}>{copy.badge}</Text>
+              <Text style={styles.meta}>
+                {kind === 'expired' ? 'Recharge to continue without a gap.' : 'Ended — subscribe again anytime.'}
+              </Text>
+              <GourmeatPrimaryButton
+                label="Browse kitchens"
+                variant="outline"
+                onPress={() => router.push('/(customer)/tiffin' as any)}
+                style={{ marginTop: shcSpacing.sm }}
+              />
+            </GourmeatCard>
+          ) : null}
         </View>
       ) : (
         <GourmeatEmptyState

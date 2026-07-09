@@ -455,10 +455,14 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/tiffin/subscription", { method: "GET" });
     },
 
-    async subscribeTiffin(cookId: string, mealsPerWeek: 2 | 3 | 4) {
+    async subscribeTiffin(cookId: string, mealsPerWeek: 2 | 3 | 4, weeks?: number) {
       return request("/store/shc/tiffin/subscription", {
         method: "POST",
-        body: JSON.stringify({ cook_id: cookId, meals_per_week: mealsPerWeek }),
+        body: JSON.stringify({
+          cook_id: cookId,
+          meals_per_week: mealsPerWeek,
+          ...(weeks != null ? { weeks } : {}),
+        }),
       });
     },
 
@@ -544,6 +548,36 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/tiffin/orders/skip", {
         method: "POST",
         body: JSON.stringify({ collection_date: collectionDate, collection_slot: collectionSlot }),
+      });
+    },
+
+    /** HomelyEats add extras / customize meal (≥8h). amount_cents debits wallet when > 0. */
+    async customizeTiffinMeal(input: {
+      collectionDate: string;
+      collectionSlot?: string;
+      extraLines: string[];
+      amountCents?: number;
+      paynowRef?: string | null;
+    }) {
+      return request("/store/shc/tiffin/orders/customize", {
+        method: "POST",
+        body: JSON.stringify({
+          collection_date: input.collectionDate,
+          collection_slot: input.collectionSlot,
+          extra_lines: input.extraLines,
+          amount_cents: input.amountCents ?? 0,
+          paynow_ref: input.paynowRef ?? null,
+        }),
+      });
+    },
+
+    async updateTiffinSubscriptionNotes(input: {
+      cooking_notes?: string | null;
+      collection_notes?: string | null;
+    }) {
+      return request("/store/shc/tiffin/subscription/notes", {
+        method: "PATCH",
+        body: JSON.stringify(input),
       });
     },
 

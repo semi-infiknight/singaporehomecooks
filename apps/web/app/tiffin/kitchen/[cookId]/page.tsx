@@ -132,6 +132,7 @@ export default function TiffinKitchenPage() {
       await subscribeMut.mutateAsync({
         cookId,
         mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
+        weeks: selectedDuration.weeks,
       });
       router.replace('/tiffin/confirm');
     } catch (e: unknown) {
@@ -327,6 +328,15 @@ export default function TiffinKitchenPage() {
             title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
             testID="kitchen-menu-header"
           />
+          {dishes[0] ? (
+            <div className="mb-3">
+              <Link href={`/product/${encodeURIComponent(dishes[0].id)}`}>
+                <SHCButton variant="outline" size="sm" testID="kitchen-order-once-btn">
+                  Order once (try without plan)
+                </SHCButton>
+              </Link>
+            </div>
+          ) : null}
           {dishes.length === 0 ? (
             <p className="text-sm font-semibold text-muted-foreground mb-4" data-testid="kitchen-menu-empty">
               No tiffin dishes listed for this kitchen yet.

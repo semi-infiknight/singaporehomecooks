@@ -102,6 +102,7 @@ export default function TiffinKitchenScreen() {
       await subscribeMut.mutateAsync({
         cookId: String(cookId),
         mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
+        weeks: selectedDuration.weeks,
       });
       router.replace('/(customer)/tiffin/confirm' as any);
     } catch (e: any) {
@@ -203,6 +204,17 @@ export default function TiffinKitchenScreen() {
           testID="kitchen-menu-header"
         />
         <Text style={styles.sectionHint}>Pick dishes when you build your weekly plan after subscribe.</Text>
+        {dishes[0] ? (
+          <GourmeatPrimaryButton
+            label="Order once (try without plan)"
+            variant="outline"
+            onPress={() =>
+              router.push(`/(customer)/product/${encodeURIComponent(dishes[0].id)}` as any)
+            }
+            testID="kitchen-order-once-btn"
+            style={{ marginBottom: shcSpacing.sm }}
+          />
+        ) : null}
         {dishes.length === 0 ? (
           <Text style={styles.empty} testID="kitchen-menu-empty">
             No tiffin dishes listed for this kitchen yet.

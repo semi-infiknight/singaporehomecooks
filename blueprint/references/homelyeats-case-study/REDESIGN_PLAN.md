@@ -298,6 +298,21 @@ bash scripts/ship-tiffin-wave7.sh          # push + medusa from-source + verify
 SKIP_PUSH=1 SLEEP_S=90 bash scripts/ship-tiffin-wave7.sh   # after manual deploy
 ```
 
+### Wave 8 — Residual case-study honesty (post gap-audit 2026-07-09)
+
+Gap audit vs CASE_STUDY + image specs closed implementable leftovers (no rebuild of W1–7):
+
+1. [x] **Customize API** — `POST /store/shc/tiffin/orders/customize` + `shc_tiffin_meal_custom`; wire mobile/web order-manage pay delta  
+2. [x] **Day menu join** — `listMealInstances` attaches cook publish + extras; `menu_pending` drives “Menu yet to be updated”  
+3. [x] **Mobile wallet metric** — manage shows `balance_cents` (parity with web)  
+4. [x] **Plan duration weeks** — subscribe body `weeks` → opening balance / deliveries / expires_on  
+5. [x] **Past subscription history** — `past_subscriptions` on GET + Active/Past tabs  
+6. [x] **Kitchen Order once** CTA → PDP (mobile + web)  
+7. [x] **Manage notes persist** — `PATCH /subscription/notes` cooking + collection  
+8. [x] Unit + smoke extended (customize + notes); redeploy medusa for live write path  
+
+**Explicit non-goals (still):** HomelyEats orange; delivery radius; multi-kitchen concurrent subs; full guest OTP redesign; real PayU rails; per-order slot persistence (local UX ok); WhatsApp reminder network (device toggle only).
+
 ---
 
 ## 9. Per-surface checklist (every wave)

@@ -13,6 +13,7 @@ import {
   useCancelTiffin,
   useSubscribeTiffin,
   useResumeTiffin,
+  useUpdateTiffinNotes,
   TIFFIN_DAY_LABELS,
   tiffinWeeklySubtotal,
 } from '../../../lib/useTiffin';
@@ -26,10 +27,12 @@ export default function TiffinManagePage() {
   const cancelMut = useCancelTiffin();
   const subscribeMut = useSubscribeTiffin();
   const resumeMut = useResumeTiffin();
+  const notesMut = useUpdateTiffinNotes();
   const [showReasons, setShowReasons] = useState(false);
   const [cookingNotes, setCookingNotes] = useState('');
   const [collectionNotes, setCollectionNotes] = useState('');
   const [reminders, setReminders] = useState(true);
+  const [notesSaved, setNotesSaved] = useState(false);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -39,6 +42,11 @@ export default function TiffinManagePage() {
   useEffect(() => {
     if (!isLoading && !sub) router.replace('/tiffin/subscriptions');
   }, [isLoading, sub, router]);
+
+  useEffect(() => {
+    if (sub?.cooking_notes != null) setCookingNotes(String(sub.cooking_notes || ''));
+    if (sub?.collection_notes != null) setCollectionNotes(String(sub.collection_notes || ''));
+  }, [sub?.id, sub?.cooking_notes, sub?.collection_notes]);
 
   if (isLoading || !sub) {
     return (
@@ -184,6 +192,26 @@ export default function TiffinManagePage() {
           onChange={(e) => setCollectionNotes(e.target.value)}
           data-testid="manage-collection-notes"
         />
+        <SHCButton
+          size="sm"
+          variant="outline"
+          testID="manage-save-notes"
+          disabled={notesMut.isPending}
+          onClick={async () => {
+            try {
+              await notesMut.mutateAsync({
+                cooking_notes: cookingNotes || null,
+                collection_notes: collectionNotes || null,
+              });
+              setNotesSaved(true);
+              setTimeout(() => setNotesSaved(false), 2000);
+            } catch {
+              /* ignore */
+            }
+          }}
+        >
+          {notesMut.isPending ? 'Saving…' : notesSaved ? 'Saved' : 'Save instructions'}
+        </SHCButton>
         <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
           <input
             type="checkbox"
@@ -192,7 +220,7 @@ export default function TiffinManagePage() {
             className="accent-primary"
             data-testid="manage-reminders-toggle"
           />
-          Reminder before subscription ends
+          Reminder before subscription ends (device notifications)
         </label>
       </SHCCard>
 
