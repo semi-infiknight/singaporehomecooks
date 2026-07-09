@@ -4,10 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cron from "node-cron";
 
+import { MEDUSA_DIR, resolveMedusaScriptPath } from "./medusa-script-path";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "../../..");
-const MEDUSA_SCRIPT = path.join(ROOT, "apps/medusa/scripts/weekly-payout.ts");
-const TIFFIN_ORDERS_SCRIPT = "scripts/tiffin-weekly-orders.ts";
 
 const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -23,12 +22,12 @@ function log(job: string, msg: string) {
 
 function runMedusaScript(scriptRel: string, args: string[] = []): Promise<JobResult> {
   return new Promise((resolve) => {
-    const script = path.join(ROOT, scriptRel);
+    const script = resolveMedusaScriptPath(scriptRel);
     const child = spawn(
       "pnpm",
       ["exec", "tsx", script, ...args],
       {
-        cwd: path.join(ROOT, "apps/medusa"),
+        cwd: MEDUSA_DIR,
         env: { ...process.env, DATABASE_URL: DATABASE_URL || process.env.DATABASE_URL },
         stdio: ["ignore", "pipe", "pipe"],
       }
@@ -97,7 +96,7 @@ async function notificationRetry(): Promise<JobResult> {
 
 async function tiffinWeeklyOrders(): Promise<JobResult> {
   log("tiffin-weekly-orders", "starting");
-  const result = await runMedusaScript(TIFFIN_ORDERS_SCRIPT);
+  const result = await runMedusaScript("scripts/tiffin-weekly-orders.ts");
   log("tiffin-weekly-orders", result.ok ? "done" : `failed: ${result.detail}`);
   return result;
 }
