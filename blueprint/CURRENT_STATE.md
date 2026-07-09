@@ -31,7 +31,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HEAD `1f9cc92`; HomelyEats W1–8 live smoke green — customize + notes included)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HEAD `33be5eb`; HomelyEats W1–8 + skeptic: mobile notes, honest order errors, customize wallet delta)
 
 ---
 
