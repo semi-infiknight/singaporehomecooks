@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-08 (Agent Playbook in blueprint — build, taste, test playbook) — [goal-workflow.md](./production/goal-workflow.md) for all tracks; Family Values v4 trays; full web cook PWA portal; listings PATCH/DELETE; web checkout auth guards; Railway PWA ship pipeline; worker + minio on Railway. See [CURRENT_STATE.md](./CURRENT_STATE.md) for authoritative snapshot.
+**Last Updated:** 2026-07-09 — **Tiffin weekly subscription** shipped (mobile customer + cook + Medusa + worker); Railway live `/store/shc/tiffin/*` @ `83943c3`. See [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,20 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-09 — Tiffin weekly subscription)
+
+End-to-end **tiffin subscription** (single kitchen, 2/3/4 meals/week, recurring template + next-week override):
+
+- **Backend:** `shc-tiffin` module + migration; routes under `/store/shc/tiffin/*`; `materializeTiffinWeeklyOrders()`; worker cron Mon 08:00 UTC (`apps/worker/src/index.ts`).
+- **Packages:** `@shc/business-rules/tiffin`, `@shc/api-client` tiffin methods, `@shc/ui/tiffin-ux.tsx`.
+- **Mobile customer:** `apps/mobile-customer/app/(customer)/tiffin/` — browse, kitchen subscribe, confirm, planner, menu, manage. Entry: discover promo + profile tile.
+- **Mobile cook:** `apps/mobile-cook/app/(cook)/tiffin/` — kitchen config (enable, tagline, days, eligible dishes). Dashboard quick action.
+- **Maestro:** `tiffin-config.yaml`, `tiffin-subscribe.yaml`, `scripts/run-tiffin-e2e.sh`.
+- **Fixes:** SecureStore-safe milestone keys; cook app crash on listings/compliance; `product.name` (not `title`) in weekly order SQL; CI lockfile + worker ESM `.js` imports.
+- **Railway ship lesson:** goals with `TOUCHES_API=1` must **`git push origin main`** + verify live route — local-only commits do not deploy (`railway redeploy` ≠ new code).
+
+Commits: `d0bd725` … `83943c3` on `main`.
 
 ## Progress Update (2026-07-08 — Cook sign-up + onboarding wiring)
 

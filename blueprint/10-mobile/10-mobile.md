@@ -184,13 +184,36 @@ Prereqs: Node 22+, pnpm 11, Xcode, CocoaPods, EAS account (`pnpm dlx eas-cli log
 - **Web parity** maintained via tri-platform sync skill — discover (halal/light chips, proximity hint, Zomato dish rails), checkout stepper + auth guard, search ADD, location picker (`/location`), heritage on profile, request-dish footer CTA, full `/cook-portal`, Family Values trays (`SHCTrayWeb`), PWA route handlers + install banner.
 - No direct HTTP in screens; all data via hooks + `@shc/api-client`.
 
-## Gaps (mobile-specific) — post sync 2026-07-08
+## Tiffin subscription (2026-07-09)
+
+**Customer** (`apps/mobile-customer/app/(customer)/tiffin/`):
+
+| Screen | Route | testID |
+|--------|-------|--------|
+| Browse kitchens | `index.tsx` | `tiffin-browse-screen` |
+| Subscribe | `kitchen/[cookId].tsx` | `tiffin-kitchen-screen`, `tiffin-meals-{2,3,4}`, `tiffin-subscribe-btn` |
+| Confirm | `confirm.tsx` | `tiffin-confirm-screen`, `tiffin-pick-meals-btn` |
+| Weekly planner | `planner.tsx` | `tiffin-planner-screen`, `tiffin-save-plan-btn` |
+| Full menu | `menu.tsx` | `tiffin-menu-screen` |
+| Manage | `manage.tsx` | `tiffin-manage-screen` |
+
+Entry: discover promo rail (`Weekly tiffin`) + profile tile `profile-tiffin-tile`.
+
+**Cook** (`apps/mobile-cook/app/(cook)/tiffin/index.tsx`): `cook-tiffin-config-screen`, enabled switch, tagline, collection days, dish toggles, save. Dashboard bento quick action **Tiffin**.
+
+**Maestro:** `e2e/tiffin-config.yaml`, `e2e/tiffin-subscribe.yaml`; run via `scripts/run-tiffin-e2e.sh`. Cook needs `EXPO_PUBLIC_MAESTRO_E2E=1` to skip onboarding in E2E.
+
+**Hooks:** `hooks/useTiffin.ts` (both apps). **UI:** `packages/shc-ui/src/tiffin-ux.tsx`.
+
+## Gaps (mobile-specific) — post sync 2026-07-09
 
 | Gap | Notes |
 |---|---|
+| Tiffin web parity | Mobile-only; no web tiffin screens |
+| Tiffin customer Maestro on Railway | Needs kitchen config saved (cook app) or seed |
 | iOS Maestro full tours | Android PASS; re-verify after native rebuilds |
 | Cook full Medusa auth actor | Hybrid SHC JWT + scrypt; full Medusa cook actor pending |
 | Real PayNow / PayU | Simulated; manual ops confirm |
-| Worker cron automation | Service on Railway; some jobs still manual (`weekly-payout.ts` sim) |
+| Worker cron automation | Tiffin weekly orders cron wired; payout still manual sim |
 
-**Resolved since 2026-06-20:** web review UI, order items snapshot, notifications persistence, listings image_url, web cook portal, listings edit/delete, Family Values trays, checkout auth guard, PWA deploy pipeline.
+**Resolved since 2026-06-20:** web review UI, order items snapshot, notifications persistence, listings image_url, web cook portal, listings edit/delete, Family Values trays, checkout auth guard, PWA deploy pipeline. **2026-07-09:** tiffin subscription mobile + API + worker.

@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-08 — cook register + profile onboarding routes; listings GET/PATCH/DELETE on `/store/shc/listings/:id`; `@shc/api-client` `ShcRequestError` + `SHCErrorCode` propagation; web checkout/PDP auth guards documented in 07-auth.
+**Last Updated:** 2026-07-09 — **Tiffin subscription routes** under `/store/shc/tiffin/*` (kitchens, subscription, weekly-plan, cook config). Prior: cook register/profile; listings CRUD; `ShcRequestError` propagation.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -26,6 +26,20 @@
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
 | Media upload (MinIO/S3) | ✅ Full server upload (base64 -> backend putObject to MinIO with auth) + presigned mode + 400px WebP derivative via Sharp. POST /store/shc/upload supports mode=server or presigned. Integrated with listings. | done (core) |
 | Reviews | ✅ Implemented | GET/POST /orders/:id/review (customer post-collection only) |
+| **Tiffin subscription** | ✅ Implemented | See tiffin routes table below; `@shc/api-client` + mobile hooks |
+
+**Tiffin routes (2026-07-09):**
+
+| Route | Methods | Auth | Purpose |
+|-------|---------|------|---------|
+| `/store/shc/tiffin/kitchens` | GET | public | Browse enabled kitchens + eligible dishes |
+| `/store/shc/tiffin/kitchens/:cookId` | GET | public | Single kitchen menu for subscribe flow |
+| `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT | Active sub; subscribe (one kitchen); cancel |
+| `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
+| `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
+| `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT | Enable kitchen, eligible products, collection days |
+
+Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`.
 
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
 

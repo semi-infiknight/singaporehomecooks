@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-06-29 (launch-readiness wiring) — all blueprint custom tables now have registered Medusa modules/migrations; compliance docs wired; product-meta stores cook-created listing display fields; credit ledger resolve bug fixed.
+**Last Updated:** 2026-07-09 — **shc-tiffin** module (kitchen config, subscription, weekly plan tables + service). Prior: launch-readiness modules; compliance; product-meta listing fields.
 **Owner:** Backend Track
 
 ## Overview
@@ -26,6 +26,7 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 - **shc-cart** (Postgres one-cook cart)
 - **shc-notification** (DB-backed in-app inbox)
 - **shc-compliance-doc, shc-dispute, shc-commission-rule, shc-cook-expense, shc-feature-flag, shc-search-synonym, shc-platform-stat** (previously paper-only blueprint tables now registered with models/services/migrations)
+- **shc-tiffin** (2026-07-09): `shc_tiffin_kitchen_config`, `shc_tiffin_subscription`, `shc_tiffin_weekly_plan`; one-kitchen subscription gate; plan rollover via `@shc/business-rules/tiffin`
 
 **Phase 6 Backend-Money (2026-06-14):** 
 - shc-ledger: models/ledger-entry, migration, service (postCommission using 15% business-rules calc + double-entry legs e.g. Cook-Earnings-Payable/Order-Sales + Platform-Commission; postPayout clearing leg; list + summary + verifyInvariant; audit logs).

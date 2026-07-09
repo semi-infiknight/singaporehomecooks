@@ -7,7 +7,7 @@
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [build-protocol.md](./build-protocol.md)
 
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-07-09
 **Owner:** All agent tracks
 
 Blueprint is canonical. `.cursor/rules/testing-tiers.mdc` mirrors this.
@@ -118,6 +118,20 @@ pnpm verify:full
 | Metro crash (~125KB bundle) | `TOUCHES_NATIVE=1` bundles guard |
 | Medusa TS break | `pnpm --filter medusa typecheck` |
 | testID drift | Maestro YAML validate |
+| **API not on Railway** | `git push origin main` + curl live route (`TOUCHES_API=1`) |
+| Local commits not deployed | Push before declaring API goals done |
+
+### Ship step (API / `TOUCHES_API=1` goals)
+
+After `verify:goal` passes locally:
+
+1. `git push origin main`
+2. Wait for CI green (lockfile, worker build, typecheck)
+3. Confirm Railway medusa deploy SUCCESS (GitHub webhook or `railway up`)
+4. Smoke live: e.g. `curl …/store/shc/tiffin/kitchens` → HTTP 200
+5. Patch blueprint + CURRENT_STATE in same push window
+
+`railway redeploy` restarts the **previous image** — not sufficient for new routes.
 
 ### Stable / slow — **skip** unless flavour requires
 

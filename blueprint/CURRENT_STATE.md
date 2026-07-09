@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-08 (Railway-only backend enforced for all clients) — Family Values v4 trays/morph across tri-platform; full web cook PWA portal (TestFlight parity); cook listings PATCH/DELETE + mobile long-press edit/delete; web checkout auth guard (guest→login, cart refresh post-sign-in, PDP add-to-cart requires auth); `@shc/api-client` propagates `ShcRequestError` with `SHCErrorCode`; Railway topology includes worker + minio; `pnpm railway:ship` / `railway:verify-pwa` PWA deploy pipeline with `X-SHC-Railway-Build-Id` fingerprint; PWA assets served via Next.js route handlers (`/sw.js`, `/icon*.png`); explicit `STORE_CORS`/`AUTH_CORS` via `pnpm railway:wire` (fixes wildcard CORS breaking web login). Prior launch-readiness (2026-06-29): disputes, feature flags, `/ops`, web push, worker internal routes, commission rules, search synonyms — all still live.
+**Last Updated:** 2026-07-09 — **Tiffin weekly subscription** (single-kitchen, 2/3/4 meals/week) end-to-end on mobile + Medusa + worker cron; Railway medusa live at `/store/shc/tiffin/*` (deployed `main` @ `83943c3`). Prior: Railway-only clients; Family Values v4; cook PWA; listings CRUD; checkout auth guards; `pnpm railway:ship` PWA pipeline.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -12,15 +12,16 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX | Gourmeat discover (promo rail, filter chips, photo bento, vector tab icons); collection location picker (`/(customer)/location`, GPS + OneMap search + draggable map); Toptal checkout stepper + search ADD + request-dish footer CTA + “Order again”; heritage banner on Profile; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX | Sign-up + 4-step onboarding; dashboard/orders (accept/decline)/earnings/compliance/listings; listings search/filters + long-press edit/delete; Family Values trays; Expo `:8082` |
+| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover promo rail → `/(customer)/tiffin` (browse kitchens → subscribe → confirm → weekly planner → manage); location picker; checkout; Expo `:8081` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + 4-step onboarding; dashboard **Tiffin** quick action → `/(cook)/tiffin` (enable kitchen, collection days, eligible dishes); orders/listings/compliance; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops | Customer marketplace (TestFlight parity discover); **full `/cook-portal`** (dashboard, orders, listings, compliance, earnings, separate cook session + tab bar); `/ops` (health/ledger/payouts/disputes); PWA via route handlers + manifest; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
-| **Maestro device E2E** | ✅ Android + iOS | Real PDP add-to-cart (no API cart pre-seed); `location-map-android.yaml` PASS (search → confirm map + nudge); `scripts/run-maestro-full-tour.sh` |
+| **Maestro device E2E** | ✅ Android + iOS | `tiffin-config.yaml` (cook) PASS; `tiffin-subscribe.yaml` (customer) needs kitchen seeded/configured; `scripts/run-tiffin-e2e.sh` skips customer when Railway tiffin 404 |
+| **Tiffin subscription** | ✅ Mobile + API | `shc-tiffin` module; weekly plan template + next-week override; worker Mon 08:00 UTC materializes `shc_order_meta`; business rules in `@shc/business-rules/tiffin` |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
@@ -28,7 +29,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-08; HEAD `02a1f53`)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HEAD `83943c3`)
 
 ---
 
@@ -172,6 +173,12 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/notifications` | GET | customer or cook JWT |
 | `/store/shc/listings` | GET, POST | cook JWT |
 | `/store/shc/listings/:id` | PATCH, DELETE | cook JWT (owner only) |
+| `/store/shc/tiffin/kitchens` | GET | public |
+| `/store/shc/tiffin/kitchens/:cookId` | GET | public |
+| `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT |
+| `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT |
+| `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT |
+| `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT |
 | …growth routes (credits, requests, bids, heritage, ai, compliance, upload, feature-flags, disputes) | various | ✅ implemented |
 
 ### Server libs (`apps/medusa/src/lib/`)
@@ -183,6 +190,20 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `shc-cart` module | Postgres-backed cart (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | `shc-product-shape.ts` | Product DTO mapper |
 | `shc-notifications-store.ts` | In-memory notifications (dev) |
+| `shc-tiffin-shape.ts` | Kitchen/subscription DTO mapper |
+| `shc-tiffin-weekly-orders.ts` | Idempotent weekly order materialization (`TIFFIN-{subId}-{week}-{day}`) |
+
+### Tiffin (`apps/medusa/src/modules/shc-tiffin/`)
+
+| Table | Purpose |
+|-------|---------|
+| `shc_tiffin_kitchen_config` | Cook enables kitchen, eligible `product_id`s, collection days, tagline |
+| `shc_tiffin_subscription` | One active sub per customer; single `cook_id`; meals_per_week 2/3/4 |
+| `shc_tiffin_weekly_plan` | `week_start` null = recurring template; dated row = next-week override |
+
+**Scripts:** `apps/medusa/scripts/tiffin-weekly-orders.ts` — manual or worker cron.  
+**Seed:** Auntie Rose tiffin config in `seed.ts` (runs when `RAILWAY_RUN_SEED=true` only).  
+**UI:** `packages/shc-ui/src/tiffin-ux.tsx` — Mobbin-aligned components + testIDs.
 
 ---
 
@@ -200,6 +221,7 @@ pnpm web:dev                      # Web :3001
 bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb reverse
 bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
 bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
+bash scripts/run-tiffin-e2e.sh         # Cook tiffin-config + customer subscribe (customer skipped if API 404)
 
 pnpm verify:wip                   # Mid-goal: optional FILTER=<pkg> or RISK=native spot check
 FLAVOUR=polish SCOPE=web pnpm verify:goal   # Polish goal — typecheck + guards only
@@ -237,6 +259,10 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 11. **Railway web CORS** — web PWA login fails with "Failed to fetch" if medusa `STORE_CORS` mixes wildcard with explicit origins; run `pnpm railway:wire`.
 12. **PWA assets** — `/sw.js` and icons are served by Next.js route handlers (`apps/web/app/sw.js/route.ts`, etc.), not `public/sw.js`. Responses include `X-SHC-Railway-Build-Id` for deploy verification.
 13. **Web checkout** — unauthenticated users cannot reach checkout or add-to-cart; redirect to `/login` with `returnTo`.
+14. **Railway deploy requires `git push origin main`** — local commits do not deploy; `railway redeploy` restarts old image; use GitHub push or `railway up` for fresh build. API-touching goals: push → CI green → curl live route before declaring done.
+15. **Tiffin kitchens empty on Railway** — until cook saves config via app or `RAILWAY_RUN_SEED=true` re-seed; `GET /store/shc/tiffin/kitchens` returns `{ kitchens: [] }` when none enabled.
+16. **SecureStore milestone keys** — use `shc_milestone_*` (no colons); `milestoneStorageKey()` in `@shc/ui` family-values-core.
+17. **Cook Maestro E2E** — set `EXPO_PUBLIC_MAESTRO_E2E=1` in `apps/mobile-cook/.env.local` to skip onboarding during device tests.
 
 ---
 
@@ -246,6 +272,8 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 |------|-----|----------|
 | Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
+| **Tiffin web parity** | Customer/cook tiffin flows mobile-only; no web screens yet | P2 |
+| **Tiffin seed on Railway** | `shc_tiffin_kitchen_config` for Rose only when `RAILWAY_RUN_SEED=true`; cook app config or one-time seed needed | P1 |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |
 
 All 4 + MinIO auth hardening + notifications deeper (read UI, per-type limits, mark-all, types) completed. See §9.

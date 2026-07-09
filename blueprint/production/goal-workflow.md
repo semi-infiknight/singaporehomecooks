@@ -11,7 +11,7 @@
 - `.cursor/rules/testing-tiers.mdc`
 - `scripts/verify-tier.sh`
 
-**Last Updated:** 2026-07-08 — Flavours + experience ledger for strategic verify.
+**Last Updated:** 2026-07-09 — Railway ship step for API goals; tiffin goal reference.
 **Owners:** All tracks — pick `SCOPE` + `FLAVOUR` at goal start (see [testing-flavours.md](./testing-flavours.md)).
 
 ## What is a goal?
@@ -32,7 +32,7 @@ A goal usually spans **multiple commits**. Tests run **once** when the goal is d
 |-------|---------|-------|-----------|
 | **Build** | Many WIP commits | **None** (optional `FILTER=pkg pnpm verify:wip`) | Batch into final commit(s) |
 | **Verify** | Goal complete | `SCOPE=<area> pnpm verify:goal` **once** | Same commit or immediate follow-up |
-| **Ship** | Milestone / stitch / TestFlight | `pnpm verify:full` | Stitching agent + INDEX update |
+| **Ship** | API goals (`TOUCHES_API=1`) or milestone | `git push origin main` + Railway live smoke; milestone: `pnpm verify:full` | Blueprint + INDEX update |
 
 ## Pick `SCOPE` + `FLAVOUR` (at goal start)
 
@@ -107,8 +107,9 @@ Implementation: `scripts/verify-tier.sh`. Cursor rule: `.cursor/rules/testing-ti
 1. **Start:** Read CURRENT_STATE + track + phase; name the goal and pick future `SCOPE`.
 2. **Build:** Ship commits freely; no Maestro, no `verify:real-e2e`, no `verify:quick` unless debugging outside the goal.
 3. **Verify:** Run `SCOPE=* pnpm verify:goal`; fix failures before declaring done.
-4. **Document:** Patch blueprint + CURRENT_STATE + INDEX in the same commit window as verify.
-5. **Ship (if milestone):** Stitching agent runs `pnpm verify:full` on `integrate/*` (see stitching-protocol).
+4. **Ship (API):** `git push origin main`; wait CI + Railway medusa deploy; curl new routes on production.
+5. **Document:** Patch blueprint + CURRENT_STATE + INDEX in the same commit window as verify/ship.
+6. **Ship (milestone):** Stitching agent runs `pnpm verify:full` on `integrate/*` (see stitching-protocol).
 
 ## Stitching integration
 

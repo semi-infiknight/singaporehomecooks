@@ -8,7 +8,7 @@
 - [CURRENT_STATE.md](./CURRENT_STATE.md)
 - [AGENTS.md](./AGENTS.md)
 
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-07-09
 **Audience:** AI agents and subagents only
 
 ---
@@ -51,7 +51,8 @@
 2. UI work → read design-taste.md
 3. Build (many commits) → wiring checklist per wiring commit
 4. Goal close: FLAVOUR=* SCOPE=* pnpm verify:goal
-5. Patch blueprint + CURRENT_STATE same commit window
+5. Ship (if TOUCHES_API=1): git push origin main → CI green → Railway deploy → curl live route
+6. Patch blueprint + CURRENT_STATE same commit window
 ```
 
 ---
