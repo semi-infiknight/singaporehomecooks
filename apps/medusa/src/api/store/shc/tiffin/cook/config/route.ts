@@ -34,7 +34,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       });
     }
     const kitchen = await shapeTiffinKitchen(config, req.scope);
-    res.json({ config, kitchen });
+    // Wave 4 social proof — top-level subscriber_count for cook metrics strip
+    res.json({
+      config,
+      kitchen,
+      subscriber_count: (kitchen as { subscriber_count?: number })?.subscriber_count ?? 0,
+    });
   } catch {
     return unauthorized(res, "Cook login required");
   }

@@ -1,9 +1,18 @@
 'use client';
 
+/**
+ * Post-subscribe confirm — trust steps + pick meals CTA (Wave 4 funnel).
+ */
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { subscribeConfirmSteps, subscribeTrustChips } from '@shc/utils';
 import { useTiffinSubscription } from '../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader } from '../../components/SHCWebComponents';
+import {
+  SHCButton,
+  SHCCard,
+  SHCPageHeader,
+  SubscribeTrustList,
+} from '../../components/SHCWebComponents';
 
 function formatWeekLabel(iso: string) {
   const d = new Date(`${iso}T12:00:00.000Z`);
@@ -13,6 +22,14 @@ function formatWeekLabel(iso: string) {
 export default function TiffinConfirmPage() {
   const router = useRouter();
   const { data: subData, isLoading } = useTiffinSubscription();
+
+  const kitchen = (subData as any)?.kitchen;
+  const cookName = kitchen?.cook?.display_name || 'your kitchen';
+  const trustChips = subscribeTrustChips({
+    area: kitchen?.cook?.area,
+    cookName,
+  });
+  const steps = subscribeConfirmSteps();
 
   const weeks = useMemo(() => {
     const current = (subData as any)?.current_week;
@@ -35,15 +52,36 @@ export default function TiffinConfirmPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-32" data-testid="tiffin-confirm-screen">
-      <SHCPageHeader title="You're subscribed!" subtitle="Pick meals for your weekly plan next." />
+    <div className="max-w-2xl mx-auto px-4 py-6 pb-36" data-testid="tiffin-confirm-screen">
+      <SHCPageHeader
+        title="You're subscribed!"
+        subtitle={`${cookName} · pick meals for your weekly plan next.`}
+      />
 
       <SHCCard className="mb-4 bg-[var(--shc-bento-mint)]">
         <p className="font-black text-lg">Welcome to weekly tiffin</p>
         <p className="text-sm text-muted-foreground font-semibold mt-1">
-          You can make changes until midnight before each collection day.
+          You can change meals until midnight before each collection day.
         </p>
       </SHCCard>
+
+      <p className="font-extrabold text-sm mb-2">What happens next</p>
+      <ul className="space-y-2 mb-5" data-testid="tiffin-confirm-steps">
+        {steps.map((s) => (
+          <li
+            key={s.id}
+            className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2.5"
+          >
+            <p className="font-extrabold text-sm">{s.title}</p>
+            <p className="text-xs font-semibold text-muted-foreground mt-0.5">{s.body}</p>
+          </li>
+        ))}
+      </ul>
+
+      <p className="font-extrabold text-sm mb-2">Your plan guarantees</p>
+      <div className="mb-5">
+        <SubscribeTrustList chips={trustChips} compact />
+      </div>
 
       <p className="font-extrabold text-sm mb-2">Upcoming weeks</p>
       <ul className="space-y-2 mb-6">
@@ -59,12 +97,16 @@ export default function TiffinConfirmPage() {
             Week of {w.label}
           </li>
         ))}
+        {weeks.length === 0 ? (
+          <li className="text-sm font-semibold text-muted-foreground">Calendar builds after you pick meals.</li>
+        ) : null}
       </ul>
 
-      <div className="fixed bottom-0 left-0 right-0 md:static p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)]">
-        <div className="max-w-2xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-[70] bg-card/95 border-t-2 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),8px)] md:static md:border-0 md:bg-transparent md:pb-0">
+        <div className="max-w-2xl mx-auto px-4 py-3 mb-14 md:mb-0">
           <SHCButton
             className="w-full"
+            size="lg"
             onClick={() => router.replace('/tiffin/planner')}
             testID="tiffin-pick-meals-btn"
           >

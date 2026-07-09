@@ -68,7 +68,10 @@ export default function CookTiffinConfigPage() {
         enabled,
         eligibleProductIds: eligible,
         collectionDays,
-        subscriberCount: (configData as any)?.subscriber_count ?? (config as any)?.subscriber_count,
+        subscriberCount:
+          (configData as any)?.subscriber_count ??
+          (configData as any)?.kitchen?.subscriber_count ??
+          (config as any)?.subscriber_count,
       }),
     [enabled, eligible, collectionDays, configData, config]
   );

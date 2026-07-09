@@ -1,5 +1,8 @@
+/**
+ * Post-subscribe confirm — trust steps + pick meals (Wave 4).
+ */
 import React, { useMemo } from 'react';
-import { View, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ScrollView, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -9,6 +12,7 @@ import {
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
+import { subscribeConfirmSteps, subscribeTrustChips } from '@shc/utils';
 import { useTiffinSubscription } from '../../../hooks/useTiffin';
 
 function formatWeekLabel(iso: string) {
@@ -20,6 +24,14 @@ export default function TiffinConfirmScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: subData, isLoading } = useTiffinSubscription();
+
+  const kitchen = (subData as any)?.kitchen;
+  const cookName = kitchen?.cook?.display_name || 'your kitchen';
+  const steps = subscribeConfirmSteps();
+  const trust = subscribeTrustChips({
+    area: kitchen?.cook?.area,
+    cookName,
+  });
 
   const weeks = useMemo(() => {
     const current = (subData as any)?.current_week;
@@ -51,8 +63,25 @@ export default function TiffinConfirmScreen() {
         }}
       >
         <SHCTiffinConfirmBanner
-          subtitle="You can make changes until midnight before each collection day."
+          subtitle={`${cookName} · changes until midnight before each collection day.`}
         />
+
+        <Text style={styles.section}>What happens next</Text>
+        {steps.map((s) => (
+          <View key={s.id} style={styles.card} testID={`tiffin-confirm-step-${s.id}`}>
+            <Text style={styles.cardTitle}>{s.title}</Text>
+            <Text style={styles.cardBody}>{s.body}</Text>
+          </View>
+        ))}
+
+        <Text style={styles.section}>Your plan guarantees</Text>
+        {trust.map((c) => (
+          <View key={c.id} style={styles.card} testID={`subscribe-trust-${c.id}`}>
+            <Text style={styles.cardTitle}>✓ {c.label}</Text>
+            <Text style={styles.cardBody}>{c.detail}</Text>
+          </View>
+        ))}
+
         <SHCTiffinUpcomingWeeks weeks={weeks} selectedWeek={(subData as any)?.current_week} />
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]}>
@@ -69,6 +98,23 @@ export default function TiffinConfirmScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  section: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: gourmeatColors.text,
+    marginTop: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+  },
+  card: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+  },
+  cardTitle: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text },
+  cardBody: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4, lineHeight: 17 },
   footer: {
     position: 'absolute',
     left: 0,

@@ -25,6 +25,8 @@ import {
   kitchenRatingBuckets,
   tiffinPlanDurationOptions,
   tiffinPlanDurationTotal,
+  subscribeTrustChips,
+  kitchenSubscriberLabel,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
@@ -42,6 +44,7 @@ import {
   SHCErrorBanner,
   GourmeatSectionTitle,
   KitchenTrustCertsList,
+  SubscribeTrustList,
 } from '../../../components/SHCWebComponents';
 
 export default function TiffinKitchenPage() {
@@ -109,6 +112,10 @@ export default function TiffinKitchenPage() {
   const reviews = sortKitchenReviews(kitchenDemoReviews(cookId), 'recent');
   const buckets = kitchenRatingBuckets(ratingSum.rating);
   const avatar = getCookAvatarUrl(cookId, cookName);
+  const trustChips = subscribeTrustChips({
+    area: (kitchen as any)?.cook?.area,
+    cookName,
+  });
 
   const handleSubscribe = async () => {
     setSubscribeError('');
@@ -350,12 +357,20 @@ export default function TiffinKitchenPage() {
             </ul>
           )}
 
-          <p className="text-xs font-semibold text-primary mb-6" data-testid="kitchen-collection-days">
+          <p className="text-xs font-semibold text-primary mb-3" data-testid="kitchen-collection-days">
             Collection days:{' '}
             {((kitchen as any).collection_days || [])
               .map((d: number) => TIFFIN_DAY_LABELS[d])
               .join(', ')}
           </p>
+          <p className="text-xs font-bold text-muted-foreground mb-4" data-testid="kitchen-subscriber-proof">
+            👤 {kitchenSubscriberLabel((kitchen as any)?.subscriber_count)}
+          </p>
+
+          <GourmeatSectionTitle title="Why subscribe" testID="kitchen-trust-header" />
+          <div className="mb-8">
+            <SubscribeTrustList chips={trustChips} />
+          </div>
         </>
       )}
 

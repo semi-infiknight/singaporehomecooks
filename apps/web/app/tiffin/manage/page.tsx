@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { subscriptionLedgerPreview } from '@shc/utils';
 import {
   useTiffinSubscription,
   useCancelTiffin,
@@ -49,6 +50,7 @@ export default function TiffinManagePage() {
 
   const isPaused = sub.status === 'paused';
   const cookName = kitchen?.cook?.display_name || 'Kitchen';
+  const ledger = subscriptionLedgerPreview(sub);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-manage-screen">
@@ -211,6 +213,25 @@ export default function TiffinManagePage() {
           <li className="text-sm font-semibold text-muted-foreground">No meals planned — edit weekly plan.</li>
         ) : null}
       </ul>
+
+      {/* Recent transactions — Wave 4/5 ledger shell (ref manage 29) */}
+      <p className="font-extrabold text-sm mb-2">Recent activity</p>
+      <SHCCard className="mb-6" data-testid="tiffin-ledger-preview">
+        <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
+          {ledger.map((row) => (
+            <li key={row.id} className="py-2.5 first:pt-0 last:pb-0 flex justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-bold truncate">{row.label}</p>
+                <p className="text-[11px] font-semibold text-muted-foreground">{row.dateLabel}</p>
+              </div>
+              <p className="text-sm font-black tabular-nums shrink-0">{row.amountLabel}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[11px] font-semibold text-muted-foreground mt-3 pt-2 border-t border-[var(--shc-border-brutal)]/40">
+          Full PayNow ledger lands with billing. Recharge extends deliveries + flex.
+        </p>
+      </SHCCard>
 
       {/* Danger zone last */}
       <div className="border-t-2 border-[var(--shc-border-brutal)] pt-4" data-testid="tiffin-danger-zone">

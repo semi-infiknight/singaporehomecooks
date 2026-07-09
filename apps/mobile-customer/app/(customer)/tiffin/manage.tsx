@@ -13,6 +13,7 @@ import {
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
+import { subscriptionLedgerPreview } from '@shc/utils';
 import {
   useTiffinSubscription,
   useCancelTiffin,
@@ -82,6 +83,7 @@ export default function TiffinManageScreen() {
   const currentSlots = (subData as any)?.slots_current_week || [];
   const nextSlots = (subData as any)?.slots_next_week || [];
   const isPaused = sub.status === 'paused';
+  const ledger = subscriptionLedgerPreview(sub);
 
   return (
     <ScrollView
@@ -205,6 +207,22 @@ export default function TiffinManageScreen() {
         </>
       ) : null}
 
+      <Text style={styles.section}>Recent activity</Text>
+      <View style={styles.ledger} testID="tiffin-ledger-preview">
+        {ledger.map((row) => (
+          <View key={row.id} style={styles.ledgerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ledgerLabel}>{row.label}</Text>
+              <Text style={styles.hint}>{row.dateLabel}</Text>
+            </View>
+            <Text style={styles.ledgerAmt}>{row.amountLabel}</Text>
+          </View>
+        ))}
+        <Text style={[styles.hint, { marginTop: 8 }]}>
+          Full PayNow ledger lands with billing. Recharge extends deliveries + flex.
+        </Text>
+      </View>
+
       <Text style={[styles.section, { marginTop: shcSpacing.xl }]}>Danger zone</Text>
       {!showReasons ? (
         <GourmeatPrimaryButton
@@ -243,4 +261,22 @@ const styles = StyleSheet.create({
   actions: { marginBottom: shcSpacing.md },
   mealsRow: { flexDirection: 'row', gap: 8 },
   reasons: { marginTop: shcSpacing.sm },
+  ledger: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    padding: shcSpacing.md,
+  },
+  ledgerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: gourmeatColors.border,
+  },
+  ledgerLabel: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text },
+  ledgerAmt: { fontSize: 13, fontWeight: '900', color: gourmeatColors.primary },
 });

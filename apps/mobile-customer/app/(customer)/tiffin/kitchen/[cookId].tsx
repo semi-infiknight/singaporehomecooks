@@ -23,6 +23,8 @@ import {
   kitchenTiffinPlanRows,
   tiffinPlanDurationOptions,
   tiffinPlanDurationTotal,
+  subscribeTrustChips,
+  kitchenSubscriberLabel,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
@@ -222,6 +224,20 @@ export default function TiffinKitchenScreen() {
             .map((d: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
             .join(', ')}
         </Text>
+        <Text style={styles.sectionHint} testID="kitchen-subscriber-proof">
+          👤 {kitchenSubscriberLabel(kitchen.subscriber_count)}
+        </Text>
+
+        <Text style={styles.sectionTitle}>Why subscribe</Text>
+        {subscribeTrustChips({
+          area: kitchen?.cook?.area,
+          cookName,
+        }).map((c) => (
+          <View key={c.id} style={styles.trustCard} testID={`subscribe-trust-${c.id}`}>
+            <Text style={styles.trustTitle}>✓ {c.label}</Text>
+            <Text style={styles.sectionHint}>{c.detail}</Text>
+          </View>
+        ))}
       </ScrollView>
 
       <View
@@ -301,6 +317,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: shcSpacing.md,
   },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: gourmeatColors.text,
+    marginTop: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+  },
+  trustCard: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.sm,
+  },
+  trustTitle: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text, marginBottom: 4 },
   footer: {
     position: 'absolute',
     left: 0,

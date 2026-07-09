@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getDishImageUrl } from '@shc/utils';
+import { getDishImageUrl, subscribeTrustChips } from '@shc/utils';
 import Image from 'next/image';
 import {
   useTiffinSubscription,
@@ -11,7 +11,13 @@ import {
   TIFFIN_DAY_LABELS,
   type TiffinPlanSlot,
 } from '../../../lib/useTiffin';
-import { SHCButton, SHCPageHeader, SHCBadge } from '../../components/SHCWebComponents';
+import {
+  SHCButton,
+  SHCPageHeader,
+  SHCBadge,
+  SHCErrorBanner,
+  SubscribeTrustList,
+} from '../../components/SHCWebComponents';
 
 export default function TiffinPlannerPage() {
   return (
@@ -52,6 +58,7 @@ function TiffinPlannerInner() {
 
   const [slots, setSlots] = useState<TiffinPlanSlot[]>(initialSlots);
   const [editingDay, setEditingDay] = useState<number | null>(null);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     setSlots(initialSlots);
@@ -80,10 +87,24 @@ function TiffinPlannerInner() {
   };
 
   const handleSave = async () => {
-    if (isNextWeek) await saveNextWeek.mutateAsync(slots);
-    else await savePlan.mutateAsync({ slots, as_recurring_template: true });
-    router.replace('/tiffin/manage');
+    setSaveError('');
+    if (slots.length !== mealsPerWeek) {
+      setSaveError(`Pick exactly ${mealsPerWeek} day${mealsPerWeek === 1 ? '' : 's'} before saving.`);
+      return;
+    }
+    try {
+      if (isNextWeek) await saveNextWeek.mutateAsync(slots);
+      else await savePlan.mutateAsync({ slots, as_recurring_template: true });
+      router.replace('/tiffin/manage');
+    } catch (e: unknown) {
+      setSaveError((e as Error)?.message || 'Could not save plan. Try again.');
+    }
   };
+
+  const trustChips = subscribeTrustChips({
+    area: kitchen?.cook?.area,
+    cookName: kitchen?.cook?.display_name,
+  });
 
   if (isLoading || !sub) {
     return (
@@ -178,12 +199,31 @@ function TiffinPlannerInner() {
         Selected {slots.length}/{mealsPerWeek}
       </p>
 
-      <div className="fixed bottom-0 left-0 right-0 md:static p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)]">
-        <div className="max-w-2xl mx-auto">
+      {dishes.length === 0 ? (
+        <p className="text-sm font-semibold text-muted-foreground mb-4">
+          This kitchen has no eligible dishes yet. Ask the cook to enable tiffin dishes, or pick another kitchen.
+        </p>
+      ) : null}
+
+      <div className="mb-6">
+        <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide mb-2">
+          Collection & safety
+        </p>
+        <SubscribeTrustList chips={trustChips.slice(0, 3)} compact />
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-[70] bg-card/95 border-t-2 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),8px)] md:static md:border-0 md:bg-transparent md:pb-0">
+        <div className="max-w-2xl mx-auto px-4 py-3 mb-14 md:mb-0">
+          {saveError ? (
+            <div className="mb-2">
+              <SHCErrorBanner message={saveError} />
+            </div>
+          ) : null}
           <SHCButton
             className="w-full"
+            size="lg"
             onClick={handleSave}
-            disabled={slots.length !== mealsPerWeek || savePlan.isPending || saveNextWeek.isPending}
+            disabled={savePlan.isPending || saveNextWeek.isPending}
             testID={isNextWeek ? 'tiffin-save-next-week-btn' : 'tiffin-save-plan-btn'}
           >
             {savePlan.isPending || saveNextWeek.isPending

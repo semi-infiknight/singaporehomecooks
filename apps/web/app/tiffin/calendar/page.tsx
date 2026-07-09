@@ -3,8 +3,15 @@
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
+import { emptyOrdersDayCopy } from '@shc/utils';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal, TIFFIN_DAY_LABELS } from '../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader, SHCBadge } from '../../components/SHCWebComponents';
+import {
+  SHCButton,
+  SHCCard,
+  SHCPageHeader,
+  SHCBadge,
+  IllustratedEmptyState,
+} from '../../components/SHCWebComponents';
 
 export default function TiffinCalendarPage() {
   const router = useRouter();
@@ -67,9 +74,16 @@ export default function TiffinCalendarPage() {
       </div>
 
       {dayMeals.length === 0 ? (
-        <SHCCard>
-          <p className="text-sm font-semibold text-muted-foreground text-center py-6">No meal on this day.</p>
-        </SHCCard>
+        <IllustratedEmptyState
+          kind="no_orders"
+          title={emptyOrdersDayCopy({ isToday: false }).title}
+          description="Tiffin collection days appear when you save a weekly plan."
+          action={
+            <SHCButton size="sm" onClick={() => router.push('/tiffin/planner')}>
+              Edit weekly plan
+            </SHCButton>
+          }
+        />
       ) : (
         dayMeals.map((m) => {
           const dish = dishes.find((d: any) => d.id === m.product_id);

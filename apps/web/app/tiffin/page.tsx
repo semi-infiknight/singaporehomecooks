@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { getCookAvatarUrl, getDishImageUrl } from '@shc/utils';
+import { getCookAvatarUrl, getDishImageUrl, kitchenSubscriberLabel, kitchenOpenStatus } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useTiffinKitchens, useTiffinSubscription, tiffinPricePerServing } from '../../lib/useTiffin';
 import { SHCButton, SHCCard, SHCEmptyState } from '../components/SHCWebComponents';
@@ -224,6 +224,11 @@ export default function TiffinBrowsePage() {
               .filter((n: number) => Number.isFinite(n) && n > 0);
             const from = prices.length ? Math.min(...prices) : tiffinPricePerServing(3);
             const to = prices.length ? Math.max(...prices) : tiffinPricePerServing(2);
+            const open = kitchenOpenStatus({
+              display_name: name,
+              area: k.cook?.area,
+              status: k.enabled === false ? 'paused' : 'active',
+            });
             return (
               <li key={k.cook_id}>
                 <button
@@ -247,15 +252,19 @@ export default function TiffinBrowsePage() {
                       {k.tagline || 'Weekly home-cooked meals'}
                       {k.cook?.area ? ` · ${k.cook.area}` : ''}
                     </p>
-                    <p className="text-sm font-extrabold text-green-700 mt-1">
-                      Open <span className="text-muted-foreground font-semibold">· HDB collection evenings</span>
+                    <p
+                      className={`text-sm font-extrabold mt-1 ${open.isOpen ? 'text-green-700' : 'text-red-700'}`}
+                      data-testid={`tiffin-kitchen-open-${k.cook_id}`}
+                    >
+                      {open.label}{' '}
+                      <span className="text-muted-foreground font-semibold">· {open.detail}</span>
                     </p>
                     <div className="flex justify-between items-center mt-2 text-sm">
                       <span className="font-black">
                         S${Math.round(from)}–{Math.round(to)}/meal
                       </span>
-                      <span className="text-muted-foreground font-semibold">
-                        👤 {k.subscriber_count ?? 0} subscribers
+                      <span className="text-muted-foreground font-semibold" data-testid={`tiffin-kitchen-subs-${k.cook_id}`}>
+                        👤 {kitchenSubscriberLabel(k.subscriber_count)}
                       </span>
                     </div>
                   </div>

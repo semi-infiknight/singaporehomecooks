@@ -21,7 +21,7 @@ import {
   GourmeatPrimaryButton,
   tiffinPricePerServing,
 } from '@shc/ui';
-import { kitchenDishPriceDollars } from '@shc/utils';
+import { kitchenDishPriceDollars, kitchenOpenStatus } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 
@@ -183,6 +183,11 @@ export default function TiffinBrowseScreen() {
             .filter((n: number | null): n is number => n != null && n > 0);
           const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
           const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
+          const open = kitchenOpenStatus({
+            display_name: k.cook?.display_name,
+            area: k.cook?.area,
+            status: k.enabled === false ? 'paused' : 'active',
+          });
           return (
             <SHCTiffinKitchenCard
               key={k.cook_id}
@@ -196,8 +201,8 @@ export default function TiffinBrowseScreen() {
               priceFrom={Math.round(from)}
               priceTo={Math.round(to)}
               rating={4.8}
-              isOpen
-              closesAt="HDB collection evenings"
+              isOpen={open.isOpen}
+              closesAt={open.detail}
               coverUri={k.dishes?.[0]?.image_url}
               onPress={() => openKitchen(k.cook_id)}
             />

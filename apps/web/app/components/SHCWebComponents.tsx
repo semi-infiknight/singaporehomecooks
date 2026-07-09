@@ -1101,6 +1101,42 @@ export function AccountMenuList({
   );
 }
 
+/** Subscribe funnel trust chips (one kitchen · collection · allergens · flex) */
+export function SubscribeTrustList({
+  chips,
+  compact = false,
+}: {
+  chips: Array<{ id: string; label: string; detail: string }>;
+  compact?: boolean;
+}) {
+  return (
+    <ul
+      className={compact ? 'space-y-2' : 'space-y-2.5'}
+      data-testid="subscribe-trust-list"
+    >
+      {chips.map((c) => (
+        <li
+          key={c.id}
+          className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2.5"
+          data-testid={`subscribe-trust-${c.id}`}
+        >
+          <p className="text-sm font-extrabold flex items-center gap-2">
+            <span className="text-primary" aria-hidden>
+              ✓
+            </span>
+            {c.label}
+          </p>
+          {!compact ? (
+            <p className="text-xs font-semibold text-muted-foreground mt-0.5 leading-snug pl-5">
+              {c.detail}
+            </p>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** Wireframe kitchen trust certs — Licenses · Food safety · Hygiene */
 export function KitchenTrustCertsList({
   certs,
