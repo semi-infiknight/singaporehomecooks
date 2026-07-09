@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Customer + cook onboarding:** customer first-open carousel (`shc_onboarding_seen_v1`); cook kitchen setup after login (`shc_cook_onboarding_seen_v1`) on mobile-cook + web `/cook-portal/onboarding`; dashboard “Kitchen setup tour” to replay.
+**Last Updated:** 2026-07-09 — **Category explore pages:** home cuisine chips → `/category/[id]` (web) + `/(customer)/category/[id]` (mobile); offer banner · top rated · kitchens; pure helpers in `@shc/utils/category`.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
