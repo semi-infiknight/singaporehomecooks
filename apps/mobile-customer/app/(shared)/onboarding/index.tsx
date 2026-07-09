@@ -8,6 +8,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SHCOnboardingFlowScreen, shcColors, shcSpacing } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES } from '@shc/utils';
+import { markOnboardingSeen } from '../../../lib/onboarding';
 
 type Step = {
   imageUri: string;
@@ -53,12 +54,18 @@ export default function CustomerOnboardingScreen() {
   const isLast = step === STEPS.length - 1;
   const current = STEPS[step];
 
-  const exploreGuest = () => router.replace('/(customer)' as any);
-  const goAuth = () => router.push('/(shared)/auth' as any);
+  const exploreGuest = async () => {
+    await markOnboardingSeen();
+    router.replace('/(customer)' as any);
+  };
+  const goAuth = async () => {
+    await markOnboardingSeen();
+    router.push('/(shared)/auth' as any);
+  };
 
   const goNext = () => {
     if (isLast) {
-      goAuth();
+      void goAuth();
       return;
     }
     setStep((s) => s + 1);

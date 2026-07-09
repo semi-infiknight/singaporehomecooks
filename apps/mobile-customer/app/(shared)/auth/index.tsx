@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
+import { markOnboardingSeen } from '../../../lib/onboarding';
 
 export default function AuthScreen() {
   const { login, register } = useAuth();
@@ -32,6 +33,7 @@ export default function AuthScreen() {
       } else {
         await register(email.trim(), password);
       }
+      await markOnboardingSeen();
       router.replace('/(customer)');
     } catch (e) {
       Alert.alert('Sign in failed', (e as Error).message);
@@ -92,14 +94,30 @@ export default function AuthScreen() {
           {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
         </SHCButton>
 
-        <Pressable onPress={() => setMode(mode === 'login' ? 'register' : 'login')} style={styles.modeToggle} testID="auth-mode-toggle">
-          <Text style={styles.modeToggleText}>
-            {mode === 'login' ? 'New here? Create an account' : 'Have an account? Log in'}
-          </Text>
-        </Pressable>
+        {mode === 'login' ? (
+          <Pressable
+            onPress={() => router.push('/(shared)/onboarding' as any)}
+            style={styles.modeToggle}
+            testID="auth-new-here-tour"
+          >
+            <Text style={styles.modeToggleText}>New here? See how it works</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => setMode('login')} style={styles.modeToggle} testID="auth-mode-toggle">
+            <Text style={styles.modeToggleText}>Have an account? Log in</Text>
+          </Pressable>
+        )}
+        {mode === 'login' && (
+          <Pressable onPress={() => setMode('register')} style={styles.modeToggle} testID="auth-mode-toggle">
+            <Text style={styles.modeToggleText}>Create an account</Text>
+          </Pressable>
+        )}
 
         <Pressable
-          onPress={() => router.replace('/(customer)' as any)}
+          onPress={async () => {
+            await markOnboardingSeen();
+            router.replace('/(customer)' as any);
+          }}
           style={styles.browseBtn}
           testID="auth-browse-guest-btn"
           accessibilityRole="button"

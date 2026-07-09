@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Homepage = full marketplace** (not tiffin-only): dismissible subscription banner + cuisine categories + Popular/One meal/Events modes + event rail + kitchens near you + single-dish grid. Tiffin OS remains under `/tiffin` and Discover promo. Emulators: Metro reload → Railway API; PWA redeploy after homepage ship.
+**Last Updated:** 2026-07-09 — **First open → onboarding carousel** (not sign-in): mobile root + web `/` gate when `shc_onboarding_seen_v1` unset; guest/skip/sign-in marks seen. Homepage remains full marketplace after tour.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 

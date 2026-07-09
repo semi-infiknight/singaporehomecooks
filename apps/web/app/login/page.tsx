@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/useAuth';
+import { markOnboardingSeen } from '../../lib/onboarding';
 import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponents';
 
 export default function LoginPage() {
@@ -27,6 +28,7 @@ export default function LoginPage() {
     try {
       if (mode === 'login') await login(email, password);
       else await register(email, password);
+      markOnboardingSeen();
       router.push(nextPath.startsWith('/') ? nextPath : '/');
     } catch (err) {
       setError((err as Error).message);
@@ -76,18 +78,41 @@ export default function LoginPage() {
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </SHCButton>
         </form>
-        <button
-          type="button"
-          className="text-sm text-primary w-full text-center font-bold"
-          onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-        >
-          {mode === 'login' ? 'New here? Create an account' : 'Already have an account? Sign in'}
-        </button>
+        {mode === 'login' ? (
+          <button
+            type="button"
+            className="text-sm text-primary w-full text-center font-bold"
+            data-testid="login-new-here-tour"
+            onClick={() => router.push('/onboarding')}
+          >
+            New here? See how it works
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="text-sm text-primary w-full text-center font-bold"
+            onClick={() => setMode('login')}
+          >
+            Already have an account? Sign in
+          </button>
+        )}
+        {mode === 'login' && (
+          <button
+            type="button"
+            className="text-sm text-muted-foreground w-full text-center font-bold"
+            onClick={() => setMode('register')}
+          >
+            Create an account
+          </button>
+        )}
         <button
           type="button"
           className="w-full text-center text-sm font-bold text-muted-foreground underline py-2"
           data-testid="onboarding-guest-btn"
-          onClick={() => router.push(nextPath.startsWith('/') ? nextPath : '/')}
+          onClick={() => {
+            markOnboardingSeen();
+            router.push(nextPath.startsWith('/') ? nextPath : '/');
+          }}
         >
           Continue as guest
         </button>
