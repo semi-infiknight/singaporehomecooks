@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats Wave 7 ship closeout:** pg-first subscribe; `scripts/ship-tiffin-wave7.sh`; API surface docs.
+**Last Updated:** 2026-07-09 — **HomelyEats Waves 1–7 closed:** pg-first subscribe shipped; push + medusa `--from-source` redeploy; full tiffin smoke.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -21,17 +21,17 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
 | **Maestro device E2E** | ✅ Android + iOS | Cook `tiffin-config.yaml`; customer `tiffin-subscribe.yaml` + **`tiffin-flex-os.yaml`** (pause/recharge/calendar); `pnpm e2e:tiffin` |
-| **Tiffin subscription** | ✅ Mobile + API + **Wave 6** | Ledger + recharge PayNow; pause/skip/resume; `pnpm smoke:tiffin` curl suite; worker Mon materialize; fix: subscribe errors no longer masked as 401 |
+| **Tiffin subscription** | ✅ Mobile + API + **Wave 7** | Ledger + recharge PayNow; pause/skip/resume; **pg-first** create/list; `pnpm smoke:tiffin` + `pnpm ship:tiffin`; worker Mon materialize; honest errors (no false 401) |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
-| **Paper wireframe IA** | ✅ Wave 1–7 | **W7 ship:** Postgres-first subscribe create; ship script; 06-api-surface ledger/recharge; operator must push + redeploy medusa |
+| **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HEAD `83943c3`)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HomelyEats W1–7 ship)
 
 ---
 
@@ -262,7 +262,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 11. **Railway web CORS** — web PWA login fails with "Failed to fetch" if medusa `STORE_CORS` mixes wildcard with explicit origins; run `pnpm railway:wire`.
 12. **PWA assets** — `/sw.js` and icons are served by Next.js route handlers (`apps/web/app/sw.js/route.ts`, etc.), not `public/sw.js`. Responses include `X-SHC-Railway-Build-Id` for deploy verification.
 13. **Web checkout** — unauthenticated users cannot reach checkout or add-to-cart; redirect to `/login` with `returnTo`.
-14. **Railway deploy requires `git push origin main`** — local commits do not deploy; `railway redeploy` restarts old image; use GitHub push or `railway up` for fresh build. API-touching goals: push → CI green → curl live route before declaring done.
+14. **Railway deploy requires `git push origin main`** — local commits do not deploy; plain `railway redeploy` restarts the **old** image. Use **`railway redeploy -s medusa --from-source -y`** (or GitHub auto-deploy) after push. Tiffin: `pnpm ship:tiffin`.
 15. **Tiffin kitchens on Railway** — filled by normal `seed.ts` on medusa boot (same seed as cooks/dishes). If empty: cook **Save tiffin settings** or re-deploy so entrypoint seed runs.
 16. **SecureStore milestone keys** — use `shc_milestone_*` (no colons); `milestoneStorageKey()` in `@shc/ui` family-values-core.
 17. **Cook Maestro E2E** — set `EXPO_PUBLIC_MAESTRO_E2E=1` in `apps/mobile-cook/.env.local` to skip onboarding during device tests.
@@ -275,7 +275,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 |------|-----|----------|
 | Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
-| **Tiffin HomelyEats redesign** | UI/flow overhaul + additive subscription OS; **no feature removal**; web + both apps iOS/Android same waves — [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md) | P0 (product) |
+| **Tiffin HomelyEats redesign** | Waves 1–7 done (UI + flex OS + ledger + pg-first ship) — [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md) | done |
 | **Tiffin web parity** | Customer `/tiffin/*` + cook `/cook-portal/tiffin` shipped | done |
 | **Tiffin seed on Railway** | Part of uniform `seed.ts` / entrypoint (not a separate command) | done |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |

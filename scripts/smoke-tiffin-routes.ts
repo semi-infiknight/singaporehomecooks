@@ -95,11 +95,16 @@ async function main() {
     customerToken
   );
   if (subCreate.status === 401 || subCreate.status === 500) {
-    // Pre-wave-6 medusa masked DB errors as 401; still validate read paths
+    // Pre-wave-7 medusa: MikroORM create failed / false 401; needs pg-first + redeploy
     console.warn(
       `⚠️  POST /tiffin/subscription HTTP ${subCreate.status}: ${JSON.stringify(subCreate.body).slice(0, 200)}`
     );
-    console.warn('   Redeploy medusa with wave 6 error-handling + ledger for full write smoke.');
+    console.warn('   Redeploy medusa with wave 7 pg-first subscribe for full write smoke.');
+    if (process.env.REQUIRE_TIFFIN_SMOKE === '1') {
+      throw new Error(
+        `POST /tiffin/subscription HTTP ${subCreate.status} — medusa not on wave 7 yet (REQUIRE_TIFFIN_SMOKE=1)`
+      );
+    }
     console.log('\n=== smoke-tiffin-routes PARTIAL (read paths OK; subscribe write needs medusa redeploy) ===');
     return;
   }

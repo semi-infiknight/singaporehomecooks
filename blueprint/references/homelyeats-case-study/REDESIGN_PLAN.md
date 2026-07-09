@@ -291,11 +291,11 @@ Each wave = **one goal**: many commits → one `FLAVOUR=* SCOPE=tiffin pnpm veri
 2. [x] **Ship script** — `bash scripts/ship-tiffin-wave7.sh` (push optional, typecheck, `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`)  
 3. [x] **API surface docs** — pause/resume/recharge/ledger/balance on `06-api-surface`  
 4. [x] **Error mapping** — `tiffinCustomerError` (401 only for real UNAUTHORIZED)  
-5. [ ] **Operator:** push `main` + Railway medusa redeploy → green full smoke  
+5. [x] **Operator:** push `main` + `railway redeploy -s medusa --from-source -y` → `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`  
 
 ```bash
-bash scripts/ship-tiffin-wave7.sh          # push + verify
-SKIP_PUSH=1 SLEEP_S=60 bash scripts/ship-tiffin-wave7.sh   # after manual deploy
+bash scripts/ship-tiffin-wave7.sh          # push + medusa from-source + verify
+SKIP_PUSH=1 SLEEP_S=90 bash scripts/ship-tiffin-wave7.sh   # after manual deploy
 ```
 
 ---

@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — HomelyEats Waves 1–6 implemented (UI + flex OS + ledger + harden). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-09 — HomelyEats Waves 1–7 programme closed (UI + flex OS + ledger + harden + pg-first ship). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -11,9 +11,9 @@
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
 
-## Progress Update (2026-07-09 — HomelyEats Waves 1–6)
+## Progress Update (2026-07-09 — HomelyEats Waves 1–7 ship)
 
-Paper-wireframe / HomelyEats programme delivered tri-platform:
+Paper-wireframe / HomelyEats programme delivered tri-platform + production closeout:
 
 | Wave | Delivered |
 |------|-----------|
@@ -23,9 +23,10 @@ Paper-wireframe / HomelyEats programme delivered tri-platform:
 | 4 | Social proof, subscribe trust funnel, confirm steps, ledger shell |
 | 5 | `shc_tiffin_ledger`, balance_cents, PayNow recharge confirm, real transactions |
 | 6 | `pnpm smoke:tiffin`, Maestro flex OS, error-masking fix, verify-tier hooks |
+| 7 | Postgres-first subscribe create/list; `pnpm ship:tiffin`; 06-api-surface ledger/recharge docs |
 
-**Commands:** `pnpm smoke:tiffin` · `pnpm e2e:tiffin` · `FLAVOUR=wiring SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal`  
-**Ship:** push main + Railway medusa redeploy for ledger + honest subscribe errors.
+**Commands:** `pnpm smoke:tiffin` · `pnpm e2e:tiffin` · `pnpm ship:tiffin` · `FLAVOUR=wiring SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal`  
+**Ship:** `git push origin main` → `railway redeploy -s medusa --from-source -y` → `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`
 
 ## Progress Update (2026-07-09 — Tiffin weekly subscription)
 
