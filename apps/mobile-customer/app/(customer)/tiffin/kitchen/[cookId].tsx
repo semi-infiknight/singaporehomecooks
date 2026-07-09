@@ -27,13 +27,18 @@ import {
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
 import { useTiffinKitchen, useSubscribeTiffin } from '../../../../hooks/useTiffin';
+import { useAuth } from '../../../../hooks/useAuth';
+import { useGuestAuthTray } from '../../../../hooks/useGuestAuthTray';
 
 export default function TiffinKitchenScreen() {
   const { cookId } = useLocalSearchParams<{ cookId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId || '');
   const subscribeMut = useSubscribeTiffin();
+  const [subscribeError, setSubscribeError] = useState('');
 
   const mealsOptions: number[] = kitchen?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(mealsOptions[1] || 3);
@@ -79,12 +84,27 @@ export default function TiffinKitchenScreen() {
   );
 
   const handleSubscribe = async () => {
-    if (!cookId) return;
-    await subscribeMut.mutateAsync({
-      cookId,
-      mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
-    });
-    router.replace('/(customer)/tiffin/confirm' as any);
+    setSubscribeError('');
+    if (!cookId) {
+      setSubscribeError('Kitchen missing. Go back and open a kitchen again.');
+      return;
+    }
+    if (!user) {
+      showGuestAuthTray(
+        'Sign in to subscribe',
+        'Browse kitchens freely — sign in to start a tiffin plan and pick meals.'
+      );
+      return;
+    }
+    try {
+      await subscribeMut.mutateAsync({
+        cookId: String(cookId),
+        mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
+      });
+      router.replace('/(customer)/tiffin/confirm' as any);
+    } catch (e: any) {
+      setSubscribeError(e?.message || 'Unable to subscribe. Try again.');
+    }
   };
 
   if (isLoading) {
@@ -110,7 +130,7 @@ export default function TiffinKitchenScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.sm,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 120,
+          paddingBottom: 140,
         }}
       >
         <View style={styles.topBar}>
@@ -204,9 +224,30 @@ export default function TiffinKitchenScreen() {
         </Text>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            paddingBottom: Math.max(insets.bottom, 12) + shcSpacing.md,
+            zIndex: 40,
+            elevation: 40,
+          },
+        ]}
+        testID="tiffin-subscribe-bar"
+      >
+        {subscribeError ? (
+          <Text style={styles.err} testID="tiffin-subscribe-error">
+            {subscribeError}
+          </Text>
+        ) : null}
         <GourmeatPrimaryButton
-          label="Subscribe & select meals"
+          label={
+            subscribeMut.isPending
+              ? 'Subscribing…'
+              : user
+                ? 'Subscribe & select meals'
+                : 'Sign in to subscribe'
+          }
           onPress={handleSubscribe}
           loading={subscribeMut.isPending}
           testID="tiffin-subscribe-btn"
@@ -270,5 +311,11 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.surface,
     borderTopWidth: 1,
     borderTopColor: gourmeatColors.border,
+  },
+  err: {
+    color: '#B91C1C',
+    fontWeight: '700',
+    fontSize: 13,
+    marginBottom: shcSpacing.sm,
   },
 });

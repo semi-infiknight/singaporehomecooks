@@ -17,8 +17,36 @@ const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' |
 };
 
 const VISIBLE_TABS = new Set(Object.keys(TAB_META));
-const HIDE_CART_BAR = new Set(['cart', 'checkout', 'product/[id]', 'cook/[slug]', 'search', 'orders/[id]', 'request']);
-const HIDE_TAB_BAR = new Set(['request', 'location', 'checkout', 'product/[id]', 'orders/[id]']);
+const HIDE_CART_BAR = new Set([
+  'cart',
+  'checkout',
+  'product/[id]',
+  'cook/[slug]',
+  'search',
+  'orders/[id]',
+  'request',
+  'tiffin/kitchen/[cookId]',
+  'tiffin/confirm',
+  'tiffin/planner',
+  'tiffin/manage',
+]);
+const HIDE_TAB_BAR = new Set([
+  'request',
+  'location',
+  'checkout',
+  'product/[id]',
+  'orders/[id]',
+  'orders/manage',
+  'tiffin/kitchen/[cookId]',
+  'tiffin/confirm',
+  'tiffin/planner',
+  'tiffin/manage',
+  'tiffin/pause',
+  'tiffin/recharge',
+  'tiffin/subscriptions',
+  'tiffin/calendar',
+  'tiffin/menu',
+]);
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();

@@ -39,6 +39,7 @@ import {
   SHCButton,
   SHCCard,
   SHCBadge,
+  SHCErrorBanner,
   GourmeatSectionTitle,
   KitchenTrustCertsList,
 } from '../../../components/SHCWebComponents';
@@ -54,6 +55,7 @@ export default function TiffinKitchenPage() {
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(3);
   const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
+  const [subscribeError, setSubscribeError] = useState('');
 
   useEffect(() => {
     if (mealsOptions.length) {
@@ -109,16 +111,30 @@ export default function TiffinKitchenPage() {
   const avatar = getCookAvatarUrl(cookId, cookName);
 
   const handleSubscribe = async () => {
-    if (!cookId) return;
-    if (!user) {
-      router.push(`/login?returnTo=/tiffin/kitchen/${cookId}`);
+    setSubscribeError('');
+    if (!cookId) {
+      setSubscribeError('Kitchen id missing. Go back and open a kitchen again.');
       return;
     }
-    await subscribeMut.mutateAsync({
-      cookId,
-      mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
-    });
-    router.replace('/tiffin/confirm');
+    if (!user) {
+      // Login page reads `next` (not returnTo)
+      router.push(`/login?next=${encodeURIComponent(`/tiffin/kitchen/${cookId}`)}`);
+      return;
+    }
+    try {
+      await subscribeMut.mutateAsync({
+        cookId,
+        mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
+      });
+      router.replace('/tiffin/confirm');
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      const msg =
+        err?.message === 'Failed to fetch'
+          ? 'Could not reach the server. Check your connection and try again.'
+          : err?.message || 'Unable to subscribe. Try again or pick another kitchen.';
+      setSubscribeError(msg);
+    }
   };
 
   if (isLoading) {
@@ -408,24 +424,41 @@ export default function TiffinKitchenPage() {
         </div>
       )}
 
-      {tab === 'plan' && (
-        <div className="fixed bottom-0 left-0 right-0 md:static md:mt-4 p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0">
-          <div className="max-w-2xl mx-auto">
-            <SHCButton
-              className="w-full"
-              onClick={handleSubscribe}
-              disabled={subscribeMut.isPending}
-              testID="tiffin-subscribe-btn"
+      {/* Sticky CTA — always visible; above mobile tab bar (z-50) so taps register */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[70] bg-card/95 border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),8px)] md:static md:mt-4 md:border-0 md:shadow-none md:bg-transparent md:pb-0"
+        data-testid="tiffin-subscribe-bar"
+      >
+        <div className="max-w-2xl mx-auto px-4 py-3 mb-14 md:mb-0">
+          {subscribeError ? (
+            <div className="mb-2">
+              <SHCErrorBanner message={subscribeError} />
+            </div>
+          ) : null}
+          {tab !== 'plan' ? (
+            <button
+              type="button"
+              className="text-xs font-bold text-primary mb-2 w-full text-left"
+              onClick={() => setTab('plan')}
             >
-              {subscribeMut.isPending
-                ? 'Subscribing…'
-                : user
-                  ? 'Subscribe & select meals'
-                  : 'Sign in to subscribe'}
-            </SHCButton>
-          </div>
+              Plan tab · choose meals/week first ↑
+            </button>
+          ) : null}
+          <SHCButton
+            className="w-full"
+            size="lg"
+            onClick={handleSubscribe}
+            disabled={subscribeMut.isPending}
+            testID="tiffin-subscribe-btn"
+          >
+            {subscribeMut.isPending
+              ? 'Subscribing…'
+              : user
+                ? 'Subscribe & select meals'
+                : 'Sign in to subscribe'}
+          </SHCButton>
         </div>
-      )}
+      </div>
     </div>
   );
 }
