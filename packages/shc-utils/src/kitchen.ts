@@ -117,3 +117,33 @@ export function kitchenTiffinPlanRows(
     label: `${meals} meals / week`,
   }));
 }
+
+/**
+ * Dish price in SGD dollars for kitchen menu badges (matches GourmeatDishCard: S${price}).
+ * Prefer explicit `price` as dollars. If only `price_cents` is set, convert cents → dollars.
+ * Never apply “price > 50 means cents” heuristics (breaks S$60 → S$1).
+ */
+export function kitchenDishPriceDollars(dish: {
+  price?: number | null;
+  price_cents?: number | null;
+}): number | null {
+  if (dish.price != null && Number.isFinite(Number(dish.price))) {
+    return Number(dish.price);
+  }
+  if (dish.price_cents != null && Number.isFinite(Number(dish.price_cents))) {
+    return Number(dish.price_cents) / 100;
+  }
+  return null;
+}
+
+/** Format kitchen dish price label e.g. "S$12". */
+export function kitchenDishPriceLabel(dish: {
+  price?: number | null;
+  price_cents?: number | null;
+}): string | null {
+  const dollars = kitchenDishPriceDollars(dish);
+  if (dollars == null) return null;
+  // Whole dollars when integer; else 2dp
+  if (Number.isInteger(dollars)) return `S$${dollars}`;
+  return `S$${dollars.toFixed(2)}`;
+}

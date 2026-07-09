@@ -5,6 +5,8 @@ import {
   kitchenOpenStatus,
   kitchenTagList,
   kitchenTiffinPlanRows,
+  kitchenDishPriceDollars,
+  kitchenDishPriceLabel,
 } from './kitchen';
 
 const PRODUCTS: Record<string, unknown>[] = [
@@ -127,5 +129,29 @@ describe('kitchenTiffinPlanRows', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({ meals: 2, pricePerMeal: 10, label: '2 meals / week' });
     expect(rows[1]?.pricePerMeal).toBe(15);
+  });
+});
+
+describe('kitchenDishPriceDollars / Label', () => {
+  it('uses price as dollars when present (Gourmeat parity)', () => {
+    // Live tiffin API: price=60, price_cents=6000 → display S$60 not S$1
+    expect(kitchenDishPriceDollars({ price: 60, price_cents: 6000 })).toBe(60);
+    expect(kitchenDishPriceLabel({ price: 60, price_cents: 6000 })).toBe('S$60');
+  });
+
+  it('does not divide dollars by 100 for values > 50', () => {
+    expect(kitchenDishPriceDollars({ price: 60 })).toBe(60);
+    expect(kitchenDishPriceLabel({ price: 60 })).toBe('S$60');
+    expect(kitchenDishPriceLabel({ price: 12 })).toBe('S$12');
+  });
+
+  it('falls back to price_cents/100 when price missing', () => {
+    expect(kitchenDishPriceDollars({ price_cents: 1200 })).toBe(12);
+    expect(kitchenDishPriceLabel({ price_cents: 1250 })).toBe('S$12.50');
+  });
+
+  it('returns null when no price fields', () => {
+    expect(kitchenDishPriceDollars({})).toBeNull();
+    expect(kitchenDishPriceLabel({})).toBeNull();
   });
 });

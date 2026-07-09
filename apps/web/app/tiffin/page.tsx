@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getCookAvatarUrl, getDishImageUrl } from '@shc/utils';
-import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useTiffinKitchens, useTiffinSubscription, tiffinPricePerServing } from '../../lib/useTiffin';
 import { SHCButton, SHCCard, SHCEmptyState } from '../components/SHCWebComponents';
@@ -27,7 +26,6 @@ const CATEGORIES = [
 
 export default function TiffinBrowsePage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { data: kitchens = [], isLoading } = useTiffinKitchens();
   const { data: subData } = useTiffinSubscription();
   const { locationLabel } = useCustomerLocation();
@@ -199,10 +197,10 @@ export default function TiffinBrowsePage() {
               k.dishes?.[0]?.image_url ||
               getDishImageUrl({ id: k.dishes?.[0]?.id, name: k.dishes?.[0]?.name, cuisine: k.dishes?.[0]?.cuisine }) ||
               getCookAvatarUrl(k.cook_id, name);
+            // price is SGD dollars (same as GourmeatDishCard) — never /100 for values > 50
             const prices = (k.dishes || [])
               .map((d: any) => Number(d.price))
-              .filter((n: number) => Number.isFinite(n) && n > 0)
-              .map((p: number) => (p > 50 ? p / 100 : p));
+              .filter((n: number) => Number.isFinite(n) && n > 0);
             const from = prices.length ? Math.min(...prices) : tiffinPricePerServing(3);
             const to = prices.length ? Math.max(...prices) : tiffinPricePerServing(2);
             return (
@@ -212,10 +210,7 @@ export default function TiffinBrowsePage() {
                   data-testid={`tiffin-kitchen-${k.cook_id}`}
                   className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95 transition-opacity"
                   onClick={() => {
-                    if (!user) {
-                      router.push(`/login?returnTo=/tiffin/kitchen/${k.cook_id}`);
-                      return;
-                    }
+                    // Browse-first: open kitchen detail without login; Subscribe requires auth
                     router.push(`/tiffin/kitchen/${k.cook_id}`);
                   }}
                 >

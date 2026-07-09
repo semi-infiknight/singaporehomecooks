@@ -14,6 +14,7 @@ import {
   kitchenOpenStatus,
   kitchenTagList,
   kitchenTiffinPlanRows,
+  kitchenDishPriceLabel,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
 import {
@@ -229,10 +230,8 @@ export default function TiffinKitchenPage() {
                 <p className="font-bold text-sm truncate">{d.name}</p>
                 <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
               </div>
-              {d.price != null ? (
-                <SHCBadge variant="heritage">
-                  S${d.price > 50 ? (d.price / 100).toFixed(0) : d.price}
-                </SHCBadge>
+              {kitchenDishPriceLabel(d) ? (
+                <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
               ) : null}
             </li>
           ))}
