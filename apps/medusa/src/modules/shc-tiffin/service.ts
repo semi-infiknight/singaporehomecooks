@@ -611,7 +611,7 @@ class ShcTiffinModuleService extends MedusaService({
         /* non-fatal wallet */
       }
     }
-    return { ok: true, collection_date: collectionDate, ...saved };
+    return { ok: true, ...saved, collection_date: collectionDate };
   }
 
   async updateSubscriptionNotes(
