@@ -77,8 +77,8 @@ describe("materializeTiffinWeeklyOrders", () => {
         cook_rose: { default_collection_slot: "18:00-19:00" },
       },
       products: {
-        dish_nasi_001: { product_id: "dish_nasi_001", title: "Nasi Lemak", price_cents: 1200, cook_id: "cook_rose" },
-        dish_keluak_002: { product_id: "dish_keluak_002", title: "Ayam Buah Keluak", price_cents: 1500, cook_id: "cook_rose" },
+        dish_nasi_001: { product_id: "dish_nasi_001", name: "Nasi Lemak", price_cents: 1200, cook_id: "cook_rose" },
+        dish_keluak_002: { product_id: "dish_keluak_002", name: "Ayam Buah Keluak", price_cents: 1500, cook_id: "cook_rose" },
       },
       inserts,
     });
@@ -107,8 +107,8 @@ describe("materializeTiffinWeeklyOrders", () => {
       },
       configs: { cook_rose: { default_collection_slot: "18:00-19:00" } },
       products: {
-        dish_tpl: { product_id: "dish_tpl", title: "Template", price_cents: 1000, cook_id: "cook_rose" },
-        dish_override: { product_id: "dish_override", title: "Override", price_cents: 1100, cook_id: "cook_rose" },
+        dish_tpl: { product_id: "dish_tpl", name: "Template", price_cents: 1000, cook_id: "cook_rose" },
+        dish_override: { product_id: "dish_override", name: "Override", price_cents: 1100, cook_id: "cook_rose" },
       },
       inserts,
     });
@@ -130,7 +130,7 @@ describe("materializeTiffinWeeklyOrders", () => {
         tiffin_sub_idem: [{ week_start: null, slots: [{ day_of_week: 1, product_id: "dish_a" }] }],
       },
       configs: { cook_rose: {} },
-      products: { dish_a: { product_id: "dish_a", title: "Dish A", price_cents: 900, cook_id: "cook_rose" } },
+      products: { dish_a: { product_id: "dish_a", name: "Dish A", price_cents: 900, cook_id: "cook_rose" } },
       existingOrders: existing,
       inserts,
     });
@@ -140,5 +140,31 @@ describe("materializeTiffinWeeklyOrders", () => {
     expect(result.created).toBe(0);
     expect(result.skipped).toBe(1);
     expect(inserts).toHaveLength(0);
+  });
+
+  it("falls back to productTitleFromId when name is null", async () => {
+    const inserts: unknown[][] = [];
+    const db = mockDb({
+      subs: [{ id: "tiffin_sub_fb", customer_id: "cust_4", cook_id: "cook_rose", status: "active" }],
+      plans: {
+        tiffin_sub_fb: [{ week_start: null, slots: [{ day_of_week: 1, product_id: "dish_nasi_lemak_prawn_001" }] }],
+      },
+      configs: { cook_rose: { default_collection_slot: "18:00-19:00" } },
+      products: {
+        dish_nasi_lemak_prawn_001: {
+          product_id: "dish_nasi_lemak_prawn_001",
+          name: null,
+          price_cents: 1200,
+          cook_id: "cook_rose",
+        },
+      },
+      inserts,
+    });
+
+    const result = await materializeTiffinWeeklyOrders(db, "2026-07-06");
+
+    expect(result.created).toBe(1);
+    const items = JSON.parse(inserts[0]?.[6] as string);
+    expect(items[0].name).toBe("Nasi Lemak Sambal Prawn");
   });
 });

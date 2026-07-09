@@ -19,7 +19,10 @@ async function main() {
 
   try {
     const result = await materializeTiffinWeeklyOrders(
-      { query: (sql, params) => client.query(sql, params).then((r) => ({ rows: r.rows })) },
+      {
+        query: (sql, params) =>
+          client.query(sql, params).then((r: { rows: unknown[] }) => ({ rows: r.rows })),
+      },
       weekArg
     );
     console.log(`[TIFFIN-ORDERS] week_start=${result.week_start} created=${result.created} skipped=${result.skipped}`);

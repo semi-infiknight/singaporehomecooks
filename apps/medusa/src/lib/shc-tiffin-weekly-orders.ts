@@ -4,6 +4,7 @@ import {
   resolvePlanForWeek,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
+import { productTitleFromId } from "./shc-product-titles";
 
 export type TiffinWeeklyOrdersDb = {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -66,7 +67,7 @@ export async function materializeTiffinWeeklyOrders(
       }
 
       const { rows: products } = await db.query(
-        `SELECT product_id, title, price_cents, cook_id FROM shc_product_meta WHERE product_id = $1 LIMIT 1`,
+        `SELECT product_id, name, price_cents, cook_id FROM shc_product_meta WHERE product_id = $1 LIMIT 1`,
         [slot.product_id]
       );
       const product = products[0];
@@ -76,7 +77,7 @@ export async function materializeTiffinWeeklyOrders(
       const items = [
         {
           product_id: slot.product_id,
-          name: product.title,
+          name: product.name || productTitleFromId(slot.product_id),
           qty: 1,
           price: price / 100,
           cook_id: sub.cook_id,
