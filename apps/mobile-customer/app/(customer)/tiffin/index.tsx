@@ -21,8 +21,8 @@ import {
   GourmeatPrimaryButton,
   tiffinPricePerServing,
 } from '@shc/ui';
+import { kitchenDishPriceDollars } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
-import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 
 const FILTERS = [
@@ -44,7 +44,6 @@ const CATEGORIES = [
 export default function TiffinBrowseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isGuest, requireAuth } = useGuestAuthGate();
   const { data: kitchens = [], isLoading } = useTiffinKitchens();
   const { data: subData } = useTiffinSubscription();
   const { active: location, locationLabel } = useCustomerLocation();
@@ -85,11 +84,8 @@ export default function TiffinBrowseScreen() {
     return list;
   }, [kitchens, query, filter, category, location, locationLabel]);
 
+  /** Browse-first (Jakob’s Law): open kitchen detail without login; subscribe still auth-gated on kitchen page. */
   const openKitchen = (cookId: string) => {
-    if (isGuest) {
-      requireAuth('Subscribe to tiffin');
-      return;
-    }
     router.push(`/(customer)/tiffin/kitchen/${cookId}` as any);
   };
 
@@ -181,17 +177,12 @@ export default function TiffinBrowseScreen() {
         />
       ) : (
         filtered.map((k: any) => {
+          // price is SGD dollars (kitchenDishPriceDollars) — never p>50/100
           const prices = (k.dishes || [])
-            .map((d: any) => Number(d.price))
-            .filter((n: number) => Number.isFinite(n) && n > 0);
-          const from =
-            prices.length > 0
-              ? Math.min(...prices.map((p: number) => (p > 50 ? p / 100 : p)))
-              : tiffinPricePerServing(3);
-          const to =
-            prices.length > 0
-              ? Math.max(...prices.map((p: number) => (p > 50 ? p / 100 : p)))
-              : tiffinPricePerServing(2);
+            .map((d: any) => kitchenDishPriceDollars(d))
+            .filter((n: number | null): n is number => n != null && n > 0);
+          const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
+          const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
           return (
             <SHCTiffinKitchenCard
               key={k.cook_id}
