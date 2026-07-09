@@ -33,7 +33,7 @@ import { clearCookOnboardingSeen } from '../../lib/onboarding';
 const QUICK_ACTIONS = [
   { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
   { href: '/(cook)/orders', iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/(cook)/tiffin', iconKey: 'home' as const, label: 'Tiffin', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-yellow' as const },
+  { href: '/(cook)/tiffin', iconKey: 'home' as const, label: 'Tiffin OS', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-yellow' as const },
   { href: '/(cook)/earnings', iconKey: 'earnings' as const, label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
   { href: '/(cook)/compliance', iconKey: 'compliance' as const, label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
 ];
@@ -99,6 +99,16 @@ export default function CookDashboard() {
       >
         <Text style={styles.tourBannerTitle}>Kitchen setup tour</Text>
         <Text style={styles.tourBannerSub}>Story · collection · PDPA — replay anytime</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => router.push('/(cook)/tiffin' as any)}
+        style={[styles.tourBanner, styles.tiffinBanner]}
+        testID="cook-tiffin-ops-banner"
+        accessibilityRole="button"
+      >
+        <Text style={styles.tourBannerTitle}>Tiffin kitchen OS</Text>
+        <Text style={styles.tourBannerSub}>Publish day menu · cancel kitchen day · visibility</Text>
       </Pressable>
 
       <SHCFadeIn delay={60}>
@@ -323,6 +333,9 @@ const styles = StyleSheet.create({
     borderColor: shcColors.border,
     backgroundColor: shcColors.bentoPeach || '#FFE8DE',
     ...shcShadows.brutalSm,
+  },
+  tiffinBanner: {
+    backgroundColor: shcColors.bentoYellow || '#FFF3C4',
   },
   tourBannerTitle: { fontSize: 16, fontWeight: '800', color: shcColors.text },
   tourBannerSub: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },

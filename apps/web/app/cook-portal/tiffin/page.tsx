@@ -1,6 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+/**
+ * Cook tiffin OS — config + day menu publish / cancel (wireframe kitchen ops).
+ */
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCookListings } from '../../../lib/useCookPortal';
 import {
@@ -10,12 +13,19 @@ import {
   usePublishTiffinDayMenu,
   TIFFIN_DAY_LABELS,
 } from '../../../lib/useTiffin';
-import { weekStartMonday } from '@shc/business-rules';
+import {
+  cookOpsCollectionDates,
+  cookTiffinMetrics,
+  cookMenuPublishSuccessCopy,
+  cookDayCancelSuccessCopy,
+  cookTiffinEmptyDishesCopy,
+} from '@shc/utils';
 import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCBadge,
+  IllustratedEmptyState,
 } from '../../components/SHCWebComponents';
 
 export default function CookTiffinConfigPage() {
@@ -32,6 +42,9 @@ export default function CookTiffinConfigPage() {
   const [eligible, setEligible] = useState<string[]>([]);
   const [collectionDays, setCollectionDays] = useState<number[]>([1, 2, 3, 4, 5]);
   const [savedMsg, setSavedMsg] = useState('');
+  const [opsMsg, setOpsMsg] = useState('');
+  const [opsError, setOpsError] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
     if (config) {
@@ -49,6 +62,26 @@ export default function CookTiffinConfigPage() {
     cuisine: l.cuisine,
   }));
 
+  const metrics = useMemo(
+    () =>
+      cookTiffinMetrics({
+        enabled,
+        eligibleProductIds: eligible,
+        collectionDays,
+        subscriberCount: (configData as any)?.subscriber_count ?? (config as any)?.subscriber_count,
+      }),
+    [enabled, eligible, collectionDays, configData, config]
+  );
+
+  const opsDays = useMemo(
+    () => cookOpsCollectionDates({ collectionDays, count: 7 }),
+    [collectionDays]
+  );
+
+  useEffect(() => {
+    if (!selectedDate && opsDays[0]) setSelectedDate(opsDays[0].date);
+  }, [opsDays, selectedDate]);
+
   const toggleDish = (id: string) => {
     setEligible((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
@@ -60,6 +93,7 @@ export default function CookTiffinConfigPage() {
   };
 
   const handleSave = async () => {
+    setOpsError('');
     await updateMut.mutateAsync({
       enabled,
       tagline: tagline.trim() || undefined,
@@ -70,6 +104,41 @@ export default function CookTiffinConfigPage() {
     setSavedMsg('Tiffin settings saved — customers can subscribe now.');
   };
 
+  const handlePublish = async () => {
+    setOpsError('');
+    setOpsMsg('');
+    if (!selectedDate) return;
+    if (eligible.length === 0) {
+      setOpsError('Select at least one eligible dish before publishing a menu.');
+      return;
+    }
+    try {
+      await publishMenuMut.mutateAsync({
+        collectionDate: selectedDate,
+        productIds: eligible,
+        note: 'Daily tiffin menu',
+      });
+      setOpsMsg(cookMenuPublishSuccessCopy(selectedDate, eligible.length));
+    } catch (e: any) {
+      setOpsError(e?.message || 'Publish failed');
+    }
+  };
+
+  const handleCancelDay = async () => {
+    setOpsError('');
+    setOpsMsg('');
+    if (!selectedDate) return;
+    try {
+      await cancelDayMut.mutateAsync({
+        collectionDate: selectedDate,
+        reason: 'Kitchen unavailable',
+      });
+      setOpsMsg(cookDayCancelSuccessCopy(selectedDate));
+    } catch (e: any) {
+      setOpsError(e?.message || 'Cancel day failed');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
@@ -78,13 +147,44 @@ export default function CookTiffinConfigPage() {
     );
   }
 
+  const emptyDishes = cookTiffinEmptyDishesCopy();
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 pb-24" data-testid="cook-tiffin-config-screen">
       <GourmeatCookHeader
-        title="Tiffin subscription"
-        subtitle="Let customers subscribe to weekly meals from your kitchen"
+        title="Tiffin kitchen OS"
+        subtitle="Visibility · plan dishes · publish day menu · cancel day"
         testID="cook-tiffin-header"
       />
+
+      {/* Metrics strip */}
+      <GourmeatCard className="mb-4" data-testid="cook-tiffin-metrics">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <p className="font-black text-sm">{metrics.statusLabel}</p>
+            <p className="text-xs font-semibold text-muted-foreground mt-0.5">{metrics.statusDetail}</p>
+          </div>
+          <SHCBadge variant={metrics.enabled ? 'success' : 'default'}>
+            {metrics.enabled ? 'On' : 'Off'}
+          </SHCBadge>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="font-black text-primary text-lg">{metrics.eligibleCount}</p>
+            <p className="text-[10px] font-bold text-muted-foreground">Eligible dishes</p>
+          </div>
+          <div>
+            <p className="font-black text-primary text-lg">{metrics.collectionDayCount}</p>
+            <p className="text-[10px] font-bold text-muted-foreground">Collection days</p>
+          </div>
+          <div>
+            <p className="font-black text-primary text-lg">
+              {metrics.subscriberCount != null ? metrics.subscriberCount : '—'}
+            </p>
+            <p className="text-[10px] font-bold text-muted-foreground">Subscribers</p>
+          </div>
+        </div>
+      </GourmeatCard>
 
       <GourmeatCard className="mb-4">
         <div className="flex items-center justify-between">
@@ -138,14 +238,19 @@ export default function CookTiffinConfigPage() {
         Select listings customers can pick in their weekly plan.
       </p>
       {dishes.length === 0 ? (
-        <GourmeatCard className="mb-4">
-          <p className="text-sm text-muted-foreground font-semibold">No listings yet.</p>
-          <GourmeatPrimaryButton
-            label="Create a listing"
-            onClick={() => router.push('/cook-portal/listings')}
-            className="mt-2"
+        <div className="mb-4" data-testid="cook-tiffin-empty-dishes">
+          <IllustratedEmptyState
+            kind="no_active_sub"
+            title={emptyDishes.title}
+            description={emptyDishes.body}
+            action={
+              <GourmeatPrimaryButton
+                label={emptyDishes.ctaLabel}
+                onClick={() => router.push('/cook-portal/listings')}
+              />
+            }
           />
-        </GourmeatCard>
+        </div>
       ) : (
         <ul className="space-y-2 mb-6">
           {dishes.map((d: { id: string; name: string; price?: number; cuisine?: string }) => {
@@ -176,29 +281,73 @@ export default function CookTiffinConfigPage() {
 
       {savedMsg ? <p className="text-sm font-bold text-primary mb-3">{savedMsg}</p> : null}
 
-      <p className="font-extrabold text-sm mb-2 mt-4">Menu publish & day cancel</p>
+      {/* Day ops — pick date then publish / cancel */}
+      <p className="font-extrabold text-sm mb-2 mt-2">Day menu & cancel</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        Publish today&apos;s menu so customer order cards leave “Menu yet to be updated”. Cancel a day
+        to notify subscribers.
+      </p>
+      <div
+        className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide"
+        data-testid="cook-tiffin-ops-dates"
+      >
+        {opsDays.map((d) => {
+          const on = d.date === selectedDate;
+          return (
+            <button
+              key={d.date}
+              type="button"
+              data-testid={`cook-ops-date-${d.date}`}
+              onClick={() => setSelectedDate(d.date)}
+              className={`shrink-0 rounded-xl border-2 px-3 py-2 text-center min-w-[4.5rem] ${
+                on
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-[var(--shc-border-brutal)] bg-card'
+              }`}
+            >
+              <div className="text-[10px] font-bold opacity-90">{d.shortLabel}</div>
+              <div className="text-xs font-black">{d.date.slice(5)}</div>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex flex-col gap-2 mb-4">
         <GourmeatPrimaryButton
-          label="Publish menu for next Mon"
-          onClick={() => {
-            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
-            publishMenuMut.mutate({ collectionDate: date, productIds: eligible, note: 'Weekly tiffin menu' });
-          }}
+          label={
+            publishMenuMut.isPending
+              ? 'Publishing…'
+              : `Publish menu · ${selectedDate || 'pick a day'}`
+          }
+          onClick={handlePublish}
           loading={publishMenuMut.isPending}
           testID="cook-tiffin-publish-menu-btn"
           className="w-full"
         />
         <GourmeatPrimaryButton
-          label="Cancel kitchen day (next Mon)"
-          onClick={() => {
-            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
-            cancelDayMut.mutate({ collectionDate: date, reason: 'Kitchen unavailable' });
-          }}
+          label={
+            cancelDayMut.isPending
+              ? 'Canceling…'
+              : `Cancel kitchen day · ${selectedDate || 'pick a day'}`
+          }
+          onClick={handleCancelDay}
           loading={cancelDayMut.isPending}
           testID="cook-tiffin-cancel-day-btn"
           className="w-full"
+          variant="outline"
         />
       </div>
+
+      {opsMsg ? (
+        <p className="text-sm font-bold text-[var(--shc-success)] mb-3" data-testid="cook-tiffin-ops-msg">
+          {opsMsg}
+        </p>
+      ) : null}
+      {opsError ? (
+        <p className="text-sm font-bold text-red-600 mb-3" data-testid="cook-tiffin-ops-error">
+          {opsError}
+        </p>
+      ) : null}
 
       <GourmeatPrimaryButton
         label={updateMut.isPending ? 'Saving…' : 'Save tiffin settings'}

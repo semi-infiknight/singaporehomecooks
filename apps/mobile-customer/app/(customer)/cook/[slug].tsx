@@ -226,8 +226,11 @@ export default function KitchenPage() {
           story={cook.story}
           testID="kitchen-page-hero"
         />
-        <Pressable onPress={() => setTab('reviews')} testID="kitchen-rating-pill">
-          <Text style={styles.ratingLink}>★ {ratingSum.label} · See reviews</Text>
+        <Pressable
+          onPress={() => router.push(`/(customer)/cook/${slug}/ratings` as any)}
+          testID="kitchen-rating-pill"
+        >
+          <Text style={styles.ratingLink}>★ {ratingSum.label} · See all ratings</Text>
         </Pressable>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabRow}>

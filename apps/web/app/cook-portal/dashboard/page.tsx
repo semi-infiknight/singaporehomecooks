@@ -76,6 +76,17 @@ export default function CookDashboardPage() {
         </p>
       </Link>
 
+      <Link
+        href="/cook-portal/tiffin"
+        data-testid="cook-tiffin-ops-banner"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-yellow)] p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
+      >
+        <p className="font-black text-foreground">Tiffin kitchen OS</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+          Publish day menu · cancel kitchen day · subscriber visibility
+        </p>
+      </Link>
+
       <div className="grid grid-cols-3 gap-2 mb-6">
         <GourmeatCard className="bg-[var(--shc-bento-mint)] text-center col-span-1">
           <p className="text-xs font-bold text-muted-foreground">This week</p>

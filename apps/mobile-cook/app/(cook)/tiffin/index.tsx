@@ -1,5 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, Switch, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+/**
+ * Cook tiffin OS — config + day menu publish / cancel (wave 3).
+ */
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  ScrollView,
+  Text,
+  Switch,
+  TextInput,
+  ActivityIndicator,
+  StyleSheet,
+  Pressable,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,9 +22,20 @@ import {
   shcSpacing,
   TIFFIN_DAY_LABELS,
 } from '@shc/ui';
-import { useTiffinCookConfig, useUpdateTiffinCookConfig, useKitchenCancelTiffinDay, usePublishTiffinDayMenu } from '../../../hooks/useTiffin';
+import {
+  cookOpsCollectionDates,
+  cookTiffinMetrics,
+  cookMenuPublishSuccessCopy,
+  cookDayCancelSuccessCopy,
+  cookTiffinEmptyDishesCopy,
+} from '@shc/utils';
+import {
+  useTiffinCookConfig,
+  useUpdateTiffinCookConfig,
+  useKitchenCancelTiffinDay,
+  usePublishTiffinDayMenu,
+} from '../../../hooks/useTiffin';
 import { useCookListings } from '../../../hooks/useProducts';
-import { weekStartMonday } from '@shc/business-rules';
 
 export default function CookTiffinConfigScreen() {
   const router = useRouter();
@@ -28,6 +51,9 @@ export default function CookTiffinConfigScreen() {
   const [tagline, setTagline] = useState('');
   const [eligible, setEligible] = useState<string[]>([]);
   const [collectionDays, setCollectionDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [opsMsg, setOpsMsg] = useState('');
+  const [opsError, setOpsError] = useState('');
 
   useEffect(() => {
     if (config) {
@@ -44,6 +70,26 @@ export default function CookTiffinConfigScreen() {
     price: l.price,
     cuisine: l.cuisine,
   }));
+
+  const metrics = useMemo(
+    () =>
+      cookTiffinMetrics({
+        enabled,
+        eligibleProductIds: eligible,
+        collectionDays,
+        subscriberCount: (configData as any)?.subscriber_count,
+      }),
+    [enabled, eligible, collectionDays, configData]
+  );
+
+  const opsDays = useMemo(
+    () => cookOpsCollectionDates({ collectionDays, count: 7 }),
+    [collectionDays]
+  );
+
+  useEffect(() => {
+    if (!selectedDate && opsDays[0]) setSelectedDate(opsDays[0].date);
+  }, [opsDays, selectedDate]);
 
   const toggleDish = (id: string) => {
     setEligible((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -66,6 +112,41 @@ export default function CookTiffinConfigScreen() {
     router.back();
   };
 
+  const handlePublish = async () => {
+    setOpsError('');
+    setOpsMsg('');
+    if (!selectedDate) return;
+    if (eligible.length === 0) {
+      setOpsError('Select at least one eligible dish before publishing.');
+      return;
+    }
+    try {
+      await publishMenuMut.mutateAsync({
+        collectionDate: selectedDate,
+        productIds: eligible,
+        note: 'Daily tiffin menu',
+      });
+      setOpsMsg(cookMenuPublishSuccessCopy(selectedDate, eligible.length));
+    } catch (e: any) {
+      setOpsError(e?.message || 'Publish failed');
+    }
+  };
+
+  const handleCancelDay = async () => {
+    setOpsError('');
+    setOpsMsg('');
+    if (!selectedDate) return;
+    try {
+      await cancelDayMut.mutateAsync({
+        collectionDate: selectedDate,
+        reason: 'Kitchen unavailable',
+      });
+      setOpsMsg(cookDayCancelSuccessCopy(selectedDate));
+    } catch (e: any) {
+      setOpsError(e?.message || 'Cancel day failed');
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -73,6 +154,8 @@ export default function CookTiffinConfigScreen() {
       </View>
     );
   }
+
+  const emptyDishes = cookTiffinEmptyDishesCopy();
 
   return (
     <View style={styles.screen} testID="cook-tiffin-config-screen">
@@ -84,10 +167,31 @@ export default function CookTiffinConfigScreen() {
         }}
       >
         <GourmeatScreenHeader
-          title="Tiffin subscription"
-          subtitle="Let customers subscribe to weekly meals from your kitchen"
+          title="Tiffin kitchen OS"
+          subtitle="Visibility · dishes · publish / cancel day"
           onBack={() => router.back()}
         />
+
+        <View style={styles.metrics} testID="cook-tiffin-metrics">
+          <Text style={styles.metricsTitle}>{metrics.statusLabel}</Text>
+          <Text style={styles.metricsDetail}>{metrics.statusDetail}</Text>
+          <View style={styles.metricsRow}>
+            <View style={styles.metricCell}>
+              <Text style={styles.metricNum}>{metrics.eligibleCount}</Text>
+              <Text style={styles.metricLabel}>Dishes</Text>
+            </View>
+            <View style={styles.metricCell}>
+              <Text style={styles.metricNum}>{metrics.collectionDayCount}</Text>
+              <Text style={styles.metricLabel}>Days</Text>
+            </View>
+            <View style={styles.metricCell}>
+              <Text style={styles.metricNum}>
+                {metrics.subscriberCount != null ? metrics.subscriberCount : '—'}
+              </Text>
+              <Text style={styles.metricLabel}>Subs</Text>
+            </View>
+          </View>
+        </View>
 
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Visible to customers</Text>
@@ -123,40 +227,82 @@ export default function CookTiffinConfigScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Eligible dishes</Text>
-        <Text style={styles.hint}>Select precooked listings customers can pick in their weekly plan.</Text>
-        {dishes.map((d: { id: string; name: string; price?: number; cuisine?: string }) => (
-          <SHCTiffinCookDishToggle
-            key={d.id}
-            dish={d}
-            enabled={eligible.includes(d.id)}
-            onToggle={() => toggleDish(d.id)}
-          />
-        ))}
+        <Text style={styles.hint}>Select listings customers can pick in their weekly plan.</Text>
+        {dishes.length === 0 ? (
+          <View testID="cook-tiffin-empty-dishes" style={styles.emptyBox}>
+            <Text style={styles.emptyTitle}>{emptyDishes.title}</Text>
+            <Text style={styles.hint}>{emptyDishes.body}</Text>
+            <GourmeatPrimaryButton
+              label={emptyDishes.ctaLabel}
+              onPress={() => router.push('/(cook)/listings' as any)}
+              style={{ marginTop: shcSpacing.sm }}
+            />
+          </View>
+        ) : (
+          dishes.map((d: { id: string; name: string; price?: number; cuisine?: string }) => (
+            <SHCTiffinCookDishToggle
+              key={d.id}
+              dish={d}
+              enabled={eligible.includes(d.id)}
+              onToggle={() => toggleDish(d.id)}
+            />
+          ))
+        )}
 
-        <Text style={styles.sectionTitle}>Today&apos;s menu & day cancel</Text>
-        <Text style={styles.hint}>Publish eligible dishes for a collection date, or cancel the kitchen day (notifies calendar status).</Text>
+        <Text style={styles.sectionTitle}>Day menu & cancel</Text>
+        <Text style={styles.hint}>
+          Pick a collection date, publish the menu, or cancel the kitchen day.
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.opsScroll}>
+          {opsDays.map((d) => {
+            const on = d.date === selectedDate;
+            return (
+              <Pressable
+                key={d.date}
+                onPress={() => setSelectedDate(d.date)}
+                style={[styles.opsChip, on && styles.opsChipOn]}
+                testID={`cook-ops-date-${d.date}`}
+              >
+                <Text style={[styles.opsChipDay, on && styles.opsChipTextOn]}>{d.shortLabel}</Text>
+                <Text style={[styles.opsChipDate, on && styles.opsChipTextOn]}>{d.date.slice(5)}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
         <GourmeatPrimaryButton
-          label="Publish menu for next Mon"
-          variant="outline"
-          onPress={() => {
-            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
-            publishMenuMut.mutate({ collectionDate: date, productIds: eligible, note: 'Weekly tiffin menu' });
-          }}
+          label={
+            publishMenuMut.isPending
+              ? 'Publishing…'
+              : `Publish menu · ${selectedDate || 'pick day'}`
+          }
+          onPress={handlePublish}
           loading={publishMenuMut.isPending}
           testID="cook-tiffin-publish-menu-btn"
           style={{ marginTop: shcSpacing.sm }}
         />
         <GourmeatPrimaryButton
-          label="Cancel kitchen day (next Mon)"
+          label={
+            cancelDayMut.isPending
+              ? 'Canceling…'
+              : `Cancel kitchen day · ${selectedDate || 'pick day'}`
+          }
           variant="outline"
-          onPress={() => {
-            const date = weekStartMonday(new Date(Date.now() + 7 * 86400000));
-            cancelDayMut.mutate({ collectionDate: date, reason: 'Kitchen unavailable' });
-          }}
+          onPress={handleCancelDay}
           loading={cancelDayMut.isPending}
           testID="cook-tiffin-cancel-day-btn"
           style={{ marginTop: shcSpacing.sm }}
         />
+        {opsMsg ? (
+          <Text style={styles.okMsg} testID="cook-tiffin-ops-msg">
+            {opsMsg}
+          </Text>
+        ) : null}
+        {opsError ? (
+          <Text style={styles.errMsg} testID="cook-tiffin-ops-error">
+            {opsError}
+          </Text>
+        ) : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]}>
@@ -174,7 +320,26 @@ export default function CookTiffinConfigScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: shcSpacing.md },
+  metrics: {
+    backgroundColor: gourmeatColors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    padding: shcSpacing.md,
+    marginBottom: shcSpacing.md,
+  },
+  metricsTitle: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text },
+  metricsDetail: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 },
+  metricsRow: { flexDirection: 'row', marginTop: shcSpacing.sm },
+  metricCell: { flex: 1, alignItems: 'center' },
+  metricNum: { fontSize: 20, fontWeight: '900', color: gourmeatColors.primary },
+  metricLabel: { fontSize: 10, fontWeight: '700', color: gourmeatColors.textLight, marginTop: 2 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: shcSpacing.md,
+  },
   rowLabel: { fontSize: 15, fontWeight: '700', color: gourmeatColors.text },
   label: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text, marginBottom: shcSpacing.xs },
   input: {
@@ -190,6 +355,32 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginTop: shcSpacing.md },
   hint: { fontSize: 12, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
   dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginVertical: shcSpacing.sm },
+  opsScroll: { marginVertical: shcSpacing.sm, maxHeight: 72 },
+  opsChip: {
+    width: 64,
+    marginRight: 8,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    backgroundColor: gourmeatColors.surface,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  opsChipOn: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  opsChipDay: { fontSize: 10, fontWeight: '800', color: gourmeatColors.textLight },
+  opsChipDate: { fontSize: 12, fontWeight: '900', color: gourmeatColors.text, marginTop: 2 },
+  opsChipTextOn: { color: '#fff' },
+  emptyBox: {
+    padding: shcSpacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    backgroundColor: gourmeatColors.surface,
+    marginBottom: shcSpacing.md,
+  },
+  emptyTitle: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text, marginBottom: 4 },
+  okMsg: { marginTop: shcSpacing.sm, fontSize: 13, fontWeight: '700', color: '#2E7D32' },
+  errMsg: { marginTop: shcSpacing.sm, fontSize: 13, fontWeight: '700', color: '#B91C1C' },
   footer: {
     position: 'absolute',
     left: 0,

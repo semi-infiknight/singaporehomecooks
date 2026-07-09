@@ -235,7 +235,7 @@ export default function KitchenPage() {
               type="button"
               className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
               data-testid="kitchen-rating-pill"
-              onClick={() => setTab('reviews')}
+              onClick={() => router.push(`/cook/${slug}/ratings`)}
             >
               ★ {ratingSum.label}
             </button>
@@ -525,6 +525,14 @@ export default function KitchenPage() {
             <p className="text-xs font-semibold text-muted-foreground">
               Community samples for this kitchen · leave a review after you collect an order.
             </p>
+            <button
+              type="button"
+              className="mt-3 text-sm font-bold text-primary"
+              data-testid="kitchen-see-all-ratings"
+              onClick={() => router.push(`/cook/${slug}/ratings`)}
+            >
+              Open full ratings →
+            </button>
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" data-testid="kitchen-review-sorts">
