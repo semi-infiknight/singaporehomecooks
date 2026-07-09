@@ -105,7 +105,55 @@ export default function CookOrdersPage() {
         }
       />
 
-      <div className="flex items-center justify-between mb-1" data-testid="cook-collab-board">
+      <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
+
+      {orders.length === 0 && (
+        <GourmeatCard className="mb-4">
+          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+        </GourmeatCard>
+      )}
+
+      {orders.map((o: Record<string, unknown>) => {
+        const status = String(o.shc_status || '');
+        const actions = NEXT_ACTIONS[status] || [];
+        const dishName = String((o.items as { name?: string }[])?.[0]?.name || '');
+        return (
+          <GourmeatOrderRow
+            key={String(o.id)}
+            orderId={String(o.id)}
+            dishName={dishName}
+            productId={String((o.items as { product_id?: string }[])?.[0]?.product_id || '')}
+            statusLabel={getOrderStatusLabel(status)}
+            collectionDate={o.collection_date ? String(o.collection_date) : undefined}
+            collectionSlot={o.collection_slot ? String(o.collection_slot) : undefined}
+            total={o.total as number}
+            onPress={() => router.push(`/cook-portal/orders/${o.id}`)}
+            testID={`cook-order-row-${o.id}`}
+            actions={
+              <>
+                {actions.map((a) => (
+                  <GourmeatPrimaryButton
+                    key={a.to}
+                    label={a.label}
+                    size="sm"
+                    className="mr-2 mb-1"
+                    testID={`cook-order-${o.id}-action-${a.to}`}
+                    onClick={() => doTransition(String(o.id), a.to)}
+                  />
+                ))}
+                <Link
+                  href={`/cook-portal/orders/${o.id}`}
+                  className="text-xs font-bold text-primary underline"
+                >
+                  Details
+                </Link>
+              </>
+            }
+          />
+        );
+      })}
+
+      <div className="flex items-center justify-between mt-8 mb-1" data-testid="cook-collab-board">
         <p className="text-sm font-extrabold text-foreground">Collaboration Board</p>
         {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
       </div>
@@ -178,54 +226,6 @@ export default function CookOrdersPage() {
           )
         )}
       </GourmeatCard>
-
-      <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
-
-      {orders.length === 0 && (
-        <GourmeatCard>
-          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
-        </GourmeatCard>
-      )}
-
-      {orders.map((o: Record<string, unknown>) => {
-        const status = String(o.shc_status || '');
-        const actions = NEXT_ACTIONS[status] || [];
-        const dishName = String((o.items as { name?: string }[])?.[0]?.name || '');
-        return (
-          <GourmeatOrderRow
-            key={String(o.id)}
-            orderId={String(o.id)}
-            dishName={dishName}
-            productId={String((o.items as { product_id?: string }[])?.[0]?.product_id || '')}
-            statusLabel={getOrderStatusLabel(status)}
-            collectionDate={o.collection_date ? String(o.collection_date) : undefined}
-            collectionSlot={o.collection_slot ? String(o.collection_slot) : undefined}
-            total={o.total as number}
-            onPress={() => router.push(`/cook-portal/orders/${o.id}`)}
-            testID={`cook-order-row-${o.id}`}
-            actions={
-              <>
-                {actions.map((a) => (
-                  <GourmeatPrimaryButton
-                    key={a.to}
-                    label={a.label}
-                    size="sm"
-                    className="mr-2 mb-1"
-                    testID={`cook-order-${o.id}-action-${a.to}`}
-                    onClick={() => doTransition(String(o.id), a.to)}
-                  />
-                ))}
-                <Link
-                  href={`/cook-portal/orders/${o.id}`}
-                  className="text-xs font-bold text-primary underline"
-                >
-                  Details
-                </Link>
-              </>
-            }
-          />
-        );
-      })}
     </div>
   );
 }

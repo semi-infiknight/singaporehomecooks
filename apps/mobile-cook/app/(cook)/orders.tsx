@@ -122,8 +122,57 @@ export default function CookOrders() {
 
       {err && <SHCErrorBanner code={err.code} message={err.message} />}
 
-      {/* Collaboration Board — under Orders */}
-      <View style={styles.collabHeader} testID="cook-collab-board">
+      <SHCSectionTitle>Collection orders</SHCSectionTitle>
+
+      {orders.length === 0 && (
+        <GourmeatCard>
+          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+        </GourmeatCard>
+      )}
+
+      <SHCFadeIn delay={80}>
+        {orders.map((o: any) => {
+          const actions = NEXT_ACTIONS[o.shc_status] || [];
+          const dishName = o.items?.[0]?.name;
+          return (
+            <GourmeatOrderRow
+              key={o.id}
+              orderId={o.id}
+              dishName={dishName}
+              productId={o.items?.[0]?.product_id}
+              status={o.shc_status}
+              statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
+              collectionDate={o.collection_date}
+              collectionSlot={o.collection_slot}
+              total={o.total}
+              onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
+              testID={`cook-order-row-${o.id}`}
+              actions={
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {actions.map((a) => (
+                    <GourmeatPrimaryButton
+                      key={a.to}
+                      label={a.label}
+                      testID={`cook-order-${o.id}-action-${a.to}`}
+                      onPress={() => doTransition(o.id, a.to)}
+                      style={{ paddingVertical: 8, paddingHorizontal: 12, minWidth: 80 }}
+                    />
+                  ))}
+                  <Link href={`/(shared)/chat/${o.id}` as any} style={styles.actionLink}>
+                    <Text style={styles.actionLinkText}>Chat</Text>
+                  </Link>
+                  <Link href={`/(cook)/orders/${o.id}` as any} style={styles.actionLink}>
+                    <Text style={styles.actionLinkText}>Details</Text>
+                  </Link>
+                </View>
+              }
+            />
+          );
+        })}
+      </SHCFadeIn>
+
+      {/* Collaboration Board — below collection orders */}
+      <View style={[styles.collabHeader, { marginTop: shcSpacing.lg }]} testID="cook-collab-board">
         <SHCSectionTitle style={styles.collabTitle}>Collaboration Board</SHCSectionTitle>
         {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
       </View>
@@ -187,55 +236,6 @@ export default function CookOrders() {
           ))
         )}
       </GourmeatCard>
-
-      <SHCSectionTitle style={{ marginTop: shcSpacing.lg }}>Collection orders</SHCSectionTitle>
-
-      {orders.length === 0 && (
-        <GourmeatCard>
-          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
-        </GourmeatCard>
-      )}
-
-      <SHCFadeIn delay={80}>
-        {orders.map((o: any) => {
-          const actions = NEXT_ACTIONS[o.shc_status] || [];
-          const dishName = o.items?.[0]?.name;
-          return (
-            <GourmeatOrderRow
-              key={o.id}
-              orderId={o.id}
-              dishName={dishName}
-              productId={o.items?.[0]?.product_id}
-              status={o.shc_status}
-              statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
-              collectionDate={o.collection_date}
-              collectionSlot={o.collection_slot}
-              total={o.total}
-              onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
-              testID={`cook-order-row-${o.id}`}
-              actions={
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {actions.map((a) => (
-                    <GourmeatPrimaryButton
-                      key={a.to}
-                      label={a.label}
-                      testID={`cook-order-${o.id}-action-${a.to}`}
-                      onPress={() => doTransition(o.id, a.to)}
-                      style={{ paddingVertical: 8, paddingHorizontal: 12, minWidth: 80 }}
-                    />
-                  ))}
-                  <Link href={`/(shared)/chat/${o.id}` as any} style={styles.actionLink}>
-                    <Text style={styles.actionLinkText}>Chat</Text>
-                  </Link>
-                  <Link href={`/(cook)/orders/${o.id}` as any} style={styles.actionLink}>
-                    <Text style={styles.actionLinkText}>Details</Text>
-                  </Link>
-                </View>
-              }
-            />
-          );
-        })}
-      </SHCFadeIn>
 
       <Link href="/(cook)/listings" asChild>
         <Pressable style={styles.listingsBtn}>
