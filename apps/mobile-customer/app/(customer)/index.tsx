@@ -280,7 +280,13 @@ export default function CustomerDiscover() {
           <GourmeatCategoryRow
             categories={cuisineCategories}
             selectedId={cuisineFilter}
-            onSelect={setCuisineFilter}
+            onSelect={(id) => {
+              setCuisineFilter(id);
+              // Dedicated category page (HomelyEats Explore category) — not only in-place filter
+              if (id) {
+                router.push(`/(customer)/category/${encodeURIComponent(id)}` as any);
+              }
+            }}
             testID="cuisine-gourmeat-row"
           />
         </>

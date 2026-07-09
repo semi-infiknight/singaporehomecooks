@@ -271,7 +271,13 @@ export default function DiscoverHome() {
             <GourmeatCategoryRow
               items={cuisineItems}
               active={cuisineFilter}
-              onSelect={setCuisineFilter}
+              onSelect={(id) => {
+                setCuisineFilter(id);
+                // Dedicated category page (HomelyEats Explore category) — not only in-place filter
+                if (id) {
+                  router.push(`/category/${encodeURIComponent(id)}`);
+                }
+              }}
               testID="cuisine-gourmeat-row"
             />
           </div>

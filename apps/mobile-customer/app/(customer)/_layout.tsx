@@ -44,6 +44,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="profile/index" options={{ title: 'Profile', headerShown: false }} />
 
       <Tabs.Screen name="search" options={{ href: null, title: 'Advanced Search', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="category/[id]" options={{ href: null, title: 'Category', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="cook/[slug]" options={{ href: null, title: 'Cook Profile', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="product/[id]" options={{ href: null, title: 'Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="checkout" options={{ href: null, title: 'Checkout (PayNow)', tabBarStyle: { display: 'none' } }} />
