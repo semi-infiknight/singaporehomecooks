@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cron from "node-cron";
 
-import { MEDUSA_DIR, resolveMedusaScriptPath } from "./medusa-script-path";
+import { MEDUSA_DIR, resolveMedusaScriptPath } from "./medusa-script-path.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

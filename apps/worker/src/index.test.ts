@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
-import { resolveMedusaScriptPath, ROOT } from "./medusa-script-path";
+import { resolveMedusaScriptPath, ROOT } from "./medusa-script-path.js";
 
 describe("worker medusa script paths", () => {
   it("resolves tiffin-weekly-orders under apps/medusa/scripts", () => {
