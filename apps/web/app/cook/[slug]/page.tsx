@@ -23,7 +23,16 @@ import {
   kitchenAboutPoints,
   kitchenMenuSections,
   kitchenDishPriceLabel,
+  kitchenMenuFilterChips,
+  filterKitchenMenuDishes,
+  kitchenMealSectionDeliveryHint,
+  upsertKitchenOrderLine,
+  setKitchenOrderLineQty,
+  lineQtyForProduct,
+  formatKitchenOrderCta,
+  formatKitchenSubscribeCta,
   type KitchenReviewSort,
+  type KitchenOrderLine,
 } from '@shc/utils';
 import { useCook, useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useAuth } from '../../../lib/useAuth';
@@ -32,8 +41,8 @@ import {
   SHCButton,
   SHCBadge,
   SHCLoading,
-  type DishCardProduct,
 } from '../../components/SHCWebComponents';
+import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
 import { getHeritageArchive } from '../../../lib/api-client';
 
 type TabId = 'menu' | 'about' | 'hours' | 'reviews';
@@ -64,6 +73,9 @@ export default function KitchenPage() {
   const [tab, setTab] = useState<TabId>('menu');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
+  const [menuFilter, setMenuFilter] = useState('all');
+  const [orderLines, setOrderLines] = useState<KitchenOrderLine[]>([]);
+  const [customizeDish, setCustomizeDish] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     if (cook?.id) getHeritageArchive(cook.id).then(setHeritage).catch(() => {});
@@ -80,7 +92,12 @@ export default function KitchenPage() {
     [products, cook, slug]
   );
 
-  const menuSections = useMemo(() => kitchenMenuSections(cookProducts), [cookProducts]);
+  const filteredProducts = useMemo(
+    () => filterKitchenMenuDishes(cookProducts, menuFilter),
+    [cookProducts, menuFilter]
+  );
+
+  const menuSections = useMemo(() => kitchenMenuSections(filteredProducts), [filteredProducts]);
 
   useEffect(() => {
     if (menuSections.length) {
@@ -109,16 +126,39 @@ export default function KitchenPage() {
   );
   const aboutPoints = useMemo(() => kitchenAboutPoints(cook as any), [cook]);
 
-  const handleAdd = useCallback(
-    (productId: string) => {
+  const openCustomize = useCallback(
+    (dish: Record<string, unknown>) => {
       if (!user) {
         router.push(`/login?next=${encodeURIComponent(`/cook/${slug}`)}`);
         return;
       }
-      addMut.mutate({ productId, qty: 1 });
+      setCustomizeDish(dish);
     },
-    [user, router, addMut, slug]
+    [user, router, slug]
   );
+
+  const confirmCustomize = useCallback(
+    (line: KitchenOrderLine) => {
+      setOrderLines((prev) => upsertKitchenOrderLine(prev, line));
+      addMut.mutate({ productId: line.productId, qty: line.qty });
+    },
+    [addMut]
+  );
+
+  const bumpLineQty = useCallback(
+    (productId: string, delta: number) => {
+      setOrderLines((prev) => {
+        const cur = lineQtyForProduct(prev, productId);
+        const next = cur + delta;
+        if (next <= 0) return setKitchenOrderLineQty(prev, productId, 0);
+        if (delta > 0) addMut.mutate({ productId, qty: 1 });
+        return setKitchenOrderLineQty(prev, productId, next);
+      });
+    },
+    [addMut]
+  );
+
+  const orderCta = useMemo(() => formatKitchenOrderCta(orderLines), [orderLines]);
 
   if (isLoading) {
     return (
@@ -245,9 +285,26 @@ export default function KitchenPage() {
         ))}
       </div>
 
-      {/* ── Menu ── */}
+      {/* ── Menu — HomelyEats kitchen order flow ── */}
       {tab === 'menu' && (
         <div data-testid="kitchen-tab-panel-menu">
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide" data-testid="kitchen-menu-filters">
+            {kitchenMenuFilterChips().map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setMenuFilter(f.id)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold border-2 ${
+                  menuFilter === f.id
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-[var(--shc-border-brutal)] bg-card'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {menuSections.length === 0 ? (
             <p className="text-sm font-semibold text-muted-foreground mb-4" data-testid="kitchen-menu-empty">
               No dishes listed for this kitchen yet.
@@ -272,7 +329,7 @@ export default function KitchenPage() {
                       <div>
                         <p className="font-black text-foreground">{section.title}</p>
                         <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-                          {section.subtitle}
+                          {kitchenMealSectionDeliveryHint(section.title)}
                         </p>
                       </div>
                       <span className="text-lg font-light text-muted-foreground">{isOpen ? '⌃' : '⌄'}</span>
@@ -281,8 +338,9 @@ export default function KitchenPage() {
                       <ul className="border-t-2 border-[var(--shc-border-brutal)] divide-y-2 divide-[var(--shc-border-brutal)]">
                         {section.dishes.map((d) => {
                           const price = kitchenDishPriceLabel(d);
+                          const qty = lineQtyForProduct(orderLines, String(d.id));
                           return (
-                            <li key={String(d.id)} className="flex gap-3 items-center p-3">
+                            <li key={String(d.id)} className="flex gap-3 items-center p-3" data-testid={`kitchen-menu-row-${d.id}`}>
                               <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-muted">
                                 <Image
                                   src={getDishImageUrl({
@@ -308,18 +366,38 @@ export default function KitchenPage() {
                                 {price && (
                                   <p className="text-sm font-black text-primary mt-0.5">{price}/portion</p>
                                 )}
+                                <p className="text-[10px] font-bold text-primary/80">Customizable</p>
                               </div>
-                              <div className="flex flex-col gap-1 shrink-0">
-                                <SHCButton size="sm" onClick={() => handleAdd(String(d.id))} testID={`kitchen-add-${d.id}`}>
+                              {qty > 0 ? (
+                                <div
+                                  className="flex items-center gap-2 border-2 border-[var(--shc-border-brutal)] rounded-xl px-1"
+                                  data-testid={`kitchen-row-qty-${d.id}`}
+                                >
+                                  <button
+                                    type="button"
+                                    className="w-8 h-8 font-black"
+                                    onClick={() => bumpLineQty(String(d.id), -1)}
+                                  >
+                                    −
+                                  </button>
+                                  <span className="font-black tabular-nums w-5 text-center">{qty}</span>
+                                  <button
+                                    type="button"
+                                    className="w-8 h-8 font-black"
+                                    onClick={() => openCustomize(d)}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              ) : (
+                                <SHCButton
+                                  size="sm"
+                                  onClick={() => openCustomize(d)}
+                                  testID={`kitchen-add-${d.id}`}
+                                >
                                   + Add
                                 </SHCButton>
-                                <Link
-                                  href={`/product/${d.id}`}
-                                  className="text-[10px] font-bold text-center text-primary"
-                                >
-                                  Details
-                                </Link>
-                              </div>
+                              )}
                             </li>
                           );
                         })}
@@ -331,22 +409,9 @@ export default function KitchenPage() {
             </div>
           )}
 
-          <div
-            className="rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4"
-            data-testid="kitchen-tiffin-cta-card"
-          >
-            <p className="font-black text-base">Weekly tiffin from this kitchen</p>
-            <p className="text-xs font-semibold opacity-90 mt-1 mb-3">
-              2 · 3 · 4 meals/week · flexible skip &amp; pause
-            </p>
-            <SHCButton
-              onClick={() => router.push(`/tiffin/kitchen/${cook.id}`)}
-              testID="kitchen-tiffin-cta"
-              className="w-full"
-            >
-              View tiffin plans
-            </SHCButton>
-          </div>
+          <p className="text-xs font-semibold text-muted-foreground mb-4">
+            Report an issue with the menu · Trust &amp; Safety on Home
+          </p>
         </div>
       )}
 
@@ -496,15 +561,46 @@ export default function KitchenPage() {
         </div>
       )}
 
-      {cookProducts.length > 0 && tab === 'menu' && (
-        <div className="fixed bottom-0 left-0 right-0 md:static p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0">
-          <div className="max-w-2xl mx-auto">
-            <SHCButton className="w-full" onClick={() => router.push('/cart')} testID="kitchen-order-cta">
-              View cart
-            </SHCButton>
+      {/* Sticky bar — HomelyEats “Create subscription” analogue: cart + tiffin */}
+      {tab === 'menu' && orderLines.length > 0 && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 p-3 bg-card/95 border-t-2 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),12px)]"
+          data-testid="kitchen-order-sticky"
+        >
+          <div className="max-w-2xl mx-auto flex flex-col gap-2">
+            <div className="flex items-center justify-between text-sm font-bold">
+              <span data-testid="kitchen-order-item-label">{orderCta.itemLabel}</span>
+              <span className="tabular-nums text-primary" data-testid="kitchen-order-total">
+                {orderCta.totalLabel}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <SHCButton
+                className="flex-1"
+                onClick={() => router.push('/cart')}
+                testID="kitchen-order-cta"
+              >
+                {orderCta.ctaLabel}
+              </SHCButton>
+              <SHCButton
+                variant="outline"
+                className="flex-1"
+                onClick={() => router.push(`/tiffin/kitchen/${cook.id}`)}
+                testID="kitchen-subscribe-cta"
+              >
+                {formatKitchenSubscribeCta()}
+              </SHCButton>
+            </div>
           </div>
         </div>
       )}
+
+      <KitchenMealCustomizeSheet
+        dish={customizeDish}
+        open={Boolean(customizeDish)}
+        onClose={() => setCustomizeDish(null)}
+        onConfirm={confirmCustomize}
+      />
     </div>
   );
 }

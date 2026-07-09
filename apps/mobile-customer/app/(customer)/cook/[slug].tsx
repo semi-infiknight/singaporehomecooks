@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Pressable,
   Image,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +37,26 @@ import {
   kitchenAboutPoints,
   kitchenMenuSections,
   kitchenDishPriceLabel,
+  kitchenMenuFilterChips,
+  filterKitchenMenuDishes,
+  kitchenMealSectionDeliveryHint,
+  buildCustomizeDraft,
+  kitchenMealExtraOptions,
+  kitchenMealAddonOptions,
+  kitchenMealMetaChips,
+  kitchenCustomizeUnitPrice,
+  kitchenCustomizeAddButtonLabel,
+  adjustMealQty,
+  toggleAddonId,
+  draftToOrderLine,
+  upsertKitchenOrderLine,
+  setKitchenOrderLineQty,
+  lineQtyForProduct,
+  formatKitchenOrderCta,
+  formatKitchenSubscribeCta,
   type KitchenReviewSort,
+  type KitchenOrderLine,
+  type KitchenMealCustomizeDraft,
 } from '@shc/utils';
 import { useCook, useDiscovery, useAddToCart } from '../../../hooks/useProducts';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
@@ -63,6 +83,10 @@ export default function KitchenPage() {
   const [tab, setTab] = useState<TabId>('menu');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
+  const [menuFilter, setMenuFilter] = useState('all');
+  const [orderLines, setOrderLines] = useState<KitchenOrderLine[]>([]);
+  const [customizeDish, setCustomizeDish] = useState<Record<string, unknown> | null>(null);
+  const [draft, setDraft] = useState<KitchenMealCustomizeDraft | null>(null);
 
   const listings = useMemo(
     () =>
@@ -75,7 +99,12 @@ export default function KitchenPage() {
     [allProducts, cook, slug]
   );
 
-  const menuSections = useMemo(() => kitchenMenuSections(listings), [listings]);
+  const filteredListings = useMemo(
+    () => filterKitchenMenuDishes(listings, menuFilter),
+    [listings, menuFilter]
+  );
+
+  const menuSections = useMemo(() => kitchenMenuSections(filteredListings), [filteredListings]);
 
   useEffect(() => {
     if (cook?.id) {
@@ -95,13 +124,42 @@ export default function KitchenPage() {
     }
   }, [menuSections]);
 
-  const handleAdd = useCallback(
-    (productId: string) => {
+  const openCustomize = useCallback(
+    (dish: Record<string, unknown>) => {
       if (!requireAuth('Sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty: 1 });
+      setCustomizeDish(dish);
+      setDraft(buildCustomizeDraft(dish));
     },
-    [requireAuth, addMut]
+    [requireAuth]
   );
+
+  const confirmCustomize = useCallback(() => {
+    if (!draft || !customizeDish) return;
+    const extras = kitchenMealExtraOptions(customizeDish);
+    const addons = kitchenMealAddonOptions(customizeDish);
+    const line = draftToOrderLine(draft, extras, addons);
+    setOrderLines((prev) => upsertKitchenOrderLine(prev, line));
+    addMut.mutate({ productId: line.productId, qty: line.qty });
+    setCustomizeDish(null);
+    setDraft(null);
+  }, [draft, customizeDish, addMut]);
+
+  const orderCta = useMemo(() => formatKitchenOrderCta(orderLines), [orderLines]);
+  const customizeExtras = useMemo(
+    () => (customizeDish ? kitchenMealExtraOptions(customizeDish) : []),
+    [customizeDish]
+  );
+  const customizeAddons = useMemo(
+    () => (customizeDish ? kitchenMealAddonOptions(customizeDish) : []),
+    [customizeDish]
+  );
+  const customizeChips = useMemo(
+    () => (customizeDish ? kitchenMealMetaChips(customizeDish) : []),
+    [customizeDish]
+  );
+  const unitPrice = draft
+    ? kitchenCustomizeUnitPrice(draft, { extras: customizeExtras, addons: customizeAddons })
+    : 0;
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
   const buckets = useMemo(() => kitchenRatingBuckets(ratingSum.rating), [ratingSum.rating]);
@@ -183,6 +241,19 @@ export default function KitchenPage() {
 
         {tab === 'menu' && (
           <View testID="kitchen-tab-panel-menu">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+              {kitchenMenuFilterChips().map((f) => (
+                <Pressable
+                  key={f.id}
+                  onPress={() => setMenuFilter(f.id)}
+                  style={[styles.filterChip, menuFilter === f.id && styles.filterChipOn]}
+                >
+                  <Text style={[styles.filterChipText, menuFilter === f.id && styles.filterChipTextOn]}>
+                    {f.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
             {menuSections.length === 0 ? (
               <Text style={styles.empty} testID="kitchen-menu-empty">
                 No dishes listed for this kitchen yet.
@@ -198,48 +269,61 @@ export default function KitchenPage() {
                     >
                       <View style={{ flex: 1 }}>
                         <Text style={styles.sectionTitle}>{section.title}</Text>
-                        <Text style={styles.sectionSub}>{section.subtitle}</Text>
+                        <Text style={styles.sectionSub}>{kitchenMealSectionDeliveryHint(section.title)}</Text>
                       </View>
                       <Text style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</Text>
                     </Pressable>
                     {isOpen &&
-                      section.dishes.map((d) => (
-                        <View key={String(d.id)} style={styles.dishRow}>
-                          <Image
-                            source={{
-                              uri: getDishImageUrl({
-                                id: String(d.id),
-                                cuisine: d.cuisine ? String(d.cuisine) : undefined,
-                                name: String(d.name),
-                              }),
-                            }}
-                            style={styles.dishThumb}
-                          />
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.dishName} numberOfLines={1}>
-                              {String(d.name)}
-                            </Text>
-                            <Text style={styles.dishMeta} numberOfLines={1}>
-                              {kitchenDishPriceLabel(d) || ''}/portion
-                            </Text>
+                      section.dishes.map((d) => {
+                        const qty = lineQtyForProduct(orderLines, String(d.id));
+                        return (
+                          <View key={String(d.id)} style={styles.dishRow} testID={`kitchen-menu-row-${d.id}`}>
+                            <Image
+                              source={{
+                                uri: getDishImageUrl({
+                                  id: String(d.id),
+                                  cuisine: d.cuisine ? String(d.cuisine) : undefined,
+                                  name: String(d.name),
+                                }),
+                              }}
+                              style={styles.dishThumb}
+                            />
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.dishName} numberOfLines={1}>
+                                {String(d.name)}
+                              </Text>
+                              <Text style={styles.dishMeta} numberOfLines={1}>
+                                {kitchenDishPriceLabel(d) || ''}/portion · Customizable
+                              </Text>
+                            </View>
+                            {qty > 0 ? (
+                              <View style={styles.qtyRow}>
+                                <Pressable
+                                  onPress={() =>
+                                    setOrderLines((prev) =>
+                                      setKitchenOrderLineQty(prev, String(d.id), qty - 1)
+                                    )
+                                  }
+                                >
+                                  <Text style={styles.qtyBtn}>−</Text>
+                                </Pressable>
+                                <Text style={styles.qtyVal}>{qty}</Text>
+                                <Pressable onPress={() => openCustomize(d)}>
+                                  <Text style={styles.qtyBtn}>+</Text>
+                                </Pressable>
+                              </View>
+                            ) : (
+                              <Pressable style={styles.addBtn} onPress={() => openCustomize(d)} testID={`kitchen-add-${d.id}`}>
+                                <Text style={styles.addBtnText}>+ Add</Text>
+                              </Pressable>
+                            )}
                           </View>
-                          <Pressable style={styles.addBtn} onPress={() => handleAdd(String(d.id))}>
-                            <Text style={styles.addBtnText}>+ Add</Text>
-                          </Pressable>
-                        </View>
-                      ))}
+                        );
+                      })}
                   </View>
                 );
               })
             )}
-            <View style={styles.planCard} testID="kitchen-tiffin-cta-card">
-              <Text style={styles.planTitle}>Weekly tiffin from this kitchen</Text>
-              <GourmeatPrimaryButton
-                label="View tiffin plans"
-                onPress={() => router.push(`/(customer)/tiffin/kitchen/${cook.id}` as any)}
-                testID="kitchen-tiffin-cta"
-              />
-            </View>
           </View>
         )}
 
@@ -328,15 +412,108 @@ export default function KitchenPage() {
         )}
       </ScrollView>
 
-      {listings.length > 0 && tab === 'menu' && (
-        <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]}>
+      {tab === 'menu' && orderLines.length > 0 && (
+        <View style={[styles.footer, { paddingBottom: insets.bottom + shcSpacing.md }]} testID="kitchen-order-sticky">
+          <View style={styles.footerMeta}>
+            <Text style={styles.footerItems} testID="kitchen-order-item-label">
+              {orderCta.itemLabel}
+            </Text>
+            <Text style={styles.footerTotal} testID="kitchen-order-total">
+              {orderCta.totalLabel}
+            </Text>
+          </View>
           <GourmeatPrimaryButton
-            label="View cart"
+            label={orderCta.ctaLabel}
             onPress={() => router.push('/(customer)/cart' as any)}
             testID="kitchen-order-cta"
           />
+          <Pressable
+            onPress={() => router.push(`/(customer)/tiffin/kitchen/${cook.id}` as any)}
+            style={styles.subLink}
+            testID="kitchen-subscribe-cta"
+          >
+            <Text style={styles.subLinkText}>{formatKitchenSubscribeCta()}</Text>
+          </Pressable>
         </View>
       )}
+
+      <Modal visible={Boolean(customizeDish && draft)} animationType="slide" transparent testID="kitchen-customize-sheet">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            {draft && customizeDish ? (
+              <>
+                <Text style={styles.modalTitle} testID="kitchen-customize-title">
+                  {draft.productName}
+                </Text>
+                <View style={styles.chipRow}>
+                  {customizeChips.map((c) => (
+                    <Text key={c.id} style={styles.chip}>
+                      {c.label}
+                    </Text>
+                  ))}
+                </View>
+                <Text style={styles.modalSection}>Extra · select one</Text>
+                {customizeExtras.map((e) => (
+                  <Pressable
+                    key={e.id}
+                    style={[styles.optRow, draft.extraId === e.id && styles.optRowOn]}
+                    onPress={() => setDraft((d) => (d ? { ...d, extraId: e.id } : d))}
+                  >
+                    <Text style={styles.optLabel}>{e.label}</Text>
+                    <Text style={styles.optPrice}>
+                      {e.priceDelta > 0 ? `+S$${e.priceDelta}` : 'S$0'}
+                      {draft.extraId === e.id ? ' ✓' : ''}
+                    </Text>
+                  </Pressable>
+                ))}
+                <Text style={styles.modalSection}>Add-on · optional</Text>
+                {customizeAddons.map((a) => (
+                  <Pressable
+                    key={a.id}
+                    style={[styles.optRow, draft.addonIds.includes(a.id) && styles.optRowOn]}
+                    onPress={() =>
+                      setDraft((d) => (d ? { ...d, addonIds: toggleAddonId(d.addonIds, a.id) } : d))
+                    }
+                  >
+                    <Text style={styles.optLabel}>{a.label}</Text>
+                    <Text style={styles.optPrice}>
+                      +S${a.priceDelta}
+                      {draft.addonIds.includes(a.id) ? ' ✓' : ''}
+                    </Text>
+                  </Pressable>
+                ))}
+                <View style={styles.modalFooter}>
+                  <View style={styles.qtyRow}>
+                    <Pressable onPress={() => setDraft((d) => (d ? { ...d, qty: adjustMealQty(d.qty, -1) } : d))}>
+                      <Text style={styles.qtyBtn}>−</Text>
+                    </Pressable>
+                    <Text style={styles.qtyVal} testID="kitchen-qty-value">
+                      {draft.qty}
+                    </Text>
+                    <Pressable onPress={() => setDraft((d) => (d ? { ...d, qty: adjustMealQty(d.qty, 1) } : d))}>
+                      <Text style={styles.qtyBtn}>+</Text>
+                    </Pressable>
+                  </View>
+                  <Pressable style={styles.confirmBtn} onPress={confirmCustomize} testID="kitchen-customize-add-btn">
+                    <Text style={styles.confirmBtnText}>{kitchenCustomizeAddButtonLabel(unitPrice)}</Text>
+                  </Pressable>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setCustomizeDish(null);
+                    setDraft(null);
+                  }}
+                  style={{ marginTop: 12 }}
+                >
+                  <Text style={{ textAlign: 'center', fontWeight: '700', color: gourmeatColors.textLight }}>
+                    Cancel
+                  </Text>
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -394,15 +571,82 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   addBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
-  planCard: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 14,
-    padding: shcSpacing.md,
-    marginTop: shcSpacing.sm,
-    gap: 10,
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    marginRight: 8,
   },
-  planTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
+  filterChipOn: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  filterChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
+  filterChipTextOn: { color: '#fff' },
+  qtyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    paddingHorizontal: 6,
+  },
+  qtyBtn: { fontSize: 18, fontWeight: '900', paddingHorizontal: 8, paddingVertical: 4 },
+  qtyVal: { fontWeight: '900', minWidth: 18, textAlign: 'center' },
   empty: { fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight },
+  footerMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  footerItems: { fontWeight: '800', fontSize: 13 },
+  footerTotal: { fontWeight: '900', color: gourmeatColors.primary },
+  subLink: { marginTop: 8, alignItems: 'center' },
+  subLinkText: { fontWeight: '800', color: gourmeatColors.primary, fontSize: 13 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalSheet: {
+    backgroundColor: gourmeatColors.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: shcSpacing.md,
+    maxHeight: '88%',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '900', marginBottom: 8 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  chip: {
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    overflow: 'hidden',
+  },
+  modalSection: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: gourmeatColors.textLight,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  optRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  optRowOn: { borderColor: gourmeatColors.primary, backgroundColor: '#FFF0EB' },
+  optLabel: { fontWeight: '700', fontSize: 14 },
+  optPrice: { fontWeight: '800', fontSize: 13 },
+  modalFooter: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: gourmeatColors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  confirmBtnText: { color: '#fff', fontWeight: '900', fontSize: 13 },
   aboutPoint: { fontSize: 14, fontWeight: '600', color: gourmeatColors.text, marginTop: 8 },
   infoCard: {
     marginTop: shcSpacing.sm,
