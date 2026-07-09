@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Category explore pages:** home cuisine chips → `/category/[id]` (web) + `/(customer)/category/[id]` (mobile); offer banner · top rated · kitchens; pure helpers in `@shc/utils/category`.
+**Last Updated:** 2026-07-09 — **Kitchen pages (Jakob’s Law):** cook + tiffin kitchen hero/rating/open/tags/menu/CTA on web + mobile-customer; `scopeProductsByKitchen` in `@shc/utils/kitchen`.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
