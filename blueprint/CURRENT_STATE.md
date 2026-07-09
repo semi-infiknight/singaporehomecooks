@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats tiffin OS wave shipped**: flex/skip/pause/cancel-reason + meal calendar API; `@shc/ui` calendar/status/metrics/empty; customer calendar screens mobile+web; cook day menu + kitchen cancel. Refs `references/homelyeats-case-study/`.
+**Last Updated:** 2026-07-09 — HomelyEats tiffin OS **fully live on Railway**: medusa `2272abf4` + web `d8da05fd` (`/tiffin`, `/tiffin/calendar`, `/tiffin/manage`, cook portal tiffin all 200). Emulators: Metro on latest main → Railway API.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
