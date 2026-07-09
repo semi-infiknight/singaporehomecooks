@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Tiffin seed + web parity**: `seed-tiffin.ts` on every Medusa boot; kitchen config via direct pg (`shc-tiffin-pg.ts`); customer web `/tiffin/*` + cook `/cook-portal/tiffin`. Prior: HomelyEats case-study pack; mobile tiffin + Railway API.
+**Last Updated:** 2026-07-09 — **Tiffin seed + web parity live**: Railway kitchens returns Auntie Rose (`GET /store/shc/tiffin/kitchens` ≥1); `seed-tiffin` on boot + `shc-tiffin-pg`; customer `/tiffin/*` + cook `/cook-portal/tiffin`. HEAD `e5aa34a`.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
