@@ -7,6 +7,7 @@ import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './th
 import { SHCFoodImage } from './visuals';
 import { GourmeatPrimaryButton } from './gourmeat';
 import { getDishImageUrl, getCookAvatarUrl } from '@shc/utils';
+import { EmptyIllustration } from './empty-illustrations';
 
 export const TIFFIN_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
@@ -1066,27 +1067,38 @@ export function SHCTiffinPlanMetrics({
   );
 }
 
-/** HomelyEats ref 34 — empty state */
+/** HomelyEats ref 34 — empty state (+ optional plate/box illustration) */
 export function SHCTiffinEmptyState({
   title,
   subtitle,
   actionLabel,
   onAction,
   testID = 'tiffin-empty-state',
+  illustration,
 }: {
   title: string;
   subtitle?: string;
   actionLabel?: string;
   onAction?: () => void;
   testID?: string;
+  illustration?: import('@shc/utils').EmptyIllustrationKind;
 }) {
   return (
     <View testID={testID} style={styles.emptyState}>
-      <Text style={styles.emptyEmoji}>🍱</Text>
+      {illustration ? (
+        <EmptyIllustration kind={illustration} size={120} />
+      ) : (
+        <Text style={styles.emptyEmoji}>🍱</Text>
+      )}
       <Text style={styles.emptyTitle}>{title}</Text>
       {subtitle ? <Text style={styles.emptySubtitle}>{subtitle}</Text> : null}
       {actionLabel && onAction ? (
-        <GourmeatPrimaryButton label={actionLabel} onPress={onAction} testID="tiffin-empty-action" style={{ marginTop: shcSpacing.md }} />
+        <GourmeatPrimaryButton
+          label={actionLabel}
+          onPress={onAction}
+          testID="tiffin-empty-action"
+          style={{ marginTop: shcSpacing.md }}
+        />
       ) : null}
     </View>
   );
@@ -1136,9 +1148,23 @@ const styles = StyleSheet.create({
   metricCell: { flex: 1, alignItems: 'center' },
   metricValue: { fontSize: 15, fontWeight: '800', color: gourmeatColors.primary },
   metricLabel: { fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2, textAlign: 'center' },
-  emptyState: { alignItems: 'center', paddingVertical: shcSpacing.xl * 1.5, paddingHorizontal: shcSpacing.lg },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: shcSpacing.xl * 1.5,
+    paddingHorizontal: shcSpacing.lg,
+    minHeight: 280,
+    gap: shcSpacing.md,
+  },
   emptyEmoji: { fontSize: 40, marginBottom: shcSpacing.sm },
-  emptyTitle: { fontSize: 17, fontWeight: '800', color: gourmeatColors.text, textAlign: 'center' },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 260,
+  },
   emptySubtitle: { fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center', marginTop: 6, lineHeight: 18 },
   heroBanner: {
     backgroundColor: gourmeatColors.primary,

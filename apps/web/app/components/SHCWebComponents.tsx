@@ -1072,6 +1072,83 @@ export function SHCEmptyState({
   );
 }
 
+/** HomelyEats empty screens — plate (orders) / open box (subscriptions) */
+export function IllustratedEmptyState({
+  kind,
+  title,
+  description,
+  action,
+  testID,
+}: {
+  kind: 'no_orders' | 'no_active_sub' | 'no_past_sub';
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+  testID?: string;
+}) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center text-center px-6 py-16 min-h-[320px]"
+      data-testid={testID || `empty-${kind}`}
+    >
+      {kind === 'no_orders' ? <WebEmptyOrdersPlate /> : <WebEmptySubscriptionBox />}
+      <p className="mt-6 text-[15px] font-semibold text-muted-foreground max-w-[260px] leading-snug">
+        {title}
+      </p>
+      {description ? (
+        <p className="mt-2 text-sm text-muted-foreground/80 max-w-sm">{description}</p>
+      ) : null}
+      {action ? <div className="mt-5">{action}</div> : null}
+    </div>
+  );
+}
+
+function WebEmptyOrdersPlate() {
+  return (
+    <div
+      className="flex items-center justify-center gap-3 h-20"
+      aria-hidden
+      data-testid="empty-illust-no-orders"
+    >
+      {/* Fork */}
+      <div className="flex flex-col items-center h-16 w-3.5">
+        <div className="flex gap-0.5 h-7 items-end">
+          <span className="w-[3px] h-full rounded-sm bg-[#F5C842]" />
+          <span className="w-[3px] h-full rounded-sm bg-[#F5C842]" />
+          <span className="w-[3px] h-full rounded-sm bg-[#F5C842]" />
+        </div>
+        <span className="w-1.5 flex-1 mt-0.5 rounded-sm bg-[#F5C842]" />
+      </div>
+      {/* Plate */}
+      <div className="w-16 h-16 rounded-full border-[3px] border-[#E8A317] bg-[#F0EDE6] flex items-center justify-center shadow-sm">
+        <div className="w-11 h-11 rounded-full border-2 border-[#F5C842]/60" />
+      </div>
+      {/* Knife */}
+      <div className="flex flex-col items-center h-16 w-3">
+        <span className="w-2 h-8 rounded-t-md rounded-b-sm bg-[#F5C842]" />
+        <span className="w-1.5 flex-1 mt-0.5 rounded-sm bg-[#E8A317]" />
+      </div>
+    </div>
+  );
+}
+
+function WebEmptySubscriptionBox() {
+  return (
+    <div className="relative w-28 h-28 flex flex-col items-center justify-end" aria-hidden data-testid="empty-illust-no-sub">
+      <div className="flex items-end gap-2.5 mb-1 h-9">
+        <span className="w-3.5 h-3.5 rounded-full bg-[#E85D4C]/90 -rotate-[18deg] scale-90" />
+        <span className="w-4.5 h-4.5 rounded-full bg-[#E85D4C] mb-1.5" />
+        <span className="w-3.5 h-3.5 rounded-full bg-[#E85D4C]/90 rotate-[18deg] scale-90" />
+      </div>
+      <div className="relative w-20 h-12 rounded-lg border-2 border-[#E8A317] bg-[#F5A623] overflow-visible">
+        <span className="absolute -top-2.5 left-1 w-[42%] h-3.5 bg-[#F5C842] rounded-t-md -rotate-[8deg]" />
+        <span className="absolute -top-2.5 right-1 w-[42%] h-3.5 bg-[#F5C842] rounded-t-md rotate-[8deg]" />
+        <div className="m-2.5 h-6 rounded bg-white/35" />
+      </div>
+    </div>
+  );
+}
+
 export function SHCSkeletonGrid({ count = 6 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:gap-4" aria-busy="true" aria-label="Loading dishes">

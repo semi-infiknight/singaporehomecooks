@@ -253,6 +253,11 @@ export default function Profile() {
           <SHCButtonText>View My Orders</SHCButtonText>
         </SHCButton>
       </Link>
+      <Link href="/(customer)/tiffin/subscriptions" asChild>
+        <SHCButton variant="outline" style={styles.actionBtn} testID="profile-subscriptions-link">
+          <SHCButtonText variant="outline">My Subscriptions</SHCButtonText>
+        </SHCButton>
+      </Link>
       <Link href="/(shared)/onboarding" asChild>
         <SHCButton variant="outline" style={styles.actionBtn} testID="trust-safety-link">
           <SHCButtonText variant="outline">Trust & Safety</SHCButtonText>

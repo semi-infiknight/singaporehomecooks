@@ -31,13 +31,13 @@ export default function TiffinManagePage() {
   const currentSlots = (subData as any)?.slots_current_week || [];
 
   useEffect(() => {
-    if (!isLoading && !sub) router.replace('/tiffin');
+    if (!isLoading && !sub) router.replace('/tiffin/subscriptions');
   }, [isLoading, sub, router]);
 
   if (isLoading || !sub) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading subscription…
+        {isLoading ? 'Loading subscription…' : 'Opening My Subscriptions…'}
       </div>
     );
   }

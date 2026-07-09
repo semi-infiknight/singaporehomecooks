@@ -26,6 +26,7 @@ import {
   collectOrderDates,
   monthLabelForDate,
   buildManageOrderQuery,
+  emptyOrdersDayCopy,
   type DayOrderCard,
 } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
@@ -154,14 +155,14 @@ export default function MyOrdersList() {
             ) : null}
 
             {dayCards.length === 0 && !mealsLoading ? (
-              <GourmeatCard testID="orders-day-empty">
+              <View testID="orders-day-empty">
                 <GourmeatEmptyState
-                  title="No meals this day"
-                  body="One-time collections and tiffin slots show on their collection date."
+                  illustration="no_orders"
+                  title={emptyOrdersDayCopy({ isToday: selected === today }).title}
                   ctaLabel="Browse kitchens"
                   onCta={() => router.push('/(customer)/' as any)}
                 />
-              </GourmeatCard>
+              </View>
             ) : (
               dayCards.map((card) => (
                 <View key={card.id} style={styles.cardWrap}>

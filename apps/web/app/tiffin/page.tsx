@@ -98,12 +98,33 @@ export default function TiffinBrowsePage() {
         <div data-testid="tiffin-active-banner">
           <SHCCard className="mb-4">
             <p className="font-bold text-sm mb-3">You have an active tiffin plan</p>
-            <SHCButton size="sm" onClick={() => router.push('/tiffin/manage')} testID="tiffin-go-manage-btn">
-              Manage subscription
-            </SHCButton>
+            <div className="flex flex-wrap gap-2">
+              <SHCButton size="sm" onClick={() => router.push('/tiffin/manage')} testID="tiffin-go-manage-btn">
+                Manage subscription
+              </SHCButton>
+              <SHCButton
+                size="sm"
+                variant="outline"
+                onClick={() => router.push('/tiffin/subscriptions')}
+                testID="tiffin-my-subs-btn"
+              >
+                My Subscriptions
+              </SHCButton>
+            </div>
           </SHCCard>
         </div>
-      ) : null}
+      ) : (
+        <div className="mb-4" data-testid="tiffin-empty-subs-link">
+          <SHCButton
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/tiffin/subscriptions')}
+            testID="tiffin-my-subs-btn"
+          >
+            My Subscriptions
+          </SHCButton>
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative mb-4">

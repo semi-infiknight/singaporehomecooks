@@ -12,6 +12,7 @@ import { SHCFavoriteButton } from './delivery-ux';
 import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 import type { SHCBottomTab } from './primitives';
+import { EmptyIllustration } from './empty-illustrations';
 
 /** Deterministic promo badge per dish id (10–25% off). */
 export function gourmeatDiscountPercent(id: string): number {
@@ -1126,19 +1127,51 @@ export function GourmeatEmptyState({
   ctaLabel,
   onCta,
   testID,
+  illustration,
 }: {
   title: string;
   body?: string;
   ctaLabel?: string;
   onCta?: () => void;
   testID?: string;
+  /** HomelyEats empty illustrations */
+  illustration?: import('@shc/utils').EmptyIllustrationKind;
 }) {
   return (
-    <View testID={testID} style={{ alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm }}>
-      <Text style={{ fontSize: 18, fontWeight: '800', color: gourmeatColors.text }}>{title}</Text>
-      {body ? <Text style={{ fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center' }}>{body}</Text> : null}
+    <View
+      testID={testID}
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: shcSpacing.xl * 1.5,
+        paddingHorizontal: shcSpacing.lg,
+        gap: shcSpacing.md,
+        minHeight: 280,
+      }}
+    >
+      {illustration ? <EmptyIllustration kind={illustration} size={120} /> : null}
+      <Text
+        style={{
+          fontSize: 15,
+          fontWeight: '600',
+          color: gourmeatColors.textLight,
+          textAlign: 'center',
+          lineHeight: 22,
+          maxWidth: 260,
+        }}
+      >
+        {title}
+      </Text>
+      {body ? (
+        <Text style={{ fontSize: 13, color: gourmeatColors.textLight, textAlign: 'center' }}>{body}</Text>
+      ) : null}
       {ctaLabel && onCta ? (
-        <GourmeatPrimaryButton label={ctaLabel} onPress={onCta} testID="gourmeat-empty-cta" style={{ marginTop: shcSpacing.sm, minWidth: 200 }} />
+        <GourmeatPrimaryButton
+          label={ctaLabel}
+          onPress={onCta}
+          testID="gourmeat-empty-cta"
+          style={{ marginTop: shcSpacing.sm, minWidth: 180 }}
+        />
       ) : null}
     </View>
   );

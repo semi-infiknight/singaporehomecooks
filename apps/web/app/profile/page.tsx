@@ -169,9 +169,16 @@ export default function Profile() {
         <p className="text-sm text-muted-foreground font-semibold mb-3">
           Weekly home-cooked meals from one kitchen — pick 2, 3, or 4 collection days.
         </p>
-        <Link href="/tiffin" data-testid="profile-tiffin-link">
-          <SHCButton size="sm">Browse tiffin kitchens</SHCButton>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/tiffin" data-testid="profile-tiffin-link">
+            <SHCButton size="sm">Browse tiffin kitchens</SHCButton>
+          </Link>
+          <Link href="/tiffin/subscriptions" data-testid="profile-subscriptions-link">
+            <SHCButton size="sm" variant="outline">
+              My Subscriptions
+            </SHCButton>
+          </Link>
+        </div>
       </SHCCard>
 
       <div className="mt-3">

@@ -19,13 +19,20 @@ import {
   dayOrderStatusChip,
   primaryActionLabel,
   buildManageOrderQuery,
+  emptyOrdersDayCopy,
   type DayOrderCard,
 } from '@shc/utils';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../lib/useTiffin';
-import { GourmeatScreenHeader, SHCEmptyState, SHCButton, SHCCard } from '../components/SHCWebComponents';
+import {
+  GourmeatScreenHeader,
+  SHCEmptyState,
+  SHCButton,
+  SHCCard,
+  IllustratedEmptyState,
+} from '../components/SHCWebComponents';
 
 export default function OrdersList() {
   const router = useRouter();
@@ -163,17 +170,17 @@ export default function OrdersList() {
           )}
 
           {!isLoading && !mealsLoading && dayCards.length === 0 && (
-            <SHCCard data-testid="orders-day-empty">
-              <SHCEmptyState
-                title="No meals this day"
-                description="One-time collections and tiffin slots show on their collection date."
+            <div data-testid="orders-day-empty">
+              <IllustratedEmptyState
+                kind="no_orders"
+                title={emptyOrdersDayCopy({ isToday: selected === today }).title}
                 action={
                   <Link href="/" className="text-sm font-bold text-primary">
                     Browse kitchens →
                   </Link>
                 }
               />
-            </SHCCard>
+            </div>
           )}
 
           <div className="space-y-3">

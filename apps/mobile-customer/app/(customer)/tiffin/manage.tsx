@@ -58,12 +58,24 @@ export default function TiffinManageScreen() {
 
   if (!sub) {
     return (
-      <ScrollView style={styles.screen} contentContainerStyle={{ padding: shcSpacing.lg, paddingTop: insets.top + 24 }}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={{ padding: shcSpacing.lg, paddingTop: insets.top + 24, flexGrow: 1 }}
+        testID="tiffin-manage-empty"
+      >
         <SHCTiffinEmptyState
-          title="No active tiffin plan"
-          subtitle="Subscribe to a home kitchen for weekly collection meals."
-          actionLabel="Browse kitchens"
+          illustration="no_active_sub"
+          title="You have no active subscriptions."
+          actionLabel="Subscribe now"
           onAction={() => router.replace('/(customer)/tiffin' as any)}
+          testID="tiffin-manage-empty-state"
+        />
+        <GourmeatPrimaryButton
+          label="My Subscriptions"
+          variant="outline"
+          onPress={() => router.push('/(customer)/tiffin/subscriptions' as any)}
+          style={{ marginTop: shcSpacing.md }}
+          testID="tiffin-open-subscriptions"
         />
       </ScrollView>
     );
