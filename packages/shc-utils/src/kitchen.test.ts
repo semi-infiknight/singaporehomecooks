@@ -7,6 +7,13 @@ import {
   kitchenTiffinPlanRows,
   kitchenDishPriceDollars,
   kitchenDishPriceLabel,
+  kitchenRatingSummary,
+  kitchenRatingBuckets,
+  kitchenDemoReviews,
+  sortKitchenReviews,
+  kitchenCollectionHours,
+  kitchenAboutPoints,
+  kitchenMenuSections,
 } from './kitchen';
 
 const PRODUCTS: Record<string, unknown>[] = [
@@ -153,5 +160,63 @@ describe('kitchenDishPriceDollars / Label', () => {
   it('returns null when no price fields', () => {
     expect(kitchenDishPriceDollars({})).toBeNull();
     expect(kitchenDishPriceLabel({})).toBeNull();
+  });
+});
+
+describe('kitchenRatingSummary + buckets', () => {
+  it('formats rating with review count', () => {
+    const s = kitchenRatingSummary(ROSE);
+    expect(s.rating).toBe(4.8);
+    expect(s.reviewCount).toBe(24);
+    expect(s.label).toBe('4.8 (24)');
+  });
+
+  it('returns 5 buckets summing to ~1', () => {
+    const buckets = kitchenRatingBuckets(4.8);
+    expect(buckets).toHaveLength(5);
+    expect(buckets[0]?.key).toBe('excellent');
+    const sum = buckets.reduce((a, b) => a + b.share, 0);
+    expect(sum).toBeCloseTo(1, 5);
+  });
+});
+
+describe('kitchenDemoReviews + sort', () => {
+  it('is deterministic per cook id', () => {
+    const a = kitchenDemoReviews('cook_rose_tampines_001');
+    const b = kitchenDemoReviews('cook_rose_tampines_001');
+    expect(a).toEqual(b);
+    expect(a.length).toBeGreaterThan(0);
+    expect(a[0]?.author).toBeTruthy();
+  });
+
+  it('sorts highest first', () => {
+    const revs = kitchenDemoReviews('cook_x', 6);
+    const sorted = sortKitchenReviews(revs, 'highest');
+    for (let i = 1; i < sorted.length; i++) {
+      expect(sorted[i - 1]!.rating).toBeGreaterThanOrEqual(sorted[i]!.rating);
+    }
+  });
+});
+
+describe('kitchenCollectionHours + about + menu sections', () => {
+  it('returns collection hour slots', () => {
+    const hours = kitchenCollectionHours({ collection_days: [5, 6] });
+    expect(hours.length).toBeGreaterThanOrEqual(2);
+    expect(hours[0]?.window).toMatch(/pm|am|Collect/i);
+  });
+
+  it('includes trust about points', () => {
+    const pts = kitchenAboutPoints(ROSE);
+    expect(pts.some((p) => p.toLowerCase().includes('allergen') || p.toLowerCase().includes('hdb'))).toBe(
+      true
+    );
+  });
+
+  it('groups menu by occasion or cuisine', () => {
+    const sections = kitchenMenuSections(PRODUCTS);
+    expect(sections.length).toBeGreaterThan(0);
+    const allIds = sections.flatMap((s) => s.dishes.map((d) => d.id));
+    expect(allIds).toContain('dish_a');
+    expect(allIds).toContain('dish_c');
   });
 });

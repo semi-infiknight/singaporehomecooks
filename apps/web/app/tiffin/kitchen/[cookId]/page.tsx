@@ -15,6 +15,12 @@ import {
   kitchenTagList,
   kitchenTiffinPlanRows,
   kitchenDishPriceLabel,
+  kitchenRatingSummary,
+  kitchenCollectionHours,
+  kitchenAboutPoints,
+  kitchenDemoReviews,
+  sortKitchenReviews,
+  kitchenRatingBuckets,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
 import {
@@ -35,6 +41,7 @@ export default function TiffinKitchenPage() {
   const subscribeMut = useSubscribeTiffin();
   const mealsOptions: number[] = (kitchen as any)?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(3);
+  const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
 
   useEffect(() => {
     if (mealsOptions.length) {
@@ -67,6 +74,14 @@ export default function TiffinKitchenPage() {
     () => kitchenTiffinPlanRows(mealsOptions, tiffinPricePerServing),
     [mealsOptions]
   );
+  const ratingSum = kitchenRatingSummary(cookMeta);
+  const hours = kitchenCollectionHours({
+    collection_days: (kitchen as any)?.collection_days,
+    collection_instructions: (kitchen as any)?.cook?.collection_instructions,
+  });
+  const aboutPoints = kitchenAboutPoints(cookMeta);
+  const reviews = sortKitchenReviews(kitchenDemoReviews(cookId), 'recent');
+  const buckets = kitchenRatingBuckets(ratingSum.rating);
   const avatar = getCookAvatarUrl(cookId, cookName);
 
   const handleSubscribe = async () => {
@@ -136,7 +151,7 @@ export default function TiffinKitchenPage() {
               className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
               data-testid="kitchen-rating-pill"
             >
-              ★ {Number(cookMeta.rating).toFixed(1)}
+              ★ {ratingSum.label}
             </span>
           </div>
           <p
@@ -163,104 +178,191 @@ export default function TiffinKitchenPage() {
         </div>
       </div>
 
-      <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
-      <p className="text-xs font-semibold text-muted-foreground mb-2">How many meals each week?</p>
-      <div className="flex gap-2 mb-3" data-testid="tiffin-meals-picker">
-        {mealsOptions.map((n) => {
-          const active = n === mealsPerWeek;
-          return (
-            <button
-              key={n}
-              type="button"
-              data-testid={`tiffin-meals-${n}`}
-              onClick={() => setMealsPerWeek(n)}
-              className={`flex-1 rounded-xl border-2 px-3 py-3 text-center ${
-                active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-[var(--shc-border-brutal)] bg-card'
-              }`}
-            >
-              <div className="font-black text-lg">{n}</div>
-              <div className="text-[10px] font-bold opacity-90">S${tiffinPricePerServing(n)}/meal</div>
-            </button>
-          );
-        })}
-      </div>
-      <div className="mb-3" data-testid="kitchen-plan-rows">
-        {planRows.map((row) => (
-          <p key={row.meals} className="text-xs font-semibold text-muted-foreground">
-            {row.label} · S${row.pricePerMeal.toFixed(2)}/meal
-          </p>
+      <div className="flex gap-1 overflow-x-auto border-b-2 border-[var(--shc-border-brutal)] mb-4" data-testid="kitchen-tabs">
+        {(
+          [
+            { id: 'plan' as const, label: 'Plans' },
+            { id: 'about' as const, label: 'About' },
+            { id: 'hours' as const, label: 'Hours' },
+            { id: 'reviews' as const, label: 'Reviews' },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            data-testid={`kitchen-tab-${t.id}`}
+            onClick={() => setTab(t.id)}
+            className={`shrink-0 px-3 py-2.5 text-sm font-extrabold border-b-2 -mb-0.5 ${
+              tab === t.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
+            }`}
+          >
+            {t.label}
+          </button>
         ))}
       </div>
 
-      <SHCCard className="mb-4">
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-sm">Weekly total</span>
-          <span className="font-black text-lg tabular-nums">
-            S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}
-          </span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">Collection from HDB kitchen · PayNow on first cycle</p>
-      </SHCCard>
+      {tab === 'plan' && (
+        <>
+          <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
+          <p className="text-xs font-semibold text-muted-foreground mb-2">How many meals each week?</p>
+          <div className="flex gap-2 mb-3" data-testid="tiffin-meals-picker">
+            {mealsOptions.map((n) => {
+              const active = n === mealsPerWeek;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  data-testid={`tiffin-meals-${n}`}
+                  onClick={() => setMealsPerWeek(n)}
+                  className={`flex-1 rounded-xl border-2 px-3 py-3 text-center ${
+                    active
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-[var(--shc-border-brutal)] bg-card'
+                  }`}
+                >
+                  <div className="font-black text-lg">{n}</div>
+                  <div className="text-[10px] font-bold opacity-90">S${tiffinPricePerServing(n)}/meal</div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mb-3" data-testid="kitchen-plan-rows">
+            {planRows.map((row) => (
+              <p key={row.meals} className="text-xs font-semibold text-muted-foreground">
+                {row.label} · S${row.pricePerMeal.toFixed(2)}/meal
+              </p>
+            ))}
+          </div>
 
-      <GourmeatSectionTitle
-        title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
-        testID="kitchen-menu-header"
-      />
-      {dishes.length === 0 ? (
-        <p className="text-sm font-semibold text-muted-foreground mb-4" data-testid="kitchen-menu-empty">
-          No tiffin dishes listed for this kitchen yet.
-        </p>
-      ) : (
-        <ul className="space-y-2 mb-4" data-testid="kitchen-menu-list">
-          {dishes.map((d) => (
-            <li
-              key={d.id}
-              className="flex gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2"
-            >
-              <Image
-                src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
-                alt=""
-                width={48}
-                height={48}
-                className="rounded-lg object-cover"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">{d.name}</p>
-                <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
-              </div>
-              {kitchenDishPriceLabel(d) ? (
-                <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+          <SHCCard className="mb-4">
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-sm">Weekly total</span>
+              <span className="font-black text-lg tabular-nums">
+                S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Collection from HDB kitchen · PayNow on first cycle</p>
+          </SHCCard>
+
+          <GourmeatSectionTitle
+            title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
+            testID="kitchen-menu-header"
+          />
+          {dishes.length === 0 ? (
+            <p className="text-sm font-semibold text-muted-foreground mb-4" data-testid="kitchen-menu-empty">
+              No tiffin dishes listed for this kitchen yet.
+            </p>
+          ) : (
+            <ul className="space-y-2 mb-4" data-testid="kitchen-menu-list">
+              {dishes.map((d) => (
+                <li
+                  key={d.id}
+                  className="flex gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2"
+                >
+                  <Image
+                    src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="rounded-lg object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{d.name}</p>
+                    <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
+                  </div>
+                  {kitchenDishPriceLabel(d) ? (
+                    <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p className="text-xs font-semibold text-primary mb-6" data-testid="kitchen-collection-days">
+            Collection days:{' '}
+            {((kitchen as any).collection_days || [])
+              .map((d: number) => TIFFIN_DAY_LABELS[d])
+              .join(', ')}
+          </p>
+        </>
       )}
 
-      <p className="text-xs font-semibold text-primary mb-6" data-testid="kitchen-collection-days">
-        Collection days:{' '}
-        {((kitchen as any).collection_days || [])
-          .map((d: number) => TIFFIN_DAY_LABELS[d])
-          .join(', ')}
-      </p>
-
-      <div className="fixed bottom-0 left-0 right-0 md:static md:mt-4 p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0">
-        <div className="max-w-2xl mx-auto">
-          <SHCButton
-            className="w-full"
-            onClick={handleSubscribe}
-            disabled={subscribeMut.isPending}
-            testID="tiffin-subscribe-btn"
-          >
-            {subscribeMut.isPending
-              ? 'Subscribing…'
-              : user
-                ? 'Subscribe & select meals'
-                : 'Sign in to subscribe'}
-          </SHCButton>
+      {tab === 'about' && (
+        <div className="space-y-3 mb-8" data-testid="kitchen-tab-panel-about">
+          <ul className="space-y-2">
+            {aboutPoints.map((p) => (
+              <li key={p} className="text-sm font-semibold">
+                ✓ {p}
+              </li>
+            ))}
+          </ul>
+          <SHCCard>
+            <p className="text-xs font-bold text-muted-foreground">Location</p>
+            <p className="font-bold mt-1">{(kitchen as any).cook?.area || 'Singapore'}</p>
+          </SHCCard>
+          <SHCCard>
+            <p className="text-xs font-bold text-muted-foreground">About the cook</p>
+            <p className="font-bold mt-1">{cookName}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {(kitchen as any).cook?.story || (kitchen as any).tagline || 'Weekly home-cooked tiffin.'}
+            </p>
+          </SHCCard>
         </div>
-      </div>
+      )}
+
+      {tab === 'hours' && (
+        <div className="space-y-2 mb-8" data-testid="kitchen-tab-panel-hours">
+          {hours.map((h) => (
+            <div key={h.id} className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-3">
+              <p className="font-black text-sm">{h.label}</p>
+              <p className="text-sm text-muted-foreground font-semibold">{h.window}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'reviews' && (
+        <div className="space-y-3 mb-8" data-testid="kitchen-tab-panel-reviews">
+          <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] p-4">
+            <p className="text-3xl font-black">{ratingSum.rating.toFixed(1)} / 5</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-3">{ratingSum.reviewCount} reviews</p>
+            {buckets.map((b) => (
+              <div key={b.key} className="flex items-center gap-2 text-xs mb-1">
+                <span className="w-20 text-muted-foreground font-semibold">{b.label}</span>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full" style={{ width: `${Math.round(b.share * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          {reviews.map((r) => (
+            <SHCCard key={r.id}>
+              <p className="font-black text-sm">{r.author}</p>
+              <p className="text-primary font-bold text-sm">{'★'.repeat(r.rating)}</p>
+              <p className="text-sm text-muted-foreground mt-1">{r.body}</p>
+            </SHCCard>
+          ))}
+        </div>
+      )}
+
+      {tab === 'plan' && (
+        <div className="fixed bottom-0 left-0 right-0 md:static md:mt-4 p-4 md:p-0 bg-card/95 md:bg-transparent border-t md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),16px)] md:pb-0">
+          <div className="max-w-2xl mx-auto">
+            <SHCButton
+              className="w-full"
+              onClick={handleSubscribe}
+              disabled={subscribeMut.isPending}
+              testID="tiffin-subscribe-btn"
+            >
+              {subscribeMut.isPending
+                ? 'Subscribing…'
+                : user
+                  ? 'Subscribe & select meals'
+                  : 'Sign in to subscribe'}
+            </SHCButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -147,3 +147,213 @@ export function kitchenDishPriceLabel(dish: {
   if (Number.isInteger(dollars)) return `S$${dollars}`;
   return `S$${dollars.toFixed(2)}`;
 }
+
+/* ── HomelyEats kitchen subpages: ratings, reviews, about, collection hours ── */
+
+export type KitchenReview = {
+  id: string;
+  author: string;
+  rating: number;
+  body: string;
+  daysAgo: number;
+  hasPhoto?: boolean;
+};
+
+export type KitchenRatingBucket = {
+  key: 'excellent' | 'very_good' | 'average' | 'poor' | 'terrible';
+  label: string;
+  /** 0–1 share of reviews */
+  share: number;
+};
+
+export type KitchenHourSlot = {
+  id: string;
+  label: string;
+  window: string;
+};
+
+const RATING_LABELS: Record<KitchenRatingBucket['key'], string> = {
+  excellent: 'Excellent',
+  very_good: 'Very good',
+  average: 'Average',
+  poor: 'Poor',
+  terrible: 'Terrible',
+};
+
+function hashSeed(s: string): number {
+  return s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+}
+
+/** Effective rating + count for hero (defaults when cook has no aggregates). */
+export function kitchenRatingSummary(cook?: KitchenIdentity | null): {
+  rating: number;
+  reviewCount: number;
+  label: string;
+} {
+  const rating =
+    cook?.rating != null && Number.isFinite(Number(cook.rating)) ? Number(cook.rating) : 4.8;
+  const reviewCount =
+    cook?.review_count != null && Number(cook.review_count) > 0
+      ? Number(cook.review_count)
+      : cook?.orders != null && Number(cook.orders) > 0
+        ? Math.min(Number(cook.orders), 99)
+        : 24;
+  return {
+    rating,
+    reviewCount,
+    label: `${rating.toFixed(1)} (${reviewCount})`,
+  };
+}
+
+/**
+ * Distribution bars for rating breakdown (HomelyEats).
+ * Skews higher when average rating is high — pure, deterministic.
+ */
+export function kitchenRatingBuckets(averageRating: number): KitchenRatingBucket[] {
+  const r = Math.min(5, Math.max(1, averageRating));
+  // Approximate shares that peak near the average star band
+  const raw = [0.05, 0.1, 0.15, 0.25, 0.45]; // terrible → excellent base
+  if (r >= 4.5) {
+    raw[0] = 0.02;
+    raw[1] = 0.03;
+    raw[2] = 0.08;
+    raw[3] = 0.22;
+    raw[4] = 0.65;
+  } else if (r >= 4.0) {
+    raw[0] = 0.03;
+    raw[1] = 0.07;
+    raw[2] = 0.15;
+    raw[3] = 0.35;
+    raw[4] = 0.4;
+  } else if (r >= 3.0) {
+    raw[0] = 0.08;
+    raw[1] = 0.15;
+    raw[2] = 0.35;
+    raw[3] = 0.28;
+    raw[4] = 0.14;
+  }
+  const sum = raw.reduce((a, b) => a + b, 0);
+  // Return excellent-first for UI (HomelyEats order)
+  return (['excellent', 'very_good', 'average', 'poor', 'terrible'] as const).map((key, i) => ({
+    key,
+    label: RATING_LABELS[key],
+    share: raw[4 - i] / sum,
+  }));
+}
+
+/**
+ * Deterministic community reviews for a kitchen (until cook-level review API).
+ * Seeded by cook id so the same kitchen always shows the same sample set.
+ */
+export function kitchenDemoReviews(cookId: string, count = 6): KitchenReview[] {
+  const seed = hashSeed(cookId || 'kitchen');
+  const authors = [
+    'Mei Ling',
+    'Priya S.',
+    'Aisha R.',
+    'David Tan',
+    'Siti N.',
+    'Wei Jie',
+    'Hannah L.',
+    'Raj K.',
+  ];
+  const bodies = [
+    'Excellent home-cooked meals. Good quantity and taste. Collection was smooth at the HDB lobby.',
+    'Food is really good. Would appreciate if portions can be slightly larger for family orders.',
+    'Been ordering for months. Packaging is careful and the menu has real heritage options.',
+    'Authentic flavours — tastes like my auntie’s kitchen. Clear allergen notes too.',
+    'On-time collection window. Dish was still warm and well packed for the MRT ride home.',
+    'Great for festive gatherings. Ordered ahead for our reunion and everything arrived as planned.',
+  ];
+  const n = Math.min(count, authors.length, bodies.length);
+  const out: KitchenReview[] = [];
+  for (let i = 0; i < n; i++) {
+    const idx = (seed + i * 3) % authors.length;
+    const rating = 5 - ((seed + i) % 5 === 0 ? 1 : 0) - ((seed + i) % 7 === 0 ? 1 : 0);
+    out.push({
+      id: `rev_${cookId}_${i}`,
+      author: authors[idx],
+      rating: Math.max(3, Math.min(5, rating)),
+      body: bodies[(seed + i) % bodies.length],
+      daysAgo: 1 + ((seed + i * 5) % 21),
+      hasPhoto: (seed + i) % 3 === 0,
+    });
+  }
+  return out;
+}
+
+export type KitchenReviewSort = 'recent' | 'highest' | 'lowest' | 'photos';
+
+export function sortKitchenReviews(
+  reviews: KitchenReview[],
+  sort: KitchenReviewSort
+): KitchenReview[] {
+  const list = [...reviews];
+  if (sort === 'highest') list.sort((a, b) => b.rating - a.rating || a.daysAgo - b.daysAgo);
+  else if (sort === 'lowest') list.sort((a, b) => a.rating - b.rating || a.daysAgo - b.daysAgo);
+  else if (sort === 'photos') list.sort((a, b) => Number(b.hasPhoto) - Number(a.hasPhoto) || a.daysAgo - b.daysAgo);
+  else list.sort((a, b) => a.daysAgo - b.daysAgo);
+  return list;
+}
+
+/** SHC collection windows (HDB) — HomelyEats “delivery hours” analogue. */
+export function kitchenCollectionHours(opts?: {
+  collection_days?: number[];
+  collection_instructions?: string | null;
+}): KitchenHourSlot[] {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = opts?.collection_days?.length
+    ? opts.collection_days.map((d) => dayNames[d] || `Day ${d}`).join(', ')
+    : 'Fri, Sat, Sun';
+  return [
+    {
+      id: 'evening',
+      label: 'Evening collection',
+      window: `${days} · 5:00 pm – 8:00 pm`,
+    },
+    {
+      id: 'lunch',
+      label: 'Weekend lunch',
+      window: 'Sat, Sun · 11:30 am – 1:30 pm',
+    },
+    {
+      id: 'note',
+      label: 'How it works',
+      window: opts?.collection_instructions
+        ? String(opts.collection_instructions).slice(0, 120)
+        : 'Collect from HDB lobby after cook accepts — exact slot on your order.',
+    },
+  ];
+}
+
+/** Trust bullets for About kitchen (hygiene / care — HomelyEats about page). */
+export function kitchenAboutPoints(cook?: KitchenIdentity | null): string[] {
+  const points = [
+    'Home kitchen · heritage recipes',
+    'Allergen disclosure on every dish',
+    'HDB collection only (no stranger delivery)',
+    'Clear receipts for every order',
+  ];
+  if (cook?.sfa_reg_number) points.unshift('SFA-aware kitchen practices');
+  return points;
+}
+
+/** Group dishes into expandable meal sections (occasion / cuisine). */
+export function kitchenMenuSections(
+  products: Record<string, unknown>[]
+): Array<{ id: string; title: string; subtitle: string; dishes: Record<string, unknown>[] }> {
+  if (!products.length) return [];
+  const byOccasion = new Map<string, Record<string, unknown>[]>();
+  for (const p of products) {
+    const tags = Array.isArray(p.occasion_tags) ? (p.occasion_tags as string[]) : [];
+    const key = tags[0] || (p.cuisine ? String(p.cuisine) : 'Signature dishes');
+    if (!byOccasion.has(key)) byOccasion.set(key, []);
+    byOccasion.get(key)!.push(p);
+  }
+  return Array.from(byOccasion.entries()).map(([title, dishes]) => ({
+    id: title.toLowerCase().replace(/\s+/g, '-'),
+    title,
+    subtitle: 'HDB collection · order ahead for best slots',
+    dishes,
+  }));
+}
