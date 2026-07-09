@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -26,7 +26,7 @@ import {
   DirectionalTabScreen,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
-import { useMyOrders, useRequests, useCreateBid } from '../../hooks/useOrder';
+import { useMyOrders } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
 
@@ -48,25 +48,10 @@ export default function CookDashboard() {
     router.replace('/(shared)/auth' as any);
   };
   const { data: orders = [] } = useMyOrders();
-  const { data: openReqs = [] } = useRequests();
-  const createBidMut = useCreateBid();
-
-  const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
-  const [collabMsg, setCollabMsg] = useState('');
 
   const earnings = orders
     .filter((o: any) => o.shc_status === 'completed')
     .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
-
-  const handleBid = async (reqId: string) => {
-    const price = parseInt(bidPrices[reqId] || '1200');
-    await createBidMut.mutateAsync({
-      requestId: reqId,
-      priceCents: price,
-      message: collabMsg || 'Heritage HDB recipe interpretation ready. Flexible for your party size.',
-    });
-    setCollabMsg('');
-  };
 
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
@@ -195,46 +180,16 @@ export default function CookDashboard() {
         </SHCButton>
       </Link>
 
-      {/* Collaboration board */}
-      <View style={styles.sectionHeader}>
-        <SHCSectionTitle style={styles.collabTitle}>Collaboration Board</SHCSectionTitle>
-        {openReqs.length > 0 && <SHCBadge variant="warning">{openReqs.length} open</SHCBadge>}
-      </View>
-      <SHCCard variant="bento-peach">
-        {openReqs.length === 0 && (
-          <View style={styles.collabEmpty}>
-            <SHCFoodImage uri={BENTO_ACTION_IMAGES.request} height={64} rounded={shcRadii.md} />
-            <SHCBadge variant="default">No open requests</SHCBadge>
-          </View>
-        )}
-        {openReqs.map((r: any) => (
-          <SHCCard key={r.id} style={styles.collabCard} testID={`collab-req-${r.id}`}>
-            <Text style={styles.collabBody} numberOfLines={2}>{r.body}</Text>
-            <View style={styles.collabBadges}>
-              <SHCBadge variant="heritage">{r.party_size || '?'} guests</SHCBadge>
-              <SHCBadge variant="default">S${r.budget_cents ? (r.budget_cents / 100).toFixed(0) : '—'}</SHCBadge>
-              <SHCBadge variant="default">{r.date}</SHCBadge>
-            </View>
-            <TextInput
-              placeholder="Bid S$ e.g. 14"
-              value={bidPrices[r.id] || ''}
-              onChangeText={(t) => setBidPrices((p) => ({ ...p, [r.id]: t }))}
-              keyboardType="numeric"
-              style={styles.collabInput}
-            />
-            <TextInput
-              placeholder="Message (optional)"
-              value={collabMsg}
-              onChangeText={setCollabMsg}
-              style={styles.collabInput}
-            />
-            <SHCButton size="sm" onPress={() => handleBid(r.id)} testID={`bid-btn-${r.id}`}>
-              <SHCButtonText>Bid</SHCButtonText>
-            </SHCButton>
-
-          </SHCCard>
-        ))}
-      </SHCCard>
+      {/* Collaboration lives under Orders tab */}
+      <Pressable
+        onPress={() => router.push('/(cook)/orders' as any)}
+        style={styles.collabLink}
+        testID="collab-board-link"
+        accessibilityRole="button"
+      >
+        <Text style={styles.collabLinkTitle}>Collaboration Board</Text>
+        <Text style={styles.collabLinkBody}>Recipe requests & bids → open under Orders</Text>
+      </Pressable>
 
       {/* Heritage archive */}
       <SHCSectionTitle>Heritage Archive</SHCSectionTitle>
@@ -358,6 +313,16 @@ const styles = StyleSheet.create({
   bentoCol: { flex: 1 },
   chatBtn: { marginTop: shcSpacing.md },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: shcSpacing.lg },
+  collabLink: {
+    marginBottom: shcSpacing.md,
+    padding: shcSpacing.md,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    backgroundColor: gourmeatColors.surface,
+  },
+  collabLinkTitle: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text },
+  collabLinkBody: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 },
   collabTitle: { marginTop: 0, flex: 1 },
   collabEmpty: { alignItems: 'center', paddingVertical: shcSpacing.md, gap: shcSpacing.sm },
 

@@ -1,20 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { clearCookOnboardingSeen } from '../../../lib/onboarding';
-import {
-  useCookOrders,
-  useOpenRequests,
-  useCreateBid,
-} from '../../../lib/useCookPortal';
+import { useCookOrders, useOpenRequests } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatOrderRow,
-  GourmeatPrimaryButton,
   SHCBadge,
   VisualBentoTile,
 } from '../../components/SHCWebComponents';
@@ -32,23 +26,12 @@ export default function CookDashboardPage() {
   const { user } = useCookAuth();
   const { data: orders = [] } = useCookOrders();
   const { data: openReqs = [] } = useOpenRequests();
-  const createBid = useCreateBid();
-  const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
-  const [collabMsg, setCollabMsg] = useState('');
 
   const earnings = orders
     .filter((o: { shc_status?: string }) => o.shc_status === 'completed')
     .reduce((s: number, o: { total?: number }) => s + Math.floor((o.total || 0) * 0.85), 0);
 
-  const handleBid = async (reqId: string) => {
-    const price = parseInt(bidPrices[reqId] || '1200', 10);
-    await createBid.mutateAsync({
-      requestId: reqId,
-      priceCents: price,
-      message: collabMsg || 'Heritage HDB recipe interpretation ready. Flexible for your party size.',
-    });
-    setCollabMsg('');
-  };
+  const reqCount = Array.isArray(openReqs) ? openReqs.length : 0;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-dashboard">
@@ -98,7 +81,7 @@ export default function CookDashboardPage() {
         </GourmeatCard>
         <GourmeatCard className="bg-[var(--shc-bento-peach)] text-center">
           <p className="text-xs font-bold text-muted-foreground">Requests</p>
-          <p className="text-2xl font-black">{openReqs.length}</p>
+          <p className="text-2xl font-black">{reqCount}</p>
         </GourmeatCard>
       </div>
 
@@ -121,40 +104,19 @@ export default function CookDashboardPage() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-extrabold text-foreground">Collaboration Board</p>
-        {openReqs.length > 0 ? <SHCBadge variant="warning">{openReqs.length} open</SHCBadge> : null}
-      </div>
-      <GourmeatCard className="mb-6 bg-[var(--shc-bento-peach)]">
-        {openReqs.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No open requests</p>
-        ) : (
-          openReqs.map((r: { id: string; body?: string; party_size?: number; budget_cents?: number; date?: string }) => (
-            <div key={r.id} className="bg-card rounded-xl p-3 mb-3 last:mb-0 shadow-[var(--shc-shadow-soft)]" data-testid={`collab-req-${r.id}`}>
-              <p className="font-bold text-sm line-clamp-2">{r.body}</p>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                <SHCBadge variant="heritage">{r.party_size || '?'} guests</SHCBadge>
-                <SHCBadge variant="default">
-                  S${r.budget_cents ? (r.budget_cents / 100).toFixed(0) : '—'}
-                </SHCBadge>
-                {r.date ? <SHCBadge variant="default">{r.date}</SHCBadge> : null}
-              </div>
-              <input
-                className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm"
-                placeholder="Bid S$ e.g. 14"
-                value={bidPrices[r.id] || ''}
-                onChange={(e) => setBidPrices((p) => ({ ...p, [r.id]: e.target.value }))}
-              />
-              <GourmeatPrimaryButton
-                label="Bid"
-                className="mt-2"
-                onClick={() => handleBid(r.id)}
-                testID={`bid-btn-${r.id}`}
-              />
-            </div>
-          ))
-        )}
-      </GourmeatCard>
+      <Link
+        href="/cook-portal/orders"
+        data-testid="collab-board-link"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-6 shadow-[var(--shc-shadow-brutal-sm)]"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-black text-foreground">Collaboration Board</p>
+          {reqCount > 0 ? <SHCBadge variant="warning">{reqCount} open</SHCBadge> : null}
+        </div>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+          Recipe requests &amp; bids live under Orders — place bids in S$
+        </p>
+      </Link>
 
       <p className="text-sm font-extrabold text-foreground mb-2">Recent Orders</p>
       {orders.length === 0 ? (

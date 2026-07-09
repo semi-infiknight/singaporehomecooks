@@ -143,6 +143,9 @@ export function useCreateBid() {
   return useMutation({
     mutationFn: ({ requestId, priceCents, message }: { requestId: string; priceCents: number; message?: string }) =>
       createBid(requestId, priceCents, message),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-open-requests'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cook-open-requests'] });
+      qc.invalidateQueries({ queryKey: ['cook-orders'] });
+    },
   });
 }

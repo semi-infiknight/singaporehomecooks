@@ -72,7 +72,10 @@ export function useCreateBid() {
       const { createBid } = await import('../lib/api-client');
       return createBid(requestId, priceCents, message);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bids'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bids'] });
+      qc.invalidateQueries({ queryKey: ['requests'] });
+    },
   });
 }
 

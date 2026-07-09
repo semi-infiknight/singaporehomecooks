@@ -26,3 +26,4 @@ export * from './e2e-cart';
 export * from './e2e-order';
 export * from './discover-evidence';
 export * from './railway-client';
+export * from './collab-bid';
