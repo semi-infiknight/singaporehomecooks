@@ -15,5 +15,10 @@ if [ "$RAILWAY_RUN_SEED" = "true" ]; then
   node --import tsx ./scripts/seed.ts || echo "[shc-medusa] Seed skipped or partial — check logs"
 fi
 
+# Always ensure demo tiffin kitchen (Auntie Rose) — idempotent, safe every deploy.
+# Fixes GET /store/shc/tiffin/kitchens returning [] when full seed was never re-run.
+echo "[shc-medusa] Ensuring tiffin kitchen seed..."
+node --import tsx ./scripts/seed-tiffin.ts || echo "[shc-medusa] Tiffin seed skipped or partial — check logs"
+
 echo "[shc-medusa] Starting API on port ${PORT:-9000}..."
 exec "$MEDUSA_BIN" start

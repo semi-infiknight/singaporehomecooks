@@ -81,6 +81,7 @@ export const DEFAULT_PROMOS: Array<{
   badge?: string;
   imageKey: PromoBannerKey;
 }> = [
+  { id: 'promo-tiffin', title: 'Weekly tiffin', subtitle: '2–4 meals from one kitchen', badge: 'Subscribe', imageKey: 'family' },
   { id: 'promo-raya', title: 'Hari Raya spreads', subtitle: 'Order 3 days ahead', badge: '20% OFF', imageKey: 'hariRaya' },
   { id: 'promo-credits', title: 'Home Credits', subtitle: 'Earn 5% on every order', badge: 'NEW', imageKey: 'credits' },
   { id: 'promo-family', title: 'Family feasts', subtitle: 'Min portions for parties', imageKey: 'family' },

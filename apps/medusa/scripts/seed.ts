@@ -401,29 +401,14 @@ async function seed() {
     await pg2.end().catch(() => {});
   }
 
-  // Tiffin subscription: seed Rose kitchen with eligible dishes
-  const pg3 = new Client({ connectionString: dbUrl });
+  // Tiffin subscription: seed Rose kitchen with eligible dishes (also via scripts/seed-tiffin.ts on every boot)
   try {
-    await pg3.connect();
-    await pg3.query(
-      `INSERT INTO shc_tiffin_kitchen_config (
-        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, collection_days, default_collection_slot, created_at, updated_at
-      ) VALUES (
-        'tiffin_cfg_rose', 'cook_rose_tampines_001', true,
-        'Peranakan comfort — weekly tiffin from our Tampines HDB kitchen',
-        '["dish_nasi_lemak_prawn_001","dish_ayam_buah_keluak_002"]'::jsonb,
-        '[2,3,4]'::jsonb, '[1,2,3,4,5]'::jsonb, '18:00-19:00', now(), now()
-      ) ON CONFLICT (cook_id) DO UPDATE SET
-        enabled = EXCLUDED.enabled,
-        tagline = EXCLUDED.tagline,
-        eligible_product_ids = EXCLUDED.eligible_product_ids,
-        updated_at = now()`
-    );
-    console.log("  ✓ shc_tiffin_kitchen_config seeded for Auntie Rose");
+    const { seedTiffinKitchenConfig } = await import("./seed-tiffin");
+    const tiffin = await seedTiffinKitchenConfig(dbUrl);
+    if (tiffin.ok) console.log("  ✓", tiffin.message);
+    else console.log("[SEED][TIFFIN] partial:", tiffin.message);
   } catch (e: any) {
     console.log("[SEED][TIFFIN] Tiffin seed partial (migrate first?):", e.message);
-  } finally {
-    await pg3.end().catch(() => {});
   }
 
   console.log("[SEED] Done.");

@@ -22,6 +22,7 @@ import { getOrderStatusLabel } from '@shc/utils';
 const QUICK_ACTIONS = [
   { href: '/cook-portal/listings', label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
   { href: '/cook-portal/orders', label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
+  { href: '/cook-portal/tiffin', label: 'Tiffin', image: BENTO_ACTION_IMAGES.checkout, variant: 'bento-yellow' as const },
   { href: '/cook-portal/earnings', label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
   { href: '/cook-portal/compliance', label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
 ];
@@ -90,7 +91,7 @@ export default function CookDashboardPage() {
           />
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
         {QUICK_ACTIONS.slice(2).map((a) => (
           <VisualBentoTile key={a.href} imageUrl={a.image} label={a.label} href={a.href} variant={a.variant} />
         ))}

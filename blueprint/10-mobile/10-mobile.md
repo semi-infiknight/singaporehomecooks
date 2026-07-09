@@ -209,7 +209,7 @@ Entry: discover promo rail (`Weekly tiffin`) + profile tile `profile-tiffin-tile
 
 | Gap | Notes |
 |---|---|
-| Tiffin web parity | Mobile-only; no web tiffin screens |
+| Tiffin web parity | ✅ Web `/tiffin/*` + `/cook-portal/tiffin` (2026-07-09) |
 | Tiffin customer Maestro on Railway | Needs kitchen config saved (cook app) or seed |
 | iOS Maestro full tours | Android PASS; re-verify after native rebuilds |
 | Cook full Medusa auth actor | Hybrid SHC JWT + scrypt; full Medusa cook actor pending |

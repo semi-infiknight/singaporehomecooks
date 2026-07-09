@@ -10,6 +10,11 @@ import {
 import { TiffinKitchenConfig } from "./models/kitchen-config";
 import { TiffinSubscription } from "./models/subscription";
 import { TiffinWeeklyPlan } from "./models/weekly-plan";
+import {
+  pgGetKitchenConfig,
+  pgListEnabledKitchens,
+  pgUpsertKitchenConfig,
+} from "../../lib/shc-tiffin-pg";
 
 export type TiffinKitchenConfigDTO = {
   cook_id: string;
@@ -26,39 +31,55 @@ class ShcTiffinModuleService extends MedusaService({
   TiffinSubscription,
   TiffinWeeklyPlan,
 }) {
+  /** Kitchen config uses direct pg — MikroORM list was empty on Railway despite SQL rows. */
   async getKitchenConfig(cookId: string): Promise<TiffinKitchenConfigDTO | null> {
-    const [rows] = await this.listAndCountTiffinKitchenConfigs({ cook_id: cookId } as any, { take: 1 }).catch(() => [[]]);
-    const row = (rows as any[])?.[0];
-    if (!row) return null;
-    return this.shapeKitchen(row);
+    try {
+      return await pgGetKitchenConfig(cookId);
+    } catch {
+      const [rows] = await this.listAndCountTiffinKitchenConfigs({ cook_id: cookId } as any, { take: 1 }).catch(() => [[]]);
+      const row = (rows as any[])?.[0];
+      if (!row) return null;
+      return this.shapeKitchen(row);
+    }
   }
 
   async upsertKitchenConfig(cookId: string, data: Partial<TiffinKitchenConfigDTO>): Promise<TiffinKitchenConfigDTO> {
-    const existing = await this.getKitchenConfig(cookId);
-    const payload = {
-      cook_id: cookId,
-      enabled: data.enabled ?? existing?.enabled ?? false,
-      tagline: data.tagline ?? existing?.tagline ?? null,
-      eligible_product_ids: data.eligible_product_ids ?? existing?.eligible_product_ids ?? [],
-      meals_per_week_options: data.meals_per_week_options ?? existing?.meals_per_week_options ?? [2, 3, 4],
-      collection_days: data.collection_days ?? existing?.collection_days ?? [1, 2, 3, 4, 5],
-      default_collection_slot: data.default_collection_slot ?? existing?.default_collection_slot ?? "18:00-19:00",
-      updated_at: new Date(),
-    };
-    if (existing) {
-      await this.updateTiffinKitchenConfigs({
-        selector: { cook_id: cookId },
-        data: payload as any,
-      });
-    } else {
-      await this.createTiffinKitchenConfigs([{ ...payload, created_at: new Date() } as any]);
+    try {
+      return await pgUpsertKitchenConfig(cookId, data);
+    } catch (e) {
+      // Fallback MikroORM path (local dev without DATABASE_URL quirks)
+      const existing = await this.getKitchenConfig(cookId);
+      const payload = {
+        cook_id: cookId,
+        enabled: data.enabled ?? existing?.enabled ?? false,
+        tagline: data.tagline ?? existing?.tagline ?? null,
+        eligible_product_ids: data.eligible_product_ids ?? existing?.eligible_product_ids ?? [],
+        meals_per_week_options: data.meals_per_week_options ?? existing?.meals_per_week_options ?? [2, 3, 4],
+        collection_days: data.collection_days ?? existing?.collection_days ?? [1, 2, 3, 4, 5],
+        default_collection_slot: data.default_collection_slot ?? existing?.default_collection_slot ?? "18:00-19:00",
+        updated_at: new Date(),
+      };
+      if (existing) {
+        await this.updateTiffinKitchenConfigs({
+          selector: { cook_id: cookId },
+          data: payload as any,
+        });
+      } else {
+        await this.createTiffinKitchenConfigs([
+          { id: `tiffin_cfg_${cookId}`, ...payload, created_at: new Date() } as any,
+        ]);
+      }
+      return (await this.getKitchenConfig(cookId))!;
     }
-    return (await this.getKitchenConfig(cookId))!;
   }
 
   async listEnabledKitchens(): Promise<TiffinKitchenConfigDTO[]> {
-    const [rows] = await this.listAndCountTiffinKitchenConfigs({ enabled: true } as any, { take: 100 }).catch(() => [[]]);
-    return (rows as any[]).map((r) => this.shapeKitchen(r));
+    try {
+      return await pgListEnabledKitchens();
+    } catch {
+      const [rows] = await this.listAndCountTiffinKitchenConfigs({ enabled: true } as any, { take: 100 }).catch(() => [[]]);
+      return (rows as any[]).map((r) => this.shapeKitchen(r));
+    }
   }
 
   async getActiveSubscription(customerId: string) {

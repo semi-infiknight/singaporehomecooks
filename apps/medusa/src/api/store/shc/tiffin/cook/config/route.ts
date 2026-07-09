@@ -45,13 +45,20 @@ export async function PUT(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid tiffin config", parse.error.format() as any) });
   }
+  let cookId: string;
   try {
-    const cookId = getCookId(req);
+    cookId = getCookId(req);
+  } catch {
+    return unauthorized(res, "Cook login required");
+  }
+  try {
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
     const config = await tiffin.upsertKitchenConfig(cookId, parse.data);
     const kitchen = await shapeTiffinKitchen(config, req.scope);
     res.json({ config, kitchen });
-  } catch {
-    return unauthorized(res, "Cook login required");
+  } catch (e: any) {
+    return res.status(500).json({
+      error: createSHCError("SHC-GENERIC-001", e?.message || "Failed to save tiffin config"),
+    });
   }
 }

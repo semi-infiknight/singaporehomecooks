@@ -201,7 +201,8 @@ export default function DiscoverHome() {
         <div className="shc-section-gap mb-4">
           <PromoRail
             onPromoClick={(id) => {
-              if (id === 'promo-raya') setOccasionFilter('Hari Raya');
+              if (id === 'promo-tiffin') router.push('/tiffin');
+              else if (id === 'promo-raya') setOccasionFilter('Hari Raya');
               else if (id === 'promo-credits') router.push('/profile');
               else if (id === 'promo-paynow') router.push('/content/trust');
             }}

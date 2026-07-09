@@ -332,6 +332,7 @@ export function PromoRail({
   onPromoClick?: (id: string) => void;
 }) {
   const icons: Record<string, LucideIcon> = {
+    'promo-tiffin': Home,
     'promo-raya': Leaf,
     'promo-credits': Wallet,
     'promo-family': Users,

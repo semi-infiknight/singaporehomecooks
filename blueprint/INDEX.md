@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — **Tiffin weekly subscription** shipped (mobile customer + cook + Medusa + worker); Railway live `/store/shc/tiffin/*` @ `83943c3`. See [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-09 — Tiffin seed always-on + web parity (`/tiffin/*`, `/cook-portal/tiffin`, `seed-tiffin` + `shc-tiffin-pg`). Prior: HomelyEats case-study pack; mobile tiffin. See [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -76,6 +76,7 @@ Start here → follow links. Each file contains:
 - [14-founder-inputs.md](./14-founder-inputs/14-founder-inputs.md)
 - [15-calendar.md](./15-calendar/15-calendar.md)
 - [16-references.md](./16-references/16-references.md)
+- **[HomelyEats case study (tiffin redesign brief)](./references/homelyeats-case-study/README.md)** — extracted Medium product-design case study: flows, states, images, [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md)
 
 **Decision Trees & Edge Cases (Critical for Production Logic):**
 - CURRENT_STATE.md §8 "What's NOT Done" + code audits (no separate GAP_ANALYSIS.md; live gaps are in CURRENT_STATE) — historical source gap audit was folded in.

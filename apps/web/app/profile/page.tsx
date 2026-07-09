@@ -136,6 +136,16 @@ export default function Profile() {
         <HeritageStoryBanner href="/content/trust" />
       </div>
 
+      <SHCSectionTitle>Tiffin</SHCSectionTitle>
+      <SHCCard className="mb-4">
+        <p className="text-sm text-muted-foreground font-semibold mb-3">
+          Weekly home-cooked meals from one kitchen — pick 2, 3, or 4 collection days.
+        </p>
+        <Link href="/tiffin" data-testid="profile-tiffin-link">
+          <SHCButton size="sm">Browse tiffin kitchens</SHCButton>
+        </Link>
+      </SHCCard>
+
       <div className="mt-3">
         <SHCButton
           size="sm"
