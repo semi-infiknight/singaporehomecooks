@@ -10,6 +10,7 @@ import {
   GourmeatCookHeader,
   GourmeatOrderRow,
   GourmeatPrimaryButton,
+  GourmeatActionRow,
   GourmeatCard,
   GourmeatEmptyState,
   SHCErrorBanner,
@@ -148,23 +149,31 @@ export default function CookOrders() {
               onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
               testID={`cook-order-row-${o.id}`}
               actions={
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
                   {actions.map((a) => (
                     <GourmeatPrimaryButton
                       key={a.to}
                       label={a.label}
+                      size="sm"
                       testID={`cook-order-${o.id}-action-${a.to}`}
                       onPress={() => doTransition(o.id, a.to)}
-                      style={{ paddingVertical: 8, paddingHorizontal: 12, minWidth: 80 }}
                     />
                   ))}
-                  <Link href={`/(shared)/chat/${o.id}` as any} style={styles.actionLink}>
-                    <Text style={styles.actionLinkText}>Chat</Text>
-                  </Link>
-                  <Link href={`/(cook)/orders/${o.id}` as any} style={styles.actionLink}>
-                    <Text style={styles.actionLinkText}>Details</Text>
-                  </Link>
-                </View>
+                  <GourmeatPrimaryButton
+                    label="Chat"
+                    size="sm"
+                    variant="outline"
+                    testID={`cook-order-${o.id}-chat`}
+                    onPress={() => router.push(`/(shared)/chat/${o.id}` as any)}
+                  />
+                  <GourmeatPrimaryButton
+                    label="Details"
+                    size="sm"
+                    variant="outline"
+                    testID={`cook-order-${o.id}-details`}
+                    onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
+                  />
+                </GourmeatActionRow>
               }
             />
           );
@@ -292,13 +301,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listingsBtnText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 15 },
-  actionLink: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    backgroundColor: gourmeatColors.surface,
-  },
-  actionLinkText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text },
 });

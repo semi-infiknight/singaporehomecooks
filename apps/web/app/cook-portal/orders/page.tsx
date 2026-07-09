@@ -19,6 +19,7 @@ import {
   GourmeatCookHeader,
   GourmeatOrderRow,
   GourmeatPrimaryButton,
+  GourmeatActionRow,
   GourmeatCard,
   GourmeatEmptyState,
   SHCBadge,
@@ -130,24 +131,24 @@ export default function CookOrdersPage() {
             onPress={() => router.push(`/cook-portal/orders/${o.id}`)}
             testID={`cook-order-row-${o.id}`}
             actions={
-              <>
+              <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
                 {actions.map((a) => (
                   <GourmeatPrimaryButton
                     key={a.to}
                     label={a.label}
                     size="sm"
-                    className="mr-2 mb-1"
                     testID={`cook-order-${o.id}-action-${a.to}`}
                     onClick={() => doTransition(String(o.id), a.to)}
                   />
                 ))}
-                <Link
-                  href={`/cook-portal/orders/${o.id}`}
-                  className="text-xs font-bold text-primary underline"
-                >
-                  Details
-                </Link>
-              </>
+                <GourmeatPrimaryButton
+                  label="Details"
+                  size="sm"
+                  variant="outline"
+                  testID={`cook-order-${o.id}-details`}
+                  onClick={() => router.push(`/cook-portal/orders/${o.id}`)}
+                />
+              </GourmeatActionRow>
             }
           />
         );

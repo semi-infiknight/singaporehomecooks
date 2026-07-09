@@ -51,6 +51,20 @@ describe('Gourmeat button surfaces (mobile-customer)', () => {
     expectInnerViewBackground(block, 'GourmeatPrimaryButton');
   });
 
+  it('GourmeatPrimaryButton size sm is compact 36px (order action chips)', () => {
+    const block = extractFunctionBlock(gourmeat, 'GourmeatPrimaryButton', 'GourmeatProductStickyBar');
+    expect(block).toContain("size = 'md'");
+    expect(block).toMatch(/minHeight:\s*isSm\s*\?\s*36\s*:\s*48/);
+    expect(block).toMatch(/height:\s*isSm\s*\?\s*36/);
+    expect(block).toContain("size === 'sm'");
+  });
+
+  it('GourmeatActionRow is a horizontal equal-height strip', () => {
+    const block = extractFunctionBlock(gourmeat, 'GourmeatActionRow', 'GourmeatProductStickyBar');
+    expect(block).toContain("flexDirection: 'row'");
+    expect(block).toContain("alignItems: 'center'");
+  });
+
   it('GourmeatProductStickyBar add control uses inner View backgroundColor', () => {
     const block = extractFunctionBlock(gourmeat, 'GourmeatProductStickyBar', 'GourmeatCookHeader');
     const addStart = block.lastIndexOf('<Pressable');

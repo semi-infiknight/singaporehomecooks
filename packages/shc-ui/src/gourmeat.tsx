@@ -884,12 +884,15 @@ export function GourmeatCartLineItem({
   );
 }
 
+/** Shared CTA — `md` full-width form actions; `sm` equal-height chips for action rows. */
 export function GourmeatPrimaryButton({
   label,
   onPress,
   disabled,
   loading,
   variant = 'primary',
+  size = 'md',
+  fullWidth,
   testID,
   style,
 }: {
@@ -898,10 +901,16 @@ export function GourmeatPrimaryButton({
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'outline';
+  /** sm = compact 36px chips (order rows); md = 48px form CTAs */
+  size?: 'md' | 'sm';
+  /** When true, stretch to parent width (md default). sm is never full-width. */
+  fullWidth?: boolean;
   testID?: string;
   style?: object;
 }) {
   const isOutline = variant === 'outline';
+  const isSm = size === 'sm';
+  const stretch = fullWidth ?? !isSm;
   return (
     <Pressable onPress={onPress} disabled={disabled || loading} testID={testID} accessibilityRole="button">
       {({ pressed }) => (
@@ -915,24 +924,58 @@ export function GourmeatPrimaryButton({
                   ? gourmeatColors.primaryDark
                   : gourmeatColors.primary,
             borderRadius: gourmeatRadii.md,
-            paddingVertical: 14,
-            paddingHorizontal: shcSpacing.lg,
+            paddingVertical: isSm ? 8 : 14,
+            paddingHorizontal: isSm ? 14 : shcSpacing.lg,
             alignItems: 'center',
+            justifyContent: 'center',
             borderWidth: isOutline ? 1 : 0,
             borderColor: gourmeatColors.border,
             opacity: disabled ? 0.6 : 1,
-            minHeight: 48,
-            alignSelf: 'stretch',
+            minHeight: isSm ? 36 : 48,
+            height: isSm ? 36 : undefined,
+            alignSelf: stretch ? 'stretch' : 'auto',
+            flexGrow: 0,
+            flexShrink: 0,
             ...gourmeatShadows.soft,
             ...(style || {}),
           }}
         >
-          <Text style={{ fontSize: 15, fontWeight: '800', color: isOutline ? gourmeatColors.text : gourmeatColors.onPrimary }}>
-            {loading ? 'Please wait…' : label}
+          <Text
+            style={{
+              fontSize: isSm ? 13 : 15,
+              fontWeight: '800',
+              lineHeight: isSm ? 16 : 20,
+              color: isOutline ? gourmeatColors.text : gourmeatColors.onPrimary,
+            }}
+          >
+            {loading ? (isSm ? '…' : 'Please wait…') : label}
           </Text>
         </View>
       )}
     </Pressable>
+  );
+}
+
+/** Equal-height action strip under order cards (Ready / Chat / Details). */
+export function GourmeatActionRow({
+  children,
+  testID,
+}: {
+  children: React.ReactNode;
+  testID?: string;
+}) {
+  return (
+    <View
+      testID={testID}
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      {children}
+    </View>
   );
 }
 
@@ -1109,14 +1152,41 @@ export function GourmeatOrderRow({
     return (
       <View>
         <Pressable onPress={onPress}>{inner}</Pressable>
-        {actions ? <View style={{ paddingHorizontal: shcSpacing.sm, marginTop: -shcSpacing.xs, marginBottom: shcSpacing.sm }}>{actions}</View> : null}
+        {actions ? (
+          <View
+            style={{
+              paddingHorizontal: shcSpacing.sm,
+              marginTop: 4,
+              marginBottom: shcSpacing.sm,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            {actions}
+          </View>
+        ) : null}
       </View>
     );
   }
   return (
     <View>
       {inner}
-      {actions ? <View style={{ paddingHorizontal: shcSpacing.sm, paddingBottom: shcSpacing.sm }}>{actions}</View> : null}
+      {actions ? (
+        <View
+          style={{
+            paddingHorizontal: shcSpacing.sm,
+            paddingBottom: shcSpacing.sm,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {actions}
+        </View>
+      ) : null}
     </View>
   );
 }

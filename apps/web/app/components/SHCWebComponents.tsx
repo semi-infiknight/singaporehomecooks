@@ -2136,7 +2136,9 @@ export function GourmeatOrderRow({
       ) : (
         card
       )}
-      {actions ? <div className="px-3 pb-3 -mt-1 flex flex-wrap gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="px-3 pb-3 mt-1 flex flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
     </div>
   );
 
@@ -2200,6 +2202,8 @@ export function GourmeatPrimaryButton({
   disabled,
   loading,
   variant = 'primary',
+  size = 'md',
+  fullWidth,
   testID,
   className = '',
 }: {
@@ -2208,17 +2212,23 @@ export function GourmeatPrimaryButton({
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'outline';
+  size?: 'md' | 'sm';
+  fullWidth?: boolean;
   testID?: string;
   className?: string;
 }) {
   const outline = variant === 'outline';
+  const isSm = size === 'sm';
+  const stretch = fullWidth ?? !isSm;
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
       data-testid={testID}
-      className={`inline-flex items-center justify-center px-3 py-2 rounded-xl text-sm font-extrabold transition-opacity disabled:opacity-50 ${
+      className={`inline-flex items-center justify-center rounded-xl font-extrabold transition-opacity disabled:opacity-50 ${
+        isSm ? 'h-9 min-h-[36px] px-3.5 py-0 text-[13px] leading-none' : 'min-h-12 px-4 py-3 text-sm'
+      } ${stretch ? 'w-full' : 'w-auto shrink-0'} ${
         outline
           ? 'bg-card border border-border text-foreground'
           : 'bg-primary text-primary-foreground hover:bg-[var(--shc-primary-dark)]'
@@ -2226,6 +2236,26 @@ export function GourmeatPrimaryButton({
     >
       {loading ? '…' : label}
     </button>
+  );
+}
+
+/** Equal-height action strip under order cards */
+export function GourmeatActionRow({
+  children,
+  className = '',
+  testID,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className={`flex flex-wrap items-center gap-2 ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
