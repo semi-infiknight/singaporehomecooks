@@ -245,29 +245,79 @@ export function SHCTiffinKitchenCard({
   );
 }
 
+/**
+ * Kitchen page hero (HomelyEats / Jakob’s Law restaurant page).
+ * Full-bleed photo + name + rating + open status + story/tags.
+ */
 export function SHCTiffinKitchenHero({
   cookName,
   tagline,
   imageUri,
-  testID = 'tiffin-kitchen-hero',
+  rating,
+  reviewCount,
+  isOpen = true,
+  openDetail = 'HDB collection evenings',
+  tags,
+  story,
+  testID = 'kitchen-page-hero',
 }: {
   cookName: string;
   tagline?: string;
   imageUri?: string;
+  rating?: number;
+  reviewCount?: number;
+  isOpen?: boolean;
+  openDetail?: string;
+  tags?: string[];
+  story?: string;
   testID?: string;
 }) {
   const uri = imageUri || getCookAvatarUrl('tiffin', cookName);
+  const ratingText =
+    rating != null
+      ? reviewCount != null
+        ? `${rating.toFixed(1)} (${reviewCount})`
+        : rating.toFixed(1)
+      : null;
   return (
     <View testID={testID} style={styles.kitchenHero}>
-      <Image source={{ uri }} style={styles.kitchenHeroImage} resizeMode="cover" />
+      <Image source={{ uri }} style={styles.kitchenHeroImage} resizeMode="cover" accessibilityIgnoresInvertColors />
       <View style={styles.kitchenHeroBody}>
-        <Text style={styles.kitchenHeroTitle}>{cookName}</Text>
+        <View style={styles.kitchenHeroTitleRow}>
+          <Text style={styles.kitchenHeroTitle} numberOfLines={2}>
+            {cookName}
+          </Text>
+          {ratingText ? (
+            <View style={styles.kitchenHeroRating} testID="kitchen-rating-pill">
+              <Text style={styles.kitchenHeroRatingText}>★ {ratingText}</Text>
+            </View>
+          ) : null}
+        </View>
         <Text style={styles.kitchenHeroSubtitle}>
           {tagline || 'Home-cooked tiffin — collection from one HDB kitchen each week.'}
         </Text>
-        <Text style={styles.kitchenHeroNote}>
-          This is your default kitchen. Adjust your weekly order anytime from the full menu.
+        <Text style={[styles.kitchenHeroOpen, { color: isOpen ? '#2E7D32' : '#C62828' }]} testID="kitchen-open-status">
+          {isOpen ? 'Open' : 'Closed'}
+          <Text style={styles.kitchenHeroOpenDetail}> · {openDetail}</Text>
         </Text>
+        {tags && tags.length > 0 ? (
+          <View style={styles.kitchenHeroTags} testID="kitchen-tags">
+            {tags.map((t) => (
+              <View key={t} style={styles.kitchenHeroTag}>
+                <Text style={styles.kitchenHeroTagText}>{t}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {story ? (
+          <Text style={styles.kitchenHeroNote} numberOfLines={3} testID="kitchen-story">
+            {story}
+          </Text>
+        ) : (
+          <Text style={styles.kitchenHeroNote}>
+            Adjust your weekly order anytime from the full menu after you subscribe.
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -1190,13 +1240,35 @@ const styles = StyleSheet.create({
     borderRadius: gourmeatRadii.lg,
     overflow: 'hidden',
     marginBottom: shcSpacing.md,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
     ...gourmeatShadows.soft,
   },
-  kitchenHeroImage: { width: '100%', height: 140 },
+  kitchenHeroImage: { width: '100%', height: 168 },
   kitchenHeroBody: { padding: shcSpacing.md },
-  kitchenHeroTitle: { fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
+  kitchenHeroTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  kitchenHeroTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
+  kitchenHeroRating: {
+    backgroundColor: '#1C1C1C',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  kitchenHeroRatingText: { color: '#fff', fontSize: 12, fontWeight: '800' },
   kitchenHeroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4, lineHeight: 18 },
-  kitchenHeroNote: { fontSize: 11, color: gourmeatColors.textMuted, marginTop: shcSpacing.sm, lineHeight: 16 },
+  kitchenHeroOpen: { fontSize: 13, fontWeight: '800', marginTop: 8 },
+  kitchenHeroOpenDetail: { fontWeight: '600', color: gourmeatColors.textLight },
+  kitchenHeroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  kitchenHeroTag: {
+    backgroundColor: '#FFF0EB',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+  },
+  kitchenHeroTagText: { fontSize: 11, fontWeight: '700', color: gourmeatColors.text },
+  kitchenHeroNote: { fontSize: 12, color: gourmeatColors.textMuted, marginTop: shcSpacing.sm, lineHeight: 17 },
   mealsPickerRow: { flexDirection: 'row', gap: shcSpacing.sm, paddingVertical: shcSpacing.sm },
   mealsPill: {
     minWidth: 108,

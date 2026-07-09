@@ -1,9 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+/**
+ * Tiffin kitchen page — HomelyEats restaurant IA + plan subscribe.
+ * Browse without login; auth only on subscribe.
+ */
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { getCookAvatarUrl, getDishImageUrl } from '@shc/utils';
+import Link from 'next/link';
+import {
+  getCookAvatarUrl,
+  getDishImageUrl,
+  kitchenOpenStatus,
+  kitchenTagList,
+  kitchenTiffinPlanRows,
+} from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
 import {
   useTiffinKitchen,
@@ -12,7 +23,7 @@ import {
   tiffinWeeklySubtotal,
   TIFFIN_DAY_LABELS,
 } from '../../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader, SHCBadge } from '../../../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCBadge, GourmeatSectionTitle } from '../../../components/SHCWebComponents';
 
 export default function TiffinKitchenPage() {
   const params = useParams();
@@ -30,12 +41,6 @@ export default function TiffinKitchenPage() {
     }
   }, [JSON.stringify(mealsOptions)]);
 
-  useEffect(() => {
-    if (!user) {
-      router.replace(`/login?returnTo=/tiffin/kitchen/${cookId}`);
-    }
-  }, [user, cookId, router]);
-
   const dishes = ((kitchen as any)?.dishes || []) as Array<{
     id: string;
     name: string;
@@ -43,8 +48,32 @@ export default function TiffinKitchenPage() {
     cuisine?: string;
   }>;
 
+  const cookName = (kitchen as any)?.cook?.display_name || 'Kitchen';
+  const cookMeta = {
+    id: cookId,
+    display_name: cookName,
+    area: (kitchen as any)?.cook?.area,
+    story: (kitchen as any)?.tagline || (kitchen as any)?.cook?.story,
+    cuisine: dishes[0]?.cuisine,
+    rating: (kitchen as any)?.rating ?? (kitchen as any)?.cook?.rating ?? 4.8,
+    review_count: (kitchen as any)?.review_count,
+    subscriber_count: (kitchen as any)?.subscriber_count,
+    status: (kitchen as any)?.enabled === false ? 'paused' : 'active',
+  };
+  const open = kitchenOpenStatus(cookMeta);
+  const tags = kitchenTagList(cookMeta);
+  const planRows = useMemo(
+    () => kitchenTiffinPlanRows(mealsOptions, tiffinPricePerServing),
+    [mealsOptions]
+  );
+  const avatar = getCookAvatarUrl(cookId, cookName);
+
   const handleSubscribe = async () => {
     if (!cookId) return;
+    if (!user) {
+      router.push(`/login?returnTo=/tiffin/kitchen/${cookId}`);
+      return;
+    }
     await subscribeMut.mutateAsync({
       cookId,
       mealsPerWeek: mealsPerWeek as 2 | 3 | 4,
@@ -63,34 +92,79 @@ export default function TiffinKitchenPage() {
   if (!kitchen) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10" data-testid="tiffin-kitchen-missing">
-        <SHCPageHeader title="Kitchen unavailable" subtitle="This kitchen is not offering tiffin right now." />
+        <h1 className="text-xl font-black mb-2">Kitchen unavailable</h1>
+        <p className="text-sm text-muted-foreground mb-4">This kitchen is not offering tiffin right now.</p>
         <SHCButton onClick={() => router.push('/tiffin')}>Back to tiffin</SHCButton>
       </div>
     );
   }
 
-  const cookName = (kitchen as any).cook?.display_name || 'Kitchen';
-  const avatar = getCookAvatarUrl(cookId, cookName);
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-32" data-testid="tiffin-kitchen-screen">
-      <SHCPageHeader title="Subscribe" subtitle="STEP 1 · Choose your weekly plan" />
+    <div className="max-w-2xl mx-auto px-4 py-4 pb-32" data-testid="tiffin-kitchen-screen">
+      <div className="flex items-center gap-2 mb-3">
+        <Link
+          href="/tiffin"
+          className="w-10 h-10 flex items-center justify-center text-2xl font-light"
+          data-testid="kitchen-back-btn"
+        >
+          ‹
+        </Link>
+        <h1 className="flex-1 text-center text-lg font-black truncate" data-testid="kitchen-page-title">
+          {cookName}
+        </h1>
+        <span className="w-10" />
+      </div>
 
-      <div className="rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] mb-4 shadow-[var(--shc-shadow-brutal-sm)]">
-        <div className="relative h-36 bg-[var(--shc-bento-mint)]">
-          <Image src={avatar} alt="" fill className="object-cover opacity-90" sizes="640px" />
+      <div
+        className="rounded-2xl overflow-hidden border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal-sm)] mb-4"
+        data-testid="kitchen-page-hero"
+      >
+        <div className="relative h-44 bg-[var(--shc-bento-mint)]">
+          <Image src={avatar} alt="" fill className="object-cover" sizes="720px" priority />
         </div>
-        <div className="p-4 bg-card">
-          <p className="font-black text-xl">{cookName}</p>
-          <p className="text-sm text-muted-foreground font-semibold mt-1">
-            {(kitchen as any).tagline ||
-              `${(kitchen as any).cook?.area || 'Singapore'} · home-cooked tiffin`}
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="font-black text-xl truncate">{cookName}</p>
+              <p className="text-sm text-muted-foreground font-semibold mt-1">
+                {(kitchen as any).tagline ||
+                  `${(kitchen as any).cook?.area || 'Singapore'} · home-cooked tiffin`}
+              </p>
+            </div>
+            <span
+              className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
+              data-testid="kitchen-rating-pill"
+            >
+              ★ {Number(cookMeta.rating).toFixed(1)}
+            </span>
+          </div>
+          <p
+            className={`text-sm font-extrabold mt-2 ${open.isOpen ? 'text-green-700' : 'text-red-700'}`}
+            data-testid="kitchen-open-status"
+          >
+            {open.label}{' '}
+            <span className="text-muted-foreground font-semibold">· {open.detail}</span>
           </p>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3" data-testid="kitchen-tags">
+              {tags.map((t) => (
+                <SHCBadge key={t} variant="heritage">
+                  {t}
+                </SHCBadge>
+              ))}
+            </div>
+          )}
+          {(kitchen as any).cook?.story && (
+            <p className="text-sm text-muted-foreground font-semibold mt-3 leading-relaxed" data-testid="kitchen-story">
+              {(kitchen as any).cook.story}
+            </p>
+          )}
         </div>
       </div>
 
-      <p className="font-bold text-sm mb-2">How many meals each week?</p>
-      <div className="flex gap-2 mb-4" data-testid="tiffin-meals-picker">
+      <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
+      <p className="text-xs font-semibold text-muted-foreground mb-2">How many meals each week?</p>
+      <div className="flex gap-2 mb-3" data-testid="tiffin-meals-picker">
         {mealsOptions.map((n) => {
           const active = n === mealsPerWeek;
           return (
@@ -111,41 +185,61 @@ export default function TiffinKitchenPage() {
           );
         })}
       </div>
+      <div className="mb-3" data-testid="kitchen-plan-rows">
+        {planRows.map((row) => (
+          <p key={row.meals} className="text-xs font-semibold text-muted-foreground">
+            {row.label} · S${row.pricePerMeal.toFixed(2)}/meal
+          </p>
+        ))}
+      </div>
 
       <SHCCard className="mb-4">
         <div className="flex justify-between items-center">
           <span className="font-bold text-sm">Weekly total</span>
-          <span className="font-black text-lg tabular-nums">S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}</span>
+          <span className="font-black text-lg tabular-nums">
+            S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}
+          </span>
         </div>
         <p className="text-xs text-muted-foreground mt-1">Collection from HDB kitchen · PayNow on first cycle</p>
       </SHCCard>
 
-      <p className="font-extrabold text-sm mb-2">Full menu</p>
-      <ul className="space-y-2 mb-4">
-        {dishes.map((d) => (
-          <li
-            key={d.id}
-            className="flex gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2"
-          >
-            <Image
-              src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
-              alt=""
-              width={48}
-              height={48}
-              className="rounded-lg object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm truncate">{d.name}</p>
-              <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
-            </div>
-            {d.price != null ? (
-              <SHCBadge variant="heritage">S${(d.price / 100).toFixed(0)}</SHCBadge>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <GourmeatSectionTitle
+        title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
+        testID="kitchen-menu-header"
+      />
+      {dishes.length === 0 ? (
+        <p className="text-sm font-semibold text-muted-foreground mb-4" data-testid="kitchen-menu-empty">
+          No tiffin dishes listed for this kitchen yet.
+        </p>
+      ) : (
+        <ul className="space-y-2 mb-4" data-testid="kitchen-menu-list">
+          {dishes.map((d) => (
+            <li
+              key={d.id}
+              className="flex gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2"
+            >
+              <Image
+                src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
+                alt=""
+                width={48}
+                height={48}
+                className="rounded-lg object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm truncate">{d.name}</p>
+                <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
+              </div>
+              {d.price != null ? (
+                <SHCBadge variant="heritage">
+                  S${d.price > 50 ? (d.price / 100).toFixed(0) : d.price}
+                </SHCBadge>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <p className="text-xs font-semibold text-primary mb-6">
+      <p className="text-xs font-semibold text-primary mb-6" data-testid="kitchen-collection-days">
         Collection days:{' '}
         {((kitchen as any).collection_days || [])
           .map((d: number) => TIFFIN_DAY_LABELS[d])
@@ -160,7 +254,11 @@ export default function TiffinKitchenPage() {
             disabled={subscribeMut.isPending}
             testID="tiffin-subscribe-btn"
           >
-            {subscribeMut.isPending ? 'Subscribing…' : 'Subscribe & select meals'}
+            {subscribeMut.isPending
+              ? 'Subscribing…'
+              : user
+                ? 'Subscribe & select meals'
+                : 'Sign in to subscribe'}
           </SHCButton>
         </div>
       </div>

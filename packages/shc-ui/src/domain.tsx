@@ -254,48 +254,113 @@ export function SHCProfileHero({
   );
 }
 
-/** Cook storefront hero — full-bleed kitchen photo + overlay */
+/**
+ * Cook storefront hero — HomelyEats kitchen page (Jakob’s Law).
+ * Full-bleed kitchen photo + name + rating + open status + tags/story.
+ */
 export function SHCCookStoreHero({
   name,
   area,
   rating,
   orders,
   avatarUri,
-  testID = 'cook-store-hero',
+  isOpen = true,
+  openDetail,
+  tags,
+  story,
+  testID = 'kitchen-page-hero',
 }: {
   name: string;
   area?: string;
   rating?: number;
   orders?: number;
   avatarUri?: string;
+  isOpen?: boolean;
+  openDetail?: string;
+  tags?: string[];
+  story?: string;
   testID?: string;
 }) {
   const heroUri = getCookKitchenHeroUrl(name);
   const avatar = avatarUri || getCookAvatarUrl(undefined, name);
+  const detail = openDetail || 'HDB collection evenings';
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.md, borderRadius: shcRadii.lg, overflow: 'hidden', borderWidth: shcBorders.brutal, borderColor: colors.border, ...shcShadows.brutalSm }}>
+    <View
+      testID={testID}
+      style={{
+        marginBottom: shcSpacing.md,
+        borderRadius: shcRadii.lg,
+        overflow: 'hidden',
+        borderWidth: shcBorders.brutal,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+        ...shcShadows.brutalSm,
+      }}
+    >
       <SHCFoodImage
         uri={heroUri}
-        height={140}
+        height={168}
         rounded={0}
         overlay={
-          <View style={{ flex: 1, backgroundColor: 'rgba(36,24,18,0.5)', padding: shcSpacing.md, justifyContent: 'flex-end' }}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(36,24,18,0.48)', padding: shcSpacing.md, justifyContent: 'flex-end' }}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: shcSpacing.sm }}>
               <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden', borderWidth: 2, borderColor: colors.onPrimary }}>
                 <SHCFoodImage uri={avatar} height={56} width={56} rounded={0} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.onPrimary, fontWeight: '900', fontSize: 20 }}>{name}</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, marginTop: 2 }}>
+                <Text style={{ color: colors.onPrimary, fontWeight: '900', fontSize: 20 }} numberOfLines={2}>
+                  {name}
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.92)', fontSize: 12, marginTop: 2, fontWeight: '600' }}>
                   {area ? `${area} · ` : ''}HDB collection
-                  {rating ? ` · ★ ${rating}` : ''}
                   {orders ? ` · ${orders}+ orders` : ''}
                 </Text>
               </View>
+              {rating != null ? (
+                <View
+                  testID="kitchen-rating-pill"
+                  style={{ backgroundColor: '#1C1C1C', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 }}
+                >
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>★ {Number(rating).toFixed(1)}</Text>
+                </View>
+              ) : null}
             </View>
           </View>
         }
       />
+      <View style={{ padding: shcSpacing.md }}>
+        <Text
+          testID="kitchen-open-status"
+          style={{ fontSize: 13, fontWeight: '800', color: isOpen ? colors.success : colors.error }}
+        >
+          {isOpen ? 'Open' : 'Closed'}
+          <Text style={{ fontWeight: '600', color: colors.textLight }}> · {detail}</Text>
+        </Text>
+        {tags && tags.length > 0 ? (
+          <View testID="kitchen-tags" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+            {tags.map((t) => (
+              <View
+                key={t}
+                style={{
+                  backgroundColor: colors.bentoPeach,
+                  borderRadius: shcRadii.pill,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text }}>{t}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {story ? (
+          <Text testID="kitchen-story" style={{ fontSize: 13, color: colors.textLight, marginTop: 10, lineHeight: 19 }} numberOfLines={4}>
+            {story}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -470,6 +535,11 @@ export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }
   );
 }
 
+function slotTestId(date: string, slot: string, isSel: boolean) {
+  const safeSlot = slot.replace(/:/g, '');
+  return isSel ? `slot-${date}-${safeSlot}-selected` : `slot-${date}-${safeSlot}`;
+}
+
 export function CollectionSlotPicker({ availableSlots, onSelect, selected }: { availableSlots: Array<{ date: string; slot: string }>; onSelect: (d: string, s: string) => void; selected?: { date: string; slot: string } }) {
   return (
     <View testID="collection-slot-picker">
@@ -482,7 +552,7 @@ export function CollectionSlotPicker({ availableSlots, onSelect, selected }: { a
             key={idx}
             onPress={() => onSelect(s.date, s.slot)}
             style={{ padding: 12, backgroundColor: isSel ? colors.bentoMint : colors.surfaceAlt, borderRadius: 8, marginBottom: 6, borderWidth: 2, borderColor: isSel ? colors.primary : colors.border }}
-            testID={`slot-${s.date}-${s.slot}`}
+            testID={slotTestId(s.date, s.slot, Boolean(isSel))}
           >
             <Text style={{ fontWeight: isSel ? '600' : '400' }}>{s.date} • {s.slot} (Singapore time)</Text>
             <Text style={{ fontSize: 11, color: colors.textLight }}>Collect from cook's HDB unit. Address released 2h prior.</Text>
