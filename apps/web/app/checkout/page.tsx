@@ -3,7 +3,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BENTO_ACTION_IMAGES, getFirstCartProductId, orderSuccessfulCopy, computeOneTimeOrderSummary } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  getFirstCartProductId,
+  orderSuccessfulCopy,
+  computeOneTimeOrderSummary,
+} from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
 import { useCheckout, useTransitionOrder } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
@@ -25,6 +30,21 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 
+function extractOrderId(res: unknown): string | null {
+  if (!res || typeof res !== 'object') return null;
+  const r = res as Record<string, unknown>;
+  if (typeof r.id === 'string' && r.id) return r.id;
+  const order = r.order as Record<string, unknown> | undefined;
+  if (order && typeof order.id === 'string' && order.id) return order.id;
+  const data = r.data as Record<string, unknown> | undefined;
+  if (data) {
+    if (typeof data.id === 'string' && data.id) return data.id;
+    const nested = data.order as Record<string, unknown> | undefined;
+    if (nested && typeof nested.id === 'string') return nested.id;
+  }
+  return null;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -35,6 +55,7 @@ export default function CheckoutPage() {
       router.replace('/login?next=/checkout');
     }
   }, [authLoading, user, router]);
+
   const checkoutMut = useCheckout();
   const transitionMut = useTransitionOrder();
   const { data: creditsData } = useCredits();
@@ -47,7 +68,7 @@ export default function CheckoutPage() {
   const [paynowRef, setPaynowRef] = useState('');
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
-  const [processingFlash, setProcessingFlash] = useState(false);
+  const [payPhase, setPayPhase] = useState<'form' | 'paynow' | 'done'>('form');
   const { openTray, dismiss } = useSHCTrayWeb();
   const {
     show: showFirstOrderCelebration,
@@ -58,7 +79,6 @@ export default function CheckoutPage() {
   const firstPid = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
   const oneTime = computeOneTimeOrderSummary(cart.items || []);
-  const total = oneTime.itemTotal;
   const creditBal = creditsData?.balance || 0;
   const amountDue = Math.max(0, oneTime.total - Math.floor(creditsApply / 4));
 
@@ -74,32 +94,52 @@ export default function CheckoutPage() {
     );
   }, [dismiss, openTray]);
 
+  const showCheckoutError = (err: { code?: string; message: string }) => {
+    setError(err);
+    // Sticky bar can cover the banner on mobile — scroll it into view
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        document.querySelector('[role="alert"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+  };
+
+  /** Place order then show PayNow confirm (or auto-confirm in demo). */
   const doCheckout = async () => {
     setError(null);
     if (!allergenAck) {
       openAllergenTray();
-      setError({ code: 'SHC-CART-003', message: 'Please acknowledge allergens before placing your order.' });
+      showCheckoutError({ code: 'SHC-CART-003', message: 'Please acknowledge allergens before placing your order.' });
       return;
     }
     if (!pdpaConsent) {
-      setError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
+      showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
       return;
     }
     if (!selected) {
-      setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
+      showCheckoutError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
       return;
     }
     try {
-      const res: { order?: { id: string }; id?: string } = await checkoutMut.mutateAsync({
+      const res = await checkoutMut.mutateAsync({
         allergenAck,
         collection: selected,
         pdpaConsent,
         creditsToApply: creditsApply,
         isCorporate: isCorp,
       });
-      const oid = res?.order?.id || res?.id || 'SHC-' + Date.now();
+      const oid = extractOrderId(res);
+      if (!oid) {
+        showCheckoutError({
+          code: 'SHC-GENERIC-001',
+          message: 'Order was created but no order id returned. Check My orders, or try again.',
+        });
+        return;
+      }
       setOrderId(oid);
-      if (isCorp && oid) {
+      setPaynowRef(oid);
+      setPayPhase('paynow');
+      if (isCorp) {
         try {
           const { flagCorporateOrder } = await import('../../lib/api-client');
           await flagCorporateOrder(oid, 'Corporate/group order from web checkout — invoice stub for ops.');
@@ -113,60 +153,49 @@ export default function CheckoutPage() {
         err?.message === 'Failed to fetch'
           ? 'Could not reach the server. Check your connection and try again.'
           : err?.message || 'Unable to place order. Please try again.';
-      setError({ code: err?.code, message });
+      showCheckoutError({ code: err?.code, message });
     }
   };
 
   const confirmPay = async (ref: string) => {
-    if (!orderId) return;
+    if (!orderId) {
+      throw new Error('No order to confirm. Place the order first.');
+    }
+    if (ref) setPaynowRef(ref);
     try {
       await transitionMut.mutateAsync({ orderId, to: 'paid' as never });
-      console.log('[PayNow] ref captured:', ref, 'for', orderId);
     } catch {
-      /* non-fatal — ops can reconcile manually */
+      /* order may already be paid from checkout — continue */
     }
-    const celebrated = await triggerFirstOrder();
-    if (!celebrated) router.push(`/orders/${orderId}`);
+    setPayPhase('done');
+    try {
+      await triggerFirstOrder();
+    } catch {
+      /* ignore */
+    }
+    // Always land on order tracking after a short success beat
+    window.setTimeout(() => {
+      router.push(`/orders/${orderId}`);
+    }, 900);
   };
 
-  if (orderId) {
+  // ── Success / processing ──
+  if (orderId && payPhase === 'done') {
     const okCopy = orderSuccessfulCopy();
     return (
-      <div className="max-w-xl mx-auto px-4 py-8" data-testid="order-success-screen">
-        {processingFlash ? (
-          <div className="min-h-[50vh] flex flex-col items-center justify-center text-center" data-testid="order-processing">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl text-green-700 mb-4">
-              ✓
-            </div>
-            <h1 className="text-2xl font-black mb-2">{okCopy.title}</h1>
-            <p className="text-sm font-semibold text-muted-foreground mb-6">{okCopy.subtitle}</p>
-            <p className="text-xs text-muted-foreground">Ref {orderId}</p>
-          </div>
-        ) : (
-          <>
-            <div className="min-h-[20vh] flex flex-col items-center justify-center text-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl text-green-700 mb-3">
-                ✓
-              </div>
-              <h1 className="text-xl font-black">{okCopy.title}</h1>
-              <p className="text-sm font-semibold text-muted-foreground mt-1">
-                Complete PayNow to confirm · Ref {orderId}
-              </p>
-            </div>
-            <PayNowPanel
-              amount={amountDue}
-              reference={paynowRef || orderId}
-              onRefChange={setPaynowRef}
-              onConfirmPay={async (ref) => {
-                setProcessingFlash(true);
-                await confirmPay(ref);
-              }}
-            />
-            <p className="mt-3 text-xs font-medium text-muted-foreground">
-              Address released 2h before slot. Chat opens after payment confirm.
-            </p>
-          </>
-        )}
+      <div
+        className="max-w-xl mx-auto px-4 py-16 min-h-[60vh] flex flex-col items-center justify-center text-center"
+        data-testid="order-success-screen"
+      >
+        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl text-green-700 mb-4">
+          ✓
+        </div>
+        <h1 className="text-2xl font-black mb-2">{okCopy.title}</h1>
+        <p className="text-sm font-semibold text-muted-foreground mb-2">{okCopy.subtitle}</p>
+        <p className="text-xs text-muted-foreground mb-6">Ref {orderId}</p>
+        <SHCButton onClick={() => router.push(`/orders/${orderId}`)} testID="order-success-track">
+          Track order
+        </SHCButton>
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
           message="Your first heritage order — thank you for supporting local home cooks!"
@@ -176,6 +205,42 @@ export default function CheckoutPage() {
           }}
           testID="first-order-celebration"
         />
+      </div>
+    );
+  }
+
+  // ── PayNow after order placed ──
+  if (orderId && payPhase === 'paynow') {
+    const okCopy = orderSuccessfulCopy();
+    return (
+      <div className="max-w-xl mx-auto px-4 py-8 pb-28" data-testid="order-paynow-screen">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-2xl text-green-700 mx-auto mb-3">
+            ✓
+          </div>
+          <h1 className="text-xl font-black">{okCopy.title}</h1>
+          <p className="text-sm font-semibold text-muted-foreground mt-1">
+            Complete PayNow to confirm · Ref {orderId}
+          </p>
+        </div>
+        <PayNowPanel
+          amount={amountDue}
+          reference={paynowRef || orderId}
+          onRefChange={setPaynowRef}
+          onConfirmPay={confirmPay}
+          confirmLabel={`I've paid · S$${amountDue.toFixed(2)}`}
+          busy={transitionMut.isPending}
+        />
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          Address released 2h before slot. Chat opens after payment confirm.
+        </p>
+        <button
+          type="button"
+          className="mt-4 w-full text-sm font-bold text-primary"
+          onClick={() => router.push(`/orders/${orderId}`)}
+        >
+          Skip to order tracking →
+        </button>
       </div>
     );
   }
@@ -211,26 +276,25 @@ export default function CheckoutPage() {
     { id: 'pay', label: 'PayNow', done: false },
   ];
   const checkoutStep = !selected ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
+  // Only disable while placing — incomplete form still clickable so doCheckout can surface errors
+  const placing = checkoutMut.isPending;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad">
+    <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad" data-testid="checkout-form-screen">
       <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
           <h1 className="text-xl font-black text-white">Checkout</h1>
           <p className="text-xs font-semibold text-white/90">
-            {items.length} item{items.length !== 1 ? 's' : ''} · PayNow collection
+            {items.length} item{items.length !== 1 ? 's' : ''} · PayNow · HDB collection
           </p>
         </div>
       </div>
-      <a
-        href="/cart"
-        className="text-sm font-semibold text-muted-foreground hover:text-primary mb-4 inline-block"
-      >
+      <a href="/cart" className="text-sm font-semibold text-muted-foreground hover:text-primary mb-4 inline-block">
         ← Back to cart
       </a>
       <p className="text-muted-foreground mb-4 text-sm">
-        3 quick steps — collection, safety, then PayNow.
+        Collection slot → safety → Pay with PayNow.
       </p>
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
@@ -238,14 +302,20 @@ export default function CheckoutPage() {
       <SHCCard className="mb-6 shc-bento-peach">
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground font-semibold">
-            {items.length} item{items.length !== 1 ? 's' : ''}
+            {items.length} item{items.length !== 1 ? 's' : ''} · incl. service fee
           </span>
-          <span className="text-2xl font-black tabular-nums font-mono">S${total.toFixed(2)}</span>
+          <span className="text-2xl font-black tabular-nums font-mono">S${amountDue.toFixed(2)}</span>
         </div>
       </SHCCard>
 
-      <SHCSectionTitle subtitle="Choose when you'll collect from the cook's home">Collection slot</SHCSectionTitle>
-      <CollectionSlotPicker slots={slots} selected={selected} onSelect={(d, s) => setSelected({ date: d, slot: s })} />
+      <SHCSectionTitle subtitle="Choose when you'll collect from the cook's home">
+        Collection slot
+      </SHCSectionTitle>
+      <CollectionSlotPicker
+        slots={slots}
+        selected={selected}
+        onSelect={(d, s) => setSelected({ date: d, slot: s })}
+      />
 
       <SHCSectionTitle subtitle="Required before we can process your order">Safety & consent</SHCSectionTitle>
       <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-checkout-web" />
@@ -292,20 +362,26 @@ export default function CheckoutPage() {
       {error && <SHCErrorBanner code={error.code} message={error.message} />}
 
       <SHCSectionTitle>Payment</SHCSectionTitle>
-      <PayNowPanel amount={amountDue} reference={'WEB-' + Date.now().toString().slice(-6)} onRefChange={setPaynowRef} />
+      <SHCCard className="mb-4 shc-bento-yellow" data-testid="paynow-summary-card">
+        <p className="font-bold mb-1">Pay with PayNow</p>
+        <p className="text-sm text-muted-foreground font-medium mb-2">
+          Place the order to get your payment reference, then confirm transfer.
+        </p>
+        <p className="text-2xl font-black tabular-nums">S${amountDue.toFixed(2)}</p>
+      </SHCCard>
 
       {/* Desktop CTA */}
       <SHCButton
-        className="mt-6 w-full hidden sm:flex"
+        className="mt-2 w-full hidden sm:flex"
         size="lg"
         onClick={doCheckout}
-        disabled={checkoutMut.isPending}
+        disabled={placing}
         testID="complete-checkout-web"
       >
-        {checkoutMut.isPending ? 'Placing order…' : `Place order · S$${amountDue.toFixed(2)}`}
+        {placing ? 'Placing order…' : `Pay with PayNow · S$${amountDue.toFixed(2)}`}
       </SHCButton>
 
-      {/* Mobile bottom sticky CTA */}
+      {/* Mobile sticky CTA — above tab bar */}
       <BottomStickyBar className="sm:hidden">
         <div className="flex gap-3 items-center">
           <div className="shrink-0">
@@ -316,10 +392,10 @@ export default function CheckoutPage() {
             className="flex-1"
             size="lg"
             onClick={doCheckout}
-            disabled={checkoutMut.isPending}
-            testID="complete-checkout-web"
+            disabled={placing}
+            testID="complete-checkout-web-mobile"
           >
-            {checkoutMut.isPending ? 'Placing…' : 'Place order'}
+            {placing ? 'Placing…' : 'Pay with PayNow'}
           </SHCButton>
         </div>
       </BottomStickyBar>

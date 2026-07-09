@@ -24,7 +24,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Tiffin subscription** | ✅ Mobile + API | `shc-tiffin` module; weekly plan template + next-week override; worker Mon 08:00 UTC materializes `shc_order_meta`; business rules in `@shc/business-rules/tiffin` |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
-| **PayNow / PayU** | 🟡 Simulated | Manual ops confirm via admin route |
+| **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).

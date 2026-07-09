@@ -1030,10 +1030,10 @@ export function BottomStickyBar({
 }) {
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 bg-card border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)] ${className}`}
+      className={`fixed bottom-0 left-0 right-0 z-[70] bg-card border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),8px)] ${className}`}
       data-testid="bottom-sticky-bar"
     >
-      <div className="max-w-6xl mx-auto px-4 py-3">{children}</div>
+      <div className="max-w-6xl mx-auto px-4 py-3 mb-14 md:mb-0">{children}</div>
     </div>
   );
 }
@@ -1164,21 +1164,29 @@ export function PayNowPanel({
   onRefChange,
   onConfirmPay,
   confirmLabel = "I've paid — confirm order",
+  busy = false,
 }: {
   amount: number;
   reference: string;
   onRefChange?: (r: string) => void;
   onConfirmPay?: (ref: string) => void | Promise<void>;
   confirmLabel?: string;
+  /** External busy state (e.g. placing order) */
+  busy?: boolean;
 }) {
   const [refValue, setRefValue] = React.useState(reference);
   const [confirming, setConfirming] = React.useState(false);
+  const [localError, setLocalError] = React.useState('');
 
   React.useEffect(() => {
     setRefValue(reference);
   }, [reference]);
+
+  const effectiveRef = (refValue || reference || '').trim();
+  const isBusy = confirming || busy;
+
   return (
-    <SHCCard className="shc-bento-yellow">
+    <SHCCard className="shc-bento-yellow" data-testid="paynow-panel">
       <div className="flex items-center gap-2 mb-3">
         <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
           <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -1186,22 +1194,24 @@ export function PayNowPanel({
         <div>
           <div className="font-bold">Pay with PayNow</div>
           <div className="text-sm text-muted-foreground font-medium">
-            Transfer the exact amount, then enter your reference below
+            Transfer the exact amount, then confirm below
           </div>
         </div>
       </div>
-      <div className="text-2xl font-black tabular-nums font-mono mb-3">S${amount.toFixed(2)}</div>
+      <div className="text-2xl font-black tabular-nums font-mono mb-3">
+        S${Number(amount || 0).toFixed(2)}
+      </div>
       <div className="p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg font-mono text-sm space-y-1 shadow-[var(--shc-shadow-brutal-sm)]">
         <div>
           <span className="text-muted-foreground">UEN</span> 12345678X
         </div>
         <div>
-          <span className="text-muted-foreground">Reference</span> {reference}
+          <span className="text-muted-foreground">Reference</span> {reference || '—'}
         </div>
       </div>
       <label className="block mt-4 text-sm font-bold text-foreground">Payment reference</label>
       <input
-        placeholder="Enter the reference from your banking app"
+        placeholder="Enter banking app reference (or use order ref above)"
         className="shc-input mt-1.5"
         value={refValue}
         onChange={(e) => {
@@ -1210,23 +1220,36 @@ export function PayNowPanel({
         }}
         data-testid="paynow-ref-input"
       />
-      {onConfirmPay && (
+      {localError ? (
+        <p className="text-sm font-bold text-red-600 mt-2" role="alert">
+          {localError}
+        </p>
+      ) : null}
+      {onConfirmPay ? (
         <SHCButton
           className="mt-4 w-full"
           size="lg"
-          disabled={confirming || !refValue.trim()}
+          disabled={isBusy}
           onClick={async () => {
+            setLocalError('');
+            const ref = effectiveRef || reference || `PAY-${Date.now()}`;
             setConfirming(true);
             try {
-              await onConfirmPay(refValue.trim());
+              await onConfirmPay(ref);
+            } catch (e) {
+              setLocalError((e as Error)?.message || 'Payment confirm failed. Try again.');
             } finally {
               setConfirming(false);
             }
           }}
-          data-testid="paynow-confirm"
+          testID="paynow-confirm"
         >
-          {confirming ? 'Confirming…' : confirmLabel}
+          {isBusy ? 'Confirming…' : confirmLabel}
         </SHCButton>
+      ) : (
+        <p className="text-xs font-semibold text-muted-foreground mt-3">
+          Complete the steps above, then use Place order to continue to payment.
+        </p>
       )}
       <p className="text-xs text-muted-foreground mt-2 font-medium">
         Your collection address is shared 2 hours before your slot, after payment is confirmed.
