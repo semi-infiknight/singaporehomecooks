@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — HomelyEats tiffin OS **fully live on Railway**: medusa `2272abf4` + web `d8da05fd` (`/tiffin`, `/tiffin/calendar`, `/tiffin/manage`, cook portal tiffin all 200). Emulators: Metro on latest main → Railway API.
+**Last Updated:** 2026-07-09 — **Homepage = full marketplace** (not tiffin-only): dismissible subscription banner + cuisine categories + Popular/One meal/Events modes + event rail + kitchens near you + single-dish grid. Tiffin OS remains under `/tiffin` and Discover promo. Emulators: Metro reload → Railway API; PWA redeploy after homepage ship.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -12,9 +12,9 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover promo rail → `/(customer)/tiffin` (browse kitchens → subscribe → confirm → weekly planner → manage); location picker; checkout; Expo `:8081` |
+| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | **Discover homepage** = marketplace (promo banner → categories → order modes → kitchens → dish grid); tiffin deep-link via banner/`/(customer)/tiffin`; location; checkout; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + 4-step onboarding; dashboard **Tiffin** quick action → `/(cook)/tiffin` (enable kitchen, collection days, eligible dishes); orders/listings/compliance; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops + **Tiffin** | Customer marketplace; **`/tiffin/*`** (browse → kitchen subscribe → confirm → planner → manage); **full `/cook-portal`** (+ **`/cook-portal/tiffin`** config); `/ops`; PWA; checkout auth guard |
+| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops + **Tiffin** | **`/` homepage** marketplace IA (subscription banner only + one-off/events/kitchens/dishes); **`/tiffin/*`**; **full `/cook-portal`** (+ tiffin); `/ops`; PWA; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |

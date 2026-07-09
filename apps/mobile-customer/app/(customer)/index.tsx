@@ -13,7 +13,6 @@ import {
   type GourmeatCategoryItem,
   type SHCDishCardData,
   shcSpacing,
-  SHCFadeIn,
   SHCFoodImage,
   SHCSearchResultsPanel,
   SHCGuestBrowseBar,
@@ -23,6 +22,8 @@ import {
   SHCPromoRail,
   SHCRequestDishHomeCTA,
   SHCTiffinHeroBanner,
+  SHCTiffinKitchenCard,
+  SHCTiffinFilterChips,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -47,6 +48,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
+import { useQuery } from '@tanstack/react-query';
+import { getCooks } from '../../lib/api-client';
 
 const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'];
 
@@ -69,11 +72,20 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
   };
 }
 
+/** Order-mode tabs under popular — one meal vs event/occasion (HomelyEats meal-type strip). */
+const ORDER_MODES = [
+  { id: 'popular', label: 'Popular' },
+  { id: 'one-off', label: 'One meal' },
+  { id: 'occasion', label: 'Events' },
+];
+
 export default function CustomerDiscover() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
+  const [orderMode, setOrderMode] = useState('popular');
+  const [promoDismissed, setPromoDismissed] = useState(false);
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const { user } = useAuth();
   const { isGuest, requireAuth } = useGuestAuthGate();
@@ -81,6 +93,7 @@ export default function CustomerDiscover() {
   const { data: orders = [] } = useOrders('customer');
   const { favorites, toggle, isFavorite } = useFavorites();
   const { data: products = [], isLoading } = useProducts('');
+  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
 
@@ -188,7 +201,7 @@ export default function CustomerDiscover() {
 
   const ListHeader = (
     <>
-      {/* HomelyEats homepage chrome: location + search first */}
+      {/* Full marketplace homepage — subscription is only a banner, not the whole page */}
       <GourmeatHomeHeader
         headline="Hungry? Order & Eat."
         locationLabel={headerLocationLabel}
@@ -196,6 +209,7 @@ export default function CustomerDiscover() {
         avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
         onProfilePress={() => router.push('/(customer)/profile' as any)}
         onLocationPress={() => router.push('/(customer)/location' as any)}
+        onNotificationPress={() => router.push('/(customer)/profile' as any)}
       />
 
       <GourmeatSearchBar
@@ -222,59 +236,27 @@ export default function CustomerDiscover() {
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
       )}
 
-      {/* HomelyEats #1 — primary subscription promo (tiffin is SHC subscription) */}
-      {!query && (
-        <Pressable
-          onPress={() => router.push('/(customer)/tiffin' as any)}
-          style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}
-          testID="home-tiffin-promo"
-        >
-          <SHCTiffinHeroBanner
-            title="No time to cook?"
-            highlight="Explore tiffin plans"
-            bullets={[
-              'Nutritious home-cooked meals from HDB kitchens',
-              'Heritage cuisines across Singapore',
-              'Flexible 2 · 3 · 4 meals per week',
-            ]}
-          />
-        </Pressable>
-      )}
-
-      {/* Secondary promo rail — occasions / credits / trust */}
-      {!query && (
-        <View style={{ paddingHorizontal: shcSpacing.md }}>
-          <SHCPromoRail
-            promos={[
-              { id: 'hari-raya', title: 'Hari Raya specials', subtitle: 'Order 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Festive', iconKey: 'people' },
-              { id: 'credits', title: 'Earn credits', subtitle: '4 credits ≈ S$1 off', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Wallet', iconKey: 'profile' },
-              { id: 'paynow', title: 'PayNow collection', subtitle: 'HDB pickup · no delivery', imageUrl: PROMO_BANNER_IMAGES.paynow, iconKey: 'cart' },
-            ]}
-            onPromoPress={(id) => {
-              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
-              else if (id === 'credits') router.push('/(customer)/profile' as any);
-              else router.push('/(shared)/onboarding' as any);
-            }}
-          />
+      {/* ① Subscription promo only — encourages tiffin; rest of page is one-off / events */}
+      {!query && !promoDismissed && (
+        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }} testID="home-tiffin-promo">
+          <View style={styles.promoWrap}>
+            <Pressable onPress={() => setPromoDismissed(true)} style={styles.promoClose} hitSlop={12} testID="home-promo-dismiss">
+              <Text style={styles.promoCloseText}>✕</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/(customer)/tiffin' as any)}>
+              <SHCTiffinHeroBanner
+                title="No time to cook?"
+                highlight="Explore tiffin plans ✨"
+                bullets={[
+                  'Weekly home-cooked meals from one kitchen',
+                  'Or keep scrolling to order single dishes & events',
+                  'Flexible 2 · 3 · 4 meals per week',
+                ]}
+              />
+            </Pressable>
+          </View>
         </View>
       )}
-
-      {/* HomelyEats sort/filter chips */}
-      <View style={{ paddingHorizontal: shcSpacing.md }}>
-        <SHCFilterChipRow
-          chips={[
-            { id: 'halal', label: 'Halal', active: halalOnly },
-            { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
-            { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
-          ]}
-          onChipPress={(id) => {
-            if (id === 'halal') toggleHalalOnly();
-            if (id === 'light') toggleLight();
-            if (id === 'nearest') router.push('/(customer)/location' as any);
-          }}
-          testID="discover-filter-chips"
-        />
-      </View>
 
       {activeOrder && (
         <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
@@ -291,58 +273,149 @@ export default function CustomerDiscover() {
         </View>
       )}
 
-      {collectionLocation && (
-        <Text style={{ paddingHorizontal: shcSpacing.md, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginBottom: shcSpacing.xs }}>
-          {gridProducts.length} dishes near {locationLabel || 'you'}
-        </Text>
+      {/* ② Explore by categories — cuisine */}
+      {!query && (
+        <>
+          <Text style={styles.sectionEyebrow}>Explore by categories</Text>
+          <GourmeatCategoryRow
+            categories={cuisineCategories}
+            selectedId={cuisineFilter}
+            onSelect={setCuisineFilter}
+            testID="cuisine-gourmeat-row"
+          />
+        </>
       )}
 
-      {/* HomelyEats #2 — explore by categories (cuisines first, then occasions) */}
-      <GourmeatSectionTitle title="Explore by cuisine" actionLabel="See all" onActionPress={() => router.push('/(customer)/search' as any)} />
-      <GourmeatCategoryRow
-        categories={cuisineCategories}
-        selectedId={cuisineFilter}
-        onSelect={setCuisineFilter}
-        testID="cuisine-gourmeat-row"
-      />
-
-      <GourmeatSectionTitle title="Occasions" />
-      <GourmeatCategoryRow
-        categories={occasionCategories}
-        selectedId={occasionFilter}
-        onSelect={setOccasionFilter}
-      />
-
-      {/* HomelyEats offer card */}
+      {/* ③ Most popular for one meal / event orders */}
       {!query && (
-        <View style={styles.offerCard} testID="home-offer-card">
-          <Text style={styles.offerTitle}>Get more with Home Credits</Text>
-          <Text style={styles.offerSub}>Earn on every order · redeem at checkout. Valid on heritage dishes.</Text>
+        <View style={{ marginBottom: shcSpacing.sm }}>
+          <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
+          <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
+            <SHCTiffinFilterChips
+              chips={ORDER_MODES}
+              activeId={orderMode}
+              onSelect={(id) => {
+                setOrderMode(id);
+                if (id === 'occasion') {
+                  /* keep occasion row visible; soft-focus events */
+                } else if (id === 'one-off') {
+                  setOccasionFilter('');
+                }
+              }}
+            />
+          </View>
+          {(orderMode === 'popular' || orderMode === 'one-off') && reorderDishes.length > 0 && (
+            <SHCZomatoDishRowRail
+              title=""
+              dishes={reorderDishes}
+              onDishPress={goToProduct}
+              testID="order-again-rail"
+            />
+          )}
+          {orderMode === 'occasion' && (
+            <GourmeatCategoryRow
+              categories={occasionCategories}
+              selectedId={occasionFilter}
+              onSelect={setOccasionFilter}
+            />
+          )}
         </View>
       )}
 
-      {!query && reorderDishes.length > 0 && (
-        <SHCFadeIn delay={80}>
-          <View style={{ marginBottom: shcSpacing.section }}>
-            <GourmeatSectionTitle title="Most popular · order again" />
-            <SHCZomatoDishRowRail title="" dishes={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
+      {/* Offer — first subscription / credits */}
+      {!query && (
+        <Pressable
+          style={styles.offerCard}
+          testID="home-offer-card"
+          onPress={() => router.push('/(customer)/tiffin' as any)}
+        >
+          <Text style={styles.offerTitle}>Subscribe for weekly tiffin</Text>
+          <Text style={styles.offerSub}>
+            Banner only — below you can still order one dish or a full occasion spread.
+          </Text>
+        </Pressable>
+      )}
+
+      {/* Event / occasion rail */}
+      {!query && (
+        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md }}>
+          <SHCPromoRail
+            promos={[
+              { id: 'hari-raya', title: 'Hari Raya spreads', subtitle: 'Order for the open house', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Event', iconKey: 'people' },
+              { id: 'cny', title: 'CNY reunion', subtitle: 'Plan 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.family, badge: 'Event', iconKey: 'people' },
+              { id: 'request', title: 'Request a dish', subtitle: 'Custom occasion menu', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Custom', iconKey: 'discover' },
+            ]}
+            onPromoPress={(id) => {
+              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
+              else if (id === 'cny') setOccasionFilter('Chinese New Year');
+              else router.push('/(customer)/request' as any);
+            }}
+          />
+        </View>
+      )}
+
+      {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
+      {!query && (cooks as any[]).length > 0 && (
+        <View style={{ marginBottom: shcSpacing.md }} testID="home-kitchens-section">
+          <GourmeatSectionTitle
+            title={`${(cooks as any[]).length} kitchens near you`}
+            actionLabel="Tiffin"
+            onActionPress={() => router.push('/(customer)/tiffin' as any)}
+          />
+          <View style={{ paddingHorizontal: shcSpacing.md }}>
+            <SHCFilterChipRow
+              chips={[
+                { id: 'halal', label: 'Halal', active: halalOnly },
+                { id: 'light', label: 'Light', active: maxCal === 500 },
+                { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
+              ]}
+              onChipPress={(id) => {
+                if (id === 'halal') toggleHalalOnly();
+                if (id === 'light') toggleLight();
+                if (id === 'nearest') router.push('/(customer)/location' as any);
+              }}
+              testID="discover-filter-chips"
+            />
           </View>
-        </SHCFadeIn>
+          {(cooks as any[]).slice(0, 4).map((c: any) => (
+            <View key={c.id || c.slug} style={{ paddingHorizontal: shcSpacing.md }}>
+              <SHCTiffinKitchenCard
+                cookId={c.id || c.slug}
+                cookName={c.display_name || c.name || 'Home kitchen'}
+                area={c.area}
+                tagline={c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
+                rating={c.rating != null ? Number(c.rating) : 4.8}
+                reviewCount={c.review_count}
+                subscriberCount={c.subscriber_count}
+                isOpen
+                closesAt="HDB collection"
+                onPress={() => {
+                  const slug = c.slug || c.id;
+                  if (slug) router.push(`/(customer)/cook/${slug}` as any);
+                }}
+              />
+            </View>
+          ))}
+        </View>
       )}
 
       {!query && savedDishes.length > 0 && (
-        <SHCFadeIn delay={100}>
-          <View style={{ marginBottom: shcSpacing.section }}>
-            <GourmeatSectionTitle title="Saved for you" />
-            <SHCZomatoDishRowRail title="" dishes={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
-          </View>
-        </SHCFadeIn>
+        <View style={{ marginBottom: shcSpacing.section }}>
+          <GourmeatSectionTitle title="Saved for later" />
+          <SHCZomatoDishRowRail title="" dishes={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
+        </View>
       )}
 
+      {/* Main grid: one-off dishes for single meal / cart */}
       <GourmeatSectionTitle
-        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        title={
+          occasionFilter
+            ? `${occasionFilter.split(' ')[0]} dishes — order for your event`
+            : 'Order a single dish'
+        }
         testID="all-dishes-header"
       />
+      <Text style={styles.gridHint}>Add to cart for one meal · switch to tiffin above for weekly plans</Text>
 
       {isLoading && <Text style={styles.loading}>···</Text>}
       {gridProducts.length === 0 && !isLoading && (
@@ -394,4 +467,32 @@ const styles = StyleSheet.create({
   },
   offerTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
   offerSub: { fontSize: 12, color: 'rgba(255,255,255,0.88)', marginTop: 4, lineHeight: 17 },
+  promoWrap: { position: 'relative' },
+  promoClose: {
+    position: 'absolute',
+    top: 10,
+    right: 14,
+    zIndex: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promoCloseText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  sectionEyebrow: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '700',
+    color: gourmeatColors.textLight,
+    marginBottom: 4,
+  },
+  gridHint: {
+    paddingHorizontal: shcSpacing.md,
+    fontSize: 12,
+    color: gourmeatColors.textLight,
+    fontWeight: '600',
+    marginBottom: shcSpacing.sm,
+  },
 });

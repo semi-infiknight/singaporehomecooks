@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useProducts, useAddToCart } from '../lib/useProducts';
 import { useOrders } from '../lib/useOrder';
 import { useAuth } from '../lib/useAuth';
@@ -20,10 +22,12 @@ import {
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
   OFFLINE_DISCOVER_PRODUCT,
+  PROMO_BANNER_IMAGES,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
+import { getCooks } from '../lib/api-client';
 import {
   SHCButton,
   SHCSkeletonGrid,
@@ -38,7 +42,6 @@ import {
   GourmeatSectionTitle,
   FilterChipRow,
   SearchResultsPanel,
-  PromoRail,
   RequestDishHomeCTA,
   type DishCardProduct,
 } from './components/SHCWebComponents';
@@ -50,6 +53,13 @@ const occasions = [
     label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
     imageUrl: getOccasionImageUrl(o),
   })),
+];
+
+/** Order-mode tabs — one meal vs event (HomelyEats meal-type strip, adapted for SHC). */
+const ORDER_MODES = [
+  { id: 'popular', label: 'Popular' },
+  { id: 'one-off', label: 'One meal' },
+  { id: 'occasion', label: 'Events' },
 ];
 
 function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
@@ -66,8 +76,11 @@ export default function DiscoverHome() {
   const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
+  const [orderMode, setOrderMode] = useState('popular');
+  const [promoDismissed, setPromoDismissed] = useState(false);
   const { data: products = [], isLoading } = useProducts('');
   const { data: orders = [] } = useOrders();
+  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
@@ -103,25 +116,29 @@ export default function DiscoverHome() {
 
   const savedDishes = useMemo(() => {
     if (query.trim()) return [];
-    return favoritesToReorderDishes(favorites).map((d) => toDishCard({
-      id: d.id,
-      name: d.name,
-      cook_name: d.cook_name || '',
-      price: d.price,
-      cuisine: d.cuisine,
-    })) as DishCardProduct[];
+    return favoritesToReorderDishes(favorites).map((d) =>
+      toDishCard({
+        id: d.id,
+        name: d.name,
+        cook_name: d.cook_name || '',
+        price: d.price,
+        cuisine: d.cuisine,
+      })
+    ) as DishCardProduct[];
   }, [favorites, query]);
 
   const reorderDishes = useMemo(() => {
     if (query.trim()) return [];
     const items = extractReorderDishes(orders as Record<string, unknown>[]);
-    return items.map((d) => toDishCard({
-      id: d.id,
-      name: d.name,
-      cook_name: d.cook_name || '',
-      price: d.price,
-      cuisine: d.cuisine,
-    })) as DishCardProduct[];
+    return items.map((d) =>
+      toDishCard({
+        id: d.id,
+        name: d.name,
+        cook_name: d.cook_name || '',
+        price: d.price,
+        cuisine: d.cuisine,
+      })
+    ) as DishCardProduct[];
   }, [orders, query]);
 
   const cuisineItems = MIND_CUISINE_CATEGORIES.map((c) => ({
@@ -132,6 +149,7 @@ export default function DiscoverHome() {
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
+  const cookList = cooks as Array<Record<string, unknown>>;
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
 
@@ -160,8 +178,12 @@ export default function DiscoverHome() {
   );
 
   return (
-    <section id="discover" className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8" data-testid="customer-discover-screen discover-home">
-      {/* Mobile: Gourmeat chrome (AppHeader is hidden below md). Desktop: search/location live in AppHeader. */}
+    <section
+      id="discover"
+      className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8"
+      data-testid="customer-discover-screen discover-home"
+    >
+      {/* Mobile chrome — desktop uses AppHeader */}
       <div className="md:hidden">
         <GourmeatHomeHeader
           headline="Hungry? Order & Eat."
@@ -173,7 +195,7 @@ export default function DiscoverHome() {
         <GourmeatSearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Search dishes, cooks, occasions…"
+          placeholder="Search kitchen, dish or cuisine"
           onFilterPress={() => router.push('/search')}
         />
       </div>
@@ -197,52 +219,34 @@ export default function DiscoverHome() {
         </div>
       )}
 
-      {/* HomelyEats homepage #1 — subscription promo (SHC tiffin) */}
-      {!query.trim() && (
-        <button
-          type="button"
-          onClick={() => router.push('/tiffin')}
-          data-testid="home-tiffin-promo"
-          className="w-full text-left rounded-2xl p-4 mb-4 text-white shadow-[var(--shc-shadow-brutal-sm)]"
-          style={{ background: 'var(--shc-gourmeat-primary, #F87048)' }}
-        >
-          <p className="font-black text-lg">No time to cook?</p>
-          <p className="font-extrabold text-base opacity-95 mb-2">Explore tiffin plans</p>
-          <ul className="text-sm font-semibold space-y-0.5 opacity-90">
-            <li>· Nutritious home-cooked meals from HDB kitchens</li>
-            <li>· Heritage cuisines across Singapore</li>
-            <li>· Flexible 2 · 3 · 4 meals per week</li>
-          </ul>
-        </button>
-      )}
-
-      {!query.trim() && (
-        <div className="shc-section-gap mb-4">
-          <PromoRail
-            onPromoClick={(id) => {
-              if (id === 'promo-tiffin') router.push('/tiffin');
-              else if (id === 'promo-raya') setOccasionFilter('Hari Raya');
-              else if (id === 'promo-credits') router.push('/profile');
-              else if (id === 'promo-paynow') router.push('/content/trust');
-            }}
-          />
+      {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
+      {!query.trim() && !promoDismissed && (
+        <div className="relative mb-4" data-testid="home-tiffin-promo">
+          <button
+            type="button"
+            onClick={() => setPromoDismissed(true)}
+            className="absolute top-2.5 right-3 z-10 w-7 h-7 rounded-full bg-white/35 text-white font-extrabold text-xs"
+            aria-label="Dismiss subscription promo"
+            data-testid="home-promo-dismiss"
+          >
+            ✕
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/tiffin')}
+            className="w-full text-left rounded-2xl p-4 text-white shadow-[var(--shc-shadow-brutal-sm)]"
+            style={{ background: 'var(--shc-gourmeat-primary, #F87048)' }}
+          >
+            <p className="font-black text-lg">No time to cook?</p>
+            <p className="font-extrabold text-base opacity-95 mb-2">Explore tiffin plans ✨</p>
+            <ul className="text-sm font-semibold space-y-0.5 opacity-90">
+              <li>· Weekly home-cooked meals from one kitchen</li>
+              <li>· Or keep scrolling for single dishes &amp; events</li>
+              <li>· Flexible 2 · 3 · 4 meals per week</li>
+            </ul>
+          </button>
         </div>
       )}
-
-      {/* HomelyEats sort chips */}
-      <FilterChipRow
-        chips={[
-          { id: 'halal', label: 'Halal', active: halalOnly },
-          { id: 'light', label: 'Light (<500 cal)', active: maxCal === 500 },
-          { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
-        ]}
-        onChipClick={(id) => {
-          if (id === 'halal') toggleHalalOnly();
-          if (id === 'light') toggleLight();
-          if (id === 'nearest') router.push('/location');
-        }}
-        testID="discover-filter-chips"
-      />
 
       {activeOrder && (
         <div className="mb-3">
@@ -259,43 +263,197 @@ export default function DiscoverHome() {
         </div>
       )}
 
-      {collectionLocation && (
-        <p className="text-xs font-bold text-primary mb-2">
-          {gridProducts.length} dishes near {locationLabel || 'you'}
-        </p>
+      {/* ② Explore by categories — cuisine */}
+      {!query.trim() && (
+        <>
+          <p className="text-xs font-bold text-muted-foreground text-center mb-1">Explore by categories</p>
+          <div className="shc-section-gap mb-4">
+            <GourmeatCategoryRow
+              items={cuisineItems}
+              active={cuisineFilter}
+              onSelect={setCuisineFilter}
+              testID="cuisine-gourmeat-row"
+            />
+          </div>
+        </>
       )}
 
-      {/* HomelyEats #2 — cuisine categories first */}
-      <GourmeatSectionTitle title="Explore by cuisine" actionLabel="See all" actionHref="/search" />
-      <div className="shc-section-gap">
-        <GourmeatCategoryRow items={cuisineItems} active={cuisineFilter} onSelect={setCuisineFilter} testID="cuisine-gourmeat-row" />
-      </div>
-
-      <GourmeatSectionTitle title="Occasions" actionLabel="See all" actionHref="/search" />
-      <div className="shc-section-gap">
-        <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
-      </div>
-
-      {/* HomelyEats offer card */}
+      {/* ③ Most popular — one meal / event order modes */}
       {!query.trim() && (
-        <div className="rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4" data-testid="home-offer-card">
-          <p className="font-black text-base">Get more with Home Credits</p>
-          <p className="text-xs font-semibold opacity-90 mt-1">
-            Earn on every order · redeem at checkout. Valid on heritage dishes.
-          </p>
+        <div className="shc-section-gap mb-4">
+          <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-2" data-testid="home-order-mode-chips">
+            {ORDER_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => {
+                  setOrderMode(m.id);
+                  if (m.id === 'one-off') setOccasionFilter('');
+                }}
+                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-bold border-2 ${
+                  orderMode === m.id
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card border-[var(--shc-border-brutal)]'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          {(orderMode === 'popular' || orderMode === 'one-off') && reorderDishes.length > 0 && (
+            <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
+          )}
+          {orderMode === 'occasion' && (
+            <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
+          )}
         </div>
       )}
 
-      {!query.trim() && reorderDishes.length > 0 && (
-        <div className="shc-section-gap">
-          <GourmeatSectionTitle title="Most popular · order again" />
-          <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
+      {/* Offer — encourage subscription without taking over the page */}
+      {!query.trim() && (
+        <button
+          type="button"
+          data-testid="home-offer-card"
+          onClick={() => router.push('/tiffin')}
+          className="w-full text-left rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4"
+        >
+          <p className="font-black text-base">Subscribe for weekly tiffin</p>
+          <p className="text-xs font-semibold opacity-90 mt-1">
+            Banner only — below you can still order one dish or a full occasion spread.
+          </p>
+        </button>
+      )}
+
+      {/* Event / occasion rail — one-off party ordering */}
+      {!query.trim() && (
+        <div className="flex gap-3 overflow-x-auto pb-2 mb-4 scrollbar-hide" data-testid="home-event-rail">
+          {[
+            {
+              id: 'hari-raya',
+              title: 'Hari Raya spreads',
+              subtitle: 'Order for the open house',
+              imageUrl: PROMO_BANNER_IMAGES.hariRaya,
+              badge: 'Event',
+            },
+            {
+              id: 'cny',
+              title: 'CNY reunion',
+              subtitle: 'Plan 2 weeks ahead',
+              imageUrl: PROMO_BANNER_IMAGES.family,
+              badge: 'Event',
+            },
+            {
+              id: 'request',
+              title: 'Request a dish',
+              subtitle: 'Custom occasion menu',
+              imageUrl: PROMO_BANNER_IMAGES.credits,
+              badge: 'Custom',
+            },
+          ].map((promo) => (
+            <button
+              key={promo.id}
+              type="button"
+              onClick={() => {
+                if (promo.id === 'hari-raya') {
+                  setOrderMode('occasion');
+                  setOccasionFilter('Hari Raya');
+                } else if (promo.id === 'cny') {
+                  setOrderMode('occasion');
+                  setOccasionFilter('Chinese New Year');
+                } else {
+                  router.push('/request');
+                }
+              }}
+              className="relative shrink-0 w-[260px] h-[100px] rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-left"
+            >
+              <Image src={promo.imageUrl} alt="" fill className="object-cover" sizes="260px" />
+              <div className="relative z-10 flex flex-col justify-between h-full p-3 bg-[rgba(36,24,18,0.45)]">
+                <span className="self-end text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded border border-[var(--shc-border-brutal)]">
+                  {promo.badge}
+                </span>
+                <div>
+                  <div className="font-black text-white text-sm">{promo.title}</div>
+                  <div className="text-[11px] font-semibold text-white/90 mt-0.5">{promo.subtitle}</div>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
+      {!query.trim() && cookList.length > 0 && (
+        <div className="mb-6" data-testid="home-kitchens-section">
+          <GourmeatSectionTitle
+            title={`${cookList.length} kitchens near you`}
+            actionLabel="Tiffin"
+            actionHref="/tiffin"
+          />
+          <FilterChipRow
+            chips={[
+              { id: 'halal', label: 'Halal', active: halalOnly },
+              { id: 'light', label: 'Light', active: maxCal === 500 },
+              { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
+            ]}
+            onChipClick={(id) => {
+              if (id === 'halal') toggleHalalOnly();
+              if (id === 'light') toggleLight();
+              if (id === 'nearest') router.push('/location');
+            }}
+            testID="discover-filter-chips"
+          />
+          <ul className="space-y-3 mt-3">
+            {cookList.slice(0, 4).map((c) => {
+              const id = String(c.id || c.slug || '');
+              const name = String(c.display_name || c.name || 'Home kitchen');
+              const slug = String(c.slug || c.id || '');
+              const cover = getCookAvatarUrl(id, name);
+              return (
+                <li key={id || slug}>
+                  <button
+                    type="button"
+                    data-testid={`home-kitchen-${id}`}
+                    className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95 transition-opacity"
+                    onClick={() => {
+                      if (slug) router.push(`/cook/${slug}`);
+                    }}
+                  >
+                    <div className="relative h-36 w-full bg-muted">
+                      <Image src={cover} alt="" fill className="object-cover" sizes="640px" />
+                    </div>
+                    <div className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-black text-foreground truncate flex-1">{name}</p>
+                        <span className="text-xs font-bold shrink-0">
+                          ★ {c.rating != null ? Number(c.rating).toFixed(1) : '4.8'}
+                          {c.review_count != null ? ` (${c.review_count})` : ''}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground font-semibold line-clamp-1 mt-0.5">
+                        {c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
+                        {c.area ? ` · ${String(c.area)}` : ''}
+                      </p>
+                      <p className="text-sm font-extrabold text-green-700 mt-1">
+                        Open <span className="text-muted-foreground font-semibold">· HDB collection</span>
+                      </p>
+                      {c.subscriber_count != null && (
+                        <p className="text-xs font-semibold text-muted-foreground mt-1">
+                          👤 {String(c.subscriber_count)} subscribers
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
 
       {!query.trim() && savedDishes.length > 0 && (
-        <div className="shc-section-gap">
-          <GourmeatSectionTitle title="Saved for you" />
+        <div className="shc-section-gap mb-4">
+          <GourmeatSectionTitle title="Saved for later" />
           <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </div>
       )}
@@ -312,10 +470,18 @@ export default function DiscoverHome() {
         </div>
       )}
 
+      {/* Main grid: one-off dishes for single meal / cart */}
       <GourmeatSectionTitle
-        title={occasionFilter ? `${occasionFilter.split(' ')[0]} dishes` : 'Popular near you'}
+        title={
+          occasionFilter
+            ? `${occasionFilter.split(' ')[0]} dishes — order for your event`
+            : 'Order a single dish'
+        }
         testID="all-dishes-header"
       />
+      <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">
+        Add to cart for one meal · tiffin plans are in the banner above
+      </p>
 
       {isLoading && <SHCSkeletonGrid />}
       {!isLoading && gridProducts.length === 0 && !query.trim() && (
