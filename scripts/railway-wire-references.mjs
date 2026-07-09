@@ -49,13 +49,15 @@ set("medusa", [
   ["MINIO_COMPLIANCE_BUCKET", "cook-certs"],
   ["WEB_PUBLIC_URL", "https://${{web.RAILWAY_PUBLIC_DOMAIN}}"],
   // Explicit origins only — never mix "*" with URLs (breaks browser sign-in CORS).
+  // Include both custom domain (RAILWAY_PUBLIC_DOMAIN) and stable *.up.railway.app host —
+  // custom domain alone left PWA sign-in as browser "Failed to fetch" when users hit Railway URL.
   [
     "STORE_CORS",
-    "https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
   ],
   [
     "AUTH_CORS",
-    "https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
   ],
 ]);
 
