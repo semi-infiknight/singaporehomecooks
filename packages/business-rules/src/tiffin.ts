@@ -162,13 +162,45 @@ export function normalizeSubStatus(status: string): TiffinSubscriptionStatus {
   return "active";
 }
 
+/**
+ * Effective OS status for UI + gates (HomelyEats pause window).
+ * Stale paused_until in the past → active (pause window elapsed).
+ */
+export function effectiveSubscriptionStatus(input: {
+  dbStatus: string;
+  pausedUntil?: string | null;
+  now?: Date;
+}): "active" | "paused" | "canceled" | "expired" {
+  const st = normalizeSubStatus(input.dbStatus);
+  if (st === "canceled") return "canceled";
+  if (st === "expired") return "expired";
+  const today = (input.now ?? new Date()).toISOString().slice(0, 10);
+  // Explicit pause window wins: future/today = paused, past = active (stale window)
+  if (input.pausedUntil != null && input.pausedUntil !== "") {
+    return input.pausedUntil >= today ? "paused" : "active";
+  }
+  // No date meta: honour explicit paused status string
+  if (st === "paused") return "paused";
+  return "active";
+}
+
+/** True when pause window is still open (paused_until today or future). */
+export function isPauseWindowActive(pausedUntil: string | null | undefined, now = new Date()): boolean {
+  if (!pausedUntil) return false;
+  return pausedUntil >= now.toISOString().slice(0, 10);
+}
+
 export function subscriptionCardKind(input: {
   status: string;
   pausedUntil?: string | null;
   expiresOn?: string | null;
   now?: Date;
 }): "active" | "paused" | "expires_soon" | "canceled" | "expired" {
-  const st = normalizeSubStatus(input.status);
+  const st = effectiveSubscriptionStatus({
+    dbStatus: input.status,
+    pausedUntil: input.pausedUntil,
+    now: input.now,
+  });
   if (st === "canceled") return "canceled";
   if (st === "expired") return "expired";
   if (st === "paused") return "paused";
@@ -287,9 +319,15 @@ export function projectMealInstances(input: {
       else if (input.kitchenCanceledDates?.has(collectionDate)) status = "canceled_by_kitchen";
       else if (input.deliveredDates?.has(collectionDate)) status = "delivered";
       else {
-        const daysAhead =
-          (new Date(`${collectionDate}T12:00:00.000Z`).getTime() - now.getTime()) / 86400000;
-        if (daysAhead > 14) status = "indeterminate";
+        // HomelyEats: past collection slots without skip/cancel → delivered (completed collection)
+        const start = slotStartUtc(collectionDate, collection_slot);
+        if (now.getTime() > start.getTime()) {
+          status = "delivered";
+        } else {
+          const daysAhead =
+            (new Date(`${collectionDate}T12:00:00.000Z`).getTime() - now.getTime()) / 86400000;
+          if (daysAhead > 14) status = "indeterminate";
+        }
       }
       const customizable =
         status === "scheduled" || status === "indeterminate"

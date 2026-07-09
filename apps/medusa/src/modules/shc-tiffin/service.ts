@@ -11,6 +11,8 @@ import {
   applyPause,
   projectMealInstances,
   defaultFlexQuota,
+  effectiveSubscriptionStatus,
+  isPauseWindowActive,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 import { TiffinKitchenConfig } from "./models/kitchen-config";
@@ -189,15 +191,18 @@ class ShcTiffinModuleService extends MedusaService({
         expires_on: m.expires_on,
         cancel_reason: m.cancel_reason,
       };
+      // Clear stale pause window so gates + UI stay consistent
+      if (meta.paused_until && !isPauseWindowActive(meta.paused_until)) {
+        await pgUpdateSubMeta(sub.id, { paused_until: null });
+        meta.paused_until = null;
+      }
     } catch {
       /* defaults */
     }
-    const status =
-      sub.status === "cancelled"
-        ? "canceled"
-        : meta.paused_until && meta.paused_until >= new Date().toISOString().slice(0, 10)
-          ? "paused"
-          : "active";
+    const status = effectiveSubscriptionStatus({
+      dbStatus: sub.status,
+      pausedUntil: meta.paused_until,
+    });
     return { ...meta, status, deliveries_left: Math.max(0, (meta.flex_quota || 0) + 8) };
   }
 
@@ -205,8 +210,17 @@ class ShcTiffinModuleService extends MedusaService({
     const active = await this.getActiveSubscription(customerId);
     if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
     const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
+    // Same status model as UI: expired paused_until → active
+    if (meta.paused_until && !isPauseWindowActive(meta.paused_until)) {
+      await pgUpdateSubMeta(active.id, { paused_until: null });
+      meta.paused_until = null;
+    }
+    const osStatus = effectiveSubscriptionStatus({
+      dbStatus: active.status,
+      pausedUntil: meta.paused_until,
+    });
     const gate = canPauseSubscription({
-      status: meta.paused_until ? "paused" : "active",
+      status: osStatus,
       flexRemaining: meta.flex_remaining,
       pauseDays,
     });
@@ -228,7 +242,11 @@ class ShcTiffinModuleService extends MedusaService({
     const active = await this.getActiveSubscription(customerId);
     if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
     const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
-    const gate = canResumeSubscription(meta.paused_until ? "paused" : "active");
+    const osStatus = effectiveSubscriptionStatus({
+      dbStatus: active.status,
+      pausedUntil: meta.paused_until,
+    });
+    const gate = canResumeSubscription(osStatus);
     if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
     await pgUpdateSubMeta(active.id, { paused_until: null });
     return { ...active, status: "active", paused_until: null };

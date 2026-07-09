@@ -16,6 +16,8 @@ import {
   projectMealInstances,
   TIFFIN_CUSTOMIZE_CUTOFF_HOURS,
   slotStartUtc,
+  effectiveSubscriptionStatus,
+  isPauseWindowActive,
 } from "./tiffin";
 
 describe("tiffin business rules", () => {
@@ -163,5 +165,66 @@ describe("tiffin business rules", () => {
     expect(instances.length).toBe(2);
     expect(instances.find((i) => i.collection_date === "2026-07-06")?.product_id).toBe("dish_a");
     expect(instances.find((i) => i.collection_date === "2026-07-08")?.status).toBe("skipped");
+  });
+
+  it("marks past collection slots as delivered (not scheduled)", () => {
+    // 2026-06-01 is Monday → day_of_week 1; slot 18:00 already past when now is July
+    const instances = projectMealInstances({
+      subscriptionId: "sub_past",
+      cookId: "cook_rose",
+      fromIso: "2026-06-01",
+      toIso: "2026-06-07",
+      plans: [
+        {
+          week_start: null,
+          slots: [{ day_of_week: 1, product_id: "dish_a", collection_slot: "18:00-19:00" }],
+        },
+      ],
+      now: new Date("2026-07-09T12:00:00.000Z"),
+    });
+    expect(instances.length).toBeGreaterThan(0);
+    const june1 = instances.find((i) => i.collection_date === "2026-06-01");
+    expect(june1).toBeDefined();
+    expect(june1!.status).toBe("delivered");
+    expect(june1!.status).not.toBe("scheduled");
+  });
+
+  it("treats expired paused_until as active for pause/resume gates", () => {
+    const now = new Date("2026-07-09T12:00:00.000Z");
+    expect(isPauseWindowActive("2026-07-08", now)).toBe(false);
+    expect(isPauseWindowActive("2026-07-10", now)).toBe(true);
+
+    expect(
+      effectiveSubscriptionStatus({
+        dbStatus: "active",
+        pausedUntil: "2026-07-08",
+        now,
+      })
+    ).toBe("active");
+    expect(
+      effectiveSubscriptionStatus({
+        dbStatus: "active",
+        pausedUntil: "2026-07-10",
+        now,
+      })
+    ).toBe("paused");
+
+    // After pause window elapsed: can pause again, cannot resume
+    const effective = effectiveSubscriptionStatus({
+      dbStatus: "active",
+      pausedUntil: "2026-07-08",
+      now,
+    });
+    expect(canPauseSubscription({ status: effective, flexRemaining: 2, pauseDays: 1 }).ok).toBe(true);
+    expect(canResumeSubscription(effective).ok).toBe(false);
+
+    // While still paused: cannot pause again, can resume
+    const stillPaused = effectiveSubscriptionStatus({
+      dbStatus: "active",
+      pausedUntil: "2026-07-15",
+      now,
+    });
+    expect(canPauseSubscription({ status: stillPaused, flexRemaining: 2, pauseDays: 1 }).ok).toBe(false);
+    expect(canResumeSubscription(stillPaused).ok).toBe(true);
   });
 });
