@@ -80,7 +80,7 @@ function MyRequestCard({ request }: { request: RequestRow }) {
 }
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { data: credits } = useCredits();
   const redeem = useRedeemCredits();
   const { data: notifs = [], markRead } = useNotifications();
@@ -90,10 +90,38 @@ export default function Profile() {
   const balance = credits?.balance || 0;
   const tier = credits?.tier || 'Silver';
 
+  // Guest browse: no wallet / orders chrome — sign in or keep exploring home
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
+        <SHCPageHeader
+          title="Browse as guest"
+          subtitle="Sign in for orders, credits, and wallet"
+        />
+        <SHCCard className="mb-4" data-testid="guest-profile-gate">
+          <p className="font-black text-foreground mb-2">You are exploring freely</p>
+          <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+            Discover kitchens and dishes on Home. Wallet, orders, and account tools only appear after you sign in.
+          </p>
+        </SHCCard>
+        <div className="flex flex-col gap-3">
+          <Link href="/login" data-testid="guest-profile-signin">
+            <SHCButton className="w-full">Sign in / Create account</SHCButton>
+          </Link>
+          <Link href="/" data-testid="guest-profile-home">
+            <SHCButton variant="outline" className="w-full">
+              Back to home
+            </SHCButton>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
       <div className="flex items-start justify-between mb-6">
-        <SHCPageHeader title={`👋 ${user?.name?.split(' ')[0] || 'there'}`} />
+        <SHCPageHeader title={`👋 ${user.name?.split(' ')[0] || 'there'}`} />
         <div className="relative mt-2">
           <button
             type="button"
@@ -200,6 +228,20 @@ export default function Profile() {
       </SHCCard>
 
       <WebPushOptIn />
+
+      <div className="mt-8">
+        <SHCButton
+          variant="outline"
+          className="w-full"
+          testID="logout-btn"
+          onClick={async () => {
+            await logout();
+            window.location.href = '/login';
+          }}
+        >
+          Log out
+        </SHCButton>
+      </div>
     </div>
   );
 }

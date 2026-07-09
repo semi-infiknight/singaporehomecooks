@@ -109,6 +109,18 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
+          // Guest browse: Home only for free navigation; account tabs need sign-in
+          if (!user && key !== 'index') {
+            showGuestAuthTray(
+              key === 'orders/index'
+                ? 'Sign in to view orders'
+                : key === 'cart'
+                  ? 'Sign in to view cart'
+                  : 'Sign in for wallet & account',
+              'Browse kitchens on Home — sign in for orders, cart, and wallet.'
+            );
+            return;
+          }
           notifyTabChange(key);
           navigation.navigate(key);
         }}

@@ -2,23 +2,26 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Home, Receipt, ShoppingBag, Wallet } from 'lucide-react';
 import { useCart } from '../../lib/useProducts';
+import { useAuth } from '../../lib/useAuth';
 import { summarizeCart } from '@shc/utils';
 import { StickyCartBar } from './SHCWebComponents';
 
 const TABS = [
-  { href: '/', label: 'Home', icon: Home, testID: 'mobile-tab-discover', match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') },
-  { href: '/orders', label: 'Orders', icon: Receipt, testID: 'mobile-tab-orders', match: (p: string) => p.startsWith('/orders') },
-  { href: '/cart', label: 'Cart', icon: ShoppingBag, testID: 'mobile-tab-cart', match: (p: string) => p === '/cart' || p === '/checkout' },
-  { href: '/profile', label: 'Wallet', icon: Wallet, testID: 'mobile-tab-profile', match: (p: string) => p.startsWith('/profile') },
+  { href: '/', label: 'Home', icon: Home, testID: 'mobile-tab-discover', match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') || p.startsWith('/category') || p.startsWith('/tiffin') },
+  { href: '/orders', label: 'Orders', icon: Receipt, testID: 'mobile-tab-orders', match: (p: string) => p.startsWith('/orders'), needsAuth: true },
+  { href: '/cart', label: 'Cart', icon: ShoppingBag, testID: 'mobile-tab-cart', match: (p: string) => p === '/cart' || p === '/checkout', needsAuth: true },
+  { href: '/profile', label: 'Wallet', icon: Wallet, testID: 'mobile-tab-profile', match: (p: string) => p.startsWith('/profile'), needsAuth: true },
 ];
 
 const HIDE_CART_BAR = /^\/(cart|checkout)(\/|$)/;
 
 export function AppMobileTabBar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
   const { data: cart } = useCart();
   const items = ((cart?.items ?? []) as Parameters<typeof summarizeCart>[0]) || [];
   const firstItem = items[0];
@@ -27,7 +30,8 @@ export function AppMobileTabBar() {
       ? String((firstItem as { name?: string }).name || '')
       : undefined;
   const summary = summarizeCart(items, firstName);
-  const showCartBar = summary.hasItems && !HIDE_CART_BAR.test(pathname);
+  // Guests never see sticky cart bar (cart requires sign-in)
+  const showCartBar = Boolean(user) && summary.hasItems && !HIDE_CART_BAR.test(pathname);
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none px-3 pb-[max(env(safe-area-inset-bottom),8px)]">
@@ -49,16 +53,23 @@ export function AppMobileTabBar() {
             {TABS.map((tab) => {
               const active = tab.match(pathname);
               const Icon = tab.icon;
-              const badge = tab.href === '/cart' && summary.hasItems ? summary.badgeLabel : null;
+              const badge = user && tab.href === '/cart' && summary.hasItems ? summary.badgeLabel : null;
+              const needsAuth = 'needsAuth' in tab && tab.needsAuth && !user;
               return (
                 <Link
                   key={tab.href}
-                  href={tab.href}
+                  href={needsAuth ? `/login?next=${encodeURIComponent(tab.href)}` : tab.href}
                   data-testid={tab.testID}
                   className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 relative ${
                     active ? 'text-primary' : 'text-white/55'
                   }`}
                   aria-current={active ? 'page' : undefined}
+                  onClick={(e) => {
+                    if (needsAuth) {
+                      e.preventDefault();
+                      router.push(`/login?next=${encodeURIComponent(tab.href)}`);
+                    }
+                  }}
                 >
                   <span className="relative">
                     <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />

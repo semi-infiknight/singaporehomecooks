@@ -96,6 +96,50 @@ export default function Profile() {
     router.replace('/(shared)/auth');
   };
 
+  // Guest browse: no wallet / orders / logout — sign in or keep exploring home
+  if (!user) {
+    return (
+      <DirectionalTabScreen testID="profile-tab-scene">
+        <View style={styles.screen} testID="customer-profile-screen">
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={[
+              styles.content,
+              { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 },
+            ]}
+          >
+            <GourmeatScreenHeader
+              title="Browse as guest"
+              subtitle="Sign in for orders, credits, and wallet"
+            />
+            <SHCCard variant="bento-peach" style={styles.trustCard} testID="guest-profile-gate">
+              <SHCIcon name="profile" size={28} color={shcColors.primary} active />
+              <Text style={styles.trustTitle}>You are exploring freely</Text>
+              <Text style={styles.trustBody}>
+                Discover kitchens and dishes on Home. Wallet, orders, and logout only appear after you sign in.
+              </Text>
+            </SHCCard>
+            <SHCButton
+              style={styles.actionBtn}
+              onPress={() => router.push('/(shared)/auth' as any)}
+              testID="guest-profile-signin"
+            >
+              <SHCButtonText>Sign in / Create account</SHCButtonText>
+            </SHCButton>
+            <SHCButton
+              variant="outline"
+              style={styles.actionBtn}
+              onPress={() => router.replace('/(customer)' as any)}
+              testID="guest-profile-home"
+            >
+              <SHCButtonText variant="outline">Back to home</SHCButtonText>
+            </SHCButton>
+          </ScrollView>
+        </View>
+      </DirectionalTabScreen>
+    );
+  }
+
   return (
     <DirectionalTabScreen testID="profile-tab-scene">
 
@@ -107,7 +151,7 @@ export default function Profile() {
       <View style={styles.headerRow}>
         <View style={styles.heroWrap}>
           <GourmeatScreenHeader
-            title={user?.name || 'Guest'}
+            title={user.name || 'You'}
             subtitle={`${tier} tier · HDB home cook lover`}
           />
         </View>
