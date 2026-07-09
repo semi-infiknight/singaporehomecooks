@@ -48,8 +48,9 @@ export default function CookDashboard() {
     router.replace('/(shared)/auth' as any);
   };
   const { data: orders = [] } = useMyOrders();
-  const { data: openReqs = [] } = useRequests();
-  const reqCount = Array.isArray(openReqs) ? openReqs.length : 0;
+  // Request count only (bidding UI lives under Orders) — never reference openReqs in JSX
+  const requestsQuery = useRequests();
+  const reqCount = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0;
 
   const earnings = orders
     .filter((o: any) => o.shc_status === 'completed')
