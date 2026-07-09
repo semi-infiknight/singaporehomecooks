@@ -82,8 +82,18 @@ export function shouldReduceMotion(pref?: boolean | null): boolean {
 
 export type MilestoneId = 'first_listing_publish' | 'first_order' | 'compliance_approved';
 
+/** SecureStore keys: alphanumeric, ".", "-", "_" only (no colons or spaces). */
+export function secureStoreSafeSegment(value: string): string {
+  const base = (value || 'anon').trim() || 'anon';
+  return base.replace(/[^A-Za-z0-9._-]/g, '_');
+}
+
+export function isValidSecureStoreKey(key: string): boolean {
+  return key.length > 0 && /^[A-Za-z0-9._-]+$/.test(key);
+}
+
 export function milestoneStorageKey(id: MilestoneId, userId: string): string {
-  return `shc:milestone:${id}:${userId || 'anon'}`;
+  return `shc_milestone_${id}_${secureStoreSafeSegment(userId)}`;
 }
 
 export function shouldShowMilestone(

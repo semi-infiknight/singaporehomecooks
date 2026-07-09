@@ -1,0 +1,100 @@
+# Customer app — tiffin browse → subscribe → weekly meal plan
+# Prereq: Metro :8081 + bash scripts/start-mobile-dev.sh
+# Run: maestro test apps/mobile-customer/e2e/tiffin-subscribe.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- openLink: shc-customer:///(shared)/auth
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+# Cancel existing subscription if present (idempotent re-runs)
+- openLink: shc-customer:///(customer)/tiffin/manage
+- tapOn:
+    text: "Open"
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "tiffin-manage-screen"
+    commands:
+      - tapOn:
+          id: "tiffin-cancel-sub-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "tiffin-browse-screen"
+          timeout: 60000
+          optional: true
+- openLink: shc-customer:///(customer)/tiffin
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-browse-screen"
+    timeout: 60000
+- assertVisible:
+    id: "tiffin-hero-banner"
+- tapOn:
+    id: "tiffin-kitchen-cook_rose_tampines_001"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-kitchen-screen"
+    timeout: 60000
+- tapOn:
+    id: "tiffin-meals-2"
+- tapOn:
+    id: "tiffin-subscribe-btn"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-confirm-screen"
+    timeout: 90000
+- tapOn:
+    id: "tiffin-pick-meals-btn"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-planner-screen"
+    timeout: 60000
+- tapOn:
+    id: "tiffin-add-meal-slot"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-dish-picker"
+    timeout: 15000
+- tapOn:
+    id: "tiffin-menu-item-dish_nasi_lemak_prawn_001"
+- tapOn:
+    id: "tiffin-add-meal-slot"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-dish-picker"
+    timeout: 15000
+- tapOn:
+    id: "tiffin-menu-item-dish_ayam_buah_keluak_002"
+- tapOn:
+    id: "tiffin-save-plan-btn"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-manage-screen"
+    timeout: 90000
+- assertVisible:
+    id: "tiffin-manage-screen"

@@ -1,0 +1,62 @@
+# Cook app — tiffin kitchen configuration (Railway backend)
+# Prereq: EXPO_PUBLIC_MAESTRO_E2E=1 in Cook Metro (.env.local) + bash scripts/start-mobile-dev.sh
+# Run: maestro test apps/mobile-cook/e2e/tiffin-config.yaml
+appId: com.singaporehomecooks.cook
+---
+# Keep keychain so returning cooks skip onboarding (SecureStore onboarding flag).
+- launchApp:
+    clearState: true
+- runFlow:
+    when:
+      visible: "SHC Cook Portal"
+    commands:
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 120000
+- openLink: shc-cook:///(cook)/tiffin
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-tiffin-config-screen"
+    timeout: 60000
+- assertVisible:
+    id: "cook-tiffin-enabled-switch"
+- tapOn:
+    id: "cook-tiffin-tagline-input"
+- inputText: "Peranakan weekly tiffin — Maestro E2E"
+- tapOn:
+    id: "cook-tiffin-day-1"
+- scrollUntilVisible:
+    element:
+      id: "cook-tiffin-save-btn"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "cook-tiffin-save-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 60000
+    optional: true
+- tapOn:
+    text: "Dismiss"
+    optional: true
+- openLink: shc-cook:///(cook)/tiffin
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-tiffin-config-screen"
+    timeout: 60000
+- assertVisible:
+    id: "cook-tiffin-config-screen"

@@ -22,18 +22,19 @@ export default function CookAuthScreen() {
   const displayNameRef = useRef<TextInput>(null);
   const areaRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('rose@shc.local');
+  const [password, setPassword] = useState('cooksecret');
   const [displayName, setDisplayName] = useState('');
   const [area, setArea] = useState('');
   const [busy, setBusy] = useState(false);
 
   const afterAuth = async (isNewAccount: boolean) => {
-    if (isNewAccount) {
+    const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
+    if (isNewAccount && !maestroE2e) {
       router.replace('/(shared)/onboarding');
       return;
     }
-    const seenOnboarding = await hasSeenCookOnboarding();
+    const seenOnboarding = maestroE2e || (await hasSeenCookOnboarding());
     router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
   };
 
@@ -128,7 +129,9 @@ export default function CookAuthScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          textContentType={mode === 'register' ? 'newPassword' : 'password'}
+          autoComplete="off"
+          autoCorrect={false}
+          textContentType={mode === 'register' ? 'none' : 'password'}
           returnKeyType="go"
           onSubmitEditing={submit}
           placeholder="Password (6+ characters)"

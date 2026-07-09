@@ -3,6 +3,9 @@ import {
   computeMorphingLabelSegments,
   dismissTray,
   markMilestoneSeen,
+  milestoneStorageKey,
+  isValidSecureStoreKey,
+  secureStoreSafeSegment,
   morphingLabelTarget,
   popTray,
   pushTray,
@@ -89,6 +92,16 @@ describe('milestones', () => {
     expect(shouldShowMilestone('first_order', 'u1', {})).toBe(true);
     const seen = markMilestoneSeen('first_order', 'u1', {});
     expect(shouldShowMilestone('first_order', 'u1', seen)).toBe(false);
+  });
+
+  it('uses SecureStore-safe keys (no colons or spaces)', () => {
+    const key = milestoneStorageKey('first_listing_publish', 'cook_rose_tampines_001');
+    expect(key).toBe('shc_milestone_first_listing_publish_cook_rose_tampines_001');
+    expect(isValidSecureStoreKey(key)).toBe(true);
+    const nameKey = milestoneStorageKey('first_order', 'Auntie Rose');
+    expect(nameKey).toBe('shc_milestone_first_order_Auntie_Rose');
+    expect(isValidSecureStoreKey(nameKey)).toBe(true);
+    expect(secureStoreSafeSegment('')).toBe('anon');
   });
 });
 

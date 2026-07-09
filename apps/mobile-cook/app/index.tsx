@@ -21,7 +21,8 @@ export default function RootIndex(): ReactElement {
 
     let cancelled = false;
     (async () => {
-      const seen = await hasSeenCookOnboarding();
+      const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
+      const seen = maestroE2e || (await hasSeenCookOnboarding());
       if (cancelled) return;
       setNeedsOnboarding(!seen);
       setOnboardingChecked(true);

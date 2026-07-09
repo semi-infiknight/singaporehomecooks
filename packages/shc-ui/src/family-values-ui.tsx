@@ -20,6 +20,7 @@ import {
   TAB_SLIDE_OFFSET,
   type MilestoneId,
   milestoneStorageKey,
+  isValidSecureStoreKey,
   shouldShowMilestone,
   markMilestoneSeen,
   registerSharedDishLayout,
@@ -258,7 +259,11 @@ export function SHCSharedDishImage({
     const node = containerRef.current;
     if (!node) return;
     node.measureInWindow((x, y, w, h) => {
-      if (w > 0 && h > 0) setHeroRect({ x, y, w, h });
+      if (w <= 0 || h <= 0) return;
+      setHeroRect((prev) => {
+        if (prev.x === x && prev.y === y && prev.w === w && prev.h === h) return prev;
+        return { x, y, w, h };
+      });
     });
   }, [hero]);
 
@@ -285,11 +290,12 @@ export function SHCSharedDishImage({
 
   useEffect(() => {
     morphStarted.current = false;
-    if (hero && !reduce) {
-      measureHeroRect();
-      runHeroMorph(0);
-    }
-  }, [dishId, hero, heroRect, reduce, runHeroMorph, measureHeroRect]);
+    if (hero && !reduce) measureHeroRect();
+  }, [dishId, hero, reduce, measureHeroRect]);
+
+  useEffect(() => {
+    if (hero && !reduce) runHeroMorph(0);
+  }, [dishId, hero, reduce, heroRect, runHeroMorph]);
 
   const setRefs = useCallback(
     (node: View | null) => {
@@ -421,7 +427,7 @@ export function useMilestoneCelebration(
   const key = milestoneStorageKey(id, userId);
 
   useEffect(() => {
-    if (!storage || !userId) return;
+    if (!storage || !userId || !isValidSecureStoreKey(key)) return;
     storage.get(key).then((v) => {
       if (v === '1') setSeen((s) => ({ ...s, [key]: true }));
     });
@@ -431,7 +437,7 @@ export function useMilestoneCelebration(
     if (!shouldShowMilestone(id, userId, seen)) return false;
     setShow(true);
     setSeen((s) => markMilestoneSeen(id, userId, s));
-    if (storage) await storage.set(key, '1');
+    if (storage && isValidSecureStoreKey(key)) await storage.set(key, '1');
     return true;
   };
 
