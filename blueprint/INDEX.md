@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — HomelyEats redesign plan locked (UI overhaul, keep all features, tri-platform waves): [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Prior: tiffin seed + web parity. See [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-09 — HomelyEats Waves 1–6 implemented (UI + flex OS + ledger + harden). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -11,6 +11,22 @@
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
 
+## Progress Update (2026-07-09 — HomelyEats Waves 1–6)
+
+Paper-wireframe / HomelyEats programme delivered tri-platform:
+
+| Wave | Delivered |
+|------|-----------|
+| 1 | Account menu, kitchen trust certs, cart coupon/bill/PayNow, plan duration |
+| 2 | Pause/recharge screens, subscription card states, manage hierarchy |
+| 3 | Cook tiffin OS (metrics, date publish/cancel), standalone ratings |
+| 4 | Social proof, subscribe trust funnel, confirm steps, ledger shell |
+| 5 | `shc_tiffin_ledger`, balance_cents, PayNow recharge confirm, real transactions |
+| 6 | `pnpm smoke:tiffin`, Maestro flex OS, error-masking fix, verify-tier hooks |
+
+**Commands:** `pnpm smoke:tiffin` · `pnpm e2e:tiffin` · `FLAVOUR=wiring SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal`  
+**Ship:** push main + Railway medusa redeploy for ledger + honest subscribe errors.
+
 ## Progress Update (2026-07-09 — Tiffin weekly subscription)
 
 End-to-end **tiffin subscription** (single kitchen, 2/3/4 meals/week, recurring template + next-week override):
@@ -19,11 +35,9 @@ End-to-end **tiffin subscription** (single kitchen, 2/3/4 meals/week, recurring 
 - **Packages:** `@shc/business-rules/tiffin`, `@shc/api-client` tiffin methods, `@shc/ui/tiffin-ux.tsx`.
 - **Mobile customer:** `apps/mobile-customer/app/(customer)/tiffin/` — browse, kitchen subscribe, confirm, planner, menu, manage. Entry: discover promo + profile tile.
 - **Mobile cook:** `apps/mobile-cook/app/(cook)/tiffin/` — kitchen config (enable, tagline, days, eligible dishes). Dashboard quick action.
-- **Maestro:** `tiffin-config.yaml`, `tiffin-subscribe.yaml`, `scripts/run-tiffin-e2e.sh`.
+- **Maestro:** `tiffin-config.yaml`, `tiffin-subscribe.yaml`, `tiffin-flex-os.yaml`, `scripts/run-tiffin-e2e.sh`.
 - **Fixes:** SecureStore-safe milestone keys; cook app crash on listings/compliance; `product.name` (not `title`) in weekly order SQL; CI lockfile + worker ESM `.js` imports.
 - **Railway ship lesson:** goals with `TOUCHES_API=1` must **`git push origin main`** + verify live route — local-only commits do not deploy (`railway redeploy` ≠ new code).
-
-Commits: `d0bd725` … `83943c3` on `main`.
 
 ## Progress Update (2026-07-08 — Cook sign-up + onboarding wiring)
 

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **Kitchen pages (Jakob’s Law):** cook + tiffin kitchen hero/rating/open/tags/menu/CTA on web + mobile-customer; `scopeProductsByKitchen` in `@shc/utils/kitchen`.
+**Last Updated:** 2026-07-09 — **HomelyEats Wave 6 harden:** `pnpm smoke:tiffin` + Maestro flex OS; tiffin route error masking fixed (no more false 401).
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -20,13 +20,13 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
 | **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
-| **Maestro device E2E** | ✅ Android + iOS | `tiffin-config.yaml` (cook) PASS; `tiffin-subscribe.yaml` (customer) needs kitchen seeded/configured; `scripts/run-tiffin-e2e.sh` skips customer when Railway tiffin 404 |
-| **Tiffin subscription** | ✅ Mobile + API | `shc-tiffin` module; weekly plan template + next-week override; worker Mon 08:00 UTC materializes `shc_order_meta`; business rules in `@shc/business-rules/tiffin` |
+| **Maestro device E2E** | ✅ Android + iOS | Cook `tiffin-config.yaml`; customer `tiffin-subscribe.yaml` + **`tiffin-flex-os.yaml`** (pause/recharge/calendar); `pnpm e2e:tiffin` |
+| **Tiffin subscription** | ✅ Mobile + API + **Wave 6** | Ledger + recharge PayNow; pause/skip/resume; `pnpm smoke:tiffin` curl suite; worker Mon materialize; fix: subscribe errors no longer masked as 401 |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
-| **Paper wireframe IA** | ✅ Wave 1–5 | **W5** Tiffin ledger table + API rows; recharge PayNow confirm + `paynow_ref`; wallet/balance_cents; manage real transactions; skip/pause ledger lines |
+| **Paper wireframe IA** | ✅ Wave 1–6 | **W6 harden:** smoke suite, Maestro flex OS, verify-tier tiffin hook, blueprint sync; redeploy medusa for full write smoke |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).

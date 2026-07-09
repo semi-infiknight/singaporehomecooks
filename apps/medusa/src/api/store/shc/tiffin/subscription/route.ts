@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { weekStartMonday } from "@shc/business-rules";
-import { getCustomerId, unauthorized } from "../../../../../lib/shc-actors";
+import { getCustomerId, unauthorized, tiffinCustomerError } from "../../../../../lib/shc-actors";
 import ShcTiffinModuleService from "../../../../../modules/shc-tiffin/service";
 import { shapeTiffinKitchen } from "../../../../../lib/shc-tiffin-shape";
 
@@ -83,8 +83,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     (sub as any).__customerId = customerId;
     res.status(201).json(await subscriptionPayload(tiffin, sub, req.scope));
   } catch (e: any) {
-    if (e?.code) return res.status(400).json({ error: e });
-    return unauthorized(res, "Customer login required");
+    return tiffinCustomerError(res, e, "Subscribe failed");
   }
 }
 
@@ -96,7 +95,7 @@ export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
       typeof (req.body as any)?.reason === "string" ? (req.body as any).reason : undefined;
     await tiffin.cancelSubscription(customerId, reason);
     res.json({ ok: true });
-  } catch {
-    return unauthorized(res, "Customer login required");
+  } catch (e: any) {
+    return tiffinCustomerError(res, e, "Cancel failed");
   }
 }

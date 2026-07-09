@@ -108,6 +108,7 @@ export default function TiffinManageScreen() {
         flexQuota={sub.flex_quota}
         expiresOn={sub.expires_on}
         balanceLabel={`${sub.meals_per_week}/wk`}
+        testID="tiffin-plan-metrics"
       />
 
       {/* Primary: Pause · Recharge */}

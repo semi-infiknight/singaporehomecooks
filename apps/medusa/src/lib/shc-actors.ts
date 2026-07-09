@@ -49,3 +49,20 @@ export function tryCookId(req: MedusaRequest): string | null {
 export function unauthorized(res: MedusaResponse, message: string) {
   return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", message) });
 }
+
+/**
+ * Map route catch → 401 only for real auth failures; surface business/DB errors correctly.
+ * (Previously any non-code throw was mislabeled "Customer login required".)
+ */
+export function tiffinCustomerError(res: MedusaResponse, e: any, fallback = "Tiffin request failed") {
+  const msg = String(e?.message || "");
+  if (msg === "UNAUTHORIZED" || msg === "Customer login required" || msg === "Cook login required") {
+    return unauthorized(res, msg === "Cook login required" ? "Cook login required" : "Customer login required");
+  }
+  if (e?.code && e?.message) {
+    return res.status(400).json({ error: { code: e.code, message: e.message, details: e.details } });
+  }
+  return res.status(500).json({
+    error: createSHCError("SHC-GENERIC-001", msg || fallback),
+  });
+}

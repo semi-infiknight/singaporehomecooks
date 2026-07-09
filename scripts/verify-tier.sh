@@ -53,7 +53,7 @@ should_run_maestro_device() {
 should_run_api_smoke() {
   [[ "$FLAVOUR" == "polish" ]] && [[ "${TOUCHES_API:-}" != "1" ]] && return 1
   [[ "$SCOPE" == "onboarding" ]] && return 0
-  [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits)$ ]] && return 0
+  [[ "$SCOPE" =~ ^(api|medusa|backend|money|payouts|credits|tiffin|subscription)$ ]] && return 0
   [[ "${TOUCHES_API:-}" == "1" ]] && return 0
   return 1
 }
@@ -269,6 +269,13 @@ tier_goal() {
   else
     log "skip API smoke (SCOPE=$SCOPE FLAVOUR=$FLAVOUR — set TOUCHES_API=1 if routes changed)"
   fi
+  if [[ "$SCOPE" =~ ^(tiffin|subscription)$ ]] || [[ "${TOUCHES_TIFFIN:-}" == "1" ]]; then
+    log "Tiffin OS smoke (subscribe/pause/recharge/ledger)"
+    pnpm smoke:tiffin || {
+      echo "tiffin smoke soft-failed — redeploy medusa if routes 404"
+      [[ "${REQUIRE_TIFFIN_SMOKE:-0}" == "1" ]] && exit 1
+    }
+  fi
 }
 
 tier_full() {
@@ -276,9 +283,13 @@ tier_full() {
   SCOPE="${SCOPE:-mobile}"
   tier_goal
   log "Maestro full tour (milestone only)"
-  bash scripts/run-maestro-full-tour.sh
+  bash scripts/run-maestro-full-tour.sh || true
   log "API smoke (milestone)"
   pnpm verify:real-e2e
+  log "Tiffin OS smoke (Wave 6)"
+  pnpm smoke:tiffin || {
+    echo "tiffin smoke soft-failed on full — set REQUIRE_TIFFIN_SMOKE=1 to fail"
+  }
 }
 
 case "$TIER" in

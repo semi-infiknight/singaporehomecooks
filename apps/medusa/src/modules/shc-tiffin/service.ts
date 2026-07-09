@@ -115,13 +115,20 @@ class ShcTiffinModuleService extends MedusaService({
   async createSubscription(customerId: string, cookId: string, mealsPerWeek: number) {
     const active = await this.getActiveSubscription(customerId);
     const gate = assertOneKitchenSubscription(active?.cook_id, cookId);
-    if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
+    if (!gate.ok) {
+      const err = createSHCError("SHC-GENERIC-001", gate.message);
+      throw Object.assign(new Error(err.message), err);
+    }
 
     const config = await this.getKitchenConfig(cookId);
-    if (!config?.enabled) throw createSHCError("SHC-GENERIC-001", "This kitchen does not offer tiffin subscription.");
+    if (!config?.enabled) {
+      const err = createSHCError("SHC-GENERIC-001", "This kitchen does not offer tiffin subscription.");
+      throw Object.assign(new Error(err.message), err);
+    }
 
     if (!config.meals_per_week_options.includes(mealsPerWeek)) {
-      throw createSHCError("SHC-GENERIC-001", "Invalid meals-per-week option for this kitchen.");
+      const err = createSHCError("SHC-GENERIC-001", "Invalid meals-per-week option for this kitchen.");
+      throw Object.assign(new Error(err.message), err);
     }
 
     if (active) {

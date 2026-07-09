@@ -1,5 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
-import { getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
+import { getCustomerId, tiffinCustomerError } from "../../../../../../lib/shc-actors";
 import ShcTiffinModuleService from "../../../../../../modules/shc-tiffin/service";
 
 /** POST /store/shc/tiffin/subscription/resume */
@@ -10,7 +10,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const result = await tiffin.resumeSubscription(customerId);
     res.json({ subscription: result });
   } catch (e: any) {
-    if (e?.code) return res.status(400).json({ error: e });
-    return unauthorized(res, "Customer login required");
+    return tiffinCustomerError(res, e, "Resume failed");
   }
 }

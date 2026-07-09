@@ -30,6 +30,9 @@ appId: com.singaporehomecooks.cook
     timeout: 60000
 - assertVisible:
     id: "cook-tiffin-enabled-switch"
+- assertVisible:
+    id: "cook-tiffin-metrics"
+    optional: true
 - tapOn:
     id: "cook-tiffin-tagline-input"
 - inputText: "Peranakan weekly tiffin — Maestro E2E"
@@ -37,11 +40,24 @@ appId: com.singaporehomecooks.cook
     id: "cook-tiffin-day-1"
 - scrollUntilVisible:
     element:
+      id: "cook-tiffin-publish-menu-btn"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    id: "cook-tiffin-publish-menu-btn"
+    optional: true
+- assertVisible:
+    id: "cook-tiffin-ops-msg"
+    optional: true
+- scrollUntilVisible:
+    element:
       id: "cook-tiffin-save-btn"
     direction: DOWN
     timeout: 20000
 - tapOn:
     id: "cook-tiffin-save-btn"
+
 - extendedWaitUntil:
     visible:
       id: "cook-dashboard"

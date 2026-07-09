@@ -38,7 +38,22 @@ appId: com.singaporehomecooks.customer
         id: "tiffin-manage-screen"
     commands:
       - tapOn:
+          id: "tiffin-cancel-btn"
+          optional: true
+      - tapOn:
           id: "tiffin-cancel-sub-btn"
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "tiffin-cancel-reason-Moving a"
+          commands:
+            - tapOn:
+                id: "tiffin-cancel-reason-Moving a"
+          optional: true
+      - tapOn:
+          text: "Moving away"
+          optional: true
       - extendedWaitUntil:
           visible:
             id: "tiffin-browse-screen"
@@ -60,6 +75,12 @@ appId: com.singaporehomecooks.customer
     visible:
       id: "tiffin-kitchen-screen"
     timeout: 60000
+- assertVisible:
+    id: "subscribe-trust-list"
+    optional: true
+- assertVisible:
+    id: "subscribe-trust-one_kitchen"
+    optional: true
 - tapOn:
     id: "tiffin-meals-2"
 - tapOn:
@@ -68,6 +89,9 @@ appId: com.singaporehomecooks.customer
     visible:
       id: "tiffin-confirm-screen"
     timeout: 90000
+- assertVisible:
+    id: "tiffin-confirm-step-plan"
+    optional: true
 - tapOn:
     id: "tiffin-pick-meals-btn"
 - extendedWaitUntil:
@@ -76,20 +100,38 @@ appId: com.singaporehomecooks.customer
     timeout: 60000
 - tapOn:
     id: "tiffin-add-meal-slot"
+    optional: true
+- tapOn:
+    id: "tiffin-day-1"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "tiffin-dish-picker"
     timeout: 15000
+    optional: true
 - tapOn:
     id: "tiffin-menu-item-dish_nasi_lemak_prawn_001"
+    optional: true
+- tapOn:
+    id: "tiffin-pick-dish-dish_nasi_lemak_prawn_001"
+    optional: true
 - tapOn:
     id: "tiffin-add-meal-slot"
+    optional: true
+- tapOn:
+    id: "tiffin-day-3"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "tiffin-dish-picker"
     timeout: 15000
+    optional: true
 - tapOn:
     id: "tiffin-menu-item-dish_ayam_buah_keluak_002"
+    optional: true
+- tapOn:
+    id: "tiffin-pick-dish-dish_ayam_buah_keluak_002"
+    optional: true
 - tapOn:
     id: "tiffin-save-plan-btn"
 - extendedWaitUntil:
@@ -98,3 +140,6 @@ appId: com.singaporehomecooks.customer
     timeout: 90000
 - assertVisible:
     id: "tiffin-manage-screen"
+- assertVisible:
+    id: "tiffin-ledger-preview"
+    optional: true

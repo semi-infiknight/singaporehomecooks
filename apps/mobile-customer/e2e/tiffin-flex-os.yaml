@@ -1,0 +1,123 @@
+# Customer app — tiffin flex OS after subscribe: manage → pause → resume → recharge → calendar
+# Prereq: active plan (run tiffin-subscribe.yaml first) OR seed customer with tiffin on Railway.
+# Run: maestro test apps/mobile-customer/e2e/tiffin-flex-os.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+    optional: true
+- openLink: shc-customer:///(shared)/auth
+- tapOn:
+    text: "Open"
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "auth-submit-btn"
+    commands:
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- openLink: shc-customer:///(customer)/tiffin/manage
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-manage-screen"
+    timeout: 90000
+- assertVisible:
+    id: "tiffin-plan-metrics"
+    optional: true
+- assertVisible:
+    id: "tiffin-ledger-preview"
+    optional: true
+# Pause OS
+- tapOn:
+    id: "tiffin-pause-btn"
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-pause-screen"
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "tiffin-pause-screen"
+    commands:
+      - tapOn:
+          id: "pause-days-1"
+          optional: true
+      - tapOn:
+          id: "pause-confirm-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "tiffin-manage-screen"
+          timeout: 90000
+      - tapOn:
+          id: "tiffin-resume-btn"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "tiffin-manage-screen"
+          timeout: 60000
+          optional: true
+# Recharge OS
+- openLink: shc-customer:///(customer)/tiffin/recharge
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-recharge-screen"
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "tiffin-recharge-screen"
+    commands:
+      - tapOn:
+          id: "recharge-weeks-1"
+          optional: true
+      - tapOn:
+          id: "recharge-continue-paynow"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "tiffin-recharge-paynow"
+          timeout: 30000
+          optional: true
+      - tapOn:
+          id: "recharge-confirm-btn"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "tiffin-manage-screen"
+          timeout: 90000
+          optional: true
+# Calendar + skip if scheduled meal present
+- openLink: shc-customer:///(customer)/tiffin/calendar
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "tiffin-calendar-screen"
+    timeout: 60000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "tiffin-order-skip-btn"
+    commands:
+      - tapOn:
+          id: "tiffin-order-skip-btn"
+- assertVisible:
+    id: "tiffin-calendar-screen"
+    optional: true

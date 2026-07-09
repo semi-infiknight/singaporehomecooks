@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
+import { getCustomerId, tiffinCustomerError } from "../../../../../../lib/shc-actors";
 import ShcTiffinModuleService from "../../../../../../modules/shc-tiffin/service";
 
 const Body = z.object({ days: z.number().int().min(1).max(30).default(1) }).strict();
@@ -18,7 +18,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const result = await tiffin.pauseSubscription(customerId, parse.data.days);
     res.json({ subscription: result });
   } catch (e: any) {
-    if (e?.code) return res.status(400).json({ error: e });
-    return unauthorized(res, "Customer login required");
+    return tiffinCustomerError(res, e, "Pause failed");
   }
 }

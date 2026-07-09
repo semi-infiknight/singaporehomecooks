@@ -278,10 +278,12 @@ Each wave = **one goal**: many commits → one `FLAVOUR=* SCOPE=tiffin pnpm veri
 
 ### Wave 6 — Harden + ship
 
-1. Maestro Android + iOS: cook config, customer subscribe, skip, pause.  
-2. `pnpm verify:full`.  
-3. Railway smoke curl suite for all new routes.  
-4. Blueprint full sync (05/06/09/10/12/CURRENT/INDEX).
+1. [x] Maestro: cook `tiffin-config.yaml`; customer `tiffin-subscribe.yaml` + **`tiffin-flex-os.yaml`** (pause/recharge/calendar); `pnpm e2e:tiffin`  
+2. [x] Verify hooks: `SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal` runs `pnpm smoke:tiffin`; full milestone includes tiffin smoke  
+3. [x] Railway smoke: `scripts/smoke-tiffin-routes.ts` (`pnpm smoke:tiffin`) — kitchens, sub, pause, resume, recharge, skip, cook menu  
+4. [x] Blueprint: CURRENT_STATE + INDEX progress; false-401 subscribe error masking fixed in tiffin routes  
+
+**Post-wave ship:** `git push` + medusa redeploy so ledger writes + honest error bodies go live.
 
 ---
 
