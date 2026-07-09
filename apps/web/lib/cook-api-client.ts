@@ -69,6 +69,13 @@ export async function clearCookSession() {
 }
 
 export const loginCook = (email: string, password: string) => cookClient.loginCook(email, password);
+export const updateCookProfile = (input: {
+  display_name?: string;
+  area?: string;
+  story?: string;
+  collection_instructions?: string;
+  pdpa_consent?: boolean;
+}) => cookClient.updateCookProfile(input);
 export const isCookAuthenticated = () => Boolean(readCookToken());
 export const getCookUser = () => cookClient.getCurrentUser();
 export const getCookOrders = () => cookClient.getMyOrders('cook');

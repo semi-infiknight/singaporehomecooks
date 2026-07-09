@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { BENTO_ACTION_IMAGES } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
+import { clearCookOnboardingSeen } from '../../../lib/onboarding';
 import {
   useCookOrders,
   useOpenRequests,
@@ -62,6 +63,18 @@ export default function CookDashboardPage() {
           </>
         }
       />
+
+      <Link
+        href="/cook-portal/onboarding"
+        onClick={() => clearCookOnboardingSeen()}
+        data-testid="cook-kitchen-tour-link"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
+      >
+        <p className="font-black text-foreground">Kitchen setup tour</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+          Story · collection · PDPA — replay anytime
+        </p>
+      </Link>
 
       <div className="grid grid-cols-3 gap-2 mb-6">
         <GourmeatCard className="bg-[var(--shc-bento-mint)] text-center col-span-1">

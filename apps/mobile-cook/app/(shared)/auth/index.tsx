@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
-import { hasSeenCookOnboarding } from '../../../lib/onboarding';
+import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../../lib/onboarding';
 
 export default function CookAuthScreen() {
   const { login, register } = useAuth();
@@ -167,7 +167,20 @@ export default function CookAuthScreen() {
         </Pressable>
 
         {mode === 'login' && (
-          <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret</Text>
+          <Pressable
+            onPress={async () => {
+              await clearCookOnboardingSeen();
+              setMode('register');
+            }}
+            style={styles.modeToggle}
+            testID="cook-auth-tour-hint"
+          >
+            <Text style={styles.modeToggleText}>Want the kitchen tour? Create account → setup after sign-up</Text>
+          </Pressable>
+        )}
+
+        {mode === 'login' && (
+          <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret — tour shows if not completed yet</Text>
         )}
       </ScrollView>
     </KeyboardAvoidingView>

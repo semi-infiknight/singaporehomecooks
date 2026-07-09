@@ -28,6 +28,7 @@ import {
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
 import { useMyOrders, useRequests, useCreateBid } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
+import { clearCookOnboardingSeen } from '../../lib/onboarding';
 
 const QUICK_ACTIONS = [
   { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
@@ -86,6 +87,19 @@ export default function CookDashboard() {
           </View>
         }
       />
+
+      <Pressable
+        onPress={async () => {
+          await clearCookOnboardingSeen();
+          router.push('/(shared)/onboarding' as any);
+        }}
+        style={styles.tourBanner}
+        testID="cook-kitchen-tour-link"
+        accessibilityRole="button"
+      >
+        <Text style={styles.tourBannerTitle}>Kitchen setup tour</Text>
+        <Text style={styles.tourBannerSub}>Story · collection · PDPA — replay anytime</Text>
+      </Pressable>
 
       <SHCFadeIn delay={60}>
       <SHCBentoGrid style={styles.earningsBento}>
@@ -301,6 +315,17 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
   heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
+  tourBanner: {
+    marginBottom: shcSpacing.md,
+    padding: shcSpacing.md,
+    borderRadius: shcRadii.lg,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: shcColors.bentoPeach || '#FFE8DE',
+    ...shcShadows.brutalSm,
+  },
+  tourBannerTitle: { fontSize: 16, fontWeight: '800', color: shcColors.text },
+  tourBannerSub: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },
   earningsBento: { marginBottom: shcSpacing.md },
   earningsHero: { padding: 0, overflow: 'hidden' },
   earningsVisual: { margin: -shcSpacing.sm },

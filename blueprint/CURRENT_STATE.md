@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **First open → onboarding carousel** (not sign-in): mobile root + web `/` gate when `shc_onboarding_seen_v1` unset; guest/skip/sign-in marks seen. Homepage remains full marketplace after tour.
+**Last Updated:** 2026-07-09 — **Customer + cook onboarding:** customer first-open carousel (`shc_onboarding_seen_v1`); cook kitchen setup after login (`shc_cook_onboarding_seen_v1`) on mobile-cook + web `/cook-portal/onboarding`; dashboard “Kitchen setup tour” to replay.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -13,7 +13,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | Layer | Status | Notes |
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | **Discover homepage** = marketplace (promo banner → categories → order modes → kitchens → dish grid); tiffin deep-link via banner/`/(customer)/tiffin`; location; checkout; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + 4-step onboarding; dashboard **Tiffin** quick action → `/(cook)/tiffin` (enable kitchen, collection days, eligible dishes); orders/listings/compliance; Expo `:8082` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + **4-step kitchen onboarding** (post-login if unseen); dashboard **Kitchen setup tour** replay; **Tiffin** → `/(cook)/tiffin`; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops + **Tiffin** | **`/` homepage** marketplace IA (subscription banner only + one-off/events/kitchens/dishes); **`/tiffin/*`**; **full `/cook-portal`** (+ tiffin); `/ops`; PWA; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |

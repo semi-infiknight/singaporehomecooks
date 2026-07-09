@@ -49,6 +49,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const isOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
 
   if (isCookPortal) {
+    const isCookOnboarding = pathname.startsWith('/cook-portal/onboarding');
+    if (isCookOnboarding) {
+      return (
+        <main className="flex-1 w-full bg-background" data-testid="cook-onboarding-chrome">
+          {children}
+        </main>
+      );
+    }
     return (
       <>
         <main className="flex-1 w-full pb-[100px] bg-background md:pb-0">
