@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * AGENT: Railway-only client env — blueprint/agent/build-protocol.md
- * Source: config/railway-client.json → apps/*/.env.local via pnpm env:sync
+ * Source: config/railway-client.json → app .env.local files via pnpm env:sync
  * Never point clients at localhost:9000.
  */
 import fs from 'node:fs';
