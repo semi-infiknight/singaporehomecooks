@@ -1,5 +1,5 @@
 /**
- * Cooking soon — order into a cook batch.
+ * Cooking soon — add to cart → existing checkout (one-cook path).
  */
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GourmeatPrimaryButton, gourmeatColors, shcSpacing } from '@shc/ui';
 import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
-import { useDrop, useOrderDrop } from '../../../hooks/useOrder';
+import { useDrop, useAddDropToCart } from '../../../hooks/useOrder';
 
 export default function DropOrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,7 +17,7 @@ export default function DropOrderScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: drop, isLoading } = useDrop(dropId);
-  const orderMut = useOrderDrop();
+  const addMut = useAddDropToCart();
   const [qty, setQty] = useState(1);
   const [error, setError] = useState('');
 
@@ -29,19 +29,17 @@ export default function DropOrderScreen() {
     return unit * qty;
   }, [drop, qty]);
 
-  async function place() {
+  async function goCheckout() {
     setError('');
     if (!user) {
       router.push('/(shared)/auth' as any);
       return;
     }
     try {
-      const res: any = await orderMut.mutateAsync({ id: dropId, qty });
-      const orderId = res?.order?.id;
-      if (orderId) router.replace(`/(customer)/orders/${orderId}` as any);
-      else router.replace('/(customer)/orders' as any);
+      await addMut.mutateAsync({ id: dropId, qty });
+      router.push('/(customer)/checkout' as any);
     } catch (e: any) {
-      setError(e?.message || 'Could not order batch');
+      setError(e?.message || 'Could not add batch to cart');
     }
   }
 
@@ -95,9 +93,9 @@ export default function DropOrderScreen() {
         </Text>
       )}
       <GourmeatPrimaryButton
-        label={orderMut.isPending ? 'Placing…' : open ? 'Order this batch' : 'Unavailable'}
-        onPress={place}
-        disabled={!open || orderMut.isPending}
+        label={addMut.isPending ? 'Adding…' : open ? 'Continue to checkout' : 'Unavailable'}
+        onPress={goCheckout}
+        disabled={!open || addMut.isPending}
         testID="drop-order-submit"
       />
     </View>

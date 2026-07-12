@@ -174,6 +174,15 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).cart;
     },
 
+    /** Cooking soon — add batch to cart (capacity reserved at checkout complete) */
+    async addDropToCart(dropId: string, qty: number) {
+      const r = await request("/store/shc/cart", {
+        method: "POST",
+        body: JSON.stringify({ drop_id: dropId, qty }),
+      });
+      return (r as any).cart;
+    },
+
     async getCart() {
       const r = await request("/store/shc/cart", { method: "GET" });
       return (r as any).cart;
@@ -351,7 +360,10 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).drop;
     },
 
-    /** Order into a Cooking soon batch (fixed collection from drop) */
+    /**
+     * @deprecated Prefer addDropToCart + checkout (one-cook cart path).
+     * Kept for admin/smoke; customer UIs must not call this.
+     */
     async orderDrop(id: string, qty: number, opts?: { allergen_acked?: boolean; pdpa_consent?: boolean }) {
       return request(`/store/shc/drops/${encodeURIComponent(id)}/order`, {
         method: "POST",

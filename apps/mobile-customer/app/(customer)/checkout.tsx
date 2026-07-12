@@ -93,6 +93,25 @@ export default function Checkout() {
   const [allergenAck, setAllergenAck] = useState(false);
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: string } | null>(null);
+
+  const dropCart = Boolean(
+    (cartRaw as any)?.drop_id || (cartRaw as any)?.items?.some?.((i: any) => i.drop_id)
+  );
+  const dropCollection = (() => {
+    const c = cartRaw as any;
+    if (c?.collection_date && c?.collection_slot) {
+      return { date: String(c.collection_date), slot: String(c.collection_slot) };
+    }
+    const line = c?.items?.find?.((i: any) => i.drop_id);
+    if (line?.collection_date && line?.collection_slot) {
+      return { date: String(line.collection_date), slot: String(line.collection_slot) };
+    }
+    return null;
+  })();
+
+  useEffect(() => {
+    if (dropCart && dropCollection) setSelectedSlot(dropCollection);
+  }, [dropCart, dropCollection?.date, dropCollection?.slot]);
   const [error, setError] = useState<null | { code?: SHCErrorCode; message: string }>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -284,8 +303,21 @@ export default function Checkout() {
 
         <SHCFadeIn>
           <SHCCard style={styles.sectionCard}>
-            <SHCSectionTitle style={styles.sectionTitle}>1. Collection Slot (availability enforced)</SHCSectionTitle>
-            <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
+            <SHCSectionTitle style={styles.sectionTitle}>
+              {dropCart ? '1. Collection (Cooking soon — locked)' : '1. Collection Slot (availability enforced)'}
+            </SHCSectionTitle>
+            {dropCart && dropCollection ? (
+              <View testID="checkout-drop-collection-locked">
+                <Text style={{ fontWeight: '800', fontSize: 15 }}>
+                  {dropCollection.date} · {dropCollection.slot}
+                </Text>
+                <Text style={{ marginTop: 4, fontSize: 12, fontWeight: '600', opacity: 0.7 }}>
+                  Fixed by the cook’s batch. Capacity reserved at place order.
+                </Text>
+              </View>
+            ) : (
+              <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
+            )}
           </SHCCard>
 
           <SHCCard style={styles.sectionCard}>
@@ -305,10 +337,10 @@ export default function Checkout() {
               testID="pdpa-consent"
               style={[styles.pdpaRow, pdpaConsent && styles.pdpaRowChecked]}
             >
-              <View style={[styles.pdpaBox, pdpaConsent && styles.pdpaBoxChecked]}>
+              <View style={[styles.pdpaBox, pdpaConsent && styles.pdpaBoxChecked]} testID="pdpa-consent-box" pointerEvents="none">
                 {pdpaConsent && <Text style={styles.pdpaCheck}>✓</Text>}
               </View>
-              <Text style={styles.pdpaText}>
+              <Text style={styles.pdpaText} pointerEvents="none">
                 I consent to the collection and use of my personal data (contact, address, order history) solely for order fulfilment and platform operations, in line with PDPA.
               </Text>
             </Pressable>

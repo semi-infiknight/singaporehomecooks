@@ -63,6 +63,29 @@ export default function CheckoutPage() {
   const [allergenAck, setAllergenAck] = useState(false);
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [selected, setSelected] = useState<{ date: string; slot: string } | null>(null);
+
+  // Cooking soon cart: lock collection to batch date/slot (server also enforces on complete)
+  const dropCart = Boolean(
+    (cart as any)?.drop_id ||
+      (cart.items as any[])?.some((i: any) => i.drop_id)
+  );
+  const dropCollection = (() => {
+    const c = cart as any;
+    if (c?.collection_date && c?.collection_slot) {
+      return { date: String(c.collection_date), slot: String(c.collection_slot) };
+    }
+    const line = (cart.items as any[])?.find((i: any) => i.drop_id);
+    if (line?.collection_date && line?.collection_slot) {
+      return { date: String(line.collection_date), slot: String(line.collection_slot) };
+    }
+    return null;
+  })();
+
+  useEffect(() => {
+    if (dropCart && dropCollection) {
+      setSelected(dropCollection);
+    }
+  }, [dropCart, dropCollection?.date, dropCollection?.slot]);
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paynowRef, setPaynowRef] = useState('');
@@ -308,14 +331,33 @@ export default function CheckoutPage() {
         </div>
       </SHCCard>
 
-      <SHCSectionTitle subtitle="Choose when you'll collect from the cook's home">
+      <SHCSectionTitle
+        subtitle={
+          dropCart
+            ? 'Fixed by the cook’s Cooking soon batch'
+            : "Choose when you'll collect from the cook's home"
+        }
+      >
         Collection slot
       </SHCSectionTitle>
-      <CollectionSlotPicker
-        slots={slots}
-        selected={selected}
-        onSelect={(d, s) => setSelected({ date: d, slot: s })}
-      />
+      {dropCart && dropCollection ? (
+        <SHCCard className="mb-4 p-4" data-testid="checkout-drop-collection-locked">
+          <p className="text-sm font-black">Cooking soon · collection locked</p>
+          <p className="mt-1 text-sm font-semibold">
+            {dropCollection.date} · {dropCollection.slot}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Capacity is reserved when you place the order (not when adding to cart).
+          </p>
+        </SHCCard>
+      ) : null}
+      {!dropCart && (
+        <CollectionSlotPicker
+          slots={slots}
+          selected={selected}
+          onSelect={(d, s) => setSelected({ date: d, slot: s })}
+        />
+      )}
 
       <SHCSectionTitle subtitle="Required before we can process your order">Safety & consent</SHCSectionTitle>
       <AllergenAckCheckbox checked={allergenAck} onChange={setAllergenAck} testID="allergen-checkout-web" />

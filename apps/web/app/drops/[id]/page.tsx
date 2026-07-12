@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * Cooking soon — order into a cook batch (fixed collection date/slot).
+ * Cooking soon — add batch to cart → existing checkout (one-cook + PayNow).
  */
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
 import { useAuth } from '../../../lib/useAuth';
-import { useDrop, useOrderDrop } from '../../../lib/useOrder';
+import { useDrop, useAddDropToCart } from '../../../lib/useOrder';
 import { SHCBadge, SHCButton, SHCCard, SHCLoading, SHCPageHeader } from '../../components/SHCWebComponents';
 
 export default function DropOrderPage() {
@@ -17,9 +17,8 @@ export default function DropOrderPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { data: drop, isLoading, error } = useDrop(id);
-  const orderMut = useOrderDrop();
+  const addMut = useAddDropToCart();
   const [qty, setQty] = useState(1);
-  const [ack, setAck] = useState(true);
   const [localError, setLocalError] = useState('');
 
   const remaining = Number(drop?.remaining_qty ?? drop?.max_qty ?? 0);
@@ -30,23 +29,18 @@ export default function DropOrderPage() {
     return unit * qty;
   }, [drop, qty]);
 
-  async function placeOrder() {
+  async function goToCheckout() {
     setLocalError('');
     if (!user) {
       router.push(`/login?next=/drops/${encodeURIComponent(id)}`);
       return;
     }
-    if (!ack) {
-      setLocalError('Please acknowledge allergens & PDPA to continue.');
-      return;
-    }
     try {
-      const res: any = await orderMut.mutateAsync({ id, qty });
-      const orderId = res?.order?.id;
-      if (orderId) router.push(`/orders/${encodeURIComponent(orderId)}`);
-      else router.push('/orders');
+      await addMut.mutateAsync({ id, qty });
+      // Real cart → checkout path (one-cook + allergen/PDPA/PayNow)
+      router.push(`/checkout?dropId=${encodeURIComponent(id)}`);
     } catch (e: any) {
-      setLocalError(e?.message || e?.error?.message || 'Could not place batch order');
+      setLocalError(e?.message || e?.error?.message || 'Could not add batch to cart');
     }
   }
 
@@ -83,7 +77,7 @@ export default function DropOrderPage() {
         </p>
         {drop.note && <p className="text-sm font-semibold">{drop.note}</p>}
         <p className="text-xs text-muted-foreground">
-          Collection is fixed to this batch — not mixed with other kitchens.
+          Collection is fixed to this batch. Checkout uses the normal cart path (one kitchen).
         </p>
       </SHCCard>
 
@@ -117,28 +111,22 @@ export default function DropOrderPage() {
         <p className="text-sm font-extrabold">
           Total <span className="text-primary">S${total.toFixed(2)}</span>
         </p>
-        <label className="flex items-start gap-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={ack}
-            onChange={(e) => setAck(e.target.checked)}
-            className="mt-1"
-            data-testid="drop-ack"
-          />
-          I acknowledge allergens &amp; PDPA for collection from this HDB kitchen.
-        </label>
-        {(localError || orderMut.isError) && (
+        {(localError || addMut.isError) && (
           <p className="text-sm font-bold text-red-700" data-testid="drop-order-error">
-            {localError || (orderMut.error as Error)?.message}
+            {localError || (addMut.error as Error)?.message}
           </p>
         )}
         <SHCButton
           className="w-full"
-          disabled={!open || orderMut.isPending}
-          onClick={placeOrder}
+          disabled={!open || addMut.isPending}
+          onClick={goToCheckout}
           testID="drop-order-submit"
         >
-          {orderMut.isPending ? 'Placing…' : open ? `Order · collect ${formatDropCookDate(drop.cook_date)}` : 'Unavailable'}
+          {addMut.isPending
+            ? 'Adding…'
+            : open
+              ? `Continue to checkout · ${formatDropCookDate(drop.cook_date)}`
+              : 'Unavailable'}
         </SHCButton>
         {drop.cook_slug && (
           <Link

@@ -103,16 +103,17 @@ export function useDrop(id: string) {
   });
 }
 
-export function useOrderDrop() {
+/** Cooking soon → cart (then /checkout for one-cook + PayNow) */
+export function useAddDropToCart() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, qty }: { id: string; qty: number }) => {
-      const { orderDrop } = await import('./api-client');
-      return orderDrop(id, qty);
+      const { addDropToCart } = await import('./api-client');
+      return addDropToCart(id, qty);
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cart'] });
       qc.invalidateQueries({ queryKey: ['drops'] });
-      qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['drop'] });
     },
   });

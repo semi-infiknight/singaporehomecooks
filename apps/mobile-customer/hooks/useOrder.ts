@@ -131,16 +131,16 @@ export function useDrop(id: string) {
     enabled: !!id,
   });
 }
-export function useOrderDrop() {
+export function useAddDropToCart() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, qty }: { id: string; qty: number }) => {
-      const { orderDrop } = await import('../lib/api-client');
-      return orderDrop(id, qty);
+      const { addDropToCart } = await import('../lib/api-client');
+      return addDropToCart(id, qty);
     },
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cart'] });
       qc.invalidateQueries({ queryKey: ['drops'] });
-      qc.invalidateQueries({ queryKey: ['orders'] });
       qc.invalidateQueries({ queryKey: ['drop'] });
     },
   });

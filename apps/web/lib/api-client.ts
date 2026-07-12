@@ -80,6 +80,7 @@ export const getCookBySlug = (slug: string) => client.getCookBySlug(slug);
 export const getProduct = (id: string) => client.getProduct(id);
 export const getSlots = (pid: string) => client.getSlots(pid);
 export const addToCart = (pid: string, qty: number) => client.addToCart(pid, qty);
+export const addDropToCart = (dropId: string, qty: number) => client.addDropToCart(dropId, qty);
 export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
 export const checkout = (ack: boolean, coll: { date: string; slot: string }, pdpa = true) =>
