@@ -51,6 +51,22 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return unauthorized(res, "Login required");
   }
 
+  // Normalize money: meta may store total_cents OR dollars in total
+  const rawTotal = m.total_cents != null ? Number(m.total_cents) : Number(m.total);
+  const total_cents =
+    Number.isFinite(rawTotal) && rawTotal > 0
+      ? rawTotal >= 1000 && Number.isInteger(rawTotal)
+        ? rawTotal // likely already cents
+        : Math.round(rawTotal * (rawTotal < 1000 ? 100 : 1))
+      : 0;
+  // Prefer explicit total_cents when present
+  const resolvedTotalCents =
+    m.total_cents != null && Number(m.total_cents) > 0
+      ? Math.round(Number(m.total_cents))
+      : m.total != null && Number(m.total) > 0
+        ? Math.round(Number(m.total) * 100)
+        : total_cents;
+
   const order = {
     id: m.order_id,
     order_id: m.order_id,
@@ -63,11 +79,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     collection_slot: m.collection_slot,
     paynow_reference: m.paynow_reference,
     items: m.items && m.items.length ? m.items : [{ name: "Order item", qty: 1 }],
-    total: m.total_cents ? Math.round(m.total_cents / 100) : m.total || 0,
-    total_cents: m.total_cents,
+    total: resolvedTotalCents / 100,
+    total_cents: resolvedTotalCents,
     credits_applied_cents: m.credits_applied_cents || 0,
     is_corporate: !!m.is_corporate,
-    created_at: m.created_at || m.updated_at,
+    created_at:
+      m.created_at instanceof Date
+        ? m.created_at.toISOString()
+        : m.created_at || m.updated_at instanceof Date
+          ? m.updated_at.toISOString()
+          : m.updated_at,
   };
 
   const invoice = buildOrderInvoice({

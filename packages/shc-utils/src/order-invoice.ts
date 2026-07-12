@@ -113,17 +113,29 @@ function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Normalize created_at from Date | ISO | locale string → YYYY-MM-DD */
+export function toInvoiceDate(v: unknown, fallback = new Date()): string {
+  if (v instanceof Date && !isNaN(v.getTime())) return isoDate(v);
+  if (v == null || v === '') return isoDate(fallback);
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return isoDate(d);
+  return isoDate(fallback);
+}
+
 function invoiceNumber(orderId: string, date: string): string {
   const safe = String(orderId || 'ORDER').replace(/[^A-Za-z0-9-]/g, '').slice(0, 24);
-  return `INV-${safe}-${date.replace(/-/g, '')}`;
+  const day = date.replace(/[^0-9]/g, '').slice(0, 8) || isoDate(new Date()).replace(/-/g, '');
+  return `INV-${safe}-${day}`;
 }
 
 export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
   const order = input.order || {};
   const orderId = String(order.id || order.order_id || 'UNKNOWN');
   const now = input.now ?? new Date();
-  const date = order.created_at ? String(order.created_at).slice(0, 10) : isoDate(now);
-  const totalCents = dollarsToCents(order.total, order.total_cents);
+  const date = toInvoiceDate(order.created_at, now);
+  let totalCents = dollarsToCents(order.total, order.total_cents);
   const rate = input.commissionRate ?? DEFAULT_COMMISSION_RATE;
   const platformFee = calculatePlatformFee(totalCents, rate);
   const cookEarn = calculateCookEarnings(totalCents, rate);
@@ -146,8 +158,10 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     };
   });
 
-  const linesSum = lines.reduce((s, l) => s + l.line_cents, 0);
-  if (lines.length === 0 || linesSum === 0) {
+  let linesSum = lines.reduce((s, l) => s + l.line_cents, 0);
+  // Prefer line sum when order total missing/zero but items have prices
+  if (totalCents <= 0 && linesSum > 0) totalCents = linesSum;
+  if (lines.length === 0 || (linesSum === 0 && totalCents > 0)) {
     // Single line from order total when snapshot lacks unit prices
     lines = [
       {
@@ -159,7 +173,8 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
         line_cents: totalCents,
       },
     ];
-  } else if (linesSum !== totalCents && totalCents > 0) {
+    linesSum = totalCents;
+  } else if (linesSum !== totalCents && totalCents > 0 && linesSum > 0) {
     // Adjust last line so sum matches paid total (credits / rounding)
     const diff = totalCents - linesSum;
     const last = lines[lines.length - 1];

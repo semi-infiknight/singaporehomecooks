@@ -70,4 +70,19 @@ describe('order-invoice', () => {
     expect(inv.total_cents).toBe(5000);
     expect(inv.lines[0].line_cents).toBe(5000);
   });
+
+  it('uses line sum when total is zero and dates stay ISO', () => {
+    const inv = buildOrderInvoice({
+      order: {
+        id: 'O2',
+        total: 0,
+        created_at: new Date('2026-07-10T12:00:00.000Z') as any,
+        items: [{ name: 'Laksa', qty: 2, unit_price_cents: 5800 }],
+      },
+      audience: 'customer',
+    });
+    expect(inv.total_cents).toBe(11600);
+    expect(inv.invoice_date).toBe('2026-07-10');
+    expect(inv.invoice_number).toMatch(/-20260710$/);
+  });
 });
