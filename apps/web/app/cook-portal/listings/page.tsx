@@ -21,7 +21,7 @@ import {
   useDeleteCookListing,
 } from '../../../lib/useCookPortal';
 import { useAICalorieEstimate } from '../../../lib/useProducts';
-import { getPhotoTips } from '../../../lib/api-client';
+import { getPhotoTips, generateListingImage } from '../../../lib/api-client';
 import {
   GourmeatCookHeader,
   GourmeatSearchBar,
@@ -96,6 +96,9 @@ export default function CookListingsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
   const [aiCal, setAiCal] = useState<{ calories: number; confidence: string; source?: string } | null>(null);
+  const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
+  const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
+  const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
@@ -159,10 +162,84 @@ export default function CookListingsPage() {
     }
   };
 
-  const previewImage = getDishImageUrl({ name, cuisine });
+  const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
+
+  const runAiPhoto = async (mode: 'generate' | 'enhance', imageBase64?: string) => {
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const res = await generateListingImage({
+        mode,
+        dish_name: name,
+        cuisine,
+        heritage_note: heritage,
+        image_base64: imageBase64,
+        ai_restyle: mode === 'enhance',
+      });
+      const url = res.webp_url || res.image_url || res.jpeg_url;
+      if (!url) throw new Error('No image URL returned');
+      setListingImageUrl(url);
+      setAiPhotoNote(
+        mode === 'generate'
+          ? `AI generated (${res.source || 'flux'}) — ${res.disclaimer || 'illustrative only'}`
+          : `Enhanced (${res.source || 'ai'}) — review before publish`
+      );
+    } catch (e) {
+      showErrorTray(
+        mode === 'generate' ? 'AI generate failed' : 'Enhance failed',
+        (e as Error).message || 'Could not create photo. Try upload instead.'
+      );
+    } finally {
+      setAiPhotoBusy(false);
+    }
+  };
+
+  const onUploadPhoto = async (file: File | null) => {
+    if (!file) return;
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Could not read file'));
+        reader.readAsDataURL(file);
+      });
+      // Direct upload path (no AI) — store as preview via enhance sharp path
+      const res = await generateListingImage({
+        mode: 'enhance',
+        dish_name: name,
+        cuisine,
+        heritage_note: heritage,
+        image_base64: dataUrl,
+        ai_restyle: false,
+      });
+      const url = res.webp_url || res.image_url || res.jpeg_url;
+      if (!url) throw new Error('Upload processing failed');
+      setListingImageUrl(url);
+      setAiPhotoNote('Photo uploaded and optimized');
+    } catch (e) {
+      showErrorTray('Upload failed', (e as Error).message || 'Could not process photo');
+    } finally {
+      setAiPhotoBusy(false);
+    }
+  };
+
+  const onEnhanceUpload = async (file: File | null) => {
+    if (!file) return;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
+    await runAiPhoto('enhance', dataUrl);
+  };
 
   const resetWizard = () => {
     setEditingId(null);
+    setListingImageUrl(null);
+    setAiPhotoNote(null);
     setName(DEFAULT_FORM.name);
     setPrice(DEFAULT_FORM.price);
     setMinQty(DEFAULT_FORM.minQty);
@@ -224,7 +301,9 @@ export default function CookListingsPage() {
       ingredients,
       allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
       heritage_note: heritage,
-      image_url: `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
+      image_url:
+        listingImageUrl ||
+        `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
     };
     if (aiCal) {
       input.calories = aiCal.calories;
@@ -527,6 +606,59 @@ export default function CookListingsPage() {
                 🔥 AI Calories
               </SHCButton>
               {aiCal ? <CalorieBadge calories={aiCal.calories} /> : null}
+              <div className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 space-y-2" data-testid="listing-photo-panel">
+                <p className="text-sm font-extrabold">Dish photo</p>
+                <p className="text-xs text-muted-foreground">
+                  Upload · Generate with AI (Cloudflare FLUX) · or enhance a cook photo
+                </p>
+                {listingImageUrl ? (
+                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-border">
+                    <Image src={listingImageUrl} alt="" fill className="object-cover" sizes="400px" unoptimized />
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <label className="cursor-pointer">
+                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2 text-xs font-extrabold">
+                      Upload
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      data-testid="listing-photo-upload"
+                      disabled={aiPhotoBusy}
+                      onChange={(e) => void onUploadPhoto(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  <SHCButton
+                    size="sm"
+                    variant="outline"
+                    disabled={aiPhotoBusy || !name.trim()}
+                    onClick={() => void runAiPhoto('generate')}
+                    testID="listing-photo-generate"
+                  >
+                    {aiPhotoBusy ? 'Working…' : 'Generate AI'}
+                  </SHCButton>
+                  <label className="cursor-pointer">
+                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2 text-xs font-extrabold">
+                      Upload + AI enhance
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      data-testid="listing-photo-enhance"
+                      disabled={aiPhotoBusy}
+                      onChange={(e) => void onEnhanceUpload(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                </div>
+                {aiPhotoNote ? (
+                  <p className="text-[11px] font-semibold text-muted-foreground" data-testid="listing-photo-note">
+                    {aiPhotoNote}
+                  </p>
+                ) : null}
+              </div>
               <button
                 type="button"
                 onClick={openPhotoTipsTray}

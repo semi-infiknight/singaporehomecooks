@@ -96,6 +96,15 @@ export const getEarnings = () => client.getEarnings();
 export const getNotifications = () => client.getNotifications();
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
+export const generateListingImage = (input: {
+  mode: 'generate' | 'enhance';
+  dish_name: string;
+  cuisine?: string;
+  heritage_note?: string;
+  image_base64?: string;
+  ai_restyle?: boolean;
+}) => client.generateListingImage(input);
+export const getAiImageStatus = () => client.getAiImageStatus();
 export const registerPushToken = (cookId: string, token: string) =>
   client.registerPushToken(token, { cookId, role: 'cook' });
 export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);

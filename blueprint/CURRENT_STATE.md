@@ -30,7 +30,8 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 | **Admin / Ops** (Medusa Admin) | ✅ Single admin app | Stock `/app` + **SHC Ops** UI routes (`/app/shc-ops/*`) using `@medusajs/ui`; APIs `/admin/shc/*`; web `/ops` redirects to Medusa |
-| **Cooking soon (cook drops)** | ✅ v1 | Cook posts batch (qty, order-by, collection); home rail + kitchen section; `POST /store/shc/drops/:id/order`; inverse of request-dish |
+| **Cooking soon (cook drops)** | ✅ v1 | Cook posts batch (qty, order-by, collection); home rail + kitchen section; cart→checkout path; inverse of request-dish |
+| **Listing AI photos** | ✅ v1 | Cook listing: Upload / Generate (Cloudflare FLUX) / Enhance; `POST /store/shc/ai/image` → MinIO WebP; needs CF env on medusa |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 

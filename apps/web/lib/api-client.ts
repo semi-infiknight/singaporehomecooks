@@ -113,6 +113,15 @@ export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
 export const markNotificationsRead = (ids?: string[], all = false) =>
   client.markNotificationsRead(ids, all);
 export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
+export const generateListingImage = (input: {
+  mode: 'generate' | 'enhance';
+  dish_name: string;
+  cuisine?: string;
+  heritage_note?: string;
+  image_base64?: string;
+  ai_restyle?: boolean;
+}) => client.generateListingImage(input);
+export const getAiImageStatus = () => client.getAiImageStatus();
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);

@@ -456,6 +456,39 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).tips ? r : { tips: (r as any).tips };
     },
 
+    /** AI listing photo: generate (FLUX) or enhance (sharp / FLUX restyle) */
+    async generateListingImage(input: {
+      mode: "generate" | "enhance";
+      dish_name: string;
+      cuisine?: string;
+      heritage_note?: string;
+      image_base64?: string;
+      ai_restyle?: boolean;
+    }) {
+      return request("/store/shc/ai/image", {
+        method: "POST",
+        body: JSON.stringify(input),
+      }) as Promise<{
+        image_url?: string;
+        webp_url?: string;
+        jpeg_url?: string;
+        key?: string;
+        source?: string;
+        disclaimer?: string;
+        width?: number;
+        height?: number;
+        bytes?: number;
+      }>;
+    },
+
+    async getAiImageStatus() {
+      return request("/store/shc/ai/image", { method: "GET" }) as Promise<{
+        configured?: boolean;
+        modes?: string[];
+        model?: string;
+      }>;
+    },
+
     async registerPushToken(
       token: string,
       opts?: { cookId?: string; role?: "cook" | "customer" }

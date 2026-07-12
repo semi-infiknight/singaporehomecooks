@@ -1,0 +1,175 @@
+/**
+ * Cloudflare Workers AI — FLUX.1 [schnell] for cook listing photos.
+ * Server-side only; free tier ~10k Neurons/day. Small output (512) then WebP.
+ *
+ * Env:
+ *   CLOUDFLARE_ACCOUNT_ID
+ *   CLOUDFLARE_API_TOKEN   (Workers AI permission)
+ *   SHC_AI_IMAGE_STEPS     (default 4, max 8)
+ *   SHC_AI_IMAGE_MAX_PX    (default 640)
+ */
+
+import sharp from "sharp";
+
+const CF_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+
+export type FoodImageMode = "generate" | "enhance";
+
+export function isCloudflareImageConfigured(): boolean {
+  return Boolean(process.env.CLOUDFLARE_ACCOUNT_ID?.trim() && process.env.CLOUDFLARE_API_TOKEN?.trim());
+}
+
+export function buildFoodPhotoPrompt(input: {
+  dish_name: string;
+  cuisine?: string;
+  heritage_note?: string;
+  enhance?: boolean;
+}): string {
+  const dish = (input.dish_name || "home cooked dish").trim().slice(0, 80);
+  const cuisine = (input.cuisine || "Singapore").trim().slice(0, 40);
+  const heritage = (input.heritage_note || "").trim().slice(0, 120);
+  const base = input.enhance
+    ? `Professional food-app photograph of ${dish}, ${cuisine} cuisine, enhanced natural window light, appetizing steam if hot food, clean ceramic plate, shallow depth of field, photorealistic, no text, no watermark, no logo, high detail`
+    : `Photorealistic plated ${dish}, ${cuisine} home kitchen Singapore, natural HDB window light, banana leaf or ceramic plate optional, appetizing, square food photography for delivery app, no text, no watermark, no hands, no logo`;
+  if (heritage) return `${base}. Story: ${heritage}`;
+  return base;
+}
+
+/**
+ * Call Cloudflare FLUX.1 schnell → JPEG base64.
+ */
+export async function generateFluxImage(prompt: string, opts?: { steps?: number; seed?: number }): Promise<Buffer> {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
+  const token = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  if (!accountId || !token) {
+    throw new Error("Cloudflare Workers AI not configured (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN)");
+  }
+
+  const steps = Math.min(8, Math.max(1, opts?.steps ?? Number(process.env.SHC_AI_IMAGE_STEPS || 4)));
+  const seed = opts?.seed ?? Math.floor(Math.random() * 2_147_483_647);
+
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${CF_MODEL}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: prompt.slice(0, 2048),
+      steps,
+      seed,
+    }),
+  });
+
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg =
+      body?.errors?.[0]?.message ||
+      body?.error?.message ||
+      body?.messages?.[0] ||
+      `Cloudflare AI ${res.status}`;
+    throw new Error(String(msg));
+  }
+
+  // Response shapes: { result: { image: base64 } } or { result: { image: "..." } } or { image }
+  const b64 =
+    body?.result?.image ||
+    body?.result?.images?.[0] ||
+    body?.image ||
+    body?.result;
+  if (typeof b64 !== "string" || b64.length < 32) {
+    throw new Error("Cloudflare AI returned no image data");
+  }
+  const clean = b64.replace(/^data:image\/\w+;base64,/, "");
+  return Buffer.from(clean, "base64");
+}
+
+/** Resize + WebP for listing cards (small file). */
+export async function compressListingImage(input: Buffer, maxPx = 640): Promise<{ webp: Buffer; width: number; height: number }> {
+  const max = Math.min(1024, Math.max(256, maxPx || Number(process.env.SHC_AI_IMAGE_MAX_PX || 640)));
+  const { data, info } = await sharp(input)
+    .rotate()
+    .resize({
+      width: max,
+      height: max,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 80, effort: 4 })
+    .toBuffer({ resolveWithObject: true });
+  return {
+    webp: data,
+    width: info.width || max,
+    height: info.height || max,
+  };
+}
+
+/**
+ * Non-AI enhance: normalize lighting/contrast for cook phone photos (always free).
+ */
+export async function sharpEnhanceFoodPhoto(input: Buffer): Promise<Buffer> {
+  return sharp(input)
+    .rotate()
+    .normalize()
+    .modulate({ brightness: 1.05, saturation: 1.08 })
+    .sharpen({ sigma: 0.8 })
+    .jpeg({ quality: 88 })
+    .toBuffer();
+}
+
+/**
+ * Generate or enhance food listing image.
+ * - generate: FLUX from dish name
+ * - enhance: sharp polish of upload; if dish_name given also can AI-restyle via FLUX
+ */
+export async function createListingFoodImage(input: {
+  mode: FoodImageMode;
+  dish_name: string;
+  cuisine?: string;
+  heritage_note?: string;
+  /** base64 of uploaded photo (enhance mode) */
+  image_base64?: string;
+  /** If true in enhance mode, also run FLUX restyle (uses neurons). Default true when CF configured. */
+  ai_restyle?: boolean;
+}): Promise<{ buffer: Buffer; contentType: string; source: string; prompt?: string }> {
+  if (input.mode === "enhance") {
+    if (!input.image_base64) {
+      throw new Error("image_base64 required for enhance mode");
+    }
+    const raw = Buffer.from(input.image_base64.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    if (raw.length < 100) throw new Error("Invalid image data");
+
+    const wantAi =
+      input.ai_restyle !== false && isCloudflareImageConfigured() && Boolean(input.dish_name?.trim());
+
+    if (wantAi) {
+      // AI restyle: generate polished food photo from dish metadata (FLUX has no img2img on schnell)
+      const prompt = buildFoodPhotoPrompt({
+        dish_name: input.dish_name,
+        cuisine: input.cuisine,
+        heritage_note: input.heritage_note,
+        enhance: true,
+      });
+      const gen = await generateFluxImage(prompt, { steps: 4 });
+      return { buffer: gen, contentType: "image/jpeg", source: "cloudflare-flux-restyle", prompt };
+    }
+
+    const polished = await sharpEnhanceFoodPhoto(raw);
+    return { buffer: polished, contentType: "image/jpeg", source: "sharp-enhance" };
+  }
+
+  // generate
+  if (!isCloudflareImageConfigured()) {
+    throw new Error("AI generate requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN");
+  }
+  if (!input.dish_name?.trim()) throw new Error("dish_name required for generate");
+  const prompt = buildFoodPhotoPrompt({
+    dish_name: input.dish_name,
+    cuisine: input.cuisine,
+    heritage_note: input.heritage_note,
+    enhance: false,
+  });
+  const gen = await generateFluxImage(prompt, { steps: 4 });
+  return { buffer: gen, contentType: "image/jpeg", source: "cloudflare-flux", prompt };
+}

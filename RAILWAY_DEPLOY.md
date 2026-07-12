@@ -71,6 +71,10 @@ This sets `${{Service.VAR}}` references on medusa, worker, and web so Postgres, 
 | `MEDUSA_PUBLIC_URL` | `https://<your-medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<your-medusa-domain>.up.railway.app` (no `https://`) |
 | `RAILWAY_SKIP_SEED` | Optional. Set `true` only to skip demo seed. Default: run full idempotent `seed.ts` on every boot (cooks, dishes, tiffin, growth). |
+| `CLOUDFLARE_ACCOUNT_ID` | Optional. Workers AI account id for cook listing **AI photo generate** (FLUX.1 schnell). |
+| `CLOUDFLARE_API_TOKEN` | Optional. Token with Workers AI **Run** permission. Without these, upload/enhance-via-sharp still work; Generate returns 503. |
+| `SHC_AI_IMAGE_MAX_PX` | Optional. Max edge for listing images (default `640`). |
+| `SHC_AI_IMAGE_PER_COOK_HOUR` | Optional. Soft per-cook AI image cap (default `30`/hour). |
 
 4. Deploy. The entrypoint runs `db:migrate`, then **one** `seed.ts` pass (includes tiffin kitchen config — not a separate command), then starts the server.
 

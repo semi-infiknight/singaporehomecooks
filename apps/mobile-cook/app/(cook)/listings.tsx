@@ -51,8 +51,15 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAICalorieEstimate, useCookListings } from '../../hooks/useProducts';
-import { getPhotoTips, createCookListing, updateCookListing, deleteCookListing } from '../../lib/api-client';
+import {
+  getPhotoTips,
+  createCookListing,
+  updateCookListing,
+  deleteCookListing,
+  generateListingImage,
+} from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import * as ImagePicker from 'expo-image-picker';
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -112,6 +119,9 @@ export default function CookListings() {
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
+  const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
+  const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
+  const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,10 +169,12 @@ export default function CookListings() {
     }
   };
 
-  const previewImage = getDishImageUrl({ name, cuisine });
+  const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
 
   const resetWizard = () => {
     setEditingId(null);
+    setListingImageUrl(null);
+    setAiPhotoNote(null);
     setName('New Nyonya Dish');
     setPrice(14);
     setMinQty(4);
@@ -209,6 +221,46 @@ export default function CookListings() {
     },
     [dismiss, openTray]
   );
+
+  const pickImageBase64 = async (): Promise<string | null> => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      showErrorTray('Permission needed', 'Allow photo library access to upload a dish photo.');
+      return null;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets?.[0]?.base64) return null;
+    const asset = result.assets[0];
+    const mime = asset.mimeType || 'image/jpeg';
+    return `data:${mime};base64,${asset.base64}`;
+  };
+
+  const runAiPhoto = async (mode: 'generate' | 'enhance', imageBase64?: string) => {
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const res = await generateListingImage({
+        mode,
+        dish_name: name,
+        cuisine,
+        heritage_note: heritage,
+        image_base64: imageBase64,
+        ai_restyle: mode === 'enhance',
+      });
+      const url = res.webp_url || res.image_url || res.jpeg_url;
+      if (!url) throw new Error('No image URL returned');
+      setListingImageUrl(url);
+      setAiPhotoNote(mode === 'generate' ? 'AI generated (FLUX)' : `Enhanced (${res.source || 'ai'})`);
+    } catch (e) {
+      showErrorTray(mode === 'generate' ? 'AI generate failed' : 'Enhance failed', (e as Error).message);
+    } finally {
+      setAiPhotoBusy(false);
+    }
+  };
 
   const performDelete = async (listing: any) => {
     if (listing.id === E2E_COOK_SEED_LISTING.id) return;
@@ -306,22 +358,8 @@ export default function CookListings() {
       heritage_note: heritage,
     };
 
-    // Full MinIO server upload example (auth on backend):
-    // In real app: use expo-image-picker, convert to base64, call uploadImageToServer
-    // Here: demo with a tiny placeholder image (1x1 red pixel jpeg base64)
-    try {
-      const { uploadImageToServer } = await import('../../lib/api-client');
-      const tinyJpegBase64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/ALQ'; // tiny placeholder
-      const uploadRes = await uploadImageToServer(tinyJpegBase64, `dish-${name.toLowerCase().replace(/\s+/g,'-')}.jpg`, user?.id || 'demo-cook');
-      const upload = uploadRes as { webp_url?: string; url?: string } | null | undefined;
-      if (upload?.webp_url || upload?.url) {
-        input.image_url = upload.webp_url || upload.url; // prefer optimized WebP derivative
-      } else {
-        input.image_url = `https://picsum.photos/seed/${name.replace(/\s+/g,'')}/400/300`;
-      }
-    } catch {
-      input.image_url = `https://picsum.photos/seed/${name.replace(/\s+/g,'')}/400/300`;
-    }
+    input.image_url =
+      listingImageUrl || `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`;
 
     if (aiCal) {
       input.calories = aiCal.calories;
@@ -486,6 +524,65 @@ export default function CookListings() {
             <SHCButtonText>🔥 AI Calories</SHCButtonText>
           </SHCButton>
           {aiCal && <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} />}
+          <View style={styles.photoPanel} testID="listing-photo-panel">
+            <Text style={styles.photoPanelTitle}>Dish photo</Text>
+            <Text style={styles.photoPanelHint}>Upload · Generate AI (FLUX) · Upload + enhance</Text>
+            {listingImageUrl ? (
+              <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
+            ) : null}
+            <View style={styles.photoActions}>
+              <SHCButton
+                variant="outline"
+                disabled={aiPhotoBusy}
+                testID="listing-photo-upload"
+                onPress={async () => {
+                  const b64 = await pickImageBase64();
+                  if (!b64) return;
+                  setAiPhotoBusy(true);
+                  try {
+                    const res = await generateListingImage({
+                      mode: 'enhance',
+                      dish_name: name,
+                      cuisine,
+                      heritage_note: heritage,
+                      image_base64: b64,
+                      ai_restyle: false,
+                    });
+                    const url = res.webp_url || res.image_url;
+                    if (url) {
+                      setListingImageUrl(url);
+                      setAiPhotoNote('Photo uploaded & optimized');
+                    }
+                  } catch (e) {
+                    showErrorTray('Upload failed', (e as Error).message);
+                  } finally {
+                    setAiPhotoBusy(false);
+                  }
+                }}
+              >
+                <SHCButtonText>Upload</SHCButtonText>
+              </SHCButton>
+              <SHCButton
+                variant="outline"
+                disabled={aiPhotoBusy || !name.trim()}
+                testID="listing-photo-generate"
+                onPress={() => void runAiPhoto('generate')}
+              >
+                <SHCButtonText>{aiPhotoBusy ? '…' : 'Generate AI'}</SHCButtonText>
+              </SHCButton>
+              <SHCButton
+                disabled={aiPhotoBusy}
+                testID="listing-photo-enhance"
+                onPress={async () => {
+                  const b64 = await pickImageBase64();
+                  if (b64) await runAiPhoto('enhance', b64);
+                }}
+              >
+                <SHCButtonText>AI enhance</SHCButtonText>
+              </SHCButton>
+            </View>
+            {aiPhotoNote ? <Text style={styles.photoNote}>{aiPhotoNote}</Text> : null}
+          </View>
           <Pressable
             onPress={async () => {
               const tips = await getPhotoTips();
@@ -604,6 +701,20 @@ const styles = StyleSheet.create({
   },
   reviewName: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15, flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 8 },
+  photoPanel: {
+    marginTop: 8,
+    marginBottom: 8,
+    padding: shcSpacing.sm,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.md,
+    backgroundColor: shcColors.surface,
+    gap: 8,
+  },
+  photoPanelTitle: { fontSize: 14, fontWeight: '800', color: shcColors.text },
+  photoPanelHint: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
+  photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  photoNote: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
   publishedCard: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm },
   trayActions: { gap: shcSpacing.sm },
   trayActionBtn: {
