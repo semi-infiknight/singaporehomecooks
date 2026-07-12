@@ -71,6 +71,20 @@ describe('order-invoice', () => {
     expect(inv.lines[0].line_cents).toBe(5000);
   });
 
+  it('reads item.price dollars from order snapshot', () => {
+    const inv = buildOrderInvoice({
+      order: {
+        id: 'SHC-03360926',
+        total: 300,
+        items: [{ qty: 5, name: 'Nasi Lemak', price: 60 }],
+      },
+      audience: 'customer',
+    });
+    expect(inv.lines[0].unit_cents).toBe(6000);
+    expect(inv.lines[0].line_cents).toBe(30000);
+    expect(inv.total_cents).toBe(30000);
+  });
+
   it('uses line sum when total is zero and dates stay ISO', () => {
     const inv = buildOrderInvoice({
       order: {

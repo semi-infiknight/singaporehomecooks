@@ -116,12 +116,14 @@ async function main() {
   const kList = kOrders.json?.orders || [];
   console.log(`orders customer=${cList.length} cook=${kList.length}`);
 
-  const oid =
-    cList[0]?.id ||
-    cList[0]?.order_id ||
-    kList[0]?.id ||
-    kList[0]?.order_id;
+  const pickOrder = (list: any[]) => {
+    const withTotal = list.find((o) => Number(o?.total) > 0 || Number(o?.total_cents) > 0);
+    return withTotal || list[0];
+  };
+  const picked = pickOrder(cList) || pickOrder(kList);
+  const oid = picked?.id || picked?.order_id;
   if (!oid) throw new Error('No orders on Railway to invoice — place an order first');
+  console.log(`using order ${oid} total=${picked?.total}`);
 
   // Customer JSON + PDF
   const invC = await shc(`/store/shc/orders/${encodeURIComponent(oid)}/invoice`, { method: 'GET' }, ctoken);

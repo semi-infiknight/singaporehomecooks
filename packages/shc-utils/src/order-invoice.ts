@@ -74,7 +74,13 @@ export type BuildInvoiceInput = {
     collection_date?: string | null;
     collection_slot?: string | null;
     paynow_reference?: string | null;
-    items?: Array<{ name?: string; qty?: number; price_cents?: number; unit_price_cents?: number }>;
+    items?: Array<{
+      name?: string;
+      qty?: number;
+      price?: number; // dollars (common snapshot)
+      price_cents?: number;
+      unit_price_cents?: number;
+    }>;
     total?: number | string;
     total_cents?: number;
     credits_applied?: number;
@@ -143,12 +149,15 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
   const rawItems = Array.isArray(order.items) ? order.items : [];
   let lines: OrderInvoiceLine[] = rawItems.map((it, i) => {
     const qty = Math.max(1, Math.floor(Number(it.qty) || 1));
-    const unit =
-      it.unit_price_cents != null
-        ? Math.round(Number(it.unit_price_cents))
-        : it.price_cents != null
-          ? Math.round(Number(it.price_cents))
-          : 0;
+    let unit = 0;
+    if (it.unit_price_cents != null && Number(it.unit_price_cents) > 0) {
+      unit = Math.round(Number(it.unit_price_cents));
+    } else if (it.price_cents != null && Number(it.price_cents) > 0) {
+      unit = Math.round(Number(it.price_cents));
+    } else if (it.price != null && Number(it.price) > 0) {
+      // Snapshot stores dollars (e.g. 60) — convert to cents
+      unit = Math.round(Number(it.price) * 100);
+    }
     const line = unit > 0 ? unit * qty : 0;
     return {
       description: String(it.name || `Item ${i + 1}`),
