@@ -86,17 +86,17 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 /** POST /store/shc/drops — cook creates a Cooking soon batch */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const parse = CreateSchema.safeParse(req.body || {});
-  if (!parse.success) {
-    return res
-      .status(400)
-      .json({ error: createSHCError("SHC-GENERIC-001", "Invalid drop", parse.error.format() as any) });
-  }
   let cookId: string;
   try {
     cookId = getCookId(req);
   } catch {
     return unauthorized(res, "Cook login required");
+  }
+  const parse = CreateSchema.safeParse(req.body || {});
+  if (!parse.success) {
+    return res
+      .status(400)
+      .json({ error: createSHCError("SHC-GENERIC-001", "Invalid drop", parse.error.format() as any) });
   }
   const priceCents =
     parse.data.price_cents != null

@@ -28,6 +28,8 @@ export type DropRow = {
   updated_at?: string | Date;
 };
 
+const RESERVE_CAS_ATTEMPTS = 8;
+
 class ShcDropModuleService extends MedusaService({ Drop }) {
   shape(d: any) {
     const ordered = Number(d.ordered_qty || 0);
@@ -56,21 +58,31 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     };
   }
 
+  /** True only when customers may still order (open, capacity, before order_by). */
+  isOrderable(row: { status: string; max_qty: number; ordered_qty: number; order_by: string }, now = new Date()) {
+    return dropCanOrder(row.status, Number(row.max_qty), Number(row.ordered_qty), String(row.order_by), now).ok;
+  }
+
   async refreshStatus(row: DropRow): Promise<DropRow> {
-    const next = dropPostDeadlineStatus(row.status, Number(row.ordered_qty), Number(row.min_qty), String(row.order_by));
+    const next = dropPostDeadlineStatus(
+      row.status,
+      Number(row.ordered_qty),
+      Number(row.min_qty),
+      String(row.order_by)
+    );
     if (next && next !== row.status) {
       const [updated] = await this.updateDrops({
         selector: { id: row.id },
         data: { status: next } as any,
       });
-      return updated as DropRow;
+      return (updated as DropRow) || { ...row, status: next };
     }
     if (row.status === "open" && dropRemainingQty(Number(row.max_qty), Number(row.ordered_qty)) <= 0) {
       const [updated] = await this.updateDrops({
         selector: { id: row.id },
         data: { status: "sold_out" } as any,
       });
-      return updated as DropRow;
+      return (updated as DropRow) || { ...row, status: "sold_out" };
     }
     return row;
   }
@@ -114,24 +126,26 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     return this.shape(created);
   }
 
-  async listMarketplace(limit = 40) {
+  /**
+   * Marketplace home feed: open + orderable only (excludes sold_out, paused, expired, zero remaining).
+   */
+  async listMarketplace(limit = 40, now = new Date()) {
     const [rows] = await this.listAndCountDrops(
-      { status: ["open", "paused", "sold_out"] as any, visibility: "marketplace" } as any,
-      { take: limit, order: { cook_date: "ASC" } as any }
+      { status: "open" as any, visibility: "marketplace" } as any,
+      { take: Math.max(limit * 2, 40), order: { cook_date: "ASC" } as any }
     ).catch(() => [[]]);
     const out = [];
     for (const r of rows as DropRow[]) {
       const refreshed = await this.refreshStatus(r);
-      if (refreshed.status === "open" || refreshed.status === "paused" || refreshed.status === "sold_out") {
-        // Only show orderable + recently sold out still on cook date window
-        if (refreshed.status === "sold_out" && refreshed.cook_date < new Date().toISOString().slice(0, 10)) continue;
-        out.push(this.shape(refreshed));
-      }
+      if (!this.isOrderable(refreshed, now)) continue;
+      out.push(this.shape(refreshed));
+      if (out.length >= limit) break;
     }
-    return out.filter((d) => d.status === "open" || d.status === "sold_out");
+    return out;
   }
 
-  async listForCook(cookId: string, opts: { activeOnly?: boolean; limit?: number } = {}) {
+  async listForCook(cookId: string, opts: { activeOnly?: boolean; limit?: number; now?: Date } = {}) {
+    const now = opts.now || new Date();
     const [rows] = await this.listAndCountDrops({ cook_id: cookId } as any, {
       take: opts.limit || 50,
       order: { created_at: "DESC" } as any,
@@ -139,7 +153,10 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     const out = [];
     for (const r of rows as DropRow[]) {
       const refreshed = await this.refreshStatus(r);
-      if (opts.activeOnly && !["open", "paused", "sold_out"].includes(refreshed.status)) continue;
+      if (opts.activeOnly) {
+        // Kitchen surface: still-orderable batches only (no empty sold-out spam)
+        if (!this.isOrderable(refreshed, now)) continue;
+      }
       out.push(this.shape(refreshed));
     }
     return out;
@@ -172,23 +189,70 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     return this.shape(updated);
   }
 
-  /** Atomic-ish capacity reserve + return shaped drop after order. */
-  async reserveQty(id: string, qty: number) {
-    const [rows] = await this.listAndCountDrops({ id } as any, { take: 1 }).catch(() => [[]]);
-    const row = (rows as DropRow[])?.[0];
-    if (!row) throw createSHCError("SHC-GENERIC-001", "Drop not found");
-    const refreshed = await this.refreshStatus(row);
-    const check = dropCanOrder(refreshed.status, Number(refreshed.max_qty), Number(refreshed.ordered_qty), String(refreshed.order_by));
-    if (!check.ok) throw createSHCError("SHC-GENERIC-001", check.reason || "Cannot order");
-    const take = dropClampOrderQty(qty, check.remaining);
-    if (take < 1) throw createSHCError("SHC-GENERIC-001", "Invalid quantity");
-    const nextOrdered = Number(refreshed.ordered_qty) + take;
-    const nextStatus = nextOrdered >= Number(refreshed.max_qty) ? "sold_out" : refreshed.status;
-    const [updated] = await this.updateDrops({
-      selector: { id },
-      data: { ordered_qty: nextOrdered, status: nextStatus } as any,
-    });
-    return { drop: this.shape(updated), qty: take };
+  /**
+   * Capacity reserve with optimistic CAS on ordered_qty+status so concurrent orders cannot exceed max.
+   * Retries on conflict.
+   */
+  async reserveQty(id: string, qty: number, now = new Date()) {
+    let lastReason = "Cannot order";
+    for (let attempt = 0; attempt < RESERVE_CAS_ATTEMPTS; attempt++) {
+      const [rows] = await this.listAndCountDrops({ id } as any, { take: 1 }).catch(() => [[]]);
+      const row = (rows as DropRow[])?.[0];
+      if (!row) throw createSHCError("SHC-GENERIC-001", "Drop not found");
+
+      const refreshed = await this.refreshStatus(row);
+      const check = dropCanOrder(
+        refreshed.status,
+        Number(refreshed.max_qty),
+        Number(refreshed.ordered_qty),
+        String(refreshed.order_by),
+        now
+      );
+      if (!check.ok) {
+        throw createSHCError("SHC-GENERIC-001", check.reason || "Cannot order");
+      }
+      const take = dropClampOrderQty(qty, check.remaining);
+      if (take < 1) throw createSHCError("SHC-GENERIC-001", "Invalid quantity");
+
+      const expectedOrdered = Number(refreshed.ordered_qty);
+      const nextOrdered = expectedOrdered + take;
+      const nextStatus = nextOrdered >= Number(refreshed.max_qty) ? "sold_out" : "open";
+
+      // CAS: only commit if ordered_qty and status still match the snapshot (optimistic lock)
+      let updatedRows: any[] = [];
+      try {
+        const r: any = await this.updateDrops({
+          selector: {
+            id,
+            ordered_qty: expectedOrdered,
+            status: "open",
+          } as any,
+          data: {
+            ordered_qty: nextOrdered,
+            status: nextStatus,
+          } as any,
+        });
+        if (Array.isArray(r) && Array.isArray(r[0])) updatedRows = r[0];
+        else if (Array.isArray(r)) updatedRows = r;
+        else if (r) updatedRows = [r];
+      } catch {
+        updatedRows = [];
+      }
+
+      const updated = updatedRows[0];
+      // Only success when CAS matched this attempt's expectedOrdered → nextOrdered
+      if (
+        updated &&
+        Number(updated.ordered_qty) === nextOrdered &&
+        Number(updated.ordered_qty) === expectedOrdered + take
+      ) {
+        return { drop: this.shape(updated), qty: take };
+      }
+
+      // Conflict or no-op: re-read and retry (never claim success without CAS match)
+      lastReason = "Capacity conflict — try again";
+    }
+    throw createSHCError("SHC-GENERIC-001", lastReason);
   }
 }
 
