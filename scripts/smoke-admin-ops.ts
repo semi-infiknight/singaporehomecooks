@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * Smoke admin ops APIs used by /ops dashboard.
+ * Smoke admin ops APIs used by Medusa Admin SHC Ops UI (/app/shc-ops).
  *   pnpm exec tsx scripts/smoke-admin-ops.ts
  */
 import fs from 'fs';

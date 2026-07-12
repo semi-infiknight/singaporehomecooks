@@ -59,7 +59,7 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
 **Order invoices (SG):** `GET /store/shc/orders/:id/invoice` — customer tax invoice or cook settlement note (JSON + `pdf_base64` + HTML). Query `?format=pdf` streams PDF. Auth: order owner (customer JWT or cook JWT). Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
 
-**Admin / Ops** (`/ops` web dashboard + `/admin/shc/*`):
+**Admin / Ops** (Medusa Admin **SHC Ops** UI at `/app/shc-ops/*` + `/admin/shc/*`; web `/ops` redirects):
 | Path | Purpose |
 |------|---------|
 | `GET /admin/shc/overview` | KPI snapshot: active orders, GMV sample, cooks, disputes, requests |

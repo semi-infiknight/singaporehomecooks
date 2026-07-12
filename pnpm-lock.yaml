@@ -79,9 +79,18 @@ importers:
       '@medusajs/framework':
         specifier: ^2.15.5
         version: 2.15.5(@medusajs/cli@2.15.5(@types/node@20.19.43))(@types/node@20.19.43)(ioredis@5.11.1)(vite@5.4.21(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.48.0))(zod@3.25.76)
+      '@medusajs/icons':
+        specifier: 2.15.5
+        version: 2.15.5(react@18.2.0)
+      '@medusajs/js-sdk':
+        specifier: 2.15.5
+        version: 2.15.5
       '@medusajs/medusa':
         specifier: ^2.15.5
         version: 2.15.5(1967dbce0af3783111f3d1358bf19ea0)
+      '@medusajs/ui':
+        specifier: 4.1.15
+        version: 4.1.15(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
       '@shc/business-rules':
         specifier: workspace:*
         version: link:../../packages/business-rules
@@ -91,6 +100,9 @@ importers:
       '@shc/utils':
         specifier: workspace:*
         version: link:../../packages/shc-utils
+      '@tanstack/react-query':
+        specifier: 5.64.2
+        version: 5.64.2(react@18.2.0)
       dotenv:
         specifier: 16.4.5
         version: 16.4.5
@@ -109,6 +121,9 @@ importers:
       pino:
         specifier: ^10.3.1
         version: 10.3.1
+      react-router-dom:
+        specifier: 6.30.3
+        version: 6.30.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       sharp:
         specifier: ^0.35.2
         version: 0.35.2
@@ -14639,7 +14654,6 @@ snapshots:
       '@dnd-kit/utilities': 3.2.2(react@18.2.0)
       react: 18.2.0
       tslib: 2.8.1
-    optional: true
 
   '@dnd-kit/sortable@8.0.0(@dnd-kit/core@6.3.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.3.1)':
     dependencies:
@@ -17872,7 +17886,6 @@ snapshots:
   '@medusajs/icons@2.15.5(react@18.2.0)':
     dependencies:
       react: 18.2.0
-    optional: true
 
   '@medusajs/icons@2.15.5(react@18.3.1)':
     dependencies:
@@ -18191,7 +18204,6 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
       - typescript
-    optional: true
 
   '@medusajs/ui@4.1.15(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)':
     dependencies:
@@ -19379,7 +19391,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.2.79
       '@types/react-dom': 18.3.7(@types/react@18.2.79)
-    optional: true
 
   '@radix-ui/react-dialog@1.1.4(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -19540,7 +19551,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.2.79
       '@types/react-dom': 18.3.7(@types/react@18.2.79)
-    optional: true
 
   '@radix-ui/react-dismissable-layer@1.1.3(@types/react-dom@18.3.7(@types/react@18.2.79))(@types/react@18.2.79)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -23706,7 +23716,6 @@ snapshots:
       '@tanstack/table-core': 8.20.5
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-    optional: true
 
   '@tanstack/react-table@8.20.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -29469,7 +29478,6 @@ snapshots:
       '@types/prismjs': 1.26.6
       clsx: 2.1.1
       react: 18.2.0
-    optional: true
 
   prism-react-renderer@2.4.1(react@18.3.1):
     dependencies:
@@ -29750,7 +29758,6 @@ snapshots:
       react-dom: 18.2.0(react@18.2.0)
       react-stately: 3.47.0(react@18.2.0)
       use-sync-external-store: 1.6.0(react@18.2.0)
-    optional: true
 
   react-aria@3.49.0(react-dom@18.3.1(react@18.2.0))(react@18.2.0):
     dependencies:
@@ -29815,7 +29822,6 @@ snapshots:
   react-currency-input-field@3.10.0(react@18.2.0):
     dependencies:
       react: 18.2.0
-    optional: true
 
   react-currency-input-field@3.10.0(react@18.3.1):
     dependencies:
@@ -30532,7 +30538,6 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       react-router: 6.30.3(react@18.2.0)
-    optional: true
 
   react-router-dom@6.30.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
@@ -30545,7 +30550,6 @@ snapshots:
     dependencies:
       '@remix-run/router': 1.23.2
       react: 18.2.0
-    optional: true
 
   react-router@6.30.3(react@18.3.1):
     dependencies:
@@ -31204,7 +31208,6 @@ snapshots:
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-    optional: true
 
   sonner@1.7.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:

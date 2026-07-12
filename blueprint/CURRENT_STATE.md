@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-09 — **HomelyEats Waves 1–8:** residual customize/menu-join/past-history/duration honesty; full tiffin smoke.
+**Last Updated:** 2026-07-12 — **SHC Ops in Medusa Admin** (`/app/shc-ops/*`); web `/ops` redirect; Waves 1–8 still shipped.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -14,7 +14,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | **Discover homepage** = marketplace (promo banner → categories → order modes → kitchens → dish grid); tiffin deep-link via banner/`/(customer)/tiffin`; location; checkout; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + **4-step kitchen onboarding** (post-login if unseen); dashboard **Kitchen setup tour** replay; **Tiffin** → `/(cook)/tiffin`; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + ops + **Tiffin** | **`/` homepage** marketplace IA (subscription banner only + one-off/events/kitchens/dishes); **`/tiffin/*`**; **full `/cook-portal`** (+ tiffin); `/ops`; PWA; checkout auth guard |
+| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | **`/` homepage** marketplace IA (subscription banner only + one-off/events/kitchens/dishes); **`/tiffin/*`**; **full `/cook-portal`** (+ tiffin); `/ops` → Medusa Admin; PWA; checkout auth guard |
 | **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
 | **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
@@ -29,7 +29,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
 | **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
-| **Admin / Ops** (`/ops`) | ✅ Monitoring + controls | Overview KPIs, live order board, catalog category CRUD, feature flags, disputes, payouts |
+| **Admin / Ops** (Medusa Admin) | ✅ Single admin app | Stock `/app` + **SHC Ops** UI routes (`/app/shc-ops/*`) using `@medusajs/ui`; APIs `/admin/shc/*`; web `/ops` redirects to Medusa |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 

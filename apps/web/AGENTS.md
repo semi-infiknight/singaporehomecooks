@@ -2,7 +2,7 @@
 
 **Canonical brain:** [../../blueprint/README.md](../../blueprint/README.md) → [AGENT_PLAYBOOK.md](../../blueprint/AGENT_PLAYBOOK.md)
 
-- Customer + `/cook-portal` + `/ops` — tri-platform: [design-taste.md](../../blueprint/agent/design-taste.md)
+- Customer + `/cook-portal`; ops is Medusa Admin `/app/shc-ops` (web `/ops` redirects) — tri-platform: [design-taste.md](../../blueprint/agent/design-taste.md)
 - Verify: `FLAVOUR=polish SCOPE=web pnpm verify:goal`
 - PWA assets via route handlers (`app/sw.js/route.ts`), not `public/`
 

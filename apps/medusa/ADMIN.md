@@ -1,38 +1,31 @@
-# Medusa Admin UI
+# Medusa Admin UI — single SHC ops surface
 
-## Why `/app` was 404
+SHC uses **one admin app**: stock Medusa Admin at `/app`, extended with **SHC Ops** UI routes. There is no separate branded ops SPA — marketplace monitoring and light controls live beside Orders / Products in Medusa’s own style.
 
-The default `pnpm medusa:start` and `pnpm build` set `MEDUSA_DISABLE_ADMIN=true` (API-first for CI/mobile). The admin dashboard is intentionally off unless you opt in.
+## Why `/app` was 404 (local API-only)
 
-Admin UI also needs two extra packages (now in `package.json`):
+Default `pnpm medusa:start` and `pnpm build` set `MEDUSA_DISABLE_ADMIN=true` (API-first for CI/mobile). Admin is off unless you opt in.
 
-- `@medusajs/draft-order`
-- `@medusajs/admin-shared`
+**Railway / Docker production** builds with `build:admin` and `MEDUSA_DISABLE_ADMIN=false` — dashboard is live on the medusa service.
 
-## Quick start (recommended — dev mode)
+## Quick start (local)
 
 ```bash
 pnpm docker:up          # Postgres, if not running
 pnpm medusa:dev:admin   # from repo root
 ```
 
-Open **http://localhost:9000/app** (or `http://127.0.0.1:9000/app` — both work after the backendUrl fix)
-
-Login:
+Open **http://localhost:9000/app**
 
 | Email | Password |
 |-------|----------|
 | `admin@shc.local` | `supersecret` |
 
-If **Continue with Email** does nothing or spins forever, hard-refresh the page after restarting `pnpm medusa:dev:admin` (config change). Wrong password shows "Invalid email or password".
+Create user if needed: `pnpm bootstrap:medusa`
 
-Create admin user if needed:
+If **Continue with Email** spins forever, hard-refresh after restarting `pnpm medusa:dev:admin`. Wrong password → “Invalid email or password”.
 
-```bash
-pnpm bootstrap:medusa
-```
-
-## Production-style start (with admin)
+## Production-style local start
 
 ```bash
 cd apps/medusa
@@ -40,7 +33,39 @@ pnpm build:admin        # builds UI + copies to public/admin/
 pnpm start:admin
 ```
 
-Then open **http://localhost:9000/app**
+## SHC Ops (custom admin UI)
+
+Sidebar: **SHC Ops** (and nested pages). Paths:
+
+| Path | Purpose |
+|------|---------|
+| `/app/shc-ops` | Overview KPIs, status breakdown, recent activity, health |
+| `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
+| `/app/shc-ops/catalog` | Browse category presets (not cook-owned) |
+| `/app/shc-ops/controls` | Feature flags, disputes, payouts, commission/search snapshot |
+
+Source: `apps/medusa/src/admin/routes/shc-ops/**`  
+Uses `@medusajs/ui` + session-auth JS SDK → existing `/admin/shc/*` APIs.
+
+### APIs (same as before)
+
+| Route | Purpose |
+|-------|---------|
+| `GET /admin/shc/overview` | KPI snapshot |
+| `GET /admin/shc/orders` | Cross-app order feed |
+| `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets |
+| `POST /admin/shc/payment-confirm` | Manual PayNow confirm |
+| `GET /admin/shc/ledger` | Ledger inspection |
+| `GET/POST /admin/shc/payouts` | Weekly payout batches |
+| `GET /admin/shc/cooks/verification` | Cook KYC queue |
+| `GET/POST /admin/shc/feature-flags` | Launch gates |
+| `GET/POST /admin/shc/disputes` | Dispute list / resolve |
+
+Smoke: `pnpm exec tsx scripts/smoke-admin-ops.ts`
+
+## Web `/ops`
+
+`apps/web/app/ops` is a **redirect** to Medusa Admin `…/app/shc-ops` (bookmark compatibility only). Do not rebuild a second ops UI on the Next app.
 
 ## API-only mode (no dashboard)
 
@@ -48,19 +73,10 @@ Then open **http://localhost:9000/app**
 pnpm medusa:start       # MEDUSA_DISABLE_ADMIN=true
 ```
 
-Custom ops routes still work via Admin API + JWT:
+Custom routes still work via Admin API + JWT:
 
 ```bash
 curl -X POST http://localhost:9000/auth/user/emailpass \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@shc.local","password":"supersecret"}'
 ```
-
-## SHC custom admin routes
-
-| Route | Purpose |
-|-------|---------|
-| `POST /admin/shc/payment-confirm` | Manual PayNow confirm |
-| `GET /admin/shc/ledger` | Ledger inspection |
-| `GET/POST /admin/shc/payouts` | Weekly payout batches |
-| `GET /admin/shc/cooks/verification` | Cook KYC queue |
