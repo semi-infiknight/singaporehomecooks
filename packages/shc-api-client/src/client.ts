@@ -452,6 +452,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     },
 
     // --- Tiffin subscription ---
+    async getCatalogCategories() {
+      const r = await request("/store/shc/categories", { method: "GET" });
+      return (r as any).categories || [];
+    },
+
     async getTiffinKitchens() {
       const r = await request("/store/shc/tiffin/kitchens", { method: "GET" });
       return (r as any).kitchens || [];

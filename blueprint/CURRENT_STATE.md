@@ -29,6 +29,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
 | **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
+| **Admin / Ops** (`/ops`) | ✅ Monitoring + controls | Overview KPIs, live order board, catalog category CRUD, feature flags, disputes, payouts |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 

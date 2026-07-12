@@ -59,6 +59,15 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
 **Order invoices (SG):** `GET /store/shc/orders/:id/invoice` — customer tax invoice or cook settlement note (JSON + `pdf_base64` + HTML). Query `?format=pdf` streams PDF. Auth: order owner (customer JWT or cook JWT). Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
 
+**Admin / Ops** (`/ops` web dashboard + `/admin/shc/*`):
+| Path | Purpose |
+|------|---------|
+| `GET /admin/shc/overview` | KPI snapshot: active orders, GMV sample, cooks, disputes, requests |
+| `GET /admin/shc/orders` | Cross-app order board (status/cook/customer filters) |
+| `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets (not cook-owned) |
+| `GET /store/shc/categories` | Public mind-row categories for discover |
+| Existing | feature-flags, disputes, payouts, ledger, commission-rules, search-synonyms, platform-stats, payment-confirm |
+
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
 
 **Listings routes (2026-07-04):**
