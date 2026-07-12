@@ -102,7 +102,7 @@ async function main() {
 
   // UI file checks
   const ops = fs.readFileSync(path.join(process.cwd(), 'apps/web/app/ops/page.tsx'), 'utf8');
-  for (const n of ['ops-tab-overview', 'ops-tab-orders', 'ops-tab-catalog', 'ops-tab-controls', 'ops-orders-list']) {
+  for (const n of ['ops-dashboard', 'ops-login', 'ops-tab-', 'ops-panel-overview', 'ops-orders-list', 'ops-panel-catalog']) {
     if (!ops.includes(n)) throw new Error(`ops UI missing ${n}`);
   }
   console.log('✅ ops UI tabs wired');
