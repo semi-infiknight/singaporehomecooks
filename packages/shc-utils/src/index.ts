@@ -28,4 +28,4 @@ export * from './discover-evidence';
 export * from './railway-client';
 export * from './collab-bid';
 export * from './order-invoice';
-export * from './download-invoice';
+// download-invoice uses DOM (document) — import from '@shc/utils/src/download-invoice' on web only, not here

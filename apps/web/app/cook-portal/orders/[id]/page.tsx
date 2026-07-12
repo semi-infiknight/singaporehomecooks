@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { getOrderStatusLabel, downloadPdfBase64InBrowser } from '@shc/utils';
+import { getOrderStatusLabel } from '@shc/utils';
 import { useCookOrder, useCookTransitionOrder } from '../../../../lib/useCookPortal';
 import { getCookOrderInvoice } from '../../../../lib/cook-api-client';
+import { downloadPdfBase64InBrowser } from '../../../../lib/download-pdf';
 import {
   GourmeatScreenHeader,
   GourmeatCard,

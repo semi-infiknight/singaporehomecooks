@@ -9,7 +9,7 @@ import {
   useReview,
 } from '../../../lib/useOrder';
 import { submitReview, submitOrderDispute, getOrderInvoice } from '../../../lib/api-client';
-import { downloadPdfBase64InBrowser } from '@shc/utils';
+import { downloadPdfBase64InBrowser } from '../../../lib/download-pdf';
 import { OrderTrackingTraySectionWeb } from '../../../lib/order-tray-section-web';
 import {
   SHCCard,
