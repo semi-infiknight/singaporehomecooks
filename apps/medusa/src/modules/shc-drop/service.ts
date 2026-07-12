@@ -7,6 +7,11 @@ import {
   dropPostDeadlineStatus,
   dropRemainingQty,
 } from "@shc/business-rules";
+import {
+  atomicReserveDropQty,
+  atomicReserveDropQtyFromDb,
+  type DropPgExecutor,
+} from "../../lib/shc-drop-pg";
 
 export type DropRow = {
   id: string;
@@ -28,9 +33,14 @@ export type DropRow = {
   updated_at?: string | Date;
 };
 
-const RESERVE_CAS_ATTEMPTS = 8;
-
 class ShcDropModuleService extends MedusaService({ Drop }) {
+  /**
+   * Optional test/prod override for capacity CAS.
+   * Production default: Postgres UPDATE … WHERE (see shc-drop-pg).
+   * Do NOT use Medusa updateDrops for capacity — it is list-then-assign by PK only.
+   */
+  _dropPgExecutor: DropPgExecutor | null = null;
+
   shape(d: any) {
     const ordered = Number(d.ordered_qty || 0);
     const max = Number(d.max_qty || 0);
@@ -154,7 +164,6 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     for (const r of rows as DropRow[]) {
       const refreshed = await this.refreshStatus(r);
       if (opts.activeOnly) {
-        // Kitchen surface: still-orderable batches only (no empty sold-out spam)
         if (!this.isOrderable(refreshed, now)) continue;
       }
       out.push(this.shape(refreshed));
@@ -190,69 +199,58 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
   }
 
   /**
-   * Capacity reserve with optimistic CAS on ordered_qty+status so concurrent orders cannot exceed max.
-   * Retries on conflict.
+   * Production capacity lock — never uses Medusa updateDrops multi-field selector
+   * (that path is list-by-filter then update by PK only → race oversell).
+   */
+  async reserveCapacityAtomic(id: string, take: number, now: Date = new Date()) {
+    if (this._dropPgExecutor) {
+      return atomicReserveDropQty(this._dropPgExecutor, id, take, now);
+    }
+    return atomicReserveDropQtyFromDb(id, take, now);
+  }
+
+  /**
+   * Capacity reserve with true SQL CAS (or injected executor with same WHERE semantics).
    */
   async reserveQty(id: string, qty: number, now = new Date()) {
-    let lastReason = "Cannot order";
-    for (let attempt = 0; attempt < RESERVE_CAS_ATTEMPTS; attempt++) {
-      const [rows] = await this.listAndCountDrops({ id } as any, { take: 1 }).catch(() => [[]]);
-      const row = (rows as DropRow[])?.[0];
-      if (!row) throw createSHCError("SHC-GENERIC-001", "Drop not found");
+    const [rows] = await this.listAndCountDrops({ id } as any, { take: 1 }).catch(() => [[]]);
+    const row = (rows as DropRow[])?.[0];
+    if (!row) throw createSHCError("SHC-GENERIC-001", "Drop not found");
 
-      const refreshed = await this.refreshStatus(row);
-      const check = dropCanOrder(
-        refreshed.status,
-        Number(refreshed.max_qty),
-        Number(refreshed.ordered_qty),
-        String(refreshed.order_by),
+    const refreshed = await this.refreshStatus(row);
+    const check = dropCanOrder(
+      refreshed.status,
+      Number(refreshed.max_qty),
+      Number(refreshed.ordered_qty),
+      String(refreshed.order_by),
+      now
+    );
+    if (!check.ok) {
+      throw createSHCError("SHC-GENERIC-001", check.reason || "Cannot order");
+    }
+    const take = dropClampOrderQty(qty, check.remaining);
+    if (take < 1) throw createSHCError("SHC-GENERIC-001", "Invalid quantity");
+
+    // Single atomic UPDATE … WHERE (capacity + open + order_by)
+    const updated = await this.reserveCapacityAtomic(id, take, now);
+    if (!updated) {
+      // Lost race or state changed — surface accurate reason
+      const again = await this.getDrop(id);
+      if (!again) throw createSHCError("SHC-GENERIC-001", "Drop not found");
+      const recheck = dropCanOrder(
+        again.status,
+        Number(again.max_qty),
+        Number(again.ordered_qty),
+        String(again.order_by),
         now
       );
-      if (!check.ok) {
-        throw createSHCError("SHC-GENERIC-001", check.reason || "Cannot order");
-      }
-      const take = dropClampOrderQty(qty, check.remaining);
-      if (take < 1) throw createSHCError("SHC-GENERIC-001", "Invalid quantity");
-
-      const expectedOrdered = Number(refreshed.ordered_qty);
-      const nextOrdered = expectedOrdered + take;
-      const nextStatus = nextOrdered >= Number(refreshed.max_qty) ? "sold_out" : "open";
-
-      // CAS: only commit if ordered_qty and status still match the snapshot (optimistic lock)
-      let updatedRows: any[] = [];
-      try {
-        const r: any = await this.updateDrops({
-          selector: {
-            id,
-            ordered_qty: expectedOrdered,
-            status: "open",
-          } as any,
-          data: {
-            ordered_qty: nextOrdered,
-            status: nextStatus,
-          } as any,
-        });
-        if (Array.isArray(r) && Array.isArray(r[0])) updatedRows = r[0];
-        else if (Array.isArray(r)) updatedRows = r;
-        else if (r) updatedRows = [r];
-      } catch {
-        updatedRows = [];
-      }
-
-      const updated = updatedRows[0];
-      // Only success when CAS matched this attempt's expectedOrdered → nextOrdered
-      if (
-        updated &&
-        Number(updated.ordered_qty) === nextOrdered &&
-        Number(updated.ordered_qty) === expectedOrdered + take
-      ) {
-        return { drop: this.shape(updated), qty: take };
-      }
-
-      // Conflict or no-op: re-read and retry (never claim success without CAS match)
-      lastReason = "Capacity conflict — try again";
+      throw createSHCError(
+        "SHC-GENERIC-001",
+        recheck.ok ? "Capacity conflict — try again" : recheck.reason || "Cannot order"
+      );
     }
-    throw createSHCError("SHC-GENERIC-001", lastReason);
+
+    return { drop: this.shape(updated), qty: take };
   }
 }
 

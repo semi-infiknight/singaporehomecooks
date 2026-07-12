@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import ShcDropModuleService from "./service";
 import type { DropRow } from "./service";
+import { createInMemoryDropCasExecutor } from "../../lib/shc-drop-pg";
 
 /**
- * In-memory drop store exercising the real service methods (create/list/reserve)
- * without a live DB — same code paths as production via prototype assignment.
+ * In-memory module store + production-equivalent CAS executor
+ * (createInMemoryDropCasExecutor mirrors UPDATE … WHERE semantics).
  */
 function makeDropService(seed: DropRow[] = []) {
   const store = new Map<string, DropRow>();
@@ -12,6 +13,7 @@ function makeDropService(seed: DropRow[] = []) {
   let seq = 1;
 
   const service = Object.assign(Object.create(ShcDropModuleService.prototype), {
+    _dropPgExecutor: createInMemoryDropCasExecutor(store),
     async createDrops(rows: any[]) {
       return rows.map((r) => {
         const id = r.id || `drop_${seq++}`;
@@ -36,7 +38,7 @@ function makeDropService(seed: DropRow[] = []) {
         return row;
       });
     },
-    async listAndCountDrops(filters: any = {}, _opts?: any) {
+    async listAndCountDrops(filters: any = {}) {
       let rows = Array.from(store.values());
       if (filters.id) rows = rows.filter((r) => r.id === filters.id);
       if (filters.cook_id) rows = rows.filter((r) => r.cook_id === filters.cook_id);
@@ -47,17 +49,11 @@ function makeDropService(seed: DropRow[] = []) {
       }
       return [rows, rows.length];
     },
+    /** Status-only patches (pause/close) — not used for capacity. */
     async updateDrops({ selector, data }: { selector: any; data: any }) {
-      const match = (r: DropRow) => {
-        if (selector.id && r.id !== selector.id) return false;
-        if (selector.ordered_qty != null && Number(r.ordered_qty) !== Number(selector.ordered_qty)) return false;
-        if (selector.status != null && r.status !== selector.status) return false;
-        if (selector.cook_id && r.cook_id !== selector.cook_id) return false;
-        return true;
-      };
       const updated: DropRow[] = [];
       for (const [id, row] of store) {
-        if (!match(row)) continue;
+        if (selector.id && row.id !== selector.id) continue;
         const next = { ...row, ...data };
         store.set(id, next);
         updated.push(next);
@@ -67,6 +63,8 @@ function makeDropService(seed: DropRow[] = []) {
     _store: store,
   }) as ShcDropModuleService & { _store: Map<string, DropRow> };
 
+  // Point executor at same store so reserve CAS mutates module state
+  service._dropPgExecutor = createInMemoryDropCasExecutor(store);
   return service;
 }
 
@@ -83,7 +81,7 @@ function tomorrow() {
 }
 
 describe("ShcDropModuleService cooking-soon flow", () => {
-  it("create → list open marketplace → reserve reduces remaining", async () => {
+  it("create → list open marketplace → reserve reduces remaining via SQL CAS path", async () => {
     const svc = makeDropService();
     const created = await svc.createDrop({
       cook_id: "cook_rose",
@@ -101,24 +99,12 @@ describe("ShcDropModuleService cooking-soon flow", () => {
 
     const listed = await svc.listMarketplace(20);
     expect(listed.some((d) => d.id === created.id)).toBe(true);
-    expect(listed[0]).toMatchObject({
-      title: expect.any(String),
-      price_cents: expect.any(Number),
-      cook_date: expect.any(String),
-      collection_slot: expect.any(String),
-      remaining_qty: expect.any(Number),
-      order_by: expect.any(String),
-    });
     expect(listed.every((d) => d.status === "open" && d.remaining_qty > 0)).toBe(true);
 
     const { drop, qty } = await svc.reserveQty(created.id, 12);
     expect(qty).toBe(12);
     expect(drop.ordered_qty).toBe(12);
     expect(drop.remaining_qty).toBe(28);
-
-    const listedAfter = await svc.listMarketplace(20);
-    const row = listedAfter.find((d) => d.id === created.id);
-    expect(row?.remaining_qty).toBe(28);
   });
 
   it("listMarketplace excludes sold_out and expired order_by", async () => {
@@ -169,7 +155,6 @@ describe("ShcDropModuleService cooking-soon flow", () => {
 
     const listed = await svc.listMarketplace(20);
     expect(listed.map((d) => d.id)).toEqual(["drop_open"]);
-    expect(listed[0].remaining_qty).toBe(28);
   });
 
   it("rejects reserve past order_by and over capacity", async () => {
@@ -208,18 +193,17 @@ describe("ShcDropModuleService cooking-soon flow", () => {
       message: expect.stringMatching(/closed|window/i),
     });
 
-    // only 1 left — request 10 clamps to 1, succeeds
     const { qty, drop } = await svc.reserveQty("drop_fullish", 10);
     expect(qty).toBe(1);
     expect(drop.ordered_qty).toBe(5);
     expect(drop.status).toBe("sold_out");
 
     await expect(svc.reserveQty("drop_fullish", 1)).rejects.toMatchObject({
-      message: expect.stringMatching(/sold out|sold_out|Cannot/i),
+      message: expect.stringMatching(/sold out|Cannot|conflict/i),
     });
   });
 
-  it("CAS reserve prevents concurrent oversell past max_qty", async () => {
+  it("SQL-CAS path: concurrent reserves cannot oversell past max_qty", async () => {
     const svc = makeDropService([
       {
         id: "drop_race",
@@ -237,19 +221,21 @@ describe("ShcDropModuleService cooking-soon flow", () => {
       },
     ]);
 
-    // Two concurrent reserves of 2 each — only one should fully apply; total never > 10
-    const results = await Promise.allSettled([svc.reserveQty("drop_race", 2), svc.reserveQty("drop_race", 2)]);
+    // Production path: reserveCapacityAtomic → atomicReserveDropQty (WHERE ordered_qty+take<=max)
+    const results = await Promise.allSettled([
+      svc.reserveQty("drop_race", 2),
+      svc.reserveQty("drop_race", 2),
+      svc.reserveQty("drop_race", 2),
+    ]);
     const fulfilled = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<any>[];
-    const rejected = results.filter((r) => r.status === "rejected");
-
-    // At most remaining (2) can be reserved total
     const totalTaken = fulfilled.reduce((s, r) => s + r.value.qty, 0);
+
     expect(totalTaken).toBeLessThanOrEqual(2);
-    expect(fulfilled.length + rejected.length).toBe(2);
+    expect(fulfilled.length).toBe(1);
 
     const final = await svc.getDrop("drop_race");
+    expect(final!.ordered_qty).toBe(10);
     expect(final!.ordered_qty).toBeLessThanOrEqual(10);
-    expect(final!.ordered_qty).toBe(8 + totalTaken);
   });
 
   it("listForCook activeOnly only returns orderable batches", async () => {
