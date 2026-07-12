@@ -10,11 +10,23 @@ import { resolveRailwayMedusaBase, getOrderStatusLabel } from '@shc/utils';
 import { SHCButton, SHCCard, SHCPageHeader, SHCBadge } from '../components/SHCWebComponents';
 
 const API_BASE = resolveRailwayMedusaBase(process.env.NEXT_PUBLIC_SHC_API_BASE);
+const OPS_TOKEN_KEY = 'shc_ops_admin_token';
 
 type Tab = 'overview' | 'orders' | 'catalog' | 'controls';
 
+function readOpsToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem(OPS_TOKEN_KEY);
+}
+
 async function fetchJson(path: string, init?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, init);
+  const token = readOpsToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(init?.headers as Record<string, string>),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body?.error?.message || body?.message || `HTTP ${res.status}`);
   return body;
@@ -22,6 +34,10 @@ async function fetchJson(path: string, init?: RequestInit) {
 
 export default function OpsDashboard() {
   const [tab, setTab] = useState<Tab>('overview');
+  const [adminEmail, setAdminEmail] = useState('admin@shc.local');
+  const [adminPass, setAdminPass] = useState('');
+  const [authed, setAuthed] = useState(false);
+  const [loginBusy, setLoginBusy] = useState(false);
   const [health, setHealth] = useState<any>(null);
   const [overview, setOverview] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
@@ -94,8 +110,44 @@ export default function OpsDashboard() {
   }, []);
 
   useEffect(() => {
-    loadCore();
+    if (readOpsToken()) {
+      setAuthed(true);
+      loadCore();
+    }
   }, [loadCore]);
+
+  async function loginAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginBusy(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/auth/user/emailpass`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: adminEmail.trim(), password: adminPass }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.token) {
+        throw new Error(body?.message || body?.error?.message || `Login failed (${res.status})`);
+      }
+      sessionStorage.setItem(OPS_TOKEN_KEY, body.token);
+      setAuthed(true);
+      setAdminPass('');
+      await loadCore();
+    } catch (err) {
+      setError((err as Error).message);
+      setAuthed(false);
+    } finally {
+      setLoginBusy(false);
+    }
+  }
+
+  function logoutAdmin() {
+    sessionStorage.removeItem(OPS_TOKEN_KEY);
+    setAuthed(false);
+    setOrders([]);
+    setOverview(null);
+  }
 
   const filteredOrders = useMemo(() => {
     if (!orderStatusFilter) return orders;
@@ -236,6 +288,41 @@ export default function OpsDashboard() {
     { id: 'controls', label: 'Controls' },
   ];
 
+  if (!authed) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16" data-testid="ops-login">
+        <SHCPageHeader title="Admin / Ops" subtitle="Sign in with Medusa admin to monitor the marketplace." />
+        <SHCCard className="mt-6 p-5">
+          <form className="space-y-3" onSubmit={loginAdmin}>
+            <label className="block text-xs font-bold text-muted-foreground">Admin email</label>
+            <input
+              className="w-full rounded-lg border-2 border-[var(--shc-border-brutal)] px-3 py-2 text-sm font-semibold"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.target.value)}
+              autoComplete="username"
+              data-testid="ops-login-email"
+            />
+            <label className="block text-xs font-bold text-muted-foreground">Password</label>
+            <input
+              type="password"
+              className="w-full rounded-lg border-2 border-[var(--shc-border-brutal)] px-3 py-2 text-sm font-semibold"
+              value={adminPass}
+              onChange={(e) => setAdminPass(e.target.value)}
+              autoComplete="current-password"
+              data-testid="ops-login-password"
+              required
+            />
+            {error && <p className="text-sm font-bold text-red-700">{error}</p>}
+            <SHCButton type="submit" disabled={loginBusy} testID="ops-login-submit" className="w-full">
+              {loginBusy ? 'Signing in…' : 'Sign in'}
+            </SHCButton>
+          </form>
+          <p className="mt-3 text-xs text-muted-foreground">Demo: admin@shc.local · supersecret</p>
+        </SHCCard>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10" data-testid="ops-dashboard">
       <SHCPageHeader
@@ -251,6 +338,9 @@ export default function OpsDashboard() {
           <Link href="/cook-portal" className="text-sm font-bold text-primary underline">
             Cook portal
           </Link>
+          <SHCButton size="sm" variant="outline" onClick={logoutAdmin} testID="ops-logout">
+            Log out
+          </SHCButton>
           <SHCButton size="sm" onClick={loadCore} disabled={loading} testID="ops-refresh">
             {loading ? 'Loading…' : 'Refresh'}
           </SHCButton>

@@ -24,9 +24,15 @@ function pub() {
   return RAILWAY_MEDUSA_PUBLISHABLE_KEY;
 }
 
+let adminToken = '';
+
 async function get(pathname: string) {
   const res = await fetch(`${BASE}${pathname}`, {
-    headers: { 'x-publishable-api-key': pub(), 'Content-Type': 'application/json' },
+    headers: {
+      'x-publishable-api-key': pub(),
+      'Content-Type': 'application/json',
+      ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
+    },
   });
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body };
@@ -35,7 +41,11 @@ async function get(pathname: string) {
 async function post(pathname: string, body: unknown) {
   const res = await fetch(`${BASE}${pathname}`, {
     method: 'POST',
-    headers: { 'x-publishable-api-key': pub(), 'Content-Type': 'application/json' },
+    headers: {
+      'x-publishable-api-key': pub(),
+      'Content-Type': 'application/json',
+      ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
@@ -44,6 +54,19 @@ async function post(pathname: string, body: unknown) {
 
 async function main() {
   console.log(`=== smoke-admin-ops → ${BASE} ===`);
+
+  const login = await fetch(`${BASE}/auth/user/emailpass`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: process.env.SEED_ADMIN_EMAIL || 'admin@shc.local',
+      password: process.env.SEED_ADMIN_PASS || 'supersecret',
+    }),
+  });
+  const loginBody = await login.json().catch(() => ({}));
+  if (!login.ok || !loginBody.token) throw new Error(`admin login ${login.status}`);
+  adminToken = loginBody.token;
+  console.log('✅ admin login');
 
   const health = await get('/admin/shc/health');
   if (health.status !== 200) throw new Error(`health ${health.status}`);
