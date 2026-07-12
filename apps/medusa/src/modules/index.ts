@@ -19,10 +19,12 @@ import ShcFeatureFlagModule from "./shc-feature-flag";
 import ShcSearchSynonymModule from "./shc-search-synonym";
 import ShcPlatformStatModule from "./shc-platform-stat";
 import ShcTiffinModule from "./shc-tiffin";
+import ShcDropModule from "./shc-drop";
 
 // Register custom SHC modules. Links are defined separately in src/links/*
 // Phase 6: added shc-ledger (double-entry) + shc-payout-batch (weekly)
 // Backend-Completion (Phase 8-9): added shc-request, shc-bid, shc-credit-wallet, shc-heritage for growth features.
+// Cooking soon: shc-drop (cook-led batch listings).
 export const modules = [
   { resolve: "./src/modules/shc-cook" },
   { resolve: "./src/modules/shc-product-meta" },
@@ -45,6 +47,7 @@ export const modules = [
   { resolve: "./src/modules/shc-search-synonym" },
   { resolve: "./src/modules/shc-platform-stat" },
   { resolve: "./src/modules/shc-tiffin" },
+  { resolve: "./src/modules/shc-drop" },
 ];
 
 export {
@@ -58,6 +61,7 @@ export {
   ShcBidModule,
   ShcCreditWalletModule,
   ShcHeritageModule,
+  ShcDropModule,
   ShcReviewModule,
   ShcCartModule,
   ShcNotificationModule,

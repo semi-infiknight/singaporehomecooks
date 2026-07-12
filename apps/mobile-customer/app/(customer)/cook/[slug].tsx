@@ -56,11 +56,15 @@ import {
   lineQtyForProduct,
   formatKitchenOrderCta,
   formatKitchenSubscribeCta,
+  formatDropCookDate,
+  formatDropOrderBy,
+  formatDropPrice,
   type KitchenReviewSort,
   type KitchenOrderLine,
   type KitchenMealCustomizeDraft,
 } from '@shc/utils';
 import { useCook, useDiscovery, useAddToCart } from '../../../hooks/useProducts';
+import { useDrops } from '../../../hooks/useOrder';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
 import { getHeritageArchive } from '../../../lib/api-client';
 
@@ -78,6 +82,9 @@ export default function KitchenPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug || '');
+  const { data: kitchenDrops = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
+    enabled: Boolean(cook?.id),
+  });
   const { data: allProducts = [] } = useDiscovery('', {});
   const { requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
@@ -232,6 +239,39 @@ export default function KitchenPage() {
         >
           <Text style={styles.ratingLink}>★ {ratingSum.label} · See all ratings</Text>
         </Pressable>
+
+        {(kitchenDrops as any[]).filter((d) => d.status === 'open' || d.status === 'sold_out').length > 0 && (
+          <View style={{ marginTop: 12, marginBottom: 8 }} testID="kitchen-cooking-soon">
+            <Text style={{ fontSize: 16, fontWeight: '900', marginBottom: 8, color: gourmeatColors.text }}>
+              Cooking soon
+            </Text>
+            {(kitchenDrops as any[])
+              .filter((d) => d.status === 'open' || d.status === 'sold_out')
+              .map((d) => (
+                <Pressable
+                  key={d.id}
+                  testID={`kitchen-drop-${d.id}`}
+                  onPress={() => router.push(`/(customer)/drops/${d.id}` as any)}
+                  style={{
+                    borderWidth: 2,
+                    borderColor: gourmeatColors.border,
+                    borderRadius: 14,
+                    padding: 12,
+                    marginBottom: 8,
+                    backgroundColor: gourmeatColors.card,
+                  }}
+                >
+                  <Text style={{ fontWeight: '900', fontSize: 15 }}>{d.title}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted, marginTop: 2 }}>
+                    {formatDropCookDate(d.cook_date)} · {d.collection_slot} · by {formatDropOrderBy(d.order_by)}
+                  </Text>
+                  <Text style={{ fontWeight: '800', color: gourmeatColors.primary, marginTop: 4 }}>
+                    {formatDropPrice(d.price_cents, d.price)} · {d.remaining_qty ?? 0} left
+                  </Text>
+                </Pressable>
+              ))}
+          </View>
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabRow}>
           {TABS.map((t) => (

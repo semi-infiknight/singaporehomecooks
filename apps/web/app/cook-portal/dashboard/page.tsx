@@ -15,6 +15,7 @@ import {
 import { getOrderStatusLabel } from '@shc/utils';
 
 const QUICK_ACTIONS = [
+  { href: '/cook-portal/batches', label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
   { href: '/cook-portal/listings', label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
   { href: '/cook-portal/orders', label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
   { href: '/cook-portal/tiffin', label: 'Tiffin', image: BENTO_ACTION_IMAGES.checkout, variant: 'bento-yellow' as const },
@@ -56,6 +57,17 @@ export default function CookDashboardPage() {
         <p className="font-black text-foreground">Kitchen setup tour</p>
         <p className="text-xs font-semibold text-muted-foreground mt-0.5">
           Story · collection · PDPA — replay anytime
+        </p>
+      </Link>
+
+      <Link
+        href="/cook-portal/batches"
+        data-testid="cook-batches-banner"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
+      >
+        <p className="font-black text-foreground">Cooking soon · post a batch</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+          Frying samosas tomorrow? Set qty + deadline — customers order from home
         </p>
       </Link>
 

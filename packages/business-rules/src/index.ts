@@ -12,3 +12,4 @@ export * from './portions';
 export * from './cook-status-gates';
 export * from './review';
 export * from './tiffin';
+export * from './drop';

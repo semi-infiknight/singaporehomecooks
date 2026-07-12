@@ -320,6 +320,49 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).requests || [];
     },
 
+    /** Cooking soon — marketplace open batches */
+    async listDrops(opts?: { cook_id?: string; mine?: boolean }) {
+      const qs = new URLSearchParams();
+      if (opts?.cook_id) qs.set("cook_id", opts.cook_id);
+      if (opts?.mine) qs.set("mine", "true");
+      const q = qs.toString();
+      const r = await request(`/store/shc/drops${q ? `?${q}` : ""}`, { method: "GET" });
+      return (r as any).drops || [];
+    },
+
+    async getDrop(id: string) {
+      const r = await request(`/store/shc/drops/${encodeURIComponent(id)}`, { method: "GET" });
+      return (r as any).drop;
+    },
+
+    async createDrop(input: Record<string, unknown>) {
+      const r = await request("/store/shc/drops", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+      return (r as any).drop;
+    },
+
+    async patchDrop(id: string, input: Record<string, unknown>) {
+      const r = await request(`/store/shc/drops/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      });
+      return (r as any).drop;
+    },
+
+    /** Order into a Cooking soon batch (fixed collection from drop) */
+    async orderDrop(id: string, qty: number, opts?: { allergen_acked?: boolean; pdpa_consent?: boolean }) {
+      return request(`/store/shc/drops/${encodeURIComponent(id)}/order`, {
+        method: "POST",
+        body: JSON.stringify({
+          qty,
+          allergen_acked: opts?.allergen_acked !== false,
+          pdpa_consent: opts?.pdpa_consent !== false,
+        }),
+      });
+    },
+
     async createBid(requestId: string, priceCents: number, message?: string) {
       const r = await request("/store/shc/bids", {
         method: "POST",

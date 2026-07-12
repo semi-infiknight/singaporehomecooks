@@ -104,6 +104,9 @@ export const addHeritageEntry = (cookId: string, entry: Record<string, unknown>)
 export const listOpenRequests = () => client.listOpenRequests();
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);
+export const listMyDrops = () => client.listDrops({ mine: true });
+export const createDrop = (input: Record<string, unknown>) => client.createDrop(input);
+export const patchDrop = (id: string, input: Record<string, unknown>) => client.patchDrop(id, input);
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);

@@ -111,6 +111,10 @@ export const createBid = (requestId: string, priceCents: number, message?: strin
   client.createBid(requestId, priceCents, message);
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
+export const listDrops = (opts?: { cook_id?: string; mine?: boolean }) => client.listDrops(opts);
+export const getDrop = (id: string) => client.getDrop(id);
+export const orderDrop = (id: string, qty: number, opts?: { allergen_acked?: boolean; pdpa_consent?: boolean }) =>
+  client.orderDrop(id, qty, opts);
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);

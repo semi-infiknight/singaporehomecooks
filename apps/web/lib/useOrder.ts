@@ -79,6 +79,45 @@ export function useRequests() {
     },
   });
 }
+export function useDrops(cookId?: string, opts?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['drops', cookId || 'market'],
+    queryFn: async () => {
+      const { listDrops } = await import('./api-client');
+      return listDrops(cookId ? { cook_id: cookId } : undefined);
+    },
+    staleTime: 30_000,
+    placeholderData: [],
+    enabled: opts?.enabled !== false && (cookId === undefined || !!cookId),
+  });
+}
+
+export function useDrop(id: string) {
+  return useQuery({
+    queryKey: ['drop', id],
+    queryFn: async () => {
+      const { getDrop } = await import('./api-client');
+      return getDrop(id);
+    },
+    enabled: !!id,
+  });
+}
+
+export function useOrderDrop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, qty }: { id: string; qty: number }) => {
+      const { orderDrop } = await import('./api-client');
+      return orderDrop(id, qty);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['drops'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['drop'] });
+    },
+  });
+}
+
 export function useMyRequests() {
   return useQuery({
     queryKey: ['my-requests'],

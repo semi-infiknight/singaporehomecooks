@@ -34,10 +34,14 @@ import {
   formatKitchenOrderCta,
   formatKitchenSubscribeCta,
   cartItemsAddedLabel,
+  formatDropCookDate,
+  formatDropOrderBy,
+  formatDropPrice,
   type KitchenReviewSort,
   type KitchenOrderLine,
 } from '@shc/utils';
 import { useCook, useProducts, useAddToCart } from '../../../lib/useProducts';
+import { useDrops } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
 import {
   SHCCard,
@@ -71,6 +75,9 @@ export default function KitchenPage() {
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug);
   const { data: products = [] } = useProducts('');
+  const { data: kitchenDrops = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
+    enabled: Boolean(cook?.id),
+  });
   const { user } = useAuth();
   const addMut = useAddToCart();
   const [heritage, setHeritage] = useState<Array<{ title?: string; story?: string }>>([]);
@@ -195,6 +202,8 @@ export default function KitchenPage() {
   const avatar = getCookAvatarUrl(cook.id, cook.display_name);
   const kitchenPhoto = getCookKitchenHeroUrl(cook.id || cook.display_name);
 
+  const openDrops = (kitchenDrops as any[]).filter((d) => d.status === 'open' || d.status === 'sold_out');
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10" data-testid="kitchen-page-screen">
       <div className="flex items-center gap-2 mb-3">
@@ -265,6 +274,37 @@ export default function KitchenPage() {
           )}
         </div>
       </div>
+
+      {/* Cooking soon — active batches for this kitchen */}
+      {openDrops.length > 0 && (
+        <div className="mb-4 space-y-2" data-testid="kitchen-cooking-soon">
+          <h2 className="font-black text-base">Cooking soon</h2>
+          {openDrops.map((d) => (
+            <button
+              key={d.id}
+              type="button"
+              data-testid={`kitchen-drop-${d.id}`}
+              onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
+              className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] p-4 shadow-[var(--shc-shadow-brutal-sm)]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-black">{d.title}</p>
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {formatDropCookDate(d.cook_date)} · {d.collection_slot} · by {formatDropOrderBy(d.order_by)}
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-primary">
+                    {formatDropPrice(d.price_cents, d.price)} · {d.remaining_qty ?? 0} of {d.max_qty} left
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground">
+                  Order
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Tabs — Menu · About · Hours · Reviews */}
       <div

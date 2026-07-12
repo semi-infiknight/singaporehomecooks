@@ -103,6 +103,10 @@ export const redeemCredits = (a: number) => client.redeemCredits(a);
 export const createRequest = (i: Record<string, unknown>) => client.createRequest(i);
 export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
+export const listDrops = (opts?: { cook_id?: string; mine?: boolean }) => client.listDrops(opts);
+export const getDrop = (id: string) => client.getDrop(id);
+export const orderDrop = (id: string, qty: number, opts?: { allergen_acked?: boolean; pdpa_consent?: boolean }) =>
+  client.orderDrop(id, qty, opts);
 export const getNotifications = () => client.getNotifications();
 export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
 export const markNotificationsRead = (ids?: string[], all = false) =>

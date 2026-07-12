@@ -14,6 +14,7 @@ export * from './feature-flag';
 export * from './search-synonym';
 export * from './platform-stat';
 export * from './request';
+export * from './drop';
 export * from './bid';
 export * from './notification';
 export * from './customer-location';

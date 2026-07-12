@@ -16,6 +16,9 @@ import {
   isCookAuthenticated,
   listCookExpenses,
   listOpenRequests,
+  listMyDrops,
+  createDrop,
+  patchDrop,
   submitComplianceDoc,
   transitionCookOrder,
 } from './cook-api-client';
@@ -147,5 +150,31 @@ export function useCreateBid() {
       qc.invalidateQueries({ queryKey: ['cook-open-requests'] });
       qc.invalidateQueries({ queryKey: ['cook-orders'] });
     },
+  });
+}
+
+/** Cooking soon — cook batches */
+export function useMyDrops() {
+  return useQuery({
+    queryKey: ['cook-drops'],
+    queryFn: listMyDrops,
+    enabled: isCookAuthenticated(),
+    placeholderData: [],
+  });
+}
+
+export function useCreateDrop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Record<string, unknown>) => createDrop(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-drops'] }),
+  });
+}
+
+export function usePatchDrop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Record<string, unknown> }) => patchDrop(id, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-drops'] }),
   });
 }

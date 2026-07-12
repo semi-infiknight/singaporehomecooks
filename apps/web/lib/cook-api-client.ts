@@ -101,3 +101,6 @@ export const createCookExpense = (input: {
 export const listOpenRequests = () => cookClient.listOpenRequests();
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   cookClient.createBid(requestId, priceCents, message);
+export const listMyDrops = () => cookClient.listDrops({ mine: true });
+export const createDrop = (input: Record<string, unknown>) => cookClient.createDrop(input);
+export const patchDrop = (id: string, input: Record<string, unknown>) => cookClient.patchDrop(id, input);

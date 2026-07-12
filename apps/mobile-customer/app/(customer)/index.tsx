@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
@@ -40,10 +40,13 @@ import {
   favoritesToReorderDishes,
   sortByCookProximity,
   filterDiscoverProducts,
+  formatDropCookDate,
+  formatDropOrderBy,
+  formatDropPrice,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
-import { useOrders } from '../../hooks/useOrder';
+import { useOrders, useDrops } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
@@ -91,6 +94,7 @@ export default function CustomerDiscover() {
   const { isGuest, requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
   const { data: orders = [] } = useOrders('customer');
+  const { data: drops = [] } = useDrops();
   const { favorites, toggle, isFavorite } = useFavorites();
   const { data: products = [], isLoading } = useProducts('');
   const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
@@ -357,6 +361,46 @@ export default function CustomerDiscover() {
               else router.push('/(customer)/request' as any);
             }}
           />
+        </View>
+      )}
+
+      {/* Cooking soon — cook-led batches */}
+      {!query && Array.isArray(drops) && (drops as any[]).length > 0 && (
+        <View style={{ marginBottom: shcSpacing.md }} testID="home-cooking-soon-rail">
+          <GourmeatSectionTitle title="Cooking soon near you" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: 12 }}>
+            {(drops as any[]).slice(0, 8).map((d) => (
+              <Pressable
+                key={d.id}
+                testID={`home-drop-${d.id}`}
+                onPress={() => router.push(`/(customer)/drops/${d.id}` as any)}
+                style={{
+                  width: 240,
+                  borderRadius: 16,
+                  borderWidth: 2,
+                  borderColor: gourmeatColors.border,
+                  backgroundColor: gourmeatColors.card,
+                  padding: 14,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase' }}>
+                  Cooking soon
+                </Text>
+                <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: gourmeatColors.text }} numberOfLines={1}>
+                  {d.title}
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }} numberOfLines={1}>
+                  {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
+                </Text>
+                <Text style={{ marginTop: 8, fontSize: 14, fontWeight: '800', color: gourmeatColors.primary }}>
+                  {formatDropPrice(d.price_cents, d.price)}
+                </Text>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.muted }}>
+                  {d.remaining_qty ?? 0} left · by {formatDropOrderBy(d.order_by)}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       )}
 

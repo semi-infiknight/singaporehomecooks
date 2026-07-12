@@ -31,6 +31,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
 
 const QUICK_ACTIONS = [
+  { href: '/(cook)/batches', iconKey: 'orders' as const, label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
   { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
   { href: '/(cook)/orders', iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
   { href: '/(cook)/tiffin', iconKey: 'home' as const, label: 'Tiffin OS', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-yellow' as const },

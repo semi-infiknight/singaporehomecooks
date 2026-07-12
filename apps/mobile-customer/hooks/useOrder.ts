@@ -109,6 +109,42 @@ export function useClearCart() {
 }
 
 // Phase 7-9: useRequests/useBids/useAcceptBid (collab board + request dish E2E Phase8), useNotifications (in-app bell from order/credit/req states Phase7). Appended to existing (no new files). Hooks use TanStack + SHCError ready.
+export function useDrops(cookId?: string, opts?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['drops', cookId || 'market'],
+    queryFn: async () => {
+      const { listDrops } = await import('../lib/api-client');
+      return listDrops(cookId ? { cook_id: cookId } : undefined);
+    },
+    staleTime: 30_000,
+    placeholderData: [],
+    enabled: opts?.enabled !== false && (cookId === undefined || !!cookId),
+  });
+}
+export function useDrop(id: string) {
+  return useQuery({
+    queryKey: ['drop', id],
+    queryFn: async () => {
+      const { getDrop } = await import('../lib/api-client');
+      return getDrop(id);
+    },
+    enabled: !!id,
+  });
+}
+export function useOrderDrop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, qty }: { id: string; qty: number }) => {
+      const { orderDrop } = await import('../lib/api-client');
+      return orderDrop(id, qty);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['drops'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['drop'] });
+    },
+  });
+}
 export function useRequests() {
   return useQuery({ queryKey: ['requests'], queryFn: async () => { const { listOpenRequests } = await import('../lib/api-client'); return listOpenRequests(); } });
 }

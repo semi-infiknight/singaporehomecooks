@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useProducts, useAddToCart } from '../lib/useProducts';
-import { useOrders } from '../lib/useOrder';
+import { useOrders, useDrops } from '../lib/useOrder';
 import { useAuth } from '../lib/useAuth';
 import { useDiscoverSearch } from './providers';
 import {
@@ -23,6 +23,9 @@ import {
   resolveDiscoverProductsForDisplay,
   OFFLINE_DISCOVER_PRODUCT,
   PROMO_BANNER_IMAGES,
+  formatDropCookDate,
+  formatDropOrderBy,
+  formatDropPrice,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -80,6 +83,7 @@ export default function DiscoverHome() {
   const [promoDismissed, setPromoDismissed] = useState(false);
   const { data: products = [], isLoading } = useProducts('');
   const { data: orders = [] } = useOrders();
+  const { data: drops = [] } = useDrops();
   const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
@@ -385,6 +389,37 @@ export default function DiscoverHome() {
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Cooking soon — cook-led batches (orderable) */}
+      {!query.trim() && Array.isArray(drops) && drops.length > 0 && (
+        <div className="mb-6" data-testid="home-cooking-soon-rail">
+          <GourmeatSectionTitle title="Cooking soon near you" />
+          <div className="mt-3 flex gap-3 overflow-x-auto pb-1 snap-x">
+            {(drops as any[]).slice(0, 8).map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                data-testid={`home-drop-${d.id}`}
+                onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
+                className="snap-start shrink-0 w-[260px] rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 text-left shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
+              >
+                <p className="text-[11px] font-black uppercase tracking-wide text-primary">Cooking soon</p>
+                <p className="mt-1 font-black text-foreground line-clamp-1">{d.title}</p>
+                <p className="text-xs font-semibold text-muted-foreground line-clamp-1">
+                  {d.cook_name || 'Home kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
+                </p>
+                <p className="mt-2 text-sm font-extrabold text-primary">{formatDropPrice(d.price_cents, d.price)}</p>
+                <p className="text-xs font-semibold text-muted-foreground">
+                  {d.remaining_qty ?? d.max_qty - (d.ordered_qty || 0)} left · by {formatDropOrderBy(d.order_by)}
+                </p>
+                <span className="mt-3 inline-block rounded-xl bg-primary px-3 py-1.5 text-xs font-extrabold text-primary-foreground">
+                  Order
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
