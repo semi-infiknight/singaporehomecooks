@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, TextInput, StyleSheet, Pressable, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SHCCard,
@@ -22,7 +22,12 @@ import {
   useMilestoneCelebration,
 } from '@shc/ui';
 import * as SecureStore from 'expo-secure-store';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  complianceLinksForType,
+  hasComplianceDocOfType,
+  missingComplianceTypes,
+} from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
 
@@ -55,6 +60,10 @@ export default function ComplianceUpload() {
       .catch(() => setDocs([]));
   }, [triggerIfFirst]);
 
+  const missing = useMemo(() => missingComplianceTypes(docs), [docs]);
+  const hasSelected = hasComplianceDocOfType(docs, type);
+  const courseLinks = useMemo(() => complianceLinksForType(type), [type]);
+
   const upload = async () => {
     if (!fileName) return;
     setSubmitting(true);
@@ -83,7 +92,7 @@ export default function ComplianceUpload() {
       <View style={styles.phaseBanner} testID="compliance-phase-banner">
         <Text style={styles.phaseBannerTitle}>Compliance documents are saved for admin review</Text>
         <Text style={styles.phaseBannerBody}>
-          Submit your SFA registration or WSQ certificate reference. Admin verification controls launch readiness and payout safety.
+          No cert yet? Open the official course links below, complete training, then upload here for ops review.
         </Text>
       </View>
 
@@ -98,6 +107,15 @@ export default function ComplianceUpload() {
         }
       />
 
+      {missing.length > 0 && (
+        <View style={styles.missingBanner} testID="compliance-missing-banner">
+          <Text style={styles.missingTitle}>Still needed</Text>
+          <Text style={styles.missingBody}>
+            {missing.map((t) => t.toUpperCase()).join(' · ')} — take the course, then upload your cert.
+          </Text>
+        </View>
+      )}
+
       <SHCFadeIn delay={80}>
         <View style={styles.bentoRow}>
           <View style={styles.bentoCol}>
@@ -105,7 +123,7 @@ export default function ComplianceUpload() {
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.compliance}
                 iconKey="document"
-                label="SFA"
+                label={hasComplianceDocOfType(docs, 'sfa') ? 'SFA ✓' : 'SFA'}
                 badge={type === 'sfa' ? '✓' : undefined}
                 variant={type === 'sfa' ? 'bento-mint' : 'default'}
               />
@@ -116,7 +134,7 @@ export default function ComplianceUpload() {
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.listings}
                 iconKey="education"
-                label="WSQ"
+                label={hasComplianceDocOfType(docs, 'wsq') ? 'WSQ ✓' : 'WSQ'}
                 badge={type === 'wsq' ? '✓' : undefined}
                 variant={type === 'wsq' ? 'bento-yellow' : 'default'}
               />
@@ -125,15 +143,37 @@ export default function ComplianceUpload() {
         </View>
       </SHCFadeIn>
 
+      {!hasSelected && (
+        <SHCFadeIn delay={100}>
+          <SHCSectionTitle>
+            {type === 'sfa' ? 'SFA registration & guides' : 'WSQ Food Safety Course'}
+          </SHCSectionTitle>
+          <View testID={`compliance-courses-${type}`}>
+            {courseLinks.map((link) => (
+              <Pressable
+                key={link.id}
+                testID={`compliance-course-link-${link.id}`}
+                onPress={() => void Linking.openURL(link.url)}
+                style={styles.courseCard}
+              >
+                <Text style={styles.courseTitle}>{link.title} →</Text>
+                <Text style={styles.courseBody}>{link.description}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </SHCFadeIn>
+      )}
+
       <SHCFadeIn delay={140}>
         <SHCCard style={styles.uploadCard}>
           <View style={styles.uploadHeader}>
             <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
             <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
           </View>
+          <Text style={styles.uploadHint}>After your course: submit the cert filename / reference.</Text>
 
           <TextInput
-            placeholder="cert.pdf"
+            placeholder="cert.pdf or cert reference"
             value={fileName}
             onChangeText={setFileName}
             style={styles.fileInput}
@@ -210,11 +250,34 @@ const styles = StyleSheet.create({
   },
   phaseBannerTitle: { fontSize: 14, fontWeight: '800', color: shcColors.warning, marginBottom: 4 },
   phaseBannerBody: { fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
+  missingBanner: {
+    marginBottom: shcSpacing.md,
+    padding: shcSpacing.md,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: gourmeatColors.bentoYellow,
+    ...shcShadows.brutalSm,
+  },
+  missingTitle: { fontSize: 14, fontWeight: '800', color: shcColors.text, marginBottom: 4 },
+  missingBody: { fontSize: 12, color: shcColors.textLight, lineHeight: 18, fontWeight: '600' },
   heroBadges: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
   bentoRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   bentoCol: { flex: 1 },
+  courseCard: {
+    marginBottom: shcSpacing.sm,
+    padding: shcSpacing.md,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: shcColors.surface,
+    ...shcShadows.brutalSm,
+  },
+  courseTitle: { fontSize: 14, fontWeight: '900', color: gourmeatColors.primary },
+  courseBody: { marginTop: 4, fontSize: 12, fontWeight: '600', color: shcColors.textLight, lineHeight: 17 },
   uploadCard: { marginBottom: shcSpacing.md },
   uploadHeader: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.sm },
+  uploadHint: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
   fileInput: {
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
