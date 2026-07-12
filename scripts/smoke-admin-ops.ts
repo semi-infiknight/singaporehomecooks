@@ -100,12 +100,37 @@ async function main() {
   if (up.status !== 200) throw new Error(`category upsert ${up.status} ${JSON.stringify(up.body).slice(0, 160)}`);
   console.log('✅ category upsert', up.body?.action);
 
-  // UI file checks
+  // UI file checks — single admin = Medusa Admin SHC Ops; web /ops is redirect only
   const ops = fs.readFileSync(path.join(process.cwd(), 'apps/web/app/ops/page.tsx'), 'utf8');
-  for (const n of ['ops-dashboard', 'ops-login', 'ops-tab-', 'ops-panel-overview', 'ops-orders-list', 'ops-panel-catalog']) {
-    if (!ops.includes(n)) throw new Error(`ops UI missing ${n}`);
+  for (const n of ['ops-redirect', 'app/shc-ops', 'Medusa Admin']) {
+    if (!ops.includes(n)) throw new Error(`ops redirect missing ${n}`);
   }
-  console.log('✅ ops UI tabs wired');
+  console.log('✅ web /ops redirects to Medusa Admin');
+
+  const adminRoot = path.join(process.cwd(), 'apps/medusa/src/admin/routes/shc-ops');
+  const adminPages = [
+    path.join(adminRoot, 'page.tsx'),
+    path.join(adminRoot, 'orders/page.tsx'),
+    path.join(adminRoot, 'catalog/page.tsx'),
+    path.join(adminRoot, 'controls/page.tsx'),
+  ];
+  for (const f of adminPages) {
+    if (!fs.existsSync(f)) throw new Error(`missing admin UI ${path.relative(process.cwd(), f)}`);
+    const src = fs.readFileSync(f, 'utf8');
+    if (!src.includes('defineRouteConfig') || !src.includes('/admin/shc/')) {
+      throw new Error(`admin UI not wired ${path.relative(process.cwd(), f)}`);
+    }
+  }
+  console.log('✅ Medusa Admin SHC Ops routes wired');
+
+  // Production admin SPA is served (auth gate returns HTML shell)
+  const appRes = await fetch(`${BASE}/app`);
+  if (!appRes.ok) throw new Error(`GET /app ${appRes.status}`);
+  const appHtml = await appRes.text();
+  if (!appHtml.includes('html') && !appHtml.includes('root')) {
+    throw new Error('Medusa /app did not return admin shell HTML');
+  }
+  console.log('✅ Medusa /app reachable', appRes.status);
 
   console.log('\n=== smoke-admin-ops PASSED ===');
 }
