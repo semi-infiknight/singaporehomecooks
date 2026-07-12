@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit || true"
   },
   "dependencies": {
+    "@shc/business-rules": "workspace:*",
     "@shc/types": "workspace:*"
   },
   "devDependencies": {

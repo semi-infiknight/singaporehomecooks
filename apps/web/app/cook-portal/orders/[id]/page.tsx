@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { getOrderStatusLabel } from '@shc/utils';
+import { getOrderStatusLabel, downloadPdfBase64InBrowser } from '@shc/utils';
 import { useCookOrder, useCookTransitionOrder } from '../../../../lib/useCookPortal';
+import { getCookOrderInvoice } from '../../../../lib/cook-api-client';
 import {
   GourmeatScreenHeader,
   GourmeatCard,
@@ -27,6 +29,24 @@ export default function CookOrderDetailPage() {
   const { data: order, isLoading } = useCookOrder(id);
   const transMut = useCookTransitionOrder();
   const { openTray, dismiss } = useSHCTrayWeb();
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+
+  const downloadInvoice = async () => {
+    if (!id || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await getCookOrderInvoice(id);
+      downloadPdfBase64InBrowser({
+        pdf_base64: res.pdf_base64,
+        filename: res.filename || `settlement-${id}.pdf`,
+        mime: res.mime || 'application/pdf',
+      });
+    } catch (e) {
+      alert((e as Error).message || 'Could not download settlement invoice.');
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
 
   if (isLoading || !order) {
     return (
@@ -81,7 +101,7 @@ export default function CookOrderDetailPage() {
         <p className="text-xs text-muted-foreground mt-2">Cook: {order.cook_name}</p>
       </GourmeatCard>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 mb-3">
         {actions.map((a) => (
           <GourmeatPrimaryButton
             key={a.to}
@@ -92,6 +112,14 @@ export default function CookOrderDetailPage() {
           />
         ))}
       </div>
+
+      <GourmeatPrimaryButton
+        label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
+        variant="outline"
+        onClick={downloadInvoice}
+        disabled={invoiceBusy}
+        testID="cook-order-download-invoice-btn"
+      />
 
       <Link href="/cook-portal/orders" className="block text-center text-sm font-semibold text-primary mt-8">
         Back to orders

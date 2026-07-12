@@ -228,6 +228,17 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).order;
     },
 
+    /** SG tax invoice / cook settlement — JSON + PDF base64 */
+    async getOrderInvoice(id: string) {
+      return request(`/store/shc/orders/${encodeURIComponent(id)}/invoice`, { method: "GET" }) as Promise<{
+        invoice: Record<string, unknown>;
+        html: string;
+        pdf_base64: string;
+        filename: string;
+        mime: string;
+      }>;
+    },
+
     async getMyOrders(role?: "customer" | "cook") {
       const r = role || config.appRole;
       const r2 = await request(`/store/shc/orders?role=${r}`, { method: "GET" });

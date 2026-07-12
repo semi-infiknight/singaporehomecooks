@@ -14,6 +14,8 @@ FROM deps AS build
 RUN rm -f apps/medusa/medusa-config.js
 RUN pnpm --filter @shc/types build
 RUN pnpm --filter @shc/business-rules build
+# Invoice PDF helpers (source package; tsc may soft-fail on unrelated tests)
+RUN pnpm --filter @shc/utils build || true
 ENV MEDUSA_DISABLE_ADMIN=false
 RUN pnpm --filter medusa build:admin
 

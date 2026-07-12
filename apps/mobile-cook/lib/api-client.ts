@@ -77,6 +77,7 @@ export const logout = () => clearSession();
 
 export const getMyOrders = () => client.getMyOrders('cook');
 export const getOrder = (id: string) => client.getOrder(id);
+export const getOrderInvoice = (id: string) => client.getOrderInvoice(id);
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrderDisputes = (orderId: string) => client.getOrderDisputes(orderId);
 export const submitOrderDispute = (orderId: string, input: { type?: string; notes: string }) =>

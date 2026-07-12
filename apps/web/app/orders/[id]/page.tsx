@@ -8,7 +8,8 @@ import {
   useOrderDisputes,
   useReview,
 } from '../../../lib/useOrder';
-import { submitReview, submitOrderDispute } from '../../../lib/api-client';
+import { submitReview, submitOrderDispute, getOrderInvoice } from '../../../lib/api-client';
+import { downloadPdfBase64InBrowser } from '@shc/utils';
 import { OrderTrackingTraySectionWeb } from '../../../lib/order-tray-section-web';
 import {
   SHCCard,
@@ -62,6 +63,24 @@ export default function TrackOrder() {
     [disputesRaw, id, maestroE2e]
   );
   const [msg, setMsg] = useState('');
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+
+  const downloadInvoice = async () => {
+    if (!id || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await getOrderInvoice(id);
+      downloadPdfBase64InBrowser({
+        pdf_base64: res.pdf_base64,
+        filename: res.filename || `invoice-${id}.pdf`,
+        mime: res.mime || 'application/pdf',
+      });
+    } catch (e) {
+      alert((e as Error).message || 'Could not download invoice. Sign in and try again.');
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
 
   if ((!maestroE2e && isLoading) || !order) {
     return (
@@ -111,6 +130,17 @@ export default function TrackOrder() {
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <OrderTimeline status={status} live={isActiveOrderStatus(status)} />
       </SHCCard>
+
+      <div className="mb-6">
+        <SHCButton
+          variant="outline"
+          testID="order-download-invoice-btn"
+          onClick={downloadInvoice}
+          disabled={invoiceBusy}
+        >
+          {invoiceBusy ? 'Preparing PDF…' : 'Download tax invoice (PDF)'}
+        </SHCButton>
+      </div>
 
       {isDelivered && (
         <SHCCard className="mb-6" data-testid="order-delivered-rate">

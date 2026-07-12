@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Platform, Share, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,7 @@ import {
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
-import { getOrderDisputes, submitOrderDispute } from '../../../lib/api-client';
+import { getOrderDisputes, getOrderInvoice, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
 function CookOrderDisputeTrayContent({
@@ -69,6 +69,7 @@ export default function CookManageOrder() {
   const { data: order } = useOrder(id || '');
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
+  const [invoiceBusy, setInvoiceBusy] = React.useState(false);
   const { openTray, dismiss } = useSHCTray();
 
   const { data: disputes = [] } = useQuery({
@@ -139,6 +140,34 @@ export default function CookManageOrder() {
     ));
   };
 
+  const downloadInvoice = async () => {
+    if (!id || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await getOrderInvoice(id);
+      const filename = res.filename || `settlement-${id}.pdf`;
+      let FileSystem: any = null;
+      try {
+        FileSystem = await import('expo-file-system');
+      } catch {
+        FileSystem = null;
+      }
+      if (FileSystem?.cacheDirectory) {
+        const path = `${FileSystem.cacheDirectory}${filename}`;
+        const encoding = FileSystem.EncodingType?.Base64 || 'base64';
+        await FileSystem.writeAsStringAsync(path, res.pdf_base64, { encoding });
+        const url = Platform.OS === 'ios' ? path : path.startsWith('file://') ? path : `file://${path}`;
+        await Share.share({ url, title: filename, message: Platform.OS === 'android' ? filename : undefined });
+      } else {
+        await Share.share({ title: filename, message: `Settlement invoice ${filename}` });
+      }
+    } catch (e: any) {
+      Alert.alert('Invoice', e?.message || 'Could not download settlement note.');
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
+
   if (!order) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
@@ -196,6 +225,14 @@ export default function CookManageOrder() {
           ))}
         </View>
       )}
+
+      <GourmeatPrimaryButton
+        label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
+        variant="outline"
+        onPress={downloadInvoice}
+        loading={invoiceBusy}
+        testID="cook-order-download-invoice-btn"
+      />
 
       <GourmeatPrimaryButton
         label="Chat with customer"
