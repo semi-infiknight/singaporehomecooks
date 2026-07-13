@@ -126,6 +126,8 @@ scope_unit_tests() {
         pnpm --filter medusa typecheck
         pnpm --filter medusa exec vitest run
       fi
+      log "expo route layout guard"
+      node scripts/verify-expo-routes.mjs
       bash scripts/verify-mobile-deps.sh
       if should_run_mobile_bundles; then
         bash scripts/verify-mobile-bundles.sh
@@ -234,6 +236,8 @@ tier_wip() {
 tier_quick() {
   log "seed validate"
   npx tsx scripts/seed.ts --validate
+  log "expo route layout guard (file+folder conflicts)"
+  node scripts/verify-expo-routes.mjs
   SCOPE="${SCOPE:-}"
   typecheck_scope
   pnpm --filter @shc/business-rules test
@@ -254,6 +258,9 @@ tier_goal() {
   else
     log "skip seed validate (polish / SKIP_SEED)"
   fi
+  # Always — empty dirs + file/folder twins kill Expo routes (listings, orders, cook slug)
+  log "expo route layout guard"
+  node scripts/verify-expo-routes.mjs
   typecheck_scope
   scope_unit_tests
   scope_maestro_yaml

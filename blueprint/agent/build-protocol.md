@@ -70,12 +70,30 @@ Screen (expo-router / Next page)
 ### Before committing wiring work (30s checklist)
 
 1. **Route file exists** — `apps/mobile-*/app/...` or `apps/web/app/...`
-2. **CTA wired** — `onPress` / `href` calls hook or `router.push` — not empty, not `console.log`
-3. **api-client** — import from `@shc/api-client` / `cook-api-client`, not inline fetch mock
-4. **Auth gate** — checkout, PDP add-to-cart, cook portal require session (see `02a1f53` pattern)
-5. **Error surface** — use `ShcRequestError` + `SHCErrorCode` from api-client on web/mobile
-6. **testID** — preserve Maestro targets when touching instrumented screens
-7. **Emulator sanity** — screen loads without redbox before stacking more commits
+2. **Expo route layout** — run `pnpm verify:expo-routes` (hard fail if broken)
+3. **CTA wired** — `onPress` / `href` calls hook or `router.push` — not empty, not `console.log`
+4. **api-client** — import from `@shc/api-client` / `cook-api-client`, not inline fetch mock; package `main` is **source** (`src/`), never rely on stale `dist/`
+5. **Auth gate** — checkout, PDP add-to-cart, cook portal require session (see `02a1f53` pattern)
+6. **Error surface** — use `ShcRequestError` + `SHCErrorCode` from api-client on web/mobile
+7. **testID** — preserve Maestro targets when touching instrumented screens
+8. **Emulator sanity** — screen loads without redbox before stacking more commits
+9. **Native module** — if you import `expo-*` that needs native code (image-picker, file-system, sharing), add plugin + rebuild binary; lazy-import so screens don't crash on load
+
+### Expo Router hard rules (do not break again)
+
+**Never** create both a file and a folder for the same segment:
+
+| ❌ Broken | ✅ Correct |
+|----------|-----------|
+| `orders.tsx` + `orders/[id].tsx` | `orders/index.tsx` + `orders/[id].tsx` (+ optional `orders/_layout.tsx`) |
+| `listings.tsx` + empty `listings/` | `listings.tsx` only, **or** `listings/index.tsx` |
+| `cook/[slug].tsx` + `cook/[slug]/ratings.tsx` | `cook/[slug]/index.tsx` + `cook/[slug]/ratings.tsx` |
+
+**Never** leave empty directories under `app/` (git ignores them; Expo still treats them as routes).
+
+```bash
+pnpm verify:expo-routes   # fails CI/goal if violated
+```
 
 ### Common wiring mistakes (from git history)
 
@@ -86,6 +104,10 @@ Screen (expo-router / Next page)
 | Web login "Failed to fetch" | `pnpm railway:wire` — explicit CORS, no wildcard mix |
 | Listing save doesn't persist | Hook calls `PATCH /store/shc/listings/:id` |
 | Cart empty after login | Refresh cart query in auth success handler |
+| Unmatched route / Details broken | Same segment as file **and** folder — fix layout, run `verify:expo-routes` |
+| `getX is not a function` on device | Stale `@shc/api-client` dist — use `main: src`, not gitignored dist |
+| Invoice shares as text | Write base64 PDF via `expo-file-system/legacy` + `expo-sharing` mime PDF |
+| `Cannot find native module 'Exponent…'` | Plugin + pod/rebuild; don't top-level import unlinked natives |
 
 ---
 
