@@ -8,14 +8,8 @@ export default function CookOrdersLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen
-        name="[id]"
-        options={{
-          headerShown: true,
-          title: 'Manage Order',
-          headerBackTitle: 'Orders',
-        }}
-      />
+      {/* In-screen header only — native stack header + tray context has been flaky */}
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

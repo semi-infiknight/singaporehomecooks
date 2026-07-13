@@ -19,32 +19,38 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Provider order matters:
+ * SafeArea → Query → Tray (outer) → ErrorBoundary (inner) → Stack
+ * Tray must wrap all screens that call useSHCTray; ErrorBoundary must not
+ * sit outside Tray or recovery remounts can drop context for children.
+ */
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <ErrorBoundary>
-            <SHCTrayProvider queryClient={queryClient}>
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: shcColors.primary },
-                headerTintColor: shcColors.background,
-                headerTitleStyle: { fontWeight: '600' },
-                headerTitle: 'SHC — Cook',
-              }}
-            >
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen name="(cook)" options={{ headerShown: false }} />
-              <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
-              <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
-              <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
-            </Stack>
-            </SHCTrayProvider>
-          </ErrorBoundary>
-        </SafeAreaProvider>
-      </QueryClientProvider>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <SHCTrayProvider queryClient={queryClient}>
+            <StatusBar style="dark" />
+            <ErrorBoundary>
+              <Stack
+                screenOptions={{
+                  headerStyle: { backgroundColor: shcColors.primary },
+                  headerTintColor: shcColors.background,
+                  headerTitleStyle: { fontWeight: '600' },
+                  headerTitle: 'SHC — Cook',
+                }}
+              >
+                <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="(cook)" options={{ headerShown: false }} />
+                <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
+                <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
+                <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
+              </Stack>
+            </ErrorBoundary>
+          </SHCTrayProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

@@ -52,6 +52,11 @@ const pinnedModules = [
   'nativewind',
   'moti',
   '@shopify/react-native-skia',
+  // Single instance — dual @shc/ui breaks TrayContext (useSHCTray outside provider)
+  '@shc/ui',
+  '@shc/utils',
+  '@shc/types',
+  '@shc/api-client',
 ];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {
@@ -79,7 +84,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook-v14-api-client-src';
+config.cacheVersion = 'mobile-cook-v15-tray-single-ui';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;

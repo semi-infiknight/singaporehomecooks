@@ -50,6 +50,11 @@ const pinnedModules = [
   'react-native-screens',
   'react-native-css-interop',
   'nativewind',
+  // Single instance — dual @shc/ui breaks TrayContext
+  '@shc/ui',
+  '@shc/utils',
+  '@shc/types',
+  '@shc/api-client',
 ];
 const pinnedPaths = Object.fromEntries(
   pinnedModules.map((name) => {

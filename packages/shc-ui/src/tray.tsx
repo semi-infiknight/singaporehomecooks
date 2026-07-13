@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   AccessibilityInfo,
   Platform,
+  Alert,
 } from 'react-native';
 import {
   type TrayFrame,
@@ -44,9 +45,36 @@ type TrayContextValue = {
 
 const TrayContext = createContext<TrayContextValue | null>(null);
 
+/**
+ * Soft-fallback when Provider is missing (duplicate Metro package / bad layout).
+ * Matches useTabDirection: never white-screen production with a hard throw.
+ * Prefer fixing SHCTrayProvider placement — this is a safety net only.
+ */
+function createTrayFallback(): TrayContextValue {
+  return {
+    stack: [],
+    openTray: (frame, _content) => {
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.error('[SHCTray] useSHCTray outside SHCTrayProvider — falling back to Alert');
+      }
+      Alert.alert(frame?.title || 'Notice', 'Please try again from the home tab.');
+    },
+    pushTrayContent: (frame, content) => {
+      // same as open for fallback
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.error('[SHCTray] pushTrayContent outside provider');
+      }
+      Alert.alert(frame?.title || 'Notice', 'Please try again from the home tab.');
+    },
+    popTray: () => {},
+    dismiss: () => {},
+    contentMap: {},
+  };
+}
+
 export function useSHCTray(): TrayContextValue {
   const ctx = useContext(TrayContext);
-  if (!ctx) throw new Error('useSHCTray must be used within SHCTrayProvider');
+  if (!ctx) return createTrayFallback();
   return ctx;
 }
 
