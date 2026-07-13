@@ -79,7 +79,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook-v13-onboarding-flow';
+config.cacheVersion = 'mobile-cook-v14-api-client-src';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;

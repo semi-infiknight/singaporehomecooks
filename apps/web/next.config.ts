@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from 'path';
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@shc/types', '@shc/ui', '@shc/business-rules', '@shc/utils'],
+  transpilePackages: ['@shc/types', '@shc/ui', '@shc/business-rules', '@shc/utils', '@shc/api-client'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
