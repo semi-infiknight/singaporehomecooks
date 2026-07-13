@@ -26,7 +26,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **Android native** | ✅ Both apps | Customer + cook bare `android/` (cook restored 2026-07-13); Metro :8081 / :8082; `scripts/rebuild-android-apps.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
-| **Order invoices (PDF)** | ✅ SG tax invoice | Customer tax invoice + cook settlement PDF via `GET /store/shc/orders/:id/invoice`; download on mobile + web order detail |
+| **Order invoices (PDF)** | ✅ SG tax invoice | `GET …/invoice` JSON/pdf; mobile opens **signed** `GET /hooks/shc/invoice?…` via `Linking` (no native FS); web still base64 download |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
 | **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
