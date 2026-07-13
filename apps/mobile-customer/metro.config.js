@@ -83,7 +83,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v21-api-client-src';
+config.cacheVersion = 'mobile-customer-v22-tray-single-ui';
 
 const expoLocationRoot = resolvePackageRoot('expo-location');
 const expoLocationEntry = expoLocationRoot
