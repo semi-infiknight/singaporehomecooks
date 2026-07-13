@@ -15,8 +15,43 @@ const CF_MODEL = "@cf/black-forest-labs/flux-1-schnell";
 
 export type FoodImageMode = "generate" | "enhance";
 
+/** enhance_style: polish = sharp on your photo; restyle = FLUX from dish name (not img2img). */
+export type EnhanceStyle = "polish" | "restyle";
+
+/** SG marketplace cuisine chips for generate prompts + cook UI. */
+export const FOOD_PHOTO_CUISINE_PRESETS = [
+  "Peranakan",
+  "Malay",
+  "Chinese",
+  "Indian",
+  "Eurasian",
+  "Western",
+  "Fusion",
+] as const;
+
 export function isCloudflareImageConfigured(): boolean {
   return Boolean(process.env.CLOUDFLARE_ACCOUNT_ID?.trim() && process.env.CLOUDFLARE_API_TOKEN?.trim());
+}
+
+export function getAiImagePublicStatus() {
+  const configured = isCloudflareImageConfigured();
+  return {
+    configured,
+    modes: ["upload", "generate", "polish"] as const,
+    model: CF_MODEL,
+    max_px: Number(process.env.SHC_AI_IMAGE_MAX_PX || 640),
+    rate_limit_per_hour: Number(process.env.SHC_AI_IMAGE_PER_COOK_HOUR || 30),
+    cuisine_presets: [...FOOD_PHOTO_CUISINE_PRESETS],
+    generate_available: configured,
+    generate_unavailable_reason: configured
+      ? null
+      : "AI generate is offline — set CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN on medusa",
+    enhance_styles: {
+      polish: "Brighten/contrast your upload (free, keeps your photo)",
+      restyle: "Illustrative AI plate from dish name (uses FLUX; not your exact photo)",
+    },
+    note: "Cook JWT required for POST. Prefer real kitchen photos; AI is illustrative only.",
+  };
 }
 
 export function buildFoodPhotoPrompt(input: {
@@ -120,31 +155,44 @@ export async function sharpEnhanceFoodPhoto(input: Buffer): Promise<Buffer> {
 
 /**
  * Generate or enhance food listing image.
- * - generate: FLUX from dish name
- * - enhance: sharp polish of upload; if dish_name given also can AI-restyle via FLUX
+ * - generate: FLUX from dish name + cuisine
+ * - enhance polish (default): sharp on uploaded pixels (always free)
+ * - enhance restyle: FLUX from dish name (schnell has no img2img; upload ignored for pixels)
  */
 export async function createListingFoodImage(input: {
   mode: FoodImageMode;
   dish_name: string;
   cuisine?: string;
   heritage_note?: string;
-  /** base64 of uploaded photo (enhance mode) */
+  /** base64 of uploaded photo (required for enhance polish) */
   image_base64?: string;
-  /** If true in enhance mode, also run FLUX restyle (uses neurons). Default true when CF configured. */
+  /**
+   * enhance only. Prefer enhance_style.
+   * ai_restyle true → restyle; false/undefined → polish (safe default — keeps cook photo).
+   */
   ai_restyle?: boolean;
-}): Promise<{ buffer: Buffer; contentType: string; source: string; prompt?: string }> {
+  enhance_style?: EnhanceStyle;
+}): Promise<{
+  buffer: Buffer;
+  contentType: string;
+  source: string;
+  prompt?: string;
+  enhance_style?: EnhanceStyle;
+}> {
   if (input.mode === "enhance") {
-    if (!input.image_base64) {
-      throw new Error("image_base64 required for enhance mode");
-    }
-    const raw = Buffer.from(input.image_base64.replace(/^data:image\/\w+;base64,/, ""), "base64");
-    if (raw.length < 100) throw new Error("Invalid image data");
+    const style: EnhanceStyle =
+      input.enhance_style === "restyle" || input.enhance_style === "polish"
+        ? input.enhance_style
+        : input.ai_restyle === true
+          ? "restyle"
+          : "polish";
 
-    const wantAi =
-      input.ai_restyle !== false && isCloudflareImageConfigured() && Boolean(input.dish_name?.trim());
-
-    if (wantAi) {
-      // AI restyle: generate polished food photo from dish metadata (FLUX has no img2img on schnell)
+    if (style === "restyle") {
+      if (!isCloudflareImageConfigured()) {
+        throw new Error("AI restyle requires CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN");
+      }
+      if (!input.dish_name?.trim()) throw new Error("dish_name required for AI restyle");
+      // FLUX schnell: no img2img — plate is illustrative from metadata only
       const prompt = buildFoodPhotoPrompt({
         dish_name: input.dish_name,
         cuisine: input.cuisine,
@@ -152,11 +200,27 @@ export async function createListingFoodImage(input: {
         enhance: true,
       });
       const gen = await generateFluxImage(prompt, { steps: 4 });
-      return { buffer: gen, contentType: "image/jpeg", source: "cloudflare-flux-restyle", prompt };
+      return {
+        buffer: gen,
+        contentType: "image/jpeg",
+        source: "cloudflare-flux-restyle",
+        prompt,
+        enhance_style: "restyle",
+      };
     }
 
+    if (!input.image_base64) {
+      throw new Error("image_base64 required for polish (your photo)");
+    }
+    const raw = Buffer.from(input.image_base64.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    if (raw.length < 100) throw new Error("Invalid image data");
     const polished = await sharpEnhanceFoodPhoto(raw);
-    return { buffer: polished, contentType: "image/jpeg", source: "sharp-enhance" };
+    return {
+      buffer: polished,
+      contentType: "image/jpeg",
+      source: "sharp-enhance",
+      enhance_style: "polish",
+    };
   }
 
   // generate

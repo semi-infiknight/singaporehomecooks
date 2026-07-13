@@ -57,9 +57,12 @@ import {
   updateCookListing,
   deleteCookListing,
   generateListingImage,
+  getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
 import * as ImagePicker from 'expo-image-picker';
+
+const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -109,6 +112,34 @@ export default function CookListings() {
       });
     }
   }, [step]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getAiImageStatus()
+      .then((st) => {
+        if (!cancelled) setAiImageStatus(st || {});
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAiImageStatus({
+            generate_available: false,
+            generate_unavailable_reason: 'Could not reach AI status',
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const cuisinePresets = aiImageStatus?.cuisine_presets?.length
+    ? aiImageStatus.cuisine_presets
+    : DEFAULT_CUISINE_PRESETS;
+  const generateAvailable = aiImageStatus?.generate_available === true || aiImageStatus?.configured === true;
+  const generateBlockedReason =
+    aiImageStatus?.generate_unavailable_reason ||
+    (!generateAvailable && aiImageStatus ? 'AI generate offline — upload a kitchen photo' : null);
+
   const [name, setName] = useState('New Nyonya Dish');
   const [price, setPrice] = useState(14);
   const [minQty, setMinQty] = useState(4);
@@ -122,6 +153,13 @@ export default function CookListings() {
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
   const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
   const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
+  const [aiImageStatus, setAiImageStatus] = useState<{
+    configured?: boolean;
+    generate_available?: boolean;
+    generate_unavailable_reason?: string | null;
+    cuisine_presets?: string[];
+    model?: string;
+  } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -239,24 +277,60 @@ export default function CookListings() {
     return `data:${mime};base64,${asset.base64}`;
   };
 
-  const runAiPhoto = async (mode: 'generate' | 'enhance', imageBase64?: string) => {
+  const runGenerateAi = async () => {
+    if (!generateAvailable) {
+      showErrorTray('AI generate offline', generateBlockedReason || 'Upload a real kitchen photo instead.');
+      return;
+    }
+    if (!name.trim()) {
+      showErrorTray('Dish name needed', 'Enter a dish name before generating an AI plate.');
+      return;
+    }
     setAiPhotoBusy(true);
     setAiPhotoNote(null);
     try {
       const res = await generateListingImage({
-        mode,
+        mode: 'generate',
         dish_name: name,
         cuisine,
         heritage_note: heritage,
-        image_base64: imageBase64,
-        ai_restyle: mode === 'enhance',
       });
       const url = res.webp_url || res.image_url || res.jpeg_url;
       if (!url) throw new Error('No image URL returned');
       setListingImageUrl(url);
-      setAiPhotoNote(mode === 'generate' ? 'AI generated (FLUX)' : `Enhanced (${res.source || 'ai'})`);
+      setAiPhotoNote('Illustrative AI plate — real dish may vary. Prefer a kitchen photo when you can.');
     } catch (e) {
-      showErrorTray(mode === 'generate' ? 'AI generate failed' : 'Enhance failed', (e as Error).message);
+      showErrorTray('AI generate failed', (e as Error).message);
+    } finally {
+      setAiPhotoBusy(false);
+    }
+  };
+
+  const polishFromPicker = async (label: 'upload' | 'brighten') => {
+    const b64 = await pickImageBase64();
+    if (!b64) return;
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const res = await generateListingImage({
+        mode: 'enhance',
+        dish_name: name || 'Dish',
+        cuisine,
+        heritage_note: heritage,
+        image_base64: b64,
+        enhance_style: 'polish',
+        ai_restyle: false,
+      });
+      const url = res.webp_url || res.image_url;
+      if (!url) throw new Error('Photo processing failed');
+      setListingImageUrl(url);
+      setAiPhotoNote(
+        label === 'brighten'
+          ? 'Brightened your photo (still your kitchen shot)'
+          : 'Kitchen photo uploaded & optimized'
+      );
+    } catch (e) {
+      showErrorTray(label === 'brighten' ? 'Brighten failed' : 'Upload failed', (e as Error).message);
     } finally {
       setAiPhotoBusy(false);
     }
@@ -504,7 +578,26 @@ export default function CookListings() {
       {step === 2 && (
         <ListingWizardStep step={2} title="Tags & Cuisine">
           <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
-          <TextInput value={cuisine} onChangeText={setCuisine} style={inputStyle} />
+          <Text style={styles.photoPanelHint}>Cuisine (helps AI plate + discovery)</Text>
+          <View style={styles.cuisinePresets} testID="listing-cuisine-presets">
+            {cuisinePresets.map((c) => (
+              <Pressable
+                key={c}
+                onPress={() => setCuisine(c)}
+                style={[styles.cuisineChip, cuisine === c && styles.cuisineChipActive]}
+                testID={`cuisine-preset-${c}`}
+              >
+                <Text style={[styles.cuisineChipText, cuisine === c && styles.cuisineChipTextActive]}>{c}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            value={cuisine}
+            onChangeText={setCuisine}
+            style={inputStyle}
+            placeholder="Or type a cuisine"
+            testID="listing-cuisine-input"
+          />
           <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
         </ListingWizardStep>
       )}
@@ -526,7 +619,9 @@ export default function CookListings() {
           {aiCal && <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} />}
           <View style={styles.photoPanel} testID="listing-photo-panel">
             <Text style={styles.photoPanelTitle}>Dish photo</Text>
-            <Text style={styles.photoPanelHint}>Upload · Generate AI (FLUX) · Upload + enhance</Text>
+            <Text style={styles.photoPanelHint}>
+              Kitchen photo recommended. AI plate is illustrative only.
+            </Text>
             {listingImageUrl ? (
               <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
             ) : null}
@@ -535,53 +630,42 @@ export default function CookListings() {
                 variant="outline"
                 disabled={aiPhotoBusy}
                 testID="listing-photo-upload"
-                onPress={async () => {
-                  const b64 = await pickImageBase64();
-                  if (!b64) return;
-                  setAiPhotoBusy(true);
-                  try {
-                    const res = await generateListingImage({
-                      mode: 'enhance',
-                      dish_name: name,
-                      cuisine,
-                      heritage_note: heritage,
-                      image_base64: b64,
-                      ai_restyle: false,
-                    });
-                    const url = res.webp_url || res.image_url;
-                    if (url) {
-                      setListingImageUrl(url);
-                      setAiPhotoNote('Photo uploaded & optimized');
-                    }
-                  } catch (e) {
-                    showErrorTray('Upload failed', (e as Error).message);
-                  } finally {
-                    setAiPhotoBusy(false);
-                  }
-                }}
+                onPress={() => void polishFromPicker('upload')}
               >
-                <SHCButtonText>Upload</SHCButtonText>
+                <SHCButtonText>Upload photo</SHCButtonText>
               </SHCButton>
               <SHCButton
                 variant="outline"
-                disabled={aiPhotoBusy || !name.trim()}
-                testID="listing-photo-generate"
-                onPress={() => void runAiPhoto('generate')}
+                disabled={aiPhotoBusy}
+                testID="listing-photo-brighten"
+                onPress={() => void polishFromPicker('brighten')}
               >
-                <SHCButtonText>{aiPhotoBusy ? '…' : 'Generate AI'}</SHCButtonText>
+                <SHCButtonText>Brighten</SHCButtonText>
               </SHCButton>
               <SHCButton
-                disabled={aiPhotoBusy}
-                testID="listing-photo-enhance"
-                onPress={async () => {
-                  const b64 = await pickImageBase64();
-                  if (b64) await runAiPhoto('enhance', b64);
-                }}
+                variant="outline"
+                disabled={aiPhotoBusy || !name.trim() || !generateAvailable}
+                testID="listing-photo-generate"
+                onPress={() => void runGenerateAi()}
               >
-                <SHCButtonText>AI enhance</SHCButtonText>
+                <SHCButtonText>
+                  {aiPhotoBusy ? '…' : generateAvailable ? 'Generate AI' : 'AI offline'}
+                </SHCButtonText>
               </SHCButton>
             </View>
-            {aiPhotoNote ? <Text style={styles.photoNote}>{aiPhotoNote}</Text> : null}
+            <Text style={styles.photoNote} testID="listing-photo-help">
+              Upload = your shot · Brighten = lighting only · Generate = illustrative AI plate
+            </Text>
+            {!generateAvailable && generateBlockedReason ? (
+              <Text style={styles.photoOffline} testID="listing-photo-ai-offline">
+                {generateBlockedReason}
+              </Text>
+            ) : null}
+            {aiPhotoNote ? (
+              <Text style={styles.photoNote} testID="listing-photo-note">
+                {aiPhotoNote}
+              </Text>
+            ) : null}
           </View>
           <Pressable
             onPress={async () => {
@@ -712,9 +796,32 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   photoPanelTitle: { fontSize: 14, fontWeight: '800', color: shcColors.text },
-  photoPanelHint: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
+  photoPanelHint: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: 4 },
   photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoNote: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
+  photoOffline: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#92400e',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderRadius: shcRadii.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  cuisinePresets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  cuisineChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: shcColors.surface,
+  },
+  cuisineChipActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
+  cuisineChipText: { fontSize: 12, fontWeight: '800', color: shcColors.text },
+  cuisineChipTextActive: { color: '#fff' },
   publishedCard: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm },
   trayActions: { gap: shcSpacing.sm },
   trayActionBtn: {

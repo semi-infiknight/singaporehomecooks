@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -21,7 +21,7 @@ import {
   useDeleteCookListing,
 } from '../../../lib/useCookPortal';
 import { useAICalorieEstimate } from '../../../lib/useProducts';
-import { getPhotoTips, generateListingImage } from '../../../lib/api-client';
+import { getPhotoTips, generateListingImage, getAiImageStatus } from '../../../lib/api-client';
 import {
   GourmeatCookHeader,
   GourmeatSearchBar,
@@ -58,12 +58,23 @@ type ListingRow = Record<string, unknown> & {
 };
 
 const OCCASION_OPTIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday'];
+/** Fallback cuisine chips until GET /ai/image status loads. */
+const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 const DEFAULT_FORM = {
   name: 'New Nyonya Dish',
   price: 14,
   minQty: 4,
   cuisine: 'Peranakan',
   heritage: 'Family recipe from our HDB kitchen since 1978.',
+};
+
+type AiImageStatus = {
+  configured?: boolean;
+  generate_available?: boolean;
+  generate_unavailable_reason?: string | null;
+  cuisine_presets?: string[];
+  model?: string;
+  note?: string;
 };
 
 export default function CookListingsPage() {
@@ -99,6 +110,7 @@ export default function CookListingsPage() {
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
   const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
   const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
+  const [aiImageStatus, setAiImageStatus] = useState<AiImageStatus | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
@@ -110,6 +122,28 @@ export default function CookListingsPage() {
     () => resolveCookListingsForDisplay(myListings as ListingRow[], { dev: process.env.NODE_ENV === 'development', maestroE2e }),
     [myListings, maestroE2e]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    void getAiImageStatus()
+      .then((st) => {
+        if (!cancelled) setAiImageStatus(st || {});
+      })
+      .catch(() => {
+        if (!cancelled) setAiImageStatus({ generate_available: false, generate_unavailable_reason: 'Could not reach AI status' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const cuisinePresets = aiImageStatus?.cuisine_presets?.length
+    ? aiImageStatus.cuisine_presets
+    : DEFAULT_CUISINE_PRESETS;
+  const generateAvailable = aiImageStatus?.generate_available === true || aiImageStatus?.configured === true;
+  const generateBlockedReason =
+    aiImageStatus?.generate_unavailable_reason ||
+    (!generateAvailable && aiImageStatus ? 'AI generate offline — upload a real kitchen photo instead' : null);
 
   const {
     show: showCelebration,
@@ -164,76 +198,74 @@ export default function CookListingsPage() {
 
   const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
 
-  const runAiPhoto = async (mode: 'generate' | 'enhance', imageBase64?: string) => {
-    setAiPhotoBusy(true);
-    setAiPhotoNote(null);
-    try {
-      const res = await generateListingImage({
-        mode,
-        dish_name: name,
-        cuisine,
-        heritage_note: heritage,
-        image_base64: imageBase64,
-        ai_restyle: mode === 'enhance',
-      });
-      const url = res.webp_url || res.image_url || res.jpeg_url;
-      if (!url) throw new Error('No image URL returned');
-      setListingImageUrl(url);
-      setAiPhotoNote(
-        mode === 'generate'
-          ? `AI generated (${res.source || 'flux'}) — ${res.disclaimer || 'illustrative only'}`
-          : `Enhanced (${res.source || 'ai'}) — review before publish`
-      );
-    } catch (e) {
-      showErrorTray(
-        mode === 'generate' ? 'AI generate failed' : 'Enhance failed',
-        (e as Error).message || 'Could not create photo. Try upload instead.'
-      );
-    } finally {
-      setAiPhotoBusy(false);
-    }
-  };
-
-  const onUploadPhoto = async (file: File | null) => {
-    if (!file) return;
-    setAiPhotoBusy(true);
-    setAiPhotoNote(null);
-    try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(new Error('Could not read file'));
-        reader.readAsDataURL(file);
-      });
-      // Direct upload path (no AI) — store as preview via enhance sharp path
-      const res = await generateListingImage({
-        mode: 'enhance',
-        dish_name: name,
-        cuisine,
-        heritage_note: heritage,
-        image_base64: dataUrl,
-        ai_restyle: false,
-      });
-      const url = res.webp_url || res.image_url || res.jpeg_url;
-      if (!url) throw new Error('Upload processing failed');
-      setListingImageUrl(url);
-      setAiPhotoNote('Photo uploaded and optimized');
-    } catch (e) {
-      showErrorTray('Upload failed', (e as Error).message || 'Could not process photo');
-    } finally {
-      setAiPhotoBusy(false);
-    }
-  };
-
-  const onEnhanceUpload = async (file: File | null) => {
-    if (!file) return;
-    const dataUrl = await new Promise<string>((resolve, reject) => {
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
       reader.onerror = () => reject(new Error('Could not read file'));
       reader.readAsDataURL(file);
     });
-    await runAiPhoto('enhance', dataUrl);
+
+  const runGenerateAi = async () => {
+    if (!generateAvailable) {
+      showErrorTray('AI generate offline', generateBlockedReason || 'Upload a real kitchen photo instead.');
+      return;
+    }
+    if (!name.trim()) {
+      showErrorTray('Dish name needed', 'Enter a dish name before generating an AI plate.');
+      return;
+    }
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const res = await generateListingImage({
+        mode: 'generate',
+        dish_name: name,
+        cuisine,
+        heritage_note: heritage,
+      });
+      const url = res.webp_url || res.image_url || res.jpeg_url;
+      if (!url) throw new Error('No image URL returned');
+      setListingImageUrl(url);
+      setAiPhotoNote(
+        `Illustrative AI plate (${res.model || res.source || 'flux'}) — real dish may vary. Prefer a kitchen photo when you can.`
+      );
+    } catch (e) {
+      showErrorTray('AI generate failed', (e as Error).message || 'Could not create photo. Try upload instead.');
+    } finally {
+      setAiPhotoBusy(false);
+    }
+  };
+
+  /** Upload or brighten — always polish (keeps cook photo pixels). */
+  const onPolishPhoto = async (file: File | null, label: 'upload' | 'brighten') => {
+    if (!file) return;
+    setAiPhotoBusy(true);
+    setAiPhotoNote(null);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const res = await generateListingImage({
+        mode: 'enhance',
+        dish_name: name || 'Dish',
+        cuisine,
+        heritage_note: heritage,
+        image_base64: dataUrl,
+        enhance_style: 'polish',
+        ai_restyle: false,
+      });
+      const url = res.webp_url || res.image_url || res.jpeg_url;
+      if (!url) throw new Error('Photo processing failed');
+      setListingImageUrl(url);
+      setAiPhotoNote(
+        label === 'brighten'
+          ? 'Brightened your photo (lighting/contrast only — still your kitchen shot)'
+          : 'Kitchen photo uploaded & optimized for listing cards'
+      );
+    } catch (e) {
+      showErrorTray(label === 'brighten' ? 'Brighten failed' : 'Upload failed', (e as Error).message || 'Could not process photo');
+    } finally {
+      setAiPhotoBusy(false);
+    }
   };
 
   const resetWizard = () => {
@@ -564,12 +596,30 @@ export default function CookListingsPage() {
                   sizes="100vw"
                 />
               </div>
+              <p className="text-xs font-extrabold text-muted-foreground">Cuisine (helps AI plate + discovery)</p>
+              <div className="flex flex-wrap gap-2" data-testid="listing-cuisine-presets">
+                {cuisinePresets.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCuisine(c)}
+                    className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                      cuisine === c ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+                    }`}
+                    data-testid={`cuisine-preset-${c}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
               <input
                 className="w-full rounded-xl border border-border px-3 py-2 text-sm"
                 value={cuisine}
                 onChange={(e) => setCuisine(e.target.value)}
-                placeholder="Cuisine"
+                placeholder="Or type a cuisine"
+                data-testid="listing-cuisine-input"
               />
+              <p className="text-xs font-extrabold text-muted-foreground pt-1">Occasion tags</p>
               <div className="flex flex-wrap gap-2">
                 {OCCASION_OPTIONS.map((tag) => (
                   <button
@@ -609,7 +659,7 @@ export default function CookListingsPage() {
               <div className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 space-y-2" data-testid="listing-photo-panel">
                 <p className="text-sm font-extrabold">Dish photo</p>
                 <p className="text-xs text-muted-foreground">
-                  Upload · Generate with AI (Cloudflare FLUX) · or enhance a cook photo
+                  <strong>Kitchen photo recommended.</strong> AI plate is illustrative only — customers should see the real dish when you can.
                 </p>
                 {listingImageUrl ? (
                   <div className="relative h-36 w-full rounded-lg overflow-hidden border border-border">
@@ -617,9 +667,9 @@ export default function CookListingsPage() {
                   </div>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
-                  <label className="cursor-pointer">
-                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2 text-xs font-extrabold">
-                      Upload
+                  <label className={`cursor-pointer ${aiPhotoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2 text-xs font-extrabold">
+                      Upload kitchen photo
                     </span>
                     <input
                       type="file"
@@ -627,32 +677,51 @@ export default function CookListingsPage() {
                       className="hidden"
                       data-testid="listing-photo-upload"
                       disabled={aiPhotoBusy}
-                      onChange={(e) => void onUploadPhoto(e.target.files?.[0] || null)}
+                      onChange={(e) => void onPolishPhoto(e.target.files?.[0] || null, 'upload')}
                     />
                   </label>
-                  <SHCButton
-                    size="sm"
-                    variant="outline"
-                    disabled={aiPhotoBusy || !name.trim()}
-                    onClick={() => void runAiPhoto('generate')}
-                    testID="listing-photo-generate"
-                  >
-                    {aiPhotoBusy ? 'Working…' : 'Generate AI'}
-                  </SHCButton>
-                  <label className="cursor-pointer">
-                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2 text-xs font-extrabold">
-                      Upload + AI enhance
+                  <label className={`cursor-pointer ${aiPhotoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2 text-xs font-extrabold">
+                      Brighten my photo
                     </span>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      data-testid="listing-photo-enhance"
+                      data-testid="listing-photo-brighten"
                       disabled={aiPhotoBusy}
-                      onChange={(e) => void onEnhanceUpload(e.target.files?.[0] || null)}
+                      onChange={(e) => void onPolishPhoto(e.target.files?.[0] || null, 'brighten')}
                     />
                   </label>
+                  <SHCButton
+                    size="sm"
+                    variant="outline"
+                    disabled={aiPhotoBusy || !name.trim() || !generateAvailable}
+                    onClick={() => void runGenerateAi()}
+                    testID="listing-photo-generate"
+                    title={
+                      !generateAvailable
+                        ? generateBlockedReason || 'AI generate offline'
+                        : `Generate illustrative plate (${aiImageStatus?.model || 'FLUX'})`
+                    }
+                  >
+                    {aiPhotoBusy ? 'Working…' : generateAvailable ? 'Generate AI plate' : 'AI offline'}
+                  </SHCButton>
                 </div>
+                <p
+                  className="text-[11px] font-semibold text-muted-foreground leading-snug"
+                  data-testid="listing-photo-help"
+                >
+                  <span className="font-extrabold">Upload</span> = your shot, optimized ·{' '}
+                  <span className="font-extrabold">Brighten</span> = lighting/contrast only (still your photo) ·{' '}
+                  <span className="font-extrabold">Generate AI</span> = new illustrative plate from dish name + cuisine
+                  {generateAvailable ? ` (${aiImageStatus?.model?.split('/').pop() || 'FLUX'})` : ''}
+                </p>
+                {!generateAvailable && generateBlockedReason ? (
+                  <p className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5" data-testid="listing-photo-ai-offline">
+                    {generateBlockedReason}
+                  </p>
+                ) : null}
                 {aiPhotoNote ? (
                   <p className="text-[11px] font-semibold text-muted-foreground" data-testid="listing-photo-note">
                     {aiPhotoNote}

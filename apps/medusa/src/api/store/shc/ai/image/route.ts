@@ -6,13 +6,14 @@ import { uploadBufferToMinIO } from "../../../../../lib/minio-client";
 import {
   compressListingImage,
   createListingFoodImage,
+  getAiImagePublicStatus,
   isCloudflareImageConfigured,
 } from "../../../../../lib/shc-cf-image";
 import { checkRateLimit, getRateLimitKey } from "../../../../../lib/shc-rate-limit";
 
 /**
  * POST /store/shc/ai/image
- * Cook-only: generate (FLUX) or enhance (sharp / FLUX restyle) listing food photo.
+ * Cook-only: generate (FLUX) or enhance (polish = sharp / restyle = FLUX) listing food photo.
  * Returns MinIO URL + small WebP derivative.
  *
  * Body:
@@ -20,8 +21,9 @@ import { checkRateLimit, getRateLimitKey } from "../../../../../lib/shc-rate-lim
  *   dish_name: string
  *   cuisine?: string
  *   heritage_note?: string
- *   image_base64?: string  (required for enhance)
- *   ai_restyle?: boolean   (enhance: use FLUX when configured)
+ *   image_base64?: string     (required for enhance polish)
+ *   enhance_style?: "polish" | "restyle"
+ *   ai_restyle?: boolean      (legacy: true → restyle; default polish)
  */
 const BodySchema = z
   .object({
@@ -31,17 +33,12 @@ const BodySchema = z
     heritage_note: z.string().max(300).optional(),
     image_base64: z.string().max(8_000_000).optional(),
     ai_restyle: z.boolean().optional(),
+    enhance_style: z.enum(["polish", "restyle"]).optional(),
   })
   .strict();
 
 export async function GET(_req: MedusaRequest, res: MedusaResponse) {
-  res.json({
-    configured: isCloudflareImageConfigured(),
-    modes: ["generate", "enhance", "upload"],
-    model: "@cf/black-forest-labs/flux-1-schnell",
-    max_px: Number(process.env.SHC_AI_IMAGE_MAX_PX || 640),
-    note: "Cook JWT required for POST. Free CF Workers AI neurons; soft per-cook rate limit.",
-  });
+  res.json(getAiImagePublicStatus());
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -89,6 +86,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       heritage_note: parse.data.heritage_note,
       image_base64: parse.data.image_base64,
       ai_restyle: parse.data.ai_restyle,
+      enhance_style: parse.data.enhance_style,
     });
 
     const { webp, width, height } = await compressListingImage(made.buffer);
@@ -123,9 +121,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       cook_id: cookId,
       mode: parse.data.mode,
       source: made.source,
+      enhance_style: made.enhance_style,
       bytes: webp.length,
     });
 
+    const isAi = made.source.includes("flux");
     res.status(201).json({
       image_url: webpUp.url || jpegUp.url,
       jpeg_url: jpegUp.url,
@@ -136,9 +136,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       height,
       bytes: webp.length,
       source: made.source,
+      enhance_style: made.enhance_style,
       prompt: made.prompt,
-      model: made.source.includes("flux") ? CF_MODEL_LABEL : made.source,
-      disclaimer: "AI images are illustrative — real dish may vary. Prefer a real kitchen photo when possible.",
+      model: isAi ? CF_MODEL_LABEL : made.source,
+      disclaimer: isAi
+        ? "AI images are illustrative — real dish may vary. Prefer a real kitchen photo when possible."
+        : "Photo optimized for listing cards (lighting/contrast). Your original composition is kept.",
     });
   } catch (e: any) {
     const msg = e?.message || "AI image failed";

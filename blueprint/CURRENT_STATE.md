@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-12 — **Cooking soon (cook drops)** + SHC Ops in Medusa Admin; Waves 1–8 still shipped.
+**Last Updated:** 2026-07-13 — **Listing AI photos full** (status-aware Generate, brighten polish, cuisine presets, smoke:ai-image); Cooking soon + SHC Ops still shipped.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -31,7 +31,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
 | **Admin / Ops** (Medusa Admin) | ✅ Single admin app | Stock `/app` + **SHC Ops** UI routes (`/app/shc-ops/*`) using `@medusajs/ui`; APIs `/admin/shc/*`; web `/ops` redirects to Medusa |
 | **Cooking soon (cook drops)** | ✅ v1 | Cook posts batch (qty, order-by, collection); home rail + kitchen section; cart→checkout path; inverse of request-dish |
-| **Listing AI photos** | ✅ v1 | Cook listing: Upload / Generate (Cloudflare FLUX) / Enhance; `POST /store/shc/ai/image` → MinIO WebP; needs CF env on medusa |
+| **Listing AI photos** | ✅ full | Upload kitchen photo · Brighten (sharp polish) · Generate AI plate (FLUX); status-aware Generate; cuisine presets; `GET/POST /store/shc/ai/image`; `pnpm smoke:ai-image`; needs CF env for Generate |
 
 **Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
 
@@ -185,6 +185,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT |
 | `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT |
+| `/store/shc/ai/image` | GET, POST | GET public status (configured, cuisine_presets); POST cook JWT — generate \| enhance polish/restyle → MinIO |
 | …growth routes (credits, requests, bids, heritage, ai, compliance, upload, feature-flags, disputes) | various | ✅ implemented |
 
 ### Server libs (`apps/medusa/src/lib/`)
@@ -198,6 +199,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `shc-notifications-store.ts` | In-memory notifications (dev) |
 | `shc-tiffin-shape.ts` | Kitchen/subscription DTO mapper |
 | `shc-tiffin-weekly-orders.ts` | Idempotent weekly order materialization (`TIFFIN-{subId}-{week}-{day}`) |
+| `shc-cf-image.ts` | Cloudflare FLUX generate + sharp polish; cuisine presets; public status |
 
 ### Tiffin (`apps/medusa/src/modules/shc-tiffin/`)
 
@@ -238,6 +240,8 @@ pnpm verify:full                  # Milestone only: full tour + API smoke
 pnpm verify:quick                 # One-off fix outside a goal
 pnpm verify:local                 # Seed validate + typecheck (legacy alias)
 pnpm verify:web-pwa               # PWA assets + build fingerprint (local)
+pnpm smoke:ai-image               # Listing AI photo: status + polish; generate if CF configured
+# REQUIRE_AI_GENERATE=1 pnpm smoke:ai-image   # fail if Generate offline
 
 # Railway (after railway login + railway link)
 pnpm railway:configure-web        # Point web service at railway.web.toml

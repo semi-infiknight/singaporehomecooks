@@ -103,6 +103,7 @@ export const generateListingImage = (input: {
   heritage_note?: string;
   image_base64?: string;
   ai_restyle?: boolean;
+  enhance_style?: 'polish' | 'restyle';
 }) => client.generateListingImage(input);
 export const getAiImageStatus = () => client.getAiImageStatus();
 export const registerPushToken = (cookId: string, token: string) =>

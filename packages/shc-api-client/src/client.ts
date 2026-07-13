@@ -456,14 +456,16 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).tips ? r : { tips: (r as any).tips };
     },
 
-    /** AI listing photo: generate (FLUX) or enhance (sharp / FLUX restyle) */
+    /** AI listing photo: generate (FLUX) or enhance (polish = sharp / restyle = FLUX) */
     async generateListingImage(input: {
       mode: "generate" | "enhance";
       dish_name: string;
       cuisine?: string;
       heritage_note?: string;
       image_base64?: string;
+      /** @deprecated use enhance_style */
       ai_restyle?: boolean;
+      enhance_style?: "polish" | "restyle";
     }) {
       return request("/store/shc/ai/image", {
         method: "POST",
@@ -474,18 +476,26 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         jpeg_url?: string;
         key?: string;
         source?: string;
+        enhance_style?: "polish" | "restyle";
         disclaimer?: string;
         width?: number;
         height?: number;
         bytes?: number;
+        model?: string;
       }>;
     },
 
     async getAiImageStatus() {
       return request("/store/shc/ai/image", { method: "GET" }) as Promise<{
         configured?: boolean;
+        generate_available?: boolean;
+        generate_unavailable_reason?: string | null;
         modes?: string[];
         model?: string;
+        max_px?: number;
+        cuisine_presets?: string[];
+        enhance_styles?: Record<string, string>;
+        note?: string;
       }>;
     },
 

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildFoodPhotoPrompt, compressListingImage, sharpEnhanceFoodPhoto } from "./shc-cf-image";
+import {
+  buildFoodPhotoPrompt,
+  compressListingImage,
+  createListingFoodImage,
+  FOOD_PHOTO_CUISINE_PRESETS,
+  getAiImagePublicStatus,
+  sharpEnhanceFoodPhoto,
+} from "./shc-cf-image";
 import sharp from "sharp";
 
 describe("shc-cf-image prompts + compress", () => {
@@ -13,6 +20,15 @@ describe("shc-cf-image prompts + compress", () => {
     expect(p).toMatch(/no text/i);
     expect(p).toMatch(/Malay/);
     expect(p.length).toBeLessThan(2048);
+  });
+
+  it("exposes cuisine presets + public status shape", () => {
+    expect(FOOD_PHOTO_CUISINE_PRESETS).toContain("Peranakan");
+    expect(FOOD_PHOTO_CUISINE_PRESETS).toContain("Malay");
+    const st = getAiImagePublicStatus();
+    expect(st.modes).toContain("generate");
+    expect(st.cuisine_presets.length).toBeGreaterThan(3);
+    expect(typeof st.generate_available).toBe("boolean");
   });
 
   it("compressListingImage produces small webp", async () => {
@@ -36,5 +52,22 @@ describe("shc-cf-image prompts + compress", () => {
       .toBuffer();
     const out = await sharpEnhanceFoodPhoto(jpg);
     expect(out.length).toBeGreaterThan(100);
+  });
+
+  it("enhance defaults to polish (keeps upload), not restyle", async () => {
+    const jpg = await sharp({
+      create: { width: 200, height: 150, channels: 3, background: { r: 180, g: 90, b: 40 } },
+    })
+      .jpeg()
+      .toBuffer();
+    const made = await createListingFoodImage({
+      mode: "enhance",
+      dish_name: "Rendang",
+      cuisine: "Malay",
+      image_base64: jpg.toString("base64"),
+      // no ai_restyle / enhance_style → polish
+    });
+    expect(made.source).toBe("sharp-enhance");
+    expect(made.enhance_style).toBe("polish");
   });
 });
