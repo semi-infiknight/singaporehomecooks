@@ -22,25 +22,39 @@ export const client = createShcApiClient({
 export async function hydrateSession() {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
   const userRaw = await SecureStore.getItemAsync(USER_KEY);
-  if (token) {
-    accessToken = token;
-    if (userRaw) {
-      try {
-        client.setCurrentUser(JSON.parse(userRaw));
-      } catch {
-        /* refresh below */
-      }
-    }
+  if (!token) return null;
+
+  accessToken = token;
+  let cached: ReturnType<typeof client.getCurrentUser> = null;
+  if (userRaw) {
     try {
-      const user = await client.getMe();
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      return user;
+      cached = JSON.parse(userRaw);
+      if (cached) client.setCurrentUser(cached);
     } catch {
+      cached = null;
+    }
+  }
+
+  try {
+    const user = await client.getMe();
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    return user;
+  } catch (e: any) {
+    const status = e?.status ?? e?.statusCode;
+    const msg = String(e?.message || e || '');
+    // Only wipe session on real auth failure — keep cached user on network blips
+    // (clearing here caused login↔dashboard refresh loops when getMe timed out).
+    const unauthorized =
+      status === 401 ||
+      status === 403 ||
+      /unauthorized|invalid token|jwt|not authenticated/i.test(msg);
+    if (unauthorized) {
       await clearSession();
       return null;
     }
+    if (cached) return cached;
+    return null;
   }
-  return null;
 }
 
 export async function persistSession(token: string, user: ReturnType<typeof client.getCurrentUser>) {

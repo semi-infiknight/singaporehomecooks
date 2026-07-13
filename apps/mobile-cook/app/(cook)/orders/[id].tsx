@@ -63,11 +63,12 @@ const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string; variant?
 };
 
 export default function CookManageOrder() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
-  const { data: order } = useOrder(id || '');
+  const { data: order, isLoading: orderLoading, isError: orderError, error: orderErr } = useOrder(id || '');
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
   const [invoiceBusy, setInvoiceBusy] = React.useState(false);
@@ -154,10 +155,30 @@ export default function CookManageOrder() {
     }
   };
 
-  if (!order) {
+  if (!id) {
+    return (
+      <View style={[styles.loading, { paddingTop: insets.top }]}>
+        <Text style={{ color: gourmeatColors.textLight }}>Missing order id</Text>
+        <GourmeatPrimaryButton label="Back to orders" onPress={() => router.replace('/(cook)/orders')} style={{ marginTop: 16 }} />
+      </View>
+    );
+  }
+
+  if (orderLoading && !order) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
         <Text style={{ color: gourmeatColors.textLight }}>Loading order…</Text>
+      </View>
+    );
+  }
+
+  if (orderError || !order) {
+    return (
+      <View style={[styles.loading, { paddingTop: insets.top, paddingHorizontal: 16 }]}>
+        <Text style={{ color: gourmeatColors.textLight, textAlign: 'center' }}>
+          {(orderErr as Error)?.message || 'Order not found or still loading.'}
+        </Text>
+        <GourmeatPrimaryButton label="Back to orders" onPress={() => router.replace('/(cook)/orders')} style={{ marginTop: 16 }} />
       </View>
     );
   }

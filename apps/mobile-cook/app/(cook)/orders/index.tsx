@@ -37,7 +37,7 @@ export default function CookOrders() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { data: orders = [] } = useMyOrders();
+  const { data: orders = [], isLoading: ordersLoading, isError: ordersError, error: ordersErr, refetch: refetchOrders } = useMyOrders();
   const { data: openReqs = [] } = useRequests();
   const createBidMut = useCreateBid();
   const transMut = useTransitionOrder();
@@ -122,13 +122,28 @@ export default function CookOrders() {
       />
 
       {err && <SHCErrorBanner code={err.code} message={err.message} />}
+      {ordersError && (
+        <SHCErrorBanner
+          message={(ordersErr as Error)?.message || 'Could not load orders. Pull to retry or check login.'}
+        />
+      )}
 
       <SHCSectionTitle>Collection orders</SHCSectionTitle>
 
-      {orders.length === 0 && (
+      {ordersLoading && orders.length === 0 && (
+        <GourmeatCard>
+          <GourmeatEmptyState title="Loading orders…" body="Fetching your collection orders from Railway." />
+        </GourmeatCard>
+      )}
+
+      {!ordersLoading && orders.length === 0 && !ordersError && (
         <GourmeatCard>
           <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
         </GourmeatCard>
+      )}
+
+      {ordersError && orders.length === 0 && (
+        <GourmeatPrimaryButton label="Retry load orders" onPress={() => void refetchOrders()} style={{ marginBottom: 12 }} />
       )}
 
       <SHCFadeIn delay={80}>
@@ -146,7 +161,7 @@ export default function CookOrders() {
               collectionDate={o.collection_date}
               collectionSlot={o.collection_slot}
               total={o.total}
-              onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
+              onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
               testID={`cook-order-row-${o.id}`}
               actions={
                 <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
@@ -164,14 +179,14 @@ export default function CookOrders() {
                     size="sm"
                     variant="outline"
                     testID={`cook-order-${o.id}-chat`}
-                    onPress={() => router.push(`/(shared)/chat/${o.id}` as any)}
+                    onPress={() => router.push(`/(shared)/chat/${encodeURIComponent(String(o.id))}` as any)}
                   />
                   <GourmeatPrimaryButton
                     label="Details"
                     size="sm"
                     variant="outline"
                     testID={`cook-order-${o.id}-details`}
-                    onPress={() => router.push(`/(cook)/orders/${o.id}` as any)}
+                    onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
                   />
                 </GourmeatActionRow>
               }

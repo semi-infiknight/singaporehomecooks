@@ -18,7 +18,16 @@ export function CookTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { notifyTabChange } = useTabDirection();
   const visibleRoutes = state.routes.filter((route) => VISIBLE_TABS.has(route.name));
+  // Nested stack (orders/[id]) still belongs to the parent tab "orders"
   const activeRoute = state.routes[state.index];
+  const activeKey =
+    activeRoute?.name && VISIBLE_TABS.has(activeRoute.name)
+      ? activeRoute.name
+      : visibleRoutes.find((r) => r.name === 'orders') && String(activeRoute?.name || '').startsWith('orders')
+        ? 'orders'
+        : activeRoute?.name && VISIBLE_TABS.has(activeRoute.name.split('/')[0])
+          ? activeRoute.name.split('/')[0]
+          : activeRoute?.name ?? 'dashboard';
 
   const tabs: SHCBottomTab[] = visibleRoutes.map((route) => {
     const meta = TAB_META[route.name];
@@ -44,9 +53,15 @@ export function CookTabBar({ state, navigation }: BottomTabBarProps) {
     >
       <GourmeatFloatingTabBar
         tabs={tabs}
-        activeKey={activeRoute?.name ?? 'dashboard'}
+        activeKey={VISIBLE_TABS.has(activeKey) ? activeKey : 'dashboard'}
         onTabPress={(key) => {
           notifyTabChange(key);
+          // Pop nested stack when re-tapping Orders while on detail
+          const alreadyFocused = state.routes[state.index]?.name === key;
+          if (alreadyFocused && key === 'orders') {
+            navigation.navigate(key, { screen: 'index' });
+            return;
+          }
           navigation.navigate(key);
         }}
         testID="cook-bottom-tab-bar"
