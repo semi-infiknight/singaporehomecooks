@@ -44,7 +44,13 @@
       "expo-notifications",
       "expo-asset",
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Singapore Home Cooks Cook uses your photos for dish listing images."
+        }
+      ]
     ],
     "scheme": "shc-cook",
     "extra": {

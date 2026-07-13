@@ -60,9 +60,17 @@ import {
   getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
-import * as ImagePicker from 'expo-image-picker';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
+
+/** Lazy-load so Listings + Generate AI work even when native binary lacks ImagePicker (needs rebuild). */
+async function loadImagePicker(): Promise<typeof import('expo-image-picker') | null> {
+  try {
+    return await import('expo-image-picker');
+  } catch {
+    return null;
+  }
+}
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -261,20 +269,41 @@ export default function CookListings() {
   );
 
   const pickImageBase64 = async (): Promise<string | null> => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      showErrorTray('Permission needed', 'Allow photo library access to upload a dish photo.');
+    const ImagePicker = await loadImagePicker();
+    if (!ImagePicker?.requestMediaLibraryPermissionsAsync) {
+      showErrorTray(
+        'Photo library needs app rebuild',
+        'Generate AI still works. For Upload/Brighten, rebuild the cook app (native ImagePicker module missing).'
+      );
       return null;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-      base64: true,
-    });
-    if (result.canceled || !result.assets?.[0]?.base64) return null;
-    const asset = result.assets[0];
-    const mime = asset.mimeType || 'image/jpeg';
-    return `data:${mime};base64,${asset.base64}`;
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        showErrorTray('Permission needed', 'Allow photo library access to upload a dish photo.');
+        return null;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions?.Images ?? ('images' as any),
+        quality: 0.7,
+        base64: true,
+      });
+      if (result.canceled || !result.assets?.[0]?.base64) return null;
+      const asset = result.assets[0];
+      const mime = asset.mimeType || 'image/jpeg';
+      return `data:${mime};base64,${asset.base64}`;
+    } catch (e: any) {
+      const msg = String(e?.message || e || '');
+      if (/ExponentImagePicker|native module/i.test(msg)) {
+        showErrorTray(
+          'Photo library needs app rebuild',
+          'Generate AI still works without Upload. Rebuild cook iOS/Android to enable camera roll.'
+        );
+        return null;
+      }
+      showErrorTray('Photo pick failed', msg || 'Could not open photo library.');
+      return null;
+    }
   };
 
   const runGenerateAi = async () => {
