@@ -24,6 +24,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Tiffin subscription** | ✅ Mobile + API + **Wave 8** | Ledger + recharge; pause/skip/resume/**customize extras**; day-menu join; past history; plan duration weeks; pg-first create; `pnpm smoke:tiffin` + `pnpm ship:tiffin` |
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
+| **Android native** | ✅ Both apps | Customer + cook bare `android/` (cook restored 2026-07-13); Metro :8081 / :8082; `scripts/rebuild-android-apps.sh` |
 | **PayNow / PayU** | 🟡 Simulated | Web checkout: place order → PayNow panel (`I've paid`) → track; confirm no longer blocked by empty ref / sticky under tab bar |
 | **Order invoices (PDF)** | ✅ SG tax invoice | Customer tax invoice + cook settlement PDF via `GET /store/shc/orders/:id/invoice`; download on mobile + web order detail |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
@@ -229,6 +230,7 @@ pnpm web:dev                      # Web :3001
 
 bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb reverse
 bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
+bash scripts/rebuild-android-apps.sh  # Customer + cook debug APKs → running emulator
 bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
 bash scripts/run-tiffin-e2e.sh         # Cook tiffin-config + customer subscribe (customer skipped if API 404)
 
