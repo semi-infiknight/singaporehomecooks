@@ -40,6 +40,7 @@ Do **not** use root `STATUS.md` — use `CURRENT_STATE.md`.
 
 ## Goal workflow (every task)
 
+0. **Least blast radius** — name ≥2 options; pick smallest safe path (API → web → JS → native last). See [agent/build-protocol.md](./agent/build-protocol.md) non-negotiable section.
 1. **Build** — many commits; [agent/build-protocol.md](./agent/build-protocol.md) wiring checklist
 2. **Verify** — `FLAVOUR=* SCOPE=* pnpm verify:goal` once — [agent/verify-protocol.md](./agent/verify-protocol.md)
 3. **Ship** — milestone: `pnpm verify:full`

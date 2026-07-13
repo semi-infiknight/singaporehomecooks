@@ -8,8 +8,57 @@
 - [design-taste.md](./design-taste.md)
 - [verify-protocol.md](./verify-protocol.md)
 
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-07-13
 **Owner:** All agent tracks
+
+---
+
+## ⛔ NON-NEGOTIABLE: path of least blast radius
+
+**This is a production marketplace.** Optimize for **smallest safe change that delivers the user outcome** — not for finishing the first half-written code path you find.
+
+### Rule
+
+Before implementing, name **at least two approaches** and pick the one with the **lowest blast radius** that still solves the goal. Prefer in this order:
+
+1. **Server / API only** — existing or one new route returns the artifact (PDF, JSON, redirect URL)
+2. **Web** — download / open URL / print (no native rebuild)
+3. **Mobile JS-only** — use existing packages; no new native modules
+4. **Mobile native** — new `expo-*` / pods / Gradle — **last resort**, own commit, explicit rebuild, smoke only that feature
+
+### Blast-radius checklist (block yourself if any “no”)
+
+| Question | Required answer |
+|----------|-----------------|
+| Does the API already do this? | Prefer that over client invention |
+| Can web satisfy the user without a mobile rebuild? | Prefer web / deep link to web / open URL |
+| Will this add a **native** dependency? | Only if JS/API cannot work; document why |
+| Can this ship as **one focused commit** without touching routes/auth/layout? | Prefer yes |
+| If I rebuild the app binary, did I isolate smoke to **this feature only**? | Required |
+| Am I “while I’m here” fixing unrelated bugs? | **Forbidden** in the same change set |
+
+### Forbidden patterns (we already paid for these)
+
+| Anti-pattern | Do instead |
+|--------------|------------|
+| “Finish the broken base64 → file → Share path” when `?format=pdf` already exists | Open signed URL / `format=pdf` / web download |
+| Add native packages + full iOS rebuild for a download | API stream + browser / `Linking.openURL` + signed link |
+| Mix invoice + session hydrate + Expo routes in one PR | Separate commits; one concern each |
+| Patch symptom without re-asking “product outcome” | State outcome in one sentence, then choose path |
+
+### Decision log (required in commit body or PR note for non-trivial work)
+
+```
+Outcome: <user-visible result>
+Options: (1) … (2) …
+Chosen: <#> because lowest blast radius
+Not chosen: <why higher radius rejected>
+Smoke: <exactly what was verified>
+```
+
+**On conflict:** this section wins over “match existing half-built client code” and over chat urgency to ship a familiar pattern.
+
+---
 
 ## What you're building
 

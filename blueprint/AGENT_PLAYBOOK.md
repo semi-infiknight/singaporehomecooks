@@ -31,6 +31,7 @@
 - Tri-platform parity required for UI
 - Railway Medusa for all clients (no localhost)
 - Goals: many commits → one scoped verify
+- **Least blast radius first** — [agent/build-protocol.md § NON-NEGOTIABLE](./agent/build-protocol.md): API/web/JS before native; no drive-by fixes in the same change
 
 ---
 
