@@ -63,10 +63,10 @@ import {
   type KitchenOrderLine,
   type KitchenMealCustomizeDraft,
 } from '@shc/utils';
-import { useCook, useDiscovery, useAddToCart } from '../../../hooks/useProducts';
-import { useDrops } from '../../../hooks/useOrder';
-import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
-import { getHeritageArchive } from '../../../lib/api-client';
+import { useCook, useDiscovery, useAddToCart } from '../../../../hooks/useProducts';
+import { useDrops } from '../../../../hooks/useOrder';
+import { useGuestAuthGate } from '../../../../hooks/useGuestAuthGate';
+import { getHeritageArchive } from '../../../../lib/api-client';
 
 type TabId = 'menu' | 'about' | 'hours' | 'reviews';
 

@@ -22,8 +22,8 @@ import {
 } from '@shc/ui';
 import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars } from '@shc/utils';
 
-import { useMyOrders, useTransitionOrder, useRequests, useCreateBid } from '../../hooks/useOrder';
-import { useAuth } from '../../hooks/useAuth';
+import { useMyOrders, useTransitionOrder, useRequests, useCreateBid } from '../../../hooks/useOrder';
+import { useAuth } from '../../../hooks/useAuth';
 import { SHCOrderStatus } from '@shc/types';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
