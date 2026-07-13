@@ -98,10 +98,11 @@ export type BuildInvoiceInput = {
 
 export const DEFAULT_PLATFORM_SUPPLIER = {
   legal_name: 'Singapore Home Cooks',
-  uen: process.env.SHC_PLATFORM_UEN || process.env.NEXT_PUBLIC_SHC_PLATFORM_UEN || 'UEN pending',
+  /** Set SHC_PLATFORM_UEN on medusa for production tax invoices */
+  uen: (process.env.SHC_PLATFORM_UEN || process.env.NEXT_PUBLIC_SHC_PLATFORM_UEN || 'UEN-PENDING').trim(),
   address: 'Singapore',
-  gst_registered: false,
-  gst_registration_number: null as string | null,
+  gst_registered: String(process.env.SHC_PLATFORM_GST_REGISTERED || '').toLowerCase() === 'true',
+  gst_registration_number: process.env.SHC_PLATFORM_GST_NO?.trim() || null,
 };
 
 function dollarsToCents(total: number | string | undefined, totalCents?: number): number {
@@ -393,76 +394,196 @@ function escapePdf(s: string): string {
 }
 
 /**
- * Minimal single-page PDF (A4) — Helvetica, no images.
+ * Singapore tax invoice / settlement PDF (A4, Helvetica).
+ * Layout follows common IRAS tax-invoice fields (supplier UEN, invoice no/date,
+ * line items, GST status, total in SGD). Not a scanned letterhead — platform-issued digital record.
  * Returns base64 (no data: prefix).
  */
 export function invoiceToPdfBase64(doc: OrderInvoiceDoc): string {
-  type TLine = { text: string; size: number };
-  const content: TLine[] = [];
-  const add = (text: string, size = 11) => content.push({ text, size });
+  type Cmd = string;
+  const ops: Cmd[] = [];
+  let y = 800;
 
-  add(doc.title.toUpperCase(), 16);
-  add(`${doc.invoice_number}  |  ${doc.invoice_date}  |  ${doc.currency}`, 10);
-  add('');
-  add(`Supplier: ${doc.supplier.legal_name}`, 11);
-  add(`UEN: ${doc.supplier.uen}  |  ${doc.supplier.address}`, 10);
-  add(
-    doc.supplier.gst_registered
-      ? `GST Reg: ${doc.supplier.gst_registration_number || ''}`
-      : 'Not GST-registered — no GST charged',
-    10
-  );
-  add('');
-  add(`Bill to (${doc.bill_to.role_label}): ${doc.bill_to.name}`, 11);
-  if (doc.fulfilled_by) add(`Kitchen: ${doc.fulfilled_by.cook_name}`, 10);
-  add(`Order: ${doc.order_id}`, 10);
-  if (doc.payment.collection_date) {
-    add(`Collection: ${doc.payment.collection_date} ${doc.payment.collection_slot || ''}`, 10);
-  }
-  add(`Payment: ${doc.payment.method}  Ref: ${doc.payment.reference || '—'}`, 10);
-  add('');
-  add('Items', 12);
-  for (const l of doc.lines) {
-    add(
-      `  ${l.qty} x ${l.description}  @ ${formatInvoiceMoney(l.unit_cents)}  = ${formatInvoiceMoney(l.line_cents)}`,
+  const text = (str: string, x: number, yy: number, size: number, font = '/F1') => {
+    const t = escapePdf(String(str || '').slice(0, 120));
+    ops.push(`BT ${font} ${size} Tf ${x} ${yy} Td (${t}) Tj ET`);
+  };
+  const hline = (yy: number, x1 = 48, x2 = 547) => {
+    ops.push(`${x1} ${yy} m ${x2} ${yy} l S`);
+  };
+  const advance = (dy: number) => {
+    y -= dy;
+  };
+
+  // Header
+  text(doc.title.toUpperCase(), 48, y, 18, '/F2');
+  advance(22);
+  text('Singapore marketplace · Digital tax document', 48, y, 9);
+  advance(16);
+  hline(y + 4);
+  advance(14);
+
+  // Invoice meta (right-aligned-ish block via fixed x)
+  text(`Invoice No: ${doc.invoice_number}`, 48, y, 11, '/F2');
+  text(`Date of issue: ${doc.invoice_date}`, 320, y, 11);
+  advance(14);
+  text(`Currency: ${doc.currency}`, 48, y, 10);
+  text(`Order ID: ${doc.order_id}`, 320, y, 10);
+  advance(18);
+
+  // Supplier (seller)
+  text('SUPPLIER (SELLER)', 48, y, 9, '/F2');
+  advance(12);
+  text(doc.supplier.legal_name, 48, y, 12, '/F2');
+  advance(13);
+  text(`UEN: ${doc.supplier.uen || 'UEN-PENDING'}`, 48, y, 10);
+  advance(12);
+  text(`Address: ${doc.supplier.address || 'Singapore'}`, 48, y, 10);
+  advance(12);
+  if (doc.supplier.gst_registered) {
+    text(
+      `GST-registered · GST Reg No: ${doc.supplier.gst_registration_number || doc.supplier.uen}`,
+      48,
+      y,
       10
     );
+  } else {
+    text('Not GST-registered — GST amount on this invoice is S$0.00 (no GST charged).', 48, y, 10);
   }
-  add('');
-  add(`Subtotal: ${formatInvoiceMoney(doc.subtotal_cents)}`, 11);
-  add(`GST (${(doc.gst_rate * 100).toFixed(0)}%): ${formatInvoiceMoney(doc.gst_cents)}`, 11);
-  add(`TOTAL: ${formatInvoiceMoney(doc.total_cents)}`, 13);
-  if (doc.doc_type === 'settlement_note') {
-    add(
-      `Platform fee (${((doc.commission_rate || 0) * 100).toFixed(0)}%): -${formatInvoiceMoney(doc.platform_fee_cents || 0)}`,
-      11
-    );
-    add(`Net cook earnings: ${formatInvoiceMoney(doc.cook_earnings_cents || 0)}`, 12);
-  }
-  add('');
-  for (const n of doc.notes) add(n, 9);
-  add('Singapore Home Cooks marketplace invoice', 9);
+  advance(18);
 
-  // Build PDF content stream (y from top of A4 842)
-  let y = 800;
-  const ops: string[] = [];
-  for (const line of content) {
-    if (y < 50) break;
-    const t = escapePdf(line.text.slice(0, 110));
-    ops.push(`BT /F1 ${line.size} Tf 48 ${y} Td (${t}) Tj ET`);
-    y -= line.size + 6;
+  // Bill to
+  text('BILL TO', 48, y, 9, '/F2');
+  advance(12);
+  text(`${doc.bill_to.name}  (${doc.bill_to.role_label})`, 48, y, 11, '/F2');
+  advance(12);
+  if (doc.bill_to.id) {
+    text(`Account: ${doc.bill_to.id}`, 48, y, 10);
+    advance(12);
   }
-  const stream = ops.join('\n');
+  if (doc.fulfilled_by?.cook_name) {
+    text(`Fulfilled by kitchen: ${doc.fulfilled_by.cook_name}`, 48, y, 10);
+    advance(12);
+  }
+  advance(6);
+
+  // Supply details
+  text('SUPPLY DETAILS', 48, y, 9, '/F2');
+  advance(12);
+  if (doc.payment.collection_date) {
+    text(
+      `Date of supply (collection): ${doc.payment.collection_date} ${doc.payment.collection_slot || ''}`.trim(),
+      48,
+      y,
+      10
+    );
+    advance(12);
+  }
+  text(
+    `Payment: ${doc.payment.method}${doc.payment.reference ? ` · Ref ${doc.payment.reference}` : ''}`,
+    48,
+    y,
+    10
+  );
+  advance(12);
+  if (doc.payment.status) {
+    text(`Order status: ${doc.payment.status}`, 48, y, 10);
+    advance(12);
+  }
+  advance(6);
+  hline(y + 4);
+  advance(14);
+
+  // Line table header
+  text('Description', 48, y, 9, '/F2');
+  text('Qty', 320, y, 9, '/F2');
+  text('Unit', 370, y, 9, '/F2');
+  text('Amount (SGD)', 450, y, 9, '/F2');
+  advance(10);
+  hline(y + 4);
+  advance(12);
+
+  for (const l of doc.lines) {
+    if (y < 120) break;
+    text(l.description.slice(0, 48), 48, y, 10);
+    text(String(l.qty), 325, y, 10);
+    text(formatInvoiceMoney(l.unit_cents), 370, y, 10);
+    text(formatInvoiceMoney(l.line_cents), 460, y, 10);
+    advance(14);
+  }
+  advance(4);
+  hline(y + 6);
+  advance(16);
+
+  // Totals
+  text('Subtotal (before GST)', 320, y, 10);
+  text(formatInvoiceMoney(doc.subtotal_cents), 460, y, 10);
+  advance(13);
+  text(
+    doc.supplier.gst_registered
+      ? `GST (${(doc.gst_rate * 100).toFixed(0)}%)`
+      : 'GST (not charged — not registered)',
+    320,
+    y,
+    10
+  );
+  text(formatInvoiceMoney(doc.gst_cents), 460, y, 10);
+  advance(14);
+  text('TOTAL PAYABLE', 320, y, 12, '/F2');
+  text(formatInvoiceMoney(doc.total_cents), 460, y, 12, '/F2');
+  advance(16);
+
+  if (doc.doc_type === 'settlement_note') {
+    hline(y + 4);
+    advance(14);
+    text('COOK SETTLEMENT', 48, y, 10, '/F2');
+    advance(13);
+    text(
+      `Platform service fee (${((doc.commission_rate || 0) * 100).toFixed(0)}%)`,
+      48,
+      y,
+      10
+    );
+    text(`-${formatInvoiceMoney(doc.platform_fee_cents || 0)}`, 460, y, 10);
+    advance(13);
+    text('Net cook earnings', 48, y, 11, '/F2');
+    text(formatInvoiceMoney(doc.cook_earnings_cents || 0), 460, y, 11, '/F2');
+    advance(16);
+  }
+
+  advance(6);
+  hline(y + 4);
+  advance(14);
+  text('NOTES', 48, y, 9, '/F2');
+  advance(12);
+  for (const n of doc.notes) {
+    if (y < 48) break;
+    // wrap long notes
+    const chunk = n.slice(0, 95);
+    text(chunk, 48, y, 8);
+    advance(11);
+    if (n.length > 95) {
+      text(n.slice(95, 190), 48, y, 8);
+      advance(11);
+    }
+  }
+  advance(8);
+  text('This is a computer-generated document issued by the marketplace platform.', 48, y, 8);
+  advance(10);
+  text('Keep for your accounting records. Singapore Home Cooks.', 48, y, 8);
+
+  const stream = `0.2 w\n${ops.join('\n')}`;
   const streamLen = Buffer.byteLength(stream, 'utf8');
 
   const objects: string[] = [];
   objects.push('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
   objects.push('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
   objects.push(
-    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n'
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>\nendobj\n'
   );
   objects.push(`4 0 obj\n<< /Length ${streamLen} >>\nstream\n${stream}\nendstream\nendobj\n`);
   objects.push('5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n');
+  objects.push('6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n');
 
   let pdf = '%PDF-1.4\n';
   const offsets: number[] = [0];
@@ -481,13 +602,11 @@ export function invoiceToPdfBase64(doc: OrderInvoiceDoc): string {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(pdf, 'utf8').toString('base64');
   }
-  // browser fallback
   const bytes = new TextEncoder().encode(pdf);
   let binary = '';
   bytes.forEach((b) => {
     binary += String.fromCharCode(b);
   });
-  // btoa may not exist in RN — use base64 from Buffer path primarily on server
   if (typeof btoa !== 'undefined') return btoa(binary);
   throw new Error('PDF base64 requires Buffer or btoa');
 }

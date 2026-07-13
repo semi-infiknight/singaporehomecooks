@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Platform, Share, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -31,6 +31,7 @@ import {
   submitOrderDispute,
   submitReview,
 } from '../../../lib/api-client';
+import { shareInvoicePdf } from '../../../lib/share-invoice-pdf';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -86,27 +87,9 @@ export default function OrderTracking() {
     setInvoiceBusy(true);
     try {
       const res = await getOrderInvoice(orderId);
-      const filename = res.filename || `invoice-${orderId}.pdf`;
-      let FileSystem: any = null;
-      try {
-        FileSystem = await import('expo-file-system');
-      } catch {
-        FileSystem = null;
-      }
-      if (FileSystem?.cacheDirectory) {
-        const path = `${FileSystem.cacheDirectory}${filename}`;
-        const encoding = FileSystem.EncodingType?.Base64 || 'base64';
-        await FileSystem.writeAsStringAsync(path, res.pdf_base64, { encoding });
-        const url = Platform.OS === 'ios' ? path : path.startsWith('file://') ? path : `file://${path}`;
-        await Share.share({ url, title: filename, message: Platform.OS === 'android' ? filename : undefined });
-      } else {
-        await Share.share({
-          title: filename,
-          message: `Invoice ${filename} — open the web app to download PDF if share fails.`,
-        });
-      }
+      await shareInvoicePdf(res, `invoice-${orderId}.pdf`);
     } catch (e: any) {
-      Alert.alert('Invoice', e?.message || 'Could not download invoice. Sign in and try again.');
+      Alert.alert('Invoice', e?.message || 'Could not download tax invoice PDF. Sign in and try again.');
     } finally {
       setInvoiceBusy(false);
     }

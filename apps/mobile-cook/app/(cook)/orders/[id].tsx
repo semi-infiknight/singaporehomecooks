@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Platform, Share, Alert } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +17,7 @@ import {
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
 import { getOrderDisputes, getOrderInvoice, submitOrderDispute } from '../../../lib/api-client';
+import { shareInvoicePdf } from '../../../lib/share-invoice-pdf';
 import { SHCOrderStatus } from '@shc/types';
 
 function CookOrderDisputeTrayContent({
@@ -145,24 +146,9 @@ export default function CookManageOrder() {
     setInvoiceBusy(true);
     try {
       const res = await getOrderInvoice(id);
-      const filename = res.filename || `settlement-${id}.pdf`;
-      let FileSystem: any = null;
-      try {
-        FileSystem = await import('expo-file-system');
-      } catch {
-        FileSystem = null;
-      }
-      if (FileSystem?.cacheDirectory) {
-        const path = `${FileSystem.cacheDirectory}${filename}`;
-        const encoding = FileSystem.EncodingType?.Base64 || 'base64';
-        await FileSystem.writeAsStringAsync(path, res.pdf_base64, { encoding });
-        const url = Platform.OS === 'ios' ? path : path.startsWith('file://') ? path : `file://${path}`;
-        await Share.share({ url, title: filename, message: Platform.OS === 'android' ? filename : undefined });
-      } else {
-        await Share.share({ title: filename, message: `Settlement invoice ${filename}` });
-      }
+      await shareInvoicePdf(res, `settlement-${id}.pdf`);
     } catch (e: any) {
-      Alert.alert('Invoice', e?.message || 'Could not download settlement note.');
+      Alert.alert('Invoice', e?.message || 'Could not download settlement PDF.');
     } finally {
       setInvoiceBusy(false);
     }
