@@ -83,6 +83,7 @@ export const checkoutWithCredits = (
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoice = (id: string) => client.getOrderInvoice(id);
+export const getOrderInvoiceDownloadUrl = (id: string) => client.getOrderInvoiceDownloadUrl(id);
 export const getMyOrders = () => client.getMyOrders('customer');
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,8 +16,7 @@ import {
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
-import { getOrderDisputes, getOrderInvoice, submitOrderDispute } from '../../../lib/api-client';
-import { shareInvoicePdf } from '../../../lib/share-invoice-pdf';
+import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
 function CookOrderDisputeTrayContent({
@@ -146,10 +145,14 @@ export default function CookManageOrder() {
     if (!id || invoiceBusy) return;
     setInvoiceBusy(true);
     try {
-      const res = await getOrderInvoice(id);
-      await shareInvoicePdf(res, `settlement-${id}.pdf`);
+      // Least blast radius: signed API PDF URL → system browser (no native FS/sharing)
+      const res = await getOrderInvoiceDownloadUrl(id);
+      if (!res.download_url) throw new Error('No invoice download URL from server');
+      const ok = await Linking.canOpenURL(res.download_url);
+      if (!ok) throw new Error('Cannot open invoice URL on this device');
+      await Linking.openURL(res.download_url);
     } catch (e: any) {
-      Alert.alert('Invoice', e?.message || 'Could not download settlement PDF.');
+      Alert.alert('Invoice', e?.message || 'Could not open settlement PDF.');
     } finally {
       setInvoiceBusy(false);
     }
@@ -234,7 +237,7 @@ export default function CookManageOrder() {
       )}
 
       <GourmeatPrimaryButton
-        label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
+        label={invoiceBusy ? 'Opening PDF…' : 'Open settlement invoice (PDF)'}
         variant="outline"
         onPress={downloadInvoice}
         loading={invoiceBusy}

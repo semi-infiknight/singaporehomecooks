@@ -163,20 +163,49 @@ async function main() {
     `   cook title=${invK.json.invoice?.title} fee=${invK.json.invoice?.platform_fee_cents} earn=${invK.json.invoice?.cook_earnings_cents}`
   );
 
+  // Signed openURL path (mobile least-blast) — no JWT on final PDF fetch
+  const linkK = await shc(
+    `/store/shc/orders/${encodeURIComponent(oid)}/invoice?issue_url=1`,
+    { method: 'GET' },
+    ktoken
+  );
+  if (linkK.status !== 200 || !linkK.json?.download_url) {
+    throw new Error(`issue_url failed ${linkK.status}: ${JSON.stringify(linkK.json).slice(0, 200)}`);
+  }
+  console.log(`✅ issue_url download_url expires_in=${linkK.json.expires_in}`);
+  const signed = await fetch(linkK.json.download_url as string);
+  if (!signed.ok) throw new Error(`signed hooks PDF HTTP ${signed.status}`);
+  const signedBuf = Buffer.from(await signed.arrayBuffer());
+  assertPdf(signedBuf, 'hooks signed PDF');
+  fs.writeFileSync(path.join(OUT, 'cook-signed.pdf'), signedBuf);
+  console.log('✅ GET /hooks/shc/invoice signed PDF');
+
   // Static wiring: UI must expose download CTAs
   const checks: Array<[string, string]> = [
     ['apps/mobile-customer/app/(customer)/orders/[id].tsx', 'order-download-invoice-btn'],
     ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'cook-order-download-invoice-btn'],
     ['apps/web/app/orders/[id]/page.tsx', 'order-download-invoice-btn'],
     ['apps/web/app/cook-portal/orders/[id]/page.tsx', 'cook-order-download-invoice-btn'],
-    ['apps/mobile-customer/app/(customer)/orders/[id].tsx', 'getOrderInvoice'],
+    ['apps/mobile-customer/app/(customer)/orders/[id].tsx', 'getOrderInvoiceDownloadUrl'],
+    ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'getOrderInvoiceDownloadUrl'],
+    ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'Linking.openURL'],
     ['apps/web/app/orders/[id]/page.tsx', 'downloadPdfBase64InBrowser'],
   ];
   for (const [file, needle] of checks) {
     const src = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
     if (!src.includes(needle)) throw new Error(`missing ${needle} in ${file}`);
   }
-  console.log('✅ UI wiring: customer+cook mobile+web download CTAs present');
+  // Mobile must NOT depend on native FS for invoice
+  for (const file of [
+    'apps/mobile-cook/app/(cook)/orders/[id].tsx',
+    'apps/mobile-customer/app/(customer)/orders/[id].tsx',
+  ]) {
+    const src = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+    if (src.includes('shareInvoicePdf') || src.includes('expo-file-system') || src.includes('expo-sharing')) {
+      throw new Error(`${file} still uses native FS/sharing for invoice — use signed URL`);
+    }
+  }
+  console.log('✅ UI wiring: signed URL on mobile, web blob download present');
 
   console.log(`\n=== smoke-order-invoice PASSED (files in ${OUT}) ===`);
 }

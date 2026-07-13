@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -26,12 +26,11 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import {
   getOrderDisputes,
-  getOrderInvoice,
+  getOrderInvoiceDownloadUrl,
   getReview,
   submitOrderDispute,
   submitReview,
 } from '../../../lib/api-client';
-import { shareInvoicePdf } from '../../../lib/share-invoice-pdf';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -86,10 +85,13 @@ export default function OrderTracking() {
     if (!orderId || invoiceBusy) return;
     setInvoiceBusy(true);
     try {
-      const res = await getOrderInvoice(orderId);
-      await shareInvoicePdf(res, `invoice-${orderId}.pdf`);
+      const res = await getOrderInvoiceDownloadUrl(orderId);
+      if (!res.download_url) throw new Error('No invoice download URL from server');
+      const ok = await Linking.canOpenURL(res.download_url);
+      if (!ok) throw new Error('Cannot open invoice URL on this device');
+      await Linking.openURL(res.download_url);
     } catch (e: any) {
-      Alert.alert('Invoice', e?.message || 'Could not download tax invoice PDF. Sign in and try again.');
+      Alert.alert('Invoice', e?.message || 'Could not open tax invoice PDF. Sign in and try again.');
     } finally {
       setInvoiceBusy(false);
     }
@@ -156,7 +158,7 @@ export default function OrderTracking() {
       </GourmeatCard>
 
       <GourmeatPrimaryButton
-        label={invoiceBusy ? 'Preparing invoice…' : 'Download tax invoice (PDF)'}
+        label={invoiceBusy ? 'Opening PDF…' : 'Open tax invoice (PDF)'}
         variant="outline"
         onPress={downloadInvoice}
         loading={invoiceBusy}

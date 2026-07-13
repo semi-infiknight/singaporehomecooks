@@ -237,7 +237,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).order;
     },
 
-    /** SG tax invoice / cook settlement — JSON + PDF base64 */
+    /** SG tax invoice / cook settlement — JSON + PDF base64 + signed download_url */
     async getOrderInvoice(id: string) {
       return request(`/store/shc/orders/${encodeURIComponent(id)}/invoice`, { method: "GET" }) as Promise<{
         invoice: Record<string, unknown>;
@@ -245,6 +245,25 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         pdf_base64: string;
         filename: string;
         mime: string;
+        download_url?: string;
+        expires_at?: string;
+        expires_in?: number;
+      }>;
+    },
+
+    /**
+     * Short-lived signed PDF URL (open in system browser — no native file I/O).
+     * Prefer this on mobile over base64 + expo-file-system.
+     */
+    async getOrderInvoiceDownloadUrl(id: string) {
+      return request(`/store/shc/orders/${encodeURIComponent(id)}/invoice?issue_url=1`, {
+        method: "GET",
+      }) as Promise<{
+        download_url: string;
+        expires_at?: string;
+        expires_in?: number;
+        filename?: string;
+        mime?: string;
       }>;
     },
 

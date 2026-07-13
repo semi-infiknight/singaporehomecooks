@@ -8,15 +8,21 @@ import {
   requireCookId,
   unauthorized,
 } from "../../../../../../lib/shc-actors";
+import { buildInvoiceDownloadUrl } from "../../../../../../lib/shc-invoice-sign";
 
 /**
  * GET /store/shc/orders/:id/invoice
- * SG tax invoice (customer) or settlement note (cook). PDF base64 + HTML.
- * Query: ?format=json|pdf|html  (default json)
+ * SG tax invoice (customer) or settlement note (cook).
+ * Query:
+ *   format=json|pdf|html  (default json)
+ *   issue_url=1           → { download_url } short-lived signed PDF link for mobile openURL
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params as { id: string };
   const format = String((req.query as any)?.format || "json").toLowerCase();
+  const issueUrl =
+    String((req.query as any)?.issue_url || "") === "1" ||
+    String((req.query as any)?.issue_url || "").toLowerCase() === "true";
   const auth = getAuthContext(req);
   if (!auth) {
     return unauthorized(res, "Login required to download invoice");
@@ -104,6 +110,18 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const html = invoiceToHtml(invoice);
   const pdf_base64 = invoiceToPdfBase64(invoice);
   const filename = `${invoice.invoice_number}.pdf`;
+  const link = buildInvoiceDownloadUrl({ order_id: id, audience });
+
+  // Mobile least-blast path: authenticated issue of openable PDF URL (no native FS)
+  if (issueUrl || format === "link" || format === "url") {
+    return res.json({
+      download_url: link.download_url,
+      expires_at: link.expires_at,
+      expires_in: link.expires_in,
+      filename,
+      mime: "application/pdf",
+    });
+  }
 
   if (format === "pdf") {
     const buf = Buffer.from(pdf_base64, "base64");
@@ -122,5 +140,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     pdf_base64,
     filename,
     mime: "application/pdf",
+    download_url: link.download_url,
+    expires_at: link.expires_at,
+    expires_in: link.expires_in,
   });
 }
