@@ -15,15 +15,24 @@
  */
 import fs from "fs";
 import path from "path";
+import { createRequire } from "module";
 import {
   RAILWAY_MEDUSA_PUBLISHABLE_KEY,
   resolveRailwayMedusaBase,
   resolveRailwayPublishableKey,
 } from "../packages/shc-utils/src/railway-client";
 
-/** Minimal valid 1×1 JPEG (no sharp dependency in scripts/). */
-const TINY_JPEG_B64 =
-  "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGcP//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Bf//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEABj8Cf//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAT8hf//Z";
+/** Load sharp from medusa (root may not hoist it). */
+async function makeSmokeJpegBase64(): Promise<string> {
+  const req = createRequire(path.join(process.cwd(), "apps/medusa/package.json"));
+  const sharp = req("sharp") as typeof import("sharp");
+  const buf = await sharp({
+    create: { width: 320, height: 240, channels: 3, background: { r: 210, g: 120, b: 50 } },
+  })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+  return `data:image/jpeg;base64,${buf.toString("base64")}`;
+}
 
 const BASE = resolveRailwayMedusaBase(process.env.MEDUSA_URL || process.env.EXPO_PUBLIC_MEDUSA_BASE);
 const COOK_EMAIL = process.env.SEED_COOK_EMAIL || "rose@shc.local";
@@ -98,7 +107,7 @@ async function main() {
   const cookToken = (cookLogin.body as { token?: string }).token;
   if (!cookToken) throw new Error("no cook token");
 
-  const image_base64 = `data:image/jpeg;base64,${TINY_JPEG_B64}`;
+  const image_base64 = await makeSmokeJpegBase64();
 
   const polish = await json("/store/shc/ai/image", {
     method: "POST",
