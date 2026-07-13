@@ -14,16 +14,47 @@ export const minioClient = new Client({
   secretKey,
 });
 
+/**
+ * Client used only for browser-facing presigns.
+ * Must match MINIO_PUBLIC_URL host so SigV4 Host matches what browsers hit.
+ * Falls back to internal client when public URL unset (dev / private only).
+ */
+function createPublicPresignClient(): Client {
+  const publicBase = (process.env.MINIO_PUBLIC_URL || process.env.MINIO_PUBLIC_ENDPOINT || "").trim();
+  if (!publicBase) return minioClient;
+  try {
+    const u = new URL(publicBase.includes("://") ? publicBase : `https://${publicBase}`);
+    const port = u.port ? parseInt(u.port, 10) : u.protocol === "https:" ? 443 : 80;
+    return new Client({
+      endPoint: u.hostname,
+      port,
+      useSSL: u.protocol === "https:",
+      accessKey,
+      secretKey,
+      // path-style works better behind Railway reverse proxies
+      pathStyle: true as any,
+    });
+  } catch {
+    return minioClient;
+  }
+}
+
+let publicPresignClient: Client | null = null;
+function getPublicPresignClient() {
+  if (!publicPresignClient) publicPresignClient = createPublicPresignClient();
+  return publicPresignClient;
+}
+
 export const SHC_BUCKET = bucket;
 export const COMPLIANCE_BUCKET = process.env.MINIO_COMPLIANCE_BUCKET || 'cook-certs';
 
 // Hardened: generate presigned for auth'd uploads/downloads
 export async function getPresignedUploadUrl(objectName: string, expires = 3600) {
-  return minioClient.presignedPutObject(SHC_BUCKET, objectName, expires);
+  return getPublicPresignClient().presignedPutObject(SHC_BUCKET, objectName, expires);
 }
 
 export async function getPresignedGetUrl(objectName: string, expires = 3600) {
-  return minioClient.presignedGetObject(SHC_BUCKET, objectName, expires);
+  return getPublicPresignClient().presignedGetObject(SHC_BUCKET, objectName, expires);
 }
 
 // Auth hardening helper (to be used in routes with actor)
@@ -49,10 +80,10 @@ export async function uploadBufferToMinIO(
   bucketName: string = SHC_BUCKET
 ): Promise<{ key: string; bucket: string; url?: string }> {
   await ensureBucket(bucketName);
+  // Write via private network; sign via public host for browser fetch
   await minioClient.putObject(bucketName, objectName, buffer, undefined, {
     'Content-Type': contentType,
   });
-  // Return a short-lived signed URL for immediate use (or store key and generate later)
-  const url = await minioClient.presignedGetObject(bucketName, objectName, 3600 * 24 * 7); // 7 days
+  const url = await getPublicPresignClient().presignedGetObject(bucketName, objectName, 3600 * 24 * 7); // 7 days
   return { key: objectName, bucket: bucketName, url };
 }

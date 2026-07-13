@@ -71,6 +71,7 @@ This sets `${{Service.VAR}}` references on medusa, worker, and web so Postgres, 
 | `MEDUSA_PUBLIC_URL` | `https://<your-medusa-domain>.up.railway.app` |
 | `RAILWAY_PUBLIC_DOMAIN` | `<your-medusa-domain>.up.railway.app` (no `https://`) |
 | `RAILWAY_SKIP_SEED` | Optional. Set `true` only to skip demo seed. Default: run full idempotent `seed.ts` on every boot (cooks, dishes, tiffin, growth). |
+| `MINIO_PUBLIC_URL` | Public HTTPS base for MinIO (Railway service domain). Used to presign browser-fetchable listing image URLs. Example: `https://minio-production-….up.railway.app`. |
 | `CLOUDFLARE_ACCOUNT_ID` | Optional. Workers AI account id for cook listing **AI photo generate** (FLUX.1 schnell). |
 | `CLOUDFLARE_API_TOKEN` | Optional. Token with Workers AI **Run** permission. Without these, upload/brighten (sharp polish) still work; Generate returns 503 and UI shows “AI offline”. |
 | `SHC_AI_IMAGE_MAX_PX` | Optional. Max edge for listing images (default `640`). |
