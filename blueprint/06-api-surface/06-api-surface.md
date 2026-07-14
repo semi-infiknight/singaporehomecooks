@@ -41,6 +41,7 @@
 | `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
 | `/store/shc/tiffin/subscription/recharge` | POST | customer JWT | `{ weeks, paynow_ref? }` — direct ledger extend (smoke/ops; UI uses HitPay path) |
 | `/store/shc/tiffin/subscription/recharge/paynow` | POST | customer JWT | `{ weeks }` — HitPay QR; webhook completes recharge |
+| `/store/shc/orders/corporate/invoices` | GET | customer JWT | `?from=&to=&format=json\|zip` — paid corporate tax invoices bundle |
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
 | `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |

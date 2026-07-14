@@ -95,6 +95,8 @@ export const transitionOrder = (oid: string, to: string) => client.transitionOrd
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoice = (id: string) => client.getOrderInvoice(id);
+export const downloadCorporateInvoicesZip = (opts?: { from?: string; to?: string }) =>
+  client.downloadCorporateInvoicesZip(opts);
 export const createOrderPayNow = (id: string) => client.createOrderPayNow(id);
 export const createTiffinRechargePayNow = (weeks: number) => client.createTiffinRechargePayNow(weeks);
 export const getMyOrders = () => client.getMyOrders('customer');

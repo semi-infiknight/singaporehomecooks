@@ -261,6 +261,43 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       }>;
     },
 
+    /** Paid corporate orders — JSON bundle or ZIP (format=zip). */
+    async getCorporateInvoices(opts?: { from?: string; to?: string; format?: "json" | "zip" }) {
+      const qs = new URLSearchParams();
+      if (opts?.from) qs.set("from", opts.from);
+      if (opts?.to) qs.set("to", opts.to);
+      if (opts?.format) qs.set("format", opts.format);
+      const q = qs.toString();
+      return request(`/store/shc/orders/corporate/invoices${q ? `?${q}` : ""}`, { method: "GET" }) as Promise<{
+        count: number;
+        from: string | null;
+        to: string | null;
+        invoices: Array<{ order_id: string; filename: string; pdf_base64: string; mime: string }>;
+      }>;
+    },
+
+    async downloadCorporateInvoicesZip(opts?: { from?: string; to?: string }): Promise<Blob> {
+      const qs = new URLSearchParams({ format: "zip" });
+      if (opts?.from) qs.set("from", opts.from);
+      if (opts?.to) qs.set("to", opts.to);
+      const token = config.getAccessToken();
+      const res = await fetch(`${config.medusaBase}/store/shc/orders/corporate/invoices?${qs}`, {
+        method: "GET",
+        headers: {
+          ...(config.publishableKey ? { "x-publishable-api-key": config.publishableKey } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const msg =
+          (errBody as { error?: { message?: string } }).error?.message ||
+          `HTTP ${res.status}`;
+        throw new ShcRequestError(msg);
+      }
+      return res.blob();
+    },
+
     /**
      * Create HitPay PayNow QR (or manual UEN fallback) for an order.
      * POST /store/shc/orders/:id/paynow

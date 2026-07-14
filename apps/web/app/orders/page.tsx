@@ -25,6 +25,8 @@ import {
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 import { useOrders } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
+import { downloadCorporateInvoicesZip } from '../../lib/api-client';
+import { downloadBlobInBrowser } from '../../lib/download-pdf';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../lib/useTiffin';
 import {
   GourmeatScreenHeader,
@@ -46,6 +48,16 @@ export default function OrdersList() {
 
   const { data: orders, isLoading, isFetching } = useOrders();
   const orderList = (orders as Record<string, unknown>[]) ?? [];
+  const [corpZipBusy, setCorpZipBusy] = useState(false);
+  const hasCorporatePaid = useMemo(
+    () =>
+      orderList.some((o) => {
+        if (!o.is_corporate) return false;
+        const st = String(o.shc_status || '');
+        return ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st);
+      }),
+    [orderList]
+  );
   const { data: mealData, isLoading: mealsLoading } = useTiffinMealOrders(from, to);
   const { data: subData } = useTiffinSubscription();
   const skipMut = useSkipTiffinMeal();
@@ -119,6 +131,33 @@ export default function OrdersList() {
         title="My orders"
         subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading ? ' · updating…' : ''}`}
       />
+
+      {user && hasCorporatePaid ? (
+        <SHCCard className="mb-4 p-4">
+          <p className="text-sm font-extrabold mb-1">Corporate invoices</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-3">
+            Download paid corporate / group orders as a ZIP for finance.
+          </p>
+          <SHCButton
+            variant="outline"
+            disabled={corpZipBusy}
+            testID="corporate-invoices-zip-btn"
+            onClick={async () => {
+              setCorpZipBusy(true);
+              try {
+                const blob = await downloadCorporateInvoicesZip({ from, to });
+                downloadBlobInBrowser(blob, `shc-corporate-invoices-${from}_${to}.zip`);
+              } catch (e) {
+                alert((e as Error).message || 'Could not download corporate invoices.');
+              } finally {
+                setCorpZipBusy(false);
+              }
+            }}
+          >
+            {corpZipBusy ? 'Preparing ZIP…' : 'Download corporate invoices (ZIP)'}
+          </SHCButton>
+        </SHCCard>
+      ) : null}
 
       {!user ? (
         <SHCCard>

@@ -20,7 +20,7 @@
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
 | **Admin / Ops** | ✅ SHC Ops + Insights/HitPay trends; native list read mirrors (no dual-write) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
-| **Not done** | Live HitPay KYC / real bank PayNow; bulk corporate invoice ZIP; secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
+| **Not done** | Live HitPay KYC / real bank PayNow; secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
 ---
 
@@ -43,7 +43,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Expo push** | ✅ Wired | Order transitions notify when configured |
 | **iOS / Android native** | ✅ Both apps | Metro 8081 / 8082; rebuild scripts in `scripts/` |
 | **PayNow / HitPay** | 🟡 **Sandbox only** | QR + webhook; no real bank until live KYC. [content/hitpay-setup.md](../content/hitpay-setup.md) |
-| **Order invoices (PDF)** | ✅ | Signed hooks URL on mobile; web base64 download |
+| **Order invoices (PDF)** | ✅ | Per-order + **corporate bulk ZIP** (`GET /store/shc/orders/corporate/invoices?format=zip`); signed hooks URL on mobile |
 | **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
 | **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
 | **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
