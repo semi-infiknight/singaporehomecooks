@@ -36,7 +36,7 @@ class ShcOrderMetaModuleService extends MedusaService({
       if ((data as any)[key] !== undefined) (schemaOnly as any)[key] = (data as any)[key];
     }
     const validated = shcOrderMetaSchema.partial().parse(schemaOnly);
-    const extra = {
+    const extraRaw: Record<string, unknown> = {
       customer_id: (data as any).customer_id,
       pdpa_consent_at: (data as any).pdpa_consent_at,
       pdpa_consent_version: (data as any).pdpa_consent_version,
@@ -44,9 +44,14 @@ class ShcOrderMetaModuleService extends MedusaService({
       credits_applied_cents: (data as any).credits_applied_cents,
       is_corporate: (data as any).is_corporate,
       corporate_note: (data as any).corporate_note,
-      items: (data as any).items || (data as any).items_json || null,
-      total_cents: (data as any).total_cents || (data as any).total || null,
+      items: (data as any).items || (data as any).items_json,
+      total_cents: (data as any).total_cents ?? (data as any).total,
     };
+    // Medusa rejects undefined property values on update
+    const extra: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(extraRaw)) {
+      if (v !== undefined) extra[k] = v;
+    }
     const payload = { ...validated, ...extra, updated_at: new Date() } as any;
     const [existing] = await this.listAndCountOrderMetas(
       validated.order_id ? ({ order_id: validated.order_id } as any) : {},
