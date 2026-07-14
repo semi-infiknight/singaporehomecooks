@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-15 — **SHC Ops QueryClient fix**; Ghost/skeleton loading; HitPay PayNow-only checkout; Cooking soon 7-day window; least-blast agent rule.
+**Last Updated:** 2026-07-15 — **Admin SHC read mirrors** (Orders/Products/Inventory/Price Lists widgets); SHC Ops QueryClient fix; HitPay PayNow-only checkout; Cooking soon 7-day window.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -18,7 +18,7 @@
 | **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
 | **Invoices** | Mobile: signed `?issue_url=1` + `Linking.openURL`. No expo-file-system share path. |
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
-| **Admin / Ops** | ✅ SHC Ops live on Railway (`withShcQuery` + no duplicate router `Link`) |
+| **Admin / Ops** | ✅ SHC Ops + **native list read mirrors** (Orders/Products/Inventory/Price Lists → `/admin/shc/*`; no dual-write) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
 | **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
@@ -47,7 +47,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
 | **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
 | **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
-| **Admin / Ops** | ✅ | Medusa Admin + SHC Ops (`/app/shc-ops`); local `ShcQueryProvider` avoids duplicate react-query QueryClient crash |
+| **Admin / Ops** | ✅ | Medusa Admin + SHC Ops (`/app/shc-ops`); native Orders/Products/Inventory/Price Lists widgets read `shc_*` via `/admin/shc/orders|listings|availability` (no dual-write); `ShcQueryProvider` for QueryClient |
 
 **Do not trust `STATUS.md` alone.** This file + blueprint sections are canonical. Update blueprint after route/module/UI changes.
 

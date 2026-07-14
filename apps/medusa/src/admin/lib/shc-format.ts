@@ -10,6 +10,8 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
   disputed: "Disputed",
   refunded: "Refunded",
+  active: "Active",
+  paused: "Paused",
 }
 
 export function statusLabel(status: string | null | undefined): string {

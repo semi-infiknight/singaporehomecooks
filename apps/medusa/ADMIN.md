@@ -2,6 +2,20 @@
 
 SHC uses **one admin app**: stock Medusa Admin at `/app`, extended with **SHC Ops** UI routes. There is no separate branded ops SPA — marketplace monitoring and light controls live beside Orders / Products in Medusa’s own style.
 
+## Native sidebar = SHC read mirrors (no dual-write)
+
+Stock **Orders / Products / Inventory / Price Lists** stay on Medusa core list pages, but each has an SHC widget (`*.list.before`) that reads the same `shc_*` data as SHC Ops via `/admin/shc/*`. Empty Medusa core tables may still appear below — the widget is the primary content. **Do not** dual-write into Medusa Product / Order / Inventory modules.
+
+| Admin page | Widget zone | API |
+|------------|-------------|-----|
+| `/app/orders` | `order.list.before` | `GET /admin/shc/orders` |
+| `/app/products` | `product.list.before` | `GET /admin/shc/listings` |
+| `/app/inventory` | `inventory_item.list.before` | `GET /admin/shc/availability` |
+| `/app/price-lists` | `price_list.list.before` | `GET /admin/shc/listings` (price columns) |
+
+Source: `apps/medusa/src/admin/widgets/*-list-shc.tsx`  
+**SHC Ops** remains the richer control surface (flags, disputes, payouts, payment confirm).
+
 ## Why `/app` was 404 (local API-only)
 
 Default `pnpm medusa:start` and `pnpm build` set `MEDUSA_DISABLE_ADMIN=true` (API-first for CI/mobile). Admin is off unless you opt in.
@@ -55,6 +69,8 @@ Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`)
 |-------|---------|
 | `GET /admin/shc/overview` | KPI snapshot |
 | `GET /admin/shc/orders` | Cross-app order feed |
+| `GET /admin/shc/listings` | Cook product metas (Products + Price Lists mirrors) |
+| `GET /admin/shc/availability` | Portion/day slots (Inventory mirror) |
 | `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets |
 | `POST /admin/shc/payment-confirm` | Manual PayNow confirm |
 | `GET /admin/shc/ledger` | Ledger inspection |
