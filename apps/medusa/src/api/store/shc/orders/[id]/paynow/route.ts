@@ -26,7 +26,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   let customerId: string;
   try {
-    customerId = requireCustomerId(req);
+    const cid = requireCustomerId(req);
+    if (!cid) return unauthorized(res, "Customer login required");
+    customerId = String(cid);
   } catch {
     return unauthorized(res, "Customer login required");
   }
