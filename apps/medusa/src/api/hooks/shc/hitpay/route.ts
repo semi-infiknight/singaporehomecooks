@@ -6,11 +6,71 @@ import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/servic
 
 /**
  * POST /hooks/shc/hitpay
- * HitPay payment_request.completed webhook (no JWT).
- * Register in HitPay dashboard: Developers → Webhook Endpoints → this URL.
+ * HitPay event webhooks:
+ *  - payment_request.completed (reference_number = SHC order id)
+ *  - charge.created / charge.updated (status succeeded; reference via payment_request)
  *
- * Signature: Hitpay-Signature = HMAC-SHA256(raw body, HITPAY_WEBHOOK_SALT)
+ * Signature: Hitpay-Signature = HMAC-SHA256(raw body, per-webhook salt)
+ * Register salt from webhook detail in dashboard → HITPAY_WEBHOOK_SALT on Railway.
  */
+function extractOrderId(body: any, headers: Record<string, any>): {
+  orderId: string;
+  paymentId: string;
+  status: string;
+  amount: string;
+} {
+  const eventObject = String(
+    headers["hitpay-event-object"] || headers["Hitpay-Event-Object"] || ""
+  ).toLowerCase();
+  const eventType = String(
+    headers["hitpay-event-type"] || headers["Hitpay-Event-Type"] || ""
+  ).toLowerCase();
+
+  // payment_request.completed style
+  let orderId = String(body.reference_number || body.reference || "").trim();
+  let paymentId = String(body.id || "").trim();
+  let status = String(body.status || "").toLowerCase();
+  let amount = String(body.amount ?? "");
+
+  // Nested payment_request on charge
+  const pr = body.payment_request || body.paymentRequest;
+  if (!orderId && pr) {
+    orderId = String(pr.reference_number || pr.reference || "").trim();
+    if (!paymentId && pr.id) paymentId = String(pr.id);
+  }
+  if (!orderId && body.payment_request_id) {
+    // only payment request id — not order id
+  }
+  if (!orderId && body.remark && /^SHC-/.test(String(body.remark))) {
+    orderId = String(body.remark).trim();
+  }
+
+  // charge.created: status often "succeeded"
+  if (eventObject === "charge" || body.payment_provider) {
+    status = String(body.status || status).toLowerCase();
+    amount = String(body.amount ?? amount);
+    paymentId = String(body.id || paymentId);
+  }
+
+  // Treat created/succeeded as paid for charge events
+  if (eventType === "created" && (status === "succeeded" || status === "completed" || !status)) {
+    status = status || "succeeded";
+  }
+
+  return { orderId, paymentId, status, amount };
+}
+
+function isPaidStatus(status: string): boolean {
+  const s = status.toLowerCase();
+  return (
+    !s ||
+    s === "completed" ||
+    s === "succeeded" ||
+    s === "paid" ||
+    s === "success"
+  );
+}
+
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const raw =
     (req as any).rawBody ||
@@ -23,7 +83,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     (req.headers["Hitpay-Signature"] as string) ||
     (req.headers["x-hitpay-signature"] as string);
 
-  // In sandbox without salt, allow if HITPAY_WEBHOOK_SKIP_VERIFY=1 (dev only)
   const skip =
     process.env.HITPAY_WEBHOOK_SKIP_VERIFY === "1" &&
     process.env.NODE_ENV !== "production";
@@ -38,29 +97,19 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const body = (typeof req.body === "object" && req.body ? req.body : {}) as any;
-  const status = String(body.status || "").toLowerCase();
-  const paymentRequestId = String(body.id || "").trim();
-  const referenceNumber = String(body.reference_number || "").trim();
+  const { orderId, paymentId, status, amount } = extractOrderId(body, req.headers as any);
 
-  if (status && status !== "completed") {
+  if (status && !isPaidStatus(status)) {
     return res.status(200).json({ ok: true, ignored: true, status });
   }
 
-  // Prefer our order id from reference_number; fallback search by HP: stash
-  let orderId = referenceNumber;
-  if (!orderId && paymentRequestId) {
-    // Cannot list-all easily — reference_number is required when we create
+  if (!orderId) {
     return res.status(200).json({
       ok: false,
-      reason: "missing reference_number (order id)",
+      reason: "missing order reference_number (set when creating payment request)",
     });
   }
 
-  if (!orderId) {
-    return res.status(400).json({ error: createSHCError("SHC-PAY-001", "No order reference") });
-  }
-
-  // Sanity: order exists
   try {
     const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
     const data = await metaService.getOrderMetaWithMessages(orderId);
@@ -68,20 +117,19 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${orderId}`) });
     }
   } catch {
-    /* continue — mark paid may still work */
+    /* continue */
   }
 
-  const paynowRef =
-    paymentRequestId
-      ? `HP:${paymentRequestId}`
-      : `HITPAY-${orderId}-${Date.now().toString(36)}`;
+  const paynowRef = paymentId
+    ? `HP:${paymentId}`
+    : `HITPAY-${orderId}-${Date.now().toString(36)}`;
 
   try {
     const result = await markOrderPaid(req.scope, {
       order_id: orderId,
       paynow_reference: paynowRef,
       actor: "hitpay-webhook",
-      notes: `HitPay payment_request ${paymentRequestId} amount=${body.amount}`,
+      notes: `HitPay webhook payment=${paymentId} amount=${amount}`,
     });
     return res.status(200).json({
       ok: true,
@@ -96,11 +144,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 }
 
-/** Health / HitPay dashboard URL check */
 export async function GET(_req: MedusaRequest, res: MedusaResponse) {
   res.json({
     ok: true,
     hook: "hitpay",
-    events: ["payment_request.completed"],
+    events: ["charge.created", "charge.updated", "payment_request.completed"],
+    registered_note:
+      "Webhook registered via HitPay API. Use per-webhook salt for Hitpay-Signature (dashboard webhook detail).",
   });
 }
