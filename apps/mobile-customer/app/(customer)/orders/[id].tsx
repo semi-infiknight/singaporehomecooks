@@ -8,6 +8,8 @@ import {
   OrderStatusBadge,
   SHCOrderTimeline,
   SHCFoodImage,
+  SHCSkeletonBone,
+  SHCSkeletonList,
   gourmeatColors,
   gourmeatRadii,
   shcSpacing,
@@ -42,6 +44,7 @@ type OrderDisplay = Record<string, unknown> & {
   collection_slot?: string;
   collection_instructions?: string;
   address_released_at?: string;
+  is_corporate?: boolean;
 };
 
 type OrderReview = { rating: number; body?: string };
@@ -53,7 +56,7 @@ export default function OrderTracking() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = id || '';
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
-  const { data: orderRaw, isFetching } = useOrder(orderId);
+  const { data: orderRaw, isLoading: orderLoading, isFetching } = useOrder(orderId);
   const order = useMemo(
     () => resolveOrderForDisplay<OrderDisplay>(orderRaw as OrderDisplay | undefined, orderId, { maestroE2e }),
     [orderRaw, orderId, maestroE2e]
@@ -69,14 +72,13 @@ export default function OrderTracking() {
     [existingReviewRaw, orderId, maestroE2e]
   );
 
-  const { data: disputesRaw = [] } = useQuery({
+  const { data: disputesRaw } = useQuery({
     queryKey: ['order-disputes', orderId],
     queryFn: () => getOrderDisputes(orderId),
     enabled: !!orderId,
-    placeholderData: [],
   });
   const disputes = useMemo(
-    () => resolveDisputesForDisplay<OrderDispute>(disputesRaw as OrderDispute[], orderId, { maestroE2e }),
+    () => resolveDisputesForDisplay<OrderDispute>((disputesRaw as OrderDispute[]) || [], orderId, { maestroE2e }),
     [disputesRaw, orderId, maestroE2e]
   );
   const [invoiceBusy, setInvoiceBusy] = useState(false);
@@ -95,16 +97,25 @@ export default function OrderTracking() {
     }
   };
 
-  if (!order) {
+  if (orderLoading || !order) {
     return (
-      <View style={[styles.loading, { paddingTop: insets.top }]}>
-        <Text style={{ color: gourmeatColors.textLight }}>Loading order…</Text>
+      <View style={[styles.loading, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md }]} testID="order-tracking-skeleton">
+        <SHCSkeletonBone height={160} radius={16} style={{ width: '100%', marginBottom: shcSpacing.md }} />
+        <SHCSkeletonBone height={22} width="50%" style={{ marginBottom: 8 }} />
+        <SHCSkeletonList count={3} rowHeight={56} />
+        {!orderLoading && !order ? (
+          <Text style={{ color: gourmeatColors.textLight, marginTop: shcSpacing.md }}>Order not found</Text>
+        ) : null}
       </View>
     );
   }
 
   const status = order.shc_status as SHCOrderStatus;
   const live = isActiveOrderStatus(status);
+  const isPaid = ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
+    String(status)
+  );
+  const isCorporate = Boolean(order.is_corporate);
   const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
@@ -155,14 +166,30 @@ export default function OrderTracking() {
         )}
       </GourmeatCard>
 
+      {isCorporate ? (
+        <Text style={styles.corporateBadge} testID="order-corporate-badge">
+          Corporate / group order — tax invoice for finance teams
+        </Text>
+      ) : null}
+
       <GourmeatPrimaryButton
-        label={invoiceBusy ? 'Opening PDF…' : 'Open tax invoice (PDF)'}
+        label={
+          invoiceBusy
+            ? 'Opening PDF…'
+            : isCorporate
+              ? 'Open corporate tax invoice (PDF)'
+              : 'Open tax invoice (PDF)'
+        }
         variant="outline"
         onPress={downloadInvoice}
         loading={invoiceBusy}
+        disabled={!isPaid}
         testID="order-download-invoice-btn"
         style={{ marginBottom: shcSpacing.sm }}
       />
+      {!isPaid ? (
+        <Text style={styles.hintLine}>Invoice available after PayNow payment is confirmed.</Text>
+      ) : null}
       <GourmeatPrimaryButton label="Message your cook" onPress={() => router.push(`/(shared)/chat/${order.id}` as any)} />
 
       {existingReview && (
@@ -209,4 +236,10 @@ const styles = StyleSheet.create({
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   addressLine: { marginTop: shcSpacing.sm, fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   hintLine: { marginTop: shcSpacing.sm, fontSize: 11, color: gourmeatColors.textLight },
+  corporateBadge: {
+    marginTop: shcSpacing.sm,
+    fontSize: 11,
+    fontWeight: '800',
+    color: gourmeatColors.primary,
+  },
 });

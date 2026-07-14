@@ -16,7 +16,7 @@ import {
   type KitchenReviewSort,
 } from '@shc/utils';
 import { useCook } from '../../../../lib/useProducts';
-import { SHCButton, SHCCard, SHCLoading } from '../../../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCSkeletonList } from '../../../components/SHCWebComponents';
 
 const REVIEW_SORTS: { id: KitchenReviewSort; label: string }[] = [
   { id: 'recent', label: 'Most recent' },
@@ -42,8 +42,8 @@ export default function KitchenRatingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16">
-        <SHCLoading label="Loading ratings…" />
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <SHCSkeletonList count={4} rowHeight={72} />
       </div>
     );
   }

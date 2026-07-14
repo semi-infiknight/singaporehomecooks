@@ -3,7 +3,7 @@
  * Hero · rating · open · plans · full menu · sticky subscribe CTA.
  */
 import React, { useState, useMemo } from 'react';
-import { View, ScrollView, Text, ActivityIndicator, StyleSheet, Pressable } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -13,6 +13,8 @@ import {
   SHCTiffinMenuListItem,
   GourmeatPrimaryButton,
   GourmeatSectionTitle,
+  SHCSkeletonBone,
+  SHCSkeletonList,
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
@@ -112,8 +114,11 @@ export default function TiffinKitchenScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.screen, styles.centered]}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.screen, { paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonBone height={180} radius={16} style={{ marginBottom: shcSpacing.md }} />
+        <SHCSkeletonBone height={22} width="60%" style={{ marginBottom: 8 }} />
+        <SHCSkeletonBone height={14} width="40%" style={{ marginBottom: shcSpacing.md }} />
+        <SHCSkeletonList count={4} rowHeight={56} />
       </View>
     );
   }

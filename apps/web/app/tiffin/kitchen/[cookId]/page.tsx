@@ -45,6 +45,7 @@ import {
   GourmeatSectionTitle,
   KitchenTrustCertsList,
   SubscribeTrustList,
+  SHCSkeletonList,
 } from '../../../components/SHCWebComponents';
 
 export default function TiffinKitchenPage() {
@@ -147,8 +148,9 @@ export default function TiffinKitchenPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading kitchen…
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="shc-skeleton h-40 w-full rounded-2xl mb-4" />
+        <SHCSkeletonList count={4} rowHeight={56} />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ScrollView, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -7,6 +7,7 @@ import {
   SHCTiffinMenuListItem,
   gourmeatColors,
   shcSpacing,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { useTiffinKitchen } from '../../../hooks/useTiffin';
 
@@ -33,8 +34,8 @@ export default function TiffinMenuScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
       </View>
     );
   }

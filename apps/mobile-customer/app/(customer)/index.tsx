@@ -27,6 +27,9 @@ import {
   SHCTiffinKitchenCard,
   SHCTiffinFilterChips,
   DirectionalTabScreen,
+  SHCSkeletonDishGrid,
+  SHCSkeletonCookingSoonRail,
+  SHCSkeletonKitchenList,
 } from '@shc/ui';
 import {
   getOccasionImageUrl,
@@ -99,19 +102,21 @@ export default function CustomerDiscover() {
   const { isGuest, requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
   const { data: orders = [] } = useOrders('customer');
-  const { data: dropsRaw = [], refetch: refetchDrops } = useDrops();
+  const { data: dropsRaw, isLoading: dropsLoading, refetch: refetchDrops } = useDrops();
   /** Customer: only batches cooking within next 7 days */
   const drops = useMemo(
-    () => filterCustomerCookingSoonDrops(dropsRaw as { cook_date?: string; status?: string }[]),
+    () => filterCustomerCookingSoonDrops((dropsRaw as { cook_date?: string; status?: string }[]) || []),
     [dropsRaw]
   );
   const { favorites, toggle, isFavorite } = useFavorites();
-  const { data: products = [], isLoading, refetch: refetchProducts } = useProducts('');
-  const { data: cooks = [], refetch: refetchCooks } = useQuery({
+  const { data: products, isLoading, refetch: refetchProducts } = useProducts('');
+  const productList = products ?? [];
+  const { data: cooks, isLoading: cooksLoading, refetch: refetchCooks } = useQuery({
     queryKey: ['cooks'],
     queryFn: getCooks,
     staleTime: 60_000,
   });
+  const cookList = (cooks as any[]) ?? [];
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -175,7 +180,7 @@ export default function CustomerDiscover() {
   }));
 
   const filteredProducts = useMemo(() => {
-    const list = filterDiscoverProducts(products as Record<string, unknown>[], {
+    const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
       query,
       occasion: occasionFilter || undefined,
       cuisine: cuisineFilter || undefined,
@@ -185,7 +190,7 @@ export default function CustomerDiscover() {
     return collectionLocation?.lat != null && collectionLocation?.lng != null
       ? sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng })
       : list;
-  }, [products, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
 
   const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
 
@@ -399,11 +404,13 @@ export default function CustomerDiscover() {
         </View>
       )}
 
-      {/* Cooking soon — always show section (empty state when no open batches) */}
+      {/* Cooking soon — skeleton while fetching; empty only when settled */}
       {!query && (
         <View style={{ marginBottom: shcSpacing.md }} testID="home-cooking-soon-rail">
           <GourmeatSectionTitle title="Cooking soon near you" />
-          {Array.isArray(drops) && (drops as any[]).length > 0 ? (
+          {dropsLoading && !(Array.isArray(drops) && drops.length > 0) ? (
+            <SHCSkeletonCookingSoonRail />
+          ) : Array.isArray(drops) && (drops as any[]).length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: 12 }}>
               {(drops as any[]).slice(0, 8).map((d) => (
                 <Pressable
@@ -415,7 +422,7 @@ export default function CustomerDiscover() {
                     borderRadius: 16,
                     borderWidth: 2,
                     borderColor: gourmeatColors.border,
-                    backgroundColor: gourmeatColors.card,
+                    backgroundColor: gourmeatColors.surface,
                     padding: 14,
                   }}
                 >
@@ -425,13 +432,13 @@ export default function CustomerDiscover() {
                   <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: gourmeatColors.text }} numberOfLines={1}>
                     {d.title}
                   </Text>
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }} numberOfLines={1}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight }} numberOfLines={1}>
                     {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
                   </Text>
                   <Text style={{ marginTop: 8, fontSize: 14, fontWeight: '800', color: gourmeatColors.primary }}>
                     {formatDropPrice(d.price_cents, d.price)}
                   </Text>
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.muted }}>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight }}>
                     {d.remaining_qty ?? 0} left · by {formatDropOrderBy(d.order_by)}
                   </Text>
                 </Pressable>
@@ -444,13 +451,13 @@ export default function CustomerDiscover() {
                 borderRadius: 16,
                 borderWidth: 2,
                 borderColor: gourmeatColors.border,
-                backgroundColor: gourmeatColors.card,
+                backgroundColor: gourmeatColors.surface,
                 padding: 16,
               }}
               testID="home-cooking-soon-empty"
             >
               <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.text }}>No open batches in the next 7 days</Text>
-              <Text style={{ marginTop: 6, fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }}>
+              <Text style={{ marginTop: 6, fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight }}>
                 Only batches cooking within a week appear here. Pull to refresh after a cook posts.
               </Text>
             </View>
@@ -459,47 +466,53 @@ export default function CustomerDiscover() {
       )}
 
       {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
-      {!query && (cooks as any[]).length > 0 && (
+      {!query && (cooksLoading || cookList.length > 0) && (
         <View style={{ marginBottom: shcSpacing.md }} testID="home-kitchens-section">
           <GourmeatSectionTitle
-            title={`${(cooks as any[]).length} kitchens near you`}
+            title={cooksLoading && cookList.length === 0 ? 'Kitchens near you' : `${cookList.length} kitchens near you`}
             actionLabel="Tiffin"
             onActionPress={() => router.push('/(customer)/tiffin' as any)}
           />
-          <View style={{ paddingHorizontal: shcSpacing.md }}>
-            <SHCFilterChipRow
-              chips={[
-                { id: 'halal', label: 'Halal', active: halalOnly },
-                { id: 'light', label: 'Light', active: maxCal === 500 },
-                { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
-              ]}
-              onChipPress={(id) => {
-                if (id === 'halal') toggleHalalOnly();
-                if (id === 'light') toggleLight();
-                if (id === 'nearest') router.push('/(customer)/location' as any);
-              }}
-              testID="discover-filter-chips"
-            />
-          </View>
-          {(cooks as any[]).slice(0, 4).map((c: any) => (
-            <View key={c.id || c.slug} style={{ paddingHorizontal: shcSpacing.md }}>
-              <SHCTiffinKitchenCard
-                cookId={c.id || c.slug}
-                cookName={c.display_name || c.name || 'Home kitchen'}
-                area={c.area}
-                tagline={c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
-                rating={c.rating != null ? Number(c.rating) : 4.8}
-                reviewCount={c.review_count}
-                subscriberCount={c.subscriber_count}
-                isOpen
-                closesAt="HDB collection"
-                onPress={() => {
-                  const slug = c.slug || c.id;
-                  if (slug) router.push(`/(customer)/cook/${slug}` as any);
-                }}
-              />
-            </View>
-          ))}
+          {cooksLoading && cookList.length === 0 ? (
+            <SHCSkeletonKitchenList count={3} />
+          ) : (
+            <>
+              <View style={{ paddingHorizontal: shcSpacing.md }}>
+                <SHCFilterChipRow
+                  chips={[
+                    { id: 'halal', label: 'Halal', active: halalOnly },
+                    { id: 'light', label: 'Light', active: maxCal === 500 },
+                    { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
+                  ]}
+                  onChipPress={(id) => {
+                    if (id === 'halal') toggleHalalOnly();
+                    if (id === 'light') toggleLight();
+                    if (id === 'nearest') router.push('/(customer)/location' as any);
+                  }}
+                  testID="discover-filter-chips"
+                />
+              </View>
+              {cookList.slice(0, 4).map((c: any) => (
+                <View key={c.id || c.slug} style={{ paddingHorizontal: shcSpacing.md }}>
+                  <SHCTiffinKitchenCard
+                    cookId={c.id || c.slug}
+                    cookName={c.display_name || c.name || 'Home kitchen'}
+                    area={c.area}
+                    tagline={c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
+                    rating={c.rating != null ? Number(c.rating) : 4.8}
+                    reviewCount={c.review_count}
+                    subscriberCount={c.subscriber_count}
+                    isOpen
+                    closesAt="HDB collection"
+                    onPress={() => {
+                      const slug = c.slug || c.id;
+                      if (slug) router.push(`/(customer)/cook/${slug}` as any);
+                    }}
+                  />
+                </View>
+              ))}
+            </>
+          )}
         </View>
       )}
 
@@ -521,7 +534,7 @@ export default function CustomerDiscover() {
       />
       <Text style={styles.gridHint}>Add to cart for one meal · switch to tiffin above for weekly plans</Text>
 
-      {isLoading && <Text style={styles.loading}>···</Text>}
+      {isLoading && <SHCSkeletonDishGrid count={6} />}
       {gridProducts.length === 0 && !isLoading && (
         <View style={styles.empty}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.cart} height={80} rounded={16} />

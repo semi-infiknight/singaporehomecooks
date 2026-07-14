@@ -3,6 +3,8 @@ import { createSHCError } from "@shc/types";
 import { verifyHitPayWebhookSignature } from "../../../../lib/shc-hitpay";
 import { markOrderPaid } from "../../../../lib/shc-mark-order-paid";
 import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/service";
+import ShcTiffinModuleService from "../../../../modules/shc-tiffin/service";
+import { parseTiffinRechargeHitPayReference } from "../../../../lib/shc-tiffin-recharge-hitpay";
 
 /**
  * POST /hooks/shc/hitpay
@@ -108,6 +110,31 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       ok: false,
       reason: "missing order reference_number (set when creating payment request)",
     });
+  }
+
+  const tiffinRecharge = parseTiffinRechargeHitPayReference(orderId);
+  if (tiffinRecharge) {
+    const paynowRef = paymentId
+      ? `HP:${paymentId}`
+      : `HITPAY-TRECH-${Date.now().toString(36)}`;
+    try {
+      const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+      const result = await tiffin.rechargeSubscription(tiffinRecharge.customerId, tiffinRecharge.weeks, {
+        paynowRef,
+      });
+      return res.status(200).json({
+        ok: true,
+        tiffin_recharge: true,
+        customer_id: tiffinRecharge.customerId,
+        weeks: tiffinRecharge.weeks,
+        subscription_id: (result as any)?.id || null,
+        paynow_reference: paynowRef,
+      });
+    } catch (e: any) {
+      return res.status(400).json({
+        error: createSHCError("SHC-PAY-001", e?.message || "Tiffin recharge failed"),
+      });
+    }
   }
 
   try {

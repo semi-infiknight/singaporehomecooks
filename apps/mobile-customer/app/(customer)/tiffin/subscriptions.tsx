@@ -2,13 +2,14 @@
  * My Subscriptions — Active/Past + card states (HomelyEats 28).
  */
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   GourmeatEmptyState,
   GourmeatPrimaryButton,
   GourmeatCard,
+  SHCSkeletonList,
   gourmeatColors,
   shcSpacing,
   tiffinWeeklySubtotal,
@@ -58,8 +59,8 @@ export default function MySubscriptionsScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={3} rowHeight={120} />
       </View>
     );
   }

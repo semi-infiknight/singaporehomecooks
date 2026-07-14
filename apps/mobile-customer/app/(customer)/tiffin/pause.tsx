@@ -2,7 +2,7 @@
  * HomelyEats Pause plan — flex days.
  */
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -11,6 +11,7 @@ import {
   GourmeatCard,
   gourmeatColors,
   shcSpacing,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { pauseDayOptions, applyPause } from '@shc/business-rules';
 import { useTiffinSubscription, usePauseTiffin } from '../../../hooks/useTiffin';
@@ -30,8 +31,8 @@ export default function TiffinPauseScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md, width: '100%' }]}>
+        <SHCSkeletonList count={3} rowHeight={88} />
       </View>
     );
   }

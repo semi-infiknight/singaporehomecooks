@@ -8,7 +8,6 @@ import {
   Text,
   Switch,
   TextInput,
-  ActivityIndicator,
   StyleSheet,
   Pressable,
 } from 'react-native';
@@ -18,6 +17,7 @@ import {
   GourmeatScreenHeader,
   SHCTiffinCookDishToggle,
   GourmeatPrimaryButton,
+  SHCSkeletonList,
   gourmeatColors,
   shcSpacing,
   TIFFIN_DAY_LABELS,
@@ -149,8 +149,8 @@ export default function CookTiffinConfigScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={5} rowHeight={64} />
       </View>
     );
   }

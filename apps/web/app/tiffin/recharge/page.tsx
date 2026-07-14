@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * HomelyEats Recharge plan — weeks picker → PayNow confirm → ledger write.
+ * HomelyEats Recharge plan — weeks picker → HitPay PayNow → webhook extends plan.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   rechargeWeekOptions,
@@ -11,23 +11,29 @@ import {
   defaultFlexQuota,
   tiffinRechargeAmountCents,
 } from '@shc/business-rules';
-import { tiffinWeeklySubtotal, useTiffinSubscription, useRechargeTiffin } from '../../../lib/useTiffin';
+import { tiffinWeeklySubtotal, useTiffinSubscription } from '../../../lib/useTiffin';
+import { createTiffinRechargePayNow } from '../../../lib/api-client';
 import {
   SHCButton,
   SHCCard,
   SHCPageHeader,
   SHCErrorBanner,
   SHCSkeletonList,
+  PayNowPanel,
 } from '../../components/SHCWebComponents';
 
 export default function TiffinRechargePage() {
   const router = useRouter();
-  const { data: subData, isLoading } = useTiffinSubscription();
-  const rechargeMut = useRechargeTiffin();
+  const { data: subData, isLoading, refetch } = useTiffinSubscription();
   const [weeks, setWeeks] = useState(4);
   const [phase, setPhase] = useState<'pick' | 'paynow' | 'done'>('pick');
   const [error, setError] = useState('');
-  const [payRef, setPayRef] = useState('');
+  const [paySession, setPaySession] = useState<Awaited<ReturnType<typeof createTiffinRechargePayNow>> | null>(
+    null
+  );
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const expiresBeforeRef = useRef<string | null>(null);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -37,6 +43,53 @@ export default function TiffinRechargePage() {
     [sub, weeks]
   );
   const amountDollars = amountCents / 100;
+  const defaultRef = `TIFFIN-${String(sub?.id || 'PLAN').slice(-8)}-${weeks}W`;
+
+  const loadPayNowSession = useCallback(async () => {
+    setPaySessionLoading(true);
+    setError('');
+    try {
+      const s = await createTiffinRechargePayNow(weeks);
+      setPaySession(s);
+      if (s.provider === 'hitpay') setWaitingForPayment(true);
+    } catch (e: any) {
+      setPaySession({
+        provider: 'hitpay_error',
+        error: e?.message || 'Could not create PayNow QR',
+      } as any);
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, [weeks]);
+
+  useEffect(() => {
+    if (phase === 'paynow') void loadPayNowSession();
+  }, [phase, loadPayNowSession]);
+
+  useEffect(() => {
+    if (phase !== 'paynow' || !waitingForPayment) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const fresh = await refetch();
+        const newExp = (fresh.data as any)?.subscription?.expires_on;
+        if (newExp && expiresBeforeRef.current && newExp !== expiresBeforeRef.current) {
+          if (cancelled) return;
+          setWaitingForPayment(false);
+          setPhase('done');
+          window.setTimeout(() => router.replace('/tiffin/manage'), 900);
+        }
+      } catch {
+        /* keep polling */
+      }
+    };
+    void tick();
+    const id = window.setInterval(tick, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [phase, waitingForPayment, refetch, router]);
 
   if (isLoading) {
     return (
@@ -63,19 +116,6 @@ export default function TiffinRechargePage() {
     deliveriesLeft: sub.deliveries_left ?? 0,
     expiresOn: sub.expires_on,
   });
-  const defaultRef = payRef || `TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`;
-
-  const confirmPay = async (ref: string) => {
-    setError('');
-    try {
-      await rechargeMut.mutateAsync({ weeks, paynowRef: ref || defaultRef });
-      setPhase('done');
-      window.setTimeout(() => router.replace('/tiffin/manage'), 900);
-    } catch (e: any) {
-      setError(e?.message || 'Recharge failed. Try again.');
-      throw e;
-    }
-  };
 
   if (phase === 'done') {
     return (
@@ -101,23 +141,17 @@ export default function TiffinRechargePage() {
           backHref="/tiffin/recharge"
           backLabel="Change weeks"
         />
-        <SHCCard className="shc-bento-yellow p-4">
-          <p className="font-black text-lg tabular-nums">S${amountDollars.toFixed(2)}</p>
-          <p className="text-sm font-semibold text-muted-foreground mt-1">
-            Tiffin recharge · {weeks} week{weeks > 1 ? 's' : ''} · ref {defaultRef}
-          </p>
-          <p className="text-xs font-semibold text-muted-foreground mt-3">
-            Tiffin recharge via HitPay is coming soon — confirm extends your plan until payment is wired.
-          </p>
-          <SHCButton
-            className="mt-4 w-full"
-            disabled={rechargeMut.isPending}
-            onClick={() => void confirmPay(defaultRef)}
-            testID="tiffin-recharge-confirm"
-          >
-            {rechargeMut.isPending ? 'Confirming…' : `Confirm recharge · S$${amountDollars.toFixed(2)}`}
-          </SHCButton>
-        </SHCCard>
+        <PayNowPanel
+          amount={amountDollars}
+          reference={paySession?.reference || defaultRef}
+          session={paySession}
+          loadingSession={paySessionLoading}
+          onRetry={() => void loadPayNowSession()}
+          waitingForPayment={waitingForPayment}
+        />
+        <p className="mt-3 text-xs font-medium text-muted-foreground">
+          Scan to pay · we confirm via HitPay · plan extends automatically after payment.
+        </p>
         {error ? (
           <div className="mt-3">
             <SHCErrorBanner message={error} />
@@ -193,7 +227,7 @@ export default function TiffinRechargePage() {
         testID="recharge-continue-paynow"
         onClick={() => {
           setError('');
-          setPayRef(`TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`);
+          expiresBeforeRef.current = sub.expires_on || null;
           setPhase('paynow');
         }}
       >

@@ -17,6 +17,7 @@ import {
   SHCFadeIn,
   SHCBadge,
   SHCSectionTitle,
+  SHCSkeletonOrderList,
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
@@ -37,7 +38,8 @@ export default function CookOrders() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { data: orders = [], isLoading: ordersLoading, isError: ordersError, error: ordersErr, refetch: refetchOrders } = useMyOrders();
+  const { data: orders, isLoading: ordersLoading, isError: ordersError, error: ordersErr, refetch: refetchOrders } = useMyOrders();
+  const orderList = (orders as any[]) ?? [];
   const { data: openReqs = [] } = useRequests();
   const createBidMut = useCreateBid();
   const transMut = useTransitionOrder();
@@ -90,7 +92,7 @@ export default function CookOrders() {
     }
   };
 
-  const pendingCount = orders.filter((o: any) => !['collected', 'completed'].includes(o.shc_status)).length;
+  const pendingCount = orderList.filter((o: any) => !['collected', 'completed'].includes(o.shc_status)).length;
   const reqList = Array.isArray(openReqs) ? openReqs : [];
 
   return (
@@ -130,24 +132,22 @@ export default function CookOrders() {
 
       <SHCSectionTitle>Collection orders</SHCSectionTitle>
 
-      {ordersLoading && orders.length === 0 && (
-        <GourmeatCard>
-          <GourmeatEmptyState title="Loading orders…" body="Fetching your collection orders from Railway." />
-        </GourmeatCard>
+      {ordersLoading && orderList.length === 0 && (
+        <SHCSkeletonOrderList count={4} variant="row" />
       )}
 
-      {!ordersLoading && orders.length === 0 && !ordersError && (
+      {!ordersLoading && orderList.length === 0 && !ordersError && (
         <GourmeatCard>
           <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
         </GourmeatCard>
       )}
 
-      {ordersError && orders.length === 0 && (
+      {ordersError && orderList.length === 0 && (
         <GourmeatPrimaryButton label="Retry load orders" onPress={() => void refetchOrders()} style={{ marginBottom: 12 }} />
       )}
 
       <SHCFadeIn delay={80}>
-        {orders.map((o: any) => {
+        {orderList.map((o: any) => {
           const actions = NEXT_ACTIONS[o.shc_status] || [];
           const dishName = o.items?.[0]?.name;
           return (

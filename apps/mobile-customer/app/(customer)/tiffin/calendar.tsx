@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -10,6 +10,7 @@ import {
   gourmeatColors,
   shcSpacing,
   TIFFIN_DAY_LABELS,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../../hooks/useTiffin';
@@ -54,8 +55,8 @@ export default function TiffinCalendarScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
       </View>
     );
   }

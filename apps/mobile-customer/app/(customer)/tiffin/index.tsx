@@ -4,7 +4,6 @@ import {
   ScrollView,
   Text,
   TextInput,
-  ActivityIndicator,
   StyleSheet,
   Pressable,
 } from 'react-native';
@@ -16,6 +15,7 @@ import {
   SHCTiffinEmptyState,
   SHCTiffinFilterChips,
   SHCTiffinCategoryRow,
+  SHCSkeletonKitchenList,
   gourmeatColors,
   shcSpacing,
   GourmeatPrimaryButton,
@@ -163,7 +163,7 @@ export default function TiffinBrowseScreen() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: shcSpacing.xl }} />
+        <SHCSkeletonKitchenList count={4} />
       ) : filtered.length === 0 ? (
         <SHCTiffinEmptyState
           title="No kitchens match"

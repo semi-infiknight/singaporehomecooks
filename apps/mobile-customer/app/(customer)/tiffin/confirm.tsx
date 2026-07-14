@@ -2,7 +2,7 @@
  * Post-subscribe confirm — trust steps + pick meals (Wave 4).
  */
 import React, { useMemo } from 'react';
-import { View, ScrollView, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -11,6 +11,7 @@ import {
   GourmeatPrimaryButton,
   gourmeatColors,
   shcSpacing,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { subscribeConfirmSteps, subscribeTrustChips } from '@shc/utils';
 import { useTiffinSubscription } from '../../../hooks/useTiffin';
@@ -47,8 +48,8 @@ export default function TiffinConfirmScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
       </View>
     );
   }

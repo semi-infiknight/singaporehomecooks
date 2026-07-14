@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { getCookAvatarUrl, getDishImageUrl, kitchenSubscriberLabel, kitchenOpenStatus } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useTiffinKitchens, useTiffinSubscription, tiffinPricePerServing } from '../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCEmptyState } from '../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCEmptyState, SHCSkeletonKitchenList } from '../components/SHCWebComponents';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -191,7 +191,7 @@ export default function TiffinBrowsePage() {
       </div>
 
       {isLoading ? (
-        <p className="text-center text-muted-foreground py-10 font-semibold">Loading kitchens…</p>
+        <SHCSkeletonKitchenList count={4} />
       ) : filtered.length === 0 ? (
         <SHCEmptyState
           title="No kitchens match"

@@ -29,6 +29,21 @@ import {
 } from '../../components/SHCWebComponents';
 import { useFavorites } from '../../../lib/useFavorites';
 
+function ProductDetailSkeleton() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6" data-testid="product-skeleton" aria-busy="true" aria-label="Loading dish">
+      <div className="shc-skeleton h-64 w-full rounded-2xl mb-4" />
+      <div className="space-y-3">
+        <div className="shc-skeleton h-6 w-[70%]" />
+        <div className="shc-skeleton h-4 w-[45%]" />
+        <div className="shc-skeleton h-5 w-[28%]" />
+        <div className="shc-skeleton h-20 w-full rounded-xl mt-2" />
+        <div className="shc-skeleton h-12 w-full rounded-xl mt-2" />
+      </div>
+    </div>
+  );
+}
+
 export default function ProductDetail() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -47,11 +62,14 @@ export default function ProductDetail() {
   const [aiCalories, setAiCalories] = useState<number | null>(null);
 
   if ((isLoading && !evidenceMode) || !product) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <SHCLoading label="Loading dish details…" />
-      </div>
-    );
+    if (!isLoading && !product) {
+      return (
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <SHCLoading label="Dish not found" />
+        </div>
+      );
+    }
+    return <ProductDetailSkeleton />;
   }
 
   const tier1 = product.allergen_tiers?.tier1 || [];

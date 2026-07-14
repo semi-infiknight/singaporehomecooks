@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +18,8 @@ import {
   GourmeatSectionTitle,
   SHCTiffinKitchenCard,
   SHCFilterChipRow,
+  SHCSkeletonDishGrid,
+  SHCSkeletonKitchenList,
   gourmeatColors,
   shcSpacing,
   shcRadii,
@@ -66,8 +67,10 @@ export default function CategoryExploreScreen() {
   const insets = useSafeAreaInsets();
   const { requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
-  const { data: products = [], isLoading } = useProducts('');
-  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const { data: products, isLoading } = useProducts('');
+  const productList = (products as Record<string, unknown>[]) ?? [];
+  const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const cookList = (cooks as Record<string, unknown>[]) ?? [];
   const { active: collectionLocation } = useCustomerLocation();
   const { halalOnly, toggleHalalOnly } = useDiscoverPrefs();
   const [chip, setChip] = useState('all');
@@ -76,19 +79,15 @@ export default function CategoryExploreScreen() {
   const offer = useMemo(() => categoryOfferCopy(category), [category]);
 
   const categoryProducts = useMemo(() => {
-    let list = scopeProductsByCategory(products as Record<string, unknown>[], categoryId);
+    let list = scopeProductsByCategory(productList, categoryId);
     if (halalOnly || chip === 'halal') list = list.filter((p) => Boolean(p.halal));
     return list;
-  }, [products, categoryId, halalOnly, chip]);
+  }, [productList, categoryId, halalOnly, chip]);
 
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
   const kitchens = useMemo(() => {
-    let list = scopeKitchensByCategory(
-      cooks as Record<string, unknown>[],
-      categoryProducts,
-      categoryId
-    );
+    let list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
     if (chip === 'nearest' && collectionLocation) {
       list = [...list].sort((a, b) => {
         const aArea = String(a.area || '');
@@ -98,7 +97,7 @@ export default function CategoryExploreScreen() {
       });
     }
     return list;
-  }, [cooks, categoryProducts, categoryId, chip, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, chip, collectionLocation]);
 
   const handleAdd = useCallback(
     (productId: string) => {
@@ -136,7 +135,9 @@ export default function CategoryExploreScreen() {
         </View>
 
         {isLoading ? (
-          <ActivityIndicator color={gourmeatColors.primary} style={{ marginVertical: 24 }} />
+          <View style={{ marginBottom: shcSpacing.md }}>
+            <SHCSkeletonDishGrid count={4} />
+          </View>
         ) : null}
 
         {/* Top rated dishes */}
@@ -185,10 +186,12 @@ export default function CategoryExploreScreen() {
           />
         </View>
 
-        {kitchens.length === 0 && !isLoading ? (
+        {kitchens.length === 0 && !(isLoading || cooksLoading) ? (
           <Text style={styles.empty} testID="category-kitchens-empty">
             No kitchens listed for this category yet.
           </Text>
+        ) : (isLoading || cooksLoading) && kitchens.length === 0 ? (
+          <SHCSkeletonKitchenList count={3} />
         ) : (
           kitchens.map((c) => {
             const cookId = String(c.id || c.slug || '');

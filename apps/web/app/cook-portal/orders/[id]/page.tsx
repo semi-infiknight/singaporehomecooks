@@ -12,7 +12,7 @@ import {
   GourmeatScreenHeader,
   GourmeatCard,
   GourmeatPrimaryButton,
-  SHCLoading,
+  SHCSkeletonList,
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../../../components/SHCWebComponents';
@@ -51,8 +51,8 @@ export default function CookOrderDetailPage() {
 
   if (isLoading || !order) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <SHCLoading label="Loading order…" />
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <SHCSkeletonList count={4} rowHeight={64} />
       </div>
     );
   }

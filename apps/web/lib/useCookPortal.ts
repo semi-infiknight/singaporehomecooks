@@ -29,7 +29,7 @@ export function useCookOrders() {
     queryKey: ['cook-orders'],
     queryFn: getCookOrders,
     enabled: isCookAuthenticated(),
-    placeholderData: [],
+    // Do NOT use placeholderData: [] — that paints empty UI during first fetch.
     refetchInterval: (query) => {
       const list = (query.state.data as Array<{ shc_status?: string }>) || [];
       return list.some((o) => isActiveOrderStatus(String(o.shc_status || ''))) ? 8000 : false;
@@ -62,7 +62,6 @@ export function useCookListings() {
     queryKey: ['cook-listings'],
     queryFn: getCookListings,
     enabled: isCookAuthenticated(),
-    placeholderData: [],
   });
 }
 
@@ -95,7 +94,6 @@ export function useComplianceDocs() {
     queryKey: ['cook-compliance'],
     queryFn: getComplianceDocs,
     enabled: isCookAuthenticated(),
-    placeholderData: [],
   });
 }
 
@@ -137,7 +135,6 @@ export function useOpenRequests() {
     queryKey: ['cook-open-requests'],
     queryFn: listOpenRequests,
     enabled: isCookAuthenticated(),
-    placeholderData: [],
   });
 }
 
@@ -159,7 +156,6 @@ export function useMyDrops() {
     queryKey: ['cook-drops'],
     queryFn: listMyDrops,
     enabled: isCookAuthenticated(),
-    placeholderData: [],
   });
 }
 

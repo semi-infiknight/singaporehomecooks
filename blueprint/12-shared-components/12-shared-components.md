@@ -114,6 +114,20 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 | `SHCQtyStepper` | PDP quantity control |
 | `SHCStickyActionBar` | Bottom sticky CTA shell (add-to-cart, PayNow) |
 
+### Skeleton / ghost loading (`skeleton.tsx`)
+
+| Component | Purpose |
+|---|---|
+| `SHCSkeletonBone` | Pulsing bone block |
+| `SHCSkeletonDishCard` / `SHCSkeletonDishGrid` | Discover dish card ghosts |
+| `SHCSkeletonCookingSoonCard` / `SHCSkeletonCookingSoonRail` | Cooking soon strip |
+| `SHCSkeletonKitchenRow` / `SHCSkeletonKitchenList` | Kitchen list rows |
+| `SHCSkeletonOrderCard` / `SHCSkeletonOrderRow` / `SHCSkeletonOrderList` | Orders day cards / cook order rows |
+| `SHCSkeletonList` | Generic stacked bars (cart, forms) |
+| `SHCSkeletonHomeDiscover` | Composite home ghost block |
+
+**Rule:** While `isLoading` / first fetch — show skeletons. Empty copy only when `!isLoading && data.length === 0`. Never `placeholderData: []` (paints empty as loaded). Web mirrors in `SHCWebComponents.tsx`.
+
 ### Domain Components (`domain.tsx`)
 
 | Component | Purpose |

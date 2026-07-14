@@ -122,6 +122,12 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  const {
+    show: showFirstOrderCelebration,
+    triggerIfFirst: triggerFirstOrder,
+    dismiss: dismissFirstOrderCelebration,
+  } = useMilestoneCelebrationWeb('first_order', user?.id || user?.name || 'anon');
+
   useEffect(() => {
     if (orderId && payPhase === 'paynow') void loadPayNowSession(orderId);
   }, [orderId, payPhase, loadPayNowSession]);
@@ -156,11 +162,6 @@ export default function CheckoutPage() {
       window.clearInterval(id);
     };
   }, [orderId, payPhase, waitingForPayment, router, triggerFirstOrder]);
-  const {
-    show: showFirstOrderCelebration,
-    triggerIfFirst: triggerFirstOrder,
-    dismiss: dismissFirstOrderCelebration,
-  } = useMilestoneCelebrationWeb('first_order', user?.id || user?.name || 'anon');
 
   const firstPid = getFirstCartProductId(cart?.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');

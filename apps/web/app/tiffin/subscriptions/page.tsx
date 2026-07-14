@@ -21,6 +21,7 @@ import {
   SHCBadge,
   IllustratedEmptyState,
   GourmeatScreenHeader,
+  SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 import { useAuth } from '../../../lib/useAuth';
 
@@ -53,8 +54,9 @@ export default function MySubscriptionsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading subscriptions…
+      <div className="max-w-2xl mx-auto px-4 py-8" data-testid="my-subscriptions-screen">
+        <GourmeatScreenHeader title="My Subscriptions" subtitle="Tiffin plans" />
+        <SHCSkeletonList count={3} rowHeight={120} />
       </div>
     );
   }

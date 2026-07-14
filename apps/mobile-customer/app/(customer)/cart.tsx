@@ -15,6 +15,7 @@ import {
   gourmeatLayout,
   shcSpacing,
   SHCFadeIn,
+  SHCSkeletonList,
   DirectionalTabScreen,
 } from '@shc/ui';
 import {
@@ -79,7 +80,7 @@ export default function Cart() {
           <GourmeatScreenHeader title="Cart" subtitle={cartCollectionHint()} />
 
           {isLoading && !cart ? (
-            <Text style={{ color: gourmeatColors.textMuted }}>···</Text>
+            <SHCSkeletonList count={4} rowHeight={72} testID="cart-skeleton" />
           ) : !hasItems ? (
             <GourmeatCard>
               <GourmeatEmptyState

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -12,6 +12,7 @@ import {
   GourmeatPrimaryButton,
   gourmeatColors,
   shcSpacing,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { shapeTiffinLedgerForUi } from '@shc/utils';
 import {
@@ -75,8 +76,8 @@ export default function TiffinManageScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
       </View>
     );
   }

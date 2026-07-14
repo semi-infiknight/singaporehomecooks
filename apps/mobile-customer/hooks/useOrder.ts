@@ -24,7 +24,7 @@ export function useOrders(role: 'customer' | 'cook' = 'customer') {
     queryKey: ['orders', role],
     queryFn: () => getMyOrders(),
     enabled: isAuthenticated(),
-    placeholderData: [],
+    // Do NOT use placeholderData: [] — that paints empty UI during first fetch.
     refetchInterval: (query) => {
       const list = (query.state.data as Array<{ shc_status?: string }>) || [];
       return list.some((o) => isActiveOrderStatus(String(o.shc_status || ''))) ? 8000 : false;
@@ -188,7 +188,6 @@ export function useNotifications() {
       return getNotifications();
     },
     enabled: isAuthenticated(),
-    placeholderData: [],
     refetchInterval: isAuthenticated() ? 8000 : false,
   });
 

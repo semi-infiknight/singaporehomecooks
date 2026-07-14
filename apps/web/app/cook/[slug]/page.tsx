@@ -48,7 +48,7 @@ import {
   SHCCard,
   SHCButton,
   SHCBadge,
-  SHCLoading,
+  SHCSkeletonGrid,
   KitchenTrustCertsList,
 } from '../../components/SHCWebComponents';
 import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
@@ -180,8 +180,11 @@ export default function KitchenPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <SHCLoading label="Loading kitchen…" />
+      <div className="max-w-2xl mx-auto px-4 py-6" data-testid="kitchen-page-loading">
+        <div className="shc-skeleton h-40 w-full rounded-2xl mb-4" />
+        <div className="shc-skeleton h-5 w-[55%] mb-2" />
+        <div className="shc-skeleton h-3.5 w-[35%] mb-4" />
+        <SHCSkeletonGrid count={4} />
       </div>
     );
   }

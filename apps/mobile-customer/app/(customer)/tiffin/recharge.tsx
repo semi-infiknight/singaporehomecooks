@@ -1,8 +1,8 @@
 /**
- * Recharge plan — weeks → PayNow confirm → ledger.
+ * Recharge plan — weeks → HitPay PayNow → webhook extends plan.
  */
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator, TextInput } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -12,6 +12,8 @@ import {
   gourmeatColors,
   shcSpacing,
   tiffinWeeklySubtotal,
+  SHCSkeletonList,
+  PayNowPanel,
 } from '@shc/ui';
 import {
   rechargeWeekOptions,
@@ -19,17 +21,22 @@ import {
   defaultFlexQuota,
   tiffinRechargeAmountCents,
 } from '@shc/business-rules';
-import { useTiffinSubscription, useRechargeTiffin } from '../../../hooks/useTiffin';
+import { useTiffinSubscription } from '../../../hooks/useTiffin';
+import { createTiffinRechargePayNow } from '../../../lib/api-client';
 
 export default function TiffinRechargeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { data: subData, isLoading } = useTiffinSubscription();
-  const rechargeMut = useRechargeTiffin();
+  const { data: subData, isLoading, refetch } = useTiffinSubscription();
   const [weeks, setWeeks] = useState(4);
   const [phase, setPhase] = useState<'pick' | 'paynow' | 'done'>('pick');
   const [error, setError] = useState('');
-  const [payRef, setPayRef] = useState('');
+  const [paySession, setPaySession] = useState<Awaited<ReturnType<typeof createTiffinRechargePayNow>> | null>(
+    null
+  );
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const expiresBeforeRef = useRef<string | null>(null);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -38,11 +45,58 @@ export default function TiffinRechargeScreen() {
     [sub, weeks]
   );
   const amountDollars = amountCents / 100;
+  const defaultRef = `TIFFIN-${String(sub?.id || 'PLAN').slice(-8)}-${weeks}W`;
+
+  const loadPayNowSession = useCallback(async () => {
+    setPaySessionLoading(true);
+    setError('');
+    try {
+      const s = await createTiffinRechargePayNow(weeks);
+      setPaySession(s);
+      if (s.provider === 'hitpay') setWaitingForPayment(true);
+    } catch (e: any) {
+      setPaySession({
+        provider: 'hitpay_error',
+        error: e?.message || 'Could not create PayNow QR',
+      } as any);
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, [weeks]);
+
+  useEffect(() => {
+    if (phase === 'paynow') void loadPayNowSession();
+  }, [phase, loadPayNowSession]);
+
+  useEffect(() => {
+    if (phase !== 'paynow' || !waitingForPayment) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const fresh = await refetch();
+        const newExp = (fresh.data as any)?.subscription?.expires_on;
+        if (newExp && expiresBeforeRef.current && newExp !== expiresBeforeRef.current) {
+          if (cancelled) return;
+          setWaitingForPayment(false);
+          setPhase('done');
+          setTimeout(() => router.replace('/(customer)/tiffin/manage' as any), 900);
+        }
+      } catch {
+        /* keep polling */
+      }
+    };
+    void tick();
+    const id = setInterval(tick, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [phase, waitingForPayment, refetch, router]);
 
   if (isLoading) {
     return (
-      <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+      <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md, width: '100%' }]}>
+        <SHCSkeletonList count={3} rowHeight={88} />
       </View>
     );
   }
@@ -64,7 +118,6 @@ export default function TiffinRechargeScreen() {
     deliveriesLeft: sub.deliveries_left ?? 0,
     expiresOn: sub.expires_on,
   });
-  const defaultRef = payRef || `TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`;
 
   if (phase === 'done') {
     return (
@@ -97,43 +150,18 @@ export default function TiffinRechargeScreen() {
           subtitle={`${weeks} week${weeks > 1 ? 's' : ''} · S$${amountDollars.toFixed(2)}`}
           onBack={() => setPhase('pick')}
         />
-        <GourmeatCard>
-          <Text style={styles.meta}>UEN 12345678X</Text>
-          <Text style={styles.bold}>S${amountDollars.toFixed(2)}</Text>
-          <Text style={styles.meta}>Reference {defaultRef}</Text>
-          <Text style={[styles.meta, { marginTop: 12 }]}>Payment reference</Text>
-          <TextInput
-            style={styles.input}
-            value={payRef || defaultRef}
-            onChangeText={setPayRef}
-            placeholder="Banking app reference"
-            placeholderTextColor={gourmeatColors.textMuted}
-            testID="paynow-ref-input"
-          />
-        </GourmeatCard>
-        {error ? <Text style={styles.err}>{error}</Text> : null}
-        <GourmeatPrimaryButton
-          label={rechargeMut.isPending ? 'Confirming…' : `I've paid · S$${amountDollars.toFixed(2)}`}
-          loading={rechargeMut.isPending}
-          onPress={async () => {
-            setError('');
-            try {
-              await rechargeMut.mutateAsync({
-                weeks,
-                paynowRef: (payRef || defaultRef).trim(),
-              });
-              setPhase('done');
-              setTimeout(() => router.replace('/(customer)/tiffin/manage' as any), 900);
-            } catch (e: any) {
-              setError(e?.message || 'Recharge failed');
-            }
-          }}
-          testID="recharge-confirm-btn"
-          style={{ marginTop: shcSpacing.lg }}
+        <PayNowPanel
+          orderId={paySession?.reference || defaultRef}
+          total={amountDollars}
+          session={paySession}
+          loadingSession={paySessionLoading}
+          onRetry={() => void loadPayNowSession()}
+          waitingForPayment={waitingForPayment}
         />
         <Text style={[styles.meta, { marginTop: 12 }]}>
-          Demo PayNow — confirm writes ledger + extends plan.
+          Scan to pay · we confirm via HitPay · plan extends after payment.
         </Text>
+        {error ? <Text style={styles.err}>{error}</Text> : null}
       </ScrollView>
     );
   }
@@ -198,7 +226,7 @@ export default function TiffinRechargeScreen() {
         label={`Continue to PayNow · S$${amountDollars.toFixed(2)}`}
         onPress={() => {
           setError('');
-          setPayRef(`TIFFIN-${String(sub.id || 'PLAN').slice(-8)}-${weeks}W`);
+          expiresBeforeRef.current = sub.expires_on || null;
           setPhase('paynow');
         }}
         testID="recharge-continue-paynow"
@@ -240,14 +268,5 @@ const styles = StyleSheet.create({
   bold: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text },
   price: { fontSize: 16, fontWeight: '900', color: gourmeatColors.primary, marginTop: 8 },
   err: { color: '#B91C1C', fontWeight: '700', marginTop: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 6,
-    color: gourmeatColors.text,
-    fontWeight: '600',
-  },
   doneMark: { fontSize: 40, color: '#2E7D32', marginBottom: 12 },
 });

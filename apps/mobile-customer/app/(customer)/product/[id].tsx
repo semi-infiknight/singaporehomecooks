@@ -15,6 +15,7 @@ import {
   AllergenAckCheckbox,
   SHCDishOrderingInfo,
   SHCFavoriteButton,
+  SHCSkeletonBone,
 } from '@shc/ui';
 import { getDishImageUrl } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,7 +27,7 @@ import { useFavorites } from '../../../hooks/useFavorites';
 
 export default function ProductDetail() {
   const insets = useSafeAreaInsets();
-  const { id, allergenAck: allergenAckParam } = useLocalSearchParams<{ id: string; allergenAck?: string }>();
+  const { id, allergenAck: allergenAckParam } = useLocalSearchParams<{ id: string; allergenAck?: string | string[] }>();
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id || '');
   const qc = useQueryClient();
@@ -34,19 +35,34 @@ export default function ProductDetail() {
   const { loading: authLoading, user } = useAuth();
   const { requireAuth } = useGuestAuthGate();
   const { isFavorite, toggle } = useFavorites();
-  const [allergenAck, setAllergenAck] = useState(false);
+  const allergenAckFromUrl = (() => {
+    const raw = allergenAckParam;
+    const val = Array.isArray(raw) ? raw[0] : raw;
+    return val === '1' || val === 'true';
+  })();
+  const [allergenAck, setAllergenAck] = useState(allergenAckFromUrl);
   const [qty, setQty] = useState(5);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    if (allergenAckParam === '1') setAllergenAck(true);
-  }, [allergenAckParam]);
+    if (allergenAckFromUrl) setAllergenAck(true);
+  }, [allergenAckFromUrl]);
 
   if (authLoading || isLoading || !product) {
     return (
-      <View style={styles.loadingWrap}>
-        <Text style={styles.loadingText}>{authLoading ? 'Restoring session…' : 'Loading dish…'}</Text>
+      <View style={styles.loadingWrap} testID="product-skeleton" accessibilityLabel="Loading dish">
+        <SHCSkeletonBone height={280} radius={0} style={{ width: '100%', backgroundColor: '#F0E6D8' }} />
+        <View style={{ padding: shcSpacing.md, gap: 10, width: '100%' }}>
+          <SHCSkeletonBone height={22} width="70%" />
+          <SHCSkeletonBone height={14} width="45%" />
+          <SHCSkeletonBone height={18} width="28%" />
+          <SHCSkeletonBone height={80} radius={12} style={{ marginTop: 8 }} />
+          <SHCSkeletonBone height={48} radius={12} style={{ marginTop: 12 }} />
+        </View>
+        {!authLoading && !isLoading && !product ? (
+          <Text style={styles.loadingText}>Dish not found</Text>
+        ) : null}
       </View>
     );
   }
@@ -187,7 +203,8 @@ const styles = StyleSheet.create({
     zIndex: 20,
     backgroundColor: gourmeatColors.surface,
   },
-  loadingWrap: { flex: 1, padding: shcSpacing.md, backgroundColor: gourmeatColors.background, justifyContent: 'center' },
+  loadingWrap: { flex: 1, backgroundColor: gourmeatColors.background },
+  loadingText: { textAlign: 'center', marginTop: shcSpacing.md, color: gourmeatColors.textMuted, fontWeight: '600' },
   loadingText: { fontWeight: '600', color: gourmeatColors.textLight },
   scroll: { flex: 1 },
   heroWrap: { width: '100%', height: heroHeight, backgroundColor: gourmeatColors.surfaceAlt },

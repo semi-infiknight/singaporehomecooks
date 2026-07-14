@@ -703,11 +703,6 @@ export default function CookListingsPage() {
                     disabled={aiPhotoBusy || !name.trim() || !generateAvailable}
                     onClick={() => void runGenerateAi()}
                     testID="listing-photo-generate"
-                    title={
-                      !generateAvailable
-                        ? generateBlockedReason || 'AI generate offline'
-                        : `Generate illustrative plate (${aiImageStatus?.model || 'FLUX'})`
-                    }
                   >
                     {aiPhotoBusy ? 'Working…' : generateAvailable ? 'Generate AI plate' : 'AI offline'}
                   </SHCButton>

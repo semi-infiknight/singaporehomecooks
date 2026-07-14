@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GourmeatPrimaryButton, gourmeatColors, shcSpacing } from '@shc/ui';
+import { GourmeatPrimaryButton, SHCSkeletonBone, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
 import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { useDrop, useAddDropToCart } from '../../../hooks/useOrder';
@@ -43,10 +43,20 @@ export default function DropOrderScreen() {
     }
   }
 
-  if (isLoading || !drop) {
+  if (isLoading) {
+    return (
+      <View style={[styles.wrap, { paddingTop: insets.top + 16 }]} testID="drop-order-skeleton">
+        <SHCSkeletonBone height={22} width="55%" style={{ marginBottom: 12 }} />
+        <SHCSkeletonBone height={16} width="80%" style={{ marginBottom: 8 }} />
+        <SHCSkeletonBone height={14} width="45%" style={{ marginBottom: 16 }} />
+        <SHCSkeletonList count={2} rowHeight={48} />
+      </View>
+    );
+  }
+  if (!drop) {
     return (
       <View style={[styles.wrap, { paddingTop: insets.top + 16 }]}>
-        <Text style={styles.muted}>{isLoading ? 'Loading…' : 'Batch not found'}</Text>
+        <Text style={styles.muted}>Batch not found</Text>
       </View>
     );
   }

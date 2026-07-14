@@ -3,7 +3,7 @@
  * One-time orders + tiffin meal instances per collection date.
  */
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -12,6 +12,7 @@ import {
   GourmeatCard,
   SHCTiffinCalendarStrip,
   SHCTiffinOrderStatusCard,
+  SHCSkeletonOrderList,
   gourmeatColors,
   shcSpacing,
   DirectionalTabScreen,
@@ -43,7 +44,8 @@ export default function MyOrdersList() {
   const from = addDaysIso(weekStartMonday(), -7);
   const to = addDaysIso(weekStartMonday(), 21);
 
-  const { data: orders = [], isFetching } = useMyOrders('customer');
+  const { data: orders, isLoading: ordersLoading, isFetching } = useMyOrders('customer');
+  const orderList = (orders as Record<string, unknown>[]) ?? [];
   const { data: mealData, isLoading: mealsLoading } = useTiffinMealOrders(from, to);
   const { data: subData } = useTiffinSubscription();
   const skipMut = useSkipTiffinMeal();
@@ -55,7 +57,7 @@ export default function MyOrdersList() {
 
   const allCards: DayOrderCard[] = useMemo(() => {
     const nowIso = today;
-    const oneOff = (orders as Record<string, unknown>[]).map((o) => oneOffOrderToDayCard(o, nowIso));
+    const oneOff = orderList.map((o) => oneOffOrderToDayCard(o, nowIso));
     const meals = ((mealData as any)?.meals || []) as Record<string, unknown>[];
     const tiffin = meals.map((m) => {
       const pid = String(m.product_id || '');
@@ -63,7 +65,7 @@ export default function MyOrdersList() {
       return tiffinMealToDayCard(m, { cookName, dishName });
     });
     return mergeDayOrderCards(oneOff, tiffin);
-  }, [orders, mealData, cookName, dishes, today]);
+  }, [orderList, mealData, cookName, dishes, today]);
 
   const dateSet = useMemo(() => collectOrderDates(allCards), [allCards]);
 
@@ -84,10 +86,12 @@ export default function MyOrdersList() {
     setSelected(date);
   }, []);
 
+  const ordersPending = ordersLoading || mealsLoading;
+
   // Initial auto-select only — never snap back after user taps a day
   useEffect(() => {
     if (userPickedRef.current || didInitSelectRef.current) return;
-    if (mealsLoading) return;
+    if (ordersPending) return;
     didInitSelectRef.current = true;
     if (dateSet.has(today)) {
       setSelected(today);
@@ -95,7 +99,7 @@ export default function MyOrdersList() {
     }
     const next = calendarDays.find((d) => d.hasMeal);
     if (next) setSelected(next.date);
-  }, [dateSet, today, calendarDays, mealsLoading]);
+  }, [dateSet, today, calendarDays, ordersPending]);
 
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
@@ -125,7 +129,7 @@ export default function MyOrdersList() {
       >
         <GourmeatScreenHeader
           title="My orders"
-          subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading ? ' · updating…' : ''}`}
+          subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading || ordersLoading ? ' · updating…' : ''}`}
         />
 
         {!user ? (
@@ -150,11 +154,11 @@ export default function MyOrdersList() {
               {selected === today ? 'Today' : selected}
             </Text>
 
-            {mealsLoading && dayCards.length === 0 ? (
-              <ActivityIndicator color={gourmeatColors.primary} style={{ marginVertical: 24 }} />
+            {ordersPending && dayCards.length === 0 ? (
+              <SHCSkeletonOrderList count={3} variant="card" />
             ) : null}
 
-            {dayCards.length === 0 && !mealsLoading ? (
+            {dayCards.length === 0 && !ordersPending ? (
               <View testID="orders-day-empty">
                 <GourmeatEmptyState
                   illustration="no_orders"

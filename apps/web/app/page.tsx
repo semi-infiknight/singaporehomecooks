@@ -35,6 +35,8 @@ import { getCooks } from '../lib/api-client';
 import {
   SHCButton,
   SHCSkeletonGrid,
+  SHCSkeletonCookingSoonRail,
+  SHCSkeletonKitchenList,
   SHCEmptyState,
   GuestBrowseBar,
   ActiveOrderBanner,
@@ -82,14 +84,15 @@ export default function DiscoverHome() {
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const { data: products = [], isLoading } = useProducts('');
+  const { data: products, isLoading } = useProducts('');
+  const productListRaw = products ?? [];
   const { data: orders = [] } = useOrders();
-  const { data: dropsRaw = [] } = useDrops();
+  const { data: dropsRaw, isLoading: dropsLoading } = useDrops();
   const drops = useMemo(
-    () => filterCustomerCookingSoonDrops(dropsRaw as { cook_date?: string; status?: string }[]),
+    () => filterCustomerCookingSoonDrops((dropsRaw as { cook_date?: string; status?: string }[]) || []),
     [dropsRaw]
   );
-  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
@@ -98,8 +101,8 @@ export default function DiscoverHome() {
 
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
   const productList = useMemo(
-    () => resolveDiscoverProductsForDisplay(products as DishCardProduct[], { evidence: evidenceMode }),
-    [products, evidenceMode]
+    () => resolveDiscoverProductsForDisplay(productListRaw as DishCardProduct[], { evidence: evidenceMode }),
+    [productListRaw, evidenceMode]
   );
 
   const filteredProducts = useMemo(() => {
@@ -158,7 +161,7 @@ export default function DiscoverHome() {
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
-  const cookList = cooks as Array<Record<string, unknown>>;
+  const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
 
@@ -397,11 +400,13 @@ export default function DiscoverHome() {
         </div>
       )}
 
-      {/* Cooking soon — always show (empty when no open marketplace batches) */}
+      {/* Cooking soon — skeleton while fetching; empty only when settled */}
       {!query.trim() && (
         <div className="mb-6" data-testid="home-cooking-soon-rail">
           <GourmeatSectionTitle title="Cooking soon near you" />
-          {Array.isArray(drops) && drops.length > 0 ? (
+          {dropsLoading && !(Array.isArray(drops) && drops.length > 0) ? (
+            <SHCSkeletonCookingSoonRail />
+          ) : Array.isArray(drops) && drops.length > 0 ? (
             <div className="mt-3 flex gap-3 overflow-x-auto pb-1 snap-x">
               {(drops as any[]).slice(0, 8).map((d) => (
                 <button
@@ -441,13 +446,17 @@ export default function DiscoverHome() {
       )}
 
       {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
-      {!query.trim() && cookList.length > 0 && (
+      {!query.trim() && (cooksLoading || cookList.length > 0) && (
         <div className="mb-6" data-testid="home-kitchens-section">
           <GourmeatSectionTitle
-            title={`${cookList.length} kitchens near you`}
+            title={cooksLoading && cookList.length === 0 ? 'Kitchens near you' : `${cookList.length} kitchens near you`}
             actionLabel="Tiffin"
             actionHref="/tiffin"
           />
+          {cooksLoading && cookList.length === 0 ? (
+            <SHCSkeletonKitchenList count={3} />
+          ) : (
+            <>
           <FilterChipRow
             chips={[
               { id: 'halal', label: 'Halal', active: halalOnly },
@@ -506,6 +515,8 @@ export default function DiscoverHome() {
               );
             })}
           </ul>
+            </>
+          )}
         </div>
       )}
 

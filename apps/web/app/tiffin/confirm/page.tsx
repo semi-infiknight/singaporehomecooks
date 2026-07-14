@@ -12,6 +12,7 @@ import {
   SHCCard,
   SHCPageHeader,
   SubscribeTrustList,
+  SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 
 function formatWeekLabel(iso: string) {
@@ -45,8 +46,8 @@ export default function TiffinConfirmPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading…
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <SHCSkeletonList count={4} rowHeight={72} />
       </div>
     );
   }

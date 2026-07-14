@@ -25,6 +25,8 @@ import {
   FilterChipRow,
   SHCEmptyState,
   SHCButton,
+  SHCSkeletonGrid,
+  SHCSkeletonKitchenList,
   type DishCardProduct,
 } from '../../components/SHCWebComponents';
 
@@ -54,8 +56,10 @@ export default function CategoryPage() {
   const categoryId = decodeURIComponent(String(rawId || ''));
   const router = useRouter();
   const { user } = useAuth();
-  const { data: products = [], isLoading } = useProducts('');
-  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const { data: products, isLoading } = useProducts('');
+  const productList = (products as Record<string, unknown>[]) ?? [];
+  const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const cookList = (cooks as Record<string, unknown>[]) ?? [];
   const { active: collectionLocation } = useCustomerLocation();
   const { halalOnly, toggleHalalOnly } = useDiscoverPrefs();
   const addMut = useAddToCart();
@@ -66,16 +70,16 @@ export default function CategoryPage() {
   const title = category?.label || category?.id || 'Category';
 
   const categoryProducts = useMemo(() => {
-    let list = scopeProductsByCategory(products as Record<string, unknown>[], categoryId);
+    let list = scopeProductsByCategory(productList, categoryId);
     if (halalOnly || chip === 'halal') list = list.filter((p) => Boolean(p.halal));
     return list;
-  }, [products, categoryId, halalOnly, chip]);
+  }, [productList, categoryId, halalOnly, chip]);
 
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
   const kitchens = useMemo(() => {
     let list = scopeKitchensByCategory(
-      cooks as Record<string, unknown>[],
+      cookList,
       categoryProducts,
       categoryId
     );
@@ -83,7 +87,7 @@ export default function CategoryPage() {
       list = [...list].sort((a, b) => (String(b.area || '') ? 1 : 0) - (String(a.area || '') ? 1 : 0));
     }
     return list;
-  }, [cooks, categoryProducts, categoryId, chip, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, chip, collectionLocation]);
 
   const handleAdd = useCallback(
     (productId: string) => {
@@ -126,7 +130,7 @@ export default function CategoryPage() {
       </div>
 
       <GourmeatSectionTitle title="Top rated" testID="category-top-rated-header" />
-      {isLoading && <p className="text-sm font-semibold text-muted-foreground mb-4">Loading dishes…</p>}
+      {isLoading && <SHCSkeletonGrid count={4} />}
       {!isLoading && topRated.length === 0 && (
         <div className="mb-4" data-testid="category-dishes-empty">
           <SHCEmptyState
@@ -174,11 +178,17 @@ export default function CategoryPage() {
         testID="category-filter-chips"
       />
 
-      {!isLoading && kitchens.length === 0 && (
+      {!isLoading && !cooksLoading && kitchens.length === 0 && (
         <p className="text-sm font-semibold text-muted-foreground mt-3" data-testid="category-kitchens-empty">
           No kitchens listed for this category yet.
         </p>
       )}
+
+      {(isLoading || cooksLoading) && kitchens.length === 0 ? (
+        <div className="mt-3">
+          <SHCSkeletonKitchenList count={3} />
+        </div>
+      ) : null}
 
       <ul className="space-y-3 mt-3">
         {kitchens.map((c) => {

@@ -17,6 +17,8 @@ import {
   SHCCookStoreHero,
   GourmeatPrimaryButton,
   SHCFoodImage,
+  SHCSkeletonBone,
+  SHCSkeletonList,
   gourmeatColors,
   shcSpacing,
   shcRadii,
@@ -189,14 +191,23 @@ export default function KitchenPage() {
   const trustCerts = useMemo(() => kitchenTrustCerts(cook as any), [cook]);
   const chefBg = useMemo(() => kitchenChefBackground(cook as any), [cook]);
 
-  if (isLoading || !cook) {
+  if (isLoading) {
+    return (
+      <View style={[styles.loading, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md }]} testID="kitchen-page-loading">
+        <SHCSkeletonBone height={160} radius={16} style={{ width: '100%', marginBottom: shcSpacing.md }} />
+        <SHCSkeletonBone height={20} width="60%" style={{ marginBottom: 8 }} />
+        <SHCSkeletonBone height={14} width="40%" style={{ marginBottom: shcSpacing.md }} />
+        <SHCSkeletonList count={4} rowHeight={64} />
+      </View>
+    );
+  }
+
+  if (!cook) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]} testID="kitchen-page-loading">
         <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.lg} />
-        <Text style={styles.loadingText}>{isLoading ? 'Loading kitchen…' : 'Kitchen not found'}</Text>
-        {!isLoading && (
-          <GourmeatPrimaryButton label="Back" onPress={() => router.back()} testID="kitchen-missing-back" />
-        )}
+        <Text style={styles.loadingText}>Kitchen not found</Text>
+        <GourmeatPrimaryButton label="Back" onPress={() => router.back()} testID="kitchen-missing-back" />
       </View>
     );
   }

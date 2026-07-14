@@ -13,6 +13,7 @@ import {
   shcSpacing,
   useSHCTray,
   SHCTrayAction,
+  SHCSkeletonList,
 } from '@shc/ui';
 import { getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
@@ -73,12 +74,12 @@ export default function CookManageOrder() {
   const [invoiceBusy, setInvoiceBusy] = React.useState(false);
   const { openTray, dismiss } = useSHCTray();
 
-  const { data: disputes = [] } = useQuery({
+  const { data: disputes } = useQuery({
     queryKey: ['order-disputes', id],
     queryFn: () => getOrderDisputes(id || ''),
     enabled: !!id,
-    placeholderData: [],
   });
+  const disputeList = (disputes as any[]) ?? [];
 
   const disputeMut = useMutation({
     mutationFn: (notes: string) => submitOrderDispute(id || '', { type: 'other', notes }),
@@ -166,8 +167,8 @@ export default function CookManageOrder() {
 
   if (orderLoading && !order) {
     return (
-      <View style={[styles.loading, { paddingTop: insets.top }]}>
-        <Text style={{ color: gourmeatColors.textLight }}>Loading order…</Text>
+      <View style={[styles.loading, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
       </View>
     );
   }
@@ -248,13 +249,13 @@ export default function CookManageOrder() {
         testID="cook-order-chat-btn"
       />
 
-      {disputes.length > 0 ? (
+      {disputeList.length > 0 ? (
         <GourmeatCard testID="cook-order-dispute-submitted">
           <Text style={styles.cardTitle}>Issue reported</Text>
           <Text style={styles.cardMeta}>
-            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+            {disputeList[0].status || 'open'} · {disputeList[0].type || 'other'}
           </Text>
-          {!!disputes[0].notes && <Text style={styles.cardBody}>{disputes[0].notes}</Text>}
+          {!!disputeList[0].notes && <Text style={styles.cardBody}>{disputeList[0].notes}</Text>}
         </GourmeatCard>
       ) : (
         <GourmeatPrimaryButton

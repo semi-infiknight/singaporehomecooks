@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, Alert } from 
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GourmeatCookHeader, GourmeatPrimaryButton, gourmeatColors, shcSpacing } from '@shc/ui';
+import { GourmeatCookHeader, GourmeatPrimaryButton, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
 import {
   defaultCookDateTomorrow,
   defaultOrderByTonight,
@@ -25,8 +25,9 @@ export default function CookBatchesScreen() {
   const dropsQ = useQuery({
     queryKey: ['cook-drops'],
     queryFn: listMyDrops,
-    placeholderData: [],
   });
+  const dropList = (dropsQ.data as any[]) ?? [];
+  const dropsLoading = dropsQ.isLoading;
   const createMut = useMutation({
     mutationFn: createDrop,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-drops'] }),
@@ -136,10 +137,11 @@ export default function CookBatchesScreen() {
       </View>
 
       <Text style={styles.section}>My batches</Text>
-      {(dropsQ.data as any[])?.length === 0 && (
+      {dropsLoading && dropList.length === 0 ? <SHCSkeletonList count={3} rowHeight={96} /> : null}
+      {!dropsLoading && dropList.length === 0 && (
         <Text style={styles.muted}>No batches yet.</Text>
       )}
-      {(dropsQ.data as any[])?.map((d) => (
+      {dropList.map((d) => (
         <View key={d.id} style={styles.card} testID={`cook-batch-${d.id}`}>
           <Text style={styles.cardTitle}>{d.title}</Text>
           <Text style={styles.muted}>
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
-    backgroundColor: gourmeatColors.card,
+    backgroundColor: gourmeatColors.surface,
   },
   cardTitle: { fontSize: 16, fontWeight: '900', color: gourmeatColors.text },
   input: {
@@ -196,7 +198,7 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
   err: { color: '#b91c1c', fontWeight: '700', marginTop: 8 },
   section: { fontSize: 18, fontWeight: '900', marginTop: 8, marginBottom: 8 },
-  muted: { fontSize: 12, fontWeight: '600', color: gourmeatColors.muted, marginTop: 4 },
+  muted: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 },
   price: { fontSize: 14, fontWeight: '800', color: gourmeatColors.primary, marginTop: 6 },
   badge: { marginTop: 6, fontSize: 12, fontWeight: '800', textTransform: 'capitalize' },
   secondary: {

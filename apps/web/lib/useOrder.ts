@@ -24,7 +24,7 @@ export function useOrders() {
     queryKey: ['orders', 'customer'],
     queryFn: () => getMyOrders(),
     enabled: isAuthenticated(),
-    placeholderData: [],
+    // Do NOT use placeholderData: [] — that paints empty UI during first fetch.
     refetchInterval: (query) => {
       const list = (query.state.data as Array<{ shc_status?: string }>) || [];
       return list.some((o) => isActiveOrderStatus(String(o.shc_status || ''))) ? 8000 : false;
@@ -129,7 +129,6 @@ export function useMyRequests() {
       return listMyRequests();
     },
     enabled: isAuthenticated(),
-    placeholderData: [],
   });
 }
 export function useBids(reqId?: string) {
@@ -175,7 +174,6 @@ export function useNotifications() {
       return getNotifications();
     },
     enabled: isAuthenticated(),
-    placeholderData: [],
     refetchInterval: isAuthenticated() ? 8000 : false,
   });
   const markRead = useMutation({
@@ -208,7 +206,6 @@ export function useOrderDisputes(orderId: string) {
     queryKey: ['order-disputes', orderId],
     queryFn: () => getOrderDisputes(orderId),
     enabled: !!orderId && isAuthenticated(),
-    placeholderData: [],
   });
   const submit = useMutation({
     mutationFn: ({ type = 'other', notes }: { type?: string; notes: string }) =>

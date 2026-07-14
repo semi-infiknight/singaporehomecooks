@@ -25,6 +25,7 @@ import {
   GourmeatPayButton,
   SHCEmptyState,
   SHCButton,
+  SHCSkeletonList,
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../components/SHCWebComponents';
@@ -42,7 +43,8 @@ export default function CartPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { openTray, dismiss } = useSHCTrayWeb();
-  const { data: cart = { items: [] }, isLoading } = useCart();
+  const { data: cart, isLoading } = useCart();
+  const cartData = cart ?? { items: [] };
   const clear = useClearCart();
   const { locationLabel, active: collectionLocation } = useCustomerLocation();
   const [cookingNotes, setCookingNotes] = useState('');
@@ -52,7 +54,7 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState('');
   const [couponMsg, setCouponMsg] = useState('');
 
-  const items = (cart.items || []) as CartItem[];
+  const items = ((cartData as { items?: CartItem[] }).items || []) as CartItem[];
   const summary = computeOneTimeOrderSummary(items);
   const kitchen = cartKitchenLabel(items as Array<Record<string, unknown>>);
 
@@ -73,10 +75,11 @@ export default function CartPage() {
     );
   }, [dismiss, openTray, router]);
 
-  if (isLoading) {
+  if (isLoading && !cart) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <p className="text-muted-foreground font-semibold">Loading…</p>
+      <div className="max-w-2xl mx-auto px-4 py-6" data-testid="cart-screen">
+        <GourmeatScreenHeader title="Cart" subtitle={cartCollectionHint()} />
+        <SHCSkeletonList count={4} rowHeight={72} />
       </div>
     );
   }

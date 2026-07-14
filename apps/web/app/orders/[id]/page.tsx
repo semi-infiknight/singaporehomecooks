@@ -16,8 +16,8 @@ import {
   SHCButton,
   SHCSectionTitle,
   GourmeatScreenHeader,
-  SHCLoading,
   OrderTimeline,
+  SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 import {
   getOrderStatusLabel,
@@ -37,6 +37,7 @@ type OrderDisplay = Record<string, unknown> & {
   total?: number | string;
   cook_name?: string;
   paynow_reference?: string;
+  is_corporate?: boolean;
 };
 
 type OrderReview = { rating: number; body?: string };
@@ -84,8 +85,9 @@ export default function TrackOrder() {
 
   if ((!maestroE2e && isLoading) || !order) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <SHCLoading label="Loading order…" />
+      <div className="max-w-2xl mx-auto px-4 py-6" data-testid="order-tracking-skeleton">
+        <div className="shc-skeleton h-40 w-full rounded-2xl mb-4" />
+        <SHCSkeletonList count={4} rowHeight={56} />
       </div>
     );
   }
@@ -97,6 +99,10 @@ export default function TrackOrder() {
   );
   const rateCopy = orderDeliveredRateCopy();
   const isDelivered = status === 'collected' || status === 'completed';
+  const isPaid = ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
+    String(status)
+  );
+  const isCorporate = Boolean(order.is_corporate);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10" data-testid="order-tracking-screen">
@@ -132,14 +138,28 @@ export default function TrackOrder() {
       </SHCCard>
 
       <div className="mb-6">
+        {isCorporate ? (
+          <p className="text-xs font-extrabold text-primary mb-2" data-testid="order-corporate-badge">
+            Corporate / group order — tax invoice for finance teams
+          </p>
+        ) : null}
         <SHCButton
           variant="outline"
           testID="order-download-invoice-btn"
           onClick={downloadInvoice}
-          disabled={invoiceBusy}
+          disabled={invoiceBusy || !isPaid}
         >
-          {invoiceBusy ? 'Preparing PDF…' : 'Download tax invoice (PDF)'}
+          {invoiceBusy
+            ? 'Preparing PDF…'
+            : isCorporate
+              ? 'Download corporate tax invoice (PDF)'
+              : 'Download tax invoice (PDF)'}
         </SHCButton>
+        {!isPaid ? (
+          <p className="text-[11px] font-semibold text-muted-foreground mt-2">
+            Invoice available after PayNow payment is confirmed.
+          </p>
+        ) : null}
       </div>
 
       {isDelivered && (

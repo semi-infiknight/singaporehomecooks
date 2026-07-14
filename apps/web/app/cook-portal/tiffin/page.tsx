@@ -26,12 +26,14 @@ import {
   GourmeatPrimaryButton,
   SHCBadge,
   IllustratedEmptyState,
+  SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 
 export default function CookTiffinConfigPage() {
   const router = useRouter();
   const { data: configData, isLoading } = useTiffinCookConfig();
-  const { data: listings = [] } = useCookListings();
+  const { data: listings } = useCookListings();
+  const listingList = (listings as any[]) ?? [];
   const updateMut = useUpdateTiffinCookConfig();
   const cancelDayMut = useKitchenCancelTiffinDay();
   const publishMenuMut = usePublishTiffinDayMenu();
@@ -55,7 +57,7 @@ export default function CookTiffinConfigPage() {
     }
   }, [config]);
 
-  const dishes = listings.map((l: any) => ({
+  const dishes = listingList.map((l: any) => ({
     id: l.id || l.product_id,
     name: l.name || l.title,
     price: l.price,
@@ -144,8 +146,8 @@ export default function CookTiffinConfigPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading tiffin config…
+      <div className="max-w-2xl mx-auto px-4 py-8" data-testid="cook-tiffin-skeleton">
+        <SHCSkeletonList count={5} rowHeight={64} />
       </div>
     );
   }

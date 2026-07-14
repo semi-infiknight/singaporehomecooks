@@ -84,6 +84,7 @@ export const transitionOrder = (orderId: string, to: string) => client.transitio
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoiceDownloadUrl = (id: string) => client.getOrderInvoiceDownloadUrl(id);
 export const createOrderPayNow = (id: string) => client.createOrderPayNow(id);
+export const createTiffinRechargePayNow = (weeks: number) => client.createTiffinRechargePayNow(weeks);
 export const getMyOrders = () => client.getMyOrders('customer');
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>

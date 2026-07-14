@@ -23,6 +23,7 @@ import {
   GourmeatCard,
   GourmeatEmptyState,
   SHCBadge,
+  SHCSkeletonOrderList,
 } from '../../components/SHCWebComponents';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
@@ -35,7 +36,8 @@ const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
 export default function CookOrdersPage() {
   const router = useRouter();
   const { user } = useCookAuth();
-  const { data: orders = [] } = useCookOrders();
+  const { data: orders, isLoading: ordersLoading } = useCookOrders();
+  const orderList = (orders as any[]) ?? [];
   const { data: openReqs = [] } = useOpenRequests();
   const createBid = useCreateBid();
   const transMut = useCookTransitionOrder();
@@ -45,7 +47,7 @@ export default function CookOrdersPage() {
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
 
-  const pendingCount = orders.filter(
+  const pendingCount = orderList.filter(
     (o: { shc_status?: string }) => !['collected', 'completed'].includes(String(o.shc_status))
   ).length;
 
@@ -108,13 +110,19 @@ export default function CookOrdersPage() {
 
       <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
 
-      {orders.length === 0 && (
+      {ordersLoading && orderList.length === 0 && (
+        <div className="mb-4">
+          <SHCSkeletonOrderList count={4} variant="row" />
+        </div>
+      )}
+
+      {!ordersLoading && orderList.length === 0 && (
         <GourmeatCard className="mb-4">
           <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
         </GourmeatCard>
       )}
 
-      {orders.map((o: Record<string, unknown>) => {
+      {orderList.map((o: Record<string, unknown>) => {
         const status = String(o.shc_status || '');
         const actions = NEXT_ACTIONS[status] || [];
         const dishName = String((o.items as { name?: string }[])?.[0]?.name || '');

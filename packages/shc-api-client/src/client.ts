@@ -682,6 +682,29 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
     },
 
+    /** HitPay PayNow QR for tiffin plan recharge — completes on webhook. */
+    async createTiffinRechargePayNow(weeks = 4) {
+      return request("/store/shc/tiffin/subscription/recharge/paynow", {
+        method: "POST",
+        body: JSON.stringify({ weeks }),
+      }) as Promise<{
+        provider: "hitpay" | "hitpay_unconfigured" | string;
+        reference?: string;
+        weeks?: number;
+        subscription_id?: string;
+        amount?: number;
+        currency?: string;
+        uen?: string;
+        display_name?: string;
+        payment_request_id?: string | null;
+        checkout_url?: string | null;
+        qr_payload?: string | null;
+        qr_image_data_url?: string | null;
+        status?: string;
+        error?: string;
+      }>;
+    },
+
     async cancelTiffinSubscriptionWithReason(reason?: string) {
       return request("/store/shc/tiffin/subscription", {
         method: "DELETE",

@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
 import { useAuth } from '../../../lib/useAuth';
 import { useDrop, useAddDropToCart } from '../../../lib/useOrder';
-import { SHCBadge, SHCButton, SHCCard, SHCLoading, SHCPageHeader } from '../../components/SHCWebComponents';
+import { SHCBadge, SHCButton, SHCCard, SHCPageHeader, SHCSkeletonList } from '../../components/SHCWebComponents';
 
 export default function DropOrderPage() {
   const params = useParams<{ id: string }>();
@@ -44,7 +44,13 @@ export default function DropOrderPage() {
     }
   }
 
-  if (isLoading || authLoading) return <SHCLoading label="Loading batch…" />;
+  if (isLoading || authLoading) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-8" data-testid="drop-order-skeleton">
+        <SHCSkeletonList count={4} rowHeight={56} />
+      </div>
+    );
+  }
   if (error || !drop) {
     return (
       <div className="mx-auto max-w-lg px-4 py-10">

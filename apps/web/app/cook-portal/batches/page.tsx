@@ -13,11 +13,12 @@ import {
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCreateDrop, useMyDrops, usePatchDrop } from '../../../lib/useCookPortal';
-import { GourmeatCookHeader, SHCBadge, SHCButton, SHCCard } from '../../components/SHCWebComponents';
+import { GourmeatCookHeader, SHCBadge, SHCButton, SHCCard, SHCSkeletonList } from '../../components/SHCWebComponents';
 
 export default function CookBatchesPage() {
   const { user } = useCookAuth();
-  const { data: drops = [], isLoading } = useMyDrops();
+  const { data: drops, isLoading } = useMyDrops();
+  const dropList = (drops as any[]) ?? [];
   const createMut = useCreateDrop();
   const patchMut = usePatchDrop();
   const [form, setForm] = useState({
@@ -153,12 +154,12 @@ export default function CookBatchesPage() {
       </SHCCard>
 
       <h2 className="mb-3 font-black">My batches</h2>
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isLoading && dropList.length === 0 && <SHCSkeletonList count={3} rowHeight={96} />}
       <div className="space-y-3" data-testid="cook-batches-list">
-        {(drops as any[]).length === 0 && !isLoading && (
+        {dropList.length === 0 && !isLoading && (
           <p className="text-sm font-semibold text-muted-foreground">No batches yet — post one above.</p>
         )}
-        {(drops as any[]).map((d) => (
+        {dropList.map((d) => (
           <SHCCard key={d.id} className="p-4" data-testid={`cook-batch-${d.id}`}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>

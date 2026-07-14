@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SHCTiffinPlannerScreen, gourmeatColors, type TiffinPlanSlotDraft } from '@shc/ui';
+import { SHCTiffinPlannerScreen, SHCSkeletonList, gourmeatColors, shcSpacing, type TiffinPlanSlotDraft } from '@shc/ui';
 import { useTiffinSubscription, useSaveTiffinPlan, useSaveTiffinNextWeek } from '../../../hooks/useTiffin';
 
 export default function TiffinPlannerScreen() {
@@ -72,10 +72,18 @@ export default function TiffinPlannerScreen() {
     router.replace('/(customer)/tiffin/manage' as any);
   };
 
-  if (isLoading || !sub) {
+  if (isLoading) {
+    return (
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={5} rowHeight={56} />
+      </View>
+    );
+  }
+
+  if (!sub) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color={gourmeatColors.primary} />
+        <SHCSkeletonList count={2} rowHeight={56} />
       </View>
     );
   }

@@ -227,7 +227,11 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
 
   return {
     doc_type: isCook ? 'settlement_note' : 'tax_invoice',
-    title: isCook ? 'Order settlement note' : 'Tax invoice',
+    title: isCook
+      ? 'Order settlement note'
+      : order.is_corporate
+        ? 'Tax invoice (Corporate / group)'
+        : 'Tax invoice',
     invoice_number: invoiceNumber(orderId, date),
     invoice_date: date,
     order_id: orderId,

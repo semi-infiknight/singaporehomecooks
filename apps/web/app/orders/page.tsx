@@ -32,6 +32,7 @@ import {
   SHCButton,
   SHCCard,
   IllustratedEmptyState,
+  SHCSkeletonOrderList,
 } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
@@ -43,7 +44,8 @@ export default function OrdersList() {
   const from = addDaysIso(weekStartMonday(), -7);
   const to = addDaysIso(weekStartMonday(), 21);
 
-  const { data: orders = [], isLoading, isFetching } = useOrders();
+  const { data: orders, isLoading, isFetching } = useOrders();
+  const orderList = (orders as Record<string, unknown>[]) ?? [];
   const { data: mealData, isLoading: mealsLoading } = useTiffinMealOrders(from, to);
   const { data: subData } = useTiffinSubscription();
   const skipMut = useSkipTiffinMeal();
@@ -54,7 +56,7 @@ export default function OrdersList() {
   const dishes = (kitchen?.dishes || []) as Array<{ id: string; name: string }>;
 
   const allCards: DayOrderCard[] = useMemo(() => {
-    const oneOff = (orders as Record<string, unknown>[]).map((o) => oneOffOrderToDayCard(o, today));
+    const oneOff = orderList.map((o) => oneOffOrderToDayCard(o, today));
     const meals = ((mealData as any)?.meals || []) as Record<string, unknown>[];
     const tiffin = meals.map((m) => {
       const pid = String(m.product_id || '');
@@ -62,7 +64,7 @@ export default function OrdersList() {
       return tiffinMealToDayCard(m, { cookName, dishName });
     });
     return mergeDayOrderCards(oneOff, tiffin);
-  }, [orders, mealData, cookName, dishes, today]);
+  }, [orderList, mealData, cookName, dishes, today]);
 
   const dateSet = useMemo(() => collectOrderDates(allCards), [allCards]);
 
@@ -166,7 +168,7 @@ export default function OrdersList() {
           </h2>
 
           {(isLoading || mealsLoading) && dayCards.length === 0 && (
-            <p className="text-sm font-semibold text-muted-foreground py-6">Loading meals…</p>
+            <SHCSkeletonOrderList count={3} variant="card" />
           )}
 
           {!isLoading && !mealsLoading && dayCards.length === 0 && (

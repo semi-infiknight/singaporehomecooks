@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { pauseDayOptions, applyPause } from '@shc/business-rules';
 import { useTiffinSubscription, usePauseTiffin } from '../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader, SHCErrorBanner } from '../../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCPageHeader, SHCErrorBanner, SHCSkeletonList } from '../../components/SHCWebComponents';
 
 export default function TiffinPausePage() {
   const router = useRouter();
@@ -23,8 +23,8 @@ export default function TiffinPausePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading…
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <SHCSkeletonList count={3} rowHeight={88} />
       </div>
     );
   }
