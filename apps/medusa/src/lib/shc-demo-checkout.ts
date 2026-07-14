@@ -76,7 +76,8 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     customer_id: customerId,
     collection_date,
     collection_slot,
-    shc_status: "paid" as SHCOrderStatus,
+    // Awaiting HitPay — paynow + webhook mark paid (do not stamp paid at place-order)
+    shc_status: "cart" as SHCOrderStatus,
     allergen_acked_at: allergen_acked ? new Date().toISOString() : undefined,
     pdpa_consent_at: pdpa_consent ? new Date().toISOString() : undefined,
     pdpa_consent_version: pdpa_consent ? "v1.0-pdpa-2025" : undefined,
@@ -112,7 +113,8 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     cook_id: cookId,
     customer_id: customerId,
     items: cart.items,
-    shc_status: "paid" as SHCOrderStatus,
+    // Awaiting HitPay — paynow + webhook mark paid (do not stamp paid at place-order)
+    shc_status: "cart" as SHCOrderStatus,
     collection_date,
     collection_slot,
     allergen_acked_at: allergen_acked ? new Date().toISOString() : undefined,
