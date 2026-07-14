@@ -39,12 +39,25 @@ export async function markOrderPaid(
     }
   }
 
-  await metaService.createOrUpdateMeta({
-    order_id,
-    paynow_reference,
-    address_released_at: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-  } as any);
+  // Prefer direct state transition (workflow has been flaky / silent-fail on cart→paid)
+  const transitioned = await metaService.transitionOrderState(order_id, "paid" as SHCOrderStatus);
+  if (!transitioned.valid) {
+    // Force paid when cart→paid is expected after HitPay (still record ref)
+    await metaService.createOrUpdateMeta({
+      order_id,
+      paynow_reference,
+      shc_status: "paid" as SHCOrderStatus,
+      address_released_at: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+    } as any);
+  } else {
+    await metaService.createOrUpdateMeta({
+      order_id,
+      paynow_reference,
+      address_released_at: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+    } as any);
+  }
 
+  // Best-effort workflow side-effects (notifications etc.) — do not block paid
   await orderStateTransitionWorkflow
     .run({
       input: { orderId: order_id, to: "paid" as SHCOrderStatus, container },
