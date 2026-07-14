@@ -10,6 +10,8 @@ import {
   gourmeatColors,
   shcSpacing,
   shcRadii,
+  SHCSkeletonList,
+  SHCSkeletonBone,
 } from '@shc/ui';
 import {
   getCookAvatarUrl,
@@ -70,7 +72,16 @@ export default function KitchenRatingsScreen() {
       </View>
 
       {isLoading || !cook ? (
-        <Text style={styles.meta}>Loading…</Text>
+        <View testID="kitchen-ratings-skeleton">
+          <View style={{ flexDirection: 'row', gap: shcSpacing.md, marginBottom: shcSpacing.md }}>
+            <SHCSkeletonBone width={56} height={56} radius={shcRadii.pill} />
+            <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
+              <SHCSkeletonBone height={16} width="60%" />
+              <SHCSkeletonBone height={12} width="40%" />
+            </View>
+          </View>
+          <SHCSkeletonList count={4} rowHeight={72} />
+        </View>
       ) : (
         <>
           <View style={styles.cookRow}>

@@ -13,6 +13,7 @@ import {
   SHCPageHeader,
   GourmeatDishCard,
   SearchResultsDropdown,
+  SHCSkeletonList,
   type DishCardProduct,
 } from '../components/SHCWebComponents';
 
@@ -88,8 +89,15 @@ export default function SearchPage() {
         </button>
       </div>
 
-      <p className="text-sm font-bold text-muted-foreground mb-3">{isLoading ? 'Loading…' : `${results.length} results`}</p>
+      <p className="text-sm font-bold text-muted-foreground mb-3">
+        {isLoading ? 'Searching catalogue…' : `${results.length} results`}
+      </p>
 
+      {isLoading ? (
+        <div data-testid="search-skeleton">
+          <SHCSkeletonList count={6} rowHeight={140} />
+        </div>
+      ) : (
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {results.map((p) => (
           <GourmeatDishCard
@@ -112,6 +120,7 @@ export default function SearchPage() {
           />
         ))}
       </div>
+      )}
 
       <div className="mt-6 flex gap-3">
         <SHCButton variant="outline" onClick={() => router.back()}>Back</SHCButton>

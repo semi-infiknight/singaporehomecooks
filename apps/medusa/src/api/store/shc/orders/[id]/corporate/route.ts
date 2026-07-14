@@ -13,7 +13,7 @@ const BodySchema = z
 
 /**
  * POST /store/shc/orders/:id/corporate
- * Flag an order as corporate/group with an ops note (invoice stub / multi-dish).
+ * Flag an order as corporate/group with an ops note (multi-dish).
  */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const { id: orderId } = req.params as { id: string };

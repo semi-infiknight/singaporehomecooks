@@ -39,7 +39,8 @@
 | `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT | Active sub (+ `ledger[]`, `balance_cents`); subscribe (pg-first); cancel |
 | `/store/shc/tiffin/subscription/pause` | POST | customer JWT | `{ days }` — flex pause + ledger |
 | `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
-| `/store/shc/tiffin/subscription/recharge` | POST | customer JWT | `{ weeks, paynow_ref? }` — PayNow wallet + deliveries + ledger |
+| `/store/shc/tiffin/subscription/recharge` | POST | customer JWT | `{ weeks, paynow_ref? }` — direct ledger extend (smoke/ops; UI uses HitPay path) |
+| `/store/shc/tiffin/subscription/recharge/paynow` | POST | customer JWT | `{ weeks }` — HitPay QR; webhook completes recharge |
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
 | `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |
@@ -53,7 +54,7 @@
 **GET subscription body:** `{ subscription, kitchen, ledger[], plans, slots_*, current_week, next_week }`  
 **Tables:** `shc_tiffin_subscription`, `shc_tiffin_weekly_plan`, `shc_tiffin_sub_meta` (flex, expires, deliveries_left, balance_cents), `shc_tiffin_ledger`
 
-Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `pauseTiffinSubscription`, `resumeTiffinSubscription`, `rechargeTiffinSubscription`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`, `skipTiffinMeal`, `publishTiffinDayMenu`, `kitchenCancelTiffinDay`.
+Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`, `subscribeTiffin`, `cancelTiffinSubscription`, `pauseTiffinSubscription`, `resumeTiffinSubscription`, `rechargeTiffinSubscription`, `createTiffinRechargePayNow`, `getTiffinWeeklyPlan`, `saveTiffinWeeklyPlan`, `saveTiffinNextWeekPlan`, `getTiffinCookConfig`, `updateTiffinCookConfig`, `skipTiffinMeal`, `publishTiffinDayMenu`, `kitchenCancelTiffinDay`.
 
 Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 

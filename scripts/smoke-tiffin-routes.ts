@@ -135,6 +135,20 @@ async function main() {
   );
   assertOk('POST /tiffin/subscription/resume', resume.status, [200], resume.body);
 
+  const rechargePaynow = await shcFetch(
+    '/store/shc/tiffin/subscription/recharge/paynow',
+    { method: 'POST', body: JSON.stringify({ weeks: 1 }) },
+    customerToken
+  );
+  if (rechargePaynow.status === 404) {
+    console.warn('⚠️  recharge/paynow 404 — redeploy medusa');
+  } else {
+    assertOk('POST /tiffin/subscription/recharge/paynow', rechargePaynow.status, [200], rechargePaynow.body);
+    const prov = (rechargePaynow.body as { provider?: string })?.provider;
+    const hasQr = Boolean((rechargePaynow.body as { qr_image_data_url?: string })?.qr_image_data_url);
+    console.log(`   recharge paynow provider=${prov} qr=${hasQr}`);
+  }
+
   const recharge = await shcFetch(
     '/store/shc/tiffin/subscription/recharge',
     {

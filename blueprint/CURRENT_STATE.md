@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-15 — **SHC Ops Insights + HitPay panel**; Admin SHC read mirrors; HitPay PayNow-only checkout.
+**Last Updated:** 2026-07-15 — **Tiffin recharge HitPay**; skeleton UX; corporate invoice download; SHC Ops Insights.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -12,7 +12,7 @@
 
 | Topic | State |
 |-------|--------|
-| **Payments** | **HitPay only** for customer order PayNow. No “I’ve paid” self-confirm. `POST /store/shc/orders/:id/paynow` → QR; `POST /hooks/shc/hitpay` → `markOrderPaid`. Client polls until `paid`. Admin `POST /admin/shc/payment-confirm` kept for ops. |
+| **Payments** | **HitPay only** for customer order PayNow **and tiffin recharge**. No “I’ve paid” self-confirm. Orders: `POST /store/shc/orders/:id/paynow` → QR; webhook → `markOrderPaid`. Tiffin: `POST /store/shc/tiffin/subscription/recharge/paynow` → QR; webhook ref `TRECH-{customer}-{weeks}W` → `rechargeSubscription`. Clients poll until paid / expiry extends. |
 | **HitPay env (Railway medusa)** | `HITPAY_API_KEY` (sandbox `test_…`), `HITPAY_WEBHOOK_SALT` (per-webhook salt from dashboard), `HITPAY_ENV=sandbox`. Live = production keys + `HITPAY_LIVE=1`. Setup: [content/hitpay-setup.md](../content/hitpay-setup.md). |
 | **Webhook URL** | `https://medusa-production-d2ba.up.railway.app/hooks/shc/hitpay` · events `charge.created` / `charge.updated` registered via API. |
 | **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
@@ -20,7 +20,7 @@
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
 | **Admin / Ops** | ✅ SHC Ops + Insights/HitPay trends; native list read mirrors (no dual-write) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
-| **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
+| **Not done** | Live HitPay KYC / real bank PayNow; bulk corporate invoice ZIP; secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
 ---
 
@@ -39,7 +39,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cart** | ✅ Postgres | `shc-cart` module |
 | **E2E verifier** | ✅ Tier 1+ | Full loop + credits + review + request/bid |
 | **Maestro device E2E** | ✅ Android + iOS | `pnpm e2e:tiffin` |
-| **Tiffin subscription** | ✅ Wave 8 | Ledger + flex OS; recharge demo confirm (not HitPay yet) |
+| **Tiffin subscription** | ✅ Wave 8 | Ledger + flex OS; **recharge via HitPay** (`/recharge/paynow` + webhook) |
 | **Expo push** | ✅ Wired | Order transitions notify when configured |
 | **iOS / Android native** | ✅ Both apps | Metro 8081 / 8082; rebuild scripts in `scripts/` |
 | **PayNow / HitPay** | 🟡 **Sandbox only** | QR + webhook; no real bank until live KYC. [content/hitpay-setup.md](../content/hitpay-setup.md) |

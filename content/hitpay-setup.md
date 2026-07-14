@@ -31,8 +31,11 @@ Without `HITPAY_API_KEY`, `POST /store/shc/orders/:id/paynow` returns **503** �
 | Method | Path | Auth |
 |--------|------|------|
 | POST | `/store/shc/orders/:id/paynow` | Customer JWT |
+| POST | `/store/shc/tiffin/subscription/recharge/paynow` | Customer JWT (`{ weeks }`) |
 | POST | `/hooks/shc/hitpay` | Hitpay-Signature HMAC |
 | POST | `/admin/shc/payment-confirm` | Admin (manual override) |
+
+**Tiffin recharge:** reference `TRECH-{customerId}-{weeks}W` on the payment request; webhook calls `rechargeSubscription` (no order id).
 
 Create payment uses HitPay:
 
@@ -47,6 +50,8 @@ Create payment uses HitPay:
 5. HitPay webhook → `markOrderPaid` → `shc_status=paid` + ledger.  
 6. Client polls order status until `paid`, then success / track order.
 
+**Tiffin recharge:** `/tiffin/recharge` → `createTiffinRechargePayNow(weeks)` → poll subscription until `expires_on` advances.
+
 ## Smoke
 
 ```bash
@@ -54,7 +59,7 @@ Create payment uses HitPay:
 pnpm exec vitest run apps/medusa/src/lib/shc-hitpay.test.ts
 
 # With keys on Railway after deploy:
-# Place order as customer → PayNow screen → QR appears when HITPAY_API_KEY set
+pnpm smoke:tiffin   # includes POST /recharge/paynow → QR when HITPAY_API_KEY set
 ```
 
 ## Fees (list, confirm on HitPay)
