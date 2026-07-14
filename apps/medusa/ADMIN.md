@@ -54,6 +54,7 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 | Path | Purpose |
 |------|---------|
 | `/app/shc-ops` | Overview KPIs, status breakdown, recent activity, health |
+| `/app/shc-ops/insights` | Trends (orders/GMV charts) + HitPay payment-requests + manual confirm |
 | `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
 | `/app/shc-ops/catalog` | Browse category presets (not cook-owned) |
 | `/app/shc-ops/controls` | Feature flags, disputes, payouts, commission/search snapshot |
@@ -68,6 +69,8 @@ Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`)
 | Route | Purpose |
 |-------|---------|
 | `GET /admin/shc/overview` | KPI snapshot |
+| `GET /admin/shc/analytics` | 14d order/GMV trends from `shc_order_meta` |
+| `GET /admin/shc/hitpay` | HitPay payment-requests list (Railway `HITPAY_API_KEY`) |
 | `GET /admin/shc/orders` | Cross-app order feed |
 | `GET /admin/shc/listings` | Cook product metas (Products + Price Lists mirrors) |
 | `GET /admin/shc/availability` | Portion/day slots (Inventory mirror) |

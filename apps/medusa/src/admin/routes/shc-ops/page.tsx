@@ -63,6 +63,9 @@ const ShcOpsOverviewPage = () => {
         </div>
         <div className="flex items-center gap-x-2">
           <Button size="small" variant="secondary" asChild>
+            <a href="/app/shc-ops/insights">Insights & HitPay</a>
+          </Button>
+          <Button size="small" variant="secondary" asChild>
             <a href="/app/shc-ops/orders">Orders</a>
           </Button>
           <Button size="small" variant="secondary" asChild>

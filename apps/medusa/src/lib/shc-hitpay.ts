@@ -129,6 +129,95 @@ export async function createHitPayPayNowRequest(input: {
   };
 }
 
+export type HitPayPaymentRequestRow = {
+  id: string
+  amount: string
+  currency: string
+  status: string
+  reference_number: string | null
+  purpose: string | null
+  checkout_url: string | null
+  payment_methods: string[]
+  created_at: string | null
+  updated_at: string | null
+}
+
+export type HitPayListResult = {
+  data: HitPayPaymentRequestRow[]
+  total: number
+  current_page: number
+  per_page: number
+  last_page: number
+  raw_meta?: Record<string, unknown>
+}
+
+/** List payment requests from HitPay (sandbox or live via Railway env). */
+export async function listHitPayPaymentRequests(opts?: {
+  perPage?: number
+  page?: number
+}): Promise<HitPayListResult> {
+  const apiKey = process.env.HITPAY_API_KEY?.trim()
+  if (!apiKey) throw new Error("HITPAY_API_KEY not configured")
+
+  const perPage = Math.min(Math.max(opts?.perPage ?? 25, 1), 100)
+  const page = Math.max(opts?.page ?? 1, 1)
+  const qs = new URLSearchParams({
+    per_page: String(perPage),
+    current_page: String(page),
+  })
+
+  const res = await fetch(`${hitpayBaseUrl()}/payment-requests?${qs}`, {
+    method: "GET",
+    headers: {
+      "X-BUSINESS-API-KEY": apiKey,
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+  const text = await res.text()
+  let json: any = {}
+  try {
+    json = JSON.parse(text)
+  } catch {
+    json = { raw: text.slice(0, 400) }
+  }
+  if (!res.ok) {
+    const msg = json?.message || json?.error || text.slice(0, 200) || `HTTP ${res.status}`
+    throw new Error(`HitPay list failed: ${msg}`)
+  }
+
+  const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : []
+  const meta = json?.meta || {}
+  return {
+    data: rows.map((r: any) => ({
+      id: String(r.id || ""),
+      amount: String(r.amount ?? "0"),
+      currency: String(r.currency || "sgd"),
+      status: String(r.status || "unknown"),
+      reference_number: r.reference_number != null ? String(r.reference_number) : null,
+      purpose: r.purpose != null ? String(r.purpose) : null,
+      checkout_url: r.url ? String(r.url) : null,
+      payment_methods: Array.isArray(r.payment_methods)
+        ? r.payment_methods.map(String)
+        : [],
+      created_at: r.created_at ? String(r.created_at) : null,
+      updated_at: r.updated_at ? String(r.updated_at) : null,
+    })),
+    total: Number(meta.total ?? rows.length) || rows.length,
+    current_page: Number(meta.current_page ?? page) || page,
+    per_page: Number(meta.per_page ?? perPage) || perPage,
+    last_page: Number(meta.last_page ?? 1) || 1,
+    raw_meta: meta,
+  }
+}
+
+export function hitpayEnvLabel(): "sandbox" | "live" {
+  const env = (process.env.HITPAY_ENV || "").toLowerCase()
+  if (env === "production" || env === "live" || process.env.HITPAY_LIVE === "1") {
+    return "live"
+  }
+  return "sandbox"
+}
+
 /** Encode qr_payload as a PNG data URL for clients (no native QR lib). */
 export async function qrPayloadToDataUrl(payload: string, size = 280): Promise<string | null> {
   if (!payload) return null;
