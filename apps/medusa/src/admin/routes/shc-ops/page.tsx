@@ -2,7 +2,6 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { ChartBar } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
-import { Link } from "react-router-dom"
 import { shcGet, errMessage } from "../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../lib/shc-format"
 import { withShcQuery } from "../../lib/shc-query"
@@ -64,13 +63,13 @@ const ShcOpsOverviewPage = () => {
         </div>
         <div className="flex items-center gap-x-2">
           <Button size="small" variant="secondary" asChild>
-            <Link to="/shc-ops/orders">Orders</Link>
+            <a href="/app/shc-ops/orders">Orders</a>
           </Button>
           <Button size="small" variant="secondary" asChild>
-            <Link to="/shc-ops/catalog">Catalog</Link>
+            <a href="/app/shc-ops/catalog">Catalog</a>
           </Button>
           <Button size="small" variant="secondary" asChild>
-            <Link to="/shc-ops/controls">Controls</Link>
+            <a href="/app/shc-ops/controls">Controls</a>
           </Button>
           <Button
             size="small"
@@ -133,9 +132,9 @@ const ShcOpsOverviewPage = () => {
             </Text>
           )}
           {Object.entries(ov?.orders_by_status || {}).map(([status, n]) => (
-            <Link
+            <a
               key={status}
-              to={`/shc-ops/orders?status=${encodeURIComponent(status)}`}
+              href={`/app/shc-ops/orders?status=${encodeURIComponent(status)}`}
               className="rounded-md border border-ui-border-base bg-ui-bg-base px-3 py-2 hover:bg-ui-bg-base-hover"
             >
               <Text size="xsmall" className="text-ui-fg-subtle">
@@ -144,7 +143,7 @@ const ShcOpsOverviewPage = () => {
               <Text weight="plus" className="block">
                 {n as number}
               </Text>
-            </Link>
+            </a>
           ))}
         </div>
       </Container>
@@ -153,7 +152,7 @@ const ShcOpsOverviewPage = () => {
         <div className="flex items-center justify-between px-6 py-4">
           <Heading level="h2">Recent marketplace activity</Heading>
           <Button size="small" variant="secondary" asChild>
-            <Link to="/shc-ops/orders">Full order board</Link>
+            <a href="/app/shc-ops/orders">Full order board</a>
           </Button>
         </div>
         <div className="flex flex-col divide-y">

@@ -2,7 +2,6 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Select, Table, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
-import { useSearchParams } from "react-router-dom"
 import { shcGet, errMessage } from "../../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
@@ -28,8 +27,10 @@ type OrdersResponse = {
 }
 
 const ShcOpsOrdersPage = () => {
-  const [params, setParams] = useSearchParams()
-  const initial = params.get("status") || ""
+  const initial =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("status") || ""
+      : ""
   const [statusFilter, setStatusFilter] = useState(initial)
 
   const ordersQ = useQuery({
@@ -52,8 +53,10 @@ const ShcOpsOrdersPage = () => {
 
   const onStatusChange = (v: string) => {
     setStatusFilter(v)
-    if (v) setParams({ status: v })
-    else setParams({})
+    const url = new URL(window.location.href)
+    if (v) url.searchParams.set("status", v)
+    else url.searchParams.delete("status")
+    window.history.replaceState({}, "", url.pathname + url.search)
   }
 
   return (
