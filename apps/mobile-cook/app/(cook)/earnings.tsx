@@ -73,7 +73,7 @@ export default function Earnings() {
     >
       <GourmeatCookHeader
         title="Earnings"
-        subtitle={`${user?.name} · 85% payout · PayNow weekly`}
+        subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <View style={styles.heroBadges}>
             <SHCBadge variant="heritage">This week</SHCBadge>

@@ -50,7 +50,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       <div className="max-w-lg mx-auto px-4 py-8" data-testid="cook-login-screen">
         <GourmeatCookHeader
           title="Cook sign in"
-          subtitle="HDB kitchen · 85% payout · collection-only orders"
+          subtitle="HDB kitchen · collection-only orders"
           testID="cook-login-hero"
         />
 

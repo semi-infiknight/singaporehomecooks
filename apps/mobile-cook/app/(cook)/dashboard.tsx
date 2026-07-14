@@ -24,6 +24,7 @@ import {
   shcRadii,
   shcShadows,
   DirectionalTabScreen,
+  SHCSkeletonBone,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
 import { useMyOrders, useRequests } from '../../hooks/useOrder';
@@ -48,12 +49,14 @@ export default function CookDashboard() {
     await logout();
     router.replace('/(shared)/auth' as any);
   };
-  const { data: orders = [] } = useMyOrders();
+  const { data: orders, isLoading: ordersLoading } = useMyOrders();
+  const orderList = (orders as any[]) ?? [];
   // Request count only (bidding UI lives under Orders) — never reference openReqs in JSX
   const requestsQuery = useRequests();
   const reqCount = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0;
+  const reqsLoading = requestsQuery.isLoading;
 
-  const earnings = orders
+  const earnings = orderList
     .filter((o: any) => o.shc_status === 'completed')
     .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
 
@@ -67,14 +70,8 @@ export default function CookDashboard() {
     >
       <GourmeatCookHeader
         title="Good morning, Chef"
-        subtitle={`${user?.name} · HDB kitchen · 85% payout`}
+        subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
-        badges={
-          <View style={styles.heroBadges}>
-            <SHCBadge variant="heritage">85% payout</SHCBadge>
-            <SHCBadge variant="success">S${earnings} this week</SHCBadge>
-          </View>
-        }
       />
 
       <Pressable
@@ -122,7 +119,7 @@ export default function CookDashboard() {
                 <View style={styles.earningsOverlay}>
                   <View style={styles.earningsTopRow}>
                     <SHCBentoIconBadge iconKey="earnings" size={28} />
-                    <SHCBadge variant="heritage">85% payout</SHCBadge>
+                    {/* <SHCBadge variant="heritage">85% payout</SHCBadge> */}
                   </View>
                   <Text style={styles.earningsLabel}>This week</Text>
                   <Text style={styles.earningsValue}>S${earnings}</Text>
@@ -133,12 +130,20 @@ export default function CookDashboard() {
         </SHCBentoCell>
         <SHCBentoCell variant="bento-yellow">
           <SHCBentoIconBadge iconKey="orders" size={24} />
-          <Text style={styles.statNum}>{orders.length}</Text>
+          {ordersLoading ? (
+            <SHCSkeletonBone height={22} width={36} style={{ marginTop: 8 }} />
+          ) : (
+            <Text style={styles.statNum}>{orderList.length}</Text>
+          )}
           <Text style={styles.statLabel}>Active</Text>
         </SHCBentoCell>
         <SHCBentoCell variant="bento-peach">
           <SHCBentoIconBadge iconKey="request" size={24} />
-          <Text style={styles.statNum}>{reqCount}</Text>
+          {reqsLoading ? (
+            <SHCSkeletonBone height={22} width={36} style={{ marginTop: 8 }} />
+          ) : (
+            <Text style={styles.statNum}>{reqCount}</Text>
+          )}
           <Text style={styles.statLabel}>Requests</Text>
         </SHCBentoCell>
       </SHCBentoGrid>
@@ -162,7 +167,7 @@ export default function CookDashboard() {
             imageUri={QUICK_ACTIONS[1].image}
             iconKey={QUICK_ACTIONS[1].iconKey}
             label={QUICK_ACTIONS[1].label}
-            badge={orders.length || undefined}
+            badge={orderList.length || undefined}
             onPress={() => router.push(QUICK_ACTIONS[1].href as any)}
             variant={QUICK_ACTIONS[1].variant}
           />
@@ -242,13 +247,19 @@ export default function CookDashboard() {
       </SHCCard>
 
       <Text style={styles.recentLabel}>Recent Orders</Text>
-      {orders.length === 0 && (
+      {ordersLoading && orderList.length === 0 && (
+        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md }}>
+          <SHCSkeletonBone height={88} radius={shcRadii.lg} style={{ marginBottom: 8 }} />
+          <SHCSkeletonBone height={88} radius={shcRadii.lg} />
+        </View>
+      )}
+      {!ordersLoading && orderList.length === 0 && (
         <View style={styles.noOrders}>
           <SHCFoodImage uri={BENTO_ACTION_IMAGES.orders} height={64} rounded={shcRadii.md} />
           <SHCBadge variant="default">No orders yet</SHCBadge>
         </View>
       )}
-      {orders.slice(0, 4).map((o: any) => (
+      {orderList.slice(0, 4).map((o: any) => (
         <Link key={o.id} href={`/(cook)/orders/${o.id}` as any} asChild>
           <Pressable style={styles.orderCard}>
             <SHCFoodImage

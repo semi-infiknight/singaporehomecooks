@@ -38,14 +38,8 @@ export default function CookDashboardPage() {
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-dashboard">
       <GourmeatCookHeader
         title="Good morning, Chef"
-        subtitle={`${user?.name} · HDB kitchen · 85% payout`}
+        subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
-        badges={
-          <>
-            <SHCBadge variant="heritage">85% payout</SHCBadge>
-            <SHCBadge variant="success">S${earnings} this week</SHCBadge>
-          </>
-        }
       />
 
       <Link

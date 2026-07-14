@@ -45,7 +45,7 @@ export default function CookEarningsPage() {
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-earnings-screen">
       <GourmeatCookHeader
         title="Earnings"
-        subtitle={`${user?.name} · 85% payout · PayNow weekly`}
+        subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <>
             <SHCBadge variant="heritage">This week</SHCBadge>

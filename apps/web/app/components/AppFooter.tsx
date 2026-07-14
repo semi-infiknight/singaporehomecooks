@@ -45,7 +45,7 @@ export function AppFooter() {
                 <span className="text-[#5C5144]">SFA registration & WSQ support</span>
               </li>
               <li>
-                <span className="text-[#5C5144]">Weekly payouts · 85% earnings</span>
+                <span className="text-[#5C5144]">Weekly PayNow payouts</span>
               </li>
             </ul>
           </div>
