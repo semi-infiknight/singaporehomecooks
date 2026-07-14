@@ -3,6 +3,7 @@ import { Badge, Button, Container, Heading, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
+import { withShcQuery } from "../../../lib/shc-query"
 
 type Flag = { id?: string; key: string; enabled: boolean; cohort_filter?: Record<string, unknown> }
 type Dispute = { id: string; order_id: string; type?: string; raised_by?: string; status?: string }
@@ -311,4 +312,4 @@ export const handle = {
   breadcrumb: () => "Controls",
 }
 
-export default ShcOpsControlsPage
+export default withShcQuery(ShcOpsControlsPage)

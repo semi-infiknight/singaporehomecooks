@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { shcGet, errMessage } from "../../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../../lib/shc-format"
+import { withShcQuery } from "../../../lib/shc-query"
 
 type OrderRow = {
   id: string
@@ -199,4 +200,4 @@ export const handle = {
   breadcrumb: () => "Orders",
 }
 
-export default ShcOpsOrdersPage
+export default withShcQuery(ShcOpsOrdersPage)

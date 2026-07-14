@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-14 — **HitPay PayNow-only checkout** (sandbox QR + webhook); Cooking soon 7-day customer window; signed invoice URL; least-blast agent rule.
+**Last Updated:** 2026-07-15 — **SHC Ops QueryClient fix**; Ghost/skeleton loading; HitPay PayNow-only checkout; Cooking soon 7-day window; least-blast agent rule.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -18,10 +18,9 @@
 | **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
 | **Invoices** | Mobile: signed `?issue_url=1` + `Linking.openURL`. No expo-file-system share path. |
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
+| **Admin / Ops** | SHC Ops `withShcQuery` fix — push `main` → Railway medusa `build:admin` |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
-| **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. |
-
-**Cook after paid:** Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
+| **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
 ---
 
@@ -34,7 +33,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover home + **Cooking soon** rail (7-day); HitPay PayNow checkout poll; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Dashboard **Cooking soon** banner → batches; orders Accept after paid; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | Same marketplace + HitPay PayNow; `/cook-portal`; `/ops` → Medusa Admin |
-| **Design system** | ✅ v4 Family Values | `brand.md` + `@shc/ui`; soft `useSHCTray` fallback if provider missing |
+| **Design system** | ✅ v4 Family Values + **skeleton kit** | `@shc/ui` `skeleton.tsx` + web mirrors; home/orders/cart/PDP/tiffin/cook ghosts; no `placeholderData: []` on list fetches |
 | **Medusa API** | ✅ Railway prod | Custom `/store/shc/*` + `/admin/shc/*` + `/hooks/shc/*` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer email/pass; Cook SHC JWT + scrypt |
 | **Cart** | ✅ Postgres | `shc-cart` module |
@@ -48,7 +47,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
 | **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
 | **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
-| **Admin / Ops** | ✅ | Medusa Admin + `/admin/shc/*` |
+| **Admin / Ops** | ✅ | Medusa Admin + SHC Ops (`/app/shc-ops`); local `ShcQueryProvider` avoids duplicate react-query QueryClient crash |
 
 **Do not trust `STATUS.md` alone.** This file + blueprint sections are canonical. Update blueprint after route/module/UI changes.
 

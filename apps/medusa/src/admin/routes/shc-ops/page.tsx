@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { shcGet, errMessage } from "../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../lib/shc-format"
+import { withShcQuery } from "../../lib/shc-query"
 
 type OverviewResponse = {
   overview: {
@@ -234,4 +235,4 @@ export const handle = {
   breadcrumb: () => "SHC Ops",
 }
 
-export default ShcOpsOverviewPage
+export default withShcQuery(ShcOpsOverviewPage)

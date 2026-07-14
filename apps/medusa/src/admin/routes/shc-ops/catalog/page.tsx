@@ -3,6 +3,7 @@ import { Badge, Button, Container, Heading, Input, Label, Table, Text, toast } f
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, type FormEvent } from "react"
 import { shcDelete, shcGet, shcPost, errMessage } from "../../../lib/shc-api"
+import { withShcQuery } from "../../../lib/shc-query"
 
 type CatalogCategory = {
   id: string
@@ -259,4 +260,4 @@ export const handle = {
   breadcrumb: () => "Catalog",
 }
 
-export default ShcOpsCatalogPage
+export default withShcQuery(ShcOpsCatalogPage)

@@ -47,6 +47,8 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 Source: `apps/medusa/src/admin/routes/shc-ops/**`  
 Uses `@medusajs/ui` + session-auth JS SDK → existing `/admin/shc/*` APIs.
 
+Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`) so `useQuery` / `useMutation` share a QueryClient from the same `@tanstack/react-query` instance (pnpm + Medusa dashboard otherwise throws “No QueryClient set”).
+
 ### APIs (same as before)
 
 | Route | Purpose |
