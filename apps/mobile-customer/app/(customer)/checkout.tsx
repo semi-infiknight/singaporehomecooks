@@ -30,7 +30,7 @@ import {
 import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
-import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
+import { transitionOrder, checkoutWithCredits, flagCorporateOrder, createOrderPayNow } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -184,9 +184,29 @@ export default function Checkout() {
     router.push(`/(customer)/orders/${completedOrderId}` as any);
   }, [completedOrderId, router]);
 
+  const [paySession, setPaySession] = useState<any>(null);
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
+
+  const loadPayNowSession = useCallback(async (orderId: string) => {
+    setPaySessionLoading(true);
+    try {
+      const s = await createOrderPayNow(orderId);
+      setPaySession(s);
+    } catch {
+      setPaySession(null);
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (completedOrderId) void loadPayNowSession(completedOrderId);
+  }, [completedOrderId, loadPayNowSession]);
+
   const confirmPay = async (ref: string) => {
     if (!completedOrderId) return;
     try {
+      // Manual confirm fallback — HitPay webhook is source of truth when configured
       await transitionOrder(completedOrderId, 'paid');
       console.log('[PayNow] ref captured:', ref, 'for', completedOrderId);
     } catch (e) { /* non fatal */ }
@@ -236,8 +256,19 @@ export default function Checkout() {
             imageUri={BENTO_ACTION_IMAGES.checkout}
           />
           {orderSummaryCard}
-          <PayNowPanel orderId={completedOrderId} total={amountDue} onConfirmPay={confirmPay} />
-          <Text style={styles.paynowHint}>Address released 2h before slot. Chat opens on payment confirm.</Text>
+          <PayNowPanel
+            orderId={completedOrderId}
+            total={amountDue}
+            session={paySession}
+            loadingSession={paySessionLoading}
+            onRequestSession={() => void loadPayNowSession(completedOrderId)}
+            onConfirmPay={confirmPay}
+          />
+          <Text style={styles.paynowHint}>
+            {paySession?.provider === 'hitpay'
+              ? 'Pay with the QR — we confirm automatically when HitPay notifies us. Address unlocks after paid.'
+              : 'Address released 2h before slot. Chat opens on payment confirm.'}
+          </Text>
           <SHCCard variant="bento-yellow" style={styles.footerCard}>
             <Text style={styles.footerText}>
               Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.

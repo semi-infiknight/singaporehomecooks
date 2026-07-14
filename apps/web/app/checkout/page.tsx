@@ -29,6 +29,7 @@ import {
   useMilestoneCelebrationWeb,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
+import { createOrderPayNow } from '../../lib/api-client';
 
 function extractOrderId(res: unknown): string | null {
   if (!res || typeof res !== 'object') return null;
@@ -92,7 +93,26 @@ export default function CheckoutPage() {
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
   const [payPhase, setPayPhase] = useState<'form' | 'paynow' | 'done'>('form');
+  const [paySession, setPaySession] = useState<Awaited<ReturnType<typeof createOrderPayNow>> | null>(null);
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
   const { openTray, dismiss } = useSHCTrayWeb();
+
+  const loadPayNowSession = useCallback(async (oid: string) => {
+    setPaySessionLoading(true);
+    try {
+      const s = await createOrderPayNow(oid);
+      setPaySession(s);
+      if (s.reference) setPaynowRef(s.reference);
+    } catch {
+      setPaySession(null);
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (orderId && payPhase === 'paynow') void loadPayNowSession(orderId);
+  }, [orderId, payPhase, loadPayNowSession]);
   const {
     show: showFirstOrderCelebration,
     triggerIfFirst: triggerFirstOrder,
@@ -253,9 +273,14 @@ export default function CheckoutPage() {
           onConfirmPay={confirmPay}
           confirmLabel={`I've paid · S$${amountDue.toFixed(2)}`}
           busy={transitionMut.isPending}
+          session={paySession}
+          loadingSession={paySessionLoading}
+          onRequestSession={() => orderId && void loadPayNowSession(orderId)}
         />
         <p className="mt-3 text-xs font-medium text-muted-foreground">
-          Address released 2h before slot. Chat opens after payment confirm.
+          {paySession?.provider === 'hitpay'
+            ? 'Scan the QR — we confirm when HitPay webhooks us. Address unlocks after paid.'
+            : 'Address released 2h before slot. Chat opens after payment confirm.'}
         </p>
         <button
           type="button"

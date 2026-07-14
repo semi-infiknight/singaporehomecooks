@@ -1,8 +1,8 @@
 // Domain components per 12-shared-components.md: CookCard, OrderCard, OrderStatusBadge, PayNowPanel, CollectionSlotPicker, ListingWizardStep etc.
 // Singapore taste: HDB, heritage, occasions. All components use SHC tokens + testID for Maestro.
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
-import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, Switch } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, TextInput, Switch, Image, Linking, ActivityIndicator } from 'react-native';
 import { getDishImageUrl, getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
 import { SHCZomatoAddButton, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon } from './icons';
@@ -498,15 +498,114 @@ export function OrderCard({ order, onPress, onAction, actionLabel }: { order: an
   );
 }
 
-export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }: { orderId: string; total: number; uen?: string; onConfirmPay: (ref: string) => void }) {
+export type PayNowSession = {
+  provider?: string;
+  uen?: string;
+  display_name?: string;
+  amount?: number;
+  reference?: string;
+  qr_image_data_url?: string | null;
+  qr_payload?: string | null;
+  checkout_url?: string | null;
+  payment_request_id?: string | null;
+  hint?: string;
+};
+
+/**
+ * PayNow panel — HitPay dynamic QR when session provided, else manual UEN + I've paid.
+ * QR image is generated server-side (data URL) so no native QR package is required.
+ */
+export function PayNowPanel({
+  orderId,
+  total,
+  uen = 'UEN-PENDING',
+  onConfirmPay,
+  session,
+  loadingSession,
+  onRequestSession,
+}: {
+  orderId: string;
+  total: number;
+  uen?: string;
+  onConfirmPay: (ref: string) => void;
+  /** From POST /store/shc/orders/:id/paynow */
+  session?: PayNowSession | null;
+  loadingSession?: boolean;
+  onRequestSession?: () => void;
+}) {
   const [ref, setRef] = useState('');
-  const suggested = `${orderId}-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+  const suggested = orderId || `SHC-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+  const displayUen = session?.uen || uen;
+  const displayName = session?.display_name || 'Singapore Home Cooks';
+  const amount = session?.amount != null ? Number(session.amount) : total;
+  const isHitPay = session?.provider === 'hitpay' && (session.qr_image_data_url || session.qr_payload || session.checkout_url);
+
+  useEffect(() => {
+    if (session?.reference) setRef(session.reference);
+  }, [session?.reference]);
+
   return (
     <SHCCard>
-      <SHCSectionTitle>PayNow to Singapore Home Cooks</SHCSectionTitle>
-      <Text>UEN: {uen} (Corporate)</Text>
-      <Text>Amount: S${total.toFixed(2)}</Text>
-      <Text style={{ color: colors.accent, marginVertical: 8 }}>Scan QR (stub) or transfer exact. Use reference below for auto-match.</Text>
+      <SHCSectionTitle>PayNow to {displayName}</SHCSectionTitle>
+      <Text style={{ fontWeight: '700' }}>Amount: S${Number(amount || 0).toFixed(2)}</Text>
+      <Text style={{ marginTop: 4 }}>UEN: {displayUen}</Text>
+      <Text style={{ ...shcTypography.mono, fontSize: 12, marginTop: 4 }}>Ref: {session?.reference || orderId}</Text>
+
+      {loadingSession ? (
+        <View style={{ alignItems: 'center', paddingVertical: 16 }} testID="paynow-qr-loading">
+          <ActivityIndicator color={colors.primary} />
+          <Text style={{ marginTop: 8, fontSize: 12, color: colors.textLight }}>Loading PayNow QR…</Text>
+        </View>
+      ) : null}
+
+      {session?.qr_image_data_url ? (
+        <View style={{ alignItems: 'center', marginVertical: 12 }} testID="paynow-qr">
+          <Image
+            source={{ uri: session.qr_image_data_url }}
+            style={{ width: 220, height: 220, borderRadius: 12, backgroundColor: '#fff' }}
+            resizeMode="contain"
+            accessibilityLabel="PayNow QR code"
+          />
+          <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 8, textAlign: 'center' }}>
+            Scan with your banking app · exact amount locked
+          </Text>
+        </View>
+      ) : null}
+
+      {!session?.qr_image_data_url && session?.checkout_url ? (
+        <SHCButton
+          onPress={() => void Linking.openURL(session.checkout_url!)}
+          style={{ marginTop: 12 }}
+          testID="paynow-open-checkout"
+        >
+          <SHCButtonText>Open HitPay checkout</SHCButtonText>
+        </SHCButton>
+      ) : null}
+
+      {!isHitPay && !loadingSession ? (
+        <Text style={{ color: colors.accent, marginVertical: 8 }}>
+          {session?.provider === 'manual'
+            ? 'Transfer exact amount via PayNow to the UEN above. Then confirm below.'
+            : 'Scan QR when available, or transfer exact amount. Use order ref in remarks.'}
+        </Text>
+      ) : null}
+
+      {onRequestSession && !session && !loadingSession ? (
+        <SHCButton onPress={onRequestSession} style={{ marginTop: 8 }} testID="paynow-load-qr">
+          <SHCButtonText>Generate PayNow QR</SHCButtonText>
+        </SHCButton>
+      ) : null}
+
+      {session?.hint ? (
+        <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 6 }}>{session.hint}</Text>
+      ) : null}
+
+      {isHitPay ? (
+        <Text style={{ fontSize: 12, color: colors.primary, marginTop: 8, fontWeight: '600' }}>
+          After you pay, we confirm automatically via HitPay. You can also confirm manually below if needed.
+        </Text>
+      ) : null}
+
       <TextInput
         placeholder={`e.g. ${suggested}`}
         value={ref}
@@ -519,6 +618,7 @@ export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }
           backgroundColor: colors.surface,
           ...shcTypography.mono,
           color: colors.text,
+          marginTop: 12,
         }}
         testID="paynow-ref-input"
       />
@@ -530,7 +630,9 @@ export function PayNowPanel({ orderId, total, uen = '202612345A', onConfirmPay }
       >
         <SHCButtonText>I have paid via PayNow — Confirm</SHCButtonText>
       </SHCButton>
-      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 8 }}>Cook earnings (est): S${Math.floor(total * 0.85)} (after 15% platform). Weekly payout Mon.</Text>
+      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 8 }}>
+        Cook earnings (est): S${Math.floor(Number(amount || 0) * 0.85)} (after 15% platform). Weekly payout Mon.
+      </Text>
     </SHCCard>
   );
 }

@@ -1345,6 +1345,9 @@ export function PayNowPanel({
   onConfirmPay,
   confirmLabel = "I've paid — confirm order",
   busy = false,
+  session,
+  loadingSession,
+  onRequestSession,
 }: {
   amount: number;
   reference: string;
@@ -1353,17 +1356,33 @@ export function PayNowPanel({
   confirmLabel?: string;
   /** External busy state (e.g. placing order) */
   busy?: boolean;
+  /** From POST /store/shc/orders/:id/paynow */
+  session?: {
+    provider?: string;
+    uen?: string;
+    display_name?: string;
+    amount?: number;
+    reference?: string;
+    qr_image_data_url?: string | null;
+    checkout_url?: string | null;
+    hint?: string;
+  } | null;
+  loadingSession?: boolean;
+  onRequestSession?: () => void;
 }) {
   const [refValue, setRefValue] = React.useState(reference);
   const [confirming, setConfirming] = React.useState(false);
   const [localError, setLocalError] = React.useState('');
 
   React.useEffect(() => {
-    setRefValue(reference);
-  }, [reference]);
+    setRefValue(session?.reference || reference);
+  }, [reference, session?.reference]);
 
-  const effectiveRef = (refValue || reference || '').trim();
+  const effectiveRef = (refValue || session?.reference || reference || '').trim();
   const isBusy = confirming || busy;
+  const displayAmount = session?.amount != null ? Number(session.amount) : amount;
+  const displayUen = session?.uen || 'UEN-PENDING';
+  const displayName = session?.display_name || 'Singapore Home Cooks';
 
   return (
     <SHCCard className="shc-bento-yellow" data-testid="paynow-panel">
@@ -1374,21 +1393,75 @@ export function PayNowPanel({
         <div>
           <div className="font-bold">Pay with PayNow</div>
           <div className="text-sm text-muted-foreground font-medium">
-            Transfer the exact amount, then confirm below
+            {session?.provider === 'hitpay'
+              ? 'Scan the QR with your banking app'
+              : 'Transfer the exact amount, then confirm below'}
           </div>
         </div>
       </div>
       <div className="text-2xl font-black tabular-nums font-mono mb-3">
-        S${Number(amount || 0).toFixed(2)}
+        S${Number(displayAmount || 0).toFixed(2)}
       </div>
       <div className="p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg font-mono text-sm space-y-1 shadow-[var(--shc-shadow-brutal-sm)]">
         <div>
-          <span className="text-muted-foreground">UEN</span> 12345678X
+          <span className="text-muted-foreground">To</span> {displayName}
         </div>
         <div>
-          <span className="text-muted-foreground">Reference</span> {reference || '—'}
+          <span className="text-muted-foreground">UEN</span> {displayUen}
+        </div>
+        <div>
+          <span className="text-muted-foreground">Reference</span> {session?.reference || reference || '—'}
         </div>
       </div>
+
+      {loadingSession ? (
+        <p className="text-sm font-semibold text-muted-foreground mt-3" data-testid="paynow-qr-loading">
+          Loading PayNow QR…
+        </p>
+      ) : null}
+
+      {session?.qr_image_data_url ? (
+        <div className="mt-4 flex flex-col items-center" data-testid="paynow-qr">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={session.qr_image_data_url}
+            alt="PayNow QR"
+            width={220}
+            height={220}
+            className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-white p-2"
+          />
+          <p className="text-xs font-semibold text-muted-foreground mt-2">Scan with DBS / OCBC / UOB / etc.</p>
+        </div>
+      ) : null}
+
+      {session?.checkout_url && !session?.qr_image_data_url ? (
+        <a
+          href={session.checkout_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex text-sm font-bold text-primary underline"
+          data-testid="paynow-open-checkout"
+        >
+          Open HitPay checkout →
+        </a>
+      ) : null}
+
+      {onRequestSession && !session && !loadingSession ? (
+        <SHCButton className="mt-3 w-full" onClick={onRequestSession} testID="paynow-load-qr">
+          Generate PayNow QR
+        </SHCButton>
+      ) : null}
+
+      {session?.hint ? (
+        <p className="text-xs text-muted-foreground mt-2 font-medium">{session.hint}</p>
+      ) : null}
+
+      {session?.provider === 'hitpay' ? (
+        <p className="text-xs font-semibold text-primary mt-2">
+          Payment confirms automatically via HitPay webhook. Manual confirm is a fallback.
+        </p>
+      ) : null}
+
       <label className="block mt-4 text-sm font-bold text-foreground">Payment reference</label>
       <input
         placeholder="Enter banking app reference (or use order ref above)"
