@@ -31,7 +31,7 @@ export default function CustomerDiscover() {
       <View style={{ marginBottom: 16 }}>
         <Text style={{ fontSize: 26, fontWeight: '700', color: shcColors.text }}>Singapore Home Cooks</Text>
         <Text style={{ fontSize: 14, color: shcColors.textLight, fontStyle: 'italic' }}>Heritage recipes • HDB kitchens • Planned occasions only • One cook per order</Text>
-        <Text style={{ marginTop: 4, fontSize: 11 }}>Welcome, {user.name} ({user.role}). Use DEV switcher top-right for full E2E (customer ↔ cook).</Text>
+        <Text style={{ marginTop: 4, fontSize: 11 }}>Welcome, {user.name} ({user.role}).</Text>
       </View>
 
       <TextInput

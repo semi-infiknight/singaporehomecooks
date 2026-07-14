@@ -224,10 +224,12 @@ export default function ComplianceUpload() {
         </SHCFadeIn>
       )}
 
+      {/* Demo stub chips removed — were hardcoded "Admin review" / "DEV switcher"
       <View style={styles.footerBadges}>
         <SHCBadge variant="default">Admin review</SHCBadge>
         <SHCBadge variant="success">DEV switcher</SHCBadge>
       </View>
+      */}
     </ScrollView>
       <SHCCelebration
         visible={showApprovedCelebration}

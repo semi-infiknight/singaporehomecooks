@@ -51,7 +51,7 @@ export default function ComplianceUpload() {
         </SHCCard>
       )}
 
-      <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 16 }}>Ops will verify in Admin (Medusa). Status moves to active after. (Stub enhanced for Integration — uses mock service + contracts). Use DEV switcher to test as cook.</Text>
+      <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 16 }}>Ops will verify in Admin (Medusa). Status moves to active after you are approved.</Text>
     </ScrollView>
   );
 }
