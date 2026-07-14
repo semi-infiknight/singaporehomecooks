@@ -45,27 +45,18 @@ type TrayContextValue = {
 
 const TrayContext = createContext<TrayContextValue | null>(null);
 
-/**
- * Soft-fallback when Provider is missing (duplicate Metro package / bad layout).
- * Matches useTabDirection: never white-screen production with a hard throw.
- * Prefer fixing SHCTrayProvider placement — this is a safety net only.
- */
+/** Safety net if Provider is missing (duplicate Metro @shc/ui / layout). Prefer real SHCTrayProvider. */
 function createTrayFallback(): TrayContextValue {
+  const warn = (title?: string) => {
+    if (typeof __DEV__ !== 'undefined' && __DEV__) {
+      console.error('[SHCTray] useSHCTray outside SHCTrayProvider');
+    }
+    Alert.alert(title || 'Notice', 'Please try again from the home tab.');
+  };
   return {
     stack: [],
-    openTray: (frame, _content) => {
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.error('[SHCTray] useSHCTray outside SHCTrayProvider — falling back to Alert');
-      }
-      Alert.alert(frame?.title || 'Notice', 'Please try again from the home tab.');
-    },
-    pushTrayContent: (frame, content) => {
-      // same as open for fallback
-      if (typeof __DEV__ !== 'undefined' && __DEV__) {
-        console.error('[SHCTray] pushTrayContent outside provider');
-      }
-      Alert.alert(frame?.title || 'Notice', 'Please try again from the home tab.');
-    },
+    openTray: (frame) => warn(frame?.title),
+    pushTrayContent: (frame) => warn(frame?.title),
     popTray: () => {},
     dismiss: () => {},
     contentMap: {},

@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   GourmeatHomeHeader,
   GourmeatSearchBar,
@@ -43,6 +45,7 @@ import {
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
+  filterCustomerCookingSoonDrops,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -84,20 +87,52 @@ const ORDER_MODES = [
 
 export default function CustomerDiscover() {
   const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
   const [query, setQuery] = useState('');
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
   const [promoDismissed, setPromoDismissed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const { user } = useAuth();
   const { isGuest, requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
   const { data: orders = [] } = useOrders('customer');
-  const { data: drops = [] } = useDrops();
+  const { data: dropsRaw = [], refetch: refetchDrops } = useDrops();
+  /** Customer: only batches cooking within next 7 days */
+  const drops = useMemo(
+    () => filterCustomerCookingSoonDrops(dropsRaw as { cook_date?: string; status?: string }[]),
+    [dropsRaw]
+  );
   const { favorites, toggle, isFavorite } = useFavorites();
-  const { data: products = [], isLoading } = useProducts('');
-  const { data: cooks = [] } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const { data: products = [], isLoading, refetch: refetchProducts } = useProducts('');
+  const { data: cooks = [], refetch: refetchCooks } = useQuery({
+    queryKey: ['cooks'],
+    queryFn: getCooks,
+    staleTime: 60_000,
+  });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchDrops(),
+        refetchProducts(),
+        refetchCooks(),
+        qc.invalidateQueries({ queryKey: ['drops'] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [qc, refetchCooks, refetchDrops, refetchProducts]);
+
+  // Re-fetch Cooking soon every time Home tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      void refetchDrops();
+    }, [refetchDrops])
+  );
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
 
@@ -364,43 +399,62 @@ export default function CustomerDiscover() {
         </View>
       )}
 
-      {/* Cooking soon — cook-led batches */}
-      {!query && Array.isArray(drops) && (drops as any[]).length > 0 && (
+      {/* Cooking soon — always show section (empty state when no open batches) */}
+      {!query && (
         <View style={{ marginBottom: shcSpacing.md }} testID="home-cooking-soon-rail">
           <GourmeatSectionTitle title="Cooking soon near you" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: 12 }}>
-            {(drops as any[]).slice(0, 8).map((d) => (
-              <Pressable
-                key={d.id}
-                testID={`home-drop-${d.id}`}
-                onPress={() => router.push(`/(customer)/drops/${d.id}` as any)}
-                style={{
-                  width: 240,
-                  borderRadius: 16,
-                  borderWidth: 2,
-                  borderColor: gourmeatColors.border,
-                  backgroundColor: gourmeatColors.card,
-                  padding: 14,
-                }}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase' }}>
-                  Cooking soon
-                </Text>
-                <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: gourmeatColors.text }} numberOfLines={1}>
-                  {d.title}
-                </Text>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }} numberOfLines={1}>
-                  {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
-                </Text>
-                <Text style={{ marginTop: 8, fontSize: 14, fontWeight: '800', color: gourmeatColors.primary }}>
-                  {formatDropPrice(d.price_cents, d.price)}
-                </Text>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.muted }}>
-                  {d.remaining_qty ?? 0} left · by {formatDropOrderBy(d.order_by)}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          {Array.isArray(drops) && (drops as any[]).length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: 12 }}>
+              {(drops as any[]).slice(0, 8).map((d) => (
+                <Pressable
+                  key={d.id}
+                  testID={`home-drop-${d.id}`}
+                  onPress={() => router.push(`/(customer)/drops/${d.id}` as any)}
+                  style={{
+                    width: 240,
+                    borderRadius: 16,
+                    borderWidth: 2,
+                    borderColor: gourmeatColors.border,
+                    backgroundColor: gourmeatColors.card,
+                    padding: 14,
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase' }}>
+                    Cooking soon
+                  </Text>
+                  <Text style={{ marginTop: 4, fontSize: 16, fontWeight: '900', color: gourmeatColors.text }} numberOfLines={1}>
+                    {d.title}
+                  </Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }} numberOfLines={1}>
+                    {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
+                  </Text>
+                  <Text style={{ marginTop: 8, fontSize: 14, fontWeight: '800', color: gourmeatColors.primary }}>
+                    {formatDropPrice(d.price_cents, d.price)}
+                  </Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.muted }}>
+                    {d.remaining_qty ?? 0} left · by {formatDropOrderBy(d.order_by)}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : (
+            <View
+              style={{
+                marginHorizontal: shcSpacing.md,
+                borderRadius: 16,
+                borderWidth: 2,
+                borderColor: gourmeatColors.border,
+                backgroundColor: gourmeatColors.card,
+                padding: 16,
+              }}
+              testID="home-cooking-soon-empty"
+            >
+              <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.text }}>No open batches in the next 7 days</Text>
+              <Text style={{ marginTop: 6, fontSize: 12, fontWeight: '600', color: gourmeatColors.muted }}>
+                Only batches cooking within a week appear here. Pull to refresh after a cook posts.
+              </Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -487,11 +541,13 @@ export default function CustomerDiscover() {
           renderItem={renderItem}
           keyExtractor={(item) => String(item.id)}
           numColumns={2}
-
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
           contentContainerStyle={styles.listContent}
           testID="dish-list-container"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={gourmeatColors.primary} />
+          }
         />
       </View>
     </View>

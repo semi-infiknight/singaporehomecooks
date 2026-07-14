@@ -30,4 +30,3 @@ export * from './collab-bid';
 export * from './order-invoice';
 export * from './drop-display';
 export * from './compliance-courses';
-// download-invoice uses DOM (document) — import from '@shc/utils/src/download-invoice' on web only, not here

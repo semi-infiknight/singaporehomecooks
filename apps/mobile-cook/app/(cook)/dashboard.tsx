@@ -100,6 +100,16 @@ export default function CookDashboard() {
         <Text style={styles.tourBannerSub}>Publish day menu · cancel kitchen day · visibility</Text>
       </Pressable>
 
+      <Pressable
+        onPress={() => router.push('/(cook)/batches' as any)}
+        style={[styles.tourBanner, styles.batchesBanner]}
+        testID="cook-cooking-soon-banner"
+        accessibilityRole="button"
+      >
+        <Text style={styles.tourBannerTitle}>Cooking soon</Text>
+        <Text style={styles.tourBannerSub}>Post a batch · customers order from home rail</Text>
+      </Pressable>
+
       <SHCFadeIn delay={60}>
       <SHCBentoGrid style={styles.earningsBento}>
         <SHCBentoCell variant="bento-mint" span={2} style={styles.earningsHero}>
@@ -144,6 +154,7 @@ export default function CookDashboard() {
             label={QUICK_ACTIONS[0].label}
             onPress={() => router.push(QUICK_ACTIONS[0].href as any)}
             variant={QUICK_ACTIONS[0].variant}
+            testID="cook-quick-cooking-soon"
           />
         </View>
         <View style={styles.bentoCol}>
@@ -295,6 +306,9 @@ const styles = StyleSheet.create({
   },
   tiffinBanner: {
     backgroundColor: shcColors.bentoYellow || '#FFF3C4',
+  },
+  batchesBanner: {
+    backgroundColor: shcColors.bentoMint || '#D8F3E8',
   },
   tourBannerTitle: { fontSize: 16, fontWeight: '800', color: shcColors.text },
   tourBannerSub: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },

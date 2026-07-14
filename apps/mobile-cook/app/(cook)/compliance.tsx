@@ -109,8 +109,11 @@ export default function ComplianceUpload() {
 
       {missing.length > 0 && (
         <View style={styles.missingBanner} testID="compliance-missing-banner">
-          <Text style={styles.missingTitle}>Still needed</Text>
-          <Text style={styles.missingBody}>
+          {/* Avoid fontWeight 800 + hard shadow on same card — Android faux-bold double-draws glyphs */}
+          <Text style={styles.missingTitle} maxFontSizeMultiplier={1.2}>
+            Still needed
+          </Text>
+          <Text style={styles.missingBody} maxFontSizeMultiplier={1.2}>
             {missing.map((t) => t.toUpperCase()).join(' · ')} — take the course, then upload your cert.
           </Text>
         </View>
@@ -257,10 +260,21 @@ const styles = StyleSheet.create({
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
     backgroundColor: gourmeatColors.bentoYellow,
-    ...shcShadows.brutalSm,
+    // No hard shadow here — clips/composites with bold text and looks double-struck
   },
-  missingTitle: { fontSize: 14, fontWeight: '800', color: shcColors.text, marginBottom: 4 },
-  missingBody: { fontSize: 12, color: shcColors.textLight, lineHeight: 18, fontWeight: '600' },
+  missingTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: shcColors.text,
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  missingBody: {
+    fontSize: 13,
+    color: shcColors.textLight,
+    lineHeight: 19,
+    fontWeight: '500',
+  },
   heroBadges: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
   bentoRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   bentoCol: { flex: 1 },

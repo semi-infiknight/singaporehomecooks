@@ -70,6 +70,10 @@ redis-data/
 # Logs
 logs
 *.log
+.metro-logs/
+
+# Local smoke PDF dumps
+scripts/.invoice-smoke/
 
 # OS
 Thumbs.db

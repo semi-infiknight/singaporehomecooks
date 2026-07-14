@@ -114,10 +114,14 @@ export function useDrops(cookId?: string, opts?: { enabled?: boolean }) {
     queryKey: ['drops', cookId || 'market'],
     queryFn: async () => {
       const { listDrops } = await import('../lib/api-client');
-      return listDrops(cookId ? { cook_id: cookId } : undefined);
+      const rows = await listDrops(cookId ? { cook_id: cookId } : undefined);
+      return Array.isArray(rows) ? rows : [];
     },
-    staleTime: 30_000,
-    placeholderData: [],
+    // Don't sticky-cache empty marketplace; pull-to-refresh + focus must get new batches
+    staleTime: 0,
+    gcTime: 60_000,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
     enabled: opts?.enabled !== false && (cookId === undefined || !!cookId),
   });
 }

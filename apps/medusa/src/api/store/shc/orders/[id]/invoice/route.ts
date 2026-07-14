@@ -107,13 +107,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     },
   });
 
-  const html = invoiceToHtml(invoice);
-  const pdf_base64 = invoiceToPdfBase64(invoice);
   const filename = `${invoice.invoice_number}.pdf`;
-  const link = buildInvoiceDownloadUrl({ order_id: id, audience });
 
-  // Mobile least-blast path: authenticated issue of openable PDF URL (no native FS)
+  // Mobile: short-lived signed URL only (no base64 payload)
   if (issueUrl || format === "link" || format === "url") {
+    const link = buildInvoiceDownloadUrl({ order_id: id, audience });
     return res.json({
       download_url: link.download_url,
       expires_at: link.expires_at,
@@ -122,6 +120,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       mime: "application/pdf",
     });
   }
+
+  const html = invoiceToHtml(invoice);
+  const pdf_base64 = invoiceToPdfBase64(invoice);
 
   if (format === "pdf") {
     const buf = Buffer.from(pdf_base64, "base64");
@@ -140,8 +141,5 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     pdf_base64,
     filename,
     mime: "application/pdf",
-    download_url: link.download_url,
-    expires_at: link.expires_at,
-    expires_in: link.expires_in,
   });
 }

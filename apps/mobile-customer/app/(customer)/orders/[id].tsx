@@ -87,8 +87,6 @@ export default function OrderTracking() {
     try {
       const res = await getOrderInvoiceDownloadUrl(orderId);
       if (!res.download_url) throw new Error('No invoice download URL from server');
-      const ok = await Linking.canOpenURL(res.download_url);
-      if (!ok) throw new Error('Cannot open invoice URL on this device');
       await Linking.openURL(res.download_url);
     } catch (e: any) {
       Alert.alert('Invoice', e?.message || 'Could not open tax invoice PDF. Sign in and try again.');

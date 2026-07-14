@@ -1,5 +1,21 @@
 /** Cooking soon / batch display helpers (web + mobile). */
 
+import { DROP_CUSTOMER_WINDOW_DAYS, dropCookDateWithinDays } from '@shc/business-rules';
+
+export { DROP_CUSTOMER_WINDOW_DAYS, dropCookDateWithinDays };
+
+/** Customer home/kitchen: open batches cooking within the next 7 days. */
+export function filterCustomerCookingSoonDrops<T extends { cook_date?: string; status?: string }>(
+  drops: T[],
+  now = new Date()
+): T[] {
+  if (!Array.isArray(drops)) return [];
+  return drops.filter((d) => {
+    if (d.status && d.status !== 'open' && d.status !== 'sold_out') return false;
+    return dropCookDateWithinDays(String(d.cook_date || ''), DROP_CUSTOMER_WINDOW_DAYS, now);
+  });
+}
+
 export function formatDropCookDate(cookDate: string, now = new Date()): string {
   if (!cookDate) return '—';
   const d = new Date(`${cookDate}T12:00:00`);

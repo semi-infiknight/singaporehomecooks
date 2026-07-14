@@ -8,8 +8,10 @@
 - [CURRENT_STATE.md](./CURRENT_STATE.md)
 - [AGENTS.md](./AGENTS.md)
 
-**Last Updated:** 2026-07-09
+**Last Updated:** 2026-07-14
 **Audience:** AI agents and subagents only
+
+**Session start:** Read [CURRENT_STATE.md §0 New-session handoff](./CURRENT_STATE.md) (HitPay, Cooking soon 7-day, invoices).
 
 ---
 

@@ -157,6 +157,44 @@ describe("ShcDropModuleService cooking-soon flow", () => {
     expect(listed.map((d) => d.id)).toEqual(["drop_open"]);
   });
 
+  it("listMarketplace excludes cook_date beyond 7-day customer window", async () => {
+    const far = new Date();
+    far.setDate(far.getDate() + 14);
+    const farDate = far.toISOString().slice(0, 10);
+    const svc = makeDropService([
+      {
+        id: "drop_far",
+        cook_id: "c1",
+        title: "Far batch",
+        price_cents: 100,
+        min_qty: 0,
+        max_qty: 10,
+        ordered_qty: 0,
+        cook_date: farDate,
+        collection_slot: "18:00-19:00",
+        order_by: futureIso(),
+        status: "open",
+        visibility: "marketplace",
+      },
+      {
+        id: "drop_near",
+        cook_id: "c1",
+        title: "Near batch",
+        price_cents: 100,
+        min_qty: 0,
+        max_qty: 10,
+        ordered_qty: 0,
+        cook_date: tomorrow(),
+        collection_slot: "18:00-19:00",
+        order_by: futureIso(),
+        status: "open",
+        visibility: "marketplace",
+      },
+    ]);
+    const listed = await svc.listMarketplace(20);
+    expect(listed.map((d) => d.id)).toEqual(["drop_near"]);
+  });
+
   it("rejects reserve past order_by and over capacity", async () => {
     const svc = makeDropService([
       {

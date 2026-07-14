@@ -145,11 +145,8 @@ export default function CookManageOrder() {
     if (!id || invoiceBusy) return;
     setInvoiceBusy(true);
     try {
-      // Least blast radius: signed API PDF URL → system browser (no native FS/sharing)
       const res = await getOrderInvoiceDownloadUrl(id);
       if (!res.download_url) throw new Error('No invoice download URL from server');
-      const ok = await Linking.canOpenURL(res.download_url);
-      if (!ok) throw new Error('Cannot open invoice URL on this device');
       await Linking.openURL(res.download_url);
     } catch (e: any) {
       Alert.alert('Invoice', e?.message || 'Could not open settlement PDF.');

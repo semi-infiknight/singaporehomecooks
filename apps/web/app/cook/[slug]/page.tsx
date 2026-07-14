@@ -37,6 +37,7 @@ import {
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
+  filterCustomerCookingSoonDrops,
   type KitchenReviewSort,
   type KitchenOrderLine,
 } from '@shc/utils';
@@ -75,9 +76,13 @@ export default function KitchenPage() {
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug);
   const { data: products = [] } = useProducts('');
-  const { data: kitchenDrops = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
+  const { data: kitchenDropsRaw = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
     enabled: Boolean(cook?.id),
   });
+  const kitchenDrops = useMemo(
+    () => filterCustomerCookingSoonDrops(kitchenDropsRaw as { cook_date?: string; status?: string }[]),
+    [kitchenDropsRaw]
+  );
   const { user } = useAuth();
   const addMut = useAddToCart();
   const [heritage, setHeritage] = useState<Array<{ title?: string; story?: string }>>([]);

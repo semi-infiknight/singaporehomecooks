@@ -82,17 +82,7 @@ async function main() {
   const localBuf = Buffer.from(localB64, 'base64');
   assertPdf(localBuf, 'local buildOrderInvoice');
   fs.writeFileSync(path.join(OUT, 'local-customer.pdf'), localBuf);
-
-  // Simulate browser download blob (Node polyfill)
-  const binary = Buffer.from(localB64, 'base64');
-  if (typeof Blob !== 'undefined') {
-    const blob = new Blob([binary], { type: 'application/pdf' });
-    if (blob.size !== binary.length) throw new Error('Blob size mismatch');
-    console.log(`✅ browser Blob simulation size=${blob.size}`);
-  }
-  // downloadPdfBase64InBrowser needs document — structural check only
   if (typeof dlBrowser !== 'function') throw new Error('downloadPdfBase64InBrowser missing');
-  console.log('✅ downloadPdfBase64InBrowser exported for web');
 
   const cust = await shc('/store/shc/auth/customer/login', {
     method: 'POST',

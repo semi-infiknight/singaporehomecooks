@@ -155,7 +155,7 @@ pnpm verify:expo-routes   # fails CI/goal if violated
 | Cart empty after login | Refresh cart query in auth success handler |
 | Unmatched route / Details broken | Same segment as file **and** folder — fix layout, run `verify:expo-routes` |
 | `getX is not a function` on device | Stale `@shc/api-client` dist — use `main: src`, not gitignored dist |
-| Invoice shares as text | Write base64 PDF via `expo-file-system/legacy` + `expo-sharing` mime PDF |
+| Invoice shares as text / not PDF | Issue signed URL (`?issue_url=1`) → `Linking.openURL` (mobile); web uses base64 blob helper — no native FS |
 | `Cannot find native module 'Exponent…'` | Plugin + pod/rebuild; don't top-level import unlinked natives |
 
 ---

@@ -84,10 +84,12 @@ export function useDrops(cookId?: string, opts?: { enabled?: boolean }) {
     queryKey: ['drops', cookId || 'market'],
     queryFn: async () => {
       const { listDrops } = await import('./api-client');
-      return listDrops(cookId ? { cook_id: cookId } : undefined);
+      const rows = await listDrops(cookId ? { cook_id: cookId } : undefined);
+      return Array.isArray(rows) ? rows : [];
     },
-    staleTime: 30_000,
-    placeholderData: [],
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnReconnect: true,
     enabled: opts?.enabled !== false && (cookId === undefined || !!cookId),
   });
 }

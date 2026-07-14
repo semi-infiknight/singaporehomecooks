@@ -2,12 +2,22 @@ import { describe, expect, it } from 'vitest';
 import {
   dropCanOrder,
   dropClampOrderQty,
+  dropCookDateWithinDays,
   dropFillRate,
   dropPostDeadlineStatus,
   dropRemainingQty,
 } from './drop';
 
 describe('drop rules', () => {
+  it('cook date within next 7 days (customer window)', () => {
+    const now = new Date('2026-07-14T10:00:00');
+    expect(dropCookDateWithinDays('2026-07-14', 7, now)).toBe(true);
+    expect(dropCookDateWithinDays('2026-07-21', 7, now)).toBe(true);
+    expect(dropCookDateWithinDays('2026-07-22', 7, now)).toBe(false);
+    expect(dropCookDateWithinDays('2026-07-13', 7, now)).toBe(false);
+    expect(dropCookDateWithinDays('bad', 7, now)).toBe(false);
+  });
+
   it('remaining qty', () => {
     expect(dropRemainingQty(40, 12)).toBe(28);
     expect(dropRemainingQty(10, 10)).toBe(0);

@@ -1,8 +1,27 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-13 — **Listing AI photos full** (status-aware Generate, brighten polish, cuisine presets, smoke:ai-image); Cooking soon + SHC Ops still shipped.
+**Last Updated:** 2026-07-14 — **HitPay PayNow-only checkout** (sandbox QR + webhook); Cooking soon 7-day customer window; signed invoice URL; least-blast agent rule.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
+
+---
+
+## 0. New-session handoff (2026-07-14)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Payments** | **HitPay only** for customer order PayNow. No “I’ve paid” self-confirm. `POST /store/shc/orders/:id/paynow` → QR; `POST /hooks/shc/hitpay` → `markOrderPaid`. Client polls until `paid`. Admin `POST /admin/shc/payment-confirm` kept for ops. |
+| **HitPay env (Railway medusa)** | `HITPAY_API_KEY` (sandbox `test_…`), `HITPAY_WEBHOOK_SALT` (per-webhook salt from dashboard), `HITPAY_ENV=sandbox`. Live = production keys + `HITPAY_LIVE=1`. Setup: [content/hitpay-setup.md](../content/hitpay-setup.md). |
+| **Webhook URL** | `https://medusa-production-d2ba.up.railway.app/hooks/shc/hitpay` · events `charge.created` / `charge.updated` registered via API. |
+| **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
+| **Invoices** | Mobile: signed `?issue_url=1` + `Linking.openURL`. No expo-file-system share path. |
+| **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
+| **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
+| **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. |
+
+**Cook after paid:** Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
 ---
 
@@ -12,31 +31,28 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | **Discover homepage** = marketplace (promo banner → categories → order modes → kitchens → dish grid); tiffin deep-link via banner/`/(customer)/tiffin`; location; checkout; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Sign-up + **4-step kitchen onboarding** (post-login if unseen); dashboard **Kitchen setup tour** replay; **Tiffin** → `/(cook)/tiffin`; Expo `:8082` |
-| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | **`/` homepage** marketplace IA (subscription banner only + one-off/events/kitchens/dishes); **`/tiffin/*`**; **full `/cook-portal`** (+ tiffin); `/ops` → Medusa Admin; PWA; checkout auth guard |
-| **Design system** | ✅ v4 Family Values | `brand.md` (Family Values trays/fluidity/delight) + `@shc/ui` (`tray`, `family-values-*`, `tab-direction`, `motion`, `gourmeat`) + web `SHCTrayWeb` mirrors; skill `.agents/skills/tri-platform-ui-sync/` |
-| **Medusa API** (`:9000`) | ✅ launch routes | Custom `/store/shc/*` + `/admin/shc/*`; all blueprint custom tables now have registered modules/migrations; admin UI at `/app` |
-| **Auth (JWT)** | ✅ Dev-ready | Customer: Medusa email/pass + store profile; Cook: SHC JWT + scrypt `password_hash` on `shc_cook` (dev plaintext fallback) |
-| **Cart** | ✅ Postgres module | `shc-cart` module (`shc_cart` table); legacy `shc-cart-store.ts` deprecated |
-| **E2E verifier** | ✅ Tier 1+ | Full loop + messages + completed + credits earn + **checkout-credits redeem** + review + request/bid; order lists now enriched (items + total snapshot) |
-| **Maestro device E2E** | ✅ Android + iOS | Cook `tiffin-config.yaml`; customer `tiffin-subscribe.yaml` + **`tiffin-flex-os.yaml`** (pause/recharge/calendar); `pnpm e2e:tiffin` |
-| **Tiffin subscription** | ✅ Mobile + API + **Wave 8** | Ledger + recharge; pause/skip/resume/**customize extras**; day-menu join; past history; plan duration weeks; pg-first create; `pnpm smoke:tiffin` + `pnpm ship:tiffin` |
-| **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
-| **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
-| **Android native** | ✅ Both apps | Customer + cook bare `android/` (cook restored 2026-07-13); Metro :8081 / :8082; `scripts/rebuild-android-apps.sh` |
-| **PayNow / HitPay** | 🟡 Sandbox wired | HitPay-only: QR via `POST …/paynow`, webhook `POST /hooks/shc/hitpay` → paid; client polls status. No customer “I’ve paid”. Setup: `content/hitpay-setup.md`. |
-| **Order invoices (PDF)** | ✅ SG tax invoice | `GET …/invoice` JSON/pdf; mobile opens **signed** `GET /hooks/shc/invoice?…` via `Linking` (no native FS); web still base64 download |
-| **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
-| **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |
-| **Production deploy** | ✅ Staging live | Railway `homecooks`: medusa + web + worker + minio + Postgres + Redis; `pnpm railway:ship` for PWA; see `RAILWAY_DEPLOY.md` |
-| **Admin / Ops** (Medusa Admin) | ✅ Single admin app | Stock `/app` + **SHC Ops** UI routes (`/app/shc-ops/*`) using `@medusajs/ui`; APIs `/admin/shc/*`; web `/ops` redirects to Medusa |
-| **Cooking soon (cook drops)** | ✅ v1 | Cook posts batch (qty, order-by, collection); home rail + kitchen section; cart→checkout path; inverse of request-dish |
-| **Listing AI photos** | ✅ full | Upload kitchen photo · Brighten (sharp polish) · Generate AI plate (FLUX); status-aware Generate; cuisine presets; `GET/POST /store/shc/ai/image`; `pnpm smoke:ai-image`; needs CF env for Generate |
+| **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover home + **Cooking soon** rail (7-day); HitPay PayNow checkout poll; Expo `:8081` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Dashboard **Cooking soon** banner → batches; orders Accept after paid; Expo `:8082` |
+| **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | Same marketplace + HitPay PayNow; `/cook-portal`; `/ops` → Medusa Admin |
+| **Design system** | ✅ v4 Family Values | `brand.md` + `@shc/ui`; soft `useSHCTray` fallback if provider missing |
+| **Medusa API** | ✅ Railway prod | Custom `/store/shc/*` + `/admin/shc/*` + `/hooks/shc/*` |
+| **Auth (JWT)** | ✅ Dev-ready | Customer email/pass; Cook SHC JWT + scrypt |
+| **Cart** | ✅ Postgres | `shc-cart` module |
+| **E2E verifier** | ✅ Tier 1+ | Full loop + credits + review + request/bid |
+| **Maestro device E2E** | ✅ Android + iOS | `pnpm e2e:tiffin` |
+| **Tiffin subscription** | ✅ Wave 8 | Ledger + flex OS; recharge demo confirm (not HitPay yet) |
+| **Expo push** | ✅ Wired | Order transitions notify when configured |
+| **iOS / Android native** | ✅ Both apps | Metro 8081 / 8082; rebuild scripts in `scripts/` |
+| **PayNow / HitPay** | 🟡 **Sandbox only** | QR + webhook; no real bank until live KYC. [content/hitpay-setup.md](../content/hitpay-setup.md) |
+| **Order invoices (PDF)** | ✅ | Signed hooks URL on mobile; web base64 download |
+| **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
+| **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
+| **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
+| **Admin / Ops** | ✅ | Medusa Admin + `/admin/shc/*` |
 
-**Do not trust `STATUS.md` alone** for integration details — it summarizes an earlier mock-first wave. **This file (CURRENT_STATE.md) + cross-checked blueprint/ sections are the accurate snapshot.** After any code change touching routes, modules, contracts, UI, or flows: update blueprint per self-updating-rules.md (mandatory).
+**Do not trust `STATUS.md` alone.** This file + blueprint sections are canonical. Update blueprint after route/module/UI changes.
 
-**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks) (blueprint synced to `main` 2026-07-09; HEAD `33be5eb`; HomelyEats W1–8 + skeptic: mobile notes, honest order errors, customize wallet delta)
+**Repo:** [github.com/semi-infiknight/singaporehomecooks](https://github.com/semi-infiknight/singaporehomecooks)
 
 ---
 

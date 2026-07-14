@@ -2,8 +2,10 @@ import { MedusaService } from "@medusajs/framework/utils";
 import { Drop } from "./models/drop";
 import { createSHCError } from "@shc/types";
 import {
+  DROP_CUSTOMER_WINDOW_DAYS,
   dropCanOrder,
   dropClampOrderQty,
+  dropCookDateWithinDays,
   dropPostDeadlineStatus,
   dropRemainingQty,
 } from "@shc/business-rules";
@@ -137,17 +139,18 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
   }
 
   /**
-   * Marketplace home feed: open + orderable only (excludes sold_out, paused, expired, zero remaining).
+   * Marketplace home feed: open + orderable + cook_date within next 7 days.
    */
   async listMarketplace(limit = 40, now = new Date()) {
     const [rows] = await this.listAndCountDrops(
       { status: "open" as any, visibility: "marketplace" } as any,
-      { take: Math.max(limit * 2, 40), order: { cook_date: "ASC" } as any }
+      { take: Math.max(limit * 3, 60), order: { cook_date: "ASC" } as any }
     ).catch(() => [[]]);
     const out = [];
     for (const r of rows as DropRow[]) {
       const refreshed = await this.refreshStatus(r);
       if (!this.isOrderable(refreshed, now)) continue;
+      if (!dropCookDateWithinDays(String(refreshed.cook_date), DROP_CUSTOMER_WINDOW_DAYS, now)) continue;
       out.push(this.shape(refreshed));
       if (out.length >= limit) break;
     }
@@ -165,6 +168,8 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
       const refreshed = await this.refreshStatus(r);
       if (opts.activeOnly) {
         if (!this.isOrderable(refreshed, now)) continue;
+        // Kitchen page uses activeOnly — same 7-day customer window
+        if (!dropCookDateWithinDays(String(refreshed.cook_date), DROP_CUSTOMER_WINDOW_DAYS, now)) continue;
       }
       out.push(this.shape(refreshed));
     }
