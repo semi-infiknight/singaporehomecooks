@@ -18,7 +18,7 @@
 | **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
 | **Invoices** | Mobile: signed `?issue_url=1` + `Linking.openURL`. No expo-file-system share path. |
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
-| **Admin / Ops** | SHC Ops `withShcQuery` fix — push `main` → Railway medusa `build:admin` |
+| **Admin / Ops** | ✅ SHC Ops live on Railway (`withShcQuery` + no duplicate router `Link`) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
 | **Not done** | Live HitPay KYC / real bank PayNow; tiffin recharge still demo confirm (not HitPay); secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
 
