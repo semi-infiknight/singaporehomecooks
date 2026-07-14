@@ -14,7 +14,7 @@ Dynamic PayNow QR + webhook auto-confirm for orders.
 | `SHC_PLATFORM_UEN` / `PAYNOW_UEN` | Recommended | Shown on manual fallback UI |
 | `SHC_PLATFORM_LEGAL_NAME` | Optional | Display name on PayNow panel |
 
-Without `HITPAY_API_KEY`, `POST /store/shc/orders/:id/paynow` returns `provider: "manual"` (UEN only).
+Without `HITPAY_API_KEY`, `POST /store/shc/orders/:id/paynow` returns **503** — HitPay is the only customer payment path (no manual “I've paid”).
 
 ## HitPay dashboard
 
@@ -45,7 +45,7 @@ Create payment uses HitPay:
 3. Shows `qr_image_data_url` (PNG data URL from server).  
 4. Customer scans & pays.  
 5. HitPay webhook → `markOrderPaid` → `shc_status=paid` + ledger.  
-6. “I’ve paid” remains as manual fallback.
+6. Client polls order status until `paid`, then success / track order.
 
 ## Smoke
 

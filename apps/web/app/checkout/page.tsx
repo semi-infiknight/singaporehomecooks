@@ -10,7 +10,7 @@ import {
   computeOneTimeOrderSummary,
 } from '@shc/utils';
 import { useCart, useCredits } from '../../lib/useProducts';
-import { useCheckout, useTransitionOrder } from '../../lib/useOrder';
+import { useCheckout } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
 import {
   SHCCard,
@@ -29,7 +29,7 @@ import {
   useMilestoneCelebrationWeb,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
-import { createOrderPayNow } from '../../lib/api-client';
+import { createOrderPayNow, getOrder } from '../../lib/api-client';
 
 function extractOrderId(res: unknown): string | null {
   if (!res || typeof res !== 'object') return null;
@@ -58,7 +58,6 @@ export default function CheckoutPage() {
   }, [authLoading, user, router]);
 
   const checkoutMut = useCheckout();
-  const transitionMut = useTransitionOrder();
   const { data: creditsData } = useCredits();
 
   const [allergenAck, setAllergenAck] = useState(false);
@@ -93,8 +92,11 @@ export default function CheckoutPage() {
   const [creditsApply, setCreditsApply] = useState(0);
   const [isCorp, setIsCorp] = useState(false);
   const [payPhase, setPayPhase] = useState<'form' | 'paynow' | 'done'>('form');
-  const [paySession, setPaySession] = useState<Awaited<ReturnType<typeof createOrderPayNow>> | null>(null);
+  const [paySession, setPaySession] = useState<
+    (Awaited<ReturnType<typeof createOrderPayNow>> & { error?: string }) | null
+  >(null);
   const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
   const { openTray, dismiss } = useSHCTrayWeb();
 
   const loadPayNowSession = useCallback(async (oid: string) => {
@@ -103,8 +105,17 @@ export default function CheckoutPage() {
       const s = await createOrderPayNow(oid);
       setPaySession(s);
       if (s.reference) setPaynowRef(s.reference);
-    } catch {
-      setPaySession(null);
+      if (s.provider === 'hitpay') setWaitingForPayment(true);
+      if (s.provider === 'already_paid') {
+        setPayPhase('done');
+        setWaitingForPayment(false);
+      }
+    } catch (e: any) {
+      setPaySession({
+        provider: 'hitpay_error',
+        order_id: oid,
+        error: e?.message || 'Could not create PayNow QR',
+      } as any);
     } finally {
       setPaySessionLoading(false);
     }
@@ -113,6 +124,37 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (orderId && payPhase === 'paynow') void loadPayNowSession(orderId);
   }, [orderId, payPhase, loadPayNowSession]);
+
+  // Poll until HitPay webhook marks paid
+  useEffect(() => {
+    if (!orderId || payPhase !== 'paynow' || !waitingForPayment) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const o = await getOrder(orderId);
+        const st = String((o as any)?.shc_status || '');
+        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st)) {
+          if (cancelled) return;
+          setWaitingForPayment(false);
+          setPayPhase('done');
+          try {
+            await triggerFirstOrder();
+          } catch {
+            /* ignore */
+          }
+          window.setTimeout(() => router.push(`/orders/${orderId}`), 900);
+        }
+      } catch {
+        /* keep polling */
+      }
+    };
+    void tick();
+    const id = window.setInterval(tick, 4000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [orderId, payPhase, waitingForPayment, router, triggerFirstOrder]);
   const {
     show: showFirstOrderCelebration,
     triggerIfFirst: triggerFirstOrder,
@@ -200,28 +242,6 @@ export default function CheckoutPage() {
     }
   };
 
-  const confirmPay = async (ref: string) => {
-    if (!orderId) {
-      throw new Error('No order to confirm. Place the order first.');
-    }
-    if (ref) setPaynowRef(ref);
-    try {
-      await transitionMut.mutateAsync({ orderId, to: 'paid' as never });
-    } catch {
-      /* order may already be paid from checkout — continue */
-    }
-    setPayPhase('done');
-    try {
-      await triggerFirstOrder();
-    } catch {
-      /* ignore */
-    }
-    // Always land on order tracking after a short success beat
-    window.setTimeout(() => {
-      router.push(`/orders/${orderId}`);
-    }, 900);
-  };
-
   // ── Success / processing ──
   if (orderId && payPhase === 'done') {
     const okCopy = orderSuccessfulCopy();
@@ -269,18 +289,13 @@ export default function CheckoutPage() {
         <PayNowPanel
           amount={amountDue}
           reference={paynowRef || orderId}
-          onRefChange={setPaynowRef}
-          onConfirmPay={confirmPay}
-          confirmLabel={`I've paid · S$${amountDue.toFixed(2)}`}
-          busy={transitionMut.isPending}
           session={paySession}
           loadingSession={paySessionLoading}
-          onRequestSession={() => orderId && void loadPayNowSession(orderId)}
+          onRetry={() => orderId && void loadPayNowSession(orderId)}
+          waitingForPayment={waitingForPayment}
         />
         <p className="mt-3 text-xs font-medium text-muted-foreground">
-          {paySession?.provider === 'hitpay'
-            ? 'Scan the QR — we confirm when HitPay webhooks us. Address unlocks after paid.'
-            : 'Address released 2h before slot. Chat opens after payment confirm.'}
+          Scan to pay · we confirm via HitPay · cook can accept after paid.
         </p>
         <button
           type="button"

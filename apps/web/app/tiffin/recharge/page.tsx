@@ -17,7 +17,6 @@ import {
   SHCCard,
   SHCPageHeader,
   SHCErrorBanner,
-  PayNowPanel,
 } from '../../components/SHCWebComponents';
 
 export default function TiffinRechargePage() {
@@ -101,22 +100,28 @@ export default function TiffinRechargePage() {
           backHref="/tiffin/recharge"
           backLabel="Change weeks"
         />
-        <PayNowPanel
-          amount={amountDollars}
-          reference={defaultRef}
-          onRefChange={setPayRef}
-          onConfirmPay={confirmPay}
-          confirmLabel={`I've paid · S$${amountDollars.toFixed(2)}`}
-          busy={rechargeMut.isPending}
-        />
+        <SHCCard className="shc-bento-yellow p-4">
+          <p className="font-black text-lg tabular-nums">S${amountDollars.toFixed(2)}</p>
+          <p className="text-sm font-semibold text-muted-foreground mt-1">
+            Tiffin recharge · {weeks} week{weeks > 1 ? 's' : ''} · ref {defaultRef}
+          </p>
+          <p className="text-xs font-semibold text-muted-foreground mt-3">
+            Order checkout uses HitPay PayNow. Tiffin recharge HitPay is not wired yet — confirm extends the plan for demo.
+          </p>
+          <SHCButton
+            className="mt-4 w-full"
+            disabled={rechargeMut.isPending}
+            onClick={() => void confirmPay(defaultRef)}
+            testID="tiffin-recharge-confirm-demo"
+          >
+            {rechargeMut.isPending ? 'Confirming…' : `Confirm recharge · S$${amountDollars.toFixed(2)}`}
+          </SHCButton>
+        </SHCCard>
         {error ? (
           <div className="mt-3">
             <SHCErrorBanner message={error} />
           </div>
         ) : null}
-        <p className="text-xs font-semibold text-muted-foreground mt-3">
-          Demo PayNow — confirm writes ledger + extends your plan. No real bank transfer.
-        </p>
       </div>
     );
   }

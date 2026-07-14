@@ -508,53 +508,61 @@ export type PayNowSession = {
   qr_payload?: string | null;
   checkout_url?: string | null;
   payment_request_id?: string | null;
-  hint?: string;
+  error?: string;
+  shc_status?: string;
 };
 
 /**
- * PayNow panel — HitPay dynamic QR when session provided, else manual UEN + I've paid.
- * QR image is generated server-side (data URL) so no native QR package is required.
+ * HitPay-only PayNow panel — scan QR; payment confirms via webhook (no "I've paid").
+ * QR image is a server data URL (no native QR package).
  */
 export function PayNowPanel({
   orderId,
   total,
-  uen = 'UEN-PENDING',
-  onConfirmPay,
   session,
   loadingSession,
-  onRequestSession,
+  onRetry,
+  waitingForPayment,
 }: {
   orderId: string;
   total: number;
-  uen?: string;
-  onConfirmPay: (ref: string) => void;
   /** From POST /store/shc/orders/:id/paynow */
   session?: PayNowSession | null;
   loadingSession?: boolean;
-  onRequestSession?: () => void;
+  onRetry?: () => void;
+  /** True while polling for paid status after QR shown */
+  waitingForPayment?: boolean;
 }) {
-  const [ref, setRef] = useState('');
-  const suggested = orderId || `SHC-${Date.now().toString(36).slice(-6).toUpperCase()}`;
-  const displayUen = session?.uen || uen;
   const displayName = session?.display_name || 'Singapore Home Cooks';
   const amount = session?.amount != null ? Number(session.amount) : total;
-  const isHitPay = session?.provider === 'hitpay' && (session.qr_image_data_url || session.qr_payload || session.checkout_url);
+  const hasQr = Boolean(session?.qr_image_data_url || session?.checkout_url);
+  const err =
+    session?.error ||
+    (session?.provider === 'hitpay_error' ? 'Could not create PayNow QR' : null) ||
+    (!loadingSession && session && session.provider !== 'hitpay' && session.provider !== 'already_paid' && !hasQr
+      ? 'PayNow unavailable — try again'
+      : null);
 
-  useEffect(() => {
-    if (session?.reference) setRef(session.reference);
-  }, [session?.reference]);
+  if (session?.provider === 'already_paid') {
+    return (
+      <SHCCard>
+        <SHCSectionTitle>Payment received</SHCSectionTitle>
+        <Text style={{ fontWeight: '600', color: colors.primary }}>This order is already paid.</Text>
+      </SHCCard>
+    );
+  }
 
   return (
     <SHCCard>
-      <SHCSectionTitle>PayNow to {displayName}</SHCSectionTitle>
+      <SHCSectionTitle>Pay with PayNow</SHCSectionTitle>
       <Text style={{ fontWeight: '700' }}>Amount: S${Number(amount || 0).toFixed(2)}</Text>
-      <Text style={{ marginTop: 4 }}>UEN: {displayUen}</Text>
-      <Text style={{ ...shcTypography.mono, fontSize: 12, marginTop: 4 }}>Ref: {session?.reference || orderId}</Text>
+      <Text style={{ marginTop: 4, fontWeight: '600' }}>{displayName}</Text>
+      <Text style={{ ...shcTypography.mono, fontSize: 12, marginTop: 4 }}>Order: {session?.reference || orderId}</Text>
 
       {loadingSession ? (
         <View style={{ alignItems: 'center', paddingVertical: 16 }} testID="paynow-qr-loading">
           <ActivityIndicator color={colors.primary} />
-          <Text style={{ marginTop: 8, fontSize: 12, color: colors.textLight }}>Loading PayNow QR…</Text>
+          <Text style={{ marginTop: 8, fontSize: 12, color: colors.textLight }}>Creating PayNow QR…</Text>
         </View>
       ) : null}
 
@@ -567,7 +575,7 @@ export function PayNowPanel({
             accessibilityLabel="PayNow QR code"
           />
           <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 8, textAlign: 'center' }}>
-            Scan with your banking app · exact amount locked
+            Scan with your banking app · amount is fixed
           </Text>
         </View>
       ) : null}
@@ -582,57 +590,29 @@ export function PayNowPanel({
         </SHCButton>
       ) : null}
 
-      {!isHitPay && !loadingSession ? (
-        <Text style={{ color: colors.accent, marginVertical: 8 }}>
-          {session?.provider === 'manual'
-            ? 'Transfer exact amount via PayNow to the UEN above. Then confirm below.'
-            : 'Scan QR when available, or transfer exact amount. Use order ref in remarks.'}
+      {err ? (
+        <Text style={{ color: '#b91c1c', marginTop: 10, fontWeight: '600' }} testID="paynow-error">
+          {err}
         </Text>
       ) : null}
 
-      {onRequestSession && !session && !loadingSession ? (
-        <SHCButton onPress={onRequestSession} style={{ marginTop: 8 }} testID="paynow-load-qr">
-          <SHCButtonText>Generate PayNow QR</SHCButtonText>
+      {onRetry && !loadingSession ? (
+        <SHCButton onPress={onRetry} style={{ marginTop: 12 }} testID="paynow-retry-qr">
+          <SHCButtonText>{hasQr ? 'Refresh QR' : 'Retry PayNow QR'}</SHCButtonText>
         </SHCButton>
       ) : null}
 
-      {session?.hint ? (
-        <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 6 }}>{session.hint}</Text>
+      {hasQr || waitingForPayment ? (
+        <View style={{ marginTop: 14, alignItems: 'center' }}>
+          {waitingForPayment ? <ActivityIndicator color={colors.primary} /> : null}
+          <Text style={{ fontSize: 12, color: colors.primary, marginTop: 8, fontWeight: '700', textAlign: 'center' }}>
+            Waiting for payment… we confirm automatically when HitPay notifies us.
+          </Text>
+          <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 6, textAlign: 'center' }}>
+            Do not leave this screen until paid, or check Orders after paying.
+          </Text>
+        </View>
       ) : null}
-
-      {isHitPay ? (
-        <Text style={{ fontSize: 12, color: colors.primary, marginTop: 8, fontWeight: '600' }}>
-          After you pay, we confirm automatically via HitPay. You can also confirm manually below if needed.
-        </Text>
-      ) : null}
-
-      <TextInput
-        placeholder={`e.g. ${suggested}`}
-        value={ref}
-        onChangeText={setRef}
-        style={{
-          borderWidth: shcBorders.brutal,
-          borderColor: colors.borderLight,
-          borderRadius: shcRadii.md,
-          padding: shcSpacing.sm,
-          backgroundColor: colors.surface,
-          ...shcTypography.mono,
-          color: colors.text,
-          marginTop: 12,
-        }}
-        testID="paynow-ref-input"
-      />
-      <SHCButton
-        onPress={() => onConfirmPay(ref || suggested)}
-        disabled={!ref && !suggested}
-        style={{ marginTop: 12 }}
-        testID="confirm-paynow"
-      >
-        <SHCButtonText>I have paid via PayNow — Confirm</SHCButtonText>
-      </SHCButton>
-      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 8 }}>
-        Cook earnings (est): S${Math.floor(Number(amount || 0) * 0.85)} (after 15% platform). Weekly payout Mon.
-      </Text>
     </SHCCard>
   );
 }

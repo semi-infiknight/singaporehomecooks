@@ -15,7 +15,7 @@ import {
 /**
  * POST /store/shc/orders/:id/paynow
  * Create HitPay PayNow embedded QR for this order (customer JWT).
- * Falls back to manual UEN config when HITPAY_API_KEY is unset.
+ * HitPay is the only customer payment path — no manual "I've paid".
  */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const { id: orderId } = req.params as { id: string };
@@ -74,21 +74,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     process.env.PAYNOW_DISPLAY_NAME?.trim() ||
     "Singapore Home Cooks";
 
-  // Manual fallback when HitPay not configured
   if (!hitpayConfigured()) {
-    return res.json({
-      provider: "manual",
+    return res.status(503).json({
+      error: createSHCError("SHC-PAY-001", "PayNow unavailable (HITPAY_API_KEY not configured)"),
+      provider: "hitpay_unconfigured",
       order_id: orderId,
-      amount: amountDollars,
-      currency: "SGD",
-      reference: orderId,
-      uen,
-      display_name: displayName,
-      qr_payload: null,
-      qr_image_data_url: null,
-      checkout_url: null,
-      payment_request_id: null,
-      hint: "Set HITPAY_API_KEY on Medusa for dynamic PayNow QR + webhooks",
     });
   }
 

@@ -1338,51 +1338,48 @@ export function WalletCard({ balance, tier = 'Silver' }: { balance: number; tier
   );
 }
 
+/** HitPay-only PayNow — QR + auto confirm via webhook (no "I've paid"). */
 export function PayNowPanel({
   amount,
   reference,
-  onRefChange,
-  onConfirmPay,
-  confirmLabel = "I've paid — confirm order",
-  busy = false,
   session,
   loadingSession,
-  onRequestSession,
+  onRetry,
+  waitingForPayment,
 }: {
   amount: number;
   reference: string;
-  onRefChange?: (r: string) => void;
-  onConfirmPay?: (ref: string) => void | Promise<void>;
-  confirmLabel?: string;
-  /** External busy state (e.g. placing order) */
-  busy?: boolean;
-  /** From POST /store/shc/orders/:id/paynow */
   session?: {
     provider?: string;
-    uen?: string;
     display_name?: string;
     amount?: number;
     reference?: string;
     qr_image_data_url?: string | null;
     checkout_url?: string | null;
-    hint?: string;
+    error?: string;
   } | null;
   loadingSession?: boolean;
-  onRequestSession?: () => void;
+  onRetry?: () => void;
+  waitingForPayment?: boolean;
 }) {
-  const [refValue, setRefValue] = React.useState(reference);
-  const [confirming, setConfirming] = React.useState(false);
-  const [localError, setLocalError] = React.useState('');
-
-  React.useEffect(() => {
-    setRefValue(session?.reference || reference);
-  }, [reference, session?.reference]);
-
-  const effectiveRef = (refValue || session?.reference || reference || '').trim();
-  const isBusy = confirming || busy;
   const displayAmount = session?.amount != null ? Number(session.amount) : amount;
-  const displayUen = session?.uen || 'UEN-PENDING';
   const displayName = session?.display_name || 'Singapore Home Cooks';
+  const hasQr = Boolean(session?.qr_image_data_url || session?.checkout_url);
+  const err =
+    session?.error ||
+    (session?.provider === 'hitpay_error' ? 'Could not create PayNow QR' : null) ||
+    (!loadingSession && session && session.provider !== 'hitpay' && session.provider !== 'already_paid' && !hasQr
+      ? 'PayNow unavailable — try again'
+      : null);
+
+  if (session?.provider === 'already_paid') {
+    return (
+      <SHCCard className="shc-bento-yellow" data-testid="paynow-panel">
+        <div className="font-bold text-primary">Payment received</div>
+        <p className="text-sm font-semibold text-muted-foreground mt-1">This order is already paid.</p>
+      </SHCCard>
+    );
+  }
 
   return (
     <SHCCard className="shc-bento-yellow" data-testid="paynow-panel">
@@ -1392,36 +1389,24 @@ export function PayNowPanel({
         </div>
         <div>
           <div className="font-bold">Pay with PayNow</div>
-          <div className="text-sm text-muted-foreground font-medium">
-            {session?.provider === 'hitpay'
-              ? 'Scan the QR with your banking app'
-              : 'Transfer the exact amount, then confirm below'}
-          </div>
+          <div className="text-sm text-muted-foreground font-medium">Scan the QR with your banking app</div>
         </div>
       </div>
-      <div className="text-2xl font-black tabular-nums font-mono mb-3">
+      <div className="text-2xl font-black tabular-nums font-mono mb-1">
         S${Number(displayAmount || 0).toFixed(2)}
       </div>
-      <div className="p-4 bg-card border-2 border-[var(--shc-border-brutal)] rounded-lg font-mono text-sm space-y-1 shadow-[var(--shc-shadow-brutal-sm)]">
-        <div>
-          <span className="text-muted-foreground">To</span> {displayName}
-        </div>
-        <div>
-          <span className="text-muted-foreground">UEN</span> {displayUen}
-        </div>
-        <div>
-          <span className="text-muted-foreground">Reference</span> {session?.reference || reference || '—'}
-        </div>
-      </div>
+      <p className="text-sm font-semibold text-muted-foreground mb-3">
+        {displayName} · Order {session?.reference || reference || '—'}
+      </p>
 
       {loadingSession ? (
-        <p className="text-sm font-semibold text-muted-foreground mt-3" data-testid="paynow-qr-loading">
-          Loading PayNow QR…
+        <p className="text-sm font-semibold text-muted-foreground" data-testid="paynow-qr-loading">
+          Creating PayNow QR…
         </p>
       ) : null}
 
       {session?.qr_image_data_url ? (
-        <div className="mt-4 flex flex-col items-center" data-testid="paynow-qr">
+        <div className="mt-2 flex flex-col items-center" data-testid="paynow-qr">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={session.qr_image_data_url}
@@ -1446,67 +1431,24 @@ export function PayNowPanel({
         </a>
       ) : null}
 
-      {onRequestSession && !session && !loadingSession ? (
-        <SHCButton className="mt-3 w-full" onClick={onRequestSession} testID="paynow-load-qr">
-          Generate PayNow QR
+      {err ? (
+        <p className="text-sm font-bold text-red-600 mt-3" role="alert" data-testid="paynow-error">
+          {err}
+        </p>
+      ) : null}
+
+      {onRetry && !loadingSession ? (
+        <SHCButton className="mt-3 w-full" onClick={onRetry} testID="paynow-retry-qr">
+          {hasQr ? 'Refresh QR' : 'Retry PayNow QR'}
         </SHCButton>
       ) : null}
 
-      {session?.hint ? (
-        <p className="text-xs text-muted-foreground mt-2 font-medium">{session.hint}</p>
-      ) : null}
-
-      {session?.provider === 'hitpay' ? (
-        <p className="text-xs font-semibold text-primary mt-2">
-          Payment confirms automatically via HitPay webhook. Manual confirm is a fallback.
+      {hasQr || waitingForPayment ? (
+        <p className="text-xs font-semibold text-primary mt-4 text-center" data-testid="paynow-waiting">
+          {waitingForPayment ? 'Waiting for payment… ' : ''}
+          We confirm automatically when HitPay notifies us. Address unlocks after paid.
         </p>
       ) : null}
-
-      <label className="block mt-4 text-sm font-bold text-foreground">Payment reference</label>
-      <input
-        placeholder="Enter banking app reference (or use order ref above)"
-        className="shc-input mt-1.5"
-        value={refValue}
-        onChange={(e) => {
-          setRefValue(e.target.value);
-          onRefChange?.(e.target.value);
-        }}
-        data-testid="paynow-ref-input"
-      />
-      {localError ? (
-        <p className="text-sm font-bold text-red-600 mt-2" role="alert">
-          {localError}
-        </p>
-      ) : null}
-      {onConfirmPay ? (
-        <SHCButton
-          className="mt-4 w-full"
-          size="lg"
-          disabled={isBusy}
-          onClick={async () => {
-            setLocalError('');
-            const ref = effectiveRef || reference || `PAY-${Date.now()}`;
-            setConfirming(true);
-            try {
-              await onConfirmPay(ref);
-            } catch (e) {
-              setLocalError((e as Error)?.message || 'Payment confirm failed. Try again.');
-            } finally {
-              setConfirming(false);
-            }
-          }}
-          testID="paynow-confirm"
-        >
-          {isBusy ? 'Confirming…' : confirmLabel}
-        </SHCButton>
-      ) : (
-        <p className="text-xs font-semibold text-muted-foreground mt-3">
-          Complete the steps above, then use Place order to continue to payment.
-        </p>
-      )}
-      <p className="text-xs text-muted-foreground mt-2 font-medium">
-        Your collection address is shared 2 hours before your slot, after payment is confirmed.
-      </p>
     </SHCCard>
   );
 }

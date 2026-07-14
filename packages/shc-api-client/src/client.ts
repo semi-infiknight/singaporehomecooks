@@ -269,7 +269,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request(`/store/shc/orders/${encodeURIComponent(id)}/paynow`, {
         method: "POST",
       }) as Promise<{
-        provider: "hitpay" | "manual" | "already_paid" | "hitpay_error" | string;
+        provider: "hitpay" | "already_paid" | "hitpay_error" | "hitpay_unconfigured" | string;
         order_id: string;
         amount?: number;
         currency?: string;

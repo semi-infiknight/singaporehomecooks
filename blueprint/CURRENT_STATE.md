@@ -25,7 +25,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Expo push** | ✅ Wired | `expo-server-sdk` + `/store/shc/push-token`; mobile registers on login; web browser push subscriptions via `web_push_subscription`; order transitions notify cook + customer (Expo + Web Push when VAPID configured) |
 | **iOS native** | ✅ Rebuilt | `pod install` + `expo run:ios` for both apps; `scripts/rebuild-ios-apps.sh`; Metro via `scripts/start-mobile-dev.sh` |
 | **Android native** | ✅ Both apps | Customer + cook bare `android/` (cook restored 2026-07-13); Metro :8081 / :8082; `scripts/rebuild-android-apps.sh` |
-| **PayNow / HitPay** | 🟡 Wired (keys needed) | `POST …/orders/:id/paynow` → HitPay PayNow QR; webhook `POST /hooks/shc/hitpay` → mark paid; manual “I’ve paid” fallback. Setup: `content/hitpay-setup.md`. Env: `HITPAY_API_KEY`, `HITPAY_WEBHOOK_SALT` |
+| **PayNow / HitPay** | 🟡 Sandbox wired | HitPay-only: QR via `POST …/paynow`, webhook `POST /hooks/shc/hitpay` → paid; client polls status. No customer “I’ve paid”. Setup: `content/hitpay-setup.md`. |
 | **Order invoices (PDF)** | ✅ SG tax invoice | `GET …/invoice` JSON/pdf; mobile opens **signed** `GET /hooks/shc/invoice?…` via `Linking` (no native FS); web still base64 download |
 | **Empty screens** | ✅ HomelyEats | My Orders day empty (plate + “Oh uh!”); My Subscriptions Active/Past (`/tiffin/subscriptions` + mobile) with open-box illustration + Subscribe now CTA |
 | **Paper wireframe IA** | ✅ Wave 1–7 | Programme closed: wireframe IA + flex OS + ledger + smoke + **pg-first subscribe** on Railway medusa |

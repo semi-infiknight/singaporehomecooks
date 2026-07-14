@@ -30,7 +30,7 @@ import {
 import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
-import { transitionOrder, checkoutWithCredits, flagCorporateOrder, createOrderPayNow } from '../../lib/api-client';
+import { checkoutWithCredits, flagCorporateOrder, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -186,33 +186,57 @@ export default function Checkout() {
 
   const [paySession, setPaySession] = useState<any>(null);
   const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
 
   const loadPayNowSession = useCallback(async (orderId: string) => {
     setPaySessionLoading(true);
     try {
       const s = await createOrderPayNow(orderId);
       setPaySession(s);
-    } catch {
-      setPaySession(null);
+      if (s?.provider === 'hitpay') setWaitingForPayment(true);
+      if (s?.provider === 'already_paid') {
+        const celebrated = await firstOrderMilestone.triggerIfFirst();
+        if (!celebrated) navigateToOrder();
+      }
+    } catch (e: any) {
+      setPaySession({
+        provider: 'hitpay_error',
+        error: e?.message || 'Could not create PayNow QR',
+      });
     } finally {
       setPaySessionLoading(false);
     }
-  }, []);
+  }, [firstOrderMilestone, navigateToOrder]);
 
   useEffect(() => {
     if (completedOrderId) void loadPayNowSession(completedOrderId);
   }, [completedOrderId, loadPayNowSession]);
 
-  const confirmPay = async (ref: string) => {
-    if (!completedOrderId) return;
-    try {
-      // Manual confirm fallback — HitPay webhook is source of truth when configured
-      await transitionOrder(completedOrderId, 'paid');
-      console.log('[PayNow] ref captured:', ref, 'for', completedOrderId);
-    } catch (e) { /* non fatal */ }
-    const celebrated = await firstOrderMilestone.triggerIfFirst();
-    if (!celebrated) navigateToOrder();
-  };
+  // Poll until HitPay webhook marks paid
+  useEffect(() => {
+    if (!completedOrderId || !waitingForPayment) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const o = await getOrder(completedOrderId);
+        const st = String((o as any)?.shc_status || '');
+        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st)) {
+          if (cancelled) return;
+          setWaitingForPayment(false);
+          const celebrated = await firstOrderMilestone.triggerIfFirst();
+          if (!celebrated) navigateToOrder();
+        }
+      } catch {
+        /* keep polling */
+      }
+    };
+    void tick();
+    const id = setInterval(tick, 4000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [completedOrderId, waitingForPayment, firstOrderMilestone, navigateToOrder]);
 
   if (!cart.items?.length) {
     return (
@@ -261,19 +285,12 @@ export default function Checkout() {
             total={amountDue}
             session={paySession}
             loadingSession={paySessionLoading}
-            onRequestSession={() => void loadPayNowSession(completedOrderId)}
-            onConfirmPay={confirmPay}
+            onRetry={() => void loadPayNowSession(completedOrderId)}
+            waitingForPayment={waitingForPayment}
           />
           <Text style={styles.paynowHint}>
-            {paySession?.provider === 'hitpay'
-              ? 'Pay with the QR — we confirm automatically when HitPay notifies us. Address unlocks after paid.'
-              : 'Address released 2h before slot. Chat opens on payment confirm.'}
+            Scan to pay · cook sees the order after HitPay confirms payment.
           </Text>
-          <SHCCard variant="bento-yellow" style={styles.footerCard}>
-            <Text style={styles.footerText}>
-              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
-            </Text>
-          </SHCCard>
         </ScrollView>
         <SHCCelebration
           visible={firstOrderMilestone.show}
