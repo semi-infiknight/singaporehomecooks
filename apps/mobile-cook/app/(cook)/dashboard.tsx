@@ -26,10 +26,12 @@ import {
   DirectionalTabScreen,
   SHCSkeletonBone,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getDishImageUrl } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getDishImageUrl, isCookComplianceVerified } from '@shc/utils';
 import { useMyOrders, useRequests } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
+import { useQuery } from '@tanstack/react-query';
+import { getComplianceDocs } from '../../lib/api-client';
 
 const QUICK_ACTIONS = [
   { href: '/(cook)/batches', iconKey: 'orders' as const, label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
@@ -55,6 +57,13 @@ export default function CookDashboard() {
   const requestsQuery = useRequests();
   const reqCount = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0;
   const reqsLoading = requestsQuery.isLoading;
+  const { data: complianceDocs = [] } = useQuery({
+    queryKey: ['compliance-docs'],
+    queryFn: () => getComplianceDocs(),
+  });
+  const complianceVerified = isCookComplianceVerified(
+    complianceDocs as { type?: string; status?: string; verified_at?: string | null }[]
+  );
 
   const earnings = orderList
     .filter((o: any) => o.shc_status === 'completed')
@@ -221,7 +230,6 @@ export default function CookDashboard() {
           overlay={
             <View style={styles.heritageOverlay}>
               <SHCIcon name="document" size={22} color={shcColors.onPrimary} active />
-              <SHCBadge variant="heritage">NLB · NHB</SHCBadge>
             </View>
           }
         />
@@ -283,9 +291,15 @@ export default function CookDashboard() {
         </Link>
       ))}
 
-      <View style={styles.footerBadge}>
-        <SHCBadge variant="success">SFA/WSQ verified</SHCBadge>
-      </View>
+      {complianceVerified ? (
+        <View style={styles.footerBadge}>
+          <SHCBadge variant="success">SFA/WSQ verified</SHCBadge>
+        </View>
+      ) : (
+        <Pressable onPress={() => router.push('/(cook)/compliance' as any)} style={styles.footerBadge}>
+          <SHCBadge variant="default">Upload SFA/WSQ docs →</SHCBadge>
+        </Pressable>
+      )}
 
       <Pressable
         onPress={handleLogout}

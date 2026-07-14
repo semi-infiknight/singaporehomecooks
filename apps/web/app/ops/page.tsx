@@ -6,6 +6,7 @@
  */
 import { useEffect, useMemo } from 'react';
 import { resolveRailwayMedusaBase } from '@shc/utils';
+import { showDevTools } from '../../lib/dev';
 
 const API_BASE = resolveRailwayMedusaBase(process.env.NEXT_PUBLIC_SHC_API_BASE);
 const ADMIN_OPS_URL = `${API_BASE.replace(/\/$/, '')}/app/shc-ops`;
@@ -32,9 +33,11 @@ export default function OpsRedirectPage() {
         Open Medusa Admin · SHC Ops
       </a>
       <p className="mt-4 font-mono text-xs text-muted-foreground break-all">{target}</p>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Login: admin@shc.local · supersecret (after bootstrap)
-      </p>
+      {showDevTools && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Login: admin@shc.local · supersecret (after bootstrap)
+        </p>
+      )}
     </div>
   );
 }

@@ -27,6 +27,7 @@ import {
   useSHCTrayWeb,
   SHCCelebrationWeb,
   useMilestoneCelebrationWeb,
+  SHCSkeletonList,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { createOrderPayNow, getOrder } from '../../lib/api-client';
@@ -49,7 +50,7 @@ function extractOrderId(res: unknown): string | null {
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { data: cart = { items: [] }, isLoading: cartLoading, isFetching: cartFetching } = useCart();
+  const { data: cart, isLoading: cartLoading } = useCart();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -67,14 +68,14 @@ export default function CheckoutPage() {
   // Cooking soon cart: lock collection to batch date/slot (server also enforces on complete)
   const dropCart = Boolean(
     (cart as any)?.drop_id ||
-      (cart.items as any[])?.some((i: any) => i.drop_id)
+      ((cart?.items as any[]) || [])?.some((i: any) => i.drop_id)
   );
   const dropCollection = (() => {
     const c = cart as any;
     if (c?.collection_date && c?.collection_slot) {
       return { date: String(c.collection_date), slot: String(c.collection_slot) };
     }
-    const line = (cart.items as any[])?.find((i: any) => i.drop_id);
+    const line = ((cart?.items as any[]) || [])?.find((i: any) => i.drop_id);
     if (line?.collection_date && line?.collection_slot) {
       return { date: String(line.collection_date), slot: String(line.collection_slot) };
     }
@@ -161,9 +162,9 @@ export default function CheckoutPage() {
     dismiss: dismissFirstOrderCelebration,
   } = useMilestoneCelebrationWeb('first_order', user?.id || user?.name || 'anon');
 
-  const firstPid = getFirstCartProductId(cart.items || []);
+  const firstPid = getFirstCartProductId(cart?.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
-  const oneTime = computeOneTimeOrderSummary(cart.items || []);
+  const oneTime = computeOneTimeOrderSummary(cart?.items || []);
   const creditBal = creditsData?.balance || 0;
   const amountDue = Math.max(0, oneTime.total - Math.floor(creditsApply / 4));
 
@@ -227,7 +228,7 @@ export default function CheckoutPage() {
       if (isCorp) {
         try {
           const { flagCorporateOrder } = await import('../../lib/api-client');
-          await flagCorporateOrder(oid, 'Corporate/group order from web checkout — invoice stub for ops.');
+          await flagCorporateOrder(oid, 'Corporate/group order from web checkout — multi-dish note for ops.');
         } catch {
           /* non-fatal */
         }
@@ -308,15 +309,15 @@ export default function CheckoutPage() {
     );
   }
 
-  if (authLoading || cartLoading || cartFetching) {
+  if (authLoading || (cartLoading && !cart)) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <p className="text-muted-foreground font-semibold">Loading checkout…</p>
+      <div className="max-w-xl mx-auto px-4 py-8" data-testid="checkout-skeleton">
+        <SHCSkeletonList count={5} rowHeight={56} />
       </div>
     );
   }
 
-  const items = cart.items || [];
+  const items = cart?.items || [];
   if (items.length === 0) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">

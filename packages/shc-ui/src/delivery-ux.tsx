@@ -271,10 +271,10 @@ export function SHCPersonalizedSectionHeader({
 
 /** Principle 1 + trust: social proof strip (ratings, cooks, collection) */
 const TRUST_ITEMS: { iconKey: SHCIconKey; label: string; sub: string }[] = [
-  { iconKey: 'discover', label: '127+ cooks', sub: '28 SG areas' },
-  { iconKey: 'orders', label: '4,892 meals', sub: 'This month' },
+  { iconKey: 'discover', label: 'Home cooks', sub: 'Across Singapore HDB' },
+  { iconKey: 'orders', label: 'Heritage meals', sub: 'Collection at pickup' },
   { iconKey: 'compliance', label: 'Allergen ack', sub: 'Before checkout' },
-  { iconKey: 'paynow', label: 'PayNow secure', sub: 'Manual confirm' },
+  { iconKey: 'paynow', label: 'PayNow secure', sub: 'Confirm after transfer' },
 ];
 
 export function SHCTrustStrip({ testID = 'trust-strip' }: { testID?: string }) {

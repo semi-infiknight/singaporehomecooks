@@ -20,8 +20,8 @@ export default function AuthScreen() {
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('customer@shc.local');
-  const [password, setPassword] = useState('customersecret');
+  const [email, setEmail] = useState(__DEV__ ? 'customer@shc.local' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'customersecret' : '');
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -125,7 +125,9 @@ export default function AuthScreen() {
           <Text style={styles.browseBtnText}>Browse without signing in</Text>
         </Pressable>
 
-        <Text style={styles.demoHint}>Demo: customer@shc.local / customersecret (after bootstrap)</Text>
+        {__DEV__ && mode === 'login' && (
+          <Text style={styles.demoHint}>Demo: customer@shc.local / customersecret (after bootstrap)</Text>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

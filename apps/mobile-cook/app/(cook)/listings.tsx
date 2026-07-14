@@ -31,6 +31,7 @@ import {
   ListingWizardMorphCta,
   SHCCelebration,
   useMilestoneCelebration,
+  SHCSkeletonList,
   shcSpacing,
   shcBorders,
   shcRadii,
@@ -93,7 +94,8 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: myListings = [] } = useCookListings();
+  const { data: myListings, isLoading: listingsLoading } = useCookListings();
+  const listingList = (myListings as any[]) ?? [];
   const { openTray, pushTrayContent, popTray, dismiss } = useSHCTray();
   const {
     show: showCelebration,
@@ -154,7 +156,7 @@ export default function CookListings() {
   const [cuisine, setCuisine] = useState('Peranakan');
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-  const [heritage, setHeritage] = useState('Family recipe from our HDB kitchen since 1978.');
+  const [heritage, setHeritage] = useState('');
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
@@ -176,8 +178,8 @@ export default function CookListings() {
 
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
-    () => resolveCookListingsForDisplay(myListings as Array<Record<string, unknown>>, { dev: __DEV__, maestroE2e }) as typeof myListings,
-    [myListings, maestroE2e]
+    () => resolveCookListingsForDisplay(listingList as Array<Record<string, unknown>>, { dev: __DEV__, maestroE2e }) as typeof listingList,
+    [listingList, maestroE2e]
   );
 
   const filteredListings = useMemo(
@@ -190,14 +192,14 @@ export default function CookListings() {
       { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
       { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
       { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
-      ...uniqueListingCuisines(myListings).map((cuisine) => ({
+      ...uniqueListingCuisines(listingList).map((cuisine) => ({
         id: `cuisine:${cuisine}`,
         label: cuisine,
         active: cuisineFilter === cuisine,
       })),
     ];
     return chips;
-  }, [myListings, statusFilter, cuisineFilter]);
+  }, [listingList, statusFilter, cuisineFilter]);
 
   const handleFilterChip = (chipId: string) => {
     if (chipId === 'status:all') {
@@ -227,7 +229,7 @@ export default function CookListings() {
     setCuisine('Peranakan');
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setHeritage('Family recipe from our HDB kitchen since 1978.');
+    setHeritage('');
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -519,6 +521,10 @@ export default function CookListings() {
         />
       </View>
 
+      {listingsLoading && listingList.length === 0 ? (
+        <SHCSkeletonList count={4} rowHeight={80} />
+      ) : null}
+
       {listingsForDisplay.length > 0 ? (
         <>
           <SHCFilterChipRow
@@ -530,7 +536,7 @@ export default function CookListings() {
         </>
       ) : null}
 
-      {listingsForDisplay.length === 0 && (
+      {!listingsLoading && listingsForDisplay.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCFoodImage uri={CUISINE_IMAGE.Peranakan} height={80} rounded={shcRadii.md} />
           <SHCBadge variant="default">No listings yet</SHCBadge>

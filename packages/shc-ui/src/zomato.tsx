@@ -486,8 +486,8 @@ export function SHCZomatoDishRowRail({
             key={dish.id}
             dish={dish}
             onPress={() => onDishPress?.(dish.id)}
-            offerLabel={i === 0 ? 'POPULAR' : i === 1 ? '20% OFF' : undefined}
-            offerText={i === 0 ? '★ Top rated home cook this week' : i === 1 ? '20% off on orders above S$80' : undefined}
+            offerLabel={undefined}
+            offerText={undefined}
           />
         ))}
       </ScrollView>

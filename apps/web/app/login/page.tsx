@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/useAuth';
 import { markOnboardingSeen } from '../../lib/onboarding';
+import { showDevTools } from '../../lib/dev';
 import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponents';
 
 export default function LoginPage() {
@@ -16,8 +17,8 @@ export default function LoginPage() {
     const next = new URLSearchParams(window.location.search).get('next');
     if (next?.startsWith('/')) setNextPath(next);
   }, []);
-  const [email, setEmail] = useState('customer@shc.local');
-  const [password, setPassword] = useState('customersecret');
+  const [email, setEmail] = useState(showDevTools ? 'customer@shc.local' : '');
+  const [password, setPassword] = useState(showDevTools ? 'customersecret' : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -116,7 +117,9 @@ export default function LoginPage() {
         >
           Continue as guest
         </button>
-        <p className="text-xs text-muted-foreground text-center">Demo: customer@shc.local / customersecret</p>
+        {showDevTools && (
+          <p className="text-xs text-muted-foreground text-center">Demo: customer@shc.local / customersecret</p>
+        )}
       </SHCCard>
     </div>
   );

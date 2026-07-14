@@ -24,7 +24,7 @@ export default function OrderChatScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: shcColors.background }}>
       <ScrollView style={{ flex: 1, padding: 16 }} contentContainerStyle={{ paddingBottom: 100 }}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: shcColors.text }} testID="chat-order-title">Chat for Order {orderId}</Text>
-        <Text style={{ fontSize: 12, color: shcColors.textLight }}>Secure order-scoped • Polling every ~4s (demo) • HDB notes visible here post-pay</Text>
+        <Text style={{ fontSize: 12, color: shcColors.textLight }}>Secure order-scoped chat · HDB collection notes visible after payment</Text>
 
         <SHCCard style={{ marginVertical: 12, minHeight: 220, backgroundColor: '#fff' }}>
           {messages.length === 0 && <Text style={{ color: shcColors.textLight }}>No messages yet. Send a note about collection time or dietary prefs.</Text>}

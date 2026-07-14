@@ -210,7 +210,7 @@ export function SHCSearchResultsPanel({
 /** Local heritage story — Toptal “make it memorable” */
 export function SHCHeritageStoryBanner({
   title = 'Home cooks, heritage recipes',
-  body = '127+ verified cooks across Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
+  body = 'Home cooks sharing heritage recipes from Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
   imageUri,
   onPress,
   testID = 'heritage-story-banner',

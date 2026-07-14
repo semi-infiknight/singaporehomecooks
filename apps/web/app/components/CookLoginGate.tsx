@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCookAuth } from '../../lib/useCookAuth';
 import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../lib/onboarding';
 import { GourmeatCookHeader, GourmeatPrimaryButton, GourmeatCard } from './SHCWebComponents';
+import { showDevTools } from '../../lib/dev';
 
 /**
  * Cook PWA auth + first-run kitchen onboarding.
@@ -14,8 +15,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useCookAuth();
   const pathname = usePathname() || '';
   const router = useRouter();
-  const [email, setEmail] = useState('rose@shc.local');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(showDevTools ? 'rose@shc.local' : '');
+  const [password, setPassword] = useState(showDevTools ? 'cooksecret' : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'login' | 'register-hint'>('login');
@@ -112,13 +113,15 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
             >
               New here? I’ll take the kitchen tour after sign-in
             </button>
-            {mode === 'register-hint' && (
+            {showDevTools && mode === 'register-hint' && (
               <p className="text-xs font-semibold text-muted-foreground text-center">
                 Demo cook: rose@shc.local / cooksecret — tour opens right after login.
                 New kitchens: create account on the cook mobile app, then open this PWA.
               </p>
             )}
-            <p className="text-xs text-muted-foreground text-center">Demo: rose@shc.local / cooksecret</p>
+            {showDevTools && (
+              <p className="text-xs text-muted-foreground text-center">Demo: rose@shc.local / cooksecret</p>
+            )}
           </div>
         </GourmeatCard>
       </div>

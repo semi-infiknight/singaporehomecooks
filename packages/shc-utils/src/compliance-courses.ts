@@ -82,3 +82,16 @@ export function missingComplianceTypes(
   if (!hasComplianceDocOfType(docs, 'wsq')) missing.push('wsq');
   return missing;
 }
+
+/** Both SFA and WSQ docs approved (or verified_at set) — safe to show “verified” badge */
+export function isCookComplianceVerified(
+  docs: Array<{ type?: string; status?: string; verified_at?: string | null }>
+): boolean {
+  const approved = (type: 'sfa' | 'wsq') =>
+    docs.some(
+      (d) =>
+        String(d.type || '').toLowerCase() === type &&
+        (d.status === 'approved' || Boolean(d.verified_at))
+    );
+  return approved('sfa') && approved('wsq');
+}

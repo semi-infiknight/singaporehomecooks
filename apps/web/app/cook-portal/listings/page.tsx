@@ -38,6 +38,7 @@ import {
   ListingWizardMorphCtaWeb,
   SHCCelebrationWeb,
   useMilestoneCelebrationWeb,
+  SHCSkeletonList,
   PhotoTipsTrayContentWeb,
   CalorieBadge,
 } from '../../components/SHCWebComponents';
@@ -65,7 +66,7 @@ const DEFAULT_FORM = {
   price: 14,
   minQty: 4,
   cuisine: 'Peranakan',
-  heritage: 'Family recipe from our HDB kitchen since 1978.',
+  heritage: '',
 };
 
 type AiImageStatus = {
@@ -81,7 +82,8 @@ export default function CookListingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
-  const { data: myListings = [] } = useCookListings();
+  const { data: myListings, isLoading: listingsLoading } = useCookListings();
+  const listingList = (myListings as ListingRow[]) ?? [];
   const createListing = useCreateCookListing();
   const updateListing = useUpdateCookListing();
   const deleteListing = useDeleteCookListing();
@@ -119,8 +121,8 @@ export default function CookListingsPage() {
 
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
-    () => resolveCookListingsForDisplay(myListings as ListingRow[], { dev: process.env.NODE_ENV === 'development', maestroE2e }),
-    [myListings, maestroE2e]
+    () => resolveCookListingsForDisplay(listingList, { dev: process.env.NODE_ENV === 'development', maestroE2e }),
+    [listingList, maestroE2e]
   );
 
   useEffect(() => {
@@ -171,14 +173,14 @@ export default function CookListingsPage() {
       { id: 'status:all', label: 'All', active: statusFilter === 'all' && cuisineFilter === 'all' },
       { id: 'status:live', label: 'Live', active: statusFilter === 'live' },
       { id: 'status:paused', label: 'Paused', active: statusFilter === 'paused' },
-      ...uniqueListingCuisines(myListings as ListingRow[]).map((cuisineName) => ({
+      ...uniqueListingCuisines(listingList).map((cuisineName) => ({
         id: `cuisine:${cuisineName}`,
         label: cuisineName,
         active: cuisineFilter === cuisineName,
       })),
     ];
     return chips;
-  }, [myListings, statusFilter, cuisineFilter]);
+  }, [listingList, statusFilter, cuisineFilter]);
 
   const handleFilterChip = (chipId: string) => {
     if (chipId === 'status:all') {
@@ -489,6 +491,8 @@ export default function CookListingsPage() {
         testID="cook-listings-search"
       />
 
+      {listingsLoading && listingList.length === 0 ? <SHCSkeletonList count={4} rowHeight={80} /> : null}
+
       {listingsForDisplay.length > 0 ? (
         <>
           <FilterChipRow
@@ -500,14 +504,14 @@ export default function CookListingsPage() {
         </>
       ) : null}
 
-      {listingsForDisplay.length === 0 ? (
+      {!listingsLoading && listingsForDisplay.length === 0 ? (
         <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
           <div className="relative h-20 rounded-xl overflow-hidden mb-2">
             <Image src={CUISINE_IMAGE.Peranakan} alt="" fill className="object-cover" sizes="100vw" />
           </div>
           <SHCBadge variant="default">No listings yet</SHCBadge>
         </GourmeatCard>
-      ) : filteredListings.length === 0 ? (
+      ) : filteredListings.length === 0 && !listingsLoading ? (
         <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
           <SHCBadge variant="default">No dishes match your search</SHCBadge>
         </GourmeatCard>

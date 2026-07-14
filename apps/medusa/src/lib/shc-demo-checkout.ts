@@ -84,7 +84,7 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     credits_applied_cents: creditsApplied || 0,
     is_corporate: !!isCorporate,
     corporate_note: isCorporate
-      ? `Corporate/group order — invoice stub queued for ops.`
+      ? `Corporate/group order — multi-dish note for ops.`
       : originDropId
         ? `Cooking soon batch ${originDropId}`
         : undefined,

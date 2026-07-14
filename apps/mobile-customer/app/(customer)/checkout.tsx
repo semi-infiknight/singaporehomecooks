@@ -170,7 +170,7 @@ export default function Checkout() {
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
       if (isCorporate && orderId) {
-        await flagCorporateOrder(orderId, `Group order for ${cookId} — multi dish note + invoice stub generated.`);
+        await flagCorporateOrder(orderId, `Group order for ${cookId} — multi-dish note for ops.`);
       }
     } catch (e: any) {
       setError({ code: e.code, message: e.message || SHCErrorCode });
@@ -420,17 +420,17 @@ export default function Checkout() {
             onPress={() => setIsCorporate(!isCorporate)}
             style={styles.corporateRow}
             testID="corporate-flag-toggle"
-            accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub"
+            accessibilityLabel="Toggle corporate or group order for multi-dish note"
           >
             <View style={[styles.corporateBox, isCorporate && styles.corporateBoxChecked]} />
-            <Text style={styles.corporateText}>Corporate/Group Order (multi-dish note + invoice stub)</Text>
+            <Text style={styles.corporateText}>Corporate or group order (multi-dish note for ops)</Text>
           </Pressable>
 
           {error && <SHCErrorBanner code={error.code} message={error.message} />}
 
           <SHCCard variant="bento-yellow" style={styles.footerCard}>
             <Text style={styles.footerText}>
-              Cook earnings: S${Math.floor(amountDue * 0.85)}. PayNow ref captured, order transitions validated with 09-order-state machine.
+              HDB collection at pickup · PayNow confirmed after you complete transfer.
             </Text>
           </SHCCard>
         </SHCFadeIn>

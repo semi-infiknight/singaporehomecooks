@@ -17,6 +17,7 @@ import {
   SHCCard,
   SHCPageHeader,
   SHCErrorBanner,
+  SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 
 export default function TiffinRechargePage() {
@@ -39,8 +40,8 @@ export default function TiffinRechargePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 text-center text-muted-foreground font-semibold">
-        Loading…
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <SHCSkeletonList count={3} rowHeight={88} />
       </div>
     );
   }
@@ -106,13 +107,13 @@ export default function TiffinRechargePage() {
             Tiffin recharge · {weeks} week{weeks > 1 ? 's' : ''} · ref {defaultRef}
           </p>
           <p className="text-xs font-semibold text-muted-foreground mt-3">
-            Order checkout uses HitPay PayNow. Tiffin recharge HitPay is not wired yet — confirm extends the plan for demo.
+            Tiffin recharge via HitPay is coming soon — confirm extends your plan until payment is wired.
           </p>
           <SHCButton
             className="mt-4 w-full"
             disabled={rechargeMut.isPending}
             onClick={() => void confirmPay(defaultRef)}
-            testID="tiffin-recharge-confirm-demo"
+            testID="tiffin-recharge-confirm"
           >
             {rechargeMut.isPending ? 'Confirming…' : `Confirm recharge · S$${amountDollars.toFixed(2)}`}
           </SHCButton>

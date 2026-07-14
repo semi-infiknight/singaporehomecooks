@@ -618,8 +618,8 @@ export function DishRowRail({
             product={p}
             href={onDishPress ? undefined : `/product/${p.id}`}
             onPress={onDishPress ? () => onDishPress(p.id) : undefined}
-            offerLabel={i === 0 ? 'POPULAR' : i === 1 ? '20% OFF' : undefined}
-            offerText={i === 0 ? '★ Top rated home cook this week' : i === 1 ? '20% off on orders above S$80' : undefined}
+            offerLabel={undefined}
+            offerText={undefined}
           />
         ))}
       </div>
@@ -777,7 +777,7 @@ export function SearchResultsPanel({
 
 export function HeritageStoryBanner({
   title = 'Home cooks, heritage recipes',
-  body = '127+ verified cooks across Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
+  body = 'Home cooks sharing heritage recipes from Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
   imageKey = 'listings' as keyof typeof BENTO_ACTION_IMAGES,
   href = '/content/trust',
 }: {
@@ -1013,8 +1013,139 @@ export function DishCard({
 
 export function DishCardSkeleton() {
   return (
-    <div className="shc-brutal-card overflow-hidden" aria-hidden>
-      <div className="shc-skeleton h-44 w-full rounded-none" />
+    <div className="rounded-2xl overflow-hidden bg-card shadow-sm border border-border/40" aria-hidden data-testid="skeleton-dish-card">
+      <div className="shc-skeleton h-[140px] w-full rounded-none" />
+      <div className="p-2 space-y-2">
+        <div className="shc-skeleton h-3.5 w-[78%]" />
+        <div className="shc-skeleton h-2.5 w-[55%]" />
+        <div className="shc-skeleton h-3.5 w-[36%] mt-1" />
+      </div>
+    </div>
+  );
+}
+
+export function SHCSkeletonCookingSoonCard() {
+  return (
+    <div
+      className="shrink-0 w-[260px] rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 space-y-2"
+      aria-hidden
+      data-testid="skeleton-cooking-soon-card"
+    >
+      <div className="shc-skeleton h-2.5 w-[42%]" />
+      <div className="shc-skeleton h-4 w-[88%]" />
+      <div className="shc-skeleton h-3 w-[70%]" />
+      <div className="shc-skeleton h-3.5 w-[32%] mt-1" />
+      <div className="shc-skeleton h-2.5 w-[55%]" />
+    </div>
+  );
+}
+
+export function SHCSkeletonCookingSoonRail({ count = 3 }: { count?: number }) {
+  return (
+    <div
+      className="mt-3 flex gap-3 overflow-x-auto pb-1"
+      aria-busy="true"
+      aria-label="Loading batches"
+      data-testid="skeleton-cooking-soon-rail"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <SHCSkeletonCookingSoonCard key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function SHCSkeletonKitchenRow() {
+  return (
+    <div
+      className="flex gap-4 p-4 mb-2 rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card"
+      aria-hidden
+      data-testid="skeleton-kitchen-row"
+    >
+      <div className="shc-skeleton h-16 w-16 rounded-xl shrink-0" />
+      <div className="flex-1 space-y-2 py-1">
+        <div className="shc-skeleton h-3.5 w-[70%]" />
+        <div className="shc-skeleton h-2.5 w-[45%]" />
+        <div className="shc-skeleton h-2.5 w-[55%]" />
+      </div>
+    </div>
+  );
+}
+
+export function SHCSkeletonKitchenList({ count = 3 }: { count?: number }) {
+  return (
+    <div className="space-y-1" aria-busy="true" aria-label="Loading kitchens" data-testid="skeleton-kitchen-list">
+      {Array.from({ length: count }).map((_, i) => (
+        <SHCSkeletonKitchenRow key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function SHCSkeletonOrderCard() {
+  return (
+    <div
+      className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 space-y-2.5 shadow-[var(--shc-shadow-brutal-sm)]"
+      aria-hidden
+      data-testid="skeleton-order-card"
+    >
+      <div className="flex items-center justify-between">
+        <div className="shc-skeleton h-5 w-[72px] rounded-md" />
+        <div className="shc-skeleton h-3 w-16" />
+      </div>
+      <div className="shc-skeleton h-4 w-[55%]" />
+      <div className="shc-skeleton h-3 w-[40%]" />
+      <div className="shc-skeleton h-2.5 w-[80%]" />
+      <div className="shc-skeleton h-2.5 w-[65%]" />
+      <div className="flex gap-2 mt-1">
+        <div className="shc-skeleton h-9 w-24 rounded-xl" />
+        <div className="shc-skeleton h-9 w-16 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+export function SHCSkeletonOrderRow() {
+  return (
+    <div
+      className="flex gap-3 p-2 mb-2 rounded-2xl bg-card shadow-sm"
+      aria-hidden
+      data-testid="skeleton-order-row"
+    >
+      <div className="shc-skeleton h-[72px] w-[72px] rounded-xl shrink-0" />
+      <div className="flex-1 space-y-2 py-1">
+        <div className="shc-skeleton h-3.5 w-[70%]" />
+        <div className="shc-skeleton h-2.5 w-[40%]" />
+        <div className="shc-skeleton h-5 w-[72px] rounded-md" />
+        <div className="shc-skeleton h-2.5 w-[55%]" />
+      </div>
+    </div>
+  );
+}
+
+export function SHCSkeletonOrderList({
+  count = 3,
+  variant = 'card',
+}: {
+  count?: number;
+  variant?: 'card' | 'row';
+}) {
+  const Item = variant === 'row' ? SHCSkeletonOrderRow : SHCSkeletonOrderCard;
+  return (
+    <div className="space-y-3" aria-busy="true" aria-label="Loading orders" data-testid="skeleton-order-list">
+      {Array.from({ length: count }).map((_, i) => (
+        <Item key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function SHCSkeletonList({ count = 4, rowHeight = 56 }: { count?: number; rowHeight?: number }) {
+  return (
+    <div className="space-y-2" aria-busy="true" aria-label="Loading" data-testid="skeleton-list">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="shc-skeleton w-full rounded-xl" style={{ height: rowHeight }} />
+      ))}
     </div>
   );
 }
@@ -1254,7 +1385,12 @@ function WebEmptySubscriptionBox() {
 
 export function SHCSkeletonGrid({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4" aria-busy="true" aria-label="Loading dishes">
+    <div
+      className="grid grid-cols-2 gap-3 md:gap-4"
+      aria-busy="true"
+      aria-label="Loading dishes"
+      data-testid="skeleton-dish-grid"
+    >
       {Array.from({ length: count }).map((_, i) => (
         <DishCardSkeleton key={i} />
       ))}
@@ -1619,8 +1755,8 @@ export function PersonalizedSectionHeader({
 
 export function TrustStrip() {
   const items = [
-    { label: '127+ verified cooks', sub: 'Across 28 areas', Icon: Users },
-    { label: '4,892 meals', sub: 'Served this month', Icon: UtensilsCrossed },
+    { label: 'Home cooks', sub: 'Across Singapore HDB', Icon: Users },
+    { label: 'Heritage meals', sub: 'Collection at pickup', Icon: UtensilsCrossed },
     { label: 'HDB collection', sub: 'No delivery — planned occasions', Icon: Home },
     { label: 'Allergen disclosure', sub: 'Mandatory before checkout', Icon: ShieldCheck },
   ];

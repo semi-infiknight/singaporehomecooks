@@ -22,8 +22,8 @@ export default function CookAuthScreen() {
   const displayNameRef = useRef<TextInput>(null);
   const areaRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('rose@shc.local');
-  const [password, setPassword] = useState('cooksecret');
+  const [email, setEmail] = useState(__DEV__ ? 'rose@shc.local' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'cooksecret' : '');
   const [displayName, setDisplayName] = useState('');
   const [area, setArea] = useState('');
   const [busy, setBusy] = useState(false);
@@ -179,7 +179,7 @@ export default function CookAuthScreen() {
           </Pressable>
         )}
 
-        {mode === 'login' && (
+        {__DEV__ && mode === 'login' && (
           <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret — tour shows if not completed yet</Text>
         )}
       </ScrollView>
