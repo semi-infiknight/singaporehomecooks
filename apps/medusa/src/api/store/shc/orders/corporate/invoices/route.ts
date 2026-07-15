@@ -1,14 +1,13 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
-import JSZip from "jszip";
 import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import { requireCustomerId } from "../../../../../../lib/shc-actors";
+import { buildCorporateInvoicesDownloadUrl } from "../../../../../../lib/shc-invoice-sign";
 import {
-  customerInvoiceFromMeta,
-  isPaidOrderStatus,
-  type InvoiceMetaRow,
-} from "../../../../../../lib/shc-order-invoice-from-meta";
+  corporateInvoicesZipBuffer,
+  fetchCorporateInvoicesForCustomer,
+} from "../../../../../../lib/shc-corporate-invoices-bundle";
 
 const QuerySchema = z
   .object({
@@ -22,6 +21,7 @@ const QuerySchema = z
 /**
  * GET /store/shc/orders/corporate/invoices
  * Customer JWT — paid corporate orders in optional date range → JSON bundle or ZIP of tax invoices.
+ * ?issue_url=1 → signed hook URL for mobile Linking.openURL.
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const parse = QuerySchema.safeParse(req.query || {});
@@ -38,35 +38,28 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Customer login required") });
   }
 
-  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
-  const [metas] = await metaService.listAndCountOrderMetas(
-    { customer_id: customerId } as any,
-    { take: 200 }
-  ).catch(() => [[]]);
-
   const { from, to, format, limit } = parse.data;
-  const rows = ((metas || []) as InvoiceMetaRow[])
-    .filter((m) => !!m.is_corporate && isPaidOrderStatus(String(m.shc_status || "")))
-    .filter((m) => {
-      const d = String(m.collection_date || "").slice(0, 10);
-      if (!d) return true;
-      if (from && d < from) return false;
-      if (to && d > to) return false;
-      return true;
-    })
-    .slice(0, limit);
+  const issueUrl =
+    String((req.query as any)?.issue_url || "") === "1" ||
+    String((req.query as any)?.issue_url || "").toLowerCase() === "true";
 
-  const invoices = rows.map((m) => customerInvoiceFromMeta(m));
+  if (issueUrl) {
+    const link = buildCorporateInvoicesDownloadUrl({
+      customer_id: customerId,
+      from,
+      to,
+    });
+    return res.json(link);
+  }
+
+  const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
+  const invoices = await fetchCorporateInvoicesForCustomer(metaService, customerId, { from, to, limit });
 
   if (format === "zip") {
-    const zip = new JSZip();
-    for (const inv of invoices) {
-      zip.file(inv.filename, Buffer.from(inv.pdf_base64, "base64"));
-    }
-    const buf = await zip.generateAsync({ type: "nodebuffer" });
     const stamp = from && to ? `${from}_${to}` : new Date().toISOString().slice(0, 10);
+    const { buf, filename } = await corporateInvoicesZipBuffer(invoices, stamp);
     res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="shc-corporate-invoices-${stamp}.zip"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     return res.send(buf);
   }
 

@@ -83,6 +83,8 @@ export const checkoutWithCredits = (
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoiceDownloadUrl = (id: string) => client.getOrderInvoiceDownloadUrl(id);
+export const getCorporateInvoicesDownloadUrl = (opts?: { from?: string; to?: string }) =>
+  client.getCorporateInvoicesDownloadUrl(opts);
 export const createOrderPayNow = (id: string) => client.createOrderPayNow(id);
 export const createTiffinRechargePayNow = (weeks: number) => client.createTiffinRechargePayNow(weeks);
 export const getMyOrders = () => client.getMyOrders('customer');

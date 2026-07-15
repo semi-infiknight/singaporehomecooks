@@ -58,6 +58,69 @@ export function verifyInvoiceDownload(input: {
   return { ok: true, audience: aud };
 }
 
+/** Signed bulk corporate invoice ZIP (mobile Linking.openURL). */
+export function signCorporateInvoicesDownload(input: {
+  customer_id: string;
+  from?: string;
+  to?: string;
+  exp?: number;
+}): { exp: number; sig: string } {
+  const exp = input.exp ?? Math.floor(Date.now() / 1000) + DEFAULT_TTL_SEC;
+  const payload = `corporate|${input.customer_id}|${input.from || ""}|${input.to || ""}|${exp}`;
+  const sig = createHmac("sha256", secret()).update(payload).digest("hex");
+  return { exp, sig };
+}
+
+export function verifyCorporateInvoicesDownload(input: {
+  customer_id: string;
+  from?: string;
+  to?: string;
+  exp: string | number;
+  sig: string;
+}): { ok: true } | { ok: false; reason: string } {
+  const expN = Number(input.exp);
+  if (!Number.isFinite(expN) || expN < 1) return { ok: false, reason: "invalid exp" };
+  if (expN < Math.floor(Date.now() / 1000)) return { ok: false, reason: "link expired" };
+  if (!input.customer_id?.trim()) return { ok: false, reason: "missing customer_id" };
+  if (!input.sig || !/^[a-f0-9]{32,}$/i.test(input.sig)) return { ok: false, reason: "invalid sig" };
+
+  const payload = `corporate|${input.customer_id}|${input.from || ""}|${input.to || ""}|${expN}`;
+  const expected = createHmac("sha256", secret()).update(payload).digest("hex");
+  try {
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(String(input.sig).toLowerCase(), "utf8");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+      return { ok: false, reason: "bad signature" };
+    }
+  } catch {
+    return { ok: false, reason: "bad signature" };
+  }
+  return { ok: true };
+}
+
+export function buildCorporateInvoicesDownloadUrl(input: {
+  customer_id: string;
+  from?: string;
+  to?: string;
+}): { download_url: string; expires_at: string; expires_in: number; filename: string; mime: string } {
+  const { exp, sig } = signCorporateInvoicesDownload(input);
+  const q = new URLSearchParams({
+    customer_id: input.customer_id,
+    exp: String(exp),
+    sig,
+  });
+  if (input.from) q.set("from", input.from);
+  if (input.to) q.set("to", input.to);
+  const stamp = input.from && input.to ? `${input.from}_${input.to}` : new Date().toISOString().slice(0, 10);
+  return {
+    download_url: `${medusaPublicBase()}/hooks/shc/corporate-invoices?${q.toString()}`,
+    expires_at: new Date(exp * 1000).toISOString(),
+    expires_in: Math.max(0, exp - Math.floor(Date.now() / 1000)),
+    filename: `shc-corporate-invoices-${stamp}.zip`,
+    mime: "application/zip",
+  };
+}
+
 /** Absolute public base for medusa (no trailing slash). */
 export function medusaPublicBase(): string {
   const raw =

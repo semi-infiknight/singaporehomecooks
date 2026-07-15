@@ -298,6 +298,20 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return res.blob();
     },
 
+    /** Short-lived signed corporate invoices ZIP URL for mobile Linking.openURL. */
+    async getCorporateInvoicesDownloadUrl(opts?: { from?: string; to?: string }) {
+      const qs = new URLSearchParams({ issue_url: "1" });
+      if (opts?.from) qs.set("from", opts.from);
+      if (opts?.to) qs.set("to", opts.to);
+      return request(`/store/shc/orders/corporate/invoices?${qs}`, { method: "GET" }) as Promise<{
+        download_url: string;
+        expires_at?: string;
+        expires_in?: number;
+        filename?: string;
+        mime?: string;
+      }>;
+    },
+
     /**
      * Create HitPay PayNow QR (or manual UEN fallback) for an order.
      * POST /store/shc/orders/:id/paynow

@@ -3,13 +3,14 @@
  * One-time orders + tiffin meal instances per collection date.
  */
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   GourmeatScreenHeader,
   GourmeatEmptyState,
   GourmeatCard,
+  GourmeatPrimaryButton,
   SHCTiffinCalendarStrip,
   SHCTiffinOrderStatusCard,
   SHCSkeletonOrderList,
@@ -32,6 +33,7 @@ import {
 } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
+import { getCorporateInvoicesDownloadUrl } from '../../../lib/api-client';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../../hooks/useTiffin';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 
@@ -46,6 +48,16 @@ export default function MyOrdersList() {
 
   const { data: orders, isLoading: ordersLoading, isFetching } = useMyOrders('customer');
   const orderList = (orders as Record<string, unknown>[]) ?? [];
+  const [corpZipBusy, setCorpZipBusy] = useState(false);
+  const hasCorporatePaid = useMemo(
+    () =>
+      orderList.some((o) => {
+        if (!o.is_corporate) return false;
+        const st = String(o.shc_status || '');
+        return ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st);
+      }),
+    [orderList]
+  );
   const { data: mealData, isLoading: mealsLoading } = useTiffinMealOrders(from, to);
   const { data: subData } = useTiffinSubscription();
   const skipMut = useSkipTiffinMeal();
@@ -117,6 +129,20 @@ export default function MyOrdersList() {
     }
   };
 
+  const downloadCorporateZip = async () => {
+    if (corpZipBusy) return;
+    setCorpZipBusy(true);
+    try {
+      const res = await getCorporateInvoicesDownloadUrl({ from, to });
+      if (!res.download_url) throw new Error('No download URL from server');
+      await Linking.openURL(res.download_url);
+    } catch (e: any) {
+      Alert.alert('Corporate invoices', e?.message || 'Could not download corporate invoices ZIP.');
+    } finally {
+      setCorpZipBusy(false);
+    }
+  };
+
   return (
     <DirectionalTabScreen testID="orders-tab-scene">
       <ScrollView
@@ -143,6 +169,23 @@ export default function MyOrdersList() {
           </GourmeatCard>
         ) : (
           <>
+            {hasCorporatePaid ? (
+              <GourmeatCard style={styles.corpCard}>
+                <Text style={styles.corpTitle}>Corporate invoices</Text>
+                <Text style={styles.corpBody}>
+                  Download paid corporate / group orders as a ZIP for finance.
+                </Text>
+                <GourmeatPrimaryButton
+                  label={corpZipBusy ? 'Preparing ZIP…' : 'Download corporate invoices (ZIP)'}
+                  variant="outline"
+                  onPress={downloadCorporateZip}
+                  disabled={corpZipBusy}
+                  loading={corpZipBusy}
+                  testID="corporate-invoices-zip-btn"
+                />
+              </GourmeatCard>
+            ) : null}
+
             <SHCTiffinCalendarStrip
               days={calendarDays}
               selectedDate={selected}
@@ -212,6 +255,15 @@ export default function MyOrdersList() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
+  corpCard: { marginBottom: shcSpacing.md },
+  corpTitle: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text, marginBottom: 4 },
+  corpBody: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    marginBottom: shcSpacing.sm,
+    lineHeight: 17,
+  },
   dayHeading: {
     fontSize: 15,
     fontWeight: '800',

@@ -41,7 +41,7 @@
 | `/store/shc/tiffin/subscription/resume` | POST | customer JWT | Resume paused sub |
 | `/store/shc/tiffin/subscription/recharge` | POST | customer JWT | `{ weeks, paynow_ref? }` — direct ledger extend (smoke/ops; UI uses HitPay path) |
 | `/store/shc/tiffin/subscription/recharge/paynow` | POST | customer JWT | `{ weeks }` — HitPay QR; webhook completes recharge |
-| `/store/shc/orders/corporate/invoices` | GET | customer JWT | `?from=&to=&format=json\|zip` — paid corporate tax invoices bundle |
+| `/store/shc/orders/corporate/invoices` | GET | customer JWT | `?from=&to=&format=json\|zip` — paid corporate tax invoices bundle; `?issue_url=1` → signed ZIP hook URL for mobile |
 | `/store/shc/tiffin/weekly-plan` | GET, PUT | customer JWT | Recurring template (`week_start` null) |
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT | Override plan for upcoming week only |
 | `/store/shc/tiffin/orders` | GET | customer JWT | Calendar meal instances `?from&to` |
@@ -59,7 +59,7 @@ Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`
 
 Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
-**Order invoices (SG):** `GET /store/shc/orders/:id/invoice` — customer tax invoice or cook settlement note (JSON + `pdf_base64` + HTML). Query `?format=pdf` streams PDF; `?issue_url=1` returns short-lived signed `download_url` for mobile (`GET /hooks/shc/invoice?…`). Auth: order owner (customer JWT or cook JWT). Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
+**Order invoices (SG):** `GET /store/shc/orders/:id/invoice` — customer tax invoice or cook settlement note (JSON + `pdf_base64` + HTML). Query `?format=pdf` streams PDF; `?issue_url=1` returns short-lived signed `download_url` for mobile (`GET /hooks/shc/invoice?…`). Bulk corporate ZIP: `GET /store/shc/orders/corporate/invoices?format=zip` (web blob) or `?issue_url=1` → `GET /hooks/shc/corporate-invoices?…`. Auth: order owner (customer JWT or cook JWT). Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
 
 **PayNow (HitPay):** `POST /store/shc/orders/:id/paynow` (customer JWT) → HitPay `paynow_online` QR (`qr_image_data_url`). `POST /hooks/shc/hitpay` — HitPay webhook (`charge.created` / `payment_request.completed`) → `markOrderPaid`. No customer manual confirm. Ops: `POST /admin/shc/payment-confirm`. See `content/hitpay-setup.md`.
 

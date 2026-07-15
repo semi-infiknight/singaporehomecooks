@@ -43,7 +43,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Expo push** | ✅ Wired | Order transitions notify when configured |
 | **iOS / Android native** | ✅ Both apps | Metro 8081 / 8082; rebuild scripts in `scripts/` |
 | **PayNow / HitPay** | 🟡 **Sandbox only** | QR + webhook; no real bank until live KYC. [content/hitpay-setup.md](../content/hitpay-setup.md) |
-| **Order invoices (PDF)** | ✅ | Per-order + **corporate bulk ZIP** (`GET /store/shc/orders/corporate/invoices?format=zip`); signed hooks URL on mobile |
+| **Order invoices (PDF)** | ✅ | Per-order + **corporate bulk ZIP** (`GET /store/shc/orders/corporate/invoices?format=zip` or `?issue_url=1` on mobile); signed hooks URL on mobile |
 | **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
 | **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
 | **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
