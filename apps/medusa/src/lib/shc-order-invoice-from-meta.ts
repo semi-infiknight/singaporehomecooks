@@ -29,6 +29,38 @@ const PAID_STATUSES = new Set([
   "completed",
 ]);
 
+type InvoiceOrderItem = {
+  name?: string;
+  qty?: number;
+  price?: number;
+  price_cents?: number;
+  unit_price_cents?: number;
+};
+
+function normalizeInvoiceItems(items: unknown[] | undefined): InvoiceOrderItem[] {
+  if (!items?.length) return [{ name: "Order item", qty: 1 }];
+  return items.map((raw) => {
+    const it = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    return {
+      name: typeof it.name === "string" ? it.name : "Order item",
+      qty: typeof it.qty === "number" ? it.qty : Number(it.qty) || 1,
+      price: typeof it.price === "number" ? it.price : it.price != null ? Number(it.price) : undefined,
+      price_cents:
+        typeof it.price_cents === "number"
+          ? it.price_cents
+          : it.price_cents != null
+            ? Number(it.price_cents)
+            : undefined,
+      unit_price_cents:
+        typeof it.unit_price_cents === "number"
+          ? it.unit_price_cents
+          : it.unit_price_cents != null
+            ? Number(it.unit_price_cents)
+            : undefined,
+    };
+  });
+}
+
 export function isPaidOrderStatus(status: string | undefined): boolean {
   return PAID_STATUSES.has(String(status || "").toLowerCase());
 }
@@ -52,7 +84,7 @@ export function orderFromMeta(m: InvoiceMetaRow) {
     collection_date: m.collection_date,
     collection_slot: m.collection_slot,
     paynow_reference: m.paynow_reference,
-    items: m.items && (m.items as unknown[]).length ? m.items : [{ name: "Order item", qty: 1 }],
+    items: normalizeInvoiceItems(m.items as unknown[] | undefined),
     total: resolvedTotalCents / 100,
     total_cents: resolvedTotalCents,
     credits_applied_cents: m.credits_applied_cents || 0,
