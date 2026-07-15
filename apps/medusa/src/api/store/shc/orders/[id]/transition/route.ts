@@ -4,8 +4,7 @@ import { createSHCError, SHCOrderStatus } from "@shc/types";
 import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-state-transition";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import { getCookId, unauthorized } from "../../../../../../lib/shc-actors";
-import ShcNotificationModuleService from "../../../../../../modules/shc-notification/service";
-import { notifyOrderStatusPush } from "../../../../../../lib/shc-order-push";
+import { notifyOrderStatusChange } from "../../../../../../lib/shc-order-push";
 import { resolveOrderMoney } from "../../../../../../lib/shc-order-money";
 import ShcCreditWalletModuleService from "../../../../../../modules/shc-credit-wallet/service";
 
@@ -56,15 +55,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const updated = await metaService.getOrderMetaWithMessages(id);
-  const customerId = String((current as any).customer_id || (updated.meta as any)?.customer_id || "");
-  const notifService: ShcNotificationModuleService = req.scope.resolve("shcNotification") as any;
-  if (customerId) {
-    await notifService.push(customerId, { type: "order", body: `Order ${id} is now ${to}.` });
-  }
-  await notifService.push(cookId, { type: "order", body: `Order ${id} moved to ${to}.` });
-
   const logger = (req.scope as any).resolve?.("logger") || console;
-  await notifyOrderStatusPush(req.scope, id, to, logger).catch(() => null);
+  await notifyOrderStatusChange(req.scope, id, to, logger).catch(() => null);
 
   res.json({ order: updated.meta, messages: updated.messages });
 }

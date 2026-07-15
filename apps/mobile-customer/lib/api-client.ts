@@ -98,8 +98,8 @@ export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
 export const getNotifications = () => client.getNotifications();
 export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
-export const markNotificationsRead = (ids?: string[], all = false) =>
-  client.markNotificationsRead?.(ids, all) || Promise.resolve({ success: true });
+export const markNotificationsRead = (ids?: string[], all = false, role?: 'cook' | 'customer') =>
+  client.markNotificationsRead?.(ids, all, role) || Promise.resolve({ success: true });
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
 
 // Server upload helper (full MinIO server path)

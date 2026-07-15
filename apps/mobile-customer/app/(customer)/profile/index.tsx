@@ -22,6 +22,7 @@ import {
   favoritesToReorderDishes,
   accountMenuItemsSignedIn,
   accountMenuItemsGuest,
+  orderIdFromNotificationType,
 } from '@shc/utils';
 import { useFavorites } from '../../../hooks/useFavorites';
 import { SHCZomatoDishRowRail } from '@shc/ui';
@@ -328,11 +329,25 @@ export default function Profile() {
             <Text style={styles.notifsTitle}>Notifications</Text>
           </View>
           {notifs.length === 0 && <Text style={styles.notifsEmpty}>No events yet</Text>}
-          {notifs.map((n: any, i: number) => (
-            <Text key={i} style={[styles.notifItem, !n.read && styles.notifUnread]}>
-              {!n.read ? '● ' : ''}{n.body}
-            </Text>
-          ))}
+          {notifs.map((n: any, i: number) => {
+            const orderId = orderIdFromNotificationType(n.type);
+            const row = (
+              <Text style={[styles.notifItem, !n.read && styles.notifUnread]}>
+                {!n.read ? '● ' : ''}{n.body}
+              </Text>
+            );
+            return orderId ? (
+              <Pressable
+                key={n.id || i}
+                onPress={() => router.push(`/(customer)/orders/${orderId}` as any)}
+                testID={`notif-order-${orderId}`}
+              >
+                {row}
+              </Pressable>
+            ) : (
+              <View key={n.id || i}>{row}</View>
+            );
+          })}
         </SHCCard>
       )}
     </ScrollView>

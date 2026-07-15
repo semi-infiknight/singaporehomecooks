@@ -496,8 +496,9 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).entry;
     },
 
-    async getNotifications() {
-      const r = await request("/store/shc/notifications", { method: "GET" });
+    async getNotifications(opts?: { role?: "customer" | "cook" }) {
+      const qs = opts?.role === "cook" ? "?role=cook" : "";
+      const r = await request(`/store/shc/notifications${qs}`, { method: "GET" });
       return (r as any).notifications || [];
     },
 
@@ -506,8 +507,9 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return Boolean((r as any).enabled);
     },
 
-    async markNotificationsRead(ids?: string[], all = false) {
-      return request("/store/shc/notifications", {
+    async markNotificationsRead(ids?: string[], all = false, role?: "customer" | "cook") {
+      const qs = role === "cook" ? "?role=cook" : "";
+      return request(`/store/shc/notifications${qs}`, {
         method: "POST",
         body: JSON.stringify({ ids, all }),
       });

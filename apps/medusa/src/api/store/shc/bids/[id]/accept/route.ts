@@ -8,7 +8,7 @@ import ShcNotificationModuleService from "../../../../../../modules/shc-notifica
 import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-state-transition";
 import { emitShcEvent } from "../../../../../../lib/shc-event-bus";
 import { getAuthContext, getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
-import { notifyOrderStatusPush } from "../../../../../../lib/shc-order-push";
+import { notifyOrderStatusChange } from "../../../../../../lib/shc-order-push";
 
 /**
  * POST /store/shc/bids/:id/accept
@@ -112,7 +112,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       type: "order",
       body: `Your bid was accepted — order ${orderId} is now active.`,
     });
-    await notifyOrderStatusPush(req.scope, orderId, "paid", logger);
+    await notifyOrderStatusChange(req.scope, orderId, "paid", logger);
 
     const audit = {
       ts: new Date().toISOString(),

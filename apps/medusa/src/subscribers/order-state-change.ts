@@ -1,12 +1,12 @@
 import { SubscriberArgs, SubscriberConfig } from "@medusajs/framework";
 import { SHCOrderStatus, createSHCError } from "@shc/types";
 import ShcLedgerModuleService from "../modules/shc-ledger/service";
-import { notifyOrderStatusPush } from "../lib/shc-order-push";
+import { notifyOrderStatusChange } from "../lib/shc-order-push";
 import { resolveOrderMoney } from "../lib/shc-order-money";
 
 /**
  * Subscriber for SHC order state changes.
- * Logs + stub for push/SMS/email notifications (Phase 2+ full impl).
+ * Logs + push/in-app notifications on key order transitions.
  * Phase 6: on 'completed' -> auto post commission ledger (double-entry, 15% platform/cook earnings) + audit.
  * Triggered by orderStateTransitionWorkflow or direct meta update.
  */
@@ -32,7 +32,7 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
 
   if (orderId && to) {
     try {
-      await notifyOrderStatusPush(container, orderId, to, logger);
+      await notifyOrderStatusChange(container, orderId, to, logger);
     } catch (pushErr: any) {
       logger.info?.({ event: "push.send.failed", orderId, err: pushErr.message });
     }
@@ -66,15 +66,12 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
         } catch {}
       }
 
-      // Notify stub for payout eligibility + growth
-      console.log(`[NOTIFY-STUB] Order ${orderId} completed. Earnings now eligible for weekly payout batch. Credits awarded to customer if applicable.`);
+      // Payout + credits handled above; in-app/push already sent via notifyOrderStatusChange.
     } catch (e: any) {
       logger.error?.({ event: "ledger.post_on_completed.failed", orderId, error: e.message });
       // Do not block state; money can be reconciled manually via script
     }
   }
-
-  // TODO Phase 5: integrate real Expo push, Resend email, Twilio SMS
 }
 
 export const config: SubscriberConfig = {

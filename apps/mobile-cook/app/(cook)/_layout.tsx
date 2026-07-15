@@ -3,12 +3,14 @@ import { Tabs, usePathname } from 'expo-router';
 import { gourmeatColors } from '@shc/ui/theme';
 import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CookTabBar } from '../../components/CookTabBar';
+import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
 
 const COOK_TAB_ORDER = ['dashboard', 'orders', 'listings', 'compliance'];
 
 function CookTabIndexSync({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { notifyTabChange } = useTabDirection();
+  usePushNotificationRouting();
   useEffect(() => {
     const key = COOK_TAB_ORDER.find((k) => pathname?.includes(`/${k}`) || pathname?.endsWith(k));
     if (key) notifyTabChange(key);

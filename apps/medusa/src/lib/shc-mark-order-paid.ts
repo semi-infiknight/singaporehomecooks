@@ -6,6 +6,7 @@ import { SHCOrderStatus } from "@shc/types";
 import { orderStateTransitionWorkflow } from "../workflows/order-state-transition";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcLedgerModuleService from "../modules/shc-ledger/service";
+import { notifyOrderStatusChange } from "../lib/shc-order-push";
 
 export async function markOrderPaid(
   container: MedusaContainer | any,
@@ -117,6 +118,8 @@ export async function markOrderPaid(
     total_cents: totalCents,
     notes: input.notes,
   });
+
+  await notifyOrderStatusChange(container, order_id, "paid" as SHCOrderStatus, logger).catch(() => null);
 
   const updated = await metaService.getOrderMetaWithMessages(order_id);
   return { success: true, total_cents: totalCents, meta: updated };

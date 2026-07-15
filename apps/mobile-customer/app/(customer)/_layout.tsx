@@ -3,12 +3,14 @@ import { Tabs, usePathname } from 'expo-router';
 import { gourmeatColors } from '@shc/ui/theme';
 import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CustomerTabBar } from '../../components/CustomerTabBar';
+import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
 
 const CUSTOMER_TAB_ORDER = ['index', 'orders/index', 'cart', 'profile/index'];
 
 function CustomerTabIndexSync({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { notifyTabChange } = useTabDirection();
+  usePushNotificationRouting('customer');
   useEffect(() => {
     const key = CUSTOMER_TAB_ORDER.find((k) => pathname?.includes(k.replace('/index', '')) || pathname?.endsWith(k));
     if (key) notifyTabChange(key);

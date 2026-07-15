@@ -93,13 +93,25 @@ export function useAcceptBid() {
   });
 }
 
-export function useNotifications() {
-  return useQuery({
-    queryKey: ['notifications'],
+export function useCookNotifications() {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['notifications', 'cook'],
     queryFn: async () => {
       const { getNotifications } = await import('../lib/api-client');
-      return getNotifications();
+      return getNotifications('cook');
     },
     refetchInterval: 8000,
   });
+  const markRead = useMutation({
+    mutationFn: async (opts: { ids?: string[]; all?: boolean } = {}) => {
+      const { markNotificationsRead } = await import('../lib/api-client');
+      await markNotificationsRead(opts.ids, !!opts.all, 'cook');
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications', 'cook'] }),
+  });
+  return { ...query, markRead: markRead.mutate, markReadAsync: markRead.mutateAsync };
 }
+
+/** @deprecated use useCookNotifications */
+export const useNotifications = useCookNotifications;

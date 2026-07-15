@@ -28,5 +28,6 @@ export * from './discover-evidence';
 export * from './railway-client';
 export * from './collab-bid';
 export * from './order-invoice';
+export * from './notifications';
 export * from './drop-display';
 export * from './compliance-courses';

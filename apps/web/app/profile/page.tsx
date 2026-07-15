@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Bell, Wallet } from 'lucide-react';
-import { BENTO_ACTION_IMAGES, accountMenuItemsSignedIn, accountMenuItemsGuest } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, accountMenuItemsSignedIn, accountMenuItemsGuest, orderIdFromNotificationType } from '@shc/utils';
 import { useCredits, useRedeemCredits } from '../../lib/useProducts';
 import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../lib/useOrder';
 import {
@@ -195,15 +195,29 @@ export default function Profile() {
               </div>
             ) : (
               <ul className="divide-y-2 divide-[var(--shc-border-brutal)]">
-                {(notifs as Array<{ body?: string; created_at?: string }>).map((n, i) => (
-                  <li key={i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
-                    <span aria-hidden>📬</span>
-                    <span className="text-foreground font-medium flex-1">{n.body}</span>
-                    {n.created_at && (
-                      <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
-                    )}
-                  </li>
-                ))}
+                {(notifs as Array<{ id?: string; type?: string; body?: string; created_at?: string; read?: boolean }>).map((n, i) => {
+                  const orderId = orderIdFromNotificationType(n.type);
+                  const inner = (
+                    <>
+                      <span aria-hidden>📬</span>
+                      <span className="text-foreground font-medium flex-1">{n.body}</span>
+                      {n.created_at && (
+                        <span className="text-xs text-muted-foreground shrink-0">{n.created_at.slice(11, 16)}</span>
+                      )}
+                    </>
+                  );
+                  return (
+                    <li key={n.id || i} className="py-3 text-sm flex items-start gap-2 first:pt-0 last:pb-0">
+                      {orderId ? (
+                        <Link href={`/orders/${orderId}`} className="flex items-start gap-2 flex-1 hover:underline">
+                          {inner}
+                        </Link>
+                      ) : (
+                        inner
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </SHCCard>
