@@ -27,7 +27,9 @@ import {
   resolveDisputesForDisplay,
   orderTrackingBanner,
   orderDeliveredRateCopy,
+  buildOrderChatContext,
 } from '@shc/utils';
+import { SHCOrderChatPanel } from '../../components/SHCOrderChat';
 import type { SHCOrderStatus } from '@shc/types';
 
 type OrderDisplay = Record<string, unknown> & {
@@ -63,8 +65,26 @@ export default function TrackOrder() {
     () => resolveDisputesForDisplay<OrderDispute>(disputesRaw as OrderDispute[], id, { maestroE2e }),
     [disputesRaw, id, maestroE2e]
   );
-  const [msg, setMsg] = useState('');
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const chatContext = useMemo(() => {
+    if (!order) return null;
+    const base = buildOrderChatContext({
+      orderId: id,
+      status: String(order.shc_status || ''),
+      statusLabel: getOrderStatusLabel(String(order.shc_status || '')),
+      counterpartyName: String(order.cook_name || 'Your cook'),
+      collectionDate: order.collection_date ? String(order.collection_date) : undefined,
+      collectionSlot: order.collection_slot ? String(order.collection_slot) : undefined,
+      items: (order.items as Array<{ name?: string }>) || [],
+    });
+    return {
+      ...base,
+      privacyHint:
+        (order as { address_released_at?: string }).address_released_at
+          ? undefined
+          : 'HDB collection address unlocks ~2 hours before your slot, after payment.',
+    };
+  }, [id, order]);
 
   const downloadInvoice = async () => {
     if (!id || invoiceBusy) return;
@@ -207,52 +227,17 @@ export default function TrackOrder() {
         </p>
       </SHCCard>
 
-      <div id="order-chat-section">
-        <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Chat</SHCSectionTitle>
-      </div>
-      <div className="border border-[#E8D5B7] bg-white rounded-xl overflow-hidden">
-        <div className="h-56 overflow-y-auto p-4 space-y-3 text-sm">
-          {messages.length === 0 && (
-            <p className="text-[#5C5144] text-center py-8">No messages yet. Say hello to your cook.</p>
-          )}
-          {messages.map((m: { sender_actor?: string; body?: string }, i: number) => (
-            <div
-              key={i}
-              className={`max-w-[85%] p-3 rounded-lg ${
-                m.sender_actor === 'cook'
-                  ? 'bg-secondary text-foreground mr-auto'
-                  : 'bg-primary text-primary-foreground ml-auto'
-              }`}
-            >
-              {m.body}
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2 p-3 border-t border-[#E8D5B7] bg-[#FAF7F2]">
-          <input
-            value={msg}
-            onChange={(e) => setMsg(e.target.value)}
-            className="shc-input flex-1 py-2"
-            placeholder="Type a message…"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && msg.trim()) {
-                send({ body: msg, from: 'customer' });
-                setMsg('');
-              }
-            }}
+      <div id="order-chat-section" className="mb-6">
+        <SHCSectionTitle subtitle="Message your cook about dietary needs or arrival time">Order chat</SHCSectionTitle>
+        {chatContext ? (
+          <SHCOrderChatPanel
+            viewerRole="customer"
+            context={chatContext}
+            messages={messages}
+            onSend={(body) => send({ body, from: 'customer' })}
+            isLoading={false}
           />
-          <SHCButton
-            size="sm"
-            onClick={() => {
-              if (msg.trim()) {
-                send({ body: msg, from: 'customer' });
-                setMsg('');
-              }
-            }}
-          >
-            Send
-          </SHCButton>
-        </div>
+        ) : null}
       </div>
 
       {existingReview && (

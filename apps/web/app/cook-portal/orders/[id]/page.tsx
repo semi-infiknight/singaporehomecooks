@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { getOrderStatusLabel } from '@shc/utils';
-import { useCookOrder, useCookTransitionOrder } from '../../../../lib/useCookPortal';
+import { buildOrderChatContext, getOrderStatusLabel } from '@shc/utils';
+import { useCookOrder, useCookTransitionOrder, useCookChat } from '../../../../lib/useCookPortal';
 import { getCookOrderInvoice } from '../../../../lib/cook-api-client';
 import { downloadPdfBase64InBrowser } from '../../../../lib/download-pdf';
 import {
@@ -13,9 +13,11 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCSkeletonList,
+  SHCSectionTitle,
   useSHCTrayWeb,
   SHCTrayActionWeb,
 } from '../../../components/SHCWebComponents';
+import { SHCOrderChatPanel } from '../../../components/SHCOrderChat';
 
 const NEXT: Record<string, { to: SHCOrderStatus; label: string }[]> = {
   paid: [{ to: 'accepted', label: 'Accept order' }],
@@ -28,6 +30,7 @@ export default function CookOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const { data: order, isLoading } = useCookOrder(id);
+  const { messages, send, isSending } = useCookChat(id);
   const transMut = useCookTransitionOrder();
   const { openTray, dismiss } = useSHCTrayWeb();
   const [invoiceBusy, setInvoiceBusy] = useState(false);
@@ -59,6 +62,20 @@ export default function CookOrderDetailPage() {
 
   const status = String(order.shc_status || '');
   const actions = NEXT[status] || [];
+  const chatContext = useMemo(
+    () =>
+      buildOrderChatContext({
+        orderId: id,
+        status,
+        statusLabel: getOrderStatusLabel(status),
+        counterpartyName: 'Customer',
+        collectionDate: order.collection_date ? String(order.collection_date) : undefined,
+        collectionSlot: order.collection_slot ? String(order.collection_slot) : undefined,
+        collectionInstructions: order.collection_instructions ? String(order.collection_instructions) : undefined,
+        items: (order.items as Array<{ name?: string }>) || [],
+      }),
+    [id, order, status]
+  );
 
   const confirmTransition = (to: SHCOrderStatus, label: string) => {
     openTray(
@@ -121,6 +138,20 @@ export default function CookOrderDetailPage() {
         disabled={invoiceBusy}
         testID="cook-order-download-invoice-btn"
       />
+
+      <div className="mt-6" id="cook-order-chat">
+        <SHCSectionTitle subtitle="Coordinate collection with your customer">Order chat</SHCSectionTitle>
+        <SHCOrderChatPanel
+          viewerRole="cook"
+          context={{
+            ...chatContext,
+            privacyHint: 'Share HDB block / unit when the order is ready for collection.',
+          }}
+          messages={messages}
+          onSend={(body) => send(body)}
+          sending={isSending}
+        />
+      </div>
 
       <Link href="/cook-portal/orders" className="block text-center text-sm font-semibold text-primary mt-8">
         Back to orders

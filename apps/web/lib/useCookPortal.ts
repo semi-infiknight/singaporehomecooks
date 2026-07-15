@@ -13,6 +13,8 @@ import {
   getCookListings,
   getCookOrder,
   getCookOrders,
+  getCookOrderMessages,
+  sendCookOrderMessage,
   isCookAuthenticated,
   listCookExpenses,
   listOpenRequests,
@@ -55,6 +57,21 @@ export function useCookTransitionOrder() {
       qc.invalidateQueries({ queryKey: ['cook-orders'] });
     },
   });
+}
+
+export function useCookChat(orderId: string) {
+  const qc = useQueryClient();
+  const msgs = useQuery({
+    queryKey: ['cook-chat', orderId],
+    queryFn: () => getCookOrderMessages(orderId),
+    enabled: Boolean(orderId) && isCookAuthenticated(),
+    refetchInterval: 4500,
+  });
+  const send = useMutation({
+    mutationFn: (body: string) => sendCookOrderMessage(orderId, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-chat', orderId] }),
+  });
+  return { messages: msgs.data || [], send: send.mutate, isLoading: msgs.isLoading, isSending: send.isPending };
 }
 
 export function useCookListings() {

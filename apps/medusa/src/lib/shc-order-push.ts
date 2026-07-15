@@ -224,3 +224,41 @@ export async function notifyOrderStatusChange(
 
 /** @deprecated use notifyOrderStatusChange */
 export const notifyOrderStatusPush = notifyOrderStatusChange;
+
+/** Push + in-app when a new chat message is sent (other party only). */
+export async function notifyChatMessage(
+  container: any,
+  orderId: string,
+  senderActor: "customer" | "cook" | "ops",
+  body: string,
+  logger: { info?: (msg: string) => void } = console
+) {
+  const ctx = await resolveOrderNotifyContext(container, orderId);
+  const preview = body.length > 80 ? `${body.slice(0, 77)}…` : body;
+  const data = { orderId, type: "chat" };
+
+  if (senderActor === "customer" && ctx.cookId) {
+    const cookService: ShcCookModuleService = container.resolve("shcCook");
+    const cook = await cookService.getCookWithPushToken(ctx.cookId);
+    const cookToken = (cook as any)?.expo_push_token;
+    const copy = { title: "New customer message", body: preview };
+    await sendExpoPush(cookToken, { ...copy, data }, logger);
+    await persistInApp(container, ctx.cookId, orderId, copy);
+    return;
+  }
+
+  if (senderActor === "cook" && ctx.customerId) {
+    let customerToken = getCustomerPushToken(ctx.customerId);
+    if (!customerToken) {
+      customerToken = await getCustomerPushTokenAsync(ctx.customerId, container).catch(() => undefined);
+    }
+    const webPushSub = await getCustomerWebPushSubscriptionAsync(ctx.customerId, container).catch(() => undefined);
+    const copy = {
+      title: `Message from ${ctx.cookName}`,
+      body: preview,
+    };
+    await sendExpoPush(customerToken, { ...copy, data }, logger);
+    await sendWebPush(webPushSub as any, { ...copy, data }, logger);
+    await persistInApp(container, ctx.customerId, orderId, copy);
+  }
+}

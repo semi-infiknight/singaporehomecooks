@@ -82,6 +82,9 @@ export const getCookOrders = () => cookClient.getMyOrders('cook');
 export const transitionCookOrder = (orderId: string, to: SHCOrderStatus) =>
   cookClient.transitionOrder(orderId, to);
 export const getCookOrder = (id: string) => cookClient.getOrder(id);
+export const getCookOrderMessages = (id: string) => cookClient.getMessages(id);
+export const sendCookOrderMessage = (orderId: string, body: string) =>
+  cookClient.sendMessage(orderId, body, 'cook');
 export const getCookOrderInvoice = (id: string) => cookClient.getOrderInvoice(id);
 export const getCookListings = () => cookClient.getCookListings();
 export const createCookListing = (input: Record<string, unknown>) => cookClient.createCookListing(input);

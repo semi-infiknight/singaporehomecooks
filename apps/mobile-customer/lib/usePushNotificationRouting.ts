@@ -19,9 +19,13 @@ export function usePushNotificationRouting(target: PushRouteTarget) {
         const Notifications = await import('expo-notifications');
         if (cancelled) return;
         sub = Notifications.addNotificationResponseReceivedListener((response) => {
-          const data = response.notification.request.content.data as { orderId?: string } | undefined;
+          const data = response.notification.request.content.data as { orderId?: string; type?: string } | undefined;
           const orderId = data?.orderId ? String(data.orderId) : '';
           if (!orderId) return;
+          if (data?.type === 'chat') {
+            router.push(`/(shared)/chat/${orderId}` as any);
+            return;
+          }
           if (target === 'customer') {
             router.push(`/(customer)/orders/${orderId}` as any);
           } else {

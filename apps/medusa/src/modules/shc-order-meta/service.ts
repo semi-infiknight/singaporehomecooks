@@ -108,7 +108,10 @@ class ShcOrderMetaModuleService extends MedusaService({
   async getOrderMetaWithMessages(orderId: string) {
     const [metas] = await this.listAndCountOrderMetas({ order_id: orderId } as any, { take: 1 }).catch(() => [[]]);
     const meta = (metas as any[])?.[0];
-    const [messages] = await this.listAndCountOrderMessages({ order_id: orderId } as any, { take: 50 }).catch(() => [[]]);
+    const [messages] = await this.listAndCountOrderMessages({ order_id: orderId } as any, {
+      take: 50,
+      order: { created_at: "ASC" },
+    }).catch(() => [[]]);
     return {
       meta: meta as unknown as SHCOrderMeta | undefined,
       messages: messages as unknown as any[],

@@ -40,7 +40,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **E2E verifier** | ✅ Tier 1+ | Full loop + credits + review + request/bid |
 | **Maestro device E2E** | ✅ Android + iOS | `pnpm e2e:tiffin` |
 | **Tiffin subscription** | ✅ Wave 8 | Ledger + flex OS; **recharge via HitPay** (`/recharge/paynow` + webhook) |
-| **Expo push** | ✅ Wired | Order transitions → Expo/web push + in-app bell (`order:<id>` deep links) |
+| **Expo push** | ✅ Wired | Order transitions + **new chat messages** → Expo/web push + in-app bell |
 | **iOS / Android native** | ✅ Both apps | Metro 8081 / 8082; rebuild scripts in `scripts/` |
 | **PayNow / HitPay** | 🟡 **Sandbox only** | QR + webhook; no real bank until live KYC. [content/hitpay-setup.md](../content/hitpay-setup.md) |
 | **Order invoices (PDF)** | ✅ | Per-order + **corporate bulk ZIP** (`GET /store/shc/orders/corporate/invoices?format=zip` or `?issue_url=1` on mobile); signed hooks URL on mobile |
