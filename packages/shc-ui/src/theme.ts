@@ -41,6 +41,12 @@ export const shcSpacing = {
   xl: 32,
   /** Toptal: generous white space between discover sections */
   section: 20,
+  /** Equal vertical rhythm: section above → eyebrow → circle → label (8px each) */
+  categoryStackGap: 8,
+  /** @deprecated use categoryStackGap */
+  categoryLabelGap: 8,
+  /** @deprecated use categoryStackGap */
+  categoryTitleGap: 8,
   tabBarHeight: 56,
   stickyHeaderPadding: 12,
 };
@@ -176,7 +182,24 @@ export const gourmeatLayout = {
   tabBarClearance: 88,
   /** Sticky cart bar + floating nav + margins. */
   tabBarWithCartClearance: 156,
+  /** Pinned Pay / CTA row height (excludes safe-area — add inset separately). */
+  stickyFooterClearance: 80,
 };
+
+/** Scroll content padding when the floating tab bar is visible. */
+export function contentPadForTabBar(bottomInset = 0): number {
+  return gourmeatLayout.tabBarClearance + Math.max(bottomInset, shcSpacing.sm);
+}
+
+/** Scroll content padding when the screen has its own sticky footer (tab bar hidden). */
+export function contentPadForStickyFooter(bottomInset = 0): number {
+  return gourmeatLayout.stickyFooterClearance + Math.max(bottomInset, shcSpacing.sm);
+}
+
+/** Scroll content padding on stack/modal screens (no tab bar, no sticky footer). */
+export function contentPadSafe(bottomInset = 0): number {
+  return Math.max(bottomInset, shcSpacing.md);
+}
 
 export const gourmeatTheme = {
   colors: gourmeatColors,

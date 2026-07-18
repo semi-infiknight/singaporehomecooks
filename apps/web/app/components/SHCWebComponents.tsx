@@ -316,7 +316,7 @@ function CategoryRailItem({
         />
       </div>
       <span
-        className={`text-[10px] font-bold mt-1.5 text-center leading-tight ${
+        className={`text-[10px] font-bold mt-2 text-center leading-[14px] ${
           active ? 'text-primary' : 'text-muted-foreground'
         }`}
       >
@@ -1140,6 +1140,59 @@ export function SHCSkeletonOrderList({
   );
 }
 
+export function SHCSkeletonOrdersDayScreen() {
+  return (
+    <div aria-busy="true" aria-label="Loading orders" data-testid="skeleton-orders-day-screen">
+      <div className="flex gap-2 overflow-x-hidden pb-3 mb-1">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="shc-skeleton shrink-0 w-12 h-16 rounded-xl" />
+        ))}
+      </div>
+      <div className="shc-skeleton h-4 w-14 rounded-md mb-3" />
+      <SHCSkeletonOrderList count={3} variant="card" />
+    </div>
+  );
+}
+
+export function SHCSkeletonAccountScreen() {
+  return (
+    <div aria-busy="true" aria-label="Loading account" data-testid="skeleton-account-screen">
+      <div className="shc-skeleton h-7 w-[48%] rounded-lg mb-2" />
+      <div className="shc-skeleton h-3.5 w-[62%] rounded-md mb-6" />
+      <div className="shc-skeleton h-28 w-full rounded-2xl mb-4" />
+      <SHCSkeletonList count={4} rowHeight={52} />
+    </div>
+  );
+}
+
+export function AuthSessionGate({
+  loading,
+  user,
+  guest,
+  children,
+  skeleton,
+  testID,
+}: {
+  loading: boolean;
+  user: unknown;
+  guest: React.ReactNode;
+  children: React.ReactNode;
+  skeleton?: React.ReactNode;
+  testID?: string;
+}) {
+  if (loading) {
+    return (
+      <div data-testid={testID ?? 'auth-session-loading'} aria-busy="true" aria-label="Loading">
+        {skeleton ?? <SHCSkeletonAccountScreen />}
+      </div>
+    );
+  }
+  if (!user) {
+    return <div data-testid={testID ?? 'auth-session-guest'}>{guest}</div>;
+  }
+  return <>{children}</>;
+}
+
 export function SHCSkeletonList({ count = 4, rowHeight = 56 }: { count?: number; rowHeight?: number }) {
   return (
     <div className="space-y-2" aria-busy="true" aria-label="Loading" data-testid="skeleton-list">
@@ -1155,16 +1208,19 @@ export function SHCSkeletonList({ count = 4, rowHeight = 56 }: { count?: number;
 export function BottomStickyBar({
   children,
   className = '',
+  offsetTabBar = true,
 }: {
   children: React.ReactNode;
   className?: string;
+  /** When false, bar sits flush above safe area (checkout / PDP — tab bar hidden). */
+  offsetTabBar?: boolean;
 }) {
   return (
     <div
       className={`fixed bottom-0 left-0 right-0 z-[70] bg-card border-t-2 border-[var(--shc-border-brutal)] shadow-[0_-4px_0_var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),8px)] ${className}`}
       data-testid="bottom-sticky-bar"
     >
-      <div className="max-w-6xl mx-auto px-4 py-3 mb-14 md:mb-0">{children}</div>
+      <div className={`max-w-6xl mx-auto px-4 py-3 md:mb-0 ${offsetTabBar ? 'mb-14' : ''}`}>{children}</div>
     </div>
   );
 }
@@ -1501,6 +1557,9 @@ export function PayNowPanel({
   const displayAmount = session?.amount != null ? Number(session.amount) : amount;
   const displayName = session?.display_name || 'Singapore Home Cooks';
   const hasQr = Boolean(session?.qr_image_data_url || session?.checkout_url);
+  const qrUri = session?.qr_image_data_url;
+  const qrKey = (session as { payment_request_id?: string })?.payment_request_id || session?.reference || reference;
+  const showInitialLoading = Boolean(loadingSession && !qrUri);
   const err =
     session?.error ||
     (session?.provider === 'hitpay_error' ? 'Could not create PayNow QR' : null) ||
@@ -1535,17 +1594,18 @@ export function PayNowPanel({
         {displayName} · Order {session?.reference || reference || '—'}
       </p>
 
-      {loadingSession ? (
+      {showInitialLoading ? (
         <p className="text-sm font-semibold text-muted-foreground" data-testid="paynow-qr-loading">
           Creating PayNow QR…
         </p>
       ) : null}
 
-      {session?.qr_image_data_url ? (
+      {qrUri ? (
         <div className="mt-2 flex flex-col items-center" data-testid="paynow-qr">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={session.qr_image_data_url}
+            key={qrKey}
+            src={qrUri}
             alt="PayNow QR"
             width={220}
             height={220}
@@ -1812,6 +1872,104 @@ export function OrderTimeline({ status, live = false, testID = 'order-timeline' 
   );
 }
 
+export function OrdersCalendarStrip({
+  days,
+  selectedDate,
+  todayDate,
+  onSelect,
+  testID = 'orders-calendar-strip',
+}: {
+  days: Array<{ date: string; label: string; dayNum: string; hasOrder?: boolean }>;
+  selectedDate: string;
+  todayDate?: string;
+  onSelect: (date: string) => void;
+  testID?: string;
+}) {
+  const stripRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!todayDate || !stripRef.current) return;
+    const el = stripRef.current.querySelector(`[data-cal-date="${todayDate}"]`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }
+  }, [todayDate, days]);
+
+  return (
+    <div
+      ref={stripRef}
+      className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide"
+      data-testid={testID}
+    >
+      {days.map((d) => {
+        const active = d.date === selectedDate;
+        const isToday = todayDate != null && d.date === todayDate;
+        return (
+          <button
+            key={d.date}
+            type="button"
+            data-cal-date={d.date}
+            data-testid={isToday ? `orders-cal-day-${d.date}-today` : `orders-cal-day-${d.date}`}
+            onClick={() => onSelect(d.date)}
+            className={`shrink-0 w-12 min-w-[3rem] rounded-xl border-2 py-2 text-center cursor-pointer touch-manipulation relative z-10 ${
+              active
+                ? 'border-primary bg-primary text-primary-foreground'
+                : isToday
+                  ? 'border-[var(--shc-success)] bg-[var(--shc-bento-mint)] hover:border-[var(--shc-success)]'
+                  : d.hasOrder
+                    ? 'border-primary/40 bg-card hover:border-primary'
+                    : 'border-[var(--shc-border-brutal)] bg-card hover:border-primary/50'
+            }`}
+          >
+            <div
+              className={`text-[10px] font-bold ${
+                active ? 'opacity-90' : isToday ? 'text-[var(--shc-success)] font-extrabold' : 'opacity-80'
+              }`}
+            >
+              {isToday ? 'Today' : d.label}
+            </div>
+            <div className="text-base font-black tabular-nums">{d.dayNum}</div>
+            {d.hasOrder ? (
+              <div
+                className={`w-1 h-1 rounded-full mx-auto mt-1 ${
+                  active ? 'bg-primary-foreground' : isToday ? 'bg-[var(--shc-success)]' : 'bg-primary'
+                }`}
+              />
+            ) : isToday && !active ? (
+              <div className="w-[5px] h-[5px] rounded-full bg-[var(--shc-success)] mx-auto mt-1" />
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function OrdersTabCookingIcon({
+  Icon,
+  active,
+  testID = 'orders-tab-cooking',
+}: {
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: number; 'aria-hidden'?: boolean }>;
+  active: boolean;
+  testID?: string;
+}) {
+  return (
+    <span
+      className="relative inline-flex items-end justify-center w-[32px] h-[36px]"
+      data-testid={testID}
+    >
+      <span className="absolute top-0 left-[5px] w-1 h-1 rounded-full bg-[var(--shc-success)] shc-steam-wisp shc-steam-wisp-1" />
+      <span className="absolute top-0 left-[13px] w-1 h-1 rounded-full bg-[var(--shc-success)] shc-steam-wisp shc-steam-wisp-2" />
+      <span className="absolute top-0 left-[21px] w-1 h-1 rounded-full bg-[var(--shc-success)] shc-steam-wisp shc-steam-wisp-3" />
+      <span className="inline-flex items-center justify-center rounded-lg px-0.5 py-0.5 bg-[var(--shc-bento-mint)] border-[1.5px] border-[var(--shc-border-brutal)] shc-cooking-pulse">
+        <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
+      </span>
+      <span className="absolute top-0 right-0 w-[7px] h-[7px] rounded-full bg-[var(--shc-success)] border-[1.5px] border-[var(--shc-gourmeat-nav)]" />
+    </span>
+  );
+}
+
 export function ActiveOrderBanner({
   statusLabel,
   dishName,
@@ -2037,15 +2195,19 @@ export function GourmeatCategoryRow({
   items,
   active,
   onSelect,
+  title,
   testID = 'gourmeat-category-row',
 }: {
   items: { id: string; label: string; imageUrl?: string }[];
   active: string;
   onSelect: (id: string) => void;
+  /** Centered eyebrow — equal gap above/below to circles */
+  title?: string;
   testID?: string;
 }) {
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid={testID}>
+  const gap = 'var(--shc-category-stack-gap)';
+  const row = (
+    <div className="flex gap-4 overflow-x-auto -mx-1 px-1 scrollbar-hide" data-testid={testID}>
       {items.map((item) => {
         const selected = item.id === active;
         return (
@@ -2067,12 +2229,32 @@ export function GourmeatCategoryRow({
                 <UtensilsCrossed className={`w-6 h-6 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
               )}
             </span>
-            <span className={`mt-1.5 text-[11px] text-center truncate w-full ${selected ? 'font-bold text-primary' : 'font-medium text-muted-foreground'}`}>
+            <span
+              className={`text-[11px] leading-[14px] text-center truncate w-full ${selected ? 'font-bold text-primary' : 'font-medium text-muted-foreground'}`}
+              style={{ marginTop: gap }}
+            >
               {item.label}
             </span>
           </button>
         );
       })}
+    </div>
+  );
+
+  if (!title) return row;
+
+  return (
+    <div
+      data-testid={testID ? `${testID}-section` : 'gourmeat-category-section'}
+      style={{ marginTop: gap, marginBottom: gap }}
+    >
+      <p
+        className="text-xs font-bold text-muted-foreground text-center"
+        style={{ marginBottom: gap, lineHeight: '12px' }}
+      >
+        {title}
+      </p>
+      {row}
     </div>
   );
 }

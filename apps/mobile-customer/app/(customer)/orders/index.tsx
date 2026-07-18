@@ -2,10 +2,11 @@
  * My Orders — HomelyEats day calendar + status card variants.
  * One-time orders + tiffin meal instances per collection date.
  */
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   GourmeatScreenHeader,
   GourmeatEmptyState,
@@ -14,9 +15,12 @@ import {
   SHCTiffinCalendarStrip,
   SHCTiffinOrderStatusCard,
   SHCSkeletonOrderList,
+  SHCSkeletonOrdersDayScreen,
+  SHCAuthSessionGate,
   gourmeatColors,
   shcSpacing,
   DirectionalTabScreen,
+  contentPadForTabBar,
 } from '@shc/ui';
 import {
   toIsoDate,
@@ -40,7 +44,7 @@ import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 export default function MyOrdersList() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const todayRef = useRef(toIsoDate(new Date()));
   const today = todayRef.current;
   const from = addDaysIso(weekStartMonday(), -7);
@@ -90,28 +94,19 @@ export default function MyOrdersList() {
   }, [today, dateSet]);
 
   const [selected, setSelected] = useState(today);
-  const userPickedRef = useRef(false);
-  const didInitSelectRef = useRef(false);
 
   const selectDay = useCallback((date: string) => {
-    userPickedRef.current = true;
     setSelected(date);
   }, []);
 
-  const ordersPending = ordersLoading || mealsLoading;
-
-  // Initial auto-select only — never snap back after user taps a day
-  useEffect(() => {
-    if (userPickedRef.current || didInitSelectRef.current) return;
-    if (ordersPending) return;
-    didInitSelectRef.current = true;
-    if (dateSet.has(today)) {
+  // Always land on today when opening the Orders tab
+  useFocusEffect(
+    useCallback(() => {
       setSelected(today);
-      return;
-    }
-    const next = calendarDays.find((d) => d.hasMeal);
-    if (next) setSelected(next.date);
-  }, [dateSet, today, calendarDays, ordersPending]);
+    }, [today])
+  );
+
+  const ordersPending = ordersLoading || mealsLoading;
 
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
@@ -149,7 +144,7 @@ export default function MyOrdersList() {
         style={styles.screen}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 },
+          { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) },
         ]}
         testID="customer-orders-screen"
       >
@@ -158,16 +153,21 @@ export default function MyOrdersList() {
           subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading || ordersLoading ? ' · updating…' : ''}`}
         />
 
-        {!user ? (
-          <GourmeatCard>
-            <GourmeatEmptyState
-              title="Sign in to see orders"
-              body="Scheduled collections and tiffin meals appear here by day."
-              ctaLabel="Sign in"
-              onCta={() => router.push('/(shared)/auth' as any)}
-            />
-          </GourmeatCard>
-        ) : (
+        <SHCAuthSessionGate
+          loading={authLoading}
+          user={user}
+          skeleton={<SHCSkeletonOrdersDayScreen />}
+          guest={
+            <GourmeatCard>
+              <GourmeatEmptyState
+                title="Sign in to see orders"
+                body="Scheduled collections and tiffin meals appear here by day."
+                ctaLabel="Sign in"
+                onCta={() => router.push('/(shared)/auth' as any)}
+              />
+            </GourmeatCard>
+          }
+        >
           <>
             {hasCorporatePaid ? (
               <GourmeatCard style={styles.corpCard}>
@@ -189,6 +189,7 @@ export default function MyOrdersList() {
             <SHCTiffinCalendarStrip
               days={calendarDays}
               selectedDate={selected}
+              todayDate={today}
               onSelect={selectDay}
               testID="orders-calendar-strip"
             />
@@ -246,7 +247,7 @@ export default function MyOrdersList() {
               Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
             </Text>
           </>
-        )}
+        </SHCAuthSessionGate>
       </ScrollView>
     </DirectionalTabScreen>
   );

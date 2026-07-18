@@ -8,10 +8,10 @@
 - [CURRENT_STATE.md](./CURRENT_STATE.md)
 - [AGENTS.md](./AGENTS.md)
 
-**Last Updated:** 2026-07-14
+**Last Updated:** 2026-07-18
 **Audience:** AI agents and subagents only
 
-**Session start:** Read [CURRENT_STATE.md §0 New-session handoff](./CURRENT_STATE.md) (HitPay, Cooking soon 7-day, invoices).
+**Session start:** Read [CURRENT_STATE.md §0 New-session handoff](./CURRENT_STATE.md) (HitPay QR stability, checkout CTA gate, `contentPad*` bottom insets, category spacing).
 
 ---
 

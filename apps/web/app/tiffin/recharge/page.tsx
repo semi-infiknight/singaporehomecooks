@@ -34,6 +34,7 @@ export default function TiffinRechargePage() {
   const [paySessionLoading, setPaySessionLoading] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
   const expiresBeforeRef = useRef<string | null>(null);
+  const paySessionWeeksRef = useRef<number | null>(null);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -45,7 +46,9 @@ export default function TiffinRechargePage() {
   const amountDollars = amountCents / 100;
   const defaultRef = `TIFFIN-${String(sub?.id || 'PLAN').slice(-8)}-${weeks}W`;
 
-  const loadPayNowSession = useCallback(async () => {
+  const loadPayNowSession = useCallback(async (force = false) => {
+    if (!force && paySessionWeeksRef.current === weeks) return;
+    paySessionWeeksRef.current = weeks;
     setPaySessionLoading(true);
     setError('');
     try {
@@ -53,6 +56,7 @@ export default function TiffinRechargePage() {
       setPaySession(s);
       if (s.provider === 'hitpay') setWaitingForPayment(true);
     } catch (e: any) {
+      paySessionWeeksRef.current = null;
       setPaySession({
         provider: 'hitpay_error',
         error: e?.message || 'Could not create PayNow QR',
@@ -63,7 +67,11 @@ export default function TiffinRechargePage() {
   }, [weeks]);
 
   useEffect(() => {
-    if (phase === 'paynow') void loadPayNowSession();
+    if (phase !== 'paynow') {
+      paySessionWeeksRef.current = null;
+      return;
+    }
+    void loadPayNowSession();
   }, [phase, loadPayNowSession]);
 
   useEffect(() => {
@@ -91,7 +99,7 @@ export default function TiffinRechargePage() {
     };
   }, [phase, waitingForPayment, refetch, router]);
 
-  if (isLoading) {
+  if (isLoading && !sub) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
         <SHCSkeletonList count={3} rowHeight={88} />
@@ -134,7 +142,7 @@ export default function TiffinRechargePage() {
 
   if (phase === 'paynow') {
     return (
-      <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-recharge-paynow">
+      <div className="max-w-xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-recharge-paynow">
         <SHCPageHeader
           title="PayNow recharge"
           subtitle={`${kitchen?.cook?.display_name || 'Kitchen'} · ${weeks} week${weeks > 1 ? 's' : ''}`}
@@ -146,7 +154,7 @@ export default function TiffinRechargePage() {
           reference={paySession?.reference || defaultRef}
           session={paySession}
           loadingSession={paySessionLoading}
-          onRetry={() => void loadPayNowSession()}
+          onRetry={() => void loadPayNowSession(true)}
           waitingForPayment={waitingForPayment}
         />
         <p className="mt-3 text-xs font-medium text-muted-foreground">
@@ -162,7 +170,7 @@ export default function TiffinRechargePage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-recharge-screen">
+    <div className="max-w-xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-recharge-screen">
       <SHCPageHeader
         title="Recharge plan"
         subtitle={`${kitchen?.cook?.display_name || 'Kitchen'} · avoid a gap`}

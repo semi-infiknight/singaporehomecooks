@@ -13,6 +13,7 @@ import {
   gourmeatColors,
   shcSpacing,
   SHCSkeletonList,
+  contentPadSafe,
 } from '@shc/ui';
 import { shapeTiffinLedgerForUi } from '@shc/utils';
 import {
@@ -115,7 +116,7 @@ export default function TiffinManageScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: 120 }}
+      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: contentPadSafe(insets.bottom) }}
       testID="tiffin-manage-screen"
     >
       <GourmeatScreenHeader

@@ -356,6 +356,8 @@ export type SHCBottomTab = {
   testID: string;
   /** Optional count badge (e.g. cart tab) */
   badge?: string;
+  /** Live orders cue — cooking animation when a meal is preparing today */
+  ordersLiveCue?: 'cooking';
 };
 
 export function SHCBottomTabBar({

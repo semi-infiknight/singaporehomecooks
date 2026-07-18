@@ -8,6 +8,7 @@ import {
   gourmeatColors,
   shcSpacing,
   SHCSkeletonList,
+  contentPadSafe,
 } from '@shc/ui';
 import { useTiffinKitchen } from '../../../hooks/useTiffin';
 
@@ -43,7 +44,7 @@ export default function TiffinMenuScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: 120 }}
+      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: contentPadSafe(insets.bottom) }}
       testID="tiffin-menu-screen"
     >
       <GourmeatScreenHeader

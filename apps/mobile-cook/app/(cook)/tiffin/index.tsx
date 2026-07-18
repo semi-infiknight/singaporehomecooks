@@ -21,6 +21,7 @@ import {
   gourmeatColors,
   shcSpacing,
   TIFFIN_DAY_LABELS,
+  contentPadForTabBar,
 } from '@shc/ui';
 import {
   cookOpsCollectionDates,
@@ -163,7 +164,7 @@ export default function CookTiffinConfigScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.md,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 120,
+          paddingBottom: contentPadForTabBar(insets.bottom),
         }}
       >
         <GourmeatScreenHeader

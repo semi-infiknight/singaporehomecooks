@@ -102,7 +102,7 @@ export default function CategoryPage() {
 
   return (
     <section
-      className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-8"
+      className="max-w-2xl mx-auto px-4 py-4 shc-tab-bar-pad md:pb-8"
       data-testid="category-explore-screen"
     >
       <div className="flex items-center gap-2 mb-4">

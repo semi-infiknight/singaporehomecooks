@@ -10,9 +10,11 @@ import {
   GourmeatPrimaryButton,
   GourmeatCard,
   SHCSkeletonList,
+  SHCAuthSessionSection,
   gourmeatColors,
   shcSpacing,
   tiffinWeeklySubtotal,
+  contentPadSafe,
 } from '@shc/ui';
 import { emptyActiveSubscriptionsCopy, emptyPastSubscriptionsCopy } from '@shc/utils';
 import { subscriptionCardKind, subscriptionCardCopy } from '@shc/business-rules';
@@ -24,7 +26,7 @@ type Tab = 'active' | 'past';
 export default function MySubscriptionsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: subData, isLoading } = useTiffinSubscription();
   const resumeMut = useResumeTiffin();
   const [tab, setTab] = useState<Tab>('active');
@@ -57,7 +59,7 @@ export default function MySubscriptionsScreen() {
   const activeCopy = emptyActiveSubscriptionsCopy();
   const pastCopy = emptyPastSubscriptionsCopy();
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md }]}>
         <SHCSkeletonList count={3} rowHeight={120} />
@@ -70,7 +72,7 @@ export default function MySubscriptionsScreen() {
       style={styles.screen}
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.sm,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
         flexGrow: 1,
       }}
       testID="my-subscriptions-screen"
@@ -104,15 +106,20 @@ export default function MySubscriptionsScreen() {
         })}
       </View>
 
-      {!user ? (
-        <GourmeatEmptyState
-          illustration="no_active_sub"
-          title="Sign in to manage subscriptions"
-          ctaLabel="Sign in"
-          onCta={() => router.push('/(shared)/auth' as any)}
-          testID="subscriptions-guest-empty"
-        />
-      ) : tab === 'active' ? (
+      <SHCAuthSessionSection
+        loading={authLoading}
+        user={user}
+        guest={
+          <GourmeatEmptyState
+            illustration="no_active_sub"
+            title="Sign in to manage subscriptions"
+            ctaLabel="Sign in"
+            onCta={() => router.push('/(shared)/auth' as any)}
+            testID="subscriptions-guest-empty"
+          />
+        }
+      >
+      {tab === 'active' ? (
         isActiveKind && sub && copy ? (
           <View style={styles.cardPad}>
             <GourmeatCard testID={`subscription-card-${kind}`}>
@@ -214,6 +221,7 @@ export default function MySubscriptionsScreen() {
           testID="subscriptions-past-empty"
         />
       )}
+      </SHCAuthSessionSection>
     </ScrollView>
   );
 }

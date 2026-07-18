@@ -6,13 +6,14 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, Alert } from 
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GourmeatCookHeader, GourmeatPrimaryButton, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
+import { GourmeatCookHeader, GourmeatPrimaryButton, SHCFoodImage, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
 import {
   defaultCookDateTomorrow,
   defaultOrderByTonight,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
+  getDropImageUrl,
 } from '@shc/utils';
 import { listMyDrops, createDrop, patchDrop } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
@@ -143,7 +144,13 @@ export default function CookBatchesScreen() {
       )}
       {dropList.map((d) => (
         <View key={d.id} style={styles.card} testID={`cook-batch-${d.id}`}>
-          <Text style={styles.cardTitle}>{d.title}</Text>
+          <SHCFoodImage
+            uri={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: user?.id })}
+            height={120}
+            rounded={12}
+            testID={`cook-batch-img-${d.id}`}
+          />
+          <Text style={[styles.cardTitle, { marginTop: 10 }]}>{d.title}</Text>
           <Text style={styles.muted}>
             {formatDropCookDate(d.cook_date)} · {d.collection_slot} · by {formatDropOrderBy(d.order_by)}
           </Text>

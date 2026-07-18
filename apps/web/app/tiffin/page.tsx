@@ -58,7 +58,7 @@ export default function TiffinBrowsePage() {
   }, [kitchens, query, filter, category]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-28" data-testid="tiffin-browse-screen">
+    <div className="max-w-2xl mx-auto px-4 py-4 shc-safe-bottom-pad" data-testid="tiffin-browse-screen">
       {/* Location chrome — HomelyEats header */}
       <div className="flex items-center gap-2 mb-3">
         <Link href="/" className="text-2xl font-light text-foreground leading-none px-1" aria-label="Back">
@@ -140,28 +140,38 @@ export default function TiffinBrowsePage() {
       </div>
 
       {/* Categories */}
-      <p className="text-xs font-bold text-muted-foreground text-center mb-2">Explore by categories</p>
-      <div className="flex gap-3 overflow-x-auto pb-3 mb-3" data-testid="tiffin-category-row">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => setCategory(c.id)}
-            data-testid={`tiffin-cat-${c.id}`}
-            className="shrink-0 w-[72px] flex flex-col items-center"
-          >
-            <span
-              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl border-2 bg-card ${
-                category === c.id ? 'border-primary' : 'border-[var(--shc-border-brutal)]'
-              }`}
+      <div style={{ marginTop: 'var(--shc-category-stack-gap)', marginBottom: 'var(--shc-category-stack-gap)' }}>
+        <p
+          className="text-xs font-bold text-muted-foreground text-center"
+          style={{ marginBottom: 'var(--shc-category-stack-gap)', lineHeight: '12px' }}
+        >
+          Explore by categories
+        </p>
+        <div className="flex gap-3 overflow-x-auto" data-testid="tiffin-category-row">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setCategory(c.id)}
+              data-testid={`tiffin-cat-${c.id}`}
+              className="shrink-0 w-[72px] flex flex-col items-center"
             >
-              {c.emoji}
-            </span>
-            <span className={`text-[11px] font-bold mt-1 ${category === c.id ? 'text-primary' : 'text-muted-foreground'}`}>
-              {c.label}
-            </span>
-          </button>
-        ))}
+              <span
+                className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl border-2 bg-card ${
+                  category === c.id ? 'border-primary' : 'border-[var(--shc-border-brutal)]'
+                }`}
+              >
+                {c.emoji}
+              </span>
+              <span
+                className={`text-[11px] leading-[14px] font-bold ${category === c.id ? 'text-primary' : 'text-muted-foreground'}`}
+                style={{ marginTop: 'var(--shc-category-stack-gap)' }}
+              >
+                {c.label}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Filters */}

@@ -12,6 +12,7 @@ import {
   gourmeatColors,
   shcSpacing,
   SHCSkeletonList,
+  contentPadSafe,
 } from '@shc/ui';
 import { pauseDayOptions, applyPause } from '@shc/business-rules';
 import { useTiffinSubscription, usePauseTiffin } from '../../../hooks/useTiffin';
@@ -76,7 +77,7 @@ export default function TiffinPauseScreen() {
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.md,
         paddingHorizontal: shcSpacing.md,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
       }}
       testID="tiffin-pause-screen"
     >

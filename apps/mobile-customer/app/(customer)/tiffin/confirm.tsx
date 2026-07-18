@@ -12,6 +12,7 @@ import {
   gourmeatColors,
   shcSpacing,
   SHCSkeletonList,
+  contentPadSafe,
 } from '@shc/ui';
 import { subscribeConfirmSteps, subscribeTrustChips } from '@shc/utils';
 import { useTiffinSubscription } from '../../../hooks/useTiffin';
@@ -60,7 +61,7 @@ export default function TiffinConfirmScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.xl,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 120,
+          paddingBottom: contentPadSafe(insets.bottom),
         }}
       >
         <SHCTiffinConfirmBanner

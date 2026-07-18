@@ -2,6 +2,12 @@
 
 **This repository is maintained by AI agents only.**
 
+## Production rule (non-negotiable)
+
+**Always take the path of least blast radius.**  
+API / web / pure JS first; native rebuild last. No “while I’m here” scope creep.  
+Full rule: [blueprint/agent/build-protocol.md](./blueprint/agent/build-protocol.md) § **NON-NEGOTIABLE: path of least blast radius**.
+
 ## Canonical brain: `blueprint/`
 
 Read in order:

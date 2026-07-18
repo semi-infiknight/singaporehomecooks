@@ -20,6 +20,7 @@ import {
   DirectionalTabScreen,
   SHCCelebration,
   useMilestoneCelebration,
+  contentPadForTabBar,
 } from '@shc/ui';
 import * as SecureStore from 'expo-secure-store';
 import {
@@ -86,7 +87,7 @@ export default function ComplianceUpload() {
 
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
       testID="cook-compliance-screen"
     >
       <View style={styles.phaseBanner} testID="compliance-phase-banner">

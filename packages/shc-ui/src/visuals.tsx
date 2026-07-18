@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { getDishImageUrl, resolveImageUrl } from '@shc/utils';
 import { shcColors, shcRadii, shcBorders, shcShadows, shcSpacing } from './theme';
 import { SHCBentoIconBadge, type SHCIconKey } from './icons';
 
@@ -69,6 +70,7 @@ export function SHCZomatoAddButton({
 
 export function SHCFoodImage({
   uri,
+  fallbackUri,
   width = '100%',
   height = 140,
   rounded = shcRadii.md,
@@ -76,12 +78,19 @@ export function SHCFoodImage({
   overlay,
 }: {
   uri: string;
+  fallbackUri?: string;
   width?: number | string;
   height?: number;
   rounded?: number;
   testID?: string;
   overlay?: React.ReactNode;
 }) {
+  const fallback = fallbackUri ?? getDishImageUrl({});
+  const [src, setSrc] = React.useState(() => resolveImageUrl(uri) ?? fallback);
+  React.useEffect(() => {
+    setSrc(resolveImageUrl(uri) ?? fallback);
+  }, [uri, fallback]);
+
   return (
     <View
       style={{
@@ -97,10 +106,13 @@ export function SHCFoodImage({
       testID={testID}
     >
       <Image
-        source={{ uri }}
+        source={{ uri: src }}
         style={{ width: '100%', height: '100%' }}
         resizeMode="cover"
-        recyclingKey={testID ? `${testID}-${uri}` : uri}
+        recyclingKey={testID ? `${testID}-${src}` : src}
+        onError={() => {
+          if (src !== fallback) setSrc(fallback);
+        }}
       />
       {overlay && (
         <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">

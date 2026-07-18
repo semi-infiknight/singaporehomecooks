@@ -3,10 +3,10 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcSpacing } from './theme';
 import { SHCFoodImage } from './visuals';
 import { GourmeatPrimaryButton } from './gourmeat';
-import { getDishImageUrl, getCookAvatarUrl } from '@shc/utils';
+import { getDishImageUrl, getCookKitchenHeroUrl } from '@shc/utils';
 import { EmptyIllustration } from './empty-illustrations';
 
 export const TIFFIN_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
@@ -17,6 +17,7 @@ export type TiffinDishOption = {
   price?: number;
   cuisine?: string;
   cook_name?: string;
+  image_url?: string | null;
 };
 
 export type TiffinPlanSlotDraft = {
@@ -113,9 +114,10 @@ export function SHCTiffinCategoryRow({
   onSelect: (id: string) => void;
   testID?: string;
 }) {
+  const gap = shcSpacing.categoryStackGap;
   return (
-    <View testID={testID}>
-      <Text style={styles.sectionEyebrow}>Explore by categories</Text>
+    <View testID={testID} style={{ marginTop: gap, marginBottom: gap }}>
+      <Text style={[styles.sectionEyebrow, { marginBottom: gap }]}>Explore by categories</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
         {categories.map((c) => {
           const active = c.id === activeId;
@@ -129,7 +131,7 @@ export function SHCTiffinCategoryRow({
               <View style={[styles.catCircle, active && styles.catCircleActive]}>
                 <Text style={styles.catEmoji}>{c.emoji || '🍲'}</Text>
               </View>
-              <Text style={[styles.catLabel, active && styles.catLabelActive]} numberOfLines={1}>
+              <Text style={[styles.catLabel, { marginTop: gap }, active && styles.catLabelActive]} numberOfLines={1}>
                 {c.label}
               </Text>
             </Pressable>
@@ -180,7 +182,7 @@ export function SHCTiffinKitchenCard({
   favorited?: boolean;
   testID?: string;
 }) {
-  const avatar = coverUri || getCookAvatarUrl(cookId, cookName);
+  const cover = coverUri || getCookKitchenHeroUrl(cookId);
   const priceLabel =
     priceFrom != null && priceTo != null
       ? `S$${priceFrom}–${priceTo}/meal`
@@ -192,7 +194,7 @@ export function SHCTiffinKitchenCard({
       {({ pressed }) => (
         <View style={[styles.kitchenCardFeatured, pressed && { opacity: 0.94 }]}>
           <View style={styles.kitchenCoverWrap}>
-            <Image source={{ uri: avatar }} style={styles.kitchenCover} resizeMode="cover" />
+            <Image source={{ uri: cover }} style={styles.kitchenCover} resizeMode="cover" />
             {onFavorite ? (
               <Pressable
                 onPress={(e) => {
@@ -252,6 +254,7 @@ export function SHCTiffinKitchenCard({
  */
 export function SHCTiffinKitchenHero({
   cookName,
+  cookId,
   tagline,
   imageUri,
   rating,
@@ -263,6 +266,7 @@ export function SHCTiffinKitchenHero({
   testID = 'kitchen-page-hero',
 }: {
   cookName: string;
+  cookId?: string;
   tagline?: string;
   imageUri?: string;
   rating?: number;
@@ -273,7 +277,7 @@ export function SHCTiffinKitchenHero({
   story?: string;
   testID?: string;
 }) {
-  const uri = imageUri || getCookAvatarUrl('tiffin', cookName);
+  const uri = imageUri || getCookKitchenHeroUrl(cookId || cookName);
   const ratingText =
     rating != null
       ? reviewCount != null
@@ -492,7 +496,7 @@ export function SHCTiffinOrderLineItem({
   onRemove?: () => void;
   testID?: string;
 }) {
-  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine, image_url: dish.image_url });
   const unit = price ?? dish.price ?? tiffinPricePerServing(3);
   return (
     <View testID={testID || `tiffin-order-line-${dish.id}`} style={styles.orderLine}>
@@ -532,7 +536,7 @@ export function SHCTiffinMenuListItem({
   onPress: () => void;
   testID?: string;
 }) {
-  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine, image_url: dish.image_url });
   return (
     <Pressable onPress={onPress} testID={testID || `tiffin-menu-item-${dish.id}`}>
       <View style={styles.menuListItem}>
@@ -613,7 +617,7 @@ export function SHCTiffinDishChip({
   onPress: () => void;
   testID?: string;
 }) {
-  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine, image_url: dish.image_url });
   return (
     <Pressable onPress={onPress} testID={testID || `tiffin-dish-${dish.id}`}>
       {({ pressed }) => (
@@ -885,7 +889,7 @@ export function SHCTiffinCookDishToggle({
   onToggle: () => void;
   testID?: string;
 }) {
-  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine });
+  const imageUrl = getDishImageUrl({ id: dish.id, name: dish.name, cuisine: dish.cuisine, image_url: dish.image_url });
   return (
     <Pressable onPress={onToggle} testID={testID || `tiffin-cook-dish-${dish.id}`}>
       <View style={[styles.cookDishRow, enabled && styles.cookDishRowOn]}>
@@ -906,16 +910,32 @@ export function SHCTiffinCookDishToggle({
 export function SHCTiffinCalendarStrip({
   days,
   selectedDate,
+  todayDate,
   onSelect,
   testID = 'tiffin-calendar-strip',
 }: {
   days: { date: string; label: string; hasMeal?: boolean }[];
   selectedDate: string;
+  /** ISO date for "today" — mint ring + scroll-into-view on mount */
+  todayDate?: string;
   onSelect: (date: string) => void;
   testID?: string;
 }) {
+  const scrollRef = React.useRef<ScrollView>(null);
+
+  React.useEffect(() => {
+    if (!todayDate) return;
+    const idx = days.findIndex((d) => d.date === todayDate);
+    if (idx < 0) return;
+    const timer = setTimeout(() => {
+      scrollRef.current?.scrollTo({ x: Math.max(0, idx * 60 - 48), animated: true });
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [todayDate, days]);
+
   return (
     <ScrollView
+      ref={scrollRef}
       horizontal
       showsHorizontalScrollIndicator={false}
       testID={testID}
@@ -925,22 +945,43 @@ export function SHCTiffinCalendarStrip({
     >
       {days.map((d) => {
         const active = d.date === selectedDate;
+        const isToday = todayDate != null && d.date === todayDate;
         return (
           <Pressable
             key={d.date}
             onPress={() => onSelect(d.date)}
-            testID={`tiffin-cal-day-${d.date}`}
+            testID={isToday ? `tiffin-cal-day-${d.date}-today` : `tiffin-cal-day-${d.date}`}
             hitSlop={6}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${d.label} ${d.date.slice(8, 10)}`}
-            // hasMeal before active so selection always wins visually + press works
-            style={[styles.calDay, d.hasMeal && styles.calDayHasMeal, active && styles.calDayActive]}
+            accessibilityLabel={isToday ? `Today ${d.date.slice(8, 10)}` : `${d.label} ${d.date.slice(8, 10)}`}
+            style={[
+              styles.calDay,
+              d.hasMeal && styles.calDayHasMeal,
+              isToday && !active && styles.calDayToday,
+              active && styles.calDayActive,
+            ]}
           >
-            <Text style={[styles.calDayLabel, active && styles.calDayLabelActive]}>{d.label}</Text>
-            <Text style={[styles.calDayNum, active && styles.calDayLabelActive]}>
-              {d.date.slice(8, 10)}
+            <Text
+              style={[
+                styles.calDayLabel,
+                isToday && !active && styles.calDayLabelToday,
+                active && styles.calDayLabelActive,
+              ]}
+            >
+              {isToday ? 'Today' : d.label}
             </Text>
+            <Text style={[styles.calDayNum, active && styles.calDayLabelActive]}>{d.date.slice(8, 10)}</Text>
+            {d.hasMeal ? (
+              <View
+                style={[
+                  styles.calMealDot,
+                  active ? styles.calMealDotActive : isToday ? styles.calMealDotToday : styles.calMealDotDefault,
+                ]}
+              />
+            ) : isToday && !active ? (
+              <View style={styles.calTodayDot} />
+            ) : null}
           </Pressable>
         );
       })}
@@ -1115,11 +1156,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: gourmeatColors.border,
   },
+  calDayToday: {
+    backgroundColor: shcColors.bentoMint,
+    borderWidth: 2,
+    borderColor: shcColors.success,
+  },
   calDayActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
   calDayHasMeal: { borderColor: gourmeatColors.primary },
   calDayLabel: { fontSize: 10, fontWeight: '700', color: gourmeatColors.textLight },
+  calDayLabelToday: { color: shcColors.success, fontWeight: '800' },
   calDayLabelActive: { color: '#fff' },
   calDayNum: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginTop: 2 },
+  calMealDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 4,
+  },
+  calMealDotDefault: { backgroundColor: gourmeatColors.primary },
+  calMealDotToday: { backgroundColor: shcColors.success },
+  calMealDotActive: { backgroundColor: '#fff' },
+  calTodayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 4,
+    backgroundColor: shcColors.success,
+  },
   orderStatusCard: {
     backgroundColor: gourmeatColors.surface,
     borderRadius: gourmeatRadii.lg,
@@ -1170,7 +1233,6 @@ const styles = StyleSheet.create({
     backgroundColor: gourmeatColors.primary,
     borderRadius: gourmeatRadii.lg,
     padding: shcSpacing.lg,
-    marginBottom: shcSpacing.md,
     ...gourmeatShadows.soft,
   },
   heroTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
@@ -1191,12 +1253,12 @@ const styles = StyleSheet.create({
   filterChipTextActive: { color: '#fff' },
   sectionEyebrow: {
     fontSize: 12,
+    lineHeight: 12,
     fontWeight: '700',
     color: gourmeatColors.textLight,
-    marginBottom: shcSpacing.sm,
     textAlign: 'center',
   },
-  catRow: { gap: 14, paddingBottom: shcSpacing.md },
+  catRow: { gap: 14 },
   catItem: { alignItems: 'center', width: 72 },
   catCircle: {
     width: 64,
@@ -1211,7 +1273,13 @@ const styles = StyleSheet.create({
   },
   catCircleActive: { borderColor: gourmeatColors.primary, borderWidth: 2 },
   catEmoji: { fontSize: 28 },
-  catLabel: { fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 6, textAlign: 'center' },
+  catLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    textAlign: 'center',
+  },
   catLabelActive: { color: gourmeatColors.primary, fontWeight: '800' },
   kitchenCardFeatured: {
     backgroundColor: gourmeatColors.surface,
@@ -1414,7 +1482,13 @@ const styles = StyleSheet.create({
   },
   dishChipSelected: { borderColor: gourmeatColors.primary },
   dishChipImage: { width: '100%', height: 72, borderRadius: gourmeatRadii.sm },
-  dishChipName: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text, marginTop: 6 },
+  dishChipName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: gourmeatColors.text,
+    marginTop: shcSpacing.categoryStackGap,
+    lineHeight: 14,
+  },
   dishChipPrice: { fontSize: 11, color: gourmeatColors.primary, fontWeight: '700', marginTop: 2 },
   dayRow: {
     flexDirection: 'row',

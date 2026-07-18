@@ -37,6 +37,7 @@ import {
   shcRadii,
   shcShadows,
   DirectionalTabScreen,
+  contentPadForTabBar,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -463,8 +464,7 @@ export default function CookListings() {
       heritage_note: heritage,
     };
 
-    input.image_url =
-      listingImageUrl || `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`;
+    input.image_url = listingImageUrl || getDishImageUrl({ name, cuisine });
 
     if (aiCal) {
       input.calories = aiCal.calories;
@@ -498,7 +498,7 @@ export default function CookListings() {
     <ScrollView
       ref={scrollRef}
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
       keyboardShouldPersistTaps="handled"
       testID="cook-listings-screen"
     >
@@ -659,7 +659,9 @@ export default function CookListings() {
             </Text>
             {listingImageUrl ? (
               <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
-            ) : null}
+            ) : (
+              <SHCFoodImage uri={previewImage} height={140} rounded={shcRadii.md} testID="listing-photo-preview" />
+            )}
             <View style={styles.photoActions}>
               <SHCButton
                 variant="outline"

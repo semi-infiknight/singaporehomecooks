@@ -1,12 +1,20 @@
-# Cook app — fulfil latest paid order (run after customer full-order-fulfil.yaml)
+# Cook app — accept paid order (run after customer full-order-fulfil.yaml)
+# Demo cook rose@shc.local owns dish_nasi_lemak_prawn_001 on Railway seed.
 appId: com.singaporehomecooks.cook
 ---
 - launchApp:
     clearState: true
     clearKeychain: true
 - extendedWaitUntil:
-    visible: "Sign in as cook"
+    visible: "SHC Cook Portal"
     timeout: 90000
+- tapOn:
+    id: "auth-email-input"
+- inputText: "rose@shc.local"
+- tapOn:
+    id: "auth-password-input"
+- inputText: "cooksecret"
+- tapOn: "SHC Cook Portal"
 - tapOn:
     id: "auth-submit-btn"
 - tapOn:
@@ -14,10 +22,40 @@ appId: com.singaporehomecooks.cook
     optional: true
 - runFlow:
     when:
-      visible: "Welcome, home cook"
+      visible:
+        id: "cook-onboarding-screen"
     commands:
       - tapOn:
+          id: "cook-onboarding-next-btn"
+      - tapOn:
+          id: "cook-onboarding-story-input"
+      - inputText: "Railway E2E kitchen"
+      - tapOn: "Your heritage story"
+      - tapOn:
+          id: "cook-onboarding-next-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "cook-onboarding-collection-input"
+          timeout: 15000
+      - tapOn:
+          id: "cook-onboarding-collection-input"
+      - inputText: "Block 123 lift lobby"
+      - tapOn: "Collection instructions"
+      - tapOn:
+          id: "cook-onboarding-next-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "cook-onboarding-pdpa-checkbox"
+          timeout: 15000
+      - tapOn:
+          id: "cook-onboarding-pdpa-checkbox"
+      - tapOn:
           id: "cook-onboarding-finish-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 90000
+    optional: true
 - openLink: shc-cook:///(cook)/orders
 - tapOn:
     text: "Open"
@@ -26,25 +64,28 @@ appId: com.singaporehomecooks.cook
     visible:
       id: "cook-orders-screen"
     timeout: 90000
-- tapOn:
-    text: "Accept"
+- extendedWaitUntil:
+    visible: "Nasi Lemak Sambal Prawn"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      text: "Nasi Lemak Sambal Prawn"
+    direction: DOWN
+    timeout: 30000
     optional: true
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-accepted"
+    direction: DOWN
+    timeout: 120000
 - tapOn:
-    text: "Prepare"
-    optional: true
-- tapOn:
-    text: "Ready for Collection"
-    optional: true
-- tapOn:
-    text: "Collected"
-    optional: true
-- openLink: shc-cook:///(cook)/earnings
-- tapOn:
-    text: "Open"
-    optional: true
+    id: "cook-order-.*-action-accepted"
 - extendedWaitUntil:
     visible:
-      id: "cook-earnings-screen"
-    timeout: 30000
+      id: "cook-order-.*-action-preparing"
+    timeout: 120000
+- tapOn:
+    id: "cook-order-.*-action-preparing"
+    optional: true
 - assertVisible:
-    id: "cook-earnings-screen"
+    id: "cook-orders-screen"

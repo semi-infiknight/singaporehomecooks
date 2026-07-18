@@ -11,8 +11,6 @@ import { useAuth } from '../lib/useAuth';
 import { useDiscoverSearch } from './providers';
 import {
   extractReorderDishes,
-  getActiveOrders,
-  getOrderStatusLabel,
   favoritesToReorderDishes,
   getOccasionImageUrl,
   getCookAvatarUrl,
@@ -39,7 +37,6 @@ import {
   SHCSkeletonKitchenList,
   SHCEmptyState,
   GuestBrowseBar,
-  ActiveOrderBanner,
   ZomatoDishRowRail,
   GourmeatHomeHeader,
   GourmeatSearchBar,
@@ -97,8 +94,6 @@ export default function DiscoverHome() {
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const addMut = useAddToCart();
-  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
-
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
   const productList = useMemo(
     () => resolveDiscoverProductsForDisplay(productListRaw as DishCardProduct[], { evidence: evidenceMode }),
@@ -192,7 +187,7 @@ export default function DiscoverHome() {
   return (
     <section
       id="discover"
-      className="max-w-6xl mx-auto px-4 py-4 md:py-6 pb-28 md:pb-8"
+      className="max-w-6xl mx-auto px-4 py-4 md:py-6 shc-tab-bar-pad md:pb-8"
       data-testid="customer-discover-screen discover-home"
     >
       {/* Mobile chrome — desktop uses AppHeader */}
@@ -233,7 +228,7 @@ export default function DiscoverHome() {
 
       {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
       {!query.trim() && !promoDismissed && (
-        <div className="relative mb-4" data-testid="home-tiffin-promo">
+        <div className="relative" data-testid="home-tiffin-promo">
           <button
             type="button"
             onClick={() => setPromoDismissed(true)}
@@ -260,40 +255,20 @@ export default function DiscoverHome() {
         </div>
       )}
 
-      {activeOrder && (
-        <div className="mb-3">
-          <ActiveOrderBanner
-            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
-            dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
-            collectionLabel={
-              activeOrder.collection_date
-                ? `${activeOrder.collection_date} ${activeOrder.collection_slot || ''}`
-                : undefined
-            }
-            href={`/orders/${activeOrder.id}`}
-          />
-        </div>
-      )}
-
       {/* ② Explore by categories — cuisine */}
       {!query.trim() && (
-        <>
-          <p className="text-xs font-bold text-muted-foreground text-center mb-1">Explore by categories</p>
-          <div className="shc-section-gap mb-4">
-            <GourmeatCategoryRow
-              items={cuisineItems}
-              active={cuisineFilter}
-              onSelect={(id) => {
-                setCuisineFilter(id);
-                // Dedicated category page (HomelyEats Explore category) — not only in-place filter
-                if (id) {
-                  router.push(`/category/${encodeURIComponent(id)}`);
-                }
-              }}
-              testID="cuisine-gourmeat-row"
-            />
-          </div>
-        </>
+        <GourmeatCategoryRow
+          title="Explore by categories"
+          items={cuisineItems}
+          active={cuisineFilter}
+          onSelect={(id) => {
+            setCuisineFilter(id);
+            if (id) {
+              router.push(`/category/${encodeURIComponent(id)}`);
+            }
+          }}
+          testID="cuisine-gourmeat-row"
+        />
       )}
 
       {/* ③ Most popular — one meal / event order modes */}

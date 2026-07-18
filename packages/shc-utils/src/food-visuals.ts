@@ -1,25 +1,44 @@
 /** Platform-agnostic food imagery — used by web + both mobile apps. */
 
+/** Verified Unsplash photo IDs (404-checked 2026-07). Do not swap without re-checking GET. */
+const PHOTOS = {
+  all: 'photo-1414235077428-338989a2e8c0',
+  spread: 'photo-1544025162-d76694265947',
+  curry: 'photo-1596797038530-2c107229654b',
+  riceBowl: 'photo-1585937421612-70a008356fbe',
+  malay: 'photo-1563245372-f21724e3856d',
+  chinese: 'photo-1498654896293-37aacf113fd9',
+  salad: 'photo-1540189549336-e6e99c3679fe',
+  grill: 'photo-1555939594-58d7cb561ad1',
+  pizza: 'photo-1565299624946-b28f40a0ae38',
+  kitchen: 'photo-1556911220-bff31c812dba',
+  family: 'photo-1556910103-1c02745aae4d',
+  restaurant: 'photo-1414235077428-338989a2e8c0',
+  brunch: 'photo-1504674900247-0877df9cc836',
+  birthday: 'photo-1578985545062-69928b1d9587',
+  pancakes: 'photo-1567620905732-2d1ec7ab7445',
+} as const;
+
 const img = (photoId: string, w = 800) =>
   `https://images.unsplash.com/${photoId}?w=${w}&q=80&auto=format&fit=crop`;
 
 export const DISH_IMAGE_BY_ID: Record<string, string> = {
-  dish_nasi_lemak_sambal_prawn_001: img('photo-1512058564366-7f7d7ae6d47d', 900),
-  dish_ayam_buah_keluak_002: img('photo-1585937421612-70a008356fbe', 900),
-  dish_devils_curry_003: img('photo-1596797038530-2c107229654b', 900),
+  dish_nasi_lemak_sambal_prawn_001: img(PHOTOS.riceBowl, 900),
+  dish_ayam_buah_keluak_002: img(PHOTOS.curry, 900),
+  dish_devils_curry_003: img(PHOTOS.curry, 900),
 };
 
 export const CUISINE_IMAGE: Record<string, string> = {
-  Peranakan: img('photo-1603133872878-684f208fb84a', 800),
-  Eurasian: img('photo-1596797038530-2c107229654b', 800),
-  Malay: img('photo-1563245372-f21724e3856d', 800),
-  Chinese: img('photo-1525755662778-989dcdf1cd25', 800),
-  Indian: img('photo-1589302168064-964664aafa85', 800),
+  Peranakan: img(PHOTOS.curry, 800),
+  Eurasian: img(PHOTOS.grill, 800),
+  Malay: img(PHOTOS.malay, 800),
+  Chinese: img(PHOTOS.chinese, 800),
+  Indian: img(PHOTOS.riceBowl, 800),
 };
 
 /** Zomato "What's on your mind?" cuisine circles — heritage SG kitchens */
 export const MIND_CUISINE_CATEGORIES: Array<{ id: string; label: string; imageUrl: string }> = [
-  { id: '', label: 'All', imageUrl: img('photo-1546069901-ba9599a1e63c', 400) },
+  { id: '', label: 'All', imageUrl: img(PHOTOS.all, 400) },
   { id: 'Peranakan', label: 'Nyonya', imageUrl: CUISINE_IMAGE.Peranakan },
   { id: 'Malay', label: 'Malay', imageUrl: CUISINE_IMAGE.Malay },
   { id: 'Chinese', label: 'Chinese', imageUrl: CUISINE_IMAGE.Chinese },
@@ -27,18 +46,18 @@ export const MIND_CUISINE_CATEGORIES: Array<{ id: string; label: string; imageUr
   { id: 'Eurasian', label: 'Eurasian', imageUrl: CUISINE_IMAGE.Eurasian },
 ];
 
-export const COOK_KITCHEN_HERO = img('photo-1556911220-bff31c812dba', 900);
+export const COOK_KITCHEN_HERO = img(PHOTOS.kitchen, 900);
 export const COLLECTION_SLOT_LABELS = ['Sat 6pm', 'Sun 12pm', 'Fri 7pm', 'Collect HDB'];
 
 export const OCCASION_IMAGE: Record<string, string> = {
-  '': img('photo-1546069901-ba9599a1e63c', 400),
-  'Hari Raya': img('photo-1544025162-d76694265947', 400),
-  Deepavali: img('photo-1589302168064-964664aafa85', 400),
-  'Chinese New Year': img('photo-1525755662778-989dcdf1cd25', 400),
-  'Family Gathering': img('photo-1556910103-1c02745aae4d', 400),
-  Birthday: img('photo-1578985545062-69928b1d9587', 400),
-  Wedding: img('photo-1464349095439-9a172c786ab5', 400),
-  Christmas: img('photo-1482049016688-a3be451caed7', 400),
+  '': img(PHOTOS.all, 400),
+  'Hari Raya': img(PHOTOS.spread, 400),
+  Deepavali: img(PHOTOS.riceBowl, 400),
+  'Chinese New Year': img(PHOTOS.chinese, 400),
+  'Family Gathering': img(PHOTOS.family, 400),
+  Birthday: img(PHOTOS.birthday, 400),
+  Wedding: img(PHOTOS.family, 400),
+  Christmas: img(PHOTOS.spread, 400),
 };
 
 export const OCCASION_EMOJI: Record<string, string> = {
@@ -53,23 +72,23 @@ export const OCCASION_EMOJI: Record<string, string> = {
 };
 
 export const BENTO_ACTION_IMAGES = {
-  cart: img('photo-1546069901-ba9599a1e63c', 500),
-  checkout: img('photo-1414235077428-338989a2e8c0', 500),
-  orders: img('photo-1414235077428-338989a2e8c0', 500),
-  credits: img('photo-1504674900247-0877df9cc836', 500),
-  request: img('photo-1555939594-58d7cb561ad1', 500),
-  listings: img('photo-1556911220-bff31c812dba', 500),
-  earnings: img('photo-1504674900247-0877df9cc836', 500),
-  compliance: img('photo-1556911220-e6b0d55b4e0c', 500),
+  cart: img(PHOTOS.pizza, 500),
+  checkout: img(PHOTOS.restaurant, 500),
+  orders: img(PHOTOS.restaurant, 500),
+  credits: img(PHOTOS.brunch, 500),
+  request: img(PHOTOS.grill, 500),
+  listings: img(PHOTOS.kitchen, 500),
+  earnings: img(PHOTOS.brunch, 500),
+  compliance: img(PHOTOS.kitchen, 500),
 } as const;
 
 /** Zomato-style horizontal promo banner backgrounds */
 export const PROMO_BANNER_IMAGES = {
-  hariRaya: img('photo-1544025162-d76694265947', 640),
-  credits: img('photo-1504674900247-0877df9cc836', 640),
-  newCook: img('photo-1556911220-bff31c812dba', 640),
-  family: img('photo-1556910103-1c02745aae4d', 640),
-  paynow: img('photo-1414235077428-338989a2e8c0', 640),
+  hariRaya: img(PHOTOS.spread, 640),
+  credits: img(PHOTOS.brunch, 640),
+  newCook: img(PHOTOS.kitchen, 640),
+  family: img(PHOTOS.family, 640),
+  paynow: img(PHOTOS.restaurant, 640),
 } as const;
 
 export type PromoBannerKey = keyof typeof PROMO_BANNER_IMAGES;
@@ -88,7 +107,16 @@ export const DEFAULT_PROMOS: Array<{
   { id: 'promo-paynow', title: 'PayNow checkout', subtitle: 'Instant confirmation', imageKey: 'paynow' },
 ];
 
-const DEFAULT_DISH = img('photo-1563245372-f21724e3856d', 900);
+const DEFAULT_DISH = img(PHOTOS.malay, 900);
+
+export function resolveImageUrl(url?: string | null): string | undefined {
+  const trimmed = url?.trim();
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return undefined;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+    return trimmed;
+  }
+  return undefined;
+}
 
 export function getDishImageUrl(opts: {
   id?: string;
@@ -96,7 +124,8 @@ export function getDishImageUrl(opts: {
   name?: string;
   image_url?: string | null;
 }): string {
-  if (opts.image_url) return opts.image_url;
+  const resolved = resolveImageUrl(opts.image_url);
+  if (resolved) return resolved;
   if (opts.id && DISH_IMAGE_BY_ID[opts.id]) return DISH_IMAGE_BY_ID[opts.id];
   const lower = (opts.name || '').toLowerCase();
   if (lower.includes('nasi') || lower.includes('lemak')) return DISH_IMAGE_BY_ID.dish_nasi_lemak_sambal_prawn_001;
@@ -104,6 +133,21 @@ export function getDishImageUrl(opts: {
   if (lower.includes('curry') || lower.includes('devil')) return DISH_IMAGE_BY_ID.dish_devils_curry_003;
   if (opts.cuisine && CUISINE_IMAGE[opts.cuisine]) return CUISINE_IMAGE[opts.cuisine];
   return DEFAULT_DISH;
+}
+
+/** Cooking-soon batch / drop card imagery */
+export function getDropImageUrl(opts: {
+  title?: string;
+  image_url?: string | null;
+  cook_id?: string;
+  cuisine?: string;
+}): string {
+  return getDishImageUrl({
+    id: opts.cook_id,
+    name: opts.title,
+    cuisine: opts.cuisine,
+    image_url: opts.image_url,
+  });
 }
 
 export function getOccasionImageUrl(occasion: string): string {
@@ -120,9 +164,9 @@ export function getCookKitchenHeroUrl(cookId?: string): string {
   const n = cookId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   const heroes = [
     COOK_KITCHEN_HERO,
-    img('photo-1556910103-1c02745aae4d', 900),
-    img('photo-1414235077428-338989a2e8c0', 900),
-    img('photo-1504674900247-0877df9cc836', 900),
+    img(PHOTOS.family, 900),
+    img(PHOTOS.restaurant, 900),
+    img(PHOTOS.brunch, 900),
   ];
   return heroes[n % heroes.length];
 }

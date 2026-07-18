@@ -9,8 +9,10 @@ appId: com.singaporehomecooks.customer
     visible:
       id: "customer-discover-screen"
     timeout: 120000
+- openLink: shc-customer:///(shared)/auth
 - tapOn:
-    id: "guest-browse-bar"
+    text: "Open"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "auth-submit-btn"
@@ -20,27 +22,96 @@ appId: com.singaporehomecooks.customer
 - tapOn:
     text: "OK"
     optional: true
-- openLink: shc-customer:///(customer)/product/dish_nasi_lemak_prawn_001
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- openLink: shc-customer:///(customer)/cart
+- tapOn:
+    text: "Open"
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "cart-item-0"
+    commands:
+      - tapOn: "Clear cart"
+      - extendedWaitUntil:
+          visible: "Cart is empty"
+          timeout: 30000
+- openLink: shc-customer:///(customer)/product/dish_nasi_lemak_prawn_001?allergenAck=1
 - tapOn:
     text: "Open"
     optional: true
 - extendedWaitUntil:
     visible: "Nasi Lemak Sambal Prawn"
     timeout: 30000
-- scrollUntilVisible:
-    element:
-      id: "add-to-cart-btn"
-    direction: DOWN
+- extendedWaitUntil:
+    visible:
+      id: "pdp-sticky-ready"
     timeout: 30000
 - tapOn:
-    id: "allergen-ack"
-- hideKeyboard
-- tapOn:
     id: "add-to-cart-btn"
+- runFlow:
+    when:
+      visible: "Sign in to order"
+    commands:
+      - tapOn: "Sign in"
+      - extendedWaitUntil:
+          visible:
+            id: "auth-submit-btn"
+          timeout: 30000
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+      - openLink: shc-customer:///(customer)/product/dish_nasi_lemak_prawn_001?allergenAck=1
+      - tapOn:
+          text: "Open"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "pdp-sticky-ready"
+          timeout: 30000
+      - tapOn:
+          id: "add-to-cart-btn"
+- extendedWaitUntil:
+    visible:
+      id: "add-to-cart-success"
+    timeout: 5000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cart-screen"
+    timeout: 120000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cart-item-0"
+    timeout: 120000
+    optional: true
+- openLink: shc-customer:///(customer)/cart
+- tapOn:
+    text: "Open"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "cart-screen"
     timeout: 90000
+- extendedWaitUntil:
+    visible:
+      id: "cart-item-0"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "proceed-checkout"
+    direction: DOWN
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "proceed-checkout"
+    timeout: 30000
 - tapOn:
     id: "proceed-checkout"
 - extendedWaitUntil:
@@ -49,22 +120,24 @@ appId: com.singaporehomecooks.customer
     timeout: 30000
 - scrollUntilVisible:
     element:
-      id: "collection-slot-picker"
-    direction: DOWN
+      text: ".*18:00-19:00.*"
+    direction: UP
     timeout: 20000
-- tapOn:
-    id: "collection-slot-picker"
     optional: true
+- scrollUntilVisible:
+    element:
+      text: ".*18:00-19:00.*"
+    direction: DOWN
+    timeout: 45000
 - tapOn:
-    text: ".*Singapore time"
-    optional: true
+    id: "slot-.*-18:00-19:00"
 - scrollUntilVisible:
     element:
       id: "allergen-ack"
     direction: DOWN
     timeout: 20000
 - tapOn:
-    id: "allergen-ack"
+    text: ".*MANDATORY ALLERGEN.*"
 - scrollUntilVisible:
     element:
       id: "pdpa-consent"
@@ -73,15 +146,40 @@ appId: com.singaporehomecooks.customer
 - tapOn:
     id: "pdpa-consent"
 - tapOn:
+    id: "pdpa-consent-box"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "do-checkout"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
     id: "do-checkout"
+- runFlow:
+    when:
+      visible: "Allergen acknowledgment"
+    commands:
+      - tapOn:
+          text: ".*MANDATORY ALLERGEN.*"
+      - tapOn:
+          id: "allergen-tray-confirm"
+      - scrollUntilVisible:
+          element:
+            id: "do-checkout"
+          direction: DOWN
+          timeout: 20000
+      - tapOn:
+          id: "do-checkout"
 - extendedWaitUntil:
     visible:
       id: "paynow-ref-input"
-    timeout: 60000
+    timeout: 120000
 - tapOn:
     id: "paynow-ref-input"
 - inputText: "TEST-REF-123"
-- hideKeyboard
+- tapOn:
+    text: "PayNow"
+    optional: true
 - tapOn:
     id: "confirm-paynow"
 - extendedWaitUntil:

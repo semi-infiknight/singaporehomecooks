@@ -8,7 +8,7 @@ import { ArrowLeft, CheckCircle2, Users, Wallet, Calendar } from 'lucide-react';
 import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
 import { useCreateRequest } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
-import { SHCButton, SHCCard, SHCSectionTitle } from '../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCSectionTitle, SHCSkeletonList } from '../components/SHCWebComponents';
 
 const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'];
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
@@ -23,7 +23,7 @@ function defaultDate() {
 
 export default function RequestDishPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const createReq = useCreateRequest();
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
@@ -40,8 +40,8 @@ export default function RequestDishPage() {
   const [requestDishEnabled, setRequestDishEnabled] = useState(true);
 
   useEffect(() => {
-    if (!user) router.replace('/login?next=/request');
-  }, [user, router]);
+    if (!authLoading && !user) router.replace('/login?next=/request');
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +83,14 @@ export default function RequestDishPage() {
     setRequestId((req as { id?: string })?.id);
     setDone(true);
   };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-10" data-testid="request-page-loading">
+        <SHCSkeletonList count={4} rowHeight={72} />
+      </div>
+    );
+  }
 
   if (!user) return null;
 

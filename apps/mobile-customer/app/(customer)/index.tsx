@@ -18,7 +18,6 @@ import {
   SHCFoodImage,
   SHCSearchResultsPanel,
   SHCGuestBrowseBar,
-  SHCActiveOrderBanner,
   SHCZomatoDishRowRail,
   SHCFilterChipRow,
   SHCPromoRail,
@@ -30,18 +29,19 @@ import {
   SHCSkeletonDishGrid,
   SHCSkeletonCookingSoonRail,
   SHCSkeletonKitchenList,
+  contentPadForTabBar,
 } from '@shc/ui';
 import {
   getOccasionImageUrl,
   BENTO_ACTION_IMAGES,
   PROMO_BANNER_IMAGES,
   getDishImageUrl,
+  getCookKitchenHeroUrl,
+  getDropImageUrl,
   getCookAvatarUrl,
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
   extractReorderDishes,
-  getActiveOrders,
-  getOrderStatusLabel,
   favoritesToReorderDishes,
   sortByCookProximity,
   filterDiscoverProducts,
@@ -77,6 +77,7 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
       id,
       cuisine: product.cuisine ? String(product.cuisine) : undefined,
       name: String(product.name),
+      image_url: product.image_url as string | undefined,
     }),
   };
 }
@@ -141,13 +142,16 @@ export default function CustomerDiscover() {
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const router = useRouter();
 
-  const activeOrder = useMemo(() => getActiveOrders(orders as Record<string, unknown>[])[0], [orders]);
-
   const savedDishes = useMemo(() => {
     if (query.trim()) return [];
     return favoritesToReorderDishes(favorites).map((d) => ({
       ...toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine }),
-      image_url: getDishImageUrl({ id: d.id, name: d.name, cuisine: d.cuisine }),
+      image_url: getDishImageUrl({
+        id: d.id,
+        name: d.name,
+        cuisine: d.cuisine,
+        image_url: (d as { image_url?: string }).image_url,
+      }),
     }));
   }, [favorites, query]);
 
@@ -200,7 +204,12 @@ export default function CustomerDiscover() {
     if (query.trim()) return [];
     return extractReorderDishes(orders as Record<string, unknown>[]).map((d) => ({
       ...toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine }),
-      image_url: getDishImageUrl({ id: d.id, name: d.name, cuisine: d.cuisine }),
+      image_url: getDishImageUrl({
+        id: d.id,
+        name: d.name,
+        cuisine: d.cuisine,
+        image_url: (d as { image_url?: string }).image_url,
+      }),
     }));
   }, [orders, query]);
 
@@ -261,6 +270,7 @@ export default function CustomerDiscover() {
         onChangeText={setQuery}
         placeholder="Search kitchen, dish or cuisine"
         onFilterPress={() => router.push('/(customer)/search' as any)}
+        marginBottom={0}
         testID="search-input"
       />
 
@@ -282,7 +292,7 @@ export default function CustomerDiscover() {
 
       {/* ① Subscription promo only — encourages tiffin; rest of page is one-off / events */}
       {!query && !promoDismissed && (
-        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }} testID="home-tiffin-promo">
+        <View style={{ paddingHorizontal: shcSpacing.md }} testID="home-tiffin-promo">
           <View style={styles.promoWrap}>
             <Pressable onPress={() => setPromoDismissed(true)} style={styles.promoClose} hitSlop={12} testID="home-promo-dismiss">
               <Text style={styles.promoCloseText}>✕</Text>
@@ -302,38 +312,20 @@ export default function CustomerDiscover() {
         </View>
       )}
 
-      {activeOrder && (
-        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
-          <SHCActiveOrderBanner
-            statusLabel={getOrderStatusLabel(String(activeOrder.shc_status || ''))}
-            dishName={String((activeOrder.items as any[])?.[0]?.name || '')}
-            collectionLabel={
-              activeOrder.collection_date
-                ? `${activeOrder.collection_date} ${activeOrder.collection_slot || ''}`
-                : undefined
-            }
-            onPress={() => router.push(`/(customer)/orders/${activeOrder.id}` as any)}
-          />
-        </View>
-      )}
-
       {/* ② Explore by categories — cuisine */}
       {!query && (
-        <>
-          <Text style={styles.sectionEyebrow}>Explore by categories</Text>
-          <GourmeatCategoryRow
-            categories={cuisineCategories}
-            selectedId={cuisineFilter}
-            onSelect={(id) => {
-              setCuisineFilter(id);
-              // Dedicated category page (HomelyEats Explore category) — not only in-place filter
-              if (id) {
-                router.push(`/(customer)/category/${encodeURIComponent(id)}` as any);
-              }
-            }}
-            testID="cuisine-gourmeat-row"
-          />
-        </>
+        <GourmeatCategoryRow
+          title="Explore by categories"
+          categories={cuisineCategories}
+          selectedId={cuisineFilter}
+          onSelect={(id) => {
+            setCuisineFilter(id);
+            if (id) {
+              router.push(`/(customer)/category/${encodeURIComponent(id)}` as any);
+            }
+          }}
+          testID="cuisine-gourmeat-row"
+        />
       )}
 
       {/* ③ Most popular for one meal / event orders */}
@@ -423,9 +415,16 @@ export default function CustomerDiscover() {
                     borderWidth: 2,
                     borderColor: gourmeatColors.border,
                     backgroundColor: gourmeatColors.surface,
-                    padding: 14,
+                    overflow: 'hidden',
                   }}
                 >
+                  <SHCFoodImage
+                    uri={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
+                    height={96}
+                    rounded={0}
+                    testID={`home-drop-img-${d.id}`}
+                  />
+                  <View style={{ padding: 14 }}>
                   <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase' }}>
                     Cooking soon
                   </Text>
@@ -441,6 +440,7 @@ export default function CustomerDiscover() {
                   <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight }}>
                     {d.remaining_qty ?? 0} left · by {formatDropOrderBy(d.order_by)}
                   </Text>
+                  </View>
                 </Pressable>
               ))}
             </ScrollView>
@@ -502,6 +502,7 @@ export default function CustomerDiscover() {
                     rating={c.rating != null ? Number(c.rating) : 4.8}
                     reviewCount={c.review_count}
                     subscriberCount={c.subscriber_count}
+                    coverUri={getCookKitchenHeroUrl(c.id || c.slug)}
                     isOpen
                     closesAt="HDB collection"
                     onPress={() => {
@@ -556,7 +557,7 @@ export default function CustomerDiscover() {
           numColumns={2}
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: contentPadForTabBar(insets.bottom) }]}
           testID="dish-list-container"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={gourmeatColors.primary} />
@@ -573,7 +574,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   list: { flex: 1 },
   searchOverlay: { zIndex: 20, elevation: 12 },
-  listContent: { paddingHorizontal: shcSpacing.md, paddingBottom: 120 },
+  listContent: { paddingHorizontal: shcSpacing.md },
   loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
@@ -600,13 +601,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   promoCloseText: { color: '#fff', fontWeight: '800', fontSize: 12 },
-  sectionEyebrow: {
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '700',
-    color: gourmeatColors.textLight,
-    marginBottom: 4,
-  },
   gridHint: {
     paddingHorizontal: shcSpacing.md,
     fontSize: 12,

@@ -6,20 +6,20 @@ import {
   SHCCard,
   SHCButton,
   SHCButtonText,
-  WalletCard,
   SHCVisualBentoTile,
   SHCIcon,
-  SHCBadge,
   shcSpacing,
   shcBorders,
   shcRadii,
   GourmeatScreenHeader,
-  SHCHeritageStoryBanner,
   DirectionalTabScreen,
+  SHCSkeletonAccountScreen,
+  contentPadForTabBar,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
   favoritesToReorderDishes,
+  getDishImageUrl,
   accountMenuItemsSignedIn,
   accountMenuItemsGuest,
   orderIdFromNotificationType,
@@ -28,8 +28,7 @@ import { useFavorites } from '../../../hooks/useFavorites';
 import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
-import { useCredits, useRedeemCredits } from '../../../hooks/useProducts';
-import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../../hooks/useOrder';
+import { useNotifications } from '../../../hooks/useOrder';
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
@@ -37,52 +36,12 @@ const QUICK_TILES = [
   { iconKey: 'search' as const, label: 'Search', image: BENTO_ACTION_IMAGES.request, href: '/(customer)/search', testID: 'profile-search-tile' },
 ];
 
-function MyRequestCard({ request }: { request: any }) {
-  const { data: bids = [] } = useBids(request.id);
-  const acceptBid = useAcceptBid();
-  const pendingBids = bids.filter((bid: any) => bid.status === 'pending');
-
-  return (
-    <SHCCard style={styles.requestCard}>
-      <View style={styles.requestHeader}>
-        <Text style={styles.requestTitle} numberOfLines={2}>{request.body}</Text>
-        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>{request.status}</SHCBadge>
-      </View>
-      <Text style={styles.requestMeta}>
-        {request.party_size ? `${request.party_size} pax · ` : ''}{request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : 'Open budget'}
-      </Text>
-      {pendingBids.length === 0 && <Text style={styles.requestEmpty}>No pending bids yet. Cooks will respond from their dashboard.</Text>}
-      {pendingBids.map((bid: any) => (
-        <View key={bid.id} style={styles.bidRow}>
-          <View style={styles.bidInfo}>
-            <Text style={styles.bidPrice}>S${Math.round((bid.price_cents || 0) / 100)}</Text>
-            {!!bid.message && <Text style={styles.bidMessage} numberOfLines={2}>{bid.message}</Text>}
-          </View>
-          <SHCButton
-            onPress={() => acceptBid.mutate(bid.id)}
-            disabled={acceptBid.isPending}
-            style={styles.acceptBidBtn}
-            testID={`accept-bid-${bid.id}`}
-          >
-            <SHCButtonText>Accept</SHCButtonText>
-          </SHCButton>
-        </View>
-      ))}
-    </SHCCard>
-  );
-}
-
 export default function Profile() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { showRequest } = useLocalSearchParams<{ showRequest?: string }>();
-  const { user, logout } = useAuth();
-  const { data: credits } = useCredits() as {
-    data?: { balance?: number; lifetimeSpend?: number; tier?: string };
-  };
-  const redeemMut = useRedeemCredits();
+  const { user, logout, loading: authLoading } = useAuth();
   const { data: notifs = [], markRead } = useNotifications();
-  const { data: myRequests = [] } = useMyRequests();
   const { favorites } = useFavorites();
   const savedDishes = favoritesToReorderDishes(favorites);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -93,14 +52,66 @@ export default function Profile() {
     }
   }, [showRequest, router]);
 
-  const bal = credits?.balance ?? 0;
-  const spend = credits?.lifetimeSpend ?? 0;
-  const tier = credits?.tier ?? 'Bronze';
+  const guestProfile = (
+    <>
+      <GourmeatScreenHeader title="Account" subtitle="Sign in for orders and account tools" />
+      <SHCCard variant="bento-peach" style={styles.trustCard} testID="guest-profile-gate">
+        <SHCIcon name="profile" size={28} color={shcColors.primary} active />
+        <Text style={styles.trustTitle}>You are exploring freely</Text>
+        <Text style={styles.trustBody}>
+          Discover kitchens and dishes on Home. Orders and account tools only appear after you sign in.
+        </Text>
+      </SHCCard>
+      <SHCButton
+        style={styles.actionBtn}
+        onPress={() => router.push('/(shared)/auth' as any)}
+        testID="guest-profile-signin"
+      >
+        <SHCButtonText>Sign Up / Log In</SHCButtonText>
+      </SHCButton>
+      <View style={styles.accountMenu} testID="account-menu-list">
+      {accountMenuItemsGuest()
+        .filter((i) => i.id !== 'login')
+        .map((item) => (
+          <Pressable
+            key={item.id}
+            style={styles.accountMenuRow}
+            onPress={() => {
+              if (item.id === 'browse') router.replace('/(customer)' as any);
+              else if (item.id === 'tiffin') router.push('/(customer)/tiffin' as any);
+            }}
+            testID={item.testID}
+          >
+            <Text style={styles.accountMenuLabel}>{item.label}</Text>
+            <Text style={styles.accountMenuChevron}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+    </>
+  );
 
   const handleLogout = async () => {
     await logout();
     router.replace('/(shared)/auth');
   };
+
+  if (authLoading) {
+    return (
+      <DirectionalTabScreen testID="profile-tab-scene">
+        <View style={styles.screen} testID="customer-profile-screen">
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={[
+              styles.content,
+              { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) },
+            ]}
+          >
+            <SHCSkeletonAccountScreen />
+          </ScrollView>
+        </View>
+      </DirectionalTabScreen>
+    );
+  }
 
   // Guest browse: no wallet / orders / logout — sign in or keep exploring home
   if (!user) {
@@ -111,46 +122,10 @@ export default function Profile() {
             style={{ flex: 1 }}
             contentContainerStyle={[
               styles.content,
-              { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 },
+              { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) },
             ]}
           >
-            <GourmeatScreenHeader
-              title="Account"
-              subtitle="Sign in for orders, credits, and wallet"
-            />
-            <SHCCard variant="bento-peach" style={styles.trustCard} testID="guest-profile-gate">
-              <SHCIcon name="profile" size={28} color={shcColors.primary} active />
-              <Text style={styles.trustTitle}>You are exploring freely</Text>
-              <Text style={styles.trustBody}>
-                Discover kitchens and dishes on Home. Wallet, orders, and logout only appear after you sign in.
-              </Text>
-            </SHCCard>
-            <SHCButton
-              style={styles.actionBtn}
-              onPress={() => router.push('/(shared)/auth' as any)}
-              testID="guest-profile-signin"
-            >
-              <SHCButtonText>Sign Up / Log In</SHCButtonText>
-            </SHCButton>
-            <View style={styles.accountMenu} testID="account-menu-list">
-              {accountMenuItemsGuest()
-                .filter((i) => i.id !== 'login')
-                .map((item) => (
-                  <Pressable
-                    key={item.id}
-                    style={styles.accountMenuRow}
-                    onPress={() => {
-                      if (item.id === 'browse') router.replace('/(customer)' as any);
-                      else if (item.id === 'tiffin') router.push('/(customer)/tiffin' as any);
-                      else if (item.id === 'support') router.push('/(shared)/onboarding' as any);
-                    }}
-                    testID={item.testID}
-                  >
-                    <Text style={styles.accountMenuLabel}>{item.label}</Text>
-                    <Text style={styles.accountMenuChevron}>›</Text>
-                  </Pressable>
-                ))}
-            </View>
+            {guestProfile}
           </ScrollView>
         </View>
       </DirectionalTabScreen>
@@ -163,13 +138,13 @@ export default function Profile() {
     <View style={styles.screen} testID="customer-profile-screen">
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
     >
       <View style={styles.headerRow}>
         <View style={styles.heroWrap}>
           <GourmeatScreenHeader
             title="Account"
-            subtitle={`${user.name || 'You'} · ${tier} tier`}
+            subtitle={user.name || 'You'}
           />
         </View>
         <Pressable
@@ -205,9 +180,7 @@ export default function Profile() {
                 subscriptions: '/(customer)/tiffin/subscriptions',
                 orders: '/(customer)/orders',
                 address: '/(customer)/location',
-                credits: '/(customer)/profile',
                 requests: '/(customer)/request',
-                support: '/(shared)/onboarding',
               };
               router.push((map[item.id] || '/(customer)/profile') as any);
             }}
@@ -233,38 +206,7 @@ export default function Profile() {
             </Link>
           </View>
         ))}
-        <View style={styles.tileCol}>
-          <SHCVisualBentoTile
-            imageUri={BENTO_ACTION_IMAGES.credits}
-            iconKey="credits"
-            label={`${bal} Credits`}
-            variant="bento-yellow"
-            testID="profile-credits-tile"
-          />
-        </View>
       </View>
-
-      <SHCHeritageStoryBanner
-        imageUri={BENTO_ACTION_IMAGES.compliance}
-        onPress={() => router.push('/(shared)/onboarding' as any)}
-      />
-
-      <WalletCard
-        balance={bal}
-        lifetimeSpend={spend}
-        redeemable={Math.min(80, bal)}
-        onRedeem={(amt) => redeemMut.mutate(amt)}
-      />
-
-      {myRequests.length > 0 && (
-        <View style={styles.requestsSection} testID="my-requests-panel">
-          <Text style={styles.savedTitle}>My requests</Text>
-          <Text style={styles.savedSub}>Review cook bids and accept one to create your order.</Text>
-          {myRequests.map((request: any) => (
-            <MyRequestCard key={request.id} request={request} />
-          ))}
-        </View>
-      )}
 
       {savedDishes.length > 0 && (
         <View style={{ marginTop: shcSpacing.md }}>
@@ -278,6 +220,7 @@ export default function Profile() {
               cook_name: d.cook_name || '',
               price: d.price,
               cuisine: d.cuisine,
+              image_url: getDishImageUrl({ id: d.id, name: d.name, cuisine: d.cuisine }),
             }))}
             onDishPress={(id) => router.push(`/(customer)/product/${id}` as any)}
             testID="profile-saved-rail"
@@ -299,11 +242,6 @@ export default function Profile() {
       <Link href="/(customer)/tiffin/subscriptions" asChild>
         <SHCButton variant="outline" style={styles.actionBtn} testID="profile-subscriptions-link">
           <SHCButtonText variant="outline">My Subscriptions</SHCButtonText>
-        </SHCButton>
-      </Link>
-      <Link href="/(shared)/onboarding" asChild>
-        <SHCButton variant="outline" style={styles.actionBtn} testID="trust-safety-link">
-          <SHCButtonText variant="outline">Trust & Safety</SHCButtonText>
         </SHCButton>
       </Link>
       <Link href="/(customer)/search" asChild>
@@ -404,25 +342,6 @@ const styles = StyleSheet.create({
   accountMenuLabel: { fontSize: 14, fontWeight: '700', color: shcColors.text },
   accountMenuChevron: { fontSize: 18, fontWeight: '300', color: shcColors.textLight },
   trustCard: { marginTop: shcSpacing.md, alignItems: 'center' },
-  requestsSection: { marginTop: shcSpacing.md },
-  requestCard: { marginTop: shcSpacing.sm },
-  requestHeader: { flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'flex-start' },
-  requestTitle: { flex: 1, fontSize: 14, fontWeight: '800', color: shcColors.text },
-  requestMeta: { marginTop: 4, fontSize: 12, color: shcColors.textLight, fontWeight: '600' },
-  requestEmpty: { marginTop: shcSpacing.sm, fontSize: 12, color: shcColors.textLight },
-  bidRow: {
-    marginTop: shcSpacing.sm,
-    paddingTop: shcSpacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: shcColors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: shcSpacing.sm,
-  },
-  bidInfo: { flex: 1 },
-  bidPrice: { fontSize: 14, fontWeight: '900', color: shcColors.primary },
-  bidMessage: { marginTop: 2, fontSize: 12, color: shcColors.textLight },
-  acceptBidBtn: { paddingHorizontal: shcSpacing.sm },
   savedTitle: { fontSize: 16, fontWeight: '900', color: shcColors.text },
   savedSub: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
   trustTitle: { fontWeight: '800', color: shcColors.primary, marginTop: 4 },

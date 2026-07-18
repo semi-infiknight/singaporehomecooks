@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-08 — cook sign-up + 4-step onboarding; order detail accept/decline; listings edit/delete + search/filters; Family Values trays; Maestro `onboarding.yaml` covers register flow.
+**Last Updated:** 2026-07-18 — bottom inset helpers (`contentPadForTabBar` / `contentPadForStickyFooter` / `contentPadSafe`); no `sceneStyle.paddingBottom` on Tabs; `pnpm customer:reload`.
 **Owner:** Mobile Track
 
 ## Overview

@@ -13,10 +13,16 @@ import {
   GourmeatEmptyState,
   gourmeatColors,
   gourmeatLayout,
+  contentPadForTabBar,
   shcSpacing,
+  shcColors,
   SHCFadeIn,
   SHCSkeletonList,
   DirectionalTabScreen,
+  SHCCard,
+  SHCBadge,
+  SHCButton,
+  SHCButtonText,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -29,6 +35,74 @@ import { useCart, useClearCart } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthTray } from '../../hooks/useGuestAuthTray';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
+import { useAcceptBid, useBids, useMyRequests } from '../../hooks/useOrder';
+
+function MyRequestCard({ request }: { request: any }) {
+  const { data: bids = [] } = useBids(request.id);
+  const acceptBid = useAcceptBid();
+  const pendingBids = bids.filter((bid: any) => bid.status === 'pending');
+
+  return (
+    <SHCCard style={styles.requestCard}>
+      <View style={styles.requestHeader}>
+        <Text style={styles.requestTitle} numberOfLines={2}>{request.body}</Text>
+        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>{request.status}</SHCBadge>
+      </View>
+      <Text style={styles.requestMeta}>
+        {request.party_size ? `${request.party_size} pax · ` : ''}
+        {request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : 'Open budget'}
+      </Text>
+      {pendingBids.length === 0 && (
+        <Text style={styles.requestEmpty}>No pending bids yet. Cooks will respond from their dashboard.</Text>
+      )}
+      {pendingBids.map((bid: any) => (
+        <View key={bid.id} style={styles.bidRow}>
+          <View style={styles.bidInfo}>
+            <Text style={styles.bidPrice}>S${Math.round((bid.price_cents || 0) / 100)}</Text>
+            {!!bid.message && <Text style={styles.bidMessage} numberOfLines={2}>{bid.message}</Text>}
+          </View>
+          <SHCButton
+            onPress={() => acceptBid.mutate(bid.id)}
+            disabled={acceptBid.isPending}
+            style={styles.acceptBidBtn}
+            testID={`accept-bid-${bid.id}`}
+          >
+            <SHCButtonText>Accept</SHCButtonText>
+          </SHCButton>
+        </View>
+      ))}
+    </SHCCard>
+  );
+}
+
+function MyRequestsPanel({ enabled }: { enabled: boolean }) {
+  const router = useRouter();
+  const { data: myRequests = [] } = useMyRequests({ enabled });
+
+  if (!enabled) return null;
+
+  return (
+    <View style={styles.requestsSection} testID="my-requests-panel">
+      <Text style={styles.sectionTitle}>My requests</Text>
+      <Text style={styles.requestsSub}>Review cook bids and accept one to create your order.</Text>
+      {myRequests.length === 0 ? (
+        <GourmeatCard>
+          <Text style={styles.requestEmpty}>No dish requests yet.</Text>
+          <SHCButton
+            variant="outline"
+            style={{ marginTop: shcSpacing.sm }}
+            onPress={() => router.push('/(customer)/request' as any)}
+            testID="cart-request-dish-btn"
+          >
+            <SHCButtonText variant="outline">Request a dish</SHCButtonText>
+          </SHCButton>
+        </GourmeatCard>
+      ) : (
+        myRequests.map((request: any) => <MyRequestCard key={request.id} request={request} />)
+      )}
+    </View>
+  );
+}
 
 export default function Cart() {
   const insets = useSafeAreaInsets();
@@ -72,8 +146,8 @@ export default function Cart() {
             {
               paddingTop: insets.top + shcSpacing.md,
               paddingBottom: hasItems
-                ? gourmeatLayout.tabBarClearance + 100
-                : gourmeatLayout.tabBarClearance + shcSpacing.lg,
+                ? gourmeatLayout.stickyFooterClearance + contentPadForTabBar(insets.bottom)
+                : contentPadForTabBar(insets.bottom),
             },
           ]}
         >
@@ -116,6 +190,7 @@ export default function Cart() {
                       imageUri={getDishImageUrl({
                         id: item.product_id || item.productId,
                         name: item.name,
+                        image_url: item.image_url,
                       })}
                     />
                   </View>
@@ -225,11 +300,13 @@ export default function Cart() {
               </Pressable>
             </SHCFadeIn>
           )}
+
+          <MyRequestsPanel enabled={!!user} />
         </ScrollView>
 
         {hasItems && (
           <View
-            style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 8) + 64 }]}
+            style={[styles.footer, { paddingBottom: contentPadForTabBar(insets.bottom) }]}
             testID="cart-checkout-bar"
           >
             <GourmeatPayButton
@@ -333,6 +410,31 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   clear: { fontWeight: '700', color: gourmeatColors.textLight, textAlign: 'center' },
+  requestsSection: { marginTop: shcSpacing.lg },
+  requestsSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    marginBottom: shcSpacing.sm,
+  },
+  requestCard: { marginTop: shcSpacing.sm },
+  requestHeader: { flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'flex-start' },
+  requestTitle: { flex: 1, fontSize: 14, fontWeight: '800', color: shcColors.text },
+  requestMeta: { marginTop: 4, fontSize: 12, color: shcColors.textLight, fontWeight: '600' },
+  requestEmpty: { fontSize: 12, color: shcColors.textLight, fontWeight: '600' },
+  bidRow: {
+    marginTop: shcSpacing.sm,
+    paddingTop: shcSpacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: shcColors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: shcSpacing.sm,
+  },
+  bidInfo: { flex: 1 },
+  bidPrice: { fontSize: 14, fontWeight: '900', color: shcColors.primary },
+  bidMessage: { marginTop: 2, fontSize: 12, color: shcColors.textLight },
+  acceptBidBtn: { paddingHorizontal: shcSpacing.sm },
   footer: {
     position: 'absolute',
     left: 0,

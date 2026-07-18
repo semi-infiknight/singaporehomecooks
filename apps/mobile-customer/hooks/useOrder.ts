@@ -152,8 +152,12 @@ export function useAddDropToCart() {
 export function useRequests() {
   return useQuery({ queryKey: ['requests'], queryFn: async () => { const { listOpenRequests } = await import('../lib/api-client'); return listOpenRequests(); } });
 }
-export function useMyRequests() {
-  return useQuery({ queryKey: ['my-requests'], queryFn: async () => { const { listMyRequests } = await import('../lib/api-client'); return listMyRequests(); } });
+export function useMyRequests(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['my-requests'],
+    queryFn: async () => { const { listMyRequests } = await import('../lib/api-client'); return listMyRequests(); },
+    enabled: options?.enabled ?? true,
+  });
 }
 export function useCreateRequest() {
   const qc = useQueryClient();

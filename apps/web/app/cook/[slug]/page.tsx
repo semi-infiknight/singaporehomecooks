@@ -213,7 +213,7 @@ export default function KitchenPage() {
   const openDrops = (kitchenDrops as any[]).filter((d) => d.status === 'open' || d.status === 'sold_out');
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10" data-testid="kitchen-page-screen">
+    <div className="max-w-2xl mx-auto px-4 py-4 shc-tab-bar-pad md:pb-10" data-testid="kitchen-page-screen">
       <div className="flex items-center gap-2 mb-3">
         <Link
           href="/"

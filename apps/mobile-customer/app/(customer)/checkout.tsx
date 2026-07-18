@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +26,7 @@ import {
   useSHCTray,
   SHCCelebration,
   useMilestoneCelebration,
+  contentPadForStickyFooter,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
 import { useCart, useCredits } from '../../hooks/useProducts';
@@ -78,6 +79,7 @@ export default function Checkout() {
     []
   );
   const firstOrderMilestone = useMilestoneCelebration('first_order', user?.id || user?.name || 'anon', milestoneStorage);
+  const triggerFirstOrderCelebration = firstOrderMilestone.triggerIfFirst;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -133,6 +135,17 @@ export default function Checkout() {
   };
   const itemCount = (cart.items || []).reduce((s: number, i: any) => s + i.qty, 0);
 
+  const effectiveSlot =
+    selectedSlot ?? (dropCart && dropCollection ? dropCollection : null);
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent);
+  const checkoutHint = !effectiveSlot
+    ? 'Select a collection date and time to continue'
+    : !allergenAck
+      ? 'Acknowledge allergens to continue'
+      : !pdpaConsent
+        ? 'Confirm PDPA consent to continue'
+        : null;
+
   const handleSlot = (date: string, slot: string) => setSelectedSlot({ date, slot });
 
   const openAllergenTray = useCallback(() => {
@@ -160,13 +173,13 @@ export default function Checkout() {
       setError({ code: 'SHC-GENERIC-001', message: 'PDPA consent checkbox is required for Singapore compliance (personal data processing)' });
       return;
     }
-    if (!selectedSlot) {
+    if (!effectiveSlot) {
       setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection date + slot from available (enforced)' });
       return;
     }
     setIsSubmitting(true);
     try {
-      const res = await checkoutWithCredits(allergenAck, selectedSlot, creditsToApply, isCorporate);
+      const res = await checkoutWithCredits(allergenAck, effectiveSlot, creditsToApply, isCorporate);
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
       if (isCorporate && orderId) {
@@ -187,18 +200,22 @@ export default function Checkout() {
   const [paySession, setPaySession] = useState<any>(null);
   const [paySessionLoading, setPaySessionLoading] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const paySessionOrderRef = useRef<string | null>(null);
 
-  const loadPayNowSession = useCallback(async (orderId: string) => {
+  const loadPayNowSession = useCallback(async (orderId: string, force = false) => {
+    if (!force && paySessionOrderRef.current === orderId) return;
+    paySessionOrderRef.current = orderId;
     setPaySessionLoading(true);
     try {
       const s = await createOrderPayNow(orderId);
       setPaySession(s);
       if (s?.provider === 'hitpay') setWaitingForPayment(true);
       if (s?.provider === 'already_paid') {
-        const celebrated = await firstOrderMilestone.triggerIfFirst();
+        const celebrated = await triggerFirstOrderCelebration();
         if (!celebrated) navigateToOrder();
       }
     } catch (e: any) {
+      paySessionOrderRef.current = null;
       setPaySession({
         provider: 'hitpay_error',
         error: e?.message || 'Could not create PayNow QR',
@@ -206,10 +223,12 @@ export default function Checkout() {
     } finally {
       setPaySessionLoading(false);
     }
-  }, [firstOrderMilestone, navigateToOrder]);
+  }, [triggerFirstOrderCelebration, navigateToOrder]);
 
   useEffect(() => {
-    if (completedOrderId) void loadPayNowSession(completedOrderId);
+    if (!completedOrderId) return;
+    if (paySessionOrderRef.current === completedOrderId) return;
+    void loadPayNowSession(completedOrderId);
   }, [completedOrderId, loadPayNowSession]);
 
   // Poll until HitPay webhook marks paid
@@ -223,7 +242,7 @@ export default function Checkout() {
         if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st)) {
           if (cancelled) return;
           setWaitingForPayment(false);
-          const celebrated = await firstOrderMilestone.triggerIfFirst();
+          const celebrated = await triggerFirstOrderCelebration();
           if (!celebrated) navigateToOrder();
         }
       } catch {
@@ -236,7 +255,7 @@ export default function Checkout() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [completedOrderId, waitingForPayment, firstOrderMilestone, navigateToOrder]);
+  }, [completedOrderId, waitingForPayment, triggerFirstOrderCelebration, navigateToOrder]);
 
   if (!cart.items?.length) {
     return (
@@ -271,7 +290,7 @@ export default function Checkout() {
       <View style={styles.screen}>
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 }]}
+          contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForStickyFooter(insets.bottom) }]}
           testID="checkout-screen"
         >
           <SHCCartPageHero
@@ -285,7 +304,7 @@ export default function Checkout() {
             total={amountDue}
             session={paySession}
             loadingSession={paySessionLoading}
-            onRetry={() => void loadPayNowSession(completedOrderId)}
+            onRetry={() => void loadPayNowSession(completedOrderId, true)}
             waitingForPayment={waitingForPayment}
           />
           <Text style={styles.paynowHint}>
@@ -309,7 +328,7 @@ export default function Checkout() {
     <View style={styles.screen}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 120 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForStickyFooter(insets.bottom) }]}
         testID="checkout-screen"
       >
         <Text style={styles.checkoutTitle}>Checkout</Text>
@@ -436,12 +455,17 @@ export default function Checkout() {
         </SHCFadeIn>
       </ScrollView>
 
-      <View style={{ paddingHorizontal: shcSpacing.md, paddingBottom: Math.max(insets.bottom, shcSpacing.md) }}>
+      <View style={{ paddingHorizontal: shcSpacing.md, paddingTop: shcSpacing.sm, paddingBottom: Math.max(insets.bottom, shcSpacing.sm) }}>
+        {checkoutHint && !isSubmitting ? (
+          <Text style={styles.checkoutHint} testID="checkout-blocker-hint">
+            {checkoutHint}
+          </Text>
+        ) : null}
         <GourmeatPayButton
-          label="Pay Now"
+          label={effectiveSlot ? 'Pay Now' : 'Select collection time'}
           amount={`S$${amountDue.toFixed(2)}`}
           onPress={handleCheckout as any}
-          disabled={isSubmitting}
+          disabled={!checkoutReady || isSubmitting}
           loading={isSubmitting}
           testID="do-checkout"
         />
@@ -511,6 +535,13 @@ const styles = StyleSheet.create({
   },
   corporateBoxChecked: { backgroundColor: gourmeatColors.primary },
   corporateText: { fontSize: 12, fontWeight: '600' },
+  checkoutHint: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: gourmeatColors.textLight,
+    textAlign: 'center',
+    marginBottom: shcSpacing.sm,
+  },
   paynowHint: { marginTop: shcSpacing.sm, fontSize: 12, color: gourmeatColors.success, fontWeight: '600' },
   footerCard: { marginTop: shcSpacing.md },
   footerText: { fontSize: 11, color: gourmeatColors.textLight, lineHeight: 16 },

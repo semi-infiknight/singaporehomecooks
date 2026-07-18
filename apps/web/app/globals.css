@@ -49,6 +49,10 @@
     --shc-bento-peach: #FFE8DC;
     --shc-bento-yellow: #FFF3C4;
     --shc-section-gap: 1.25rem;
+    --shc-category-stack-gap: 0.5rem;
+    --shc-mobile-tab-pad: 5.5rem;
+    --shc-sticky-footer-pad: 5rem;
+    --shc-safe-bottom-pad: 1rem;
     --shc-border-brutal: #241812;
 
     /* Gourmeat + SHC semantic aliases */
@@ -238,9 +242,18 @@ a {
   box-shadow: var(--shc-shadow-brutal);
 }
 
-/* Bottom sticky bar safe area */
-.shc-bottom-bar-pad {
-  padding-bottom: 5.5rem;
+/* Bottom inset utilities — match @shc/ui gourmeatLayout tokens */
+.shc-bottom-bar-pad,
+.shc-tab-bar-pad {
+  padding-bottom: calc(var(--shc-mobile-tab-pad) + env(safe-area-inset-bottom, 0px));
+}
+
+.shc-sticky-footer-pad {
+  padding-bottom: calc(var(--shc-sticky-footer-pad) + env(safe-area-inset-bottom, 0px));
+}
+
+.shc-safe-bottom-pad {
+  padding-bottom: calc(var(--shc-safe-bottom-pad) + env(safe-area-inset-bottom, 0px));
 }
 
 .shc-section-gap {
@@ -390,6 +403,31 @@ a {
   animation: shc-hero-scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Orders tab — cooking steam cue (matches mint active-order banner) */
+@keyframes shc-steam-rise {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  15% { opacity: 0.85; }
+  85% { opacity: 0.35; }
+  100% { transform: translateY(-10px) scale(1.1); opacity: 0; }
+}
+
+@keyframes shc-cooking-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.shc-steam-wisp {
+  animation: shc-steam-rise 0.9s ease-out infinite;
+}
+
+.shc-steam-wisp-1 { animation-delay: 0s; }
+.shc-steam-wisp-2 { animation-delay: 0.18s; }
+.shc-steam-wisp-3 { animation-delay: 0.36s; }
+
+.shc-cooking-pulse {
+  animation: shc-cooking-pulse 1.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .shc-morph-out,
   .shc-morph-in,
@@ -398,7 +436,9 @@ a {
   .shc-tab-slide-from-left,
   .shc-tab-slide-from-right,
   .shc-hero-image-scale,
-  .shc-wizard-pane {
+  .shc-wizard-pane,
+  .shc-steam-wisp,
+  .shc-cooking-pulse {
     animation: none;
   }
 }

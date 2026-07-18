@@ -49,7 +49,7 @@ export default function TiffinCalendarPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-calendar-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-calendar-screen">
       <SHCPageHeader title="My tiffin meals" subtitle="Calendar of collection days (HomelyEats My Orders)" />
 
       <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4" data-testid="tiffin-calendar-strip">

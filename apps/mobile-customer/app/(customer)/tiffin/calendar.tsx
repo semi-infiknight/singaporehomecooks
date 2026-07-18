@@ -11,6 +11,7 @@ import {
   shcSpacing,
   TIFFIN_DAY_LABELS,
   SHCSkeletonList,
+  contentPadSafe,
 } from '@shc/ui';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../../hooks/useTiffin';
@@ -67,7 +68,7 @@ export default function TiffinCalendarScreen() {
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.md,
         paddingHorizontal: shcSpacing.md,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
       }}
       testID="tiffin-calendar-screen"
     >

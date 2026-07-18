@@ -33,6 +33,9 @@ import {
   type DayOrderCardStatus,
 } from '@shc/utils';
 import { useSkipTiffinMeal, useCustomizeTiffinMeal } from '../../../lib/useTiffin';
+import { useQuery } from '@tanstack/react-query';
+import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
+import { OrderManageSupportWeb } from '../../components/OrderManageSupportWeb';
 import { SHCButton, SHCCard, SHCLoading } from '../../components/SHCWebComponents';
 
 function ManageOrderInner() {
@@ -64,9 +67,17 @@ function ManageOrderInner() {
 
   const skipMut = useSkipTiffinMeal();
   const customizeMut = useCustomizeTiffinMeal();
+  const effectiveStatus = skipped ? 'skipped' : status;
+  const trackingOrderId = kind === 'one_off' ? id : '';
+  const invoiceEnabled = trackingOrderId.length > 0 && !['skipped', 'cancelled'].includes(effectiveStatus);
+  const { data: disputesRaw } = useQuery({
+    queryKey: ['order-disputes', trackingOrderId],
+    queryFn: () => getOrderDisputes(trackingOrderId),
+    enabled: !!trackingOrderId,
+  });
+  const disputes = ((disputesRaw as Array<{ status?: string; type?: string; notes?: string }>) ?? []);
   const labels = manageOrderActionLabels(skipped ? 'skipped' : status);
   const chip = dayOrderStatusChip(skipped ? 'skipped' : status);
-  const effectiveStatus = skipped ? 'skipped' : status;
 
   const dish = useMemo(
     () => defaultAddItemDishFromMenu(menuLines, cookName),
@@ -157,7 +168,7 @@ function ManageOrderInner() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-28" data-testid="order-manage-screen">
+    <div className="max-w-2xl mx-auto px-4 py-4 shc-safe-bottom-pad" data-testid="order-manage-screen">
       <div className="flex items-center gap-2 mb-4">
         <Link href="/orders" className="text-2xl font-light w-10" aria-label="Back">
           ‹
@@ -318,6 +329,19 @@ function ManageOrderInner() {
           Full order tracking →
         </Link>
       )}
+
+      <OrderManageSupportWeb
+        orderId={trackingOrderId}
+        invoiceEnabled={invoiceEnabled}
+        onDownloadInvoice={async (oid) => {
+          const res = await getOrderInvoiceDownloadUrl(oid);
+          if (!res.download_url) throw new Error('No invoice download URL from server');
+          window.open(res.download_url, '_blank', 'noopener,noreferrer');
+        }}
+        onChat={(oid) => router.push(`/orders/${oid}#order-chat-section`)}
+        submitOrderDispute={submitOrderDispute}
+        disputes={disputes}
+      />
 
       {/* Add items sheet */}
       {showAddItems && draft && (

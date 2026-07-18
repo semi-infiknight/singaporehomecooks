@@ -39,7 +39,7 @@ export default function SearchPage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 pb-28">
+    <div className="max-w-3xl mx-auto px-4 py-8 shc-safe-bottom-pad">
       <SHCPageHeader title="Advanced Search" subtitle={`${user?.name || 'Guest'} · filters & ADD`} />
       <input
         type="search"

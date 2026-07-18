@@ -166,7 +166,7 @@ export default function TiffinKitchenPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 pb-32" data-testid="tiffin-kitchen-screen">
+    <div className="max-w-2xl mx-auto px-4 py-4 shc-safe-bottom-pad" data-testid="tiffin-kitchen-screen">
       <div className="flex items-center gap-2 mb-3">
         <Link
           href="/tiffin"

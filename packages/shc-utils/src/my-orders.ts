@@ -35,6 +35,11 @@ export type CalendarDay = {
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+/** Calendar "today" in Singapore — matches collection_date on orders. */
+export function todayIsoInSingapore(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Singapore' }).format(now);
+}
+
 export function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }

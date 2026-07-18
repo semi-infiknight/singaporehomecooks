@@ -14,6 +14,7 @@ import {
   tiffinWeeklySubtotal,
   SHCSkeletonList,
   PayNowPanel,
+  contentPadSafe,
 } from '@shc/ui';
 import {
   rechargeWeekOptions,
@@ -37,6 +38,7 @@ export default function TiffinRechargeScreen() {
   const [paySessionLoading, setPaySessionLoading] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
   const expiresBeforeRef = useRef<string | null>(null);
+  const paySessionWeeksRef = useRef<number | null>(null);
 
   const sub = (subData as any)?.subscription;
   const kitchen = (subData as any)?.kitchen;
@@ -47,7 +49,9 @@ export default function TiffinRechargeScreen() {
   const amountDollars = amountCents / 100;
   const defaultRef = `TIFFIN-${String(sub?.id || 'PLAN').slice(-8)}-${weeks}W`;
 
-  const loadPayNowSession = useCallback(async () => {
+  const loadPayNowSession = useCallback(async (force = false) => {
+    if (!force && paySessionWeeksRef.current === weeks) return;
+    paySessionWeeksRef.current = weeks;
     setPaySessionLoading(true);
     setError('');
     try {
@@ -55,6 +59,7 @@ export default function TiffinRechargeScreen() {
       setPaySession(s);
       if (s.provider === 'hitpay') setWaitingForPayment(true);
     } catch (e: any) {
+      paySessionWeeksRef.current = null;
       setPaySession({
         provider: 'hitpay_error',
         error: e?.message || 'Could not create PayNow QR',
@@ -65,7 +70,11 @@ export default function TiffinRechargeScreen() {
   }, [weeks]);
 
   useEffect(() => {
-    if (phase === 'paynow') void loadPayNowSession();
+    if (phase !== 'paynow') {
+      paySessionWeeksRef.current = null;
+      return;
+    }
+    void loadPayNowSession();
   }, [phase, loadPayNowSession]);
 
   useEffect(() => {
@@ -93,7 +102,7 @@ export default function TiffinRechargeScreen() {
     };
   }, [phase, waitingForPayment, refetch, router]);
 
-  if (isLoading) {
+  if (isLoading && !sub) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top, paddingHorizontal: shcSpacing.md, width: '100%' }]}>
         <SHCSkeletonList count={3} rowHeight={88} />
@@ -141,7 +150,7 @@ export default function TiffinRechargeScreen() {
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.md,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 120,
+          paddingBottom: contentPadSafe(insets.bottom),
         }}
         testID="tiffin-recharge-paynow"
       >
@@ -155,7 +164,7 @@ export default function TiffinRechargeScreen() {
           total={amountDollars}
           session={paySession}
           loadingSession={paySessionLoading}
-          onRetry={() => void loadPayNowSession()}
+          onRetry={() => void loadPayNowSession(true)}
           waitingForPayment={waitingForPayment}
         />
         <Text style={[styles.meta, { marginTop: 12 }]}>
@@ -172,7 +181,7 @@ export default function TiffinRechargeScreen() {
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.md,
         paddingHorizontal: shcSpacing.md,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
       }}
       testID="tiffin-recharge-screen"
     >

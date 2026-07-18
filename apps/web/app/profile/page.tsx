@@ -1,105 +1,44 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Bell, Wallet } from 'lucide-react';
-import { BENTO_ACTION_IMAGES, accountMenuItemsSignedIn, accountMenuItemsGuest, orderIdFromNotificationType } from '@shc/utils';
-import { useCredits, useRedeemCredits } from '../../lib/useProducts';
-import { useAcceptBid, useBids, useMyRequests, useNotifications } from '../../lib/useOrder';
+import { Bell } from 'lucide-react';
+import { accountMenuItemsSignedIn, accountMenuItemsGuest, orderIdFromNotificationType } from '@shc/utils';
+import { useNotifications } from '../../lib/useOrder';
 import {
   SHCCard,
   SHCButton,
-  WalletCard,
   SHCSectionTitle,
   SHCPageHeader,
   HeritageStoryBanner,
-  SHCBadge,
   AccountMenuList,
+  SHCSkeletonAccountScreen,
 } from '../components/SHCWebComponents';
 import { WebPushOptIn } from '../components/WebPushOptIn';
 import { useAuth } from '../../lib/useAuth';
 
-type RequestRow = {
-  id: string;
-  body?: string;
-  status?: string;
-  party_size?: number;
-  budget_cents?: number;
-};
-
-type BidRow = {
-  id: string;
-  status?: string;
-  price_cents?: number;
-  message?: string;
-};
-
-function MyRequestCard({ request }: { request: RequestRow }) {
-  const { data: bids = [] } = useBids(request.id);
-  const acceptBid = useAcceptBid();
-  const pendingBids = (bids as BidRow[]).filter((bid) => bid.status === 'pending');
-
-  return (
-    <SHCCard className="mb-3">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <p className="font-bold text-foreground flex-1">{request.body}</p>
-        <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>
-          {request.status || 'open'}
-        </SHCBadge>
-      </div>
-      <p className="text-xs text-muted-foreground font-semibold mb-3">
-        {request.party_size ? `${request.party_size} pax · ` : ''}
-        {request.budget_cents
-          ? `Budget S$${Math.round(request.budget_cents / 100)}`
-          : 'Open budget'}
-      </p>
-      {pendingBids.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No pending bids yet. Cooks respond from their dashboard.</p>
-      ) : (
-        <ul className="space-y-2">
-          {pendingBids.map((bid) => (
-            <li key={bid.id} className="flex items-center justify-between gap-3 border-t-2 border-[var(--shc-border-brutal)] pt-2">
-              <div className="min-w-0">
-                <p className="font-black tabular-nums">S${Math.round((bid.price_cents || 0) / 100)}</p>
-                {bid.message && <p className="text-sm text-muted-foreground truncate">{bid.message}</p>}
-              </div>
-              <SHCButton
-                size="sm"
-                onClick={() => acceptBid.mutate(bid.id)}
-                disabled={acceptBid.isPending}
-                data-testid={`accept-bid-${bid.id}`}
-              >
-                Accept
-              </SHCButton>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SHCCard>
-  );
-}
-
 export default function Profile() {
-  const { user, logout } = useAuth();
-  const { data: credits } = useCredits();
-  const redeem = useRedeemCredits();
+  const { user, logout, loading: authLoading } = useAuth();
   const { data: notifs = [], markRead } = useNotifications();
-  const { data: myRequests = [] } = useMyRequests();
   const [showNotifs, setShowNotifs] = useState(false);
 
-  const balance = credits?.balance || 0;
-  const tier = credits?.tier || 'Silver';
+  // Guest — wireframe Account: Sign Up / Log In (only after auth hydrate)
+  if (authLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
+        <SHCSkeletonAccountScreen />
+      </div>
+    );
+  }
 
-  // Guest — wireframe Account: Sign Up / Log In
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10" data-testid="customer-profile-screen">
-        <SHCPageHeader title="Account" subtitle="Sign in for orders, credits, and wallet" />
+        <SHCPageHeader title="Account" subtitle="Sign in for orders and account tools" />
         <SHCCard className="mb-4" data-testid="guest-profile-gate">
           <p className="font-black text-foreground mb-2">You are exploring freely</p>
           <p className="text-sm font-semibold text-muted-foreground leading-relaxed mb-4">
-            Discover kitchens and dishes on Home. Wallet, orders, and account tools only appear after you sign in.
+            Discover kitchens and dishes on Home. Orders and account tools only appear after you sign in.
           </p>
           <Link href="/login" data-testid="guest-profile-signin">
             <SHCButton className="w-full">Sign Up / Log In</SHCButton>
@@ -140,47 +79,9 @@ export default function Profile() {
       {/* Wireframe Account menu */}
       <AccountMenuList items={accountMenuItemsSignedIn()} />
 
-      <div id="credits" className="relative overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] my-4 h-28">
-        <Image src={BENTO_ACTION_IMAGES.credits} alt="" fill className="object-cover opacity-70" sizes="100vw" />
-        <div className="relative z-10 flex items-center justify-between h-full px-5">
-          <div>
-            <div className="text-3xl font-black tabular-nums font-mono text-foreground">{balance}</div>
-            <div className="text-xs font-bold text-muted-foreground">Home Credits · {tier}</div>
-          </div>
-          <span className="w-12 h-12 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]" aria-hidden>
-            <Wallet className="w-6 h-6 text-primary" />
-          </span>
-        </div>
-      </div>
-
-      <WalletCard balance={balance} tier={tier} />
-      <div className="mt-3 mb-4">
-        <SHCButton size="sm" variant="outline" onClick={() => redeem.mutate(20)} disabled={balance < 20}>
-          Redeem 20 credits
-        </SHCButton>
-      </div>
-
       <div className="mt-2 mb-4">
         <HeritageStoryBanner href="/content/trust" />
       </div>
-
-      <SHCSectionTitle>My requests</SHCSectionTitle>
-      {myRequests.length === 0 ? (
-        <SHCCard>
-          <p className="text-sm text-muted-foreground font-semibold">No dish requests yet.</p>
-          <Link href="/request" className="inline-block mt-3">
-            <SHCButton size="sm" variant="outline">
-              Request a dish
-            </SHCButton>
-          </Link>
-        </SHCCard>
-      ) : (
-        <div>
-          {(myRequests as RequestRow[]).map((request) => (
-            <MyRequestCard key={request.id} request={request} />
-          ))}
-        </div>
-      )}
 
       {showNotifs && (
         <>

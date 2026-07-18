@@ -33,7 +33,7 @@ import {
   categoryOfferCopy,
   getDishImageUrl,
   getCollectionSlotLabel,
-  getCookAvatarUrl,
+  getCookKitchenHeroUrl,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../hooks/useProducts';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
@@ -56,6 +56,7 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
       id,
       cuisine: product.cuisine ? String(product.cuisine) : undefined,
       name: String(product.name),
+      image_url: product.image_url as string | undefined,
     }),
   };
 }
@@ -205,7 +206,7 @@ export default function CategoryExploreScreen() {
                   tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
                   rating={c.rating != null ? Number(c.rating) : 4.8}
                   reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
-                  coverUri={getCookAvatarUrl(cookId, cookName)}
+                  coverUri={getCookKitchenHeroUrl(cookId)}
                   isOpen
                   closesAt="HDB collection"
                   onPress={() => {

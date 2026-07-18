@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-09 — HomelyEats Waves 1–8 closed (UI + flex OS + ledger + pg-first + residual customize/menu/history). Plan: [references/homelyeats-case-study/REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-18 — Image fallbacks, checkout/ PayNow polish, layout padding, category spacing. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,22 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-18 — Marketplace polish + layout)
+
+Tri-platform UX hardening (no new API surface):
+
+| Area | Delivered |
+|------|-----------|
+| **Images** | `SHCFoodImage` + `resolveImageUrl` fallbacks; working Unsplash IDs; cuisine categories from `MIND_CUISINE_CATEGORIES`; kitchen heroes not avatars |
+| **Category spacing** | `categoryStackGap` 8px rhythm; `GourmeatCategoryRow title=`; web CSS `--shc-category-stack-gap` |
+| **PayNow** | Single QR fetch per session; stable `PayNowPanel` (no flicker); tiffin recharge + checkout poll unchanged |
+| **Checkout CTA** | Disabled until slot + allergen + PDPA; label “Select collection time” when blocked |
+| **Bottom insets** | Removed Expo Tabs `sceneStyle.paddingBottom`; `contentPad*` helpers; web `hideMobileTabBar` + conditional chrome padding |
+| **Railway** | Medusa invoice type fix + redeploy (prior commit `097facd`) |
+| **Dev** | `pnpm customer:reload`, `scripts/reload-customer-emulator.sh` |
+
+**Verify:** `FLAVOUR=polish SCOPE=web pnpm verify:goal` · `FLAVOUR=wiring SCOPE=checkout TOUCHES_API=1 pnpm verify:goal`
 
 ## Progress Update (2026-07-09 — HomelyEats Waves 1–7 ship)
 

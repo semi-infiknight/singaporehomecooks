@@ -1,12 +1,28 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-15 — **Tiffin recharge HitPay**; skeleton UX; corporate invoice download; SHC Ops Insights.
+**Last Updated:** 2026-07-18 — Image fallbacks, category spacing, PayNow QR stability, checkout CTA gate, bottom inset tokens (tri-platform).
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-14)
+## 0. New-session handoff (2026-07-18)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Payments** | **HitPay only** — order PayNow + tiffin recharge. QR fetch **once per order/weeks** (no re-fetch loop); poll until webhook. `PayNowPanel` keeps QR visible during refresh. |
+| **Checkout UX** | `GourmeatPayButton` **disabled** until collection slot + allergen + PDPA; hint text above CTA. Web mirrors. |
+| **Bottom insets** | Removed tab `sceneStyle.paddingBottom` (was double-stacking ~100px). Tokens: `gourmeatLayout` + `contentPadForTabBar` / `contentPadForStickyFooter` / `contentPadSafe` in `@shc/ui`; web `--shc-mobile-tab-pad`, `shc-tab-bar-pad`, `shc-sticky-footer-pad`, `shc-safe-bottom-pad`; `hideMobileTabBar()` hides tab bar on checkout/PDP/stack routes. |
+| **Category UI** | `categoryStackGap` (8px) — eyebrow → circles → labels; `GourmeatCategoryRow title=` prop; verified Unsplash IDs in `@shc/utils/food-visuals`; `SHCFoodImage` onError fallback. |
+| **Images** | API `image_url` wired on discover/search/category/PDP/cart; kitchen heroes via `getCookKitchenHeroUrl()`; Medusa categories use `MIND_CUISINE_CATEGORIES`. |
+| **Reload scripts** | `pnpm customer:reload` / `METRO_CLEAR=1 pnpm customer:reload` → `scripts/reload-customer-emulator.sh`. |
+| **Railway medusa** | Deploy fixed (`shc-order-invoice-from-meta` types); `pnpm railway:configure-medusa`. |
+| **HitPay env** | `HITPAY_API_KEY`, `HITPAY_WEBHOOK_SALT`, `HITPAY_ENV=sandbox`. Webhook: `/hooks/shc/hitpay`. |
+| **Not done** | Live HitPay KYC; rotate secrets if exposed in chat. |
+
+## 0b. Prior handoff (2026-07-14)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -33,7 +49,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover home + **Cooking soon** rail (7-day); HitPay PayNow checkout poll; Expo `:8081` |
 | **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Dashboard **Cooking soon** banner → batches; orders Accept after paid; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | Same marketplace + HitPay PayNow; `/cook-portal`; `/ops` → Medusa Admin |
-| **Design system** | ✅ v4 Family Values + **skeleton kit** | `@shc/ui` `skeleton.tsx` + web mirrors; home/orders/cart/PDP/tiffin/cook ghosts; no `placeholderData: []` on list fetches |
+| **Design system** | ✅ v4 Family Values + skeleton kit | `@shc/ui` skeleton + **layout padding helpers**; category stack gap; tri-platform bottom inset CSS vars on web |
 | **Medusa API** | ✅ Railway prod | Custom `/store/shc/*` + `/admin/shc/*` + `/hooks/shc/*` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer email/pass; Cook SHC JWT + scrypt |
 | **Cart** | ✅ Postgres | `shc-cart` module |
@@ -290,7 +306,9 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 14. **Railway deploy requires `git push origin main`** — local commits do not deploy; plain `railway redeploy` restarts the **old** image. Use **`railway redeploy -s medusa --from-source -y`** (or GitHub auto-deploy) after push. Tiffin: `pnpm ship:tiffin`.
 15. **Tiffin kitchens on Railway** — filled by normal `seed.ts` on medusa boot (same seed as cooks/dishes). If empty: cook **Save tiffin settings** or re-deploy so entrypoint seed runs.
 16. **SecureStore milestone keys** — use `shc_milestone_*` (no colons); `milestoneStorageKey()` in `@shc/ui` family-values-core.
-17. **Cook Maestro E2E** — set `EXPO_PUBLIC_MAESTRO_E2E=1` in `apps/mobile-cook/.env.local` to skip onboarding during device tests.
+18. **Tab scene padding** — do **not** add `sceneStyle.paddingBottom` on Expo Tabs; use `contentPadForTabBar(insets.bottom)` on tab roots, `contentPadForStickyFooter` when screen has pinned Pay/CTA, `contentPadSafe` on stack screens (checkout, tiffin subflows, order detail).
+19. **PayNow QR** — `loadPayNowSession` guarded by ref (one fetch per order/recharge); `useMilestoneCelebration` callbacks stable (`useCallback`).
+20. **Category spacing** — `shcSpacing.categoryStackGap` = eyebrow/circle/label rhythm; `GourmeatCategoryRow` accepts optional `title`.
 
 ---
 

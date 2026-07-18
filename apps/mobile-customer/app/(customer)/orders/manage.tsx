@@ -10,10 +10,12 @@ import {
   Pressable,
   TextInput,
   Modal,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GourmeatPrimaryButton, gourmeatColors, shcSpacing } from '@shc/ui';
+import { GourmeatPrimaryButton, gourmeatColors, shcSpacing, GourmeatCard, useSHCTray, SHCTrayAction, SHCOrderDisputeTrayContent } from '@shc/ui';
 import {
   canSkipManageOrder,
   canAddItemsToOrder,
@@ -40,6 +42,116 @@ import {
   type DayOrderCardStatus,
 } from '@shc/utils';
 import { useSkipTiffinMeal, useCustomizeTiffinMeal } from '../../../hooks/useTiffin';
+import { useQuery } from '@tanstack/react-query';
+import {
+  getOrderDisputes,
+  getOrderInvoiceDownloadUrl,
+  submitOrderDispute,
+} from '../../../lib/api-client';
+
+type ManageOrderDispute = { status?: string; type?: string; notes?: string };
+
+function ManageOrderSupportActions({
+  orderId,
+  invoiceEnabled,
+  disputes,
+  onChat,
+}: {
+  orderId: string;
+  invoiceEnabled: boolean;
+  disputes: ManageOrderDispute[];
+  onChat: (oid: string) => void;
+}) {
+  const { openTray, dismiss } = useSHCTray();
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const hasDispute = disputes.length > 0;
+
+  const downloadInvoice = useCallback(async () => {
+    if (!orderId || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await getOrderInvoiceDownloadUrl(orderId);
+      if (!res.download_url) throw new Error('No invoice download URL from server');
+      await Linking.openURL(res.download_url);
+    } catch (e: any) {
+      Alert.alert('Invoice', e?.message || 'Could not open tax invoice PDF.');
+    } finally {
+      setInvoiceBusy(false);
+    }
+  }, [invoiceBusy, orderId]);
+
+  const openDisputeTray = useCallback(() => {
+    openTray({ id: 'order-dispute', title: 'Report an issue', height: 'medium' }, () => (
+      <SHCOrderDisputeTrayContent
+        orderId={orderId}
+        submitDisputeFn={submitOrderDispute}
+        onSuccess={() => {
+          dismiss();
+          openTray(
+            { id: 'issue-reported', title: 'Issue reported', height: 'compact' },
+            <SHCTrayAction
+              message="Ops will review this order and follow up."
+              primaryLabel="Got it"
+              onPrimary={dismiss}
+              testID="order-issue-reported-tray"
+            />
+          );
+        }}
+        onError={(message) => {
+          openTray(
+            { id: 'dispute-error', title: 'Could not report issue', height: 'compact' },
+            <SHCTrayAction message={message} primaryLabel="OK" onPrimary={dismiss} testID="dispute-error-tray" />
+          );
+        }}
+      />
+    ));
+  }, [dismiss, openTray, orderId]);
+
+  if (!orderId) return null;
+
+  return (
+    <View style={supportStyles.wrap} testID="order-manage-support-actions">
+      <GourmeatPrimaryButton
+        label={invoiceBusy ? 'Opening PDF…' : 'Open tax invoice (PDF)'}
+        variant="outline"
+        onPress={downloadInvoice}
+        loading={invoiceBusy}
+        disabled={!invoiceEnabled}
+        testID="order-manage-download-invoice-btn"
+        style={supportStyles.btn}
+      />
+      {!invoiceEnabled ? (
+        <Text style={supportStyles.hint}>Invoice available after PayNow payment is confirmed.</Text>
+      ) : null}
+
+      <GourmeatPrimaryButton
+        label="Chat with cook"
+        variant="outline"
+        onPress={() => onChat(orderId)}
+        testID="order-manage-chat-btn"
+        style={supportStyles.btn}
+      />
+
+      {hasDispute ? (
+        <GourmeatCard testID="order-manage-dispute-submitted">
+          <Text style={supportStyles.cardTitle}>Issue reported</Text>
+          <Text style={supportStyles.cardMeta}>
+            {disputes[0].status || 'open'} · {disputes[0].type || 'other'}
+          </Text>
+          {!!disputes[0].notes && <Text style={supportStyles.cardBody}>{disputes[0].notes}</Text>}
+        </GourmeatCard>
+      ) : (
+        <GourmeatPrimaryButton
+          label="Report an issue"
+          variant="outline"
+          onPress={openDisputeTray}
+          testID="order-manage-open-dispute-btn"
+          style={supportStyles.btn}
+        />
+      )}
+    </View>
+  );
+}
 
 export default function ManageOrderScreen() {
   const insets = useSafeAreaInsets();
@@ -81,6 +193,14 @@ export default function ManageOrderScreen() {
   const skipMut = useSkipTiffinMeal();
   const customizeMut = useCustomizeTiffinMeal();
   const effectiveStatus = skipped ? 'skipped' : status;
+  const trackingOrderId = kind === 'one_off' ? id : '';
+  const invoiceEnabled = trackingOrderId.length > 0 && !['skipped', 'cancelled'].includes(effectiveStatus);
+  const { data: disputesRaw } = useQuery({
+    queryKey: ['order-disputes', trackingOrderId],
+    queryFn: () => getOrderDisputes(trackingOrderId),
+    enabled: !!trackingOrderId,
+  });
+  const disputes = ((disputesRaw as any[]) ?? []) as Array<{ status?: string; type?: string; notes?: string }>;
   const labels = manageOrderActionLabels(effectiveStatus);
   const chip = dayOrderStatusChip(effectiveStatus);
 
@@ -270,6 +390,13 @@ export default function ManageOrderScreen() {
         >
           <Text style={[styles.rowLabel, { color: gourmeatColors.primary }]}>{labels.help}</Text>
         </Pressable>
+
+        <ManageOrderSupportActions
+          orderId={trackingOrderId}
+          invoiceEnabled={invoiceEnabled}
+          disputes={disputes}
+          onChat={(oid) => router.push(`/(shared)/chat/${oid}` as any)}
+        />
       </ScrollView>
 
       <Modal visible={showAddItems && !!draft} animationType="slide" transparent>
@@ -511,4 +638,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   payBtnText: { color: '#fff', fontWeight: '900', fontSize: 13 },
+});
+
+const supportStyles = StyleSheet.create({
+  wrap: { marginTop: shcSpacing.md, gap: shcSpacing.sm },
+  btn: { marginBottom: 0 },
+  hint: { fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: shcSpacing.xs },
+  cardTitle: { fontWeight: '800', fontSize: 15, color: gourmeatColors.text },
+  cardMeta: { marginTop: 4, fontSize: 12, color: gourmeatColors.textLight, fontWeight: '600' },
+  cardBody: { marginTop: 6, fontSize: 14, fontWeight: '600', color: gourmeatColors.text },
 });

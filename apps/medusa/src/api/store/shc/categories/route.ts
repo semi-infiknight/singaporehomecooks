@@ -1,9 +1,26 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
+import { MIND_CUISINE_CATEGORIES } from "@shc/utils";
 import {
   CATALOG_CATEGORIES_KEY,
   DEFAULT_CATALOG_CATEGORIES,
   type CatalogCategory,
 } from "../../../../lib/shc-catalog-categories";
+
+function mindCategoryRow(categories: CatalogCategory[]) {
+  const byId = new Map(MIND_CUISINE_CATEGORIES.map((c) => [c.id, c]));
+  const all = byId.get("")!;
+  return [
+    { id: all.id, label: all.label, imageUrl: all.imageUrl },
+    ...categories.map((c) => {
+      const preset = byId.get(c.id);
+      return {
+        id: c.id,
+        label: c.label || preset?.label || c.id,
+        imageUrl: preset?.imageUrl || c.imageUrl || all.imageUrl,
+      };
+    }),
+  ];
+}
 
 /**
  * GET /store/shc/categories — public mind-row categories (admin-managed).
@@ -28,26 +45,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     } else {
       categories = DEFAULT_CATALOG_CATEGORIES.filter((c) => c.enabled);
     }
-    const mind = [
-      {
-        id: "",
-        label: "All",
-        imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a1e63c?w=400&q=80&auto=format&fit=crop",
-      },
-      ...categories.map((c) => ({ id: c.id, label: c.label, imageUrl: c.imageUrl })),
-    ];
+    const mind = mindCategoryRow(categories);
     res.json({ categories: mind, count: mind.length });
   } catch {
     res.json({
-      categories: [
-        {
-          id: "",
-          label: "All",
-          imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a1e63c?w=400&q=80&auto=format&fit=crop",
-        },
-        ...DEFAULT_CATALOG_CATEGORIES.map((c) => ({ id: c.id, label: c.label, imageUrl: c.imageUrl })),
-      ],
-      count: DEFAULT_CATALOG_CATEGORIES.length + 1,
+      categories: MIND_CUISINE_CATEGORIES.map((c) => ({
+        id: c.id,
+        label: c.label,
+        imageUrl: c.imageUrl,
+      })),
+      count: MIND_CUISINE_CATEGORIES.length,
       source: "default",
     });
   }

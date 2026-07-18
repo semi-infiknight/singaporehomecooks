@@ -16,6 +16,7 @@ import {
   SHCDishOrderingInfo,
   SHCFavoriteButton,
   SHCSkeletonBone,
+  contentPadForStickyFooter,
 } from '@shc/ui';
 import { getDishImageUrl } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -98,13 +99,18 @@ export default function ProductDetail() {
     <View style={styles.screen} testID="product-detail-screen">
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: contentPadForStickyFooter(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroWrap}>
           <SHCSharedDishImage
             dishId={product.id}
-            uri={getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name })}
+            uri={getDishImageUrl({
+              id: product.id,
+              cuisine: product.cuisine,
+              name: product.name,
+              image_url: product.image_url,
+            })}
             style={styles.heroImage}
             hero
             testID="pdp-hero-image"
