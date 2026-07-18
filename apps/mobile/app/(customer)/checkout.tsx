@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCCard, SHCButton, SHCButtonText, CollectionSlotPicker, PayNowPanel, AllergenAckCheckbox, SHCErrorBanner, shcColors, SHCSectionTitle, CreditBadge, WalletCard } from '@shc/ui';
-import { useCart, useCredits } from '../../hooks/useProducts';
+import { SHCCard, SHCButton, SHCButtonText, CollectionSlotPicker, PayNowPanel, AllergenAckCheckbox, SHCErrorBanner, shcColors, SHCSectionTitle } from '@shc/ui';
+import { useCart } from '../../hooks/useProducts';
 import { useCheckout, useOrderChat } from '../../hooks/useOrder';
 import { useCollectionSlots } from '../../hooks/useProducts';
-import { transitionOrder, checkoutWithCredits, flagCorporateOrder } from '../../lib/api-client';
+import { transitionOrder, flagCorporateOrder } from '../../lib/api-client';
 import { SHCErrorCode } from '@shc/types';
 // ErrorBoundary provided at root layout (production-hardening). No local import needed (components/ empty to obey file rules).
 
@@ -19,11 +19,7 @@ export default function Checkout() {
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: string } | null>(null);
   const [error, setError] = useState<null | { code?: SHCErrorCode; message: string }>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
-  // Phase 9/8: credits redeem + corporate stub in checkout
-  const { data: creditsData } = useCredits();
-  const [creditsToApply, setCreditsToApply] = useState(0);
   const [isCorporate, setIsCorporate] = useState(false);
-  const creditBal = creditsData?.balance || 0;
 
   const firstProdId = (cart.items || [])[0]?.productId;
   const { data: slots = [] } = useCollectionSlots(firstProdId || 'prod_nasi_lemak');
@@ -48,8 +44,7 @@ export default function Checkout() {
       return;
     }
     try {
-      // Use enhanced with credits + corporate (Phase 9/8 growth/diff). PDPA already in base.
-      const res = await checkoutWithCredits(allergenAck, selectedSlot, creditsToApply, isCorporate);
+      const res = await checkoutMut.mutateAsync({ allergenAck, collection: selectedSlot, pdpaConsent });
       setCompletedOrderId(res.order.id);
       if (isCorporate) {
         await flagCorporateOrder(`Group order for ${cookId} — multi dish note + invoice stub generated.`);
@@ -91,21 +86,6 @@ export default function Checkout() {
       </Pressable>
       <Text style={{ fontSize: 10, color: shcColors.textLight }}>Consent timestamp will be recorded on order for audit.</Text>
 
-      {/* Phase 9/8: Credits redeem + corporate/group stub (delightful SG: apply to Raya orders; corporate invoice note) */}
-      {creditBal > 0 && (
-        <View style={{ marginVertical: 8 }} testID="credits-apply-section">
-          <CreditBadge balance={creditBal} tier={creditsData?.tier} />
-          <Text style={{ fontSize: 12, marginTop: 4 }}>Credits available: {creditBal} (4 = ~S$1 value). Redeem to reduce total for family occasions.</Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-            {[0, 20, 40, Math.min(80, creditBal)].map((v, idx) => (
-              <Pressable key={idx} onPress={() => setCreditsToApply(v)} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: creditsToApply === v ? shcColors.primary : shcColors.surface, borderRadius: 4 }} testID={`credit-preset-${v}`}>
-                <Text style={{ fontSize: 11, color: creditsToApply === v ? '#fff' : shcColors.text }}>{v}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {creditsToApply > 0 && <Text style={{ color: shcColors.success, fontSize: 12 }}>Applying {creditsToApply} credits (~S${(creditsToApply / 4).toFixed(0)})</Text>}
-        </View>
-      )}
       <Pressable onPress={() => setIsCorporate(!isCorporate)} style={{ flexDirection: 'row', alignItems: 'center', padding: 6, marginVertical: 4 }} testID="corporate-flag-toggle" accessibilityLabel="Toggle corporate or group order for multi-dish invoice stub">
         <View style={{ width: 18, height: 18, borderWidth: 2, borderColor: shcColors.primary, marginRight: 6, backgroundColor: isCorporate ? shcColors.primary : 'white', borderRadius: 3 }} />
         <Text style={{ fontSize: 12 }}>Corporate/Group Order (multi-dish note + invoice stub)</Text>

@@ -144,8 +144,6 @@ export default function CartPage() {
   const [collectionNotes, setCollectionNotes] = useState('');
   const [showCooking, setShowCooking] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
-  const [coupon, setCoupon] = useState('');
-  const [couponMsg, setCouponMsg] = useState('');
 
   const items = ((cartData as { items?: CartItem[] }).items || []) as CartItem[];
   const summary = computeOneTimeOrderSummary(items);
@@ -290,46 +288,6 @@ export default function CartPage() {
             />
           )}
 
-          {/* Wireframe: Apply coupon */}
-          <div
-            className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-3"
-            data-testid="cart-coupon-row"
-          >
-            <p className="font-extrabold mb-2 text-sm">{CART_WIREFRAME_LABELS.coupon}</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
-                placeholder="Enter code or Home Credits"
-                className="shc-input flex-1 py-2 text-sm"
-                data-testid="cart-coupon-input"
-              />
-              <SHCButton
-                size="sm"
-                variant="outline"
-                testID="cart-coupon-apply"
-                onClick={() => {
-                  const code = coupon.trim().toUpperCase();
-                  if (!code) {
-                    setCouponMsg('Enter a code to apply.');
-                    return;
-                  }
-                  // Credits redeem at checkout — coupon shell for wireframe parity
-                  setCouponMsg(
-                    code === 'WELCOME' || code === 'SHC5'
-                      ? 'Code noted — confirm at checkout with PayNow.'
-                      : 'Unknown code. Use Home Credits at checkout instead.'
-                  );
-                }}
-              >
-                Apply
-              </SHCButton>
-            </div>
-            {couponMsg ? (
-              <p className="text-xs font-semibold text-muted-foreground mt-2">{couponMsg}</p>
-            ) : null}
-          </div>
 
           {/* Wireframe: Bill summary */}
           <div

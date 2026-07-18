@@ -103,7 +103,6 @@ describe("drop → cart → demo-complete funnel", () => {
       getOrderMetaWithMessages: async () => ({ messages: [] }),
     };
     const notif = { push: async () => {} };
-    const credits = { redeemCredits: async () => ({ used: 0 }) };
 
     const token = signShcToken({ actor_type: "customer", actor_id: "cust_1", shc: true });
     const scope = {
@@ -112,7 +111,6 @@ describe("drop → cart → demo-complete funnel", () => {
         if (name === "shcCart") return cartService;
         if (name === "shcOrderMeta") return metaService;
         if (name === "shcNotification") return notif;
-        if (name === "shcCreditWallet") return credits;
         if (name === "logger") return console;
         throw new Error(`Unknown ${name}`);
       },
@@ -219,7 +217,6 @@ describe("drop → cart → demo-complete funnel", () => {
           if (name === "shcCart") return cartService;
           if (name === "shcOrderMeta") return { createOrUpdateMeta: async () => {}, addOrderMessage: async () => {}, getOrderMetaWithMessages: async () => ({}) };
           if (name === "shcNotification") return { push: async () => {} };
-          if (name === "shcCreditWallet") return { redeemCredits: async () => ({ used: 0 }) };
           throw new Error(name);
         },
       },

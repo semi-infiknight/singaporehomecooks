@@ -20,7 +20,6 @@ const UpsertSchema = z
 
 const DEFAULT_FLAGS = [
   { key: "request_dish", enabled: true, cohort_filter: {} },
-  { key: "home_credits", enabled: true, cohort_filter: {} },
   { key: "corporate_orders", enabled: true, cohort_filter: {} },
 ];
 

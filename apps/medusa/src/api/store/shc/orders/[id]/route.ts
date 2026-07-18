@@ -24,7 +24,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       pdpa_consent_at: m.pdpa_consent_at,
       address_released_at: m.address_released_at,
       customer_id: m.customer_id || "cust_demo",
-      credits_applied: m.credits_applied_cents || 0,
       is_corporate: !!m.is_corporate,
       cooking_notes: m.cooking_notes || null,
       collection_notes: m.collection_notes || null,

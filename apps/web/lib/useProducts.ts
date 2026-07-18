@@ -9,8 +9,6 @@ import {
   getCart,
   clearCart,
   createSHCError,
-  getCredits,
-  redeemCredits,
   estimateCaloriesAI,
   getPhotoTips,
   isAuthenticated,
@@ -46,20 +44,6 @@ export function useClearCart() {
   return useMutation({mutationFn:clearCart, onSuccess:()=>qc.invalidateQueries({queryKey:['cart']})});
 }
 
-// Growth parity
-export function useCredits() {
-  return useQuery<{ balance?: number; tier?: string }>({
-    queryKey: ['credits'],
-    queryFn: () => getCredits() as Promise<{ balance?: number; tier?: string }>,
-    staleTime: 10000,
-    enabled: isAuthenticated(),
-    placeholderData: { balance: 0, tier: 'Bronze' },
-  });
-}
-export function useRedeemCredits() {
-  const qc=useQueryClient();
-  return useMutation({ mutationFn:(amt:number)=>redeemCredits(amt), onSuccess:()=>{qc.invalidateQueries({queryKey:['credits']}); qc.invalidateQueries({queryKey:['cart']});} });
-}
 export function useAICalorieEstimate() { return useMutation({mutationFn:(ings:any[])=>estimateCaloriesAI(ings)}); }
 export async function getPhotoTipsHook() { return getPhotoTips(); }
 

@@ -30,10 +30,9 @@ describe('mock-service (mobile local backend, Phases 0-5)', () => {
     }
   });
 
-  it('calculates earnings/credits correctly (15% platform)', () => {
+  it('calculates cook earnings correctly (15% platform)', () => {
     const cookShare = calculateCookEarnings(10000); // cents
     expect(cookShare).toBe(8500);
-    // credits sim stub: earn on complete orders
   });
 
   it('stores PDPA consent timestamps on checkout + login (for cook/customer)', () => {
@@ -54,15 +53,10 @@ describe('mock-service (mobile local backend, Phases 0-5)', () => {
   });
 
   // Growth Wave 7-9 smoke (enriched mock + contracts + SG)
-  it('home credits + redeem + tier', () => {
-    const c = api.getCredits(); expect(c.balance).toBeGreaterThanOrEqual(0); expect(['Bronze','Silver','Gold'].includes(c.tier)).toBe(true);
-    const r = api.redeemCredits(5); expect(r.ok).toBe(true);
-  });
   it('request bid accept flow', () => {
     const req = api.createRequest({body:'test nasi lemak'}); const b=api.createBid(req.id,1100); const a=api.acceptBid(b.id); expect(a.ok).toBe(true);
   });
-  it('heritage + ai cal + synonym search', () => {
-    expect(Array.isArray(api.getHeritageArchive('cook_rose_tampines_001'))).toBe(true);
+  it('ai cal + synonym search', () => {
     const ai=api.estimateCaloriesAI([{name:'rice',quantity:1,unit:'cup'}]); expect(ai.calories>200).toBe(true);
     expect(Array.isArray(api.searchProducts('nasi lemak under 400'))).toBe(true);
   });

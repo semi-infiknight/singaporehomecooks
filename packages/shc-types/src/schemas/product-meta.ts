@@ -24,7 +24,6 @@ export const shcProductMetaSchema = z.object({
   min_qty: z.number().int().positive(),
   price_cents: z.number().int().positive().optional(),
   last_minute_premium_pct: z.number().min(0).max(100).optional(),
-  heritage_note: z.string().optional(),
   image_url: z.string().optional(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),

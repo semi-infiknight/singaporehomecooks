@@ -28,7 +28,7 @@ export function AppFooter() {
               </li>
               <li>
                 <Link href="/profile" className="text-[#2C2416] hover:text-primary">
-                  Home Credits
+                  My profile
                 </Link>
               </li>
             </ul>

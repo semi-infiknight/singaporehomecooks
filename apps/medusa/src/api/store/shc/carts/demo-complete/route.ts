@@ -13,7 +13,6 @@ const BodySchema = z.object({
   collection_slot: z.string(),
   allergen_acked: z.boolean().default(false),
   pdpa_consent: z.boolean().default(true),
-  creditsToApply: z.number().optional().default(0),
   isCorporate: z.boolean().optional().default(false),
   cooking_notes: z.string().max(2000).nullable().optional(),
   collection_notes: z.string().max(2000).nullable().optional(),
@@ -36,7 +35,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       collection_slot,
       allergen_acked,
       pdpa_consent,
-      creditsToApply,
       isCorporate,
       cooking_notes,
       collection_notes,
@@ -46,13 +44,12 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       collection_slot,
       allergen_acked,
       pdpa_consent,
-      creditsToApply,
       isCorporate,
       cooking_notes,
       collection_notes,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
-    logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id} credits=${creditsToApply}`);
+    logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id}`);
     res.json(result);
   } catch (e: any) {
     // Capacity / business errors → 400 (cart kept for retry)

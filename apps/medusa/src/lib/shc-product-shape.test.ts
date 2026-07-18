@@ -24,7 +24,6 @@ describe("shapeProduct listing discovery", () => {
         name: "Launch Laksa",
         price_cents: 1800,
         description: "Coconut gravy family recipe",
-        heritage_note: "Katong weekend special",
         min_qty: 3,
         cuisine: "Peranakan",
       },
@@ -34,7 +33,6 @@ describe("shapeProduct listing discovery", () => {
     expect(shaped.name).toBe("Launch Laksa");
     expect(shaped.price).toBe(18);
     expect(shaped.description).toBe("Coconut gravy family recipe");
-    expect(shaped.heritage_note).toBe("Katong weekend special");
     expect(shaped.cook_name).toBe("Auntie Rose");
   });
 

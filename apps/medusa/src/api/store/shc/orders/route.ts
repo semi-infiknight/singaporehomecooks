@@ -69,7 +69,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       }
     }
 
-    // Basic shape + growth metadata (credits/earnings/requests) for Phase 8-9 parity with mock. Additive only.
+    // Basic shape + growth metadata (earnings/requests) for Phase 8-9 parity with mock. Additive only.
     const orders = (metas || []).map((m: any) => ({
       id: m.order_id,
       order_id: m.order_id,
@@ -80,7 +80,6 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       collection_slot: m.collection_slot,
       paynow_reference: m.paynow_reference,
       origin_request_id: m.origin_request_id || null,
-      credits_applied_cents: m.credits_applied_cents || 0,
       is_corporate: !!m.is_corporate,
       corporate_note: m.corporate_note || null,
       cooking_notes: m.cooking_notes || null,
@@ -99,7 +98,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       count,
       earnings_summary: earningsSummary,
       note: cook_id
-        ? "Phase 6/8-9: earnings/ledger + growth (credits/requests/corporate) metadata. Full via joins."
+        ? "Phase 6/8-9: earnings/ledger + growth (requests/corporate) metadata. Full via joins."
         : "Integration path. Modules + contracts ready. Mobile toggle uses this for growth features.",
     });
   } catch (e: any) {

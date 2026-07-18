@@ -89,13 +89,6 @@ export const checkout = (
   pdpa = true,
   notes?: { cooking_notes?: string | null; collection_notes?: string | null }
 ) => client.checkout(ack, coll, pdpa, notes);
-export const checkoutWithCredits = (
-  ack: boolean,
-  coll: { date: string; slot: string },
-  credits = 0,
-  corporate = false,
-  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
-) => client.checkoutWithCredits(ack, coll, credits, corporate, notes);
 export const transitionOrder = (oid: string, to: string) => client.transitionOrder(oid, to);
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);
 export const getOrder = (id: string) => client.getOrder(id);
@@ -108,8 +101,6 @@ export const getMyOrders = () => client.getMyOrders('customer');
 export const getMessages = (oid: string) => client.getMessages(oid);
 export const sendMessage = (oid: string, body: string, from: 'customer' | 'cook') =>
   client.sendMessage(oid, body, from);
-export const getCredits = () => client.getCredits();
-export const redeemCredits = (a: number) => client.redeemCredits(a);
 export const createRequest = (i: Record<string, unknown>) => client.createRequest(i);
 export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
@@ -121,12 +112,10 @@ export const getNotifications = () => client.getNotifications();
 export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
 export const markNotificationsRead = (ids?: string[], all = false) =>
   client.markNotificationsRead(ids, all);
-export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
 export const generateListingImage = (input: {
   mode: 'generate' | 'enhance';
   dish_name: string;
   cuisine?: string;
-  heritage_note?: string;
   image_base64?: string;
   ai_restyle?: boolean;
   enhance_style?: 'polish' | 'restyle';

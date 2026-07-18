@@ -11,7 +11,6 @@ const QuerySchema = z
 
 const DEFAULTS: Record<string, boolean> = {
   request_dish: true,
-  home_credits: true,
   corporate_orders: true,
 };
 

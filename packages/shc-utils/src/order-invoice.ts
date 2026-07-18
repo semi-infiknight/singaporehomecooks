@@ -83,8 +83,6 @@ export type BuildInvoiceInput = {
     }>;
     total?: number | string;
     total_cents?: number;
-    credits_applied?: number;
-    credits_applied_cents?: number;
     is_corporate?: boolean;
     created_at?: string;
   };
@@ -185,17 +183,12 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     ];
     linesSum = totalCents;
   } else if (linesSum !== totalCents && totalCents > 0 && linesSum > 0) {
-    // Adjust last line so sum matches paid total (credits / rounding)
+    // Adjust last line so sum matches paid total (rounding)
     const diff = totalCents - linesSum;
     const last = lines[lines.length - 1];
     last.line_cents = Math.max(0, last.line_cents + diff);
     last.unit_cents = last.qty > 0 ? Math.round(last.line_cents / last.qty) : last.line_cents;
   }
-
-  const credits =
-    order.credits_applied_cents != null
-      ? Math.round(Number(order.credits_applied_cents))
-      : Math.round(Number(order.credits_applied) || 0);
 
   const supplier = { ...DEFAULT_PLATFORM_SUPPLIER, ...input.supplier };
   const gstRate = supplier.gst_registered ? 0.09 : 0;
@@ -215,9 +208,6 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
   ];
   if (order.is_corporate) {
     notes.push('Corporate / group order flag was set at checkout.');
-  }
-  if (credits > 0) {
-    notes.push(`Platform credits applied: S$${(credits / 100).toFixed(2)}.`);
   }
   if (isCook) {
     notes.push(

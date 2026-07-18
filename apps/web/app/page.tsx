@@ -340,7 +340,7 @@ export default function DiscoverHome() {
               id: 'request',
               title: 'Request a dish',
               subtitle: 'Custom occasion menu',
-              imageUrl: PROMO_BANNER_IMAGES.credits,
+              imageUrl: PROMO_BANNER_IMAGES.request,
               badge: 'Custom',
             },
           ].map((promo) => (

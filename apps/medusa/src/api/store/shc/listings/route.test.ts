@@ -37,7 +37,6 @@ describe("POST /store/shc/listings", () => {
         min_qty: 3,
         cuisine: "Peranakan",
         description: "Coconut gravy family recipe",
-        heritage_note: "Katong weekend special",
         occasion_tags: ["Birthday"],
         ingredients: [{ name: "Prawn", quantity: 6, unit: "pcs" }],
         allergen_tiers: { tier1: ["Shellfish"], tier2: [], tier3: [] },
@@ -74,7 +73,6 @@ describe("POST /store/shc/listings", () => {
     expect(savedMeta.name).toBe("Launch Laksa");
     expect(savedMeta.price_cents).toBe(1800);
     expect(savedMeta.description).toBe("Coconut gravy family recipe");
-    expect(savedMeta.heritage_note).toBe("Katong weekend special");
     expect(res.body.product.name).toBe("Launch Laksa");
     expect(res.body.product.price).toBe(18);
   });

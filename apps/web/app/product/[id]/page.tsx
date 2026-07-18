@@ -167,11 +167,6 @@ export default function ProductDetail() {
           {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
         </div>
 
-        {product.heritage_note && (
-          <SHCCard className="mb-6 shc-bento-yellow py-3 px-4">
-            <p className="text-sm text-foreground leading-snug font-medium italic line-clamp-3">{product.heritage_note}</p>
-          </SHCCard>
-        )}
 
         <SHCSectionTitle subtitle="Review before ordering">Ingredients & allergens</SHCSectionTitle>
         <SHCCard className="rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">

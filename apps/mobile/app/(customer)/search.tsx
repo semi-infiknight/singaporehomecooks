@@ -50,7 +50,6 @@ export default function SearchScreen() {
                 <View style={{ backgroundColor: shcColors[t as keyof typeof shcColors], paddingHorizontal: 4, borderRadius: 3 }}><Text style={{ color: '#fff', fontSize: 10 }}>{cal} cal</Text></View>
                 <Text>min {p.min_qty}</Text>
               </View>
-              <Text style={{ fontSize: 12, color: shcColors.textLight }}>{p.heritage_note}</Text>
             </Pressable>
             <SHCButton size="sm" style={{ marginTop: 8 }} onPress={() => goProduct(p.id)}><SHCButtonText>View &amp; Add</SHCButtonText></SHCButton>
           </SHCCard>

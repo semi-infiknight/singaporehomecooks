@@ -364,7 +364,7 @@ export default function CustomerDiscover() {
         </View>
       )}
 
-      {/* Offer — first subscription / credits */}
+      {/* Offer — weekly tiffin subscription */}
       {!query && (
         <Pressable
           style={styles.offerCard}
@@ -385,7 +385,7 @@ export default function CustomerDiscover() {
             promos={[
               { id: 'hari-raya', title: 'Hari Raya spreads', subtitle: 'Order for the open house', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Event', iconKey: 'people' },
               { id: 'cny', title: 'CNY reunion', subtitle: 'Plan 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.family, badge: 'Event', iconKey: 'people' },
-              { id: 'request', title: 'Request a dish', subtitle: 'Custom occasion menu', imageUrl: PROMO_BANNER_IMAGES.credits, badge: 'Custom', iconKey: 'discover' },
+              { id: 'request', title: 'Request a dish', subtitle: 'Custom occasion menu', imageUrl: PROMO_BANNER_IMAGES.request, badge: 'Custom', iconKey: 'discover' },
             ]}
             onPromoPress={(id) => {
               if (id === 'hari-raya') setOccasionFilter('Hari Raya');

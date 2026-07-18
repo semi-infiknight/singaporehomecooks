@@ -27,7 +27,7 @@ export default function TiffinMenuScreen() {
       name: d.name,
       price: d.price,
       cuisine: d.cuisine,
-      description: d.description || d.heritage_note,
+      description: d.description,
     }));
     if (filter === 'All') return all;
     return all.filter((d: { cuisine?: string }) => String(d.cuisine || '').toLowerCase().includes(filter.toLowerCase()));

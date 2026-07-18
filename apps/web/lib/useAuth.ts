@@ -32,7 +32,6 @@ export function useAuth() {
     setUser(u);
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
-    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
   }, [queryClient]);
 
@@ -42,7 +41,6 @@ export function useAuth() {
     setUser(u);
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
-    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
   }, [queryClient]);
 

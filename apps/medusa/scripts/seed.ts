@@ -354,7 +354,7 @@ async function seed() {
 
   // Backend-Completion (Phase 8-9): seed sample requests, bids, credits, heritage for growth routes parity with mock.
   // Uses frozen @shc/types where applicable (req/bid). Direct pg for new tables (migrations run first).
-  console.log("[SEED][BACKEND-COMPLETE-GROWTH] Seeding sample requests/bids/credits/heritage...");
+  console.log("[SEED][BACKEND-COMPLETE-GROWTH] Seeding sample requests/bids...");
   const pg2 = new Client({ connectionString: dbUrl });
   try {
     await pg2.connect();
@@ -373,28 +373,7 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING`, [demoCook]);
     console.log("  ✓ sample shc_bid seeded");
 
-    // Credit wallet for demo cust (balance for redeem demo)
-    await pg2.query(`INSERT INTO shc_credit_wallet (id, customer_id, balance_cents, lifetime_spend_cents, tier, last_earn_at, created_at, updated_at)
-      VALUES ('cw_seed_cust', $1, 120, 68000, 'Silver', now(), now(), now())
-      ON CONFLICT (customer_id) DO UPDATE SET balance_cents=120, lifetime_spend_cents=68000, tier='Silver'`, [demoCust]);
-    console.log("  ✓ sample shc_credit_wallet seeded");
-
-    // Heritage entries (published)
-    await pg2.query(`INSERT INTO shc_heritage (id, cook_id, title, story, photo_stub, published, created_at, updated_at)
-      VALUES ('ha_seed_001', $1, '1972 Katong Nasi Lemak', 'Ah Mah ground rempah on batu lesung every dawn in the shophouse. We keep the exact pandan-lemak ratio in our Tampines HDB. Published for the Heritage Library.', 'nasi-lemak-family-1972.jpg', true, now(), now())
-      ON CONFLICT (id) DO NOTHING`, [demoCook]);
-    await pg2.query(`INSERT INTO shc_heritage (id, cook_id, title, story, photo_stub, published, created_at, updated_at)
-      VALUES ('ha_seed_002', $1, 'Buah Keluak Ritual', 'Soak 3 days, scrape the flesh by hand — the same way my mother taught in 1983 HDB kitchen.', 'keluak-paste-hdb.jpg', true, now(), now())
-      ON CONFLICT (id) DO NOTHING`, [demoCook]);
-    console.log("  ✓ sample shc_heritage entries seeded");
-
-    // Add a credit ledger issuance sample (for history)
-    await pg2.query(`INSERT INTO shc_ledger_entry (id, order_id, debit_account, credit_account, amount_cents, batch_id, created_at, updated_at)
-      VALUES ('leg_credit_seed', null, 'Credit-Issuance-Expense', 'Home-Credit-Liability', 120, null, now(), now())
-      ON CONFLICT (id) DO NOTHING`);
-    console.log("  ✓ sample credit ledger entry seeded");
-
-    console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth samples (requests, bids, credits, heritage) + ledger tie-ins complete. Use routes to demo.");
+    console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth samples (requests, bids) complete.");
   } catch (e: any) {
     console.log("[SEED][BACKEND-COMPLETE-GROWTH] Growth seed partial (migrations/DB ready?):", e.message);
   } finally {

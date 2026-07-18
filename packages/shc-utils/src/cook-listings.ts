@@ -4,7 +4,6 @@ export type CookListingRow = {
   name?: string;
   cuisine?: string;
   occasion_tags?: string[];
-  heritage_note?: string;
   shc_availability?: { paused?: boolean };
 };
 
@@ -20,7 +19,6 @@ export function filterCookListings<T extends CookListingRow>(
       const haystack = [
         listing.name,
         listing.cuisine,
-        listing.heritage_note,
         ...(listing.occasion_tags || []),
       ]
         .filter(Boolean)

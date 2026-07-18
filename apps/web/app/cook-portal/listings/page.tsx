@@ -49,7 +49,6 @@ type ListingRow = Record<string, unknown> & {
   price?: number;
   min_qty?: number;
   cuisine?: string;
-  heritage_note?: string;
   occasion_tags?: string[];
   ingredients?: Array<{ name: string; quantity: number; unit: string }>;
   image_url?: string;
@@ -66,7 +65,6 @@ const DEFAULT_FORM = {
   price: 14,
   minQty: 4,
   cuisine: 'Peranakan',
-  heritage: '',
 };
 
 type AiImageStatus = {
@@ -103,7 +101,6 @@ export default function CookListingsPage() {
   const [price, setPrice] = useState(DEFAULT_FORM.price);
   const [minQty, setMinQty] = useState(DEFAULT_FORM.minQty);
   const [cuisine, setCuisine] = useState(DEFAULT_FORM.cuisine);
-  const [heritage, setHeritage] = useState(DEFAULT_FORM.heritage);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -224,7 +221,6 @@ export default function CookListingsPage() {
         mode: 'generate',
         dish_name: name,
         cuisine,
-        heritage_note: heritage,
       });
       const url = res.webp_url || res.image_url || res.jpeg_url;
       if (!url) throw new Error('No image URL returned');
@@ -250,7 +246,6 @@ export default function CookListingsPage() {
         mode: 'enhance',
         dish_name: name || 'Dish',
         cuisine,
-        heritage_note: heritage,
         image_base64: dataUrl,
         enhance_style: 'polish',
         ai_restyle: false,
@@ -280,7 +275,6 @@ export default function CookListingsPage() {
     setCuisine(DEFAULT_FORM.cuisine);
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setHeritage(DEFAULT_FORM.heritage);
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -296,7 +290,6 @@ export default function CookListingsPage() {
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
-    setHeritage(String(listing.heritage_note || ''));
     setPublished(null);
     setAiCal(
       listing.calories
@@ -334,7 +327,6 @@ export default function CookListingsPage() {
       occasion_tags: occasionTags,
       ingredients,
       allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
-      heritage_note: heritage,
       image_url:
         listingImageUrl ||
         `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
@@ -738,12 +730,6 @@ export default function CookListingsPage() {
                 </div>
                 <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
               </button>
-              <textarea
-                className="w-full rounded-xl border border-border px-3 py-2 text-sm min-h-[80px]"
-                value={heritage}
-                onChange={(e) => setHeritage(e.target.value)}
-                placeholder="Heritage story"
-              />
             </div>
           )}
 

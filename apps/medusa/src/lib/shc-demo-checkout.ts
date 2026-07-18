@@ -2,7 +2,6 @@ import type { MedusaRequest } from "@medusajs/framework/http";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcCartModuleService from "../modules/shc-cart/service";
-import ShcCreditWalletModuleService from "../modules/shc-credit-wallet/service";
 import ShcDropModuleService from "../modules/shc-drop/service";
 import { getCustomerId } from "./shc-actors";
 import ShcNotificationModuleService from "../modules/shc-notification/service";
@@ -12,7 +11,6 @@ export type DemoCheckoutInput = {
   collection_slot: string;
   allergen_acked: boolean;
   pdpa_consent: boolean;
-  creditsToApply?: number;
   isCorporate?: boolean;
   cooking_notes?: string | null;
   collection_notes?: string | null;
@@ -25,7 +23,6 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     collection_slot,
     allergen_acked,
     pdpa_consent,
-    creditsToApply = 0,
     isCorporate = false,
     cooking_notes = null,
     collection_notes = null,
@@ -40,7 +37,6 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
 
   const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
-  const credService: ShcCreditWalletModuleService = req.scope.resolve("shcCreditWallet") as any;
 
   const cart = await cartService.getCart(customerId);
   if (!cart.items?.length) {
@@ -74,12 +70,6 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     }
   }
 
-  let creditsApplied = 0;
-  if (creditsToApply > 0) {
-    const r = await credService.redeemCredits(customerId, creditsToApply, req.scope);
-    creditsApplied = r.used || 0;
-  }
-
   const cookId = cart.cookId || cart.items[0]?.cook_id;
   if (!cookId) {
     throw createSHCError("SHC-GENERIC-001", "Cart has no cook — add items from a published listing first");
@@ -98,7 +88,6 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     allergen_acked_at: allergen_acked ? new Date().toISOString() : undefined,
     pdpa_consent_at: pdpa_consent ? new Date().toISOString() : undefined,
     pdpa_consent_version: pdpa_consent ? "v1.0-pdpa-2025" : undefined,
-    credits_applied_cents: creditsApplied || 0,
     is_corporate: !!isCorporate,
     corporate_note: isCorporate
       ? `Corporate/group order — multi-dish note for ops.`
@@ -144,11 +133,10 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     collection_slot,
     allergen_acked_at: allergen_acked ? new Date().toISOString() : undefined,
     pdpa_consent_at: pdpa_consent ? new Date().toISOString() : undefined,
-    credits_applied: creditsApplied,
     is_corporate: isCorporate,
     total,
     origin_drop_id: originDropId,
   };
   const shc_meta = await metaService.getOrderMetaWithMessages(orderId);
-  return { order, shc_meta, earningsPreview: Math.round(total * 0.85), credits_applied: creditsApplied };
+  return { order, shc_meta, earningsPreview: Math.round(total * 0.85) };
 }

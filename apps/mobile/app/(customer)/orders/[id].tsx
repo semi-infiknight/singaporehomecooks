@@ -37,7 +37,7 @@ export default function OrderTracking() {
         </SHCButton>
       </Link>
 
-      <Text style={{ marginTop: 16, fontSize: 12, color: shcColors.textLight }}>After collection: leave review (one per order, post-collected only per rules). Home Credits earned.</Text>
+      <Text style={{ marginTop: 16, fontSize: 12, color: shcColors.textLight }}>After collection: leave review (one per order, post-collected only per rules).</Text>
       <Text style={{ fontSize: 11 }}>Status machine validated via @shc/types + business-rules on every transition.</Text>
     </ScrollView>
   );

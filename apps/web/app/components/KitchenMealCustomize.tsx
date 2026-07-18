@@ -68,10 +68,10 @@ export function KitchenMealCustomizeSheet({
               {draft.productName}
             </p>
             <p className="text-xs font-semibold text-muted-foreground mt-1 line-clamp-2">
-              {dish.heritage_note
-                ? String(dish.heritage_note).slice(0, 100)
+              {dish.description
+                ? String(dish.description).slice(0, 100)
                 : dish.cuisine
-                  ? `${dish.cuisine} heritage recipe`
+                  ? `${dish.cuisine} dish`
                   : 'Home-cooked portion'}
             </p>
           </div>

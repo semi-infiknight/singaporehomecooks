@@ -72,7 +72,7 @@ const STATUS_TEMPLATES: Partial<
   completed: {
     customer: {
       title: "Order complete",
-      body: "Order #{ref} with {cook} is complete. Home Credits may appear in your wallet soon.",
+      body: "Order #{ref} with {cook} is complete. Leave a review when you're ready.",
     },
     cook: {
       title: "Order complete",

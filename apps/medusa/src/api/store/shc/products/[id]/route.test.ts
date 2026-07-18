@@ -39,7 +39,6 @@ describe("GET /store/shc/products/:id", () => {
                 ingredients: [{ name: "Prawn", quantity: 6, unit: "pcs" }],
                 min_qty: 3,
                 price_cents: 1800,
-                heritage_note: "Katong weekend special",
                 image_url: "https://example.com/laksa.webp",
               }),
             };
@@ -60,7 +59,6 @@ describe("GET /store/shc/products/:id", () => {
     expect(res.body.product.name).toBe("Launch Laksa");
     expect(res.body.product.price).toBe(18);
     expect(res.body.product.description).toBe("Coconut gravy family recipe");
-    expect(res.body.product.heritage_note).toBe("Katong weekend special");
     expect(res.body.product.image_url).toBe("https://example.com/laksa.webp");
   });
 });

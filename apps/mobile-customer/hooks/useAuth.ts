@@ -37,7 +37,6 @@ export function useAuth() {
     scheduleCustomerPushRegistration();
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
-    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
   }, [queryClient]);
 
@@ -48,7 +47,6 @@ export function useAuth() {
     scheduleCustomerPushRegistration();
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
-    await queryClient.invalidateQueries({ queryKey: ['credits'] });
     return u;
   }, [queryClient]);
 
@@ -57,7 +55,6 @@ export function useAuth() {
     setUser(null);
     queryClient.removeQueries({ queryKey: ['cart'] });
     queryClient.removeQueries({ queryKey: ['orders'] });
-    queryClient.removeQueries({ queryKey: ['credits'] });
   }, [queryClient]);
 
   return { user, loading, login, register, logout, isAuthenticated: !!user };

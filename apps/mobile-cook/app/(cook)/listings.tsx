@@ -124,6 +124,26 @@ export default function CookListings() {
     }
   }, [step]);
 
+  const [name, setName] = useState('New Nyonya Dish');
+  const [price, setPrice] = useState(14);
+  const [minQty, setMinQty] = useState(4);
+  const [cuisine, setCuisine] = useState('Peranakan');
+  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
+  const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+  const [published, setPublished] = useState<any>(null);
+  const [aiCal, setAiCal] = useState<any>(null);
+  const aiEstMut = useAICalorieEstimate();
+  const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
+  const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
+  const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
+  const [aiImageStatus, setAiImageStatus] = useState<{
+    configured?: boolean;
+    generate_available?: boolean;
+    generate_unavailable_reason?: string | null;
+    cuisine_presets?: string[];
+    model?: string;
+  } | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     void getAiImageStatus()
@@ -151,26 +171,6 @@ export default function CookListings() {
     aiImageStatus?.generate_unavailable_reason ||
     (!generateAvailable && aiImageStatus ? 'AI generate offline — upload a kitchen photo' : null);
 
-  const [name, setName] = useState('New Nyonya Dish');
-  const [price, setPrice] = useState(14);
-  const [minQty, setMinQty] = useState(4);
-  const [cuisine, setCuisine] = useState('Peranakan');
-  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
-  const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-  const [heritage, setHeritage] = useState('');
-  const [published, setPublished] = useState<any>(null);
-  const [aiCal, setAiCal] = useState<any>(null);
-  const aiEstMut = useAICalorieEstimate();
-  const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
-  const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
-  const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
-  const [aiImageStatus, setAiImageStatus] = useState<{
-    configured?: boolean;
-    generate_available?: boolean;
-    generate_unavailable_reason?: string | null;
-    cuisine_presets?: string[];
-    model?: string;
-  } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -230,7 +230,6 @@ export default function CookListings() {
     setCuisine('Peranakan');
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setHeritage('');
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -248,7 +247,6 @@ export default function CookListings() {
         ? listing.ingredients
         : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
-    setHeritage(listing.heritage_note || '');
     setPublished(null);
     setAiCal(
       listing.calories
@@ -325,7 +323,6 @@ export default function CookListings() {
         mode: 'generate',
         dish_name: name,
         cuisine,
-        heritage_note: heritage,
       });
       const url = res.webp_url || res.image_url || res.jpeg_url;
       if (!url) throw new Error('No image URL returned');
@@ -348,7 +345,6 @@ export default function CookListings() {
         mode: 'enhance',
         dish_name: name || 'Dish',
         cuisine,
-        heritage_note: heritage,
         image_base64: b64,
         enhance_style: 'polish',
         ai_restyle: false,
@@ -461,7 +457,6 @@ export default function CookListings() {
       occasion_tags: occasionTags,
       ingredients,
       allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
-      heritage_note: heritage,
     };
 
     input.image_url = listingImageUrl || getDishImageUrl({ name, cuisine });
@@ -638,7 +633,7 @@ export default function CookListings() {
       )}
 
       {step === 3 && (
-        <ListingWizardStep step={3} title="Ingredients & Heritage">
+        <ListingWizardStep step={3} title="Ingredients & photo">
           <IngredientTierEditor value={ingredients} onChange={setIngredients} />
           <SHCButton
             variant="outline"
@@ -724,7 +719,6 @@ export default function CookListings() {
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
             <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
           </Pressable>
-          <TextInput value={heritage} onChangeText={setHeritage} multiline style={[inputStyle, { height: 60 }]} />
         </ListingWizardStep>
       )}
 

@@ -72,15 +72,12 @@ export const getSlots = (productId: string) => client.getSlots(productId);
 export const addToCart = (productId: string, qty: number) => client.addToCart(productId, qty);
 export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
-export const checkout = (allergenAck: boolean, collection: { date: string; slot: string }, pdpaConsent = true) =>
-  client.checkout(allergenAck, collection, pdpaConsent);
-export const checkoutWithCredits = (
+export const checkout = (
   allergenAck: boolean,
   collection: { date: string; slot: string },
-  creditsToApply = 0,
-  isCorporate = false,
+  pdpaConsent = true,
   notes?: { cooking_notes?: string | null; collection_notes?: string | null }
-) => client.checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate, notes);
+) => client.checkout(allergenAck, collection, pdpaConsent, notes);
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoiceDownloadUrl = (id: string) => client.getOrderInvoiceDownloadUrl(id);
@@ -92,8 +89,6 @@ export const getMyOrders = () => client.getMyOrders('customer');
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>
   client.sendMessage(orderId, body, from);
-export const getCredits = () => client.getCredits();
-export const redeemCredits = (amount: number) => client.redeemCredits(amount);
 export const createRequest = (input: Record<string, unknown>) => client.createRequest(input);
 export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
@@ -111,7 +106,6 @@ export async function uploadImageToServer(imageBase64: string, objectName: strin
     contentType,
   });
 }
-export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);
 export const getBids = (requestId?: string) => client.getBids(requestId);

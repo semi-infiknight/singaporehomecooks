@@ -118,8 +118,6 @@ export default function Cart() {
   const [collectionNotes, setCollectionNotes] = useState('');
   const [showCooking, setShowCooking] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
-  const [coupon, setCoupon] = useState('');
-  const [couponMsg, setCouponMsg] = useState('');
 
   const items = (cartData.items || []) as Array<Record<string, unknown>>;
   const summary = computeOneTimeOrderSummary(items as any);
@@ -235,37 +233,6 @@ export default function Cart() {
                   placeholderTextColor={gourmeatColors.textMuted}
                 />
               )}
-
-              <View style={styles.summary} testID="cart-coupon-row">
-                <Text style={styles.summaryTitle}>{CART_WIREFRAME_LABELS.coupon}</Text>
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                  <TextInput
-                    style={[styles.input, { flex: 1, minHeight: 44, marginBottom: 0 }]}
-                    value={coupon}
-                    onChangeText={setCoupon}
-                    placeholder="Code or Home Credits"
-                    placeholderTextColor={gourmeatColors.textMuted}
-                    testID="cart-coupon-input"
-                  />
-                  <Pressable
-                    style={styles.couponBtn}
-                    onPress={() => {
-                      const code = coupon.trim().toUpperCase();
-                      setCouponMsg(
-                        !code
-                          ? 'Enter a code to apply.'
-                          : code === 'WELCOME' || code === 'SHC5'
-                            ? 'Code noted — confirm at checkout.'
-                            : 'Unknown code. Use Home Credits at checkout.'
-                      );
-                    }}
-                    testID="cart-coupon-apply"
-                  >
-                    <Text style={styles.couponBtnText}>Apply</Text>
-                  </Pressable>
-                </View>
-                {couponMsg ? <Text style={styles.cancelNote}>{couponMsg}</Text> : null}
-              </View>
 
               <View style={styles.summary} testID="cart-order-summary">
                 <Text style={styles.summaryTitle}>{CART_WIREFRAME_LABELS.bill}</Text>
@@ -392,15 +359,6 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontWeight: '900', fontSize: 15 },
   totalVal: { fontWeight: '900', fontSize: 16, color: gourmeatColors.primary },
-  couponBtn: {
-    backgroundColor: gourmeatColors.surface,
-    borderWidth: 2,
-    borderColor: gourmeatColors.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-  },
-  couponBtnText: { fontWeight: '800', fontSize: 13, color: gourmeatColors.primary },
   paynowCard: {
     borderColor: gourmeatColors.primary,
     backgroundColor: '#FFF8E8',

@@ -20,7 +20,6 @@ import { checkRateLimit, getRateLimitKey } from "../../../../../lib/shc-rate-lim
  *   mode: "generate" | "enhance"
  *   dish_name: string
  *   cuisine?: string
- *   heritage_note?: string
  *   image_base64?: string     (required for enhance polish)
  *   enhance_style?: "polish" | "restyle"
  *   ai_restyle?: boolean      (legacy: true → restyle; default polish)
@@ -30,7 +29,6 @@ const BodySchema = z
     mode: z.enum(["generate", "enhance"]),
     dish_name: z.string().min(1).max(120),
     cuisine: z.string().max(60).optional(),
-    heritage_note: z.string().max(300).optional(),
     image_base64: z.string().max(8_000_000).optional(),
     ai_restyle: z.boolean().optional(),
     enhance_style: z.enum(["polish", "restyle"]).optional(),
@@ -83,7 +81,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       mode: parse.data.mode,
       dish_name: parse.data.dish_name,
       cuisine: parse.data.cuisine,
-      heritage_note: parse.data.heritage_note,
       image_base64: parse.data.image_base64,
       ai_restyle: parse.data.ai_restyle,
       enhance_style: parse.data.enhance_style,

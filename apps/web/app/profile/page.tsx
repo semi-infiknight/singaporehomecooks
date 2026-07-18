@@ -10,7 +10,6 @@ import {
   SHCButton,
   SHCSectionTitle,
   SHCPageHeader,
-  HeritageStoryBanner,
   AccountMenuList,
   SHCSkeletonAccountScreen,
 } from '../components/SHCWebComponents';
@@ -78,10 +77,6 @@ export default function Profile() {
 
       {/* Wireframe Account menu */}
       <AccountMenuList items={accountMenuItemsSignedIn()} />
-
-      <div className="mt-2 mb-4">
-        <HeritageStoryBanner href="/content/trust" />
-      </div>
 
       {showNotifs && (
         <>

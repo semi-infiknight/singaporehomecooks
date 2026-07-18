@@ -27,12 +27,6 @@ export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
 export const checkout = (allergenAck: boolean, collection: { date: string; slot: string }, pdpaConsent = true) =>
   client.checkout(allergenAck, collection, pdpaConsent);
-export const checkoutWithCredits = (
-  allergenAck: boolean,
-  collection: { date: string; slot: string },
-  creditsToApply = 0,
-  isCorporate = false
-) => client.checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate);
 export const transitionOrder = (orderId: string, to: any) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getMyOrders = (role: 'customer' | 'cook') => client.getMyOrders(role);
@@ -41,16 +35,12 @@ export const sendMessage = (orderId: string, body: string, from: 'customer' | 'c
   client.sendMessage(orderId, body, from);
 export const createCookListing = (input: any) => client.createCookListing(input);
 export const getEarnings = () => client.getEarnings();
-export const getCredits = () => client.getCredits();
-export const redeemCredits = (amount: number) => client.redeemCredits(amount);
 export const createRequest = (input: any) => client.createRequest(input);
 export const listOpenRequests = () => client.listOpenRequests();
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);
 export const getBids = (requestId?: string) => client.getBids(requestId);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
-export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
-export const addHeritageEntry = (cookId: string, entry: any) => client.addHeritageEntry(cookId, entry);
 export const getNotifications = () => client.getNotifications();
 export const estimateCaloriesAI = (ingredients: any[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();

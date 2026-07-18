@@ -754,38 +754,7 @@ export function AllergenAckCheckbox({ checked, onChange, allergens, tier1 }: { c
   );
 }
 
-// Growth + Differentiation components (Phase 7-9 Mobile): SG delight, testIDs, a11y, SHC tokens. Home Credits, requests, heritage, AI stubs.
-export function CreditBadge({ balance, tier = 'Bronze', expiryMonths = 12 }: { balance: number; tier?: 'Bronze' | 'Silver' | 'Gold'; expiryMonths?: number }) {
-  const tierColor = tier === 'Gold' ? colors.tierGold : tier === 'Silver' ? colors.tierSilver : colors.tierBronze;
-  return (
-    <View style={{ backgroundColor: colors.surfaceWarning, borderRadius: shcRadii.pill, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: colors.border }} testID="credit-badge" accessible accessibilityLabel={`Home Credits balance ${balance}, ${tier} tier, expires in ${expiryMonths} months`}>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.primary }}>🍃 {balance} Home Credits</Text>
-      <View style={{ backgroundColor: tierColor, borderRadius: shcRadii.sm, paddingHorizontal: 6, paddingVertical: 1 }}>
-        <Text style={{ color: colors.onPrimary, fontSize: 10, fontWeight: '600' }}>{tier}</Text>
-      </View>
-      <Text style={{ fontSize: 10, color: colors.textLight }}>exp {expiryMonths}m</Text>
-    </View>
-  );
-}
-
-export function WalletCard({ balance, lifetimeSpend = 0, onRedeem, redeemable = 0 }: { balance: number; lifetimeSpend?: number; onRedeem?: (amount: number) => void; redeemable?: number }) {
-  const tier = lifetimeSpend > 1200 ? 'Gold' : lifetimeSpend > 450 ? 'Silver' : 'Bronze';
-  const tierLabel = lifetimeSpend > 1200 ? 'Gold (5% bonus earn)' : lifetimeSpend > 450 ? 'Silver (unlock more)' : 'Bronze — earn on every completed order';
-  return (
-    <SHCCard variant="bento-mint" testID="wallet-card">
-      <SHCSectionTitle>🏠 Home Credits Wallet (SG Family Feasts)</SHCSectionTitle>
-      <CreditBadge balance={balance} tier={tier as any} />
-      <Text style={{ marginTop: 6, fontSize: 12, color: colors.textLight }}>{tierLabel} • Lifetime spend S${lifetimeSpend} • 5% of order total earned on 'collected'</Text>
-      {onRedeem && redeemable > 0 && (
-        <SHCButton onPress={() => onRedeem(Math.min(redeemable, balance))} style={{ marginTop: 8 }} testID="redeem-credits-btn">
-          <SHCButtonText>Redeem S${(Math.min(redeemable, balance) / 4).toFixed(0)} (apply {Math.min(redeemable, balance)} credits)</SHCButtonText>
-        </SHCButton>
-      )}
-      <Text style={{ fontSize: 10, color: colors.textLight, marginTop: 4 }}>Credits = S$0.25 each. Auto/manual at checkout for Raya spreads &amp; HDB parties. 12-month expiry.</Text>
-    </SHCCard>
-  );
-}
-
+// Growth + Differentiation components (Phase 7-9 Mobile): SG delight, testIDs, a11y, SHC tokens. Requests, AI stubs.
 export function AICalorieBadge({ calories, confidence = 'category', source = 'AI stub from ingredients' }: { calories: number; confidence?: 'full' | 'category'; source?: string }) {
   const isFull = confidence === 'full';
   return (

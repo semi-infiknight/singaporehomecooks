@@ -39,11 +39,10 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
   }
 
   // Phase 6 money engine: on completed -> ledger post + notify (idempotent in ledger)
-  // Phase 8-9 growth: also award Home Credits (5%) to customer via credit-wallet (posts ledger issuance inside)
   if (to === "completed" && orderId) {
     try {
       const ledgerService: ShcLedgerModuleService = (container as any).resolve("shcLedger");
-      const { totalCents, customerId: custId } = await resolveOrderMoney(container, orderId);
+      const { totalCents } = await resolveOrderMoney(container, orderId);
 
       if (totalCents > 0) {
         await ledgerService.postCommission({
@@ -56,17 +55,6 @@ export default async function shcOrderStateHandler({ event, container }: Subscri
       } else {
         logger.info?.({ event: "ledger.auto_post_on_completed.skip", orderId, reason: "no_total" });
       }
-
-      // Award credits for growth flow
-      if (custId && totalCents > 0) {
-        try {
-          const cred = (container as any).resolve("shcCreditWallet");
-          const aw = await cred.awardCreditsOnComplete(custId, totalCents, orderId, container);
-          logger.info?.({ event: "credit.awarded_on_completed", orderId, customer: custId, awarded: aw?.awarded });
-        } catch {}
-      }
-
-      // Payout + credits handled above; in-app/push already sent via notifyOrderStatusChange.
     } catch (e: any) {
       logger.error?.({ event: "ledger.post_on_completed.failed", orderId, error: e.message });
       // Do not block state; money can be reconciled manually via script

@@ -57,17 +57,13 @@ export function getAiImagePublicStatus() {
 export function buildFoodPhotoPrompt(input: {
   dish_name: string;
   cuisine?: string;
-  heritage_note?: string;
   enhance?: boolean;
 }): string {
   const dish = (input.dish_name || "home cooked dish").trim().slice(0, 80);
   const cuisine = (input.cuisine || "Singapore").trim().slice(0, 40);
-  const heritage = (input.heritage_note || "").trim().slice(0, 120);
-  const base = input.enhance
+  return input.enhance
     ? `Professional food-app photograph of ${dish}, ${cuisine} cuisine, enhanced natural window light, appetizing steam if hot food, clean ceramic plate, shallow depth of field, photorealistic, no text, no watermark, no logo, high detail`
     : `Photorealistic plated ${dish}, ${cuisine} home kitchen Singapore, natural HDB window light, banana leaf or ceramic plate optional, appetizing, square food photography for delivery app, no text, no watermark, no hands, no logo`;
-  if (heritage) return `${base}. Story: ${heritage}`;
-  return base;
 }
 
 /**
@@ -163,7 +159,6 @@ export async function createListingFoodImage(input: {
   mode: FoodImageMode;
   dish_name: string;
   cuisine?: string;
-  heritage_note?: string;
   /** base64 of uploaded photo (required for enhance polish) */
   image_base64?: string;
   /**
@@ -196,7 +191,6 @@ export async function createListingFoodImage(input: {
       const prompt = buildFoodPhotoPrompt({
         dish_name: input.dish_name,
         cuisine: input.cuisine,
-        heritage_note: input.heritage_note,
         enhance: true,
       });
       const gen = await generateFluxImage(prompt, { steps: 4 });
@@ -231,7 +225,6 @@ export async function createListingFoodImage(input: {
   const prompt = buildFoodPhotoPrompt({
     dish_name: input.dish_name,
     cuisine: input.cuisine,
-    heritage_note: input.heritage_note,
     enhance: false,
   });
   const gen = await generateFluxImage(prompt, { steps: 4 });

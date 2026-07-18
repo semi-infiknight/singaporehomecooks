@@ -204,7 +204,6 @@ export function SHCPageHeader({
 export type WebBentoIconKey =
   | 'cart'
   | 'orders'
-  | 'credits'
   | 'request'
   | 'listings'
   | 'earnings'
@@ -213,7 +212,6 @@ export type WebBentoIconKey =
 const WEB_BENTO_ICONS: Record<WebBentoIconKey, LucideIcon> = {
   cart: ShoppingBag,
   orders: Package,
-  credits: Wallet,
   request: ChefHat,
   listings: UtensilsCrossed,
   earnings: Banknote,
@@ -334,7 +332,7 @@ export function PromoRail({
   const icons: Record<string, LucideIcon> = {
     'promo-tiffin': Home,
     'promo-raya': Leaf,
-    'promo-credits': Wallet,
+    'promo-request': ChefHat,
     'promo-family': Users,
     'promo-paynow': CreditCard,
   };
@@ -775,34 +773,6 @@ export function SearchResultsPanel({
   );
 }
 
-export function HeritageStoryBanner({
-  title = 'Home cooks, heritage recipes',
-  body = 'Home cooks sharing heritage recipes from Singapore HDB kitchens. Collection-only — planned occasions, not delivery.',
-  imageKey = 'listings' as keyof typeof BENTO_ACTION_IMAGES,
-  href = '/content/trust',
-}: {
-  title?: string;
-  body?: string;
-  imageKey?: keyof typeof BENTO_ACTION_IMAGES;
-  href?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] shc-section-gap mb-5"
-      data-testid="heritage-story-banner"
-    >
-      <Image src={BENTO_ACTION_IMAGES[imageKey]} alt="" fill className="object-cover" sizes="100vw" />
-      <div className="absolute inset-0 bg-[rgba(36,24,18,0.5)] flex items-end justify-between p-4 gap-3">
-        <div>
-          <h2 className="text-base font-black text-white">{title}</h2>
-          <p className="text-[11px] font-semibold text-white/90 mt-1 max-w-md leading-snug">{body}</p>
-        </div>
-        <Home className="w-7 h-7 text-white shrink-0" aria-hidden />
-      </div>
-    </Link>
-  );
-}
 
 export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
   return (
@@ -933,7 +903,6 @@ export type DishCardProduct = {
   price?: number;
   cuisine?: string;
   calories?: number;
-  heritage_note?: string;
   halal?: boolean;
   min_qty?: number;
   occasion_tags?: string[];
@@ -1502,33 +1471,6 @@ export function PriceEarningsCalc({ total, compact }: { total: number; compact?:
   );
 }
 
-export function CreditBadge({ balance }: { balance: number }) {
-  return (
-    <span className="text-xs px-2.5 py-1 bg-[var(--shc-bento-mint)] text-[var(--shc-success)] rounded-full font-bold border-2 border-[var(--shc-border-brutal)]">
-      {balance} Home Credits · ~S${(balance / 4).toFixed(0)} value
-    </span>
-  );
-}
-
-export function WalletCard({ balance, tier = 'Silver' }: { balance: number; tier?: string }) {
-  return (
-    <SHCCard className="shc-bento-mint">
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="text-sm font-semibold text-muted-foreground">Home Credits</div>
-          <div className="text-3xl font-black mt-1 tabular-nums font-mono">{balance}</div>
-          <div className="text-xs text-muted-foreground mt-1 font-medium">
-            ~S${(balance / 4).toFixed(0)} redeemable at checkout
-          </div>
-        </div>
-        <SHCBadge variant="heritage">{tier} tier</SHCBadge>
-      </div>
-      <p className="text-xs text-muted-foreground mt-4 pt-3 border-t-2 border-[var(--shc-border-brutal)] font-medium">
-        Earn 5% back on every collected order. Credits expire after 12 months.
-      </p>
-    </SHCCard>
-  );
-}
 
 /** HitPay-only PayNow — QR + auto confirm via webhook (no "I've paid"). */
 export function PayNowPanel({

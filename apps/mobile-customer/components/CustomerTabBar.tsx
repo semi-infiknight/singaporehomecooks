@@ -14,7 +14,7 @@ const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' |
   index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
   'orders/index': { label: 'Orders', iconKey: 'orders', testID: 'orders-tab' },
   cart: { label: 'Cart', iconKey: 'cart', testID: 'cart-tab' },
-  'profile/index': { label: 'Wallet', iconKey: 'profile', testID: 'profile-tab' },
+  'profile/index': { label: 'Profile', iconKey: 'profile', testID: 'profile-tab' },
 };
 
 const VISIBLE_TABS = new Set(Object.keys(TAB_META));

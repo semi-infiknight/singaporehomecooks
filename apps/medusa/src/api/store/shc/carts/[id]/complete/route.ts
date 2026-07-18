@@ -19,7 +19,6 @@ const BodySchema = z.object({
   paynow_reference: z.string().optional(),
   allergen_acked: z.boolean().default(false),
   pdpa_consent: z.boolean().default(true),
-  creditsToApply: z.number().int().min(0).default(0).optional(),
   isCorporate: z.boolean().default(false).optional(),
   corporate_note: z.string().optional(),
   origin_request_id: z.string().optional(),
@@ -32,7 +31,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid complete payload", parse.error.format() as any) });
   }
-  const { collection_date, collection_slot, paynow_reference, allergen_acked, pdpa_consent, creditsToApply = 0, isCorporate = false, origin_request_id, corporate_note } = parse.data;
+  const { collection_date, collection_slot, paynow_reference, allergen_acked, pdpa_consent, isCorporate = false, origin_request_id, corporate_note } = parse.data;
 
   const cartService = req.scope.resolve("cartService") as any;
   const orderService = req.scope.resolve("order") as any; // after complete
@@ -71,17 +70,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       } as any,
     });
 
-    // Growth support (exact mock parity): credits redemption, request-originated, corporate flag. One-cook/allergen/PDPA/min-qty already in workflow.
-    let creditsApplied = 0;
-    if (creditsToApply > 0) {
-      try {
-        const credService = req.scope.resolve("shcCreditWallet") as any;
-        const r = await credService.redeemCredits("cust_demo", creditsToApply, req.scope);
-        creditsApplied = r.used || creditsToApply;
-        // Ledger redemption already posted inside credit service.
-      } catch (e) { /* non-blocking */ }
-    }
-
+    // Growth support: request-originated, corporate flag. One-cook/allergen/PDPA/min-qty already in workflow.
     // Now perform core complete (or in full compose core completeCartWorkflow)
     // Simplified: call order creation from cart
     const order = await orderService.createOrderFromCart({ cart_id: cartId });
@@ -97,17 +86,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       pdpa_consent_at: pdpa_consent ? new Date().toISOString() : undefined,
       pdpa_consent_version: pdpa_consent ? 'v1.0-pdpa-2025' : undefined,
       origin_request_id,
-      credits_applied_cents: creditsApplied || undefined,
       is_corporate: !!isCorporate,
       corporate_note: corporate_note || (isCorporate ? 'Corporate/group order from checkout per Phase 8.' : undefined),
       items: cart.items,
       total_cents: cart.items.reduce((s: number, i: any) => s + (i.price || 0) * (i.qty || i.quantity || 1), 0) * 100,
     } as any);
 
-    // Emit custom for subscriber (growth + credits earn later on complete)
-    await emitShcEvent(req.scope, "shc.order.state_changed", { orderId: order.id, from: "cart", to: "paid", creditsApplied, isCorporate, origin_request_id });
+    // Emit custom for subscriber
+    await emitShcEvent(req.scope, "shc.order.state_changed", { orderId: order.id, from: "cart", to: "paid", isCorporate, origin_request_id });
 
-    res.json({ order, shc_meta: await metaService.getOrderMetaWithMessages(order.id), credits_applied: creditsApplied, corporate: !!isCorporate });
+    res.json({ order, shc_meta: await metaService.getOrderMetaWithMessages(order.id), corporate: !!isCorporate });
   } catch (err: any) {
     const code = err.code || "SHC-GENERIC-001";
     return res.status(400).json({ error: createSHCError(code as any, err.message || "Complete failed", { details: err }) });

@@ -56,7 +56,6 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     if (rest.calories_confidence !== undefined) patch.calories_confidence = rest.calories_confidence;
     if (rest.ingredients !== undefined) patch.ingredients = rest.ingredients;
     if (rest.min_qty !== undefined) patch.min_qty = rest.min_qty;
-    if (rest.heritage_note !== undefined) patch.heritage_note = rest.heritage_note;
     if (rest.image_url !== undefined) patch.image_url = rest.image_url;
     if (price !== undefined || price_cents !== undefined) {
       patch.price_cents = listingPriceCents({ price, price_cents });

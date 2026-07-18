@@ -27,11 +27,8 @@ let messages: Record<string, any[]> = {};
 let currentUser: any = { role: 'customer' as 'customer' | 'cook', id: 'cust_demo', name: 'Demo Customer', pdpa_consent_at: null as string | null, pdpa_consent_version: null as string | null };
 
 // Phase 7-9 growth/diff state (enriched mock, frozen contracts via shc_*). Memory = simple offline cache (persist across session; prod: AsyncStorage/SecureStore swap point)
-let userCredits: Record<string, number> = {}; // customerId -> balance (units; redeem 4 units ~ S$1)
-let lifetimeSpend: Record<string, number> = {}; // for tier: Bronze <450, Silver, Gold >1200
 let requests: SHCRequest[] = [];
 let bids: SHCBid[] = [];
-let heritageArchives: Record<string, any[]> = {}; // cookId -> permanent archive entries (seed + add/edit, visible even inactive)
 let featureFlags: SHCFeatureFlag[] = [];
 let notifications: any[] = []; // in-app bell: recent order events, request matches etc.
 const searchSynonyms: Array<{term: string; expansions: string[]}> = [
@@ -114,7 +111,6 @@ function seed() {
       cook_name: cookName,
       cook_area: cook?.area,
       ...meta,
-      heritage_note: d.heritage_note || d.description?.slice(0, 120),
       description: d.description,
       festive_timing: d.festive_timing,
       image_placeholder: d.image_placeholder,
@@ -153,24 +149,13 @@ function seed() {
     { id: 'm1', order_id: 'SHC-2026-00001', sender_actor: 'cook', body: `Order accepted! Ready by 5:30pm. Collection at my HDB — details released 2h before. See you! (From ${firstDish.cook_name})`, created_at: new Date().toISOString() },
   ];
 
-  // Phase 8/9 seeds: feature flags (use shc_feature_flag), heritage archives (from seed stories + extra), sample request, credits for demo customer, platform stat stub
+  // Phase 8/9 seeds: feature flags (use shc_feature_flag), sample request, platform stat stub
   if (featureFlags.length === 0) {
     featureFlags = [
-      { key: 'home_credits', enabled: true, cohort_filter: { all: true } },
       { key: 'recipe_requests', enabled: true },
       { key: 'ai_calorie_stub', enabled: true },
       { key: 'corporate_orders', enabled: true },
     ].map(f => { try { shcFeatureFlagSchema.parse(f); } catch {}; return f as any; });
-  }
-  if (Object.keys(heritageArchives).length === 0) {
-    // Permanent archive even if cook inactive. Use seed heritage + extra SG family stories
-    heritageArchives['cook_rose_tampines_001'] = [
-      { id: 'ha1', title: '1972 Katong Nasi Lemak', story: 'Ah Mah ground rempah on batu lesung every dawn in the shophouse. We keep the exact pandan-lemak ratio in our Tampines HDB. Published for the Heritage Library.', photo_stub: 'nasi-lemak-family-1972.jpg', published: true, created_at: '2024-01-01' },
-      { id: 'ha2', title: 'Buah Keluak Ritual', story: 'Soak 3 days, scrape the flesh by hand — the same way my mother taught in 1983 HDB kitchen. The bitter chocolate depth is our family signature for Raya and birthdays.', photo_stub: 'keluak-paste-hdb.jpg', published: true, created_at: '2024-06-01' },
-    ];
-    heritageArchives['cook_doris_katong_002'] = [
-      { id: 'ha3', title: 'Eurasian Devil\'s Curry from Nenek', story: 'Portuguese-Malay roots in Katong since 1900s. The vinegar tang and mustard seeds tell our Kristang story. Still cooked in Joo Chiat HDB for Christmas & Full Moon. Always published.', photo_stub: 'devils-curry-1950s.jpg', published: true, created_at: '2025-02-01' },
-    ];
   }
   if (requests.length === 0) {
     requests = [{
@@ -178,11 +163,8 @@ function seed() {
     }];
     try { shcRequestSchema.parse(requests[0]); } catch {}
   }
-  // Seed some credits for demo (customer earns on complete; cook profile shows for own)
-  if (!userCredits['cust_demo']) userCredits['cust_demo'] = 85; // ~S$21 redeemable
-  if (!lifetimeSpend['cust_demo']) lifetimeSpend['cust_demo'] = 680; // Silver tier demo
   // Initial notif from demo order
-  if (notifications.length === 0) notifications.push({ id: 'n1', type: 'order', body: 'Demo order SHC-2026-00001 ready for collection. Home Credits will be awarded on complete.', created_at: new Date().toISOString() });
+  if (notifications.length === 0) notifications.push({ id: 'n1', type: 'order', body: 'Demo order SHC-2026-00001 ready for collection.', created_at: new Date().toISOString() });
 }
 
 seed();
@@ -232,9 +214,9 @@ export const api = {
       res = res.filter(p =>
         p.name.toLowerCase().includes(effectiveQuery) ||
         p.cook_name.toLowerCase().includes(effectiveQuery) ||
-        (p.heritage_note || '').toLowerCase().includes(effectiveQuery) ||
+        (p.description || '').toLowerCase().includes(effectiveQuery) ||
         p.occasion_tags.some((t: string) => t.toLowerCase().includes(effectiveQuery)) ||
-        expanded.split(/\s+/).some((tok: string) => p.name.toLowerCase().includes(tok) || (p.heritage_note || '').toLowerCase().includes(tok))
+        expanded.split(/\s+/).some((tok: string) => p.name.toLowerCase().includes(tok) || (p.description || '').toLowerCase().includes(tok))
       );
     }
     const f = filters || {};
@@ -386,14 +368,6 @@ export const api = {
       orders[idx].address_released_at = new Date(Date.now() + 2 * 3600 * 1000).toISOString();
     }
 
-    // Phase 9 Growth: earn Home Credits (5% of total as units) on completed/collected. 12m expiry stub (not enforced in demo). Award to customer. Add notif for bell.
-    if ((to === 'collected' || to === 'completed') && orders[idx].customer_id && orders[idx].total) {
-      const cust = orders[idx].customer_id;
-      const earned = Math.max(1, Math.floor(orders[idx].total * 0.05 * 4)); // 5% of total -> credit units (4u ~ S$1), min1
-      userCredits[cust] = (userCredits[cust] || 0) + earned;
-      lifetimeSpend[cust] = (lifetimeSpend[cust] || 0) + (orders[idx].total || 0);
-      notifications.unshift({ id: 'n' + Date.now(), type: 'credit', body: `+${earned} Home Credits earned on ${orders[idx].id} (5% of S$${orders[idx].total}). Redeem at checkout for future feasts.`, created_at: new Date().toISOString() });
-    }
     // In-app notif bell events from order states (Phase 7 polish)
     if (['paid', 'accepted', 'ready_for_collection', 'collected'].includes(to)) {
       notifications.unshift({ id: 'n' + Date.now(), type: 'order', body: `Order ${orderId} → ${to}. ${to === 'ready_for_collection' ? 'HDB collection ready — address in chat.' : ''}`, created_at: new Date().toISOString() });
@@ -427,7 +401,7 @@ export const api = {
   },
 
   // Cook listings / wizard
-  createListing(input: { name: string; price: number; min_qty: number; occasion_tags: string[]; ingredients: any[]; allergen_tiers: any; cuisine: string; heritage_note?: string }) {
+  createListing(input: { name: string; price: number; min_qty: number; occasion_tags: string[]; ingredients: any[]; allergen_tiers: any; cuisine: string }) {
     seed();
     checkRateLimit(currentUser.id, 'createListing');
     const before = { productsLen: products.length };
@@ -451,7 +425,7 @@ export const api = {
     if (featureFlags.find(f => f.key === 'ai_calorie_stub')?.enabled && input.ingredients?.length) {
       aiCal = this.estimateCaloriesAI(input.ingredients);
     }
-    const prod = { id, name: input.name, price: input.price, cook_name: currentUser.name, ...meta, calories: aiCal.calories, calories_confidence: (aiCal.confidence || 'category') as 'category'|'full', heritage_note: input.heritage_note || 'Family recipe from our HDB kitchen.', ai_source: aiCal.source };
+    const prod = { id, name: input.name, price: input.price, cook_name: currentUser.name, ...meta, calories: aiCal.calories, calories_confidence: (aiCal.confidence || 'category') as 'category'|'full', ai_source: aiCal.source };
     products.push(prod);
     availabilities.push({ product_id: id, portions_per_day: 10, collection_days: [1,2,3,4,5], time_slots: ['17:00-18:00', '18:00-19:00'], paused: false });
     auditLog(currentUser.id, 'listing.create', before, { id, price: input.price });
@@ -476,23 +450,6 @@ export const api = {
     return { ok: true, type, fileName, verified_at: null, note: 'Stub — will be verified by Ops. SFA/WSQ required before accept orders.' };
   },
 
-  // === Phase 7-9 Growth/Differentiation (mock only; will swap to real /store/shc in backend wiring) ===
-  // Home Credits (Phase 9): balance, tiers (Bronze/Silver/Gold on lifetime), earn on complete (in transition), redeem at checkout
-  getCredits() {
-    seed();
-    const bal = userCredits[currentUser.id] || 42;
-    const spend = lifetimeSpend[currentUser.id] || 320;
-    const tier = spend > 1200 ? 'Gold' : spend > 450 ? 'Silver' : 'Bronze';
-    return { balance: bal, lifetimeSpend: spend, tier, expiryNote: 'Credits expire 12 months from earn. Redeem for S$ value at checkout.' };
-  },
-  redeemCredits(amount: number) {
-    seed();
-    const bal = userCredits[currentUser.id] || 0;
-    const use = Math.min(amount, bal, 200); // cap demo
-    userCredits[currentUser.id] = bal - use;
-    notifications.unshift({ id: 'n' + Date.now(), type: 'credit', body: `Redeemed ${use} credits (S$${(use/4).toFixed(0)} value). Applied to next order.`, created_at: new Date().toISOString() });
-    return { ok: true, used: use, remaining: userCredits[currentUser.id] };
-  },
 
   // Recipe Request & Bidding (Phase 8 diff): customer "Request Custom Dish", cook bids/accept to create order stub
   createRequest(input: { body: string; youtube_url?: string; party_size?: number; budget_cents?: number; date?: string }) {
@@ -558,18 +515,6 @@ export const api = {
     return { ok: true, order };
   },
 
-  // Heritage Recipe Archive (Phase 8): permanent on cook profile (even inactive). Add/edit from cook side. Seed + new.
-  getHeritageArchive(cookId: string) {
-    seed();
-    return heritageArchives[cookId] || [];
-  },
-  addHeritageEntry(cookId: string, entry: { title: string; story: string; photo_stub?: string }) {
-    seed();
-    if (!heritageArchives[cookId]) heritageArchives[cookId] = [];
-    const newEntry = { id: 'ha' + Date.now(), ...entry, published: true, created_at: new Date().toISOString() };
-    heritageArchives[cookId].unshift(newEntry);
-    return newEntry;
-  },
 
   // Corporate/Group stub (Phase 8): flag in checkout + multi note + invoice stub
   flagCorporateOrder(note: string) {
@@ -618,19 +563,6 @@ export const api = {
   getFeatureFlags() { seed(); return featureFlags; },
   isFeatureEnabled(key: string) { seed(); return !!featureFlags.find(f => f.key === key)?.enabled; },
 
-  // Enhanced checkout support for credits redeem + corporate (called from UI)
-  checkoutWithCredits(allergenAck: boolean, collection: { date: string; slot: string }, creditsToApply = 0, isCorporate = false) {
-    seed();
-    if (creditsToApply > 0 && featureFlags.find(f => f.key === 'home_credits')?.enabled) {
-      const redeemed = this.redeemCredits(creditsToApply);
-      // In real would adjust total here; for demo we log + reduce effective in caller UI
-      console.log('[mock] credits applied', redeemed);
-    }
-    if (isCorporate && featureFlags.find(f => f.key === 'corporate_orders')?.enabled) {
-      this.flagCorporateOrder('Multi-dish corporate / group order from checkout');
-    }
-    return this.checkout(allergenAck, collection);
-  },
 };
 
 export type MockAPI = typeof api;

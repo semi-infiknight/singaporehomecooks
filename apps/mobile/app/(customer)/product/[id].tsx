@@ -44,7 +44,6 @@ export default function ProductDetail() {
       <Text style={{ color: shcColors.accent }}>by {product.cook_name} • S${product.price}/portion • {product.area || 'Singapore HDB'}</Text>
 
       <SHCCard style={{ marginVertical: 12, backgroundColor: shcColors.surfaceAlt }}>
-        <Text style={{ fontStyle: 'italic', color: shcColors.heritage }}>{product.heritage_note}</Text>
         <Text style={{ marginTop: 8, fontSize: 11, color: shcColors.textLight }}>Heritage archive stub: Story from 1972 Katong kitchen • family HDB recipes preserved for next generation.</Text>
       </SHCCard>
 

@@ -54,7 +54,7 @@ export default function LoginPage() {
 
       <SHCPageHeader
         title={mode === 'login' ? 'Sign in' : 'Create account'}
-        subtitle="Orders, tiffin, credits, and checkout — or explore as guest below."
+        subtitle="Orders, tiffin, and checkout — or explore as guest below."
       />
       <SHCCard className="p-6 space-y-4">
         <form onSubmit={submit} className="space-y-4">

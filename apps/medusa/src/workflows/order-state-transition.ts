@@ -40,32 +40,22 @@ export const transitionStateStep = createStep(
 );
 
 // Phase 6: Step to auto-post commission ledger on 'completed' (double-entry via ledger module; idempotent)
-// Phase 8-9: also award customer Home Credits (5%) via credit-wallet on completed (ledger issuance too).
 export const postCommissionOnCompleteStep = createStep(
   "post-commission-on-complete-step",
-  async (input: { orderId: string; to: SHCOrderStatus; container: any }): Promise<StepResponse<{ posted: boolean; totalCents?: number; error?: string; creditsAwarded?: number } | null>> => {
+  async (input: { orderId: string; to: SHCOrderStatus; container: any }): Promise<StepResponse<{ posted: boolean; totalCents?: number; error?: string } | null>> => {
     if (input.to !== "completed") {
       return new StepResponse(null);
     }
-    let creditsAwarded = 0;
     try {
       const ledgerService: ShcLedgerModuleService = input.container.resolve("shcLedger");
-      const { totalCents, customerId } = await resolveOrderMoney(input.container, input.orderId);
+      const { totalCents } = await resolveOrderMoney(input.container, input.orderId);
       if (totalCents > 0) {
         await ledgerService.postCommission({ orderId: input.orderId, totalCents, actor: "order-complete-workflow", container: input.container });
       }
-      // Growth: award credits to customer (ties ledger credit issuance)
-      if (customerId && totalCents > 0) {
-        try {
-          const credService = input.container.resolve("shcCreditWallet");
-          const aw = await credService.awardCreditsOnComplete(customerId, totalCents, input.orderId, input.container);
-          creditsAwarded = aw.awarded || 0;
-        } catch {}
-      }
-      return new StepResponse({ posted: totalCents > 0, totalCents, creditsAwarded });
+      return new StepResponse({ posted: totalCents > 0, totalCents });
     } catch (e: any) {
       // Non-fatal for state machine; subscriber also handles + weekly sim reconciles
-      return new StepResponse({ posted: false, error: e.message, creditsAwarded });
+      return new StepResponse({ posted: false, error: e.message });
     }
   }
 );

@@ -10,8 +10,6 @@ export const SHC_MODULES = {
   payoutBatch: "shcPayoutBatch",
   request: "shcRequest",
   bid: "shcBid",
-  creditWallet: "shcCreditWallet",
-  heritage: "shcHeritage",
   product: "product",
   order: "order",
 } as const;

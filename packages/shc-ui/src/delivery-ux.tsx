@@ -420,7 +420,6 @@ export function SHCDishOrderingInfo({
   ingredients = [],
   calories,
   caloriesConfidence,
-  heritageNote,
   testID = 'dish-ordering-info',
 }: {
   tier1?: string[];
@@ -429,26 +428,10 @@ export function SHCDishOrderingInfo({
   ingredients?: Array<{ name?: string; qty?: string; quantity?: string; unit?: string } | string>;
   calories?: number;
   caloriesConfidence?: 'full' | 'category';
-  heritageNote?: string;
   testID?: string;
 }) {
   return (
     <View testID={testID} style={{ gap: shcSpacing.md, marginBottom: shcSpacing.md }}>
-      {heritageNote ? (
-        <View
-          style={{
-            backgroundColor: shcColors.bentoYellow,
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
-            borderRadius: shcRadii.md,
-            padding: shcSpacing.md,
-            ...shcShadows.brutalSm,
-          }}
-        >
-          <Text style={{ fontSize: 13, fontWeight: '600', fontStyle: 'italic', color: shcColors.heritage }}>{heritageNote}</Text>
-        </View>
-      ) : null}
-
       <View
         style={{
           backgroundColor: shcColors.surface,

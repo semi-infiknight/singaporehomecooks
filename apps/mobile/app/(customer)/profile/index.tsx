@@ -2,26 +2,20 @@
 // Phase 7-9: WalletCard + CreditBadge + RequestDishForm modal (posts to shc_request), in-app notifs bell, redeem preview. All embedded (no new route files).
 import React, { useState } from 'react';
 import { Text, ScrollView, View, Modal, Pressable } from 'react-native';
-import { shcColors, SHCCard, SHCButton, SHCButtonText, WalletCard, RequestDishForm, SHCSectionTitle } from '@shc/ui';
+import { shcColors, SHCCard, SHCButton, SHCButtonText, RequestDishForm, SHCSectionTitle } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { Link } from 'expo-router';
-import { useCredits, useRedeemCredits, useCreateRequest, useNotifications } from '../../../hooks/useProducts';
+import { useCreateRequest, useNotifications } from '../../../hooks/useProducts';
 // Rich trust snippets from seed for onboarding/profile consistency
 import { trustSnippets } from '../../../../../seed';
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const { data: credits } = useCredits();
-  const redeemMut = useRedeemCredits();
   const createReqMut = useCreateRequest();
   const { data: notifs = [] } = useNotifications();
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
   const [showNotifs, setShowNotifs] = useState(false);
-
-  const bal = credits?.balance ?? 45;
-  const spend = credits?.lifetimeSpend ?? 320;
-  const tier = credits?.tier ?? 'Bronze';
 
   const handleRequestSubmit = async (data: any) => {
     try {
@@ -44,18 +38,10 @@ export default function Profile() {
         </Pressable>
       </View>
 
-      {/* Phase 9 Growth: Wallet + Credits redeem + tier. SG-specific: earn on collected, redeem for family feasts */}
-      <WalletCard
-        balance={bal}
-        lifetimeSpend={spend}
-        redeemable={Math.min(80, bal)}
-        onRedeem={(amt) => redeemMut.mutate(amt)}
-      />
-
       {requestSuccess && <SHCCard style={{ marginTop: 8, backgroundColor: '#DCFCE7' }}><Text style={{ color: shcColors.success }}>{requestSuccess}</Text></SHCCard>}
 
       <SHCCard>
-        <Text>Role: {user.role}. HDB home cook lover. Earn 5% credits on completed orders (12-month expiry). Redeem at checkout (auto or manual). Tier: {tier}</Text>
+        <Text>Role: {user.role}. HDB home cook lover — discover dishes and track orders here.</Text>
         <Text style={{ marginTop: 8, fontSize: 12 }}>Dietary prefs: (stub) — will filter on search. Allergen history tracked for safety.</Text>
       </SHCCard>
 
@@ -77,7 +63,7 @@ export default function Profile() {
 
       <Text onPress={logout} style={{ color: shcColors.error, marginTop: 24, textAlign: 'center' }} accessibilityRole="button">Logout (dev — resets SecureStore)</Text>
 
-      <Text style={{ marginTop: 24, fontSize: 11, color: shcColors.textLight, textAlign: 'center' }}>Earnings for cooks visible to you on checkout. Home Credits (Phase 9) + requests (Phase 8) live in mock.</Text>
+      <Text style={{ marginTop: 24, fontSize: 11, color: shcColors.textLight, textAlign: 'center' }}>Recipe requests (Phase 8) live in mock.</Text>
 
       {/* Request modal */}
       <Modal visible={showRequestModal} animationType="slide" onRequestClose={() => setShowRequestModal(false)}>

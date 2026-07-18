@@ -52,7 +52,6 @@ import {
   KitchenTrustCertsList,
 } from '../../components/SHCWebComponents';
 import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
-import { getHeritageArchive } from '../../../lib/api-client';
 
 type TabId = 'menu' | 'about' | 'hours' | 'reviews';
 
@@ -85,17 +84,12 @@ export default function KitchenPage() {
   );
   const { user } = useAuth();
   const addMut = useAddToCart();
-  const [heritage, setHeritage] = useState<Array<{ title?: string; story?: string }>>([]);
   const [tab, setTab] = useState<TabId>('menu');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
   const [menuFilter, setMenuFilter] = useState('all');
   const [orderLines, setOrderLines] = useState<KitchenOrderLine[]>([]);
   const [customizeDish, setCustomizeDish] = useState<Record<string, unknown> | null>(null);
-
-  useEffect(() => {
-    if (cook?.id) getHeritageArchive(cook.id).then(setHeritage).catch(() => {});
-  }, [cook?.id]);
 
   const cookProducts = useMemo(
     () =>
@@ -411,11 +405,7 @@ export default function KitchenPage() {
                               <div className="flex-1 min-w-0">
                                 <p className="font-bold text-sm truncate">{String(d.name)}</p>
                                 <p className="text-xs text-muted-foreground line-clamp-1">
-                                  {d.heritage_note
-                                    ? String(d.heritage_note).slice(0, 60)
-                                    : d.cuisine
-                                      ? `${d.cuisine} heritage`
-                                      : 'Home-cooked'}
+                                  {d.cuisine ? String(d.cuisine) : 'Home-cooked'}
                                 </p>
                                 {price && (
                                   <p className="text-sm font-black text-primary mt-0.5">{price}/portion</p>
@@ -508,17 +498,6 @@ export default function KitchenPage() {
             </div>
           </SHCCard>
           <KitchenTrustCertsList certs={trustCerts} />
-          {heritage.length > 0 && (
-            <div data-testid="kitchen-heritage">
-              <p className="font-black mb-2">Heritage stories</p>
-              {heritage.map((h, i) => (
-                <SHCCard key={i} className="mb-2">
-                  <p className="font-bold">{h.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{h.story}</p>
-                </SHCCard>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

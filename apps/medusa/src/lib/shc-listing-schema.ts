@@ -17,7 +17,6 @@ export const ListingCreateSchema = z.object({
     tier3: z.array(z.string()).optional(),
   }).optional(),
   halal: z.boolean().optional(),
-  heritage_note: z.string().optional(),
   image_url: z.string().min(1).optional(),
   paused: z.boolean().optional(),
 }).strict();

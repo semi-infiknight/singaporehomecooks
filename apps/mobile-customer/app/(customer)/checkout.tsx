@@ -10,7 +10,6 @@ import {
   AllergenAckCheckbox,
   SHCErrorBanner,
   SHCSectionTitle,
-  CreditBadge,
   shcSpacing,
   shcBorders,
   shcRadii,
@@ -29,9 +28,9 @@ import {
   contentPadForStickyFooter,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
-import { useCart, useCredits } from '../../hooks/useProducts';
+import { useCart } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
-import { checkoutWithCredits, flagCorporateOrder, createOrderPayNow, getOrder } from '../../lib/api-client';
+import { checkout, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 import { authRouteWithReturn } from '../../lib/auth-return';
 import { SHCErrorCode } from '@shc/types';
@@ -119,22 +118,11 @@ export default function Checkout() {
   const [error, setError] = useState<null | { code?: SHCErrorCode; message: string }>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: creditsData } = useCredits() as { data?: { balance?: number; tier?: string } };
-  const [creditsToApply, setCreditsToApply] = useState(0);
-  const [isCorporate, setIsCorporate] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('paynow');
-  const creditBal = creditsData?.balance || 0;
 
   const firstProdId = getFirstCartProductId(cart.items || []);
   const { data: slots = [] } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
   const total = (cart.items || []).reduce((s: number, i: any) => s + i.price * i.qty, 0);
-  const amountDue = Math.max(0, total - Math.floor(creditsToApply / 4));
-  const cookId = (cart as { cookId?: string; cook_id?: string }).cookId ?? (cart as { cook_id?: string }).cook_id;
-  const handlePaymentSelect = (method: string) => {
-    setPaymentMethod(method);
-    if (method === 'credits' && creditBal > 0) setCreditsToApply(Math.min(80, creditBal));
-    else if (method === 'paynow') setCreditsToApply(0);
-  };
+  const amountDue = total;
   const itemCount = (cart.items || []).reduce((s: number, i: any) => s + i.qty, 0);
 
   const effectiveSlot =
@@ -182,19 +170,10 @@ export default function Checkout() {
     setIsSubmitting(true);
     try {
       const cartNotes = await readCartCheckoutNotes();
-      const res = await checkoutWithCredits(
-        allergenAck,
-        effectiveSlot,
-        creditsToApply,
-        isCorporate,
-        toOrderNotesPayload(cartNotes)
-      );
+      const res = await checkout(allergenAck, effectiveSlot, pdpaConsent, toOrderNotesPayload(cartNotes));
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
       await clearCartCheckoutNotes();
-      if (isCorporate && orderId) {
-        await flagCorporateOrder(orderId, `Group order for ${cookId} — multi-dish note for ops.`);
-      }
     } catch (e: any) {
       setError({ code: e.code, message: e.message || SHCErrorCode });
     } finally {
@@ -275,7 +254,6 @@ export default function Checkout() {
     );
   }
 
-  const creditDiscount = Math.floor(creditsToApply / 4);
   const cartItems = (cart.items || []).map((i: any) => ({
     name: String(i.name || 'Dish'),
     qty: Number(i.qty || 1),
@@ -288,7 +266,6 @@ export default function Checkout() {
         <GourmeatOrderSummaryCard
           items={cartItems}
           subtotal={total}
-          discount={creditDiscount > 0 ? creditDiscount : undefined}
           total={amountDue}
         />
       </View>
@@ -323,7 +300,7 @@ export default function Checkout() {
         </ScrollView>
         <SHCCelebration
           visible={firstOrderMilestone.show}
-          message="Your first heritage order — thank you for supporting local home cooks!"
+          message="Your first order — thank you for supporting local home cooks!"
           onDone={() => {
             firstOrderMilestone.dismiss();
             navigateToOrder();
@@ -363,20 +340,10 @@ export default function Checkout() {
           id="paynow"
           label="PayNow"
           subtitle="Singapore's preferred instant payment"
-          selected={paymentMethod === 'paynow'}
-          onSelect={handlePaymentSelect}
+          selected
+          onSelect={() => {}}
           testID="payment-paynow"
         />
-        {creditBal > 0 && (
-          <GourmeatPaymentMethodRow
-            id="credits"
-            label={`Credits (${creditBal} available)`}
-            subtitle="4 credits ≈ S$1 off your order"
-            selected={paymentMethod === 'credits'}
-            onSelect={handlePaymentSelect}
-            testID="payment-credits"
-          />
-        )}
 
         <SHCFadeIn>
           <SHCCard style={styles.sectionCard}>
@@ -423,37 +390,6 @@ export default function Checkout() {
             </Pressable>
             <Text style={styles.pdpaHint}>Consent timestamp will be recorded on order for audit.</Text>
           </SHCCard>
-
-          {creditBal > 0 && (
-            <SHCCard variant="bento-mint" style={styles.sectionCard} testID="credits-apply-section">
-              <CreditBadge balance={creditBal} tier={creditsData?.tier as 'Bronze' | 'Silver' | 'Gold' | undefined} />
-              <Text style={styles.creditsHint}>
-                Credits available: {creditBal} (4 = ~S$1 value). Redeem for family occasions.
-              </Text>
-              <View style={styles.creditPresets}>
-                {[0, 20, 40, Math.min(80, creditBal)].map((v, idx) => (
-                  <Pressable
-                    key={idx}
-                    onPress={() => setCreditsToApply(v)}
-                    style={[styles.creditChip, creditsToApply === v && styles.creditChipActive]}
-                    testID={`credit-preset-${v}`}
-                  >
-                    <Text style={[styles.creditChipText, creditsToApply === v && styles.creditChipTextActive]}>{v}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </SHCCard>
-          )}
-
-          <Pressable
-            onPress={() => setIsCorporate(!isCorporate)}
-            style={styles.corporateRow}
-            testID="corporate-flag-toggle"
-            accessibilityLabel="Toggle corporate or group order for multi-dish note"
-          >
-            <View style={[styles.corporateBox, isCorporate && styles.corporateBoxChecked]} />
-            <Text style={styles.corporateText}>Corporate or group order (multi-dish note for ops)</Text>
-          </Pressable>
 
           {error && <SHCErrorBanner code={error.code} message={error.message} />}
 
@@ -519,32 +455,6 @@ const styles = StyleSheet.create({
   pdpaCheck: { color: '#fff', fontWeight: '800' },
   pdpaText: { flex: 1, fontSize: 13, color: gourmeatColors.text },
   pdpaHint: { fontSize: 10, color: gourmeatColors.textLight, marginTop: 6 },
-  creditsHint: { fontSize: 12, marginTop: shcSpacing.sm },
-  creditPresets: { flexDirection: 'row', gap: shcSpacing.sm, marginTop: shcSpacing.sm, flexWrap: 'wrap' },
-  creditChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: shcRadii.sm,
-    borderWidth: shcBorders.brutal,
-    borderColor: gourmeatColors.border,
-    backgroundColor: gourmeatColors.surface,
-  },
-  creditChipActive: { backgroundColor: gourmeatColors.primary },
-  creditChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
-  creditChipTextActive: { color: '#fff' },
-  creditsApplied: { color: gourmeatColors.success, fontSize: 12, marginTop: 6, fontWeight: '600' },
-  corporateRow: { flexDirection: 'row', alignItems: 'center', padding: shcSpacing.sm, marginBottom: shcSpacing.md },
-  corporateBox: {
-    width: 20,
-    height: 20,
-    borderWidth: shcBorders.brutal,
-    borderColor: gourmeatColors.border,
-    marginRight: shcSpacing.sm,
-    backgroundColor: gourmeatColors.surface,
-    borderRadius: shcRadii.sm,
-  },
-  corporateBoxChecked: { backgroundColor: gourmeatColors.primary },
-  corporateText: { fontSize: 12, fontWeight: '600' },
   checkoutHint: {
     fontSize: 12,
     fontWeight: '700',

@@ -58,17 +58,7 @@ export function useClearCart() {
   });
 }
 
-// Phase 7-9 hooks (appended to existing per ownership/no-new-file + TanStack): useCredits (wallet/earn/redeem), useAICalorieEstimate for wizard, photo tips. Growth features delightful & SG-specific (Raya credits, HDB feasts).
-export function useCredits() {
-  return useQuery({ queryKey: ['credits'], queryFn: async () => { const { getCredits } = await import('../lib/api-client.js'); return getCredits(); }, staleTime: 10000 });
-}
-export function useRedeemCredits() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (amount: number) => { const { redeemCredits } = await import('../lib/api-client.js'); return redeemCredits(amount); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['credits'] }); qc.invalidateQueries({ queryKey: ['cart'] }); },
-  });
-}
+// Phase 7-9 hooks: useAICalorieEstimate for wizard, photo tips.
 export function useAICalorieEstimate() {
   return useMutation({
     mutationFn: async (ingredients: any[]) => { const { estimateCaloriesAI } = await import('../lib/api-client.js'); return estimateCaloriesAI(ingredients); },

@@ -21,7 +21,6 @@ function matchesQuery(meta: any, ql: string): boolean {
     title.includes(ql) ||
     textIncludes(meta.product_id, ql) ||
     textIncludes(meta.description, ql) ||
-    textIncludes(meta.heritage_note, ql) ||
     textIncludes(meta.cuisine, ql) ||
     meta.occasion_tags?.some((t: string) => t.toLowerCase().includes(ql)) ||
     meta.ingredients?.some((i: { name?: string }) => i.name?.toLowerCase().includes(ql))

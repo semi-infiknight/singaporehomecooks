@@ -180,7 +180,7 @@ export function AppHeader() {
               onClick={() => setMobileOpen(false)}
               className="px-3 py-2.5 text-sm font-semibold hover:bg-secondary rounded-lg"
             >
-              Account & credits
+              My profile
             </Link>
             <Link
               href="/login"

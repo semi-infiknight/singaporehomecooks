@@ -71,7 +71,6 @@ import {
 import { useCook, useDiscovery, useAddToCart } from '../../../../hooks/useProducts';
 import { useDrops } from '../../../../hooks/useOrder';
 import { useGuestAuthGate } from '../../../../hooks/useGuestAuthGate';
-import { getHeritageArchive } from '../../../../lib/api-client';
 
 type TabId = 'menu' | 'about' | 'hours' | 'reviews';
 
@@ -97,7 +96,6 @@ export default function KitchenPage() {
   const { data: allProducts = [] } = useDiscovery('', {});
   const { requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
-  const [archive, setArchive] = useState<any[]>([]);
   const [tab, setTab] = useState<TabId>('menu');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
@@ -123,12 +121,6 @@ export default function KitchenPage() {
   );
 
   const menuSections = useMemo(() => kitchenMenuSections(filteredListings), [filteredListings]);
-
-  useEffect(() => {
-    if (cook?.id) {
-      getHeritageArchive(cook.id).then(setArchive).catch(() => setArchive([]));
-    }
-  }, [cook?.id]);
 
   useEffect(() => {
     if (menuSections.length) {
@@ -438,14 +430,6 @@ export default function KitchenPage() {
                 </View>
               ))}
             </View>
-            {archive.map((a: any, i: number) => (
-              <View key={i} style={styles.infoCard}>
-                <Text style={styles.infoBody}>{a.title}</Text>
-                <Text style={styles.infoMuted} numberOfLines={4}>
-                  {a.story}
-                </Text>
-              </View>
-            ))}
           </View>
         )}
 

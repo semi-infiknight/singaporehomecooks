@@ -212,26 +212,6 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
     },
 
-    async checkoutWithCredits(
-      allergenAck: boolean,
-      collection: { date: string; slot: string },
-      creditsToApply = 0,
-      isCorporate = false,
-      notes?: { cooking_notes?: string | null; collection_notes?: string | null }
-    ) {
-      return request("/store/shc/checkout-credits", {
-        method: "POST",
-        body: JSON.stringify({
-          allergenAck,
-          collection,
-          creditsToApply,
-          isCorporate,
-          cooking_notes: notes?.cooking_notes ?? null,
-          collection_notes: notes?.collection_notes ?? null,
-        }),
-      });
-    },
-
     async transitionOrder(orderId: string, to: string) {
       const r = await request(`/store/shc/orders/${encodeURIComponent(orderId)}/transition`, {
         method: "POST",
@@ -411,14 +391,6 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/earnings", { method: "GET" });
     },
 
-    async getCredits() {
-      return request("/store/shc/credits", { method: "GET" });
-    },
-
-    async redeemCredits(amount: number) {
-      return request("/store/shc/credits", { method: "POST", body: JSON.stringify({ amount }) });
-    },
-
     async createRequest(input: Record<string, unknown>) {
       const r = await request("/store/shc/requests", { method: "POST", body: JSON.stringify(input) });
       return (r as any).request;
@@ -498,19 +470,6 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request(`/store/shc/bids/${encodeURIComponent(bidId)}/accept`, { method: "POST", body: "{}" });
     },
 
-    async getHeritageArchive(cookId: string) {
-      const r = await request(`/store/shc/heritage?cook_id=${encodeURIComponent(cookId)}`, { method: "GET" });
-      return (r as any).archive || [];
-    },
-
-    async addHeritageEntry(cookId: string, entry: Record<string, unknown>) {
-      const r = await request("/store/shc/heritage", {
-        method: "POST",
-        body: JSON.stringify({ cook_id: cookId, ...entry }),
-      });
-      return (r as any).entry;
-    },
-
     async getNotifications(opts?: { role?: "customer" | "cook" }) {
       const qs = opts?.role === "cook" ? "?role=cook" : "";
       const r = await request(`/store/shc/notifications${qs}`, { method: "GET" });
@@ -568,7 +527,6 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       mode: "generate" | "enhance";
       dish_name: string;
       cuisine?: string;
-      heritage_note?: string;
       image_base64?: string;
       /** @deprecated use enhance_style */
       ai_restyle?: boolean;

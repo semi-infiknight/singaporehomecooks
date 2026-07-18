@@ -34,7 +34,6 @@ export async function shapeProduct(
     ingredients: meta.ingredients || [],
     min_qty: meta.min_qty || 1,
     shc_availability: avail,
-    heritage_note: meta.heritage_note || "",
     description: meta.description || "",
     image_url: meta.image_url || null,
   };

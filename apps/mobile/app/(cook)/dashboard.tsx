@@ -4,7 +4,6 @@ import { Link } from 'expo-router';
 import { SHCCard, SHCButton, SHCButtonText, OrderStatusBadge, SHCSectionTitle, shcColors } from '@shc/ui';
 import { useMyOrders, useRequests, useBids, useCreateBid, useAcceptBid } from '../../hooks/useOrder.js';
 import { useAuth } from '../../hooks/useAuth.js';
-import { getHeritageArchive } from '../../lib/api-client.js'; // for collab + heritage stub
 
 export default function CookDashboard() {
   const { user } = useAuth();
@@ -52,14 +51,6 @@ export default function CookDashboard() {
             <SHCButton size="sm" variant="outline" onPress={() => acceptMut.mutate(r.id)} style={{ marginTop: 4 }}><SHCButtonText>(Demo) Accept a bid on this</SHCButtonText></SHCButton>
           </View>
         ))}
-      </SHCCard>
-
-      {/* Phase 8: Heritage Recipe Archive edit (permanent, published even inactive). Add family story + photo stub. Viewable on cook profile too. */}
-      <SHCSectionTitle style={{ marginTop: 12 }}>My Heritage Recipe Archive (Permanent)</SHCSectionTitle>
-      <SHCCard>
-        <Text style={{ fontSize: 11 }}>Stories published forever for NLB/NHB path. Add from here (cook side).</Text>
-        {/* Stub quick add for demo */}
-        <SHCButton onPress={async () => { const mod: any = await import('../../lib/api-client.js'); if (mod.addHeritageEntry) { await mod.addHeritageEntry(user.id, { title: 'New Family Story ' + Date.now(), story: 'HDB kitchen ritual from 1970s — passed to next gen for Hari Raya & gatherings.', photo_stub: 'hdb-kitchen-stub.jpg' }); } (global as any).alert ? (global as any).alert('Heritage entry added (permanent). View on your cook profile.') : console.log('added'); }} testID="add-heritage-btn" style={{ marginTop: 6 }}><SHCButtonText>+ Add Family Story + Photo Stub (published)</SHCButtonText></SHCButton>
       </SHCCard>
 
       <Text style={{ marginTop: 16, fontWeight: '600', color: shcColors.primary }}>Recent Orders (state machine live)</Text>

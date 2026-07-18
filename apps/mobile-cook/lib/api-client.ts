@@ -116,7 +116,6 @@ export const generateListingImage = (input: {
   mode: 'generate' | 'enhance';
   dish_name: string;
   cuisine?: string;
-  heritage_note?: string;
   image_base64?: string;
   ai_restyle?: boolean;
   enhance_style?: 'polish' | 'restyle';
@@ -124,9 +123,6 @@ export const generateListingImage = (input: {
 export const getAiImageStatus = () => client.getAiImageStatus();
 export const registerPushToken = (cookId: string, token: string) =>
   client.registerPushToken(token, { cookId, role: 'cook' });
-export const getHeritageArchive = (cookId: string) => client.getHeritageArchive(cookId);
-export const addHeritageEntry = (cookId: string, entry: Record<string, unknown>) =>
-  client.addHeritageEntry(cookId, entry);
 export const listOpenRequests = () => client.listOpenRequests();
 export const createBid = (requestId: string, priceCents: number, message?: string) =>
   client.createBid(requestId, priceCents, message);

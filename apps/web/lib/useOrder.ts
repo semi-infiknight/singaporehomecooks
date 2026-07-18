@@ -7,7 +7,6 @@ import {
   getMyOrders,
   getMessages,
   sendMessage,
-  checkoutWithCredits,
   getReview,
   getOrderDisputes,
   submitReview,
@@ -40,20 +39,13 @@ export function useCheckout() {
       allergenAck,
       collection,
       pdpaConsent,
-      creditsToApply = 0,
-      isCorporate = false,
       notes,
     }: {
       allergenAck: boolean;
       collection: { date: string; slot: string };
       pdpaConsent?: boolean;
-      creditsToApply?: number;
-      isCorporate?: boolean;
       notes?: { cooking_notes?: string | null; collection_notes?: string | null };
-    }) =>
-      creditsToApply || isCorporate
-        ? checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate, notes)
-        : checkout(allergenAck, collection, pdpaConsent ?? true, notes),
+    }) => checkout(allergenAck, collection, pdpaConsent ?? true, notes),
     onSuccess: (data:any) => { qc.invalidateQueries({queryKey:['orders']}); qc.invalidateQueries({queryKey:['cart']}); if(data?.order?.id) qc.setQueryData(['order',data.order.id], data.order); },
     onError:(err:any)=>{ throw err?.code ? createSHCError(err.code as SHCErrorCode, err.message||'Checkout violation') : err; }
   });

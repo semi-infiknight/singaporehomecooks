@@ -75,7 +75,6 @@ export const BENTO_ACTION_IMAGES = {
   cart: img(PHOTOS.pizza, 500),
   checkout: img(PHOTOS.restaurant, 500),
   orders: img(PHOTOS.restaurant, 500),
-  credits: img(PHOTOS.brunch, 500),
   request: img(PHOTOS.grill, 500),
   listings: img(PHOTOS.kitchen, 500),
   earnings: img(PHOTOS.brunch, 500),
@@ -85,7 +84,7 @@ export const BENTO_ACTION_IMAGES = {
 /** Zomato-style horizontal promo banner backgrounds */
 export const PROMO_BANNER_IMAGES = {
   hariRaya: img(PHOTOS.spread, 640),
-  credits: img(PHOTOS.brunch, 640),
+  request: img(PHOTOS.grill, 640),
   newCook: img(PHOTOS.kitchen, 640),
   family: img(PHOTOS.family, 640),
   paynow: img(PHOTOS.restaurant, 640),
@@ -102,7 +101,7 @@ export const DEFAULT_PROMOS: Array<{
 }> = [
   { id: 'promo-tiffin', title: 'Weekly tiffin', subtitle: '2–4 meals from one kitchen', badge: 'Subscribe', imageKey: 'family' },
   { id: 'promo-raya', title: 'Hari Raya spreads', subtitle: 'Order 3 days ahead', badge: '20% OFF', imageKey: 'hariRaya' },
-  { id: 'promo-credits', title: 'Home Credits', subtitle: 'Earn 5% on every order', badge: 'NEW', imageKey: 'credits' },
+  { id: 'promo-request', title: 'Request a dish', subtitle: 'Custom occasion menu', badge: 'Custom', imageKey: 'request' },
   { id: 'promo-family', title: 'Family feasts', subtitle: 'Min portions for parties', imageKey: 'family' },
   { id: 'promo-paynow', title: 'PayNow checkout', subtitle: 'Instant confirmation', imageKey: 'paynow' },
 ];

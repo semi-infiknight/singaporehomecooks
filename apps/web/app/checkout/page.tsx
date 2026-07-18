@@ -9,7 +9,7 @@ import {
   orderSuccessfulCopy,
   computeOneTimeOrderSummary,
 } from '@shc/utils';
-import { useCart, useCredits } from '../../lib/useProducts';
+import { useCart } from '../../lib/useProducts';
 import { useCheckout } from '../../lib/useOrder';
 import { useCollectionSlots } from '../../lib/useProducts';
 import {
@@ -19,7 +19,6 @@ import {
   AllergenAckCheckbox,
   CollectionSlotPicker,
   PayNowPanel,
-  WalletCard,
   SHCSectionTitle,
   SHCPageHeader,
   BottomStickyBar,
@@ -60,7 +59,6 @@ export default function CheckoutPage() {
   }, [authLoading, user, router]);
 
   const checkoutMut = useCheckout();
-  const { data: creditsData } = useCredits();
 
   const [allergenAck, setAllergenAck] = useState(false);
   const [pdpaConsent, setPdpaConsent] = useState(false);
@@ -102,8 +100,6 @@ export default function CheckoutPage() {
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paynowRef, setPaynowRef] = useState('');
-  const [creditsApply, setCreditsApply] = useState(0);
-  const [isCorp, setIsCorp] = useState(false);
   const [payPhase, setPayPhase] = useState<'form' | 'paynow' | 'done'>('form');
   const [paySession, setPaySession] = useState<
     (Awaited<ReturnType<typeof createOrderPayNow>> & { error?: string }) | null
@@ -182,8 +178,7 @@ export default function CheckoutPage() {
   const firstPid = getFirstCartProductId(cart?.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
   const oneTime = computeOneTimeOrderSummary(cart?.items || []);
-  const creditBal = creditsData?.balance || 0;
-  const amountDue = Math.max(0, oneTime.total - Math.floor(creditsApply / 4));
+  const amountDue = oneTime.total;
 
   const openAllergenTray = useCallback(() => {
     openTray(
@@ -229,8 +224,6 @@ export default function CheckoutPage() {
         allergenAck,
         collection: effectiveSlot,
         pdpaConsent,
-        creditsToApply: creditsApply,
-        isCorporate: isCorp,
         notes: toOrderNotesPayload(cartNotes),
       });
       clearCartCheckoutNotes();
@@ -245,14 +238,6 @@ export default function CheckoutPage() {
       setOrderId(oid);
       setPaynowRef(oid);
       setPayPhase('paynow');
-      if (isCorp) {
-        try {
-          const { flagCorporateOrder } = await import('../../lib/api-client');
-          await flagCorporateOrder(oid, 'Corporate/group order from web checkout — multi-dish note for ops.');
-        } catch {
-          /* non-fatal */
-        }
-      }
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       const message =
@@ -282,7 +267,7 @@ export default function CheckoutPage() {
         </SHCButton>
         <SHCCelebrationWeb
           visible={showFirstOrderCelebration}
-          message="Your first heritage order — thank you for supporting local home cooks!"
+          message="Your first order — thank you for supporting local home cooks!"
           onDone={() => {
             dismissFirstOrderCelebration();
             router.push(`/orders/${orderId}`);
@@ -435,31 +420,6 @@ export default function CheckoutPage() {
         </span>
       </label>
 
-      <SHCSectionTitle subtitle="Earn 5% back on every collected order">Home Credits</SHCSectionTitle>
-      <WalletCard balance={creditBal} tier={creditsData?.tier} />
-      <div className="mt-3 flex flex-wrap gap-3 items-center text-sm">
-        <label className="flex items-center gap-2 font-semibold">
-          <span className="text-muted-foreground">Apply</span>
-          <input
-            type="number"
-            min={0}
-            max={creditBal}
-            value={creditsApply}
-            onChange={(e) => setCreditsApply(Math.min(creditBal, parseInt(e.target.value) || 0))}
-            className="shc-input w-20 py-1.5"
-          />
-          <span className="text-muted-foreground">credits (~S${(creditsApply / 4).toFixed(0)} off)</span>
-        </label>
-        <button
-          type="button"
-          onClick={() => setIsCorp(!isCorp)}
-          className={`text-xs px-3 py-1.5 border-2 border-[var(--shc-border-brutal)] rounded-lg font-bold transition-colors shadow-[var(--shc-shadow-brutal-sm)] ${
-            isCorp ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-secondary'
-          }`}
-        >
-          Corporate invoice
-        </button>
-      </div>
 
       {error && <SHCErrorBanner code={error.code} message={error.message} />}
 

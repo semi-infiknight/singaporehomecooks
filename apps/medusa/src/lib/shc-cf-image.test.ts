@@ -14,7 +14,6 @@ describe("shc-cf-image prompts + compress", () => {
     const p = buildFoodPhotoPrompt({
       dish_name: "Sambal Stingray",
       cuisine: "Malay",
-      heritage_note: "Weekend BBQ",
     });
     expect(p).toMatch(/Sambal Stingray/i);
     expect(p).toMatch(/no text/i);

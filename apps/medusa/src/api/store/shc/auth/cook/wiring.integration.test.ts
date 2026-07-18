@@ -113,6 +113,15 @@ function buildInMemoryWiringScope() {
       meta: orders[orderId],
       messages: messages.filter((m) => m.order_id === orderId),
     }),
+    transitionOrderState: async (orderId: string, to: string, actor?: string) => {
+      const current = orders[orderId];
+      if (!current) return { meta: null, valid: false, error: "Order meta not found" };
+      if (actor && current.cook_id && current.cook_id !== actor) {
+        return { meta: current, valid: false, error: "Cook does not own this order" };
+      }
+      current.shc_status = to;
+      return { meta: current, valid: true };
+    },
   });
 
   const scope = {
@@ -128,7 +137,6 @@ function buildInMemoryWiringScope() {
         return { getLedgerSummaryForOrders: async () => ({ totalCookEarnings: 0, totalPlatformFees: 0, entries: [] }) };
       }
       if (name === "shcNotification") return { createNotifications: async () => [], push: async () => [] };
-      if (name === "shcCreditWallet") return { awardCredits: async () => ({}), awardCreditsOnComplete: async () => ({}) };
       if (name === "logger") return console;
       throw new Error(`Unknown ${name}`);
     },

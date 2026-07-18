@@ -271,40 +271,6 @@ export default function CookDashboard() {
         <Text style={styles.collabLinkBody}>Recipe requests & bids → open under Orders</Text>
       </Pressable>
 
-      {/* Heritage archive */}
-      <SHCSectionTitle>Heritage Archive</SHCSectionTitle>
-      <SHCCard variant="bento-mint" style={styles.heritageCard}>
-        <SHCFoodImage
-          uri={BENTO_ACTION_IMAGES.listings}
-          height={72}
-          rounded={shcRadii.md}
-          overlay={
-            <View style={styles.heritageOverlay}>
-              <SHCIcon name="document" size={22} color={shcColors.onPrimary} active />
-            </View>
-          }
-        />
-        <SHCButton
-          onPress={async () => {
-            const mod: any = await import('../../lib/api-client');
-            if (mod.addHeritageEntry) {
-              await mod.addHeritageEntry(user?.id || '', {
-                title: 'New Family Story ' + Date.now(),
-                story: 'HDB kitchen ritual from 1970s — passed to next gen for Hari Raya & gatherings.',
-                photo_stub: 'hdb-kitchen-stub.jpg',
-              });
-            }
-            (global as any).alert
-              ? (global as any).alert('Heritage entry added (permanent). View on your cook profile.')
-              : console.log('added');
-          }}
-          testID="add-heritage-btn"
-          style={styles.heritageBtn}
-        >
-          <SHCButtonText>+ Add Story</SHCButtonText>
-        </SHCButton>
-      </SHCCard>
-
       <Text style={styles.recentLabel}>Recent Orders</Text>
       {ordersLoading && orderList.length === 0 && (
         <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md }}>
@@ -433,17 +399,6 @@ const styles = StyleSheet.create({
     ...shcShadows.brutalSm,
   },
   acceptBtn: { marginTop: 4 },
-  heritageCard: { gap: shcSpacing.sm },
-  heritageOverlay: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    backgroundColor: 'rgba(36,24,18,0.35)',
-    padding: shcSpacing.sm,
-  },
-
-  heritageBtn: { marginTop: shcSpacing.xs },
   recentLabel: { marginTop: shcSpacing.md, fontWeight: '800', color: shcColors.primary, fontSize: 15 },
   noOrders: { alignItems: 'center', paddingVertical: shcSpacing.md, gap: shcSpacing.sm },
 

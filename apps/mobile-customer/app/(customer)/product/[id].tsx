@@ -168,7 +168,6 @@ export default function ProductDetail() {
               ingredients={product.ingredients}
               calories={product.calories}
               caloriesConfidence={calConfidence}
-              heritageNote={product.heritage_note}
             />
           </GourmeatCard>
 

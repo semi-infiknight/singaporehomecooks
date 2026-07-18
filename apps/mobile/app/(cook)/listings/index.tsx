@@ -24,7 +24,6 @@ export default function CookListings() {
   const [cuisine, setCuisine] = useState('Peranakan');
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-  const [heritage, setHeritage] = useState('Family recipe from our HDB kitchen since 1978.');
   const [published, setPublished] = useState<any>(null);
   const [showPhotoTips, setShowPhotoTips] = useState(false);
   const [aiCal, setAiCal] = useState<any>(null);
@@ -39,7 +38,6 @@ export default function CookListings() {
       occasion_tags: occasionTags,
       ingredients,
       allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
-      heritage_note: heritage,
     };
     if (aiCal) { input.calories = aiCal.calories; input.calories_confidence = aiCal.confidence; } // AI stub applied
     try {
@@ -63,7 +61,6 @@ export default function CookListings() {
         <SHCCard key={p.id} style={{ marginBottom: 8 }}>
           <Text style={{ fontWeight: '600' }}>{p.name} • S${p.price} • min {p.min_qty}</Text>
           <Text style={{ fontSize: 12 }}>{p.occasion_tags?.join(', ')}</Text>
-          <Text style={{ fontSize: 11, color: shcColors.textLight }}>{p.heritage_note}</Text>
         </SHCCard>
       ))}
 
@@ -88,7 +85,7 @@ export default function CookListings() {
         </ListingWizardStep>
       )}
       {step === 3 && (
-        <ListingWizardStep step={3} title="3-Tier Ingredients + Heritage">
+        <ListingWizardStep step={3} title="3-Tier Ingredients">
           <IngredientTierEditor value={ingredients} onChange={setIngredients} />
           <SHCButton variant="outline" onPress={async () => {
             const est = await aiEstMut.mutateAsync(ingredients);
@@ -96,7 +93,6 @@ export default function CookListings() {
           }} testID="ai-cal-est-btn" style={{ marginTop: 6 }}><SHCButtonText>🔥 Run AI Calorie Estimate (stub)</SHCButtonText></SHCButton>
           {aiCal && <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} />}
           <Pressable onPress={async () => { const tips = await getPhotoTips(); setPhotoTips(tips); setShowPhotoTips(true); }} testID="photo-tips-btn"><Text style={{ color: shcColors.primary, marginTop: 6 }}>📸 Show 3 Photo Quality Tips</Text></Pressable>
-          <TextInput value={heritage} onChangeText={setHeritage} multiline style={{ height: 60, borderWidth: 1, padding: 8, marginTop: 8, borderRadius: 8, backgroundColor: '#fff' }} />
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
             <SHCButton onPress={() => setStep(2)}><SHCButtonText>Back</SHCButtonText></SHCButton>
             <SHCButton onPress={() => setStep(4)}><SHCButtonText>Next: Review & Publish</SHCButtonText></SHCButton>

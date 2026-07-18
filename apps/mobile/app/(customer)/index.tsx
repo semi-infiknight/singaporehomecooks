@@ -78,7 +78,6 @@ export default function CustomerDiscover() {
             <Pressable onPress={() => goToProduct(p.id)}>
               <Text style={{ fontSize: 17, fontWeight: '600', color: shcColors.text }}>{p.name}</Text>
               <Text style={{ color: shcColors.accent }}>{p.cook_name} • S${p.price}/portion • {p.area || p.cook_id}</Text>
-              <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }}>{p.heritage_note}</Text>
               <View style={{ flexDirection: 'row', marginTop: 6, alignItems: 'center', gap: 8 }}>
                 <SHCBadge variant="heritage">{p.cuisine}</SHCBadge>
                 {/* Calorie traffic-light badge (blueprint-aligned detail) */}

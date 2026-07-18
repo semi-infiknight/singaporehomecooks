@@ -60,7 +60,7 @@ describe("GET /admin/shc/feature-flags", () => {
     await GET(req, res);
 
     expect(res.body.flags.map((flag: any) => flag.key)).toEqual(
-      expect.arrayContaining(["request_dish", "home_credits", "corporate_orders"])
+      expect.arrayContaining(["request_dish", "corporate_orders"])
     );
   });
 });
