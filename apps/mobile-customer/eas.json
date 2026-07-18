@@ -63,7 +63,10 @@
         "bundleIdentifier": "com.singaporehomecooks.customer",
         "sku": "shc-customer",
         "language": "en-US",
-        "groups": ["Team (Expo)"]
+        "groups": ["Team (Expo)"],
+        "ascApiKeyPath": "./asc-api-key.p8",
+        "ascApiKeyId": "662S382F2P",
+        "ascApiKeyIssuerId": "b0765303-705f-4cd8-84a7-fc58fb8aa5b8"
       }
     }
   }

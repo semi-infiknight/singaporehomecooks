@@ -89,4 +89,5 @@ Thumbs.db
 secrets/
 *.key
 *.crt
+*.p8
 .backup-ios/

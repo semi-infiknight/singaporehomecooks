@@ -55,3 +55,13 @@ The `RAILWAY_TOKEN` secret is actually an **account/team API token** (workspace:
 - Target project `homecooks` / env `production`: `RAILWAY_PROJECT_ID=09a28324-88a2-4ad0-aa5f-54bc2198007b`, `RAILWAY_ENVIRONMENT_ID=546be85e-73ad-4df7-b105-4bfd90b280c0`. Services: `medusa`, `web`, `worker`, `minio`, `Postgres`, `Redis`. The live Medusa is `medusa-production-d2ba.up.railway.app`.
 - The CLI is not part of the update script; if missing on a fresh VM, install with `curl -fsSL https://railway.com/install.sh | sh` (lands in `~/.railway/bin`). Then e.g. `railway status`, `railway variables -s medusa`.
 - The raw GraphQL API also works with the same token: `POST https://backboard.railway.com/graphql/v2` with header `Authorization: Bearer $RAILWAY_TOKEN`.
+
+### Mobile (Expo / EAS)
+
+Local emulators aren't possible on this Linux VM, but **EAS cloud builds and EAS Update work** (they run on Expo's servers) using the `EXPO_TOKEN` secret.
+
+- Account: **`darksend`** (Admin). Projects: `mobile-customer` = `@darksend/shc-customer` (projectId `5c1f4300-5851-4288-9416-bd968589001a`), `mobile-cook` = `@darksend/shc-cook` (projectId `bb1c9052-df53-48fd-89e2-94ee51159bd9`).
+- CLI: `EXPO_TOKEN=... npx eas-cli@latest <cmd>` (e.g. `whoami`, `build:list`, `build -p android --profile preview`, `update --channel preview`). eas-cli isn't in the update script; `npx` fetches it.
+- **iOS App Store submit:** both `apps/*/eas.json` `submit.production.ios` are wired with the App Store Connect API key ID (`662S382F2P`) + issuer ID (`b0765303-705f-4cd8-84a7-fc58fb8aa5b8`) and expect the private key at `./asc-api-key.p8` (gitignored via `*.p8`). The `.p8` is stored base64 in the secret `APP_STORE_CONNECT_API_KEY_BASE64`; decode it before submitting, per app dir:
+  `echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -d > apps/mobile-customer/asc-api-key.p8` (and same for `mobile-cook`).
+- Note: secrets only inject at session start — a secret added mid-session (e.g. `EXPO_TOKEN`, `APP_STORE_CONNECT_*`) is available only in the next agent session.
