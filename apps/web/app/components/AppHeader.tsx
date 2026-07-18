@@ -16,7 +16,7 @@ const navLinks = [
 ];
 
 export function AppHeader() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { locationLabel, active: collectionLocation } = useCustomerLocation();
   const { data: cart } = useCart();
   const { query, setQuery } = useDiscoverSearch();
@@ -59,7 +59,7 @@ export function AppHeader() {
                 query={query}
                 products={searchHits as DishCardProduct[]}
                 onAdd={(id) => {
-                  if (!user) {
+                  if (!authLoading && !user) {
                     window.location.href = '/login';
                     return;
                   }
@@ -84,10 +84,11 @@ export function AppHeader() {
 
           <div className="flex items-center gap-1 sm:gap-2">
             <Link
-              href={user ? '/profile' : '/login'}
+              href={authLoading ? '#' : user ? '/profile' : '/login'}
               className="shc-btn-primary inline-flex items-center px-3 py-2 sm:px-4 text-xs sm:text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0"
+              aria-busy={authLoading}
             >
-              {user ? 'Account' : 'Sign in'}
+              {authLoading ? '…' : user ? 'Account' : 'Sign in'}
             </Link>
 
             <Link
@@ -141,7 +142,7 @@ export function AppHeader() {
               query={query}
               products={searchHits as DishCardProduct[]}
               onAdd={(id) => {
-                if (!user) {
+                if (!authLoading && !user) {
                   window.location.href = '/login';
                   return;
                 }
@@ -186,7 +187,7 @@ export function AppHeader() {
               onClick={() => setMobileOpen(false)}
               className="px-3 py-2.5 text-sm font-semibold hover:bg-secondary rounded-lg"
             >
-              {user ? 'Account' : 'Sign in'}
+              {authLoading ? 'Loading…' : user ? 'Account' : 'Sign in'}
             </Link>
           </nav>
         )}

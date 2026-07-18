@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-08 (Blueprint sync) — Family Values v4: `tray.tsx`, `family-values-ui.tsx`, `tab-direction.tsx`, `useOrderTrayTracking`; web `SHCTrayWeb` + `order-tray-tracking` module; morph evidence tests; Maestro `checkout-allergen-tray.yaml`, `listing-tray.yaml`.
+**Last Updated:** 2026-07-18 — Layout padding tokens, category stack gap, PayNow panel stability, food image fallbacks, tri-platform bottom inset sync.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -39,6 +39,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `location-map.tsx` / `location-map.native.tsx` | `SHCLocationDraggableMap` — web tile fallback; iOS `react-native-maps`; Android Carto OSM tiles + pan/nudge |
 | `request-ux.tsx` | Custom dish wizard + `SHCRequestDishHomeCTA` discover footer |
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
+| `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton`, `GourmeatSearchBar`, layout re-exports |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 
 **Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`).
@@ -50,14 +51,18 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | Export | Contents |
 |---|---|
 | `shcColors` | Coral primary `#D96C4A`, accent yellow, brutal border `#241812`, bento surfaces |
-| `shcSpacing` | xs–xl + `tabBarHeight`, `stickyHeaderPadding`, `section` (Toptal white-space gap) |
+| `shcSpacing` | xs–xl + `section`, **`categoryStackGap`** (8px eyebrow/circle/label), deprecated `categoryLabelGap`/`categoryTitleGap` aliases |
+| `gourmeatLayout` | `tabBarClearance` (88), `tabBarWithCartClearance` (156), **`stickyFooterClearance`** (80) |
+| `contentPadForTabBar()` | Scroll bottom pad when floating tab bar visible |
+| `contentPadForStickyFooter()` | Scroll bottom pad when screen has pinned Pay/CTA (checkout, PDP, kitchen) |
+| `contentPadSafe()` | Stack/modal screens — safe area only (no tab bar) |
 | `shcRadii` | sm–xl + `pill` |
 | `shcBorders` | thin / brutal (2px) / thick |
 | `shcShadows` | `brutal`, `brutalSm`, `brutalPressed` |
 | `shcTypography` | display, h1–h3, body, caption, mono |
 | `shcMotion` | Reanimated spring configs, Moti fade duration |
 
-**Tri-platform rule:** any token change must update `brand.md`, `theme.ts`, `apps/web/app/globals.css`, and `SHCWebComponents.tsx` together.
+**Tri-platform rule:** any token change must update `brand.md`, `theme.ts`, `apps/web/app/globals.css` (`--shc-mobile-tab-pad`, `--shc-sticky-footer-pad`, `--shc-category-stack-gap`), and `SHCWebComponents.tsx` together. Web stack routes: `apps/web/lib/mobile-chrome.ts` → `hideMobileTabBar()`.
 
 ### Zomato layout (`zomato.tsx`)
 
@@ -139,7 +144,9 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 | `SHCWizardProgress` | Listing wizard step indicator |
 | `CookCard` | Cook profile preview with heritage snippet |
 | `OrderCard` / `OrderStatusBadge` | Status-aware order cards |
-| `PayNowPanel` | UEN, amount, ref input, confirm CTA |
+| `PayNowPanel` | HitPay QR (`qr_image_data_url`), stable display during poll; no manual “I’ve paid” |
+| `GourmeatCategoryRow` | Cuisine/occasion circles; optional **`title`** for “Explore by categories” eyebrow |
+| `GourmeatPayButton` | Checkout CTA; **`disabled`** when prerequisites incomplete |
 | `CollectionSlotPicker` | HDB collection date/slot selector |
 | `AllergenAckCheckbox` | Mandatory tier-1 allergen acknowledgment |
 | `ListingWizardStep` | Cook listing wizard step shell |

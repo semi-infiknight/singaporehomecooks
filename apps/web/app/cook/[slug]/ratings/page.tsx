@@ -58,7 +58,7 @@ export default function KitchenRatingsPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="kitchen-ratings-screen">
+    <div className="max-w-xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="kitchen-ratings-screen">
       <div className="flex items-center gap-2 mb-4">
         <button
           type="button"

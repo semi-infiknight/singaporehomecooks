@@ -35,6 +35,7 @@ import {
   wizardCtaMorphOnStepEnter,
   wizardCtaMorphFromTransition,
 } from './family-values-core';
+import { getDishImageUrl, resolveImageUrl } from '@shc/utils';
 import { gourmeatColors, shcSpacing, shcRadii } from './theme';
 import { SHCButton, SHCButtonText } from './primitives';
 
@@ -246,6 +247,12 @@ export function SHCSharedDishImage({
   measureRef?: React.Ref<View>;
   testID?: string;
 }) {
+  const fallback = getDishImageUrl({});
+  const [src, setSrc] = useState(() => resolveImageUrl(uri) ?? fallback);
+  useEffect(() => {
+    setSrc(resolveImageUrl(uri) ?? fallback);
+  }, [uri, fallback]);
+
   const reduce = shouldReduceMotion();
   const containerRef = useRef<View>(null);
   const [heroRect, setHeroRect] = useState(HERO_RECT_MOBILE);
@@ -323,7 +330,15 @@ export function SHCSharedDishImage({
       style={{ transform: [{ scale }, { translateX }, { translateY }] }}
       testID={`shared-dish-wrap-${dishId}`}
     >
-      <Image source={{ uri }} style={style} testID={testID || `shared-dish-${dishId}`} resizeMode="cover" />
+      <Image
+        source={{ uri: src }}
+        style={style}
+        testID={testID || `shared-dish-${dishId}`}
+        resizeMode="cover"
+        onError={() => {
+          if (src !== fallback) setSrc(fallback);
+        }}
+      />
     </Animated.View>
   );
 }
@@ -433,15 +448,15 @@ export function useMilestoneCelebration(
     });
   }, [key, storage, userId]);
 
-  const triggerIfFirst = async () => {
+  const triggerIfFirst = useCallback(async () => {
     if (!shouldShowMilestone(id, userId, seen)) return false;
     setShow(true);
     setSeen((s) => markMilestoneSeen(id, userId, s));
     if (storage && isValidSecureStoreKey(key)) await storage.set(key, '1');
     return true;
-  };
+  }, [id, key, seen, storage, userId]);
 
-  const dismiss = () => setShow(false);
+  const dismiss = useCallback(() => setShow(false), []);
 
   return { show, triggerIfFirst, dismiss, key };
 }

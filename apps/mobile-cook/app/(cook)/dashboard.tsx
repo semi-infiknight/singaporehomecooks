@@ -25,6 +25,7 @@ import {
   shcShadows,
   DirectionalTabScreen,
   SHCSkeletonBone,
+  contentPadForTabBar,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getDishImageUrl, isCookComplianceVerified, orderIdFromNotificationType } from '@shc/utils';
 import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
@@ -76,7 +77,7 @@ export default function CookDashboard() {
 
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
       testID="cook-dashboard"
     >
       <View style={styles.headerRow}>

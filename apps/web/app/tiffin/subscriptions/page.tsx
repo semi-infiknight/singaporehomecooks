@@ -63,7 +63,7 @@ export default function MySubscriptionsPage() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8 pb-28" data-testid="my-subscriptions-screen">
+      <div className="max-w-2xl mx-auto px-4 py-8 shc-safe-bottom-pad" data-testid="my-subscriptions-screen">
         <GourmeatScreenHeader title="My Subscriptions" subtitle="Tiffin plans" />
         <IllustratedEmptyState
           kind="no_active_sub"
@@ -89,7 +89,7 @@ export default function MySubscriptionsPage() {
       : null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="my-subscriptions-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="my-subscriptions-screen">
       <div className="flex items-center gap-2 mb-4">
         <button
           type="button"

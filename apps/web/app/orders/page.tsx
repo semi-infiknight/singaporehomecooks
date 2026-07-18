@@ -4,7 +4,7 @@
  * My Orders — HomelyEats day calendar + five status card variants.
  * One-time orders + tiffin meal instances by collection date.
  */
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -35,11 +35,13 @@ import {
   SHCCard,
   IllustratedEmptyState,
   SHCSkeletonOrderList,
+  SHCSkeletonOrdersDayScreen,
+  OrdersCalendarStrip,
 } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   // Stable "today" for the session so calendar days don't thrash every render
   const todayRef = useRef(toIsoDate(new Date()));
   const today = todayRef.current;
@@ -88,27 +90,15 @@ export default function OrdersList() {
   }, [today, dateSet]);
 
   const [selected, setSelected] = useState(today);
-  /** Once the user taps a day, never auto-reset selection on data refetch. */
-  const userPickedRef = useRef(false);
-  const didInitSelectRef = useRef(false);
 
   const selectDay = useCallback((date: string) => {
-    userPickedRef.current = true;
     setSelected(date);
   }, []);
 
-  // Initial auto-select only (today if has meals, else first day with meals) — do not fight user taps
-  useEffect(() => {
-    if (userPickedRef.current || didInitSelectRef.current) return;
-    if (isLoading || mealsLoading) return;
-    didInitSelectRef.current = true;
-    if (dateSet.has(today)) {
-      setSelected(today);
-      return;
-    }
-    const next = calendarDays.find((d) => d.hasOrder);
-    if (next) setSelected(next.date);
-  }, [dateSet, today, calendarDays, isLoading, mealsLoading]);
+  // Always land on today when opening Orders (page mount / revisit)
+  React.useEffect(() => {
+    setSelected(today);
+  }, [today]);
 
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
@@ -126,7 +116,7 @@ export default function OrdersList() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-10" data-testid="customer-orders-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 shc-tab-bar-pad md:pb-10" data-testid="customer-orders-screen">
       <GourmeatScreenHeader
         title="My orders"
         subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading ? ' · updating…' : ''}`}
@@ -159,7 +149,9 @@ export default function OrdersList() {
         </SHCCard>
       ) : null}
 
-      {!user ? (
+      {authLoading ? (
+        <SHCSkeletonOrdersDayScreen />
+      ) : !user ? (
         <SHCCard>
           <SHCEmptyState
             title="Sign in to see orders"
@@ -173,34 +165,13 @@ export default function OrdersList() {
         </SHCCard>
       ) : (
         <>
-          {/* Horizontal calendar */}
-          <div
-            className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide"
-            data-testid="orders-calendar-strip"
-          >
-            {calendarDays.map((d) => {
-              const active = d.date === selected;
-              return (
-                <button
-                  key={d.date}
-                  type="button"
-                  data-testid={`orders-cal-day-${d.date}`}
-                  onClick={() => selectDay(d.date)}
-                  className={`shrink-0 w-12 min-w-[3rem] rounded-xl border-2 py-2 text-center cursor-pointer touch-manipulation relative z-10 ${
-                    active
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : d.hasOrder
-                        ? 'border-primary/40 bg-card hover:border-primary'
-                        : 'border-[var(--shc-border-brutal)] bg-card hover:border-primary/50'
-                  }`}
-                >
-                  <div className="text-[10px] font-bold opacity-80">{d.label}</div>
-                  <div className="text-base font-black tabular-nums">{d.dayNum}</div>
-                  {d.hasOrder ? <div className="w-1 h-1 rounded-full bg-current mx-auto mt-1" /> : null}
-                </button>
-              );
-            })}
-          </div>
+          <OrdersCalendarStrip
+            days={calendarDays}
+            selectedDate={selected}
+            todayDate={today}
+            onSelect={selectDay}
+            testID="orders-calendar-strip"
+          />
 
           <h2 className="text-sm font-extrabold text-foreground mb-3" data-testid="orders-selected-date">
             {selected === today ? 'Today' : selected}

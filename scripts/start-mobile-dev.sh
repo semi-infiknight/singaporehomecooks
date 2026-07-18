@@ -12,8 +12,15 @@ start_metro() {
   local name="$3"
   local log_file="${LOG_DIR}/${name// /-}-${port}.log"
   if curl -sf "http://127.0.0.1:${port}/status" >/dev/null 2>&1; then
-    echo "$name Metro already running on :$port"
-    return 0
+    if [ "${METRO_CLEAR:-0}" = "1" ]; then
+      echo "$name Metro running — METRO_CLEAR=1, restarting with --clear ..."
+      lsof -ti ":${port}" | xargs kill -9 2>/dev/null || true
+      sleep 2
+    else
+      echo "$name Metro already running on :$port"
+      echo "  → UI stale? pnpm customer:reload or METRO_CLEAR=1 bash scripts/start-mobile-dev.sh"
+      return 0
+    fi
   fi
   echo "Starting $name Metro on :$port (log: $log_file) ..."
   nohup bash -c "cd \"$ROOT/$app_dir\" && RCT_METRO_PORT=\"$port\" npx expo start --port \"$port\" --clear" \
@@ -122,5 +129,6 @@ fi
 
 echo ""
 echo "Debug builds load JS from Metro via .expo/.virtual-metro-entry (localhost:${IP})."
+echo "After @shc/ui / tab bar edits: pnpm customer:reload  (Fast Refresh often misses shared packages)"
 echo "If a app shows a redbox after rebuild, shake simulator > Reload, or rerun this script."
 echo "For TestFlight/production: eas build --profile production --platform ios (rebuild after this metro fix)."

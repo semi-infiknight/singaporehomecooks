@@ -5,8 +5,8 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GourmeatPrimaryButton, SHCSkeletonBone, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
-import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
+import { GourmeatPrimaryButton, SHCFoodImage, SHCSkeletonBone, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
+import { formatDropCookDate, formatDropOrderBy, formatDropPrice, getDropImageUrl } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { useDrop, useAddDropToCart } from '../../../hooks/useOrder';
 
@@ -68,6 +68,12 @@ export default function DropOrderScreen() {
       <Pressable onPress={() => router.back()} hitSlop={12}>
         <Text style={styles.back}>‹ Back</Text>
       </Pressable>
+      <SHCFoodImage
+        uri={getDropImageUrl({ title: drop.title, image_url: drop.image_url, cook_id: drop.cook_id })}
+        height={160}
+        rounded={16}
+        testID="drop-order-hero"
+      />
       <Text style={styles.eyebrow}>Cooking soon</Text>
       <Text style={styles.title} testID="drop-order-title">
         {drop.title}
@@ -115,7 +121,7 @@ export default function DropOrderScreen() {
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: gourmeatColors.bg, paddingHorizontal: shcSpacing.md },
   back: { fontSize: 16, fontWeight: '800', marginBottom: 12, color: gourmeatColors.text },
-  eyebrow: { fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase' },
+  eyebrow: { fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase', marginTop: 12 },
   title: { fontSize: 24, fontWeight: '900', color: gourmeatColors.text, marginTop: 4 },
   muted: { fontSize: 13, fontWeight: '600', color: gourmeatColors.muted, marginTop: 4 },
   price: { fontSize: 22, fontWeight: '900', color: gourmeatColors.primary, marginTop: 12 },

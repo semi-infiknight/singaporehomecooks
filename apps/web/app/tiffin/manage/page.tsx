@@ -61,7 +61,7 @@ export default function TiffinManagePage() {
   const ledger = shapeTiffinLedgerForUi((subData as any)?.ledger, sub);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-manage-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-manage-screen">
       <SHCPageHeader
         title="Manage subscription"
         subtitle={cookName}

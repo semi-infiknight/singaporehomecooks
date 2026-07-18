@@ -22,9 +22,11 @@ import {
   gourmeatColors,
   shcSpacing,
   shcRadii,
+  contentPadForStickyFooter,
 } from '@shc/ui';
 import {
   getDishImageUrl,
+  getDropImageUrl,
   getCookAvatarUrl,
   getCookKitchenHeroUrl,
   BENTO_ACTION_IMAGES,
@@ -224,7 +226,7 @@ export default function KitchenPage() {
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.sm,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 120,
+          paddingBottom: contentPadForStickyFooter(insets.bottom),
         }}
       >
         <View style={styles.topBar}>
@@ -238,6 +240,7 @@ export default function KitchenPage() {
         </View>
 
         <SHCCookStoreHero
+          cookId={cook.id}
           name={cook.display_name}
           area={cook.area}
           rating={ratingSum.rating}
@@ -272,11 +275,18 @@ export default function KitchenPage() {
                     borderWidth: 2,
                     borderColor: gourmeatColors.border,
                     borderRadius: 14,
-                    padding: 12,
                     marginBottom: 8,
                     backgroundColor: gourmeatColors.card,
+                    overflow: 'hidden',
                   }}
                 >
+                  <SHCFoodImage
+                    uri={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
+                    height={88}
+                    rounded={0}
+                    testID={`kitchen-drop-img-${d.id}`}
+                  />
+                  <View style={{ padding: 12 }}>
                   <Text style={{ fontWeight: '900', fontSize: 15 }}>{d.title}</Text>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted, marginTop: 2 }}>
                     {formatDropCookDate(d.cook_date)} · {d.collection_slot} · by {formatDropOrderBy(d.order_by)}
@@ -284,6 +294,7 @@ export default function KitchenPage() {
                   <Text style={{ fontWeight: '800', color: gourmeatColors.primary, marginTop: 4 }}>
                     {formatDropPrice(d.price_cents, d.price)} · {d.remaining_qty ?? 0} left
                   </Text>
+                  </View>
                 </Pressable>
               ))}
           </View>
@@ -347,6 +358,7 @@ export default function KitchenPage() {
                                   id: String(d.id),
                                   cuisine: d.cuisine ? String(d.cuisine) : undefined,
                                   name: String(d.name),
+                                  image_url: (d as { image_url?: string }).image_url,
                                 }),
                               }}
                               style={styles.dishThumb}

@@ -260,6 +260,7 @@ export function SHCProfileHero({
  */
 export function SHCCookStoreHero({
   name,
+  cookId,
   area,
   rating,
   orders,
@@ -271,6 +272,7 @@ export function SHCCookStoreHero({
   testID = 'kitchen-page-hero',
 }: {
   name: string;
+  cookId?: string;
   area?: string;
   rating?: number;
   orders?: number;
@@ -281,7 +283,7 @@ export function SHCCookStoreHero({
   story?: string;
   testID?: string;
 }) {
-  const heroUri = getCookKitchenHeroUrl(name);
+  const heroUri = getCookKitchenHeroUrl(cookId || name);
   const avatar = avatarUri || getCookAvatarUrl(undefined, name);
   const detail = openDetail || 'HDB collection evenings';
   return (
@@ -536,6 +538,9 @@ export function PayNowPanel({
   const displayName = session?.display_name || 'Singapore Home Cooks';
   const amount = session?.amount != null ? Number(session.amount) : total;
   const hasQr = Boolean(session?.qr_image_data_url || session?.checkout_url);
+  const qrUri = session?.qr_image_data_url;
+  const qrKey = session?.payment_request_id || session?.reference || orderId;
+  const showInitialLoading = Boolean(loadingSession && !qrUri);
   const err =
     session?.error ||
     (session?.provider === 'hitpay_error' ? 'Could not create PayNow QR' : null) ||
@@ -559,17 +564,18 @@ export function PayNowPanel({
       <Text style={{ marginTop: 4, fontWeight: '600' }}>{displayName}</Text>
       <Text style={{ ...shcTypography.mono, fontSize: 12, marginTop: 4 }}>Order: {session?.reference || orderId}</Text>
 
-      {loadingSession ? (
+      {showInitialLoading ? (
         <View style={{ alignItems: 'center', paddingVertical: 16 }} testID="paynow-qr-loading">
           <ActivityIndicator color={colors.primary} />
           <Text style={{ marginTop: 8, fontSize: 12, color: colors.textLight }}>Creating PayNow QR…</Text>
         </View>
       ) : null}
 
-      {session?.qr_image_data_url ? (
+      {qrUri ? (
         <View style={{ alignItems: 'center', marginVertical: 12 }} testID="paynow-qr">
           <Image
-            source={{ uri: session.qr_image_data_url }}
+            key={qrKey}
+            source={{ uri: qrUri }}
             style={{ width: 220, height: 220, borderRadius: 12, backgroundColor: '#fff' }}
             resizeMode="contain"
             accessibilityLabel="PayNow QR code"

@@ -1,5 +1,7 @@
 /** Shared catalog category presets (admin-managed, not set by cooks). */
 
+import { MIND_CUISINE_CATEGORIES } from "@shc/utils";
+
 export const CATALOG_CATEGORIES_KEY = "catalog_categories";
 
 export type CatalogCategory = {
@@ -10,43 +12,15 @@ export type CatalogCategory = {
   sort_order: number;
 };
 
-export const DEFAULT_CATALOG_CATEGORIES: CatalogCategory[] = [
-  {
-    id: "Peranakan",
-    label: "Nyonya",
-    imageUrl: "https://images.unsplash.com/photo-1603133872878-684f208fb84a?w=400&q=80&auto=format&fit=crop",
-    enabled: true,
-    sort_order: 10,
-  },
-  {
-    id: "Malay",
-    label: "Malay",
-    imageUrl: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=400&q=80&auto=format&fit=crop",
-    enabled: true,
-    sort_order: 20,
-  },
-  {
-    id: "Chinese",
-    label: "Chinese",
-    imageUrl: "https://images.unsplash.com/photo-1525755662778-989dcdf1cd25?w=400&q=80&auto=format&fit=crop",
-    enabled: true,
-    sort_order: 30,
-  },
-  {
-    id: "Indian",
-    label: "Indian",
-    imageUrl: "https://images.unsplash.com/photo-1589302168064-964664aafa85?w=400&q=80&auto=format&fit=crop",
-    enabled: true,
-    sort_order: 40,
-  },
-  {
-    id: "Eurasian",
-    label: "Eurasian",
-    imageUrl: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&q=80&auto=format&fit=crop",
-    enabled: true,
-    sort_order: 50,
-  },
-];
+export const DEFAULT_CATALOG_CATEGORIES: CatalogCategory[] = MIND_CUISINE_CATEGORIES.filter(
+  (c) => c.id
+).map((c, i) => ({
+  id: c.id,
+  label: c.label,
+  imageUrl: c.imageUrl,
+  enabled: true,
+  sort_order: (i + 1) * 10,
+}));
 
 export function normalizeCategories(raw: unknown): CatalogCategory[] {
   if (!Array.isArray(raw) || raw.length === 0) {

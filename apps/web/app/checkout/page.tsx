@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -87,6 +87,17 @@ export default function CheckoutPage() {
       setSelected(dropCollection);
     }
   }, [dropCart, dropCollection?.date, dropCollection?.slot]);
+
+  const effectiveSlot = selected ?? (dropCart && dropCollection ? dropCollection : null);
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent);
+  const checkoutHint = !effectiveSlot
+    ? 'Select a collection date and time to continue'
+    : !allergenAck
+      ? 'Acknowledge allergens to continue'
+      : !pdpaConsent
+        ? 'Confirm PDPA consent to continue'
+        : null;
+
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [paynowRef, setPaynowRef] = useState('');
@@ -98,9 +109,12 @@ export default function CheckoutPage() {
   >(null);
   const [paySessionLoading, setPaySessionLoading] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const paySessionOrderRef = useRef<string | null>(null);
   const { openTray, dismiss } = useSHCTrayWeb();
 
-  const loadPayNowSession = useCallback(async (oid: string) => {
+  const loadPayNowSession = useCallback(async (oid: string, force = false) => {
+    if (!force && paySessionOrderRef.current === oid) return;
+    paySessionOrderRef.current = oid;
     setPaySessionLoading(true);
     try {
       const s = await createOrderPayNow(oid);
@@ -112,6 +126,7 @@ export default function CheckoutPage() {
         setWaitingForPayment(false);
       }
     } catch (e: any) {
+      paySessionOrderRef.current = null;
       setPaySession({
         provider: 'hitpay_error',
         order_id: oid,
@@ -203,14 +218,14 @@ export default function CheckoutPage() {
       showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
       return;
     }
-    if (!selected) {
+    if (!effectiveSlot) {
       showCheckoutError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
       return;
     }
     try {
       const res = await checkoutMut.mutateAsync({
         allergenAck,
-        collection: selected,
+        collection: effectiveSlot,
         pdpaConsent,
         creditsToApply: creditsApply,
         isCorporate: isCorp,
@@ -278,7 +293,7 @@ export default function CheckoutPage() {
   if (orderId && payPhase === 'paynow') {
     const okCopy = orderSuccessfulCopy();
     return (
-      <div className="max-w-xl mx-auto px-4 py-8 pb-28" data-testid="order-paynow-screen">
+      <div className="max-w-xl mx-auto px-4 py-8 shc-safe-bottom-pad" data-testid="order-paynow-screen">
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-2xl text-green-700 mx-auto mb-3">
             ✓
@@ -293,7 +308,7 @@ export default function CheckoutPage() {
           reference={paynowRef || orderId}
           session={paySession}
           loadingSession={paySessionLoading}
-          onRetry={() => orderId && void loadPayNowSession(orderId)}
+          onRetry={() => orderId && void loadPayNowSession(orderId, true)}
           waitingForPayment={waitingForPayment}
         />
         <p className="mt-3 text-xs font-medium text-muted-foreground">
@@ -336,16 +351,15 @@ export default function CheckoutPage() {
   }
 
   const checkoutSteps = [
-    { id: 'slot', label: 'Collection', done: !!selected },
+    { id: 'slot', label: 'Collection', done: !!effectiveSlot },
     { id: 'safety', label: 'Safety', done: allergenAck && pdpaConsent },
     { id: 'pay', label: 'PayNow', done: false },
   ];
-  const checkoutStep = !selected ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
-  // Only disable while placing — incomplete form still clickable so doCheckout can surface errors
+  const checkoutStep = !effectiveSlot ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
   const placing = checkoutMut.isPending;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 shc-bottom-bar-pad" data-testid="checkout-form-screen">
+    <div className="max-w-xl mx-auto px-4 py-8 shc-sticky-footer-pad md:shc-safe-bottom-pad" data-testid="checkout-form-screen">
       <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
@@ -455,18 +469,23 @@ export default function CheckoutPage() {
       </SHCCard>
 
       {/* Desktop CTA */}
+      {checkoutHint && !placing ? (
+        <p className="mt-2 text-xs font-bold text-muted-foreground text-center" data-testid="checkout-blocker-hint">
+          {checkoutHint}
+        </p>
+      ) : null}
       <SHCButton
         className="mt-2 w-full hidden sm:flex"
         size="lg"
         onClick={doCheckout}
-        disabled={placing}
+        disabled={!checkoutReady || placing}
         testID="complete-checkout-web"
       >
-        {placing ? 'Placing order…' : `Pay with PayNow · S$${amountDue.toFixed(2)}`}
+        {placing ? 'Placing order…' : effectiveSlot ? `Pay with PayNow · S$${amountDue.toFixed(2)}` : 'Select collection time'}
       </SHCButton>
 
       {/* Mobile sticky CTA — above tab bar */}
-      <BottomStickyBar className="sm:hidden">
+      <BottomStickyBar className="sm:hidden" offsetTabBar={false}>
         <div className="flex gap-3 items-center">
           <div className="shrink-0">
             <div className="text-xs font-bold text-muted-foreground">Due</div>
@@ -476,10 +495,10 @@ export default function CheckoutPage() {
             className="flex-1"
             size="lg"
             onClick={doCheckout}
-            disabled={placing}
+            disabled={!checkoutReady || placing}
             testID="complete-checkout-web-mobile"
           >
-            {placing ? 'Placing…' : 'Pay with PayNow'}
+            {placing ? 'Placing…' : effectiveSlot ? 'Pay with PayNow' : 'Select collection time'}
           </SHCButton>
         </div>
       </BottomStickyBar>

@@ -27,9 +27,7 @@ export function accountMenuItemsSignedIn(): AccountMenuItem[] {
     },
     { id: 'orders', label: 'My Orders', href: '/orders', testID: 'account-menu-orders' },
     { id: 'address', label: 'Manage Address', href: '/location', testID: 'account-menu-address' },
-    { id: 'credits', label: 'Home Credits & Coupons', href: '/profile#credits', testID: 'account-menu-credits' },
     { id: 'requests', label: 'My Requests', href: '/request', testID: 'account-menu-requests' },
-    { id: 'support', label: 'Support & Trust', href: '/content/trust', testID: 'account-menu-support' },
   ];
 }
 
@@ -39,7 +37,6 @@ export function accountMenuItemsGuest(): AccountMenuItem[] {
     { id: 'login', label: 'Sign Up / Log In', href: '/login', guestOnly: true, testID: 'account-menu-login' },
     { id: 'browse', label: 'Browse kitchens', href: '/', testID: 'account-menu-browse' },
     { id: 'tiffin', label: 'Explore tiffin plans', href: '/tiffin', testID: 'account-menu-tiffin' },
-    { id: 'support', label: 'Support & Trust', href: '/content/trust', testID: 'account-menu-support' },
   ];
 }
 

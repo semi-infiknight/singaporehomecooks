@@ -115,7 +115,7 @@ function TiffinPlannerInner() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 pb-32" data-testid="tiffin-planner-screen">
+    <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-planner-screen">
       <SHCPageHeader
         title={isNextWeek ? 'Plan next week' : 'Your weekly menu'}
         subtitle={

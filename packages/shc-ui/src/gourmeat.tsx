@@ -2,10 +2,11 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
 
-export { gourmeatLayout };
+export { gourmeatLayout, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe };
 import { SHCIcon, type SHCTabIconKey } from './icons';
+import { SHCOrdersTabCookingIcon } from './orders-tab-cue';
 import { SHCFoodImage } from './visuals';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
@@ -137,12 +138,14 @@ export function GourmeatSearchBar({
   onChangeText,
   placeholder = 'Search dishes, cooks…',
   onFilterPress,
+  marginBottom = shcSpacing.md,
   testID = 'search-input',
 }: {
   value: string;
   onChangeText: (t: string) => void;
   placeholder?: string;
   onFilterPress?: () => void;
+  marginBottom?: number;
   testID?: string;
 }) {
   return (
@@ -151,7 +154,7 @@ export function GourmeatSearchBar({
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: shcSpacing.md,
-        marginBottom: shcSpacing.md,
+        marginBottom,
         gap: shcSpacing.sm,
       }}
     >
@@ -200,22 +203,26 @@ export function GourmeatSearchBar({
 }
 
 export function GourmeatCategoryRow({
+  title,
   categories,
   selectedId,
   onSelect,
   testID = 'gourmeat-category-row',
 }: {
+  /** When set, renders centered eyebrow with equal gap above/below to circles */
+  title?: string;
   categories: GourmeatCategoryItem[];
   selectedId?: string;
   onSelect: (id: string) => void;
   testID?: string;
 }) {
-  return (
+  const gap = shcSpacing.categoryStackGap;
+  const row = (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       testID={testID}
-      contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: shcSpacing.md, paddingBottom: shcSpacing.sm }}
+      contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: shcSpacing.md }}
     >
       {categories.map((cat) => {
         const active = cat.id === selectedId;
@@ -226,30 +233,12 @@ export function GourmeatCategoryRow({
             testID={`gourmeat-cat-${cat.id || 'all'}`}
             style={{ alignItems: 'center', width: 72 }}
           >
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: 32,
-                overflow: 'hidden',
-                backgroundColor: active ? gourmeatColors.primaryLight : gourmeatColors.surfaceAlt,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderWidth: active ? 2 : 0,
-                borderColor: gourmeatColors.primary,
-                ...gourmeatShadows.soft,
-              }}
-            >
-              {cat.imageUrl ? (
-                <Image source={{ uri: cat.imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-              ) : (
-                <SHCIcon name={cat.iconKey} size={26} color={active ? gourmeatColors.primary : gourmeatColors.textLight} active={active} />
-              )}
-            </View>
+            <GourmeatCategoryCircle cat={cat} active={active} />
             <Text
               style={{
-                marginTop: 6,
+                marginTop: gap,
                 fontSize: 11,
+                lineHeight: 14,
                 fontWeight: active ? '700' : '500',
                 color: active ? gourmeatColors.primary : gourmeatColors.textLight,
                 textAlign: 'center',
@@ -262,6 +251,61 @@ export function GourmeatCategoryRow({
         );
       })}
     </ScrollView>
+  );
+
+  if (!title) return row;
+
+  return (
+    <View
+      style={{ marginTop: gap, marginBottom: gap }}
+      testID={testID ? `${testID}-section` : 'gourmeat-category-section'}
+    >
+      <Text
+        style={{
+          textAlign: 'center',
+          fontSize: 12,
+          lineHeight: 12,
+          fontWeight: '700',
+          color: gourmeatColors.textLight,
+          marginBottom: gap,
+        }}
+      >
+        {title}
+      </Text>
+      {row}
+    </View>
+  );
+}
+
+function GourmeatCategoryCircle({ cat, active }: { cat: GourmeatCategoryItem; active: boolean }) {
+  const [failed, setFailed] = React.useState(false);
+  const showPhoto = Boolean(cat.imageUrl) && !failed;
+  return (
+    <View
+      style={{
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        overflow: 'hidden',
+        backgroundColor: active ? gourmeatColors.primaryLight : gourmeatColors.surfaceAlt,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: active ? 2 : 0,
+        borderColor: gourmeatColors.primary,
+        ...gourmeatShadows.soft,
+      }}
+    >
+      {showPhoto ? (
+        <Image
+          source={{ uri: cat.imageUrl }}
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <SHCIcon name={cat.iconKey} size={26} color={active ? gourmeatColors.primary : gourmeatColors.textLight} active={active} />
+      )}
+    </View>
   );
 }
 
@@ -476,12 +520,21 @@ export function GourmeatFloatingTabBar({
           >
             <View style={{ position: 'relative', marginBottom: 2 }}>
               {tab.iconKey ? (
-                <SHCIcon
-                  name={tab.iconKey as SHCTabIconKey}
-                  active={active}
-                  size={22}
-                  color={active ? gourmeatColors.navActive : 'rgba(255,255,255,0.55)'}
-                />
+                tab.ordersLiveCue === 'cooking' ? (
+                  <SHCOrdersTabCookingIcon
+                    iconKey={tab.iconKey as SHCTabIconKey}
+                    active={active}
+                    color={active ? gourmeatColors.navActive : 'rgba(255,255,255,0.55)'}
+                    size={22}
+                  />
+                ) : (
+                  <SHCIcon
+                    name={tab.iconKey as SHCTabIconKey}
+                    active={active}
+                    size={22}
+                    color={active ? gourmeatColors.navActive : 'rgba(255,255,255,0.55)'}
+                  />
+                )
               ) : (
                 <Text style={{ fontSize: 18 }}>{tab.icon ?? '•'}</Text>
               )}

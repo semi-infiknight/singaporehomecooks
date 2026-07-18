@@ -17,8 +17,7 @@ describe('wireframe-ia (paper wireframes)', () => {
         'My Subscriptions',
         'My Orders',
         'Manage Address',
-        'Home Credits & Coupons',
-        'Support & Trust',
+        'My Requests',
       ])
     );
   });

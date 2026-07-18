@@ -1,5 +1,7 @@
 /** Real-time order tracking helpers (dev.to: provide live status updates). */
 
+import { todayIsoInSingapore } from './my-orders';
+
 export type OrderTimelineStep = {
   id: string;
   label: string;
@@ -61,4 +63,28 @@ export function isActiveOrderStatus(status: string): boolean {
 
 export function getActiveOrders<T extends { shc_status?: string; status?: string }>(orders: T[]): T[] {
   return orders.filter((o) => isActiveOrderStatus(String(o.shc_status || o.status || '')));
+}
+
+/** Cook actively at the stove — only `preparing` (not paid/accepted/ready). */
+export const COOKING_ORDER_STATUSES = ['preparing'] as const;
+
+export function isOrderCookingStatus(status: string): boolean {
+  return (COOKING_ORDER_STATUSES as readonly string[]).includes(status);
+}
+
+export type OrdersTabLiveCue = 'cooking';
+
+/** Tab-bar steam animation — only when an order is preparing for today (SG). */
+export function getOrdersTabLiveCue<T extends { shc_status?: string; status?: string; collection_date?: string }>(
+  orders: T[],
+  todayIso = todayIsoInSingapore()
+): OrdersTabLiveCue | null {
+  const cookingNow = orders.some((o) => {
+    const status = String(o.shc_status || o.status || '');
+    if (!isOrderCookingStatus(status)) return false;
+    const collectionDate = String(o.collection_date || '').trim();
+    if (!collectionDate) return false;
+    return collectionDate === todayIso;
+  });
+  return cookingNow ? 'cooking' : null;
 }

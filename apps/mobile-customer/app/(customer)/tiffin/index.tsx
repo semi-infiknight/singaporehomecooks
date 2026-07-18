@@ -20,8 +20,9 @@ import {
   shcSpacing,
   GourmeatPrimaryButton,
   tiffinPricePerServing,
+  contentPadSafe,
 } from '@shc/ui';
-import { kitchenDishPriceDollars, kitchenOpenStatus } from '@shc/utils';
+import { getDishImageUrl, getCookKitchenHeroUrl, kitchenDishPriceDollars, kitchenOpenStatus } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 
@@ -94,7 +95,7 @@ export default function TiffinBrowseScreen() {
       style={styles.screen}
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.sm,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
         paddingHorizontal: shcSpacing.md,
       }}
       testID="tiffin-browse-screen"
@@ -203,7 +204,14 @@ export default function TiffinBrowseScreen() {
               rating={4.8}
               isOpen={open.isOpen}
               closesAt={open.detail}
-              coverUri={k.dishes?.[0]?.image_url}
+              coverUri={
+                getDishImageUrl({
+                  id: k.dishes?.[0]?.id,
+                  name: k.dishes?.[0]?.name,
+                  cuisine: k.dishes?.[0]?.cuisine,
+                  image_url: k.dishes?.[0]?.image_url,
+                }) || getCookKitchenHeroUrl(k.cook_id)
+              }
               onPress={() => openKitchen(k.cook_id)}
             />
           );

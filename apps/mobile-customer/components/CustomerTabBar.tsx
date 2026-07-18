@@ -4,10 +4,11 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
-import { summarizeCart } from '@shc/utils';
+import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
 import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
+import { useOrders } from '../hooks/useOrder';
 
 const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
   index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
@@ -50,10 +51,12 @@ const HIDE_TAB_BAR = new Set([
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { notifyTabChange } = useTabDirection();
   const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart } = useCart();
+  const { data: orders = [] } = useOrders('customer');
+  const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
 
   const items = (cart?.items || []) as Parameters<typeof summarizeCart>[0];
   const firstName = items[0] && 'name' in (items[0] as object) ? String((items[0] as { name?: string }).name || '') : undefined;
@@ -72,11 +75,12 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
       iconKey: meta.iconKey,
       testID: meta.testID,
       badge: route.name === 'cart' && summary.hasItems ? summary.badgeLabel : undefined,
+      ordersLiveCue: route.name === 'orders/index' && ordersLiveCue === 'cooking' ? 'cooking' : undefined,
     };
   });
 
   const openCart = useCallback(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       showGuestAuthTray(
         'Sign in to view cart',
         'Browse freely — sign in to checkout and track orders.'
@@ -138,7 +142,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
           // Guest browse: Home only for free navigation; account tabs need sign-in
-          if (!user && key !== 'index') {
+          if (!authLoading && !user && key !== 'index') {
             showGuestAuthTray(
               key === 'orders/index'
                 ? 'Sign in to view orders'

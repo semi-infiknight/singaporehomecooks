@@ -287,6 +287,33 @@ export function SHCSkeletonOrderList({
   );
 }
 
+/** My Orders tab — calendar strip + day cards while auth or first fetch pending. */
+export function SHCSkeletonOrdersDayScreen({ testID = 'skeleton-orders-day-screen' }: { testID?: string }) {
+  return (
+    <View testID={testID} accessibilityLabel="Loading orders">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: shcSpacing.sm }}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <SHCSkeletonBone key={i} width={52} height={64} radius={12} style={{ backgroundColor: BONE_SOFT }} />
+        ))}
+      </ScrollView>
+      <SHCSkeletonBone height={15} width={56} radius={6} style={{ marginTop: shcSpacing.md, marginBottom: shcSpacing.sm }} />
+      <SHCSkeletonOrderList count={3} variant="card" />
+    </View>
+  );
+}
+
+/** Account / profile ghost while auth hydrates. */
+export function SHCSkeletonAccountScreen({ testID = 'skeleton-account-screen' }: { testID?: string }) {
+  return (
+    <View testID={testID} accessibilityLabel="Loading account">
+      <SHCSkeletonBone height={28} width="48%" radius={8} style={{ marginBottom: 8 }} />
+      <SHCSkeletonBone height={14} width="62%" radius={6} style={{ marginBottom: shcSpacing.lg }} />
+      <SHCSkeletonBone height={112} width="100%" radius={16} style={{ marginBottom: shcSpacing.md }} />
+      <SHCSkeletonList count={4} rowHeight={52} />
+    </View>
+  );
+}
+
 /** Generic stacked bars — cart lines, form shells, etc. */
 export function SHCSkeletonList({
   count = 4,

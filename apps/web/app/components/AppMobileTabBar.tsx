@@ -6,8 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Home, Receipt, ShoppingBag, Wallet } from 'lucide-react';
 import { useCart } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
-import { summarizeCart } from '@shc/utils';
-import { StickyCartBar } from './SHCWebComponents';
+import { useOrders } from '../../lib/useOrder';
+import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
+import { hideMobileTabBar } from '../../lib/mobile-chrome';
+import { StickyCartBar, OrdersTabCookingIcon } from './SHCWebComponents';
 
 const TABS = [
   { href: '/', label: 'Home', icon: Home, testID: 'mobile-tab-discover', match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') || p.startsWith('/category') || p.startsWith('/tiffin') },
@@ -21,8 +23,10 @@ const HIDE_CART_BAR = /^\/(cart|checkout)(\/|$)/;
 export function AppMobileTabBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: cart } = useCart();
+  const { data: orders = [] } = useOrders();
+  const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
   const items = ((cart?.items ?? []) as Parameters<typeof summarizeCart>[0]) || [];
   const firstItem = items[0];
   const firstName =
@@ -30,6 +34,9 @@ export function AppMobileTabBar() {
       ? String((firstItem as { name?: string }).name || '')
       : undefined;
   const summary = summarizeCart(items, firstName);
+  if (hideMobileTabBar(pathname)) {
+    return null;
+  }
   // Guests never see sticky cart bar (cart requires sign-in)
   const showCartBar = Boolean(user) && summary.hasItems && !HIDE_CART_BAR.test(pathname);
 
@@ -54,7 +61,7 @@ export function AppMobileTabBar() {
               const active = tab.match(pathname);
               const Icon = tab.icon;
               const badge = user && tab.href === '/cart' && summary.hasItems ? summary.badgeLabel : null;
-              const needsAuth = 'needsAuth' in tab && tab.needsAuth && !user;
+              const needsAuth = 'needsAuth' in tab && tab.needsAuth && !authLoading && !user;
               return (
                 <Link
                   key={tab.href}
@@ -72,7 +79,11 @@ export function AppMobileTabBar() {
                   }}
                 >
                   <span className="relative">
-                    <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
+                    {tab.href === '/orders' && ordersLiveCue === 'cooking' ? (
+                      <OrdersTabCookingIcon Icon={Icon} active={active} />
+                    ) : (
+                      <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
+                    )}
                     {badge ? (
                       <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-black bg-primary text-primary-foreground rounded-full px-1">
                         {badge}

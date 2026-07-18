@@ -19,7 +19,8 @@ import {
   shcSpacing,
 } from '@shc/ui';
 import {
-  getCookAvatarUrl,
+  getCookKitchenHeroUrl,
+  getDishImageUrl,
   kitchenOpenStatus,
   kitchenTagList,
   kitchenTiffinPlanRows,
@@ -66,6 +67,7 @@ export default function TiffinKitchenScreen() {
     name: d.name,
     price: d.price,
     cuisine: d.cuisine,
+    image_url: d.image_url,
   }));
 
   const cookName = kitchen?.cook?.display_name || 'Kitchen';
@@ -152,11 +154,12 @@ export default function TiffinKitchenScreen() {
         </View>
 
         <SHCTiffinKitchenHero
+          cookId={String(cookId)}
           cookName={cookName}
           tagline={
             kitchen.tagline || `${kitchen.cook?.area || 'Singapore'} · home-cooked tiffin`
           }
-          imageUri={getCookAvatarUrl(cookId || 'tiffin', cookName)}
+          imageUri={getCookKitchenHeroUrl(String(cookId))}
           rating={Number(cookMeta.rating)}
           reviewCount={cookMeta.review_count != null ? Number(cookMeta.review_count) : undefined}
           isOpen={open.isOpen}

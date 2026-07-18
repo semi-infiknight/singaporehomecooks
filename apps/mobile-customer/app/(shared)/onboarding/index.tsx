@@ -1,7 +1,6 @@
 /**
- * Customer onboarding — HomelyEats-style friendly guide.
+ * Customer onboarding — friendly guide.
  * Warm home-food heroes, short value props, guest explore + sign-in.
- * Ref: blueprint/references/homelyeats-case-study/CASE_STUDY.md §6.1 + images/16.png
  */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';

@@ -14,6 +14,7 @@ import {
   gourmeatRadii,
   shcSpacing,
   OrderTrackingTraySection,
+  contentPadSafe,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -118,12 +119,16 @@ export default function OrderTracking() {
   const isCorporate = Boolean(order.is_corporate);
   const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
   const firstItem = (order.items || [])[0];
-  const heroUri = getDishImageUrl({ id: firstItem?.product_id || firstItem?.productId, name: firstItem?.name });
+  const heroUri = getDishImageUrl({
+    id: firstItem?.product_id || firstItem?.productId,
+    name: firstItem?.name,
+    image_url: firstItem?.image_url,
+  });
 
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingBottom: 120, paddingHorizontal: shcSpacing.md }}
+      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadSafe(insets.bottom), paddingHorizontal: shcSpacing.md }}
       testID="order-tracking-screen"
     >
       <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>

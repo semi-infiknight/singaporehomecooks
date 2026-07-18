@@ -39,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10 pb-28" data-testid="web-onboarding-login">
+    <div className="max-w-md mx-auto px-4 py-10 shc-safe-bottom-pad" data-testid="web-onboarding-login">
       {/* HomelyEats-style welcome — guest first reduces drop-off */}
       <div
         className="rounded-2xl p-5 mb-6 text-white shadow-[var(--shc-shadow-brutal-sm)]"

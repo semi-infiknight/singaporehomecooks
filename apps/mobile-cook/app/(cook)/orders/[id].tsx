@@ -8,14 +8,16 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   OrderStatusBadge,
+  SHCFoodImage,
   SHCErrorBanner,
   gourmeatColors,
   shcSpacing,
   useSHCTray,
   SHCTrayAction,
   SHCSkeletonList,
+  contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel } from '@shc/utils';
+import { getOrderStatusLabel, getDishImageUrl } from '@shc/utils';
 import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
 import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
@@ -190,13 +192,24 @@ export default function CookManageOrder() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: 100 }}
+      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }}
       testID="cook-order-detail-screen"
     >
       <GourmeatScreenHeader
         title={dishName || `Order ${order.id}`}
         subtitle={getOrderStatusLabel(String(order.shc_status || ''))}
         onBack={() => router.back()}
+      />
+
+      <SHCFoodImage
+        uri={getDishImageUrl({
+          id: order.items?.[0]?.product_id,
+          name: dishName,
+          image_url: order.items?.[0]?.image_url,
+        })}
+        height={140}
+        rounded={16}
+        testID="cook-order-hero"
       />
 
       {err && <SHCErrorBanner code={err.code} message={err.message} />}

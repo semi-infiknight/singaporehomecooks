@@ -59,7 +59,7 @@ export default function SearchScreen() {
     price: p.price,
     cuisine: p.cuisine,
     rating: p.rating || 4.8,
-    image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name }),
+    image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name, image_url: p.image_url }),
   });
 
   const occasionChips = [

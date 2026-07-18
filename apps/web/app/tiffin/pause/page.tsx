@@ -71,7 +71,7 @@ export default function TiffinPausePage() {
   });
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6 pb-28" data-testid="tiffin-pause-screen">
+    <div className="max-w-xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-pause-screen">
       <SHCPageHeader
         title="Pause plan"
         subtitle={`${kitchen?.cook?.display_name || 'Kitchen'} · uses flex days`}

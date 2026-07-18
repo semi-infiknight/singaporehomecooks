@@ -20,6 +20,7 @@ import {
   SHCSkeletonOrderList,
   gourmeatColors,
   shcSpacing,
+  contentPadForTabBar,
 } from '@shc/ui';
 import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars } from '@shc/utils';
 
@@ -98,7 +99,7 @@ export default function CookOrders() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 100 }]}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
       testID="cook-orders-screen"
     >
       <GourmeatCookHeader

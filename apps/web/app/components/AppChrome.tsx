@@ -1,9 +1,11 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/useAuth';
 import { hasSeenOnboarding } from '../../lib/onboarding';
+import { hideMobileTabBar } from '../../lib/mobile-chrome';
 import { AppHeader } from './AppHeader';
 import { AppFooter } from './AppFooter';
 import { AppMobileTabBar } from './AppMobileTabBar';
@@ -47,6 +49,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const isCookPortal = pathname.startsWith('/cook-portal');
   const isOnboarding = pathname === '/onboarding' || pathname.startsWith('/onboarding/');
+  const tabBarHidden = hideMobileTabBar(pathname);
 
   if (isCookPortal) {
     const isCookOnboarding = pathname.startsWith('/cook-portal/onboarding');
@@ -83,7 +86,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       <div className="hidden md:block">
         <AppHeader />
       </div>
-      <main className="flex-1 w-full pb-[110px] md:pb-0">
+      <main
+        className={`flex-1 w-full md:pb-0 ${tabBarHidden ? 'pb-0' : 'pb-[var(--shc-mobile-tab-pad)]'}`}
+      >
         <DirectionalTabShell mode="customer">{children}</DirectionalTabShell>
       </main>
       <div className="hidden md:block">

@@ -12,6 +12,7 @@ import {
   shcRadii,
   SHCSkeletonList,
   SHCSkeletonBone,
+  contentPadSafe,
 } from '@shc/ui';
 import {
   getCookAvatarUrl,
@@ -55,7 +56,7 @@ export default function KitchenRatingsScreen() {
       contentContainerStyle={{
         paddingTop: insets.top + shcSpacing.sm,
         paddingHorizontal: shcSpacing.md,
-        paddingBottom: 120,
+        paddingBottom: contentPadSafe(insets.bottom),
       }}
       testID="kitchen-ratings-screen"
     >
