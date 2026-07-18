@@ -49,6 +49,29 @@ else
   echo "OK: .easignore keeps ios/ native projects"
 fi
 
+for app in apps/mobile-customer apps/mobile-cook; do
+  plist=$(find "$ROOT/$app/ios" -maxdepth 2 -name Info.plist | head -1)
+  if [ -z "$plist" ]; then
+    echo "FAIL: $app Info.plist not found"
+    FAIL=1
+    continue
+  fi
+  if ! rg -q 'ITSAppUsesNonExemptEncryption' "$plist" 2>/dev/null \
+    || ! rg -A1 'ITSAppUsesNonExemptEncryption' "$plist" | rg -q '<false/>'; then
+    echo "FAIL: $app Info.plist must set ITSAppUsesNonExemptEncryption to false (export compliance)"
+    FAIL=1
+  else
+    echo "OK: $app Info.plist export compliance (ITSAppUsesNonExemptEncryption=false)"
+  fi
+
+  if ! rg -q '"ITSAppUsesNonExemptEncryption": false' "$ROOT/$app/app.json" 2>/dev/null; then
+    echo "FAIL: $app app.json must set ios.infoPlist.ITSAppUsesNonExemptEncryption to false"
+    FAIL=1
+  else
+    echo "OK: $app app.json export compliance"
+  fi
+done
+
 if [ "$FAIL" -ne 0 ]; then
   echo ""
   echo "DEPENDENCY GUARD FAILED"

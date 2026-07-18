@@ -138,8 +138,9 @@ apps/mobile-cook/app/
 | `.easignore` excludes `ios/` | **Forbidden** | `pnpm verify:mobile-deps` |
 | Metro ports | Customer 8081, Cook 8082 | `AppDelegate.swift` + `start-mobile-dev.sh` |
 | Babel JSX plugin | `^7.x` only | `pnpm verify:mobile-deps` |
+| Export compliance | `ITSAppUsesNonExemptEncryption` = false in Info.plist (HTTPS only) | `pnpm verify:mobile-deps` |
 
-**ASC apps:** Customer `6783204699`, Cook `6785112476`.
+**ASC apps:** Customer `6783204699`, Cook `6785112476`. Internal TestFlight group: **Team (Expo)**.
 
 ## New Device Setup (macOS)
 
