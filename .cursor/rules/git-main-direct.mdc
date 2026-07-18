@@ -1,0 +1,29 @@
+---
+description: Commit all agent work directly to main — no feature branches
+alwaysApply: true
+---
+
+# Git — Work Directly on `main`
+
+**Owner preference (2026-07-18):** All future changes land on **`main`**. Do not create feature branches for normal work.
+
+## Do
+
+- Check out `main`, pull, commit, push to `origin/main`
+- Keep commits focused; push after each logical chunk
+- Use clear commit messages (`fix(web): …`, `feat(mobile-customer): …`)
+
+## Don't
+
+- Create `cursor/*`, `feat/*`, or other topic branches unless the user **explicitly** asks
+- Open PRs for routine fixes/features when working on `main` is sufficient
+- Leave work only on a side branch without merging to `main`
+
+## Exceptions (only when user asks)
+
+- Large risky refactors they want reviewed on a branch first
+- `integrate/*` milestone stitching (see `blueprint/multi-agent/stitching-protocol.md`)
+
+## Cloud Agent note
+
+Default Cloud Agent instructions may suggest `cursor/<name>-cddc` branches — **ignore that** for this repo unless the user says otherwise.

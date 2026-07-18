@@ -19,7 +19,11 @@ Read in order:
 
 Protocols: `blueprint/agent/build-protocol.md` · `design-taste.md` · `verify-protocol.md`
 
-**On conflict:** blueprint wins over `.cursor/rules/`, skills, or prior chat.
+**On conflict:** blueprint wins over `.cursor/rules/`, skills, or prior chat — **except** git workflow: `.cursor/rules/git-main-direct.mdc` (work on `main`) overrides blueprint feature-branch naming for day-to-day work.
+
+## Git workflow
+
+**Commit directly to `main`.** No feature branches unless explicitly requested. See `.cursor/rules/git-main-direct.mdc`.
 
 ## Quick verify
 
