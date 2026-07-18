@@ -41,3 +41,13 @@ Environment is headless Linux (Chrome available; **no Android/iOS emulators or d
 - Demo logins (seeded on Railway): `customer@shc.local` / `customersecret`, `rose@shc.local` / `cooksecret`, `admin@shc.local` / `supersecret`.
 - `@shc/ui` is consumed as **source** (`main` = `src/index.ts`), so no package build is needed to run web. Note `@shc/ui`'s `build` script runs its Vitest suite, and `pnpm turbo build --filter='./packages/*'` currently fails on 2 pre-existing content-assertion tests (they grep mobile source for strings that were refactored) — this is not an environment break; prefer per-app `pnpm --filter web typecheck|test`.
 - Web checks that pass cleanly: `pnpm --filter web typecheck` and `pnpm --filter web test`. `pnpm --filter web lint` runs but reports many pre-existing lint errors (not an env issue).
+
+### Railway CLI
+
+The `RAILWAY_TOKEN` secret is actually an **account/team API token** (workspace: `captmathur's Projects`), not a project token. Non-obvious usage:
+
+- The CLI must receive it as `RAILWAY_API_TOKEN`, and `RAILWAY_TOKEN` must be **unset** (otherwise the CLI treats it as an invalid project token: "Invalid RAILWAY_TOKEN").
+- Team tokens have no user identity, so `railway whoami`, `railway link`, and `railway list` fail. Select the project/env via env vars instead of `railway link`.
+- Target project `homecooks` / env `production`: `RAILWAY_PROJECT_ID=09a28324-88a2-4ad0-aa5f-54bc2198007b`, `RAILWAY_ENVIRONMENT_ID=546be85e-73ad-4df7-b105-4bfd90b280c0`. Services: `medusa`, `web`, `worker`, `minio`, `Postgres`, `Redis`. The live Medusa is `medusa-production-d2ba.up.railway.app`.
+- The CLI is not part of the update script; if missing on a fresh VM, install with `curl -fsSL https://railway.com/install.sh | sh` (lands in `~/.railway/bin`). Then e.g. `railway status`, `railway variables -s medusa`.
+- The raw GraphQL API also works with the same token: `POST https://backboard.railway.com/graphql/v2` with header `Authorization: Bearer $RAILWAY_TOKEN`.
