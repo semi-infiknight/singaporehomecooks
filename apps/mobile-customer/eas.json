@@ -62,7 +62,8 @@
         "appleTeamId": "ZDDUJWZV46",
         "bundleIdentifier": "com.singaporehomecooks.customer",
         "sku": "shc-customer",
-        "language": "en-US"
+        "language": "en-US",
+        "groups": ["SHC"]
       }
     }
   }

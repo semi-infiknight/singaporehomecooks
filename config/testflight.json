@@ -1,0 +1,20 @@
+{
+  "internalGroup": "SHC",
+  "testerEmail": "mathurshubhang2002@gmail.com",
+  "apps": {
+    "customer": {
+      "ascAppId": "6783204699",
+      "testflightUrl": "https://appstoreconnect.apple.com/apps/6783204699/testflight/ios"
+    },
+    "cook": {
+      "ascAppId": "6785112476",
+      "testflightUrl": "https://appstoreconnect.apple.com/apps/6785112476/testflight/ios"
+    }
+  },
+  "oneTimeSetup": [
+    "App Store Connect → TestFlight → Internal Testing → group 'SHC'",
+    "Add mathurshubhang2002@gmail.com to the SHC group (must match Apple ID)",
+    "Enable 'Automatic distribution' on the SHC group for both apps",
+    "If the group name differs, update groups in apps/mobile-*/eas.json"
+  ]
+}
