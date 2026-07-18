@@ -25,9 +25,9 @@ echo "=== Cook iOS production build ==="
 CI=1 $EAS build --profile production --platform ios --non-interactive --wait
 
 echo ""
-echo "=== Submit to TestFlight (group from eas.json: SHC) ==="
+echo "=== Submit to TestFlight (group from eas.json: Team (Expo)) ==="
 CI=1 $EAS submit --platform ios --profile production --latest --non-interactive --wait
 
 echo ""
-echo "Done. Tester: mathurshubhang2002@gmail.com must be in ASC group SHC."
+echo "Done. Tester: mathurshubhang2002@gmail.com (Team (Expo) internal group)."
 echo "https://appstoreconnect.apple.com/apps/6785112476/testflight/ios"

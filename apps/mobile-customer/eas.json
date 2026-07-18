@@ -63,7 +63,7 @@
         "bundleIdentifier": "com.singaporehomecooks.customer",
         "sku": "shc-customer",
         "language": "en-US",
-        "groups": ["SHC"]
+        "groups": ["Team (Expo)"]
       }
     }
   }

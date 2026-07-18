@@ -1,5 +1,5 @@
 {
-  "internalGroup": "SHC",
+  "internalGroup": "Team (Expo)",
   "testerEmail": "mathurshubhang2002@gmail.com",
   "apps": {
     "customer": {
@@ -12,9 +12,8 @@
     }
   },
   "oneTimeSetup": [
-    "App Store Connect → TestFlight → Internal Testing → group 'SHC'",
-    "Add mathurshubhang2002@gmail.com to the SHC group (must match Apple ID)",
-    "Enable 'Automatic distribution' on the SHC group for both apps",
-    "If the group name differs, update groups in apps/mobile-*/eas.json"
+    "Internal group name must match eas.json exactly: Team (Expo)",
+    "mathurshubhang2002@gmail.com is already in this group",
+    "Enable automatic distribution on Team (Expo) for hands-free new builds"
   ]
 }
