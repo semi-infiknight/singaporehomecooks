@@ -15,11 +15,7 @@ This section maintains a curated list of authoritative external references, regu
 
 ## Product design references (tiffin / subscription)
 
-- **HomelyEats case study (extracted)** — [../references/homelyeats-case-study/README.md](../references/homelyeats-case-study/README.md)  
-  - Source: [Medium · Design Bootcamp](https://medium.com/design-bootcamp/how-i-simplified-ordering-home-cooked-meals-with-a-subscription-centric-app-a-product-design-521a82b219be) (Ayushi Prakash, 2023)  
-  - Full flow distillation: [CASE_STUDY.md](../references/homelyeats-case-study/CASE_STUDY.md)  
-  - SHC redesign plan: [REDESIGN_PLAN.md](../references/homelyeats-case-study/REDESIGN_PLAN.md)  
-  - Images (36 assets): [IMAGE_INDEX.md](../references/homelyeats-case-study/IMAGE_INDEX.md) + `images/`
+- **HomelyEats (Medium, 2023)** — inspiration only; tiffin UX is implemented in SHC. Source: [Design Bootcamp article](https://medium.com/design-bootcamp/how-i-simplified-ordering-home-cooked-meals-with-a-subscription-centric-app-a-product-design-521a82b219be). Local case-study images/plan removed 2026-07-18.
 
 ## Regulatory & Compliance References
 

@@ -318,7 +318,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 |------|-----|----------|
 | Full MinIO/S3 media | Full server upload (base64 -> server putObject via MinIO client) + presigned + auth hardening + listings integration; image_url now from server upload. Sharp derivatives planned. | done (core) |
 | Cook full Medusa auth | Hybrid done (hashed + bootstrap reg); full Medusa actor for cooks pending | P2 |
-| **Tiffin HomelyEats redesign** | Waves 1–7 done (UI + flex OS + ledger + pg-first ship) — [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md) | done |
+| **Tiffin subscription UX** | Waves 1–7 shipped (UI + flex OS + ledger + pg-first); reference case-study folder removed — live in app + blueprint §tiffin | done |
 | **Tiffin web parity** | Customer `/tiffin/*` + cook `/cook-portal/tiffin` shipped | done |
 | **Tiffin seed on Railway** | Part of uniform `seed.ts` / entrypoint (not a separate command) | done |
 | Production | Custom domains, real Expo push creds + receipts, PayU KYC + real bank payouts, worker cron automation (service deployed; jobs partially manual) | Founder |

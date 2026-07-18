@@ -108,7 +108,6 @@ Start here → follow links. Each file contains:
 - [14-founder-inputs.md](./14-founder-inputs/14-founder-inputs.md)
 - [15-calendar.md](./15-calendar/15-calendar.md)
 - [16-references.md](./16-references/16-references.md)
-- **[HomelyEats case study (tiffin redesign brief)](./references/homelyeats-case-study/README.md)** — extracted Medium product-design case study: flows, states, images, [REDESIGN_PLAN.md](./references/homelyeats-case-study/REDESIGN_PLAN.md)
 
 **Decision Trees & Edge Cases (Critical for Production Logic):**
 - CURRENT_STATE.md §8 "What's NOT Done" + code audits (no separate GAP_ANALYSIS.md; live gaps are in CURRENT_STATE) — historical source gap audit was folded in.

@@ -4,7 +4,7 @@
 
 **Start:** [README.md](./README.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)
 
-**Latest (2026-07-09):** HomelyEats redesign plan locked — UI/flow overhaul, **no feature removal**, simultaneous web + customer + cook (iOS/Android). See `references/homelyeats-case-study/REDESIGN_PLAN.md` + `CURRENT_STATE.md`. API goals require `git push origin main` before done.
+**Latest (2026-07-18):** Tiffin + marketplace polish shipped; HomelyEats reference assets removed (implemented in product). See `CURRENT_STATE.md` §0.
 
 ## Cold-start order
 
