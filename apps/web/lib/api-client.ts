@@ -83,14 +83,19 @@ export const addToCart = (pid: string, qty: number) => client.addToCart(pid, qty
 export const addDropToCart = (dropId: string, qty: number) => client.addDropToCart(dropId, qty);
 export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
-export const checkout = (ack: boolean, coll: { date: string; slot: string }, pdpa = true) =>
-  client.checkout(ack, coll, pdpa);
+export const checkout = (
+  ack: boolean,
+  coll: { date: string; slot: string },
+  pdpa = true,
+  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+) => client.checkout(ack, coll, pdpa, notes);
 export const checkoutWithCredits = (
   ack: boolean,
   coll: { date: string; slot: string },
   credits = 0,
-  corporate = false
-) => client.checkoutWithCredits(ack, coll, credits, corporate);
+  corporate = false,
+  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+) => client.checkoutWithCredits(ack, coll, credits, corporate, notes);
 export const transitionOrder = (oid: string, to: string) => client.transitionOrder(oid, to);
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);
 export const getOrder = (id: string) => client.getOrder(id);

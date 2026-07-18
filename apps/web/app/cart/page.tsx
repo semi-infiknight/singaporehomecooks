@@ -21,6 +21,7 @@ import { isAuthenticated } from '../../lib/api-client';
 import { useAuth } from '../../lib/useAuth';
 import { useAcceptBid, useBids, useMyRequests } from '../../lib/useOrder';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
+import { persistCartCheckoutNotes } from '../../lib/cart-notes';
 import {
   GourmeatScreenHeader,
   GourmeatPayButton,
@@ -396,15 +397,7 @@ export default function CartPage() {
                     showGuestAuthTray();
                     return;
                   }
-                  // Persist notes for checkout session
-                  try {
-                    sessionStorage.setItem(
-                      'shc_cart_notes',
-                      JSON.stringify({ cookingNotes, collectionNotes, kitchen })
-                    );
-                  } catch {
-                    /* ignore */
-                  }
+                  persistCartCheckoutNotes({ cookingNotes, collectionNotes });
                   router.push('/checkout');
                 }}
               />

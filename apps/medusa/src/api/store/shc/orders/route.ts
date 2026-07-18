@@ -83,6 +83,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       credits_applied_cents: m.credits_applied_cents || 0,
       is_corporate: !!m.is_corporate,
       corporate_note: m.corporate_note || null,
+      cooking_notes: m.cooking_notes || null,
+      collection_notes: m.collection_notes || null,
       items: m.items && m.items.length ? m.items : [{ name: 'Order item', qty: 1, product_id: '' }],
       total: m.total_cents ? Math.round(m.total_cents / 100) : (m.total || 0),
       address_released_at: m.address_released_at,

@@ -13,6 +13,8 @@ const BodySchema = z.object({
   collection: z.object({ date: z.string(), slot: z.string() }),
   creditsToApply: z.number().int().min(0).default(0),
   isCorporate: z.boolean().default(false),
+  cooking_notes: z.string().max(2000).nullable().optional(),
+  collection_notes: z.string().max(2000).nullable().optional(),
 }).strict();
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -20,7 +22,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid checkout-credits", parse.error.format() as any) });
   }
-  const { allergenAck, collection, creditsToApply, isCorporate } = parse.data;
+  const { allergenAck, collection, creditsToApply, isCorporate, cooking_notes, collection_notes } = parse.data;
 
   try {
     const result = await completeDemoCartCheckout(req, {
@@ -30,6 +32,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       pdpa_consent: true,
       creditsToApply,
       isCorporate,
+      cooking_notes,
+      collection_notes,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.(`[SHC-STORE] /checkout-credits order=${result.order.id} credits=${result.credits_applied}`);

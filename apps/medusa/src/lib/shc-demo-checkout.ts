@@ -14,12 +14,29 @@ export type DemoCheckoutInput = {
   pdpa_consent: boolean;
   creditsToApply?: number;
   isCorporate?: boolean;
+  cooking_notes?: string | null;
+  collection_notes?: string | null;
 };
 
 export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCheckoutInput) {
   const customerId = getCustomerId(req);
-  let { collection_date, collection_slot, allergen_acked, pdpa_consent, creditsToApply = 0, isCorporate = false } =
-    input;
+  let {
+    collection_date,
+    collection_slot,
+    allergen_acked,
+    pdpa_consent,
+    creditsToApply = 0,
+    isCorporate = false,
+    cooking_notes = null,
+    collection_notes = null,
+  } = input;
+
+  const trimNote = (v: string | null | undefined) => {
+    const s = typeof v === "string" ? v.trim() : "";
+    return s.length ? s.slice(0, 2000) : null;
+  };
+  cooking_notes = trimNote(cooking_notes);
+  collection_notes = trimNote(collection_notes);
 
   const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
@@ -88,6 +105,8 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
       : originDropId
         ? `Cooking soon batch ${originDropId}`
         : undefined,
+    cooking_notes,
+    collection_notes,
     origin_request_id: originDropId ? `drop:${originDropId}` : undefined,
     items: cart.items,
     total_cents: total,
@@ -98,6 +117,12 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
       ? `Thanks for joining my batch! Collection ${collection_date} · ${collection_slot}.`
       : "Order received! I'll prepare with care. Collection details released 2h before slot.";
     await metaService.addOrderMessage(orderId, "cook", cookId, msg);
+  }
+  if (cooking_notes) {
+    await metaService.addOrderMessage(orderId, "customer", customerId, `Cooking note: ${cooking_notes}`);
+  }
+  if (collection_notes) {
+    await metaService.addOrderMessage(orderId, "customer", customerId, `Collection note: ${collection_notes}`);
   }
 
   await cartService.clearCart(customerId);

@@ -15,6 +15,8 @@ const BodySchema = z.object({
   pdpa_consent: z.boolean().default(true),
   creditsToApply: z.number().optional().default(0),
   isCorporate: z.boolean().optional().default(false),
+  cooking_notes: z.string().max(2000).nullable().optional(),
+  collection_notes: z.string().max(2000).nullable().optional(),
 }).strict();
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -29,7 +31,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   try {
-    const { collection_date, collection_slot, allergen_acked, pdpa_consent, creditsToApply, isCorporate } = parse.data;
+    const {
+      collection_date,
+      collection_slot,
+      allergen_acked,
+      pdpa_consent,
+      creditsToApply,
+      isCorporate,
+      cooking_notes,
+      collection_notes,
+    } = parse.data;
     const result = await completeDemoCartCheckout(req, {
       collection_date,
       collection_slot,
@@ -37,6 +48,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       pdpa_consent,
       creditsToApply,
       isCorporate,
+      cooking_notes,
+      collection_notes,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id} credits=${creditsToApply}`);

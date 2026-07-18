@@ -36,6 +36,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthTray } from '../../hooks/useGuestAuthTray';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { useAcceptBid, useBids, useMyRequests } from '../../hooks/useOrder';
+import { persistCartCheckoutNotes } from '../../lib/cart-notes';
 
 function MyRequestCard({ request }: { request: any }) {
   const { data: bids = [] } = useBids(request.id);
@@ -125,7 +126,7 @@ export default function Cart() {
   const kitchen = cartKitchenLabel(items);
   const hasItems = items.length > 0;
 
-  const goCheckout = () => {
+  const goCheckout = async () => {
     if (!user) {
       showGuestAuthTray(
         'Sign in to checkout',
@@ -133,6 +134,7 @@ export default function Cart() {
       );
       return;
     }
+    await persistCartCheckoutNotes({ cookingNotes, collectionNotes });
     router.push('/(customer)/checkout' as any);
   };
 

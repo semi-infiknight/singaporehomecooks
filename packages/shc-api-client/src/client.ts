@@ -193,7 +193,12 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).cart;
     },
 
-    async checkout(allergenAck: boolean, collection: { date: string; slot: string }, pdpaConsent = true) {
+    async checkout(
+      allergenAck: boolean,
+      collection: { date: string; slot: string },
+      pdpaConsent = true,
+      notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+    ) {
       return request("/store/shc/carts/demo-complete", {
         method: "POST",
         body: JSON.stringify({
@@ -201,6 +206,8 @@ export function createShcApiClient(config: ShcApiClientConfig) {
           collection_date: collection.date,
           collection_slot: collection.slot,
           pdpa_consent: pdpaConsent,
+          cooking_notes: notes?.cooking_notes ?? null,
+          collection_notes: notes?.collection_notes ?? null,
         }),
       });
     },
@@ -209,11 +216,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       allergenAck: boolean,
       collection: { date: string; slot: string },
       creditsToApply = 0,
-      isCorporate = false
+      isCorporate = false,
+      notes?: { cooking_notes?: string | null; collection_notes?: string | null }
     ) {
       return request("/store/shc/checkout-credits", {
         method: "POST",
-        body: JSON.stringify({ allergenAck, collection, creditsToApply, isCorporate }),
+        body: JSON.stringify({
+          allergenAck,
+          collection,
+          creditsToApply,
+          isCorporate,
+          cooking_notes: notes?.cooking_notes ?? null,
+          collection_notes: notes?.collection_notes ?? null,
+        }),
       });
     },
 

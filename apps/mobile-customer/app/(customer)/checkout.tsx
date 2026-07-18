@@ -32,6 +32,7 @@ import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } fro
 import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
 import { checkoutWithCredits, flagCorporateOrder, createOrderPayNow, getOrder } from '../../lib/api-client';
+import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -179,9 +180,17 @@ export default function Checkout() {
     }
     setIsSubmitting(true);
     try {
-      const res = await checkoutWithCredits(allergenAck, effectiveSlot, creditsToApply, isCorporate);
+      const cartNotes = await readCartCheckoutNotes();
+      const res = await checkoutWithCredits(
+        allergenAck,
+        effectiveSlot,
+        creditsToApply,
+        isCorporate,
+        toOrderNotesPayload(cartNotes)
+      );
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
+      await clearCartCheckoutNotes();
       if (isCorporate && orderId) {
         await flagCorporateOrder(orderId, `Group order for ${cookId} — multi-dish note for ops.`);
       }

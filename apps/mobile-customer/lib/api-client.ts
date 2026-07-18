@@ -78,8 +78,9 @@ export const checkoutWithCredits = (
   allergenAck: boolean,
   collection: { date: string; slot: string },
   creditsToApply = 0,
-  isCorporate = false
-) => client.checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate);
+  isCorporate = false,
+  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+) => client.checkoutWithCredits(allergenAck, collection, creditsToApply, isCorporate, notes);
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);
 export const getOrderInvoiceDownloadUrl = (id: string) => client.getOrderInvoiceDownloadUrl(id);

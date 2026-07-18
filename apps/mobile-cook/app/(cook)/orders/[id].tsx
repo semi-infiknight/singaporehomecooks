@@ -227,6 +227,16 @@ export default function CookManageOrder() {
             {it.qty}× {it.name}
           </Text>
         ))}
+        {!!(order as any).cooking_notes && (
+          <Text style={styles.cardBody} testID="cook-order-cooking-notes">
+            Cooking: {(order as any).cooking_notes}
+          </Text>
+        )}
+        {!!(order as any).collection_notes && (
+          <Text style={styles.cardBody} testID="cook-order-collection-notes">
+            Collection: {(order as any).collection_notes}
+          </Text>
+        )}
         <Text style={styles.hint}>
           Customer address in chat after accept. Use the buttons below to advance fulfilment.
         </Text>

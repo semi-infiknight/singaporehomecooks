@@ -17,6 +17,8 @@ class ShcOrderMetaModuleService extends MedusaService({
         credits_applied_cents?: number;
         is_corporate?: boolean;
         corporate_note?: string;
+        cooking_notes?: string | null;
+        collection_notes?: string | null;
       }
     >
   ): Promise<SHCOrderMeta> {
@@ -44,6 +46,8 @@ class ShcOrderMetaModuleService extends MedusaService({
       credits_applied_cents: (data as any).credits_applied_cents,
       is_corporate: (data as any).is_corporate,
       corporate_note: (data as any).corporate_note,
+      cooking_notes: (data as any).cooking_notes,
+      collection_notes: (data as any).collection_notes,
       items: (data as any).items || (data as any).items_json,
       total_cents: (data as any).total_cents ?? (data as any).total,
     };

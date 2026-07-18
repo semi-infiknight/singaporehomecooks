@@ -31,6 +31,7 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { createOrderPayNow, getOrder } from '../../lib/api-client';
+import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 
 function extractOrderId(res: unknown): string | null {
   if (!res || typeof res !== 'object') return null;
@@ -223,13 +224,16 @@ export default function CheckoutPage() {
       return;
     }
     try {
+      const cartNotes = readCartCheckoutNotes();
       const res = await checkoutMut.mutateAsync({
         allergenAck,
         collection: effectiveSlot,
         pdpaConsent,
         creditsToApply: creditsApply,
         isCorporate: isCorp,
+        notes: toOrderNotesPayload(cartNotes),
       });
+      clearCartCheckoutNotes();
       const oid = extractOrderId(res);
       if (!oid) {
         showCheckoutError({
