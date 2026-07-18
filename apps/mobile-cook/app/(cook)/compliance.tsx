@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, Pressable, Linking } from 'react-native';
+import { View, Text, ScrollView, TextInput, StyleSheet, Pressable, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SHCCard,
@@ -31,6 +31,7 @@ import {
 } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
+import { pickComplianceCertificate, uploadComplianceCertificate, type PickedComplianceFile } from '../../lib/compliance-upload';
 
 const milestoneStorage = {
   get: (k: string) => SecureStore.getItemAsync(k),
@@ -42,6 +43,7 @@ export default function ComplianceUpload() {
   const { user } = useAuth();
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
+  const [pickedFile, setPickedFile] = useState<PickedComplianceFile | null>(null);
   const [docs, setDocs] = useState<any[]>([]);
   const [result, setResult] = useState<{ status: string; type: string; fileName: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -66,20 +68,36 @@ export default function ComplianceUpload() {
   const courseLinks = useMemo(() => complianceLinksForType(type), [type]);
 
   const upload = async () => {
-    if (!fileName) return;
+    if (!pickedFile && !fileName) return;
     setSubmitting(true);
     try {
-      const safeName = fileName.replace(/[^a-zA-Z0-9._-]+/g, '-');
-      const doc = await submitComplianceDoc({
-        type,
-        file_key: `compliance/${user?.id || 'cook'}/${Date.now()}-${safeName}`,
-      });
+      let doc: any;
+      if (pickedFile) {
+        doc = await uploadComplianceCertificate(user?.id || 'cook', type, pickedFile);
+        setResult({ status: 'pending_review', type, fileName: pickedFile.name });
+      } else {
+        const safeName = fileName.replace(/[^a-zA-Z0-9._-]+/g, '-');
+        doc = await submitComplianceDoc({
+          type,
+          file_key: `compliance/${user?.id || 'cook'}/${Date.now()}-${safeName}`,
+        });
+        setResult({ status: 'pending_review', type, fileName });
+      }
       setDocs((prev) => [doc, ...prev]);
-      setResult({ status: 'pending_review', type, fileName });
       setFileName('');
+      setPickedFile(null);
+    } catch (e: any) {
+      Alert.alert('Upload failed', e?.message || 'Could not submit compliance document.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const choosePhoto = async () => {
+    const file = await pickComplianceCertificate();
+    if (!file) return;
+    setPickedFile(file);
+    setFileName('');
   };
 
   return (
@@ -174,17 +192,36 @@ export default function ComplianceUpload() {
             <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
             <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
           </View>
-          <Text style={styles.uploadHint}>After your course: submit the cert filename / reference.</Text>
+          <Text style={styles.uploadHint}>
+            Upload a photo of your certificate, or enter a reference if you will email the PDF to ops.
+          </Text>
+
+          <SHCButton variant="outline" onPress={choosePhoto} style={styles.pickBtn} testID="compliance-pick-photo-btn">
+            <SHCButtonText variant="outline">{pickedFile ? 'Change photo' : 'Choose certificate photo'}</SHCButtonText>
+          </SHCButton>
+          {pickedFile ? (
+            <Text style={styles.pickedName} numberOfLines={1} testID="compliance-picked-file">
+              {pickedFile.name}
+            </Text>
+          ) : null}
 
           <TextInput
-            placeholder="cert.pdf or cert reference"
+            placeholder="Or cert reference (e.g. SFA reg no.)"
             value={fileName}
-            onChangeText={setFileName}
+            onChangeText={(v) => {
+              setFileName(v);
+              if (v) setPickedFile(null);
+            }}
             style={styles.fileInput}
             testID="compliance-file-input"
           />
 
-          <SHCButton onPress={upload} disabled={!fileName || submitting} style={styles.uploadBtn} testID="compliance-submit-btn">
+          <SHCButton
+            onPress={upload}
+            disabled={(!pickedFile && !fileName) || submitting}
+            style={styles.uploadBtn}
+            testID="compliance-submit-btn"
+          >
             <SHCButtonText>{submitting ? 'Submitting…' : 'Submit'}</SHCButtonText>
           </SHCButton>
         </SHCCard>
@@ -295,6 +332,8 @@ const styles = StyleSheet.create({
   uploadCard: { marginBottom: shcSpacing.md },
   uploadHeader: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.sm },
   uploadHint: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.sm },
+  pickBtn: { marginBottom: shcSpacing.sm },
+  pickedName: { fontSize: 12, fontWeight: '700', color: shcColors.text, marginBottom: shcSpacing.sm },
   fileInput: {
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
