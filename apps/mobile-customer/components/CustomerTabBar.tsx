@@ -58,13 +58,15 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const { data: orders = [] } = useOrders('customer');
   const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
 
-  const items = (cart?.items || []) as Parameters<typeof summarizeCart>[0];
+  // Guests browse signed-out — never show sticky cart or tab badge (web parity).
+  const canShowCart = Boolean(user) && !authLoading;
+  const items = (canShowCart ? cart?.items : []) as Parameters<typeof summarizeCart>[0];
   const firstName = items[0] && 'name' in (items[0] as object) ? String((items[0] as { name?: string }).name || '') : undefined;
   const summary = summarizeCart(items, firstName);
 
   const visibleRoutes = state.routes.filter((route) => VISIBLE_TABS.has(route.name));
   const activeRoute = state.routes[state.index];
-  const showCartBar = summary.hasItems && !HIDE_CART_BAR.has(activeRoute?.name ?? '');
+  const showCartBar = canShowCart && summary.hasItems && !HIDE_CART_BAR.has(activeRoute?.name ?? '');
   const hideTabBar = HIDE_TAB_BAR.has(activeRoute?.name ?? '');
 
   const tabs: SHCBottomTab[] = visibleRoutes.map((route) => {
@@ -74,7 +76,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
       label: meta.label,
       iconKey: meta.iconKey,
       testID: meta.testID,
-      badge: route.name === 'cart' && summary.hasItems ? summary.badgeLabel : undefined,
+      badge: route.name === 'cart' && canShowCart && summary.hasItems ? summary.badgeLabel : undefined,
       ordersLiveCue: route.name === 'orders/index' && ordersLiveCue === 'cooking' ? 'cooking' : undefined,
     };
   });
