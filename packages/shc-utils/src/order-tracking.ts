@@ -61,6 +61,27 @@ export function isActiveOrderStatus(status: string): boolean {
   return (ACTIVE_ORDER_STATUSES as readonly string[]).includes(status);
 }
 
+/** Cook must Accept or Decline — paid, awaiting cook action */
+export const COOK_NEEDS_ACTION_STATUSES = ["paid"] as const;
+
+export function isCookNeedsActionOrder(order: { shc_status?: string; status?: string }): boolean {
+  const status = String(order.shc_status || order.status || "");
+  return (COOK_NEEDS_ACTION_STATUSES as readonly string[]).includes(status);
+}
+
+export function partitionCookOrders<T extends { shc_status?: string; status?: string }>(orders: T[]) {
+  const needsAction: T[] = [];
+  const inProgress: T[] = [];
+  const done: T[] = [];
+  for (const o of orders) {
+    const status = String(o.shc_status || o.status || "");
+    if (isCookNeedsActionOrder(o)) needsAction.push(o);
+    else if (["collected", "completed", "cancelled"].includes(status)) done.push(o);
+    else inProgress.push(o);
+  }
+  return { needsAction, inProgress, done };
+}
+
 export function getActiveOrders<T extends { shc_status?: string; status?: string }>(orders: T[]): T[] {
   return orders.filter((o) => isActiveOrderStatus(String(o.shc_status || o.status || '')));
 }

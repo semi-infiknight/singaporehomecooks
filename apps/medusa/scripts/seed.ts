@@ -157,6 +157,20 @@ async function seed() {
     console.log(`  ✓ shc_cook seeded: ${c.slug} (${loginEmail}, hashed password)`);
   }
 
+  // Verified SFA + WSQ for demo cooks so Accept works after compliance gate ships
+  for (const cookId of ["cook_rose_tampines_001", "cook_doris_katong_002"]) {
+    for (const type of ["sfa", "wsq"] as const) {
+      const docId = `comp_seed_${cookId}_${type}`;
+      await pg.query(
+        `INSERT INTO shc_compliance_doc (id, cook_id, type, file_key, verified_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, now(), now(), now())
+         ON CONFLICT (id) DO UPDATE SET verified_at = now(), updated_at = now()`,
+        [docId, cookId, type, `seed/${cookId}-${type}.pdf`]
+      );
+    }
+    console.log(`  ✓ shc_compliance_doc seeded (verified SFA+WSQ): ${cookId}`);
+  }
+
   // Product meta + availability for /store/shc/products
   for (const p of productsToCreate) {
     const productId = p.id;

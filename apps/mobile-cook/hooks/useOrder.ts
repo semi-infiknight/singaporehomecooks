@@ -93,6 +93,16 @@ export function useAcceptBid() {
   });
 }
 
+export function useComplianceDocs() {
+  return useQuery({
+    queryKey: ['cook-compliance'],
+    queryFn: async () => {
+      const { getComplianceDocs } = await import('../lib/api-client');
+      return getComplianceDocs();
+    },
+  });
+}
+
 export function useCookNotifications() {
   const qc = useQueryClient();
   const query = useQuery({

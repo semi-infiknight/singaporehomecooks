@@ -5,6 +5,7 @@ import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import { getCookId, unauthorized } from "../../../../../../lib/shc-actors";
 import { notifyOrderStatusChange } from "../../../../../../lib/shc-order-push";
+import { assertCookCanAcceptOrder } from "../../../../../../lib/shc-cook-compliance";
 
 const BodySchema = z.object({
   to: z.string(),
@@ -30,6 +31,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     cookId = getCookId(req);
   } catch {
     return unauthorized(res, "Cook login required");
+  }
+
+  if (to === "accepted") {
+    const gate = await assertCookCanAcceptOrder(req.scope, cookId);
+    if (!gate.ok) {
+      return res.status(400).json({ error: createSHCError(gate.code, gate.message) });
+    }
   }
 
   const result = await metaService.transitionOrderState(id, to, cookId);

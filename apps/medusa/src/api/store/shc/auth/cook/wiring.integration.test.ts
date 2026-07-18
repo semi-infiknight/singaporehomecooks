@@ -89,6 +89,19 @@ function buildInMemoryWiringScope() {
   };
 
   const orderMetaProto = Object.create(ShcOrderMetaModuleService.prototype);
+  const complianceService = {
+    listAndCountComplianceDocs: async (where: any) => {
+      const cookId = where.cook_id;
+      if (!cookId) return [[], 0];
+      return [
+        [
+          { cook_id: cookId, type: "sfa", verified_at: new Date().toISOString() },
+          { cook_id: cookId, type: "wsq", verified_at: new Date().toISOString() },
+        ],
+        2,
+      ];
+    },
+  };
   const orderMetaService = Object.assign(orderMetaProto, {
     createOrUpdateMeta: async (data: any) => {
       orders[data.order_id] = { ...data, shc_status: data.shc_status || "paid" };
@@ -133,6 +146,7 @@ function buildInMemoryWiringScope() {
         return { upsertAvailability: async () => ({}), getAvailability: async () => null };
       }
       if (name === "shcOrderMeta") return orderMetaService;
+      if (name === "shcComplianceDoc") return complianceService;
       if (name === "shcLedger") {
         return { getLedgerSummaryForOrders: async () => ({ totalCookEarnings: 0, totalPlatformFees: 0, entries: [] }) };
       }

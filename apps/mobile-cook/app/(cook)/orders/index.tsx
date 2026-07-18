@@ -22,9 +22,9 @@ import {
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars } from '@shc/utils';
+import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders } from '@shc/utils';
 
-import { useMyOrders, useTransitionOrder, useRequests, useCreateBid } from '../../../hooks/useOrder';
+import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { SHCOrderStatus } from '@shc/types';
 
@@ -43,6 +43,8 @@ export default function CookOrders() {
   const orderList = (orders as any[]) ?? [];
   const { data: openReqs = [] } = useRequests();
   const createBidMut = useCreateBid();
+  const { data: complianceDocs = [] } = useComplianceDocs();
+  const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
   const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
@@ -53,10 +55,17 @@ export default function CookOrders() {
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
     setErr(null);
+    if (to === 'accepted' && !complianceOk) {
+      setErr({
+        code: 'SHC-COMPLIANCE-002',
+        message: 'SFA and WSQ must be verified before you can accept orders. Upload certificates in Compliance.',
+      });
+      return;
+    }
     try {
       await transMut.mutateAsync({ orderId, to });
     } catch (e: any) {
-      setErr({ message: e?.message || 'Transition failed' });
+      setErr({ code: e?.code, message: e?.message || 'Transition failed' });
     }
   };
 
@@ -93,8 +102,56 @@ export default function CookOrders() {
     }
   };
 
-  const pendingCount = orderList.filter((o: any) => !['collected', 'completed'].includes(o.shc_status)).length;
+  const { needsAction, inProgress } = partitionCookOrders(orderList);
   const reqList = Array.isArray(openReqs) ? openReqs : [];
+
+  const renderOrderRow = (o: any) => {
+    const actions = NEXT_ACTIONS[o.shc_status] || [];
+    const dishName = o.items?.[0]?.name;
+    return (
+      <GourmeatOrderRow
+        key={o.id}
+        orderId={o.id}
+        dishName={dishName}
+        productId={o.items?.[0]?.product_id}
+        status={o.shc_status}
+        statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
+        collectionDate={o.collection_date}
+        collectionSlot={o.collection_slot}
+        total={o.total}
+        onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
+        testID={`cook-order-row-${o.id}`}
+        actions={
+          <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
+            {actions.map((a) => (
+              <GourmeatPrimaryButton
+                key={a.to}
+                label={a.label}
+                size="sm"
+                testID={`cook-order-${o.id}-action-${a.to}`}
+                disabled={a.to === 'accepted' && !complianceOk}
+                onPress={() => doTransition(o.id, a.to)}
+              />
+            ))}
+            <GourmeatPrimaryButton
+              label="Chat"
+              size="sm"
+              variant="outline"
+              testID={`cook-order-${o.id}-chat`}
+              onPress={() => router.push(`/(shared)/chat/${encodeURIComponent(String(o.id))}` as any)}
+            />
+            <GourmeatPrimaryButton
+              label="Details"
+              size="sm"
+              variant="outline"
+              testID={`cook-order-${o.id}-details`}
+              onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
+            />
+          </GourmeatActionRow>
+        }
+      />
+    );
+  };
 
   return (
     <ScrollView
@@ -106,7 +163,7 @@ export default function CookOrders() {
         title="Orders"
         subtitle={user?.name}
         badges={
-          pendingCount > 0 ? (
+          needsAction.length > 0 ? (
             <Text
               style={{
                 fontSize: 11,
@@ -118,7 +175,21 @@ export default function CookOrders() {
                 borderRadius: 12,
               }}
             >
-              {pendingCount} active
+              {needsAction.length} need action
+            </Text>
+          ) : inProgress.length > 0 ? (
+            <Text
+              style={{
+                fontSize: 11,
+                fontWeight: '700',
+                color: gourmeatColors.textLight,
+                backgroundColor: gourmeatColors.surface,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 12,
+              }}
+            >
+              {inProgress.length} in progress
             </Text>
           ) : undefined
         }
@@ -131,70 +202,55 @@ export default function CookOrders() {
         />
       )}
 
-      <SHCSectionTitle>Collection orders</SHCSectionTitle>
-
-      {ordersLoading && orderList.length === 0 && (
-        <SHCSkeletonOrderList count={4} variant="row" />
-      )}
-
-      {!ordersLoading && orderList.length === 0 && !ordersError && (
-        <GourmeatCard>
-          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+      {!complianceOk && needsAction.length > 0 && (
+        <GourmeatCard style={{ marginBottom: shcSpacing.sm, backgroundColor: '#FEF3C7' }} testID="cook-compliance-gate-banner">
+          <Text style={{ fontSize: 13, fontWeight: '700', color: gourmeatColors.text }}>
+            Upload SFA + WSQ and wait for ops verification before accepting orders.
+          </Text>
+          <GourmeatPrimaryButton
+            label="Go to Compliance"
+            size="sm"
+            variant="outline"
+            onPress={() => router.push('/(cook)/compliance' as any)}
+            style={{ marginTop: 8 }}
+            testID="cook-compliance-gate-cta"
+          />
         </GourmeatCard>
       )}
 
-      {ordersError && orderList.length === 0 && (
-        <GourmeatPrimaryButton label="Retry load orders" onPress={() => void refetchOrders()} style={{ marginBottom: 12 }} />
+      {needsAction.length > 0 && (
+        <>
+          <SHCSectionTitle testID="cook-orders-needs-action">Needs action</SHCSectionTitle>
+          <SHCFadeIn delay={40}>{needsAction.map(renderOrderRow)}</SHCFadeIn>
+        </>
       )}
 
-      <SHCFadeIn delay={80}>
-        {orderList.map((o: any) => {
-          const actions = NEXT_ACTIONS[o.shc_status] || [];
-          const dishName = o.items?.[0]?.name;
-          return (
-            <GourmeatOrderRow
-              key={o.id}
-              orderId={o.id}
-              dishName={dishName}
-              productId={o.items?.[0]?.product_id}
-              status={o.shc_status}
-              statusLabel={getOrderStatusLabel(String(o.shc_status || ''))}
-              collectionDate={o.collection_date}
-              collectionSlot={o.collection_slot}
-              total={o.total}
-              onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
-              testID={`cook-order-row-${o.id}`}
-              actions={
-                <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
-                  {actions.map((a) => (
-                    <GourmeatPrimaryButton
-                      key={a.to}
-                      label={a.label}
-                      size="sm"
-                      testID={`cook-order-${o.id}-action-${a.to}`}
-                      onPress={() => doTransition(o.id, a.to)}
-                    />
-                  ))}
-                  <GourmeatPrimaryButton
-                    label="Chat"
-                    size="sm"
-                    variant="outline"
-                    testID={`cook-order-${o.id}-chat`}
-                    onPress={() => router.push(`/(shared)/chat/${encodeURIComponent(String(o.id))}` as any)}
-                  />
-                  <GourmeatPrimaryButton
-                    label="Details"
-                    size="sm"
-                    variant="outline"
-                    testID={`cook-order-${o.id}-details`}
-                    onPress={() => router.push(`/(cook)/orders/${encodeURIComponent(String(o.id))}` as any)}
-                  />
-                </GourmeatActionRow>
-              }
-            />
-          );
-        })}
-      </SHCFadeIn>
+      {inProgress.length > 0 && (
+        <>
+          <SHCSectionTitle testID="cook-orders-in-progress">In progress</SHCSectionTitle>
+          <SHCFadeIn delay={80}>{inProgress.map(renderOrderRow)}</SHCFadeIn>
+        </>
+      )}
+
+      {needsAction.length === 0 && inProgress.length === 0 && (
+        <>
+          <SHCSectionTitle>Collection orders</SHCSectionTitle>
+
+          {ordersLoading && orderList.length === 0 && (
+            <SHCSkeletonOrderList count={4} variant="row" />
+          )}
+
+          {!ordersLoading && orderList.length === 0 && !ordersError && (
+            <GourmeatCard>
+              <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+            </GourmeatCard>
+          )}
+
+          {ordersError && orderList.length === 0 && (
+            <GourmeatPrimaryButton label="Retry load orders" onPress={() => void refetchOrders()} style={{ marginBottom: 12 }} />
+          )}
+        </>
+      )}
 
       {/* Collaboration Board — below collection orders */}
       <View style={[styles.collabHeader, { marginTop: shcSpacing.lg }]} testID="cook-collab-board">

@@ -17,8 +17,8 @@ import {
   SHCSkeletonList,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, getDishImageUrl } from '@shc/utils';
-import { useOrder, useTransitionOrder } from '../../../hooks/useOrder';
+import { getOrderStatusLabel, getDishImageUrl, isCookComplianceVerified } from '@shc/utils';
+import { useOrder, useTransitionOrder, useComplianceDocs } from '../../../hooks/useOrder';
 import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
@@ -71,6 +71,8 @@ export default function CookManageOrder() {
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
   const { data: order, isLoading: orderLoading, isError: orderError, error: orderErr } = useOrder(id || '');
+  const { data: complianceDocs = [] } = useComplianceDocs();
+  const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
   const [invoiceBusy, setInvoiceBusy] = React.useState(false);
@@ -109,10 +111,17 @@ export default function CookManageOrder() {
   const doTransition = async (to: SHCOrderStatus) => {
     if (!id) return;
     setErr(null);
+    if (to === 'accepted' && !complianceOk) {
+      setErr({
+        code: 'SHC-COMPLIANCE-002',
+        message: 'SFA and WSQ must be verified before you can accept orders.',
+      });
+      return;
+    }
     try {
       await transMut.mutateAsync({ orderId: id, to });
     } catch (e: any) {
-      setErr({ message: e?.message || 'Transition failed' });
+      setErr({ code: e?.code, message: e?.message || 'Transition failed' });
     }
   };
 
@@ -216,6 +225,19 @@ export default function CookManageOrder() {
 
       <OrderStatusBadge status={order.shc_status} />
 
+      {!complianceOk && order.shc_status === 'paid' && (
+        <GourmeatCard style={{ marginBottom: shcSpacing.sm, backgroundColor: '#FEF3C7' }} testID="cook-order-compliance-gate">
+          <Text style={styles.hint}>Complete SFA + WSQ verification before accepting this order.</Text>
+          <GourmeatPrimaryButton
+            label="Open Compliance"
+            size="sm"
+            variant="outline"
+            onPress={() => router.push('/(cook)/compliance' as any)}
+            style={{ marginTop: 8 }}
+          />
+        </GourmeatCard>
+      )}
+
       <GourmeatCard>
         <Text style={styles.cardTitle}>Collection</Text>
         <Text style={styles.cardBody}>
@@ -250,7 +272,7 @@ export default function CookManageOrder() {
               label={transMut.isPending ? 'Updating…' : a.label}
               variant={a.variant === 'danger' ? 'outline' : a.variant || 'primary'}
               onPress={() => confirmTransition(a.to, a.label)}
-              disabled={transMut.isPending}
+              disabled={transMut.isPending || (a.to === 'accepted' && !complianceOk)}
               testID={`cook-order-transition-${a.to}`}
             />
           ))}

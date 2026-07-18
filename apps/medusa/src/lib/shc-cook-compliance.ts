@@ -1,0 +1,43 @@
+import { canCookAcceptOrder } from "@shc/business-rules";
+import { isCookComplianceVerified } from "@shc/utils";
+import type { SHCErrorCode } from "@shc/types";
+import ShcCookModuleService from "../modules/shc-cook/service";
+import ShcComplianceDocModuleService from "../modules/shc-compliance-doc/service";
+
+export async function cookHasVerifiedCompliance(scope: any, cookId: string): Promise<boolean> {
+  const complianceService: ShcComplianceDocModuleService = scope.resolve("shcComplianceDoc");
+  const [docs] = await complianceService
+    .listAndCountComplianceDocs({ cook_id: cookId } as any, { take: 50 })
+    .catch(() => [[]]);
+  return isCookComplianceVerified((docs as any[]) || []);
+}
+
+/** Gate cook Accept (paid → accepted). Returns SHC error code on failure. */
+export async function assertCookCanAcceptOrder(
+  scope: any,
+  cookId: string
+): Promise<{ ok: true } | { ok: false; code: SHCErrorCode; message: string }> {
+  const cookService: ShcCookModuleService = scope.resolve("shcCook");
+  const [cooks] = await cookService.listAndCountCooks({ id: cookId } as any, { take: 1 }).catch(() => [[]]);
+  const cook = (cooks as any[])?.[0];
+  if (!cook) {
+    return { ok: false, code: "SHC-COOK-001", message: "Cook profile not found" };
+  }
+
+  const hasVerifiedCompliance = await cookHasVerifiedCompliance(scope, cookId);
+  const gate = canCookAcceptOrder({
+    status: String(cook.status || "pending"),
+    availabilityPaused: Boolean(cook.availability_paused),
+    hasVerifiedCompliance,
+  });
+
+  if (!gate.valid) {
+    return {
+      ok: false,
+      code: (gate.code || "SHC-COMPLIANCE-002") as SHCErrorCode,
+      message: gate.error || "Compliance docs required and not verified",
+    };
+  }
+
+  return { ok: true };
+}

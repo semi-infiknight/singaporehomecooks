@@ -4,8 +4,8 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { buildOrderChatContext, getOrderStatusLabel } from '@shc/utils';
-import { useCookOrder, useCookTransitionOrder, useCookChat } from '../../../../lib/useCookPortal';
+import { buildOrderChatContext, getOrderStatusLabel, isCookComplianceVerified } from '@shc/utils';
+import { useCookOrder, useCookTransitionOrder, useCookChat, useComplianceDocs } from '../../../../lib/useCookPortal';
 import { getCookOrderInvoice } from '../../../../lib/cook-api-client';
 import { downloadPdfBase64InBrowser } from '../../../../lib/download-pdf';
 import {
@@ -30,6 +30,8 @@ export default function CookOrderDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const { data: order, isLoading } = useCookOrder(id);
+  const { data: complianceDocs = [] } = useComplianceDocs();
+  const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const { messages, send, isSending } = useCookChat(id);
   const transMut = useCookTransitionOrder();
   const { openTray, dismiss } = useSHCTrayWeb();
@@ -78,6 +80,10 @@ export default function CookOrderDetailPage() {
   );
 
   const confirmTransition = (to: SHCOrderStatus, label: string) => {
+    if (to === 'accepted' && !complianceOk) {
+      alert('SFA and WSQ must be verified before you can accept orders.');
+      return;
+    }
     openTray(
       { id: 'order-status-confirm', title: label, height: 'compact' },
       <SHCTrayActionWeb
@@ -119,12 +125,21 @@ export default function CookOrderDetailPage() {
         <p className="text-xs text-muted-foreground mt-2">Cook: {order.cook_name}</p>
       </GourmeatCard>
 
+      {!complianceOk && status === 'paid' && (
+        <GourmeatCard className="mb-3 bg-amber-50 border-amber-200" data-testid="cook-order-compliance-gate">
+          <p className="text-sm font-bold">Complete SFA + WSQ verification before accepting this order.</p>
+          <Link href="/cook-portal/compliance" className="text-sm font-semibold text-primary mt-2 inline-block">
+            Open Compliance →
+          </Link>
+        </GourmeatCard>
+      )}
+
       <div className="flex flex-wrap gap-2 mb-3">
         {actions.map((a) => (
           <GourmeatPrimaryButton
             key={a.to}
             label={transMut.isPending ? 'Updating…' : a.label}
-            disabled={transMut.isPending}
+            disabled={transMut.isPending || (a.to === 'accepted' && !complianceOk)}
             onClick={() => confirmTransition(a.to, a.label)}
             testID={`cook-portal-order-transition-${a.to}`}
           />

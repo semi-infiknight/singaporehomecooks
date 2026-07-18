@@ -7,13 +7,20 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
-import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars } from '@shc/utils';
+import {
+  getOrderStatusLabel,
+  parseBidDollarsToCents,
+  formatBidCentsAsDollars,
+  isCookComplianceVerified,
+  partitionCookOrders,
+} from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
   useCookOrders,
   useCookTransitionOrder,
   useOpenRequests,
   useCreateBid,
+  useComplianceDocs,
 } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
@@ -39,6 +46,8 @@ export default function CookOrdersPage() {
   const { data: orders, isLoading: ordersLoading } = useCookOrders();
   const orderList = (orders as any[]) ?? [];
   const { data: openReqs = [] } = useOpenRequests();
+  const { data: complianceDocs = [] } = useComplianceDocs();
+  const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const createBid = useCreateBid();
   const transMut = useCookTransitionOrder();
   const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
@@ -47,13 +56,14 @@ export default function CookOrdersPage() {
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
 
-  const pendingCount = orderList.filter(
-    (o: { shc_status?: string }) => !['collected', 'completed'].includes(String(o.shc_status))
-  ).length;
-
+  const { needsAction, inProgress } = partitionCookOrders(orderList);
   const reqList = Array.isArray(openReqs) ? openReqs : [];
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
+    if (to === 'accepted' && !complianceOk) {
+      alert('SFA and WSQ must be verified before you can accept orders. Upload certificates in Compliance.');
+      return;
+    }
     try {
       await transMut.mutateAsync({ orderId, to });
     } catch (e) {
@@ -94,73 +104,107 @@ export default function CookOrdersPage() {
     }
   };
 
+  const renderOrderRow = (o: Record<string, unknown>) => {
+    const status = String(o.shc_status || '');
+    const actions = NEXT_ACTIONS[status] || [];
+    const dishName = String((o.items as { name?: string }[])?.[0]?.name || '');
+    return (
+      <GourmeatOrderRow
+        key={String(o.id)}
+        orderId={String(o.id)}
+        dishName={dishName}
+        productId={String((o.items as { product_id?: string }[])?.[0]?.product_id || '')}
+        statusLabel={getOrderStatusLabel(status)}
+        collectionDate={o.collection_date ? String(o.collection_date) : undefined}
+        collectionSlot={o.collection_slot ? String(o.collection_slot) : undefined}
+        total={o.total as number}
+        onPress={() => router.push(`/cook-portal/orders/${o.id}`)}
+        testID={`cook-order-row-${o.id}`}
+        actions={
+          <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
+            {actions.map((a) => (
+              <GourmeatPrimaryButton
+                key={a.to}
+                label={a.label}
+                size="sm"
+                testID={`cook-order-${o.id}-action-${a.to}`}
+                disabled={a.to === 'accepted' && !complianceOk}
+                onClick={() => doTransition(String(o.id), a.to)}
+              />
+            ))}
+            <GourmeatPrimaryButton
+              label="Details"
+              size="sm"
+              variant="outline"
+              testID={`cook-order-${o.id}-details`}
+              onClick={() => router.push(`/cook-portal/orders/${o.id}`)}
+            />
+          </GourmeatActionRow>
+        }
+      />
+    );
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-orders-screen">
       <GourmeatCookHeader
         title="Orders"
         subtitle={user?.name}
         badges={
-          pendingCount > 0 ? (
+          needsAction.length > 0 ? (
             <span className="text-[11px] font-bold text-primary bg-secondary px-2.5 py-1 rounded-full">
-              {pendingCount} active
+              {needsAction.length} need action
+            </span>
+          ) : inProgress.length > 0 ? (
+            <span className="text-[11px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              {inProgress.length} in progress
             </span>
           ) : undefined
         }
       />
 
-      <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
-
-      {ordersLoading && orderList.length === 0 && (
-        <div className="mb-4">
-          <SHCSkeletonOrderList count={4} variant="row" />
-        </div>
-      )}
-
-      {!ordersLoading && orderList.length === 0 && (
-        <GourmeatCard className="mb-4">
-          <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+      {!complianceOk && needsAction.length > 0 && (
+        <GourmeatCard className="mb-3 bg-amber-50 border-amber-200" data-testid="cook-compliance-gate-banner">
+          <p className="text-sm font-bold">Upload SFA + WSQ and wait for ops verification before accepting orders.</p>
+          <Link href="/cook-portal/compliance" className="inline-block mt-2 text-sm font-semibold text-primary">
+            Go to Compliance →
+          </Link>
         </GourmeatCard>
       )}
 
-      {orderList.map((o: Record<string, unknown>) => {
-        const status = String(o.shc_status || '');
-        const actions = NEXT_ACTIONS[status] || [];
-        const dishName = String((o.items as { name?: string }[])?.[0]?.name || '');
-        return (
-          <GourmeatOrderRow
-            key={String(o.id)}
-            orderId={String(o.id)}
-            dishName={dishName}
-            productId={String((o.items as { product_id?: string }[])?.[0]?.product_id || '')}
-            statusLabel={getOrderStatusLabel(status)}
-            collectionDate={o.collection_date ? String(o.collection_date) : undefined}
-            collectionSlot={o.collection_slot ? String(o.collection_slot) : undefined}
-            total={o.total as number}
-            onPress={() => router.push(`/cook-portal/orders/${o.id}`)}
-            testID={`cook-order-row-${o.id}`}
-            actions={
-              <GourmeatActionRow testID={`cook-order-actions-${o.id}`}>
-                {actions.map((a) => (
-                  <GourmeatPrimaryButton
-                    key={a.to}
-                    label={a.label}
-                    size="sm"
-                    testID={`cook-order-${o.id}-action-${a.to}`}
-                    onClick={() => doTransition(String(o.id), a.to)}
-                  />
-                ))}
-                <GourmeatPrimaryButton
-                  label="Details"
-                  size="sm"
-                  variant="outline"
-                  testID={`cook-order-${o.id}-details`}
-                  onClick={() => router.push(`/cook-portal/orders/${o.id}`)}
-                />
-              </GourmeatActionRow>
-            }
-          />
-        );
-      })}
+      {needsAction.length > 0 && (
+        <>
+          <p className="text-sm font-extrabold text-foreground mb-2" data-testid="cook-orders-needs-action">
+            Needs action
+          </p>
+          {needsAction.map(renderOrderRow)}
+        </>
+      )}
+
+      {inProgress.length > 0 && (
+        <>
+          <p className="text-sm font-extrabold text-foreground mb-2 mt-4" data-testid="cook-orders-in-progress">
+            In progress
+          </p>
+          {inProgress.map(renderOrderRow)}
+        </>
+      )}
+
+      {needsAction.length === 0 && inProgress.length === 0 && (
+        <>
+          <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
+          {ordersLoading && orderList.length === 0 && (
+            <div className="mb-4">
+              <SHCSkeletonOrderList count={4} variant="row" />
+            </div>
+          )}
+          {!ordersLoading && orderList.length === 0 && (
+            <GourmeatCard className="mb-4">
+              <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+            </GourmeatCard>
+          )}
+        </>
+      )}
 
       <div className="flex items-center justify-between mt-8 mb-1" data-testid="cook-collab-board">
         <p className="text-sm font-extrabold text-foreground">Collaboration Board</p>
