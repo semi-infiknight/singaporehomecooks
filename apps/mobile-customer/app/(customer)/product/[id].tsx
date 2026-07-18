@@ -32,7 +32,7 @@ export default function ProductDetail() {
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id || '');
   const qc = useQueryClient();
-  const addMut = useAddToCart();
+  const addMut = useAddToCart({ silent: true });
   const { loading: authLoading, user } = useAuth();
   const { requireAuth } = useGuestAuthGate();
   const { isFavorite, toggle } = useFavorites();

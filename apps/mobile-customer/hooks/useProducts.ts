@@ -2,6 +2,8 @@
 // Discovery, cook profile, product detail. Uses TanStack Query + mock client with rule data.
 // Exports: useProducts (alias for discovery), useOrders (via companion), useCart, useChat (in useOrder)
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import {
   searchProducts,
   getCookBySlug,
@@ -44,8 +46,11 @@ export function useCollectionSlots(productId: string) {
   return useQuery({ queryKey: ['slots', productId], queryFn: () => getSlots(productId) });
 }
 
-export function useAddToCart() {
+export function useAddToCart(options?: { silent?: boolean }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const silent = options?.silent ?? false;
+
   return useMutation({
     mutationFn: async ({ productId, qty }: { productId: string; qty: number }) => {
       await hydrateSession();
@@ -53,10 +58,23 @@ export function useAddToCart() {
     },
     onSuccess: (cart) => {
       qc.setQueryData(['cart'], cart);
+      if (silent) return;
+      const count = (cart?.items || []).reduce((s: number, i: any) => s + Number(i.qty || 0), 0);
+      Alert.alert(
+        'Added to cart',
+        count > 0 ? `${count} item${count === 1 ? '' : 's'} in your cart.` : 'Item added to cart.',
+        [
+          { text: 'Continue', style: 'cancel' },
+          { text: 'View cart', onPress: () => router.push('/(customer)/cart' as any) },
+        ]
+      );
     },
     onError: (err: any) => {
-      // Surface SHCErrorCode for callers (e.g. one-cook, min-qty, allergen)
-      if (err?.code) throw createSHCError(err.code as SHCErrorCode, err.message);
+      const message = err?.message || 'Could not add to cart. Try again.';
+      if (!silent) {
+        Alert.alert('Could not add', message);
+      }
+      if (err?.code) throw createSHCError(err.code as SHCErrorCode, message);
     },
   });
 }
