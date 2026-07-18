@@ -10,14 +10,17 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { markOnboardingSeen } from '../../../lib/onboarding';
+import { safeAuthReturnTo } from '../../../lib/auth-return';
 
 export default function AuthScreen() {
   const { login, register } = useAuth();
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  const returnTo = safeAuthReturnTo(params.returnTo);
   const passwordRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState(__DEV__ ? 'customer@shc.local' : '');
@@ -34,7 +37,7 @@ export default function AuthScreen() {
         await register(email.trim(), password);
       }
       await markOnboardingSeen();
-      router.replace('/(customer)');
+      router.replace((returnTo || '/(customer)') as any);
     } catch (e) {
       Alert.alert('Sign in failed', (e as Error).message);
     } finally {

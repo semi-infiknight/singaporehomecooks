@@ -33,6 +33,7 @@ import { useCart, useCredits } from '../../hooks/useProducts';
 import { useCollectionSlots } from '../../hooks/useProducts';
 import { checkoutWithCredits, flagCorporateOrder, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
+import { authRouteWithReturn } from '../../lib/auth-return';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -84,7 +85,7 @@ export default function Checkout() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace('/(shared)/auth' as any);
+      router.replace(authRouteWithReturn('/(customer)/checkout') as any);
     }
   }, [authLoading, user, router]);
   const { data: cartRaw = { items: [] } } = useCart();

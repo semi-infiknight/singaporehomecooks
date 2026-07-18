@@ -85,7 +85,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
     if (!authLoading && !user) {
       showGuestAuthTray(
         'Sign in to view cart',
-        'Browse freely — sign in to checkout and track orders.'
+        'Browse freely — sign in to checkout and track orders.',
+        '/(customer)/cart'
       );
       return;
     }
@@ -145,13 +146,20 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         onTabPress={(key) => {
           // Guest browse: Home only for free navigation; account tabs need sign-in
           if (!authLoading && !user && key !== 'index') {
+            const returnTo =
+              key === 'orders/index'
+                ? '/(customer)/orders'
+                : key === 'cart'
+                  ? '/(customer)/cart'
+                  : '/(customer)/profile';
             showGuestAuthTray(
               key === 'orders/index'
                 ? 'Sign in to view orders'
                 : key === 'cart'
                   ? 'Sign in to view cart'
                   : 'Sign in for wallet & account',
-              'Browse kitchens on Home — sign in for orders, cart, and wallet.'
+              'Browse kitchens on Home — sign in for orders, cart, and wallet.',
+              returnTo
             );
             return;
           }

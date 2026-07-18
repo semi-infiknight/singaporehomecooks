@@ -130,7 +130,8 @@ export default function Cart() {
     if (!user) {
       showGuestAuthTray(
         'Sign in to checkout',
-        'Create an account or sign in to complete your order.'
+        'Create an account or sign in to complete your order.',
+        '/(customer)/checkout'
       );
       return;
     }
