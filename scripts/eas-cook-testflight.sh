@@ -11,8 +11,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/apps/mobile-cook"
 
-if ! pnpm dlx eas-cli whoami >/dev/null 2>&1; then
-  echo "Log in first: pnpm dlx eas-cli login"
+if [ -z "${EXPO_TOKEN:-}" ] && [ -n "${EXPO_ACCESS:-}" ]; then
+  export EXPO_TOKEN="$EXPO_ACCESS"
+fi
+
+EAS="pnpm dlx eas-cli@21.0.2"
+GROUP_ARGS=()
+if [ -n "${TESTFLIGHT_GROUPS:-}" ]; then
+  IFS=',' read -ra GROUPS <<< "$TESTFLIGHT_GROUPS"
+  for g in "${GROUPS[@]}"; do
+    GROUP_ARGS+=(--groups "$g")
+  done
+fi
+
+if ! $EAS whoami >/dev/null 2>&1; then
+  echo "Log in first: export EXPO_TOKEN=... or pnpm dlx eas-cli login"
   exit 1
 fi
 
@@ -21,11 +34,16 @@ bash "$ROOT/scripts/verify-mobile-deps.sh"
 bash "$ROOT/scripts/verify-mobile-bundles.sh"
 
 echo "=== Cook iOS production build ==="
-CI=1 pnpm dlx eas-cli build --profile production --platform ios --non-interactive --wait
+CI=1 $EAS build --profile production --platform ios --non-interactive --wait
 
 echo ""
 echo "=== Submit to TestFlight ==="
-CI=1 pnpm dlx eas-cli submit --platform ios --profile production --latest --non-interactive --wait
+CI=1 $EAS submit --platform ios --profile production --latest --non-interactive --wait "${GROUP_ARGS[@]}"
 
 echo ""
-echo "Open TestFlight in App Store Connect (ascAppId must be set in eas.json after first app create)."
+echo "Uploaded to App Store Connect. Testers are NOT notified until you:"
+echo "  1. Open https://appstoreconnect.apple.com/apps/6785112476/testflight/ios"
+echo "  2. Wait for build Processing to finish (usually 5–15 min)"
+echo "  3. Add build to Internal or External group (or enable automatic distribution)"
+echo "  4. Invite testers (email must match their Apple ID)"
+echo "Optional: TESTFLIGHT_GROUPS='Group Name' bash scripts/eas-cook-testflight.sh"
