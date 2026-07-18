@@ -145,6 +145,10 @@ async function main() {
   console.log('✅ /store/shc/auth/me (customer)');
 
   await shcFetch('/store/shc/cart', { method: 'DELETE' }, customerToken);
+  const cleared = await shcFetch('/store/shc/cart', { method: 'GET' }, customerToken);
+  if (cleared.status === 200 && (cleared.body?.cart?.items?.length ?? 0) > 0) {
+    throw new Error(`Cart not empty after DELETE: ${JSON.stringify(cleared.body?.cart?.items)}`);
+  }
 
   const cartAdd = await shcFetch(
     '/store/shc/cart',
@@ -173,10 +177,33 @@ async function main() {
   const orderId = checkout.body.order.id as string;
   console.log(`✅ /store/shc/carts/demo-complete (${orderId})`);
 
-  const customerOrders = await shcFetch('/store/shc/orders?role=customer', { method: 'GET' }, customerToken);
+  const adminToken = await loginAdmin();
+  const paid = await adminFetch(
+    '/admin/shc/payment-confirm',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        order_id: orderId,
+        paynow_reference: `E2E-${orderId}`,
+        notes: 'verify-real-e2e synthetic PayNow',
+      }),
+    },
+    adminToken
+  );
+  if (paid.status !== 200) {
+    throw new Error(`Payment confirm failed ${paid.status}: ${JSON.stringify(paid.body)}`);
+  }
+  console.log('✅ /admin/shc/payment-confirm (cart → paid)');
+
+  const customerOrders = await shcFetch('/store/shc/orders?role=customer&limit=100', { method: 'GET' }, customerToken);
   if (customerOrders.status !== 200) throw new Error(`Customer orders failed ${customerOrders.status}`);
   const found = (customerOrders.body?.orders ?? []).some((o: { order_id?: string; id?: string }) => o.order_id === orderId || o.id === orderId);
-  if (!found) throw new Error(`Order ${orderId} not in customer orders list`);
+  if (!found) {
+    const direct = await shcFetch(`/store/shc/orders/${orderId}`, { method: 'GET' }, customerToken);
+    if (direct.status !== 200 || !direct.body?.order?.id) {
+      throw new Error(`Order ${orderId} not in customer orders list`);
+    }
+  }
   console.log('✅ /store/shc/orders?role=customer');
 
   const msgCustomer = await shcFetch(

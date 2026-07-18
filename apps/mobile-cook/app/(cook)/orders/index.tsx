@@ -220,14 +220,18 @@ export default function CookOrders() {
 
       {needsAction.length > 0 && (
         <>
-          <SHCSectionTitle testID="cook-orders-needs-action">Needs action</SHCSectionTitle>
+          <View testID="cook-orders-needs-action">
+            <SHCSectionTitle>Needs action</SHCSectionTitle>
+          </View>
           <SHCFadeIn delay={40}>{needsAction.map(renderOrderRow)}</SHCFadeIn>
         </>
       )}
 
       {inProgress.length > 0 && (
         <>
-          <SHCSectionTitle testID="cook-orders-in-progress">In progress</SHCSectionTitle>
+          <View testID="cook-orders-in-progress">
+            <SHCSectionTitle>In progress</SHCSectionTitle>
+          </View>
           <SHCFadeIn delay={80}>{inProgress.map(renderOrderRow)}</SHCFadeIn>
         </>
       )}

@@ -15,6 +15,8 @@ import {
 const BASE = resolveRailwayMedusaBase(process.env.MEDUSA_URL || process.env.EXPO_PUBLIC_MEDUSA_BASE);
 const CUSTOMER_EMAIL = process.env.SEED_CUSTOMER_EMAIL || 'customer@shc.local';
 const CUSTOMER_PASS = process.env.SEED_CUSTOMER_PASS || 'customersecret';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@shc.local';
+const ADMIN_PASS = process.env.SEED_ADMIN_PASS || 'supersecret';
 const RUN_ID = Date.now().toString(36);
 const NEW_COOK_EMAIL = process.env.WIRING_COOK_EMAIL || `cook_wiring_${RUN_ID}@shc.test`;
 const NEW_COOK_PASS = process.env.WIRING_COOK_PASS || `CookWiring${RUN_ID}!`;
@@ -96,6 +98,69 @@ async function shcFetchAt(
 
 let activeBase = BASE;
 let activePubKey = loadPubKey();
+
+async function adminFetchAt(
+  base: string,
+  pathname: string,
+  init?: RequestInit,
+  token?: string
+) {
+  const res = await fetchWithRetry(`${base}${pathname}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers as Record<string, string>),
+    },
+  });
+  const body = await res.json().catch(() => ({}));
+  return { status: res.status, body };
+}
+
+async function loginAdmin() {
+  const r = await adminFetchAt(activeBase, '/auth/user/emailpass', {
+    method: 'POST',
+    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASS }),
+  });
+  if (r.status !== 200 || !r.body?.token) {
+    throw new Error(`Admin login failed ${r.status}: ${JSON.stringify(r.body)}`);
+  }
+  return r.body.token as string;
+}
+
+/** New cooks must upload SFA+WSQ and ops must verify before Accept (SHC-COMPLIANCE-002). */
+async function uploadAndVerifyCompliance(cookToken: string, cookId: string) {
+  for (const type of ['sfa', 'wsq'] as const) {
+    const r = await shcFetch(
+      '/store/shc/compliance',
+      {
+        method: 'POST',
+        body: JSON.stringify({ type, file_key: `compliance/${cookId}/${type}.pdf` }),
+      },
+      cookToken
+    );
+    if (r.status !== 201) {
+      throw new Error(`Compliance upload ${type} failed ${r.status}: ${JSON.stringify(r.body)}`);
+    }
+  }
+
+  const list = await shcFetch('/store/shc/compliance', { method: 'GET' }, cookToken);
+  if (list.status !== 200) throw new Error(`Compliance list failed ${list.status}`);
+
+  const adminToken = await loginAdmin();
+  for (const doc of list.body?.docs ?? []) {
+    const verify = await adminFetchAt(
+      activeBase,
+      `/admin/shc/compliance/${doc.id}/verify`,
+      { method: 'PATCH', body: JSON.stringify({ verified: true }) },
+      adminToken
+    );
+    if (verify.status !== 200) {
+      throw new Error(`Compliance verify ${doc.id} failed ${verify.status}: ${JSON.stringify(verify.body)}`);
+    }
+  }
+  console.log(`✅ compliance SFA+WSQ uploaded and ops-verified for ${cookId}`);
+}
 
 async function registerCook() {
   const railwayProbe = await probeRegister(BASE, loadPubKey());
@@ -221,6 +286,27 @@ async function checkoutOrder(customerToken: string, productId: string, expectedC
   return orderId;
 }
 
+async function confirmOrderPayment(orderId: string, adminToken?: string) {
+  const token = adminToken || (await loginAdmin());
+  const r = await adminFetchAt(
+    activeBase,
+    '/admin/shc/payment-confirm',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        order_id: orderId,
+        paynow_reference: `WIRING-${orderId}`,
+        notes: 'verify-cook-wiring synthetic PayNow',
+      }),
+    },
+    token
+  );
+  if (r.status !== 200) {
+    throw new Error(`Payment confirm failed ${r.status}: ${JSON.stringify(r.body)}`);
+  }
+  console.log(`✅ payment confirmed for ${orderId} (cart → paid)`);
+}
+
 async function assertCookSeesOrder(cookToken: string, orderId: string, cookId: string) {
   const r = await shcFetch('/store/shc/orders?role=cook', { method: 'GET' }, cookToken);
   if (r.status !== 200) throw new Error(`Cook orders failed ${r.status}`);
@@ -255,11 +341,13 @@ async function main() {
 
   const { token: cookToken, cookId } = await registerCook();
   console.log('Active base:', activeBase);
+  await uploadAndVerifyCompliance(cookToken, cookId);
   const { productId } = await publishListing(cookToken, cookId);
   await assertProductVisible(productId, cookId);
 
   const customerToken = await loginCustomer();
   const acceptOrderId = await checkoutOrder(customerToken, productId, cookId);
+  await confirmOrderPayment(acceptOrderId);
   const statusBeforeAccept = await assertCookSeesOrder(cookToken, acceptOrderId, cookId);
   if (statusBeforeAccept !== 'paid') {
     console.warn(`⚠️  expected paid before accept, got ${statusBeforeAccept}`);
@@ -268,6 +356,7 @@ async function main() {
   if (afterAccept !== 'accepted') throw new Error(`Expected accepted, got ${afterAccept}`);
 
   const declineOrderId = await checkoutOrder(customerToken, productId, cookId);
+  await confirmOrderPayment(declineOrderId);
   await assertCookSeesOrder(cookToken, declineOrderId, cookId);
   const afterDecline = await transitionOrder(declineOrderId, 'cancelled', cookToken);
   if (afterDecline !== 'cancelled') throw new Error(`Expected cancelled, got ${afterDecline}`);
