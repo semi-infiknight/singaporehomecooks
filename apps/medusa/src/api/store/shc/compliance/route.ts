@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError, shcComplianceDocSchema } from "@shc/types";
 import { getCookId } from "../../../../lib/shc-actors";
+import { notifyOpsComplianceDocSubmitted } from "../../../../lib/shc-compliance-ops-notify";
 import ShcComplianceDocModuleService from "../../../../modules/shc-compliance-doc/service";
 
 const BodySchema = z.object({
@@ -54,6 +55,20 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const [doc] = await complianceService.createComplianceDocs([payload as any]);
   const logger = (req.scope as any).resolve?.("logger") ?? console;
   logger.info?.({ event: "compliance.doc.submitted", cook_id: cookId, type: payload.type, file_key: payload.file_key });
+
+  void notifyOpsComplianceDocSubmitted(req.scope, {
+    cook_id: cookId,
+    doc_id: String(payload.id),
+    type: payload.type,
+    file_key: payload.file_key,
+  }).catch((err: unknown) => {
+    logger.warn?.({
+      event: "compliance.ops_notify.failed",
+      cook_id: cookId,
+      doc_id: payload.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
 
   res.status(201).json({ doc });
 }

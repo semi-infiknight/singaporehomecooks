@@ -1,6 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("../../../../lib/shc-compliance-ops-notify", () => ({
+  notifyOpsComplianceDocSubmitted: vi.fn(async () => ({ pagerduty: false, in_app: false })),
+}));
+
 import { GET, POST } from "./route";
 import { signShcToken } from "../../../../lib/shc-auth";
+import { notifyOpsComplianceDocSubmitted } from "../../../../lib/shc-compliance-ops-notify";
 
 function makeRes() {
   const res: any = {
@@ -20,6 +26,7 @@ function makeRes() {
 
 describe("POST /store/shc/compliance", () => {
   it("creates a compliance document for the authenticated cook", async () => {
+    vi.mocked(notifyOpsComplianceDocSubmitted).mockClear();
     const token = signShcToken({ actor_type: "cook", actor_id: "cook_1", shc: true });
     let createdPayload: any;
     const req: any = {
@@ -48,6 +55,14 @@ describe("POST /store/shc/compliance", () => {
     expect(createdPayload.cook_id).toBe("cook_1");
     expect(createdPayload.type).toBe("sfa");
     expect(res.body.doc.file_key).toBe("compliance/cook_1/sfa.pdf");
+    expect(notifyOpsComplianceDocSubmitted).toHaveBeenCalledWith(
+      req.scope,
+      expect.objectContaining({
+        cook_id: "cook_1",
+        type: "sfa",
+        file_key: "compliance/cook_1/sfa.pdf",
+      })
+    );
   });
 });
 

@@ -83,6 +83,17 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       open_disputes = 0;
     }
 
+    let compliance_pending = 0;
+    try {
+      const complianceService: any = req.scope.resolve("shcComplianceDoc");
+      const [docs] = await complianceService
+        .listAndCountComplianceDocs({}, { take: 500, order: { created_at: "DESC" } })
+        .catch(() => [[]]);
+      compliance_pending = ((docs as any[]) || []).filter((d) => !d.verified_at).length;
+    } catch {
+      compliance_pending = 0;
+    }
+
     const active_statuses = ["paid", "accepted", "preparing", "ready_for_collection"];
     const active_orders = active_statuses.reduce((n, s) => n + (by_status[s] || 0), 0);
 
@@ -96,6 +107,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         cooks_pending,
         open_requests,
         open_disputes,
+        compliance_pending,
       },
       recent_orders: recent,
       generated_at: new Date().toISOString(),

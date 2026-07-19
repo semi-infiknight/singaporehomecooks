@@ -7,7 +7,7 @@
 - [ERROR_CODES.md](../ERROR_CODES.md)
 - [OPERATIONS_RUNBOOK.md](../OPERATIONS_RUNBOOK.md)
 
-**Last Updated:** 2026-06-29 (loop observability pass) — Medusa `/store/shc/*` and `/admin/shc/*` now emit request-id + trace-id headers, pino JSON request logs, and PagerDuty Events API alerts on 5xx when `PAGERDUTY_ROUTING_KEY` is configured.
+**Last Updated:** 2026-07-19 — Cook compliance uploads (`POST /store/shc/compliance`) trigger PagerDuty info alerts via `notifyOpsComplianceDocSubmitted` + optional in-app bell for `SHC_OPS_ACTOR_ID` (default `shc_ops`). Prior: loop observability pass for 5xx alerts.
 **Owner:** Infra Track
 
 ## Observability Stack
@@ -40,8 +40,9 @@ All alerts must include runbook links and actionable remediation steps.
 ## Current Implementation
 
 - `apps/medusa/src/lib/shc-observability.ts` owns pino logging, trace IDs, and PagerDuty Events API delivery.
+- `apps/medusa/src/lib/shc-compliance-ops-notify.ts` alerts ops when cooks upload SFA/WSQ docs (PagerDuty `info` + `shc-notification` for ops actor).
 - `apps/medusa/src/api/middlewares.ts` attaches `x-request-id` + `x-trace-id`, records duration/status/method/path, logs structured `http.request` / `http.admin_request` events, and triggers PagerDuty alerts on 5xx.
-- Launch env requirement: set `PAGERDUTY_ROUTING_KEY` to enable alert delivery; without it, alerts are logged as skipped.
+- Launch env requirement: set `PAGERDUTY_ROUTING_KEY` to enable alert delivery; without it, alerts are logged as skipped. Optional `SHC_OPS_ACTOR_ID` for in-app ops notifications (default `shc_ops`).
 
 ## Multi-Agent Notes
 

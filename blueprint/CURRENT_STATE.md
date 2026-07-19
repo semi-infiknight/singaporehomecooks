@@ -34,7 +34,7 @@
 | **Cooking soon** | Cook: Dashboard banner + `/(cook)/batches`. Customer: home rail always shown; only batches with **cook_date within next 7 days**. API `listMarketplace` filters too (after deploy). |
 | **Invoices** | Mobile: signed `?issue_url=1` + `Linking.openURL`. No expo-file-system share path. |
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
-| **Admin / Ops** | ✅ SHC Ops + **Compliance** queue (SFA/WSQ verify) + Insights/HitPay trends; native list read mirrors (no dual-write) |
+| **Admin / Ops** | ✅ SHC Ops + **Compliance** queue (SFA/WSQ verify) + **upload alerts** (PagerDuty + in-app) + Insights/HitPay trends; native list read mirrors (no dual-write) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
 | **Not done** | Live HitPay KYC / real bank PayNow; secrets were shared in chat — rotate when possible. | Orders tab → **Needs action** (paid) → **Accept** (compliance verified) → preparing → ready → collected.
 

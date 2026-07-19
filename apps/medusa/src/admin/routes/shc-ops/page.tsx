@@ -16,6 +16,7 @@ type OverviewResponse = {
     cooks_pending: number
     open_requests: number
     open_disputes: number
+    compliance_pending: number
   }
   recent_orders: Array<{
     id: string
@@ -63,7 +64,12 @@ const ShcOpsOverviewPage = () => {
         </div>
         <div className="flex items-center gap-x-2">
           <Button size="small" variant="secondary" asChild>
-            <a href="/app/shc-ops/compliance">Compliance</a>
+            <a href="/app/shc-ops/compliance">
+              Compliance
+              {!loading && (ov?.compliance_pending ?? 0) > 0
+                ? ` (${ov?.compliance_pending})`
+                : ""}
+            </a>
           </Button>
           <Button size="small" variant="secondary" asChild>
             <a href="/app/shc-ops/insights">Insights & HitPay</a>
@@ -122,7 +128,7 @@ const ShcOpsOverviewPage = () => {
               ? "…"
               : String((ov?.open_disputes ?? 0) + (ov?.open_requests ?? 0))
           }
-          hint={`${ov?.open_disputes ?? 0} disputes · ${ov?.open_requests ?? 0} collab requests`}
+          hint={`${ov?.open_disputes ?? 0} disputes · ${ov?.open_requests ?? 0} collab requests · ${ov?.compliance_pending ?? 0} compliance docs`}
         />
       </div>
 
