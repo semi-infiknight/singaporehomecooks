@@ -53,7 +53,7 @@ function mockTiffinScope() {
     async getActiveSubscription(customerId: string) {
       return [...store.subs.values()].find((s) => s.customer_id === customerId && s.status === "active") || null;
     },
-    async createSubscription(customerId: string, cookId: string, mealsPerWeek: number) {
+    async createSubscription(customerId: string, cookId: string, mealsPerWeek: number, _weeks = 4) {
       const active = await this.getActiveSubscription(customerId);
       if (active && active.cook_id !== cookId) {
         const err: any = new Error("kitchen conflict");
@@ -80,6 +80,26 @@ function mockTiffinScope() {
       store.subs.set(sub.id, sub);
       store.plans.set(sub.id, [{ id: "tpl", subscription_id: sub.id, week_start: null, slots: [] }]);
       return sub;
+    },
+    async getSubscriptionOsFields(sub: { id: string; meals_per_week: number; status: string }) {
+      return {
+        status: sub.status || "active",
+        flex_quota: sub.meals_per_week,
+        flex_remaining: sub.meals_per_week,
+        paused_until: null,
+        expires_on: null,
+        cancel_reason: null,
+        deliveries_left: sub.meals_per_week * 4,
+        balance_cents: 0,
+        cooking_notes: null,
+        collection_notes: null,
+      };
+    },
+    async listLedger(_customerId: string) {
+      return { subscription_id: null, entries: [] as any[] };
+    },
+    async listPastSubscriptions(_customerId: string) {
+      return [] as any[];
     },
     async listPlans(subscriptionId: string) {
       return store.plans.get(subscriptionId) || [];
