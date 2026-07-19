@@ -7,6 +7,8 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "node": "22.16.0",
+      "pnpm": "11.1.3",
       "env": {
         "EXPO_PUBLIC_MEDUSA_BASE": "https://medusa-production-d2ba.up.railway.app",
         "EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY": "pk_0c98d5a5c7ba76cad2ea42501361d8e29825876bcedb8425a627f35a2c12b9b2"

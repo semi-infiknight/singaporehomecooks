@@ -49,6 +49,13 @@ else
   echo "OK: .easignore keeps ios/ native projects"
 fi
 
+if ! rg -q 'android/app/build' "$ROOT/.easignore" 2>/dev/null; then
+  echo "FAIL: .easignore must exclude android/app/build/ (local APK outputs bloat EAS archives)"
+  FAIL=1
+else
+  echo "OK: .easignore excludes android/app/build/"
+fi
+
 for app in apps/mobile-customer apps/mobile-cook; do
   plist=$(find "$ROOT/$app/ios" -maxdepth 2 -name Info.plist | head -1)
   if [ -z "$plist" ]; then

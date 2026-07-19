@@ -5,6 +5,8 @@ node_modules/
 **/.metro-cache/
 **/ios/build/
 **/android/build/
+**/android/app/build/
+**/android/.gradle/
 **/DerivedData/
 **/*.jsbundle
 
