@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     borderRadius: shcRadii.md,
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
-    backgroundColor: gourmeatColors.bentoYellow,
+    backgroundColor: shcColors.bentoYellow,
     // No hard shadow here — clips/composites with bold text and looks double-struck
   },
   missingTitle: {

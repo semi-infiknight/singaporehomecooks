@@ -122,7 +122,7 @@ export default function OrderTracking() {
   const heroUri = getDishImageUrl({
     id: firstItem?.product_id || firstItem?.productId,
     name: firstItem?.name,
-    image_url: firstItem?.image_url,
+    image_url: (firstItem as { image_url?: string } | undefined)?.image_url,
   });
 
   return (

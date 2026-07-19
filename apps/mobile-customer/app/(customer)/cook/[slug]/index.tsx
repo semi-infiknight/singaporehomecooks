@@ -268,7 +268,7 @@ export default function KitchenPage() {
                     borderColor: gourmeatColors.border,
                     borderRadius: 14,
                     marginBottom: 8,
-                    backgroundColor: gourmeatColors.card,
+                    backgroundColor: gourmeatColors.surface,
                     overflow: 'hidden',
                   }}
                 >
@@ -280,7 +280,7 @@ export default function KitchenPage() {
                   />
                   <View style={{ padding: 12 }}>
                   <Text style={{ fontWeight: '900', fontSize: 15 }}>{d.title}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.muted, marginTop: 2 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: gourmeatColors.textMuted, marginTop: 2 }}>
                     {formatDropCookDate(d.cook_date)} · {d.collection_slot} · by {formatDropOrderBy(d.order_by)}
                   </Text>
                   <Text style={{ fontWeight: '800', color: gourmeatColors.primary, marginTop: 4 }}>

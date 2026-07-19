@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: shcBorders.brutal,
-    borderTopColor: gourmeatColors.borderLight,
+    borderTopColor: shcColors.borderLight,
     backgroundColor: gourmeatColors.surface,
     paddingHorizontal: shcSpacing.md,
     paddingTop: shcSpacing.sm,

@@ -27,6 +27,7 @@
     "@gluestack-style/react": "^1.0.57",
     "@gluestack-ui/themed": "^1.1.73",
     "@react-native/assets-registry": "0.81.5",
+    "@react-navigation/native": "^7.3.3",
     "@shc/api-client": "workspace:*",
     "@shc/business-rules": "workspace:*",
     "@shc/types": "workspace:*",

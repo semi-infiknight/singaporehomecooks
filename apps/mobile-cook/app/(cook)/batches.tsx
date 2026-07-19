@@ -73,7 +73,7 @@ export default function CookBatchesScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: gourmeatColors.bg }}
+      style={{ flex: 1, backgroundColor: gourmeatColors.background }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32, paddingHorizontal: shcSpacing.md }}
       testID="cook-batches-screen"
     >

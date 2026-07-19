@@ -119,11 +119,11 @@ export default function DropOrderScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: gourmeatColors.bg, paddingHorizontal: shcSpacing.md },
+  wrap: { flex: 1, backgroundColor: gourmeatColors.background, paddingHorizontal: shcSpacing.md },
   back: { fontSize: 16, fontWeight: '800', marginBottom: 12, color: gourmeatColors.text },
   eyebrow: { fontSize: 11, fontWeight: '900', color: gourmeatColors.primary, textTransform: 'uppercase', marginTop: 12 },
   title: { fontSize: 24, fontWeight: '900', color: gourmeatColors.text, marginTop: 4 },
-  muted: { fontSize: 13, fontWeight: '600', color: gourmeatColors.muted, marginTop: 4 },
+  muted: { fontSize: 13, fontWeight: '600', color: gourmeatColors.textMuted, marginTop: 4 },
   price: { fontSize: 22, fontWeight: '900', color: gourmeatColors.primary, marginTop: 12 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 24, marginBottom: 8 },
   qtyBtn: {
