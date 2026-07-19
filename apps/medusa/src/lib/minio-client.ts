@@ -54,7 +54,11 @@ export async function getPresignedUploadUrl(objectName: string, expires = 3600) 
 }
 
 export async function getPresignedGetUrl(objectName: string, expires = 3600) {
-  return getPublicPresignClient().presignedGetObject(SHC_BUCKET, objectName, expires);
+  return getPresignedGetUrlForBucket(SHC_BUCKET, objectName, expires);
+}
+
+export async function getPresignedGetUrlForBucket(bucketName: string, objectName: string, expires = 3600) {
+  return getPublicPresignClient().presignedGetObject(bucketName, objectName, expires);
 }
 
 // Auth hardening helper (to be used in routes with actor)

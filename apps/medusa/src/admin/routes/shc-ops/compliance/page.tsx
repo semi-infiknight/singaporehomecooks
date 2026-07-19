@@ -75,6 +75,21 @@ const ShcOpsCompliancePage = () => {
     onError: (e) => toast.error(errMessage(e)),
   })
 
+  const previewDoc = useMutation({
+    mutationFn: (doc: ComplianceDocRow) =>
+      shcGet<{ preview_url?: string }>(
+        `/admin/shc/compliance/${encodeURIComponent(doc.id)}/preview-url`
+      ),
+    onSuccess: (data) => {
+      if (data.preview_url) {
+        window.open(data.preview_url, "_blank", "noopener,noreferrer")
+        return
+      }
+      toast.error("No preview URL returned")
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  })
+
   return (
     <div className="flex flex-col gap-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -203,9 +218,20 @@ const ShcOpsCompliancePage = () => {
                     <Badge size="2xsmall">{docTypeLabel(doc.type)}</Badge>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text size="xsmall" className="font-mono">
-                      {doc.file_key}
-                    </Text>
+                    <div className="flex flex-col gap-1">
+                      <Text size="xsmall" className="font-mono">
+                        {doc.file_key}
+                      </Text>
+                      <Button
+                        size="small"
+                        variant="transparent"
+                        className="w-fit px-0"
+                        onClick={() => previewDoc.mutate(doc)}
+                        isLoading={previewDoc.isPending && previewDoc.variables?.id === doc.id}
+                      >
+                        Preview file
+                      </Button>
+                    </div>
                   </Table.Cell>
                   <Table.Cell>
                     <Text size="xsmall" className="text-ui-fg-subtle">
