@@ -16,7 +16,7 @@
     "predev": "pnpm build",
     "test": "vitest run --coverage",
     "lint": "eslint src --ext .ts,.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.admin.json",
     "db:generate": "pnpm exec medusa db:generate || echo 'generate after DB ready'",
     "db:migrate": "pnpm exec medusa db:migrate || echo 'migrate after DB ready'",
     "seed": "tsx ./scripts/seed.ts"

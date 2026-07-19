@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { errMessage, shcGet } from "../lib/shc-api"
 import { formatSgd, shortId, statusLabel } from "../lib/shc-format"
 import { withShcQuery } from "../lib/shc-query"
+import { ShcTableCell } from "../lib/table-cell"
 
 type ListingRow = {
   id: string
@@ -126,18 +127,18 @@ const ShcPriceListMirror = () => {
           <Table.Body>
             {listingsQ.isLoading && (
               <Table.Row>
-                <Table.Cell colSpan={5}>
+                <ShcTableCell colSpan={5}>
                   <Text size="small">Loading listing prices…</Text>
-                </Table.Cell>
+                </ShcTableCell>
               </Table.Row>
             )}
             {!listingsQ.isLoading && listings.length === 0 && (
               <Table.Row>
-                <Table.Cell colSpan={5}>
+                <ShcTableCell colSpan={5}>
                   <Text size="small" className="text-ui-fg-subtle">
                     No SHC listing prices match this filter.
                   </Text>
-                </Table.Cell>
+                </ShcTableCell>
               </Table.Row>
             )}
             {listings.map((l) => (

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { errMessage, shcGet } from "../lib/shc-api"
 import { shortId, statusLabel } from "../lib/shc-format"
 import { withShcQuery } from "../lib/shc-query"
+import { ShcTableCell } from "../lib/table-cell"
 
 type AvailabilityRow = {
   id: string
@@ -127,18 +128,18 @@ const ShcInventoryListMirror = () => {
           <Table.Body>
             {availQ.isLoading && (
               <Table.Row>
-                <Table.Cell colSpan={5}>
+                <ShcTableCell colSpan={5}>
                   <Text size="small">Loading portion availability…</Text>
-                </Table.Cell>
+                </ShcTableCell>
               </Table.Row>
             )}
             {!availQ.isLoading && rows.length === 0 && (
               <Table.Row>
-                <Table.Cell colSpan={5}>
+                <ShcTableCell colSpan={5}>
                   <Text size="small" className="text-ui-fg-subtle">
                     No SHC availability rows match this filter.
                   </Text>
-                </Table.Cell>
+                </ShcTableCell>
               </Table.Row>
             )}
             {rows.map((r) => (

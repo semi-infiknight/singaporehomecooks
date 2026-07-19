@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, type FormEvent } from "react"
 import { shcDelete, shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { withShcQuery } from "../../../lib/shc-query"
+import { ShcTableCell } from "../../../lib/table-cell"
 
 type CatalogCategory = {
   id: string
@@ -169,18 +170,18 @@ const ShcOpsCatalogPage = () => {
             <Table.Body>
               {catsQ.isLoading && (
                 <Table.Row>
-                  <Table.Cell colSpan={5}>
+                  <ShcTableCell colSpan={5}>
                     <Text size="small">Loading…</Text>
-                  </Table.Cell>
+                  </ShcTableCell>
                 </Table.Row>
               )}
               {!catsQ.isLoading && categories.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={5}>
+                  <ShcTableCell colSpan={5}>
                     <Text size="small" className="text-ui-fg-subtle">
                       No categories saved — store defaults until you save one.
                     </Text>
-                  </Table.Cell>
+                  </ShcTableCell>
                 </Table.Row>
               )}
               {categories.map((cat) => (
