@@ -12,6 +12,13 @@ export async function shcPost<T = any>(path: string, body?: Record<string, unkno
   })
 }
 
+export async function shcPatch<T = any>(path: string, body?: Record<string, unknown>): Promise<T> {
+  return sdk.client.fetch<T>(path, {
+    method: "PATCH",
+    body: body ?? {},
+  })
+}
+
 export async function shcDelete<T = any>(path: string): Promise<T> {
   return sdk.client.fetch<T>(path, {
     method: "DELETE",
