@@ -75,7 +75,7 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     throw createSHCError("SHC-GENERIC-001", "Cart has no cook — add items from a published listing first");
   }
   const total = cart.items.reduce((s: number, i: any) => s + i.price * i.qty * 100, 0) || 4500;
-  const orderId = `SHC-${Date.now().toString().slice(-8)}`;
+  const orderId = `SHC-${Date.now().toString().slice(-8)}${Math.random().toString(36).slice(2, 6)}`;
 
   await metaService.createOrUpdateMeta({
     order_id: orderId,

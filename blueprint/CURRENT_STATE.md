@@ -36,7 +36,7 @@
 | **Least blast** | [agent/build-protocol.md](./agent/build-protocol.md) § path of least blast radius — non-negotiable. |
 | **Admin / Ops** | ✅ SHC Ops + Insights/HitPay trends; native list read mirrors (no dual-write) |
 | **Demo logins** | customer@shc.local / customersecret · rose@shc.local / cooksecret · admin@shc.local / supersecret |
-| **Not done** | Live HitPay KYC / real bank PayNow; secrets were shared in chat — rotate when possible. | Orders tab → status **Paid** → **Accept** → preparing → ready → collected.
+| **Not done** | Live HitPay KYC / real bank PayNow; secrets were shared in chat — rotate when possible. | Orders tab → **Needs action** (paid) → **Accept** (compliance verified) → preparing → ready → collected.
 
 ---
 
@@ -47,13 +47,13 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | Layer | Status | Notes |
 |-------|--------|-------|
 | **Mobile Customer** (`apps/mobile-customer`) | ✅ Full UX + **Tiffin** | Discover home + **Cooking soon** rail (7-day); HitPay PayNow checkout poll; Expo `:8081` |
-| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Dashboard **Cooking soon** banner → batches; orders Accept after paid; Expo `:8082` |
+| **Mobile Cook** (`apps/mobile-cook`) | ✅ Full UX + **Tiffin** | Dashboard **Cooking soon** banner → batches; orders **Needs action** (`paid`) + **In progress**; Accept gated on verified SFA+WSQ; Expo `:8082` |
 | **Web** (Next.js `:3001`) | ✅ Customer + cook PWA + **Tiffin** | Same marketplace + HitPay PayNow; `/cook-portal`; `/ops` → Medusa Admin |
 | **Design system** | ✅ v4 Family Values + skeleton kit | `@shc/ui` skeleton + **layout padding helpers**; category stack gap; tri-platform bottom inset CSS vars on web |
 | **Medusa API** | ✅ Railway prod | Custom `/store/shc/*` + `/admin/shc/*` + `/hooks/shc/*` |
 | **Auth (JWT)** | ✅ Dev-ready | Customer email/pass; Cook SHC JWT + scrypt |
 | **Cart** | ✅ Postgres | `shc-cart` module |
-| **E2E verifier** | ✅ Tier 1+ | Full loop + credits + review + request/bid |
+| **E2E verifier** | ✅ Tier 1+ | Full loop + review + request/bid; cook-wiring includes compliance + payment confirm |
 | **Maestro device E2E** | ✅ Android + iOS | `pnpm e2e:tiffin` |
 | **Tiffin subscription** | ✅ Wave 8 | Ledger + flex OS; **recharge via HitPay** (`/recharge/paynow` + webhook) |
 | **Expo push** | ✅ Wired | Order transitions + **new chat messages** → Expo/web push + in-app bell |
@@ -160,20 +160,21 @@ REQUIRE_RAILWAY=1 pnpm verify:cook-wiring  # new cook register → listing → c
 # optional: pnpm bootstrap:medusa  # refresh publishable key + demo customer on Railway
 ```
 
-**Cook ↔ customer wiring (`verify:cook-wiring`):** `REQUIRE_RAILWAY=1` gates goal verify (`SCOPE=onboarding`). Registers a fresh cook on Railway, publishes a listing, confirms `GET /store/shc/products?cook_id=…` includes it, customer checkout with matching `cook_id`, cook `GET /store/shc/orders?role=cook`, then accept + decline transitions. Local `:9000` optional when flag unset (dev only).
+**Cook ↔ customer wiring (`verify:cook-wiring`):** `REQUIRE_RAILWAY=1` gates goal verify (`SCOPE=onboarding`). Registers a fresh cook on Railway, uploads SFA+WSQ compliance docs (ops admin-verify), publishes a listing, confirms `GET /store/shc/products?cook_id=…` includes it, customer checkout with matching `cook_id`, admin `POST /admin/shc/payment-confirm` (`cart → paid`), cook `GET /store/shc/orders?role=cook`, then accept + decline transitions. Local `:9000` optional when flag unset (dev only).
 
 **`scripts/verify-real-e2e.ts` covers:**
 
 1. Health, cooks, products, product detail
 2. Customer login + `/auth/me` (requires non-empty user id)
 3. Cart add (authenticated)
-4. `POST /store/shc/carts/demo-complete` (checkout)
-5. Customer orders list
-6. Cook login + orders list
-7. Cook transitions: `paid` → `accepted` → `preparing` → `ready_for_collection`
-8. Order detail confirms final status
-9. Messages (customer + cook), `collected` → `completed`, credits balance, review POST/GET
-10. Request → bid → accept (growth flow); optional admin ledger check
+4. `POST /store/shc/carts/demo-complete` (checkout → `cart` status)
+5. `POST /admin/shc/payment-confirm` (`cart → paid`)
+6. Customer orders list
+7. Cook login + orders list
+8. Cook transitions: `paid` → `accepted` → `preparing` → `ready_for_collection`
+9. Order detail confirms final status
+10. Messages (customer + cook), `collected` → `completed`, review POST/GET
+11. Request → bid → accept (growth flow); optional admin ledger check
 
 CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on push to `main`.
 
@@ -218,7 +219,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/tiffin/weekly-plan/next-week` | PUT | customer JWT |
 | `/store/shc/tiffin/cook/config` | GET, PUT | cook JWT |
 | `/store/shc/ai/image` | GET, POST | GET public status (configured, cuisine_presets); POST cook JWT — generate \| enhance polish/restyle → MinIO |
-| …growth routes (credits, requests, bids, heritage, ai, compliance, upload, feature-flags, disputes) | various | ✅ implemented |
+| …growth routes (requests, bids, ai, compliance, upload, feature-flags, disputes) | various | ✅ implemented |
 
 ### Server libs (`apps/medusa/src/lib/`)
 
