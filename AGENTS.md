@@ -62,6 +62,7 @@ Local emulators aren't possible on this Linux VM, but **EAS cloud builds and EAS
 
 - Account: **`darksend`** (Admin). Projects: `mobile-customer` = `@darksend/shc-customer` (projectId `5c1f4300-5851-4288-9416-bd968589001a`), `mobile-cook` = `@darksend/shc-cook` (projectId `bb1c9052-df53-48fd-89e2-94ee51159bd9`).
 - CLI: `EXPO_TOKEN=... npx eas-cli@latest <cmd>` (e.g. `whoami`, `build:list`, `build -p android --profile preview`, `update --channel preview`). eas-cli isn't in the update script; `npx` fetches it.
+- **EAS cloud iOS simulator:** load `.agents/skills/eas-simulator/SKILL.md` before any `eas simulator:*` work (Linux cloud has no local iOS sim). Helper: `bash scripts/eas-ios-cloud-sim.sh`.
 - **iOS App Store submit:** both `apps/*/eas.json` `submit.production.ios` are wired with the App Store Connect API key ID (`662S382F2P`) + issuer ID (`b0765303-705f-4cd8-84a7-fc58fb8aa5b8`) and expect the private key at `./asc-api-key.p8` (gitignored via `*.p8`). The `.p8` is stored base64 in the secret `APP_STORE_CONNECT_API_KEY_BASE64`; decode it before submitting, per app dir:
   `echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 -d > apps/mobile-customer/asc-api-key.p8` (and same for `mobile-cook`).
 - Note: secrets only inject at session start — a secret added mid-session (e.g. `EXPO_TOKEN`, `APP_STORE_CONNECT_*`) is available only in the next agent session.

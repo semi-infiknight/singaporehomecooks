@@ -37,6 +37,7 @@ apps/mobile/.env.local
 .env.development
 .env.production
 .env.staging
+.env.eas-simulator
 
 # Vercel
 .vercel
