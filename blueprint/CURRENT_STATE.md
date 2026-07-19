@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-18 — Image fallbacks, category spacing, PayNow QR stability, checkout CTA gate, bottom inset tokens (tri-platform).
+**Last Updated:** 2026-07-19 — EAS Android dev APKs; emulator scripts for KVM-less VMs; compliance ops notify + preview.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 

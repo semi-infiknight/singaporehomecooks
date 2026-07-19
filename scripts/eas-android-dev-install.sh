@@ -21,6 +21,20 @@ if ! adb devices 2>/dev/null | grep -qE 'emulator|device'; then
   exit 1
 fi
 
+boot=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+if [ "$boot" != "1" ]; then
+  echo "Waiting for Android boot to complete..."
+  for _ in $(seq 1 120); do
+    boot=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+    if [ "$boot" = "1" ]; then break; fi
+    sleep 3
+  done
+  if [ "$boot" != "1" ]; then
+    echo "Emulator not fully booted (sys.boot_completed != 1). Run: bash scripts/start-android-emulator.sh"
+    exit 1
+  fi
+fi
+
 adb reverse tcp:8081 tcp:8081 || true
 adb reverse tcp:8082 tcp:8082 || true
 
@@ -42,6 +56,7 @@ install_latest() {
   local apk="/tmp/shc-${pkg##*.}-dev.apk"
   echo "Downloading $art"
   curl -fsSL "$art" -o "$apk"
+  adb uninstall "$pkg" >/dev/null 2>&1 || true
   adb install -r "$apk"
   adb shell monkey -p "$pkg" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
   echo "Installed $label ($pkg)"

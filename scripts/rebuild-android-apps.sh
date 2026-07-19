@@ -14,8 +14,18 @@ fi
 
 if ! adb devices 2>/dev/null | grep -qE 'emulator|device$'; then
   echo "No Android device/emulator — start SHC_Pixel (or any AVD) first"
-  echo "Linux cloud VMs need /dev/kvm (nested virt). Without KVM, use a physical device or EAS + install when a device is available."
+  echo "  bash scripts/start-android-emulator.sh   # works without KVM (slow)"
   exit 1
+fi
+
+boot=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+if [ "$boot" != "1" ]; then
+  echo "Waiting for Android boot..."
+  for _ in $(seq 1 120); do
+    boot=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+    [ "$boot" = "1" ] && break
+    sleep 3
+  done
 fi
 
 ensure_android_native() {
@@ -51,6 +61,7 @@ build_install() {
     exit 1
   fi
   echo "Installing $apk"
+  adb uninstall "$pkg" >/dev/null 2>&1 || true
   adb install -r "$apk"
   adb shell monkey -p "$pkg" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1 || true
   echo "=== $label installed ($pkg) ==="
