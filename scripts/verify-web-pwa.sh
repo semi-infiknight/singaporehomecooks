@@ -18,6 +18,14 @@ check_file() {
 
 echo "=== Web PWA guard ==="
 
+echo "=== Build shared packages (fresh CI has no dist/) ==="
+if pnpm --filter @shc/types build && pnpm --filter @shc/business-rules build && pnpm --filter @shc/utils build; then
+  echo "OK: shared packages built"
+else
+  echo "FAIL: shared package build failed"
+  FAIL=1
+fi
+
 PWA_ASSETS="$WEB/public/pwa-assets"
 check_file "$WEB/public/manifest.json" "manifest.json" || true
 check_file "$PWA_ASSETS/sw.js" "service worker" || true

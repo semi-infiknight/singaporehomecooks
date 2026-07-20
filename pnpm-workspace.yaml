@@ -8,6 +8,7 @@ overrides:
   metro-cache: 0.83.3
   metro: 0.83.3
   metro-config: 0.83.3
+  metro-runtime: 0.83.3
   mobile-customer>react: 19.1.0
   mobile-customer>react-dom: 19.1.0
   mobile-customer>react-native: 0.81.5

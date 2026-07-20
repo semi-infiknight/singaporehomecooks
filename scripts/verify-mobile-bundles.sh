@@ -8,14 +8,14 @@ FAIL=0
 export_and_check() {
   local app_dir="$1"
   local name="$2"
+  local pkg_name="$3"
   local out_dir
   out_dir=$(mktemp -d)
   echo "=== Export iOS bundle: $name ==="
   (
-    cd "$ROOT/$app_dir"
-    rm -rf dist
-    # Use workspace Expo CLI — bare `npx expo` can download a newer major (e.g. 57) and break export.
-    pnpm exec expo export --platform ios --output-dir "$out_dir" >/dev/null
+    cd "$ROOT"
+    rm -rf "$app_dir/dist"
+    pnpm --filter "$pkg_name" exec expo export --platform ios --output-dir "$out_dir" >/dev/null
   ) || {
     echo "FAIL: $name expo export --platform ios failed"
     FAIL=1
@@ -45,8 +45,8 @@ export_and_check() {
   rm -rf "$out_dir"
 }
 
-export_and_check "apps/mobile-customer" "Customer" || true
-export_and_check "apps/mobile-cook" "Cook" || true
+export_and_check "apps/mobile-customer" "Customer" "mobile-customer" || true
+export_and_check "apps/mobile-cook" "Cook" "mobile-cook" || true
 
 if [ "$FAIL" -ne 0 ]; then
   echo ""

@@ -11,6 +11,7 @@ overrides:
   metro-cache: 0.83.3
   metro: 0.83.3
   metro-config: 0.83.3
+  metro-runtime: 0.83.3
   mobile-customer>react: 19.1.0
   mobile-customer>react-dom: 19.1.0
   mobile-customer>react-native: 0.81.5
@@ -329,6 +330,9 @@ importers:
       metro-config:
         specifier: 0.83.3
         version: 0.83.3
+      metro-runtime:
+        specifier: 0.83.3
+        version: 0.83.3
       prettier-plugin-tailwindcss:
         specifier: ^0.6.14
         version: 0.6.14(prettier@3.8.4)
@@ -496,6 +500,9 @@ importers:
         specifier: 0.83.3
         version: 0.83.3
       metro-config:
+        specifier: 0.83.3
+        version: 0.83.3
+      metro-runtime:
         specifier: 0.83.3
         version: 0.83.3
       prettier-plugin-tailwindcss:
@@ -8976,10 +8983,6 @@ packages:
   metro-runtime@0.83.3:
     resolution: {integrity: sha512-JHCJb9ebr9rfJ+LcssFYA2x1qPYuSD/bbePupIGhpMrsla7RCwC/VL3yJ9cSU+nUhU4c9Ixxy8tBta+JbDeZWw==}
     engines: {node: '>=20.19.4'}
-
-  metro-runtime@0.84.4:
-    resolution: {integrity: sha512-Jibypds4g7AhzdRKY+kDoj51s5EXMwgyp5ddtlreDAsWefMdOx+agWqgm0H2XSZ/ueanHHVM89fnf5OJnlxa8Q==}
-    engines: {node: ^20.19.4 || ^22.13.0 || ^24.3.0 || >= 25.0.0}
 
   metro-source-map@0.83.3:
     resolution: {integrity: sha512-xkC3qwUBh2psVZgVavo8+r2C9Igkk3DibiOXSAht1aYRRcztEZNFtAMtfSB7sdO2iFMx2Mlyu++cBxz/fhdzQg==}
@@ -19032,10 +19035,12 @@ snapshots:
       '@react-native/js-polyfills': 0.86.0
       '@react-native/metro-babel-transformer': 0.86.0(@babel/core@7.29.7)
       metro-config: 0.83.3
-      metro-runtime: 0.84.4
+      metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
@@ -24192,11 +24197,6 @@ snapshots:
       flow-enums-runtime: 0.0.6
 
   metro-runtime@0.83.3:
-    dependencies:
-      '@babel/runtime': 7.29.7
-      flow-enums-runtime: 0.0.6
-
-  metro-runtime@0.84.4:
     dependencies:
       '@babel/runtime': 7.29.7
       flow-enums-runtime: 0.0.6

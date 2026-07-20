@@ -40,16 +40,16 @@ while IFS= read -r filter; do
   else
     echo "OK: turbo exclusion !$pkg matches workspace package"
   fi
-done < <(rg -o -- '--filter=![^ ]+' "$ROOT/.github/workflows/ci.yml" | sed 's/--filter=!//' | sort -u)
+done < <(grep -oE -- '--filter=![^ ]+' "$ROOT/.github/workflows/ci.yml" | sed 's/--filter=!//' | sort -u)
 
-if rg -q 'npx expo export' "$ROOT/scripts/verify-mobile-bundles.sh"; then
+if grep -q 'npx expo export' "$ROOT/scripts/verify-mobile-bundles.sh"; then
   echo "FAIL: verify-mobile-bundles.sh must use 'pnpm exec expo export' (npx can install wrong Expo major)"
   FAIL=1
 else
   echo "OK: mobile bundle guard uses workspace Expo CLI"
 fi
 
-if rg -q 'apps/mobile[^-]' "$ROOT/.github/workflows/ci.yml" 2>/dev/null; then
+if grep -qE 'apps/mobile[^-]' "$ROOT/.github/workflows/ci.yml" 2>/dev/null; then
   echo "FAIL: ci.yml still references removed apps/mobile monolith"
   FAIL=1
 else

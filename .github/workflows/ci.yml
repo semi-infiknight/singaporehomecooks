@@ -75,7 +75,6 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: bash scripts/verify-ci-config.sh
-      - run: pnpm --filter @shc/utils build
       - run: bash scripts/verify-web-pwa.sh
 
   maestro-e2e:
