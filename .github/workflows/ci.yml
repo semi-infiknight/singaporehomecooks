@@ -20,6 +20,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - run: bash scripts/verify-ci-config.sh
       - run: pnpm turbo build --filter=!mobile-cook --filter=!mobile-customer
       - run: pnpm turbo test --filter=!mobile-cook --filter=!mobile-customer
       - run: pnpm turbo typecheck --filter=!mobile-cook --filter=!mobile-customer
@@ -57,6 +58,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - run: bash scripts/verify-ci-config.sh
       - run: bash scripts/verify-mobile-deps.sh
       - run: bash scripts/verify-mobile-bundles.sh
 
@@ -72,6 +74,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - run: bash scripts/verify-ci-config.sh
       - run: pnpm --filter @shc/utils build
       - run: bash scripts/verify-web-pwa.sh
 
