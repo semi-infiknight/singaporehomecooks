@@ -24,8 +24,9 @@ ENV NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY:-pk_
 RUN pnpm --filter @shc/types build
 RUN pnpm --filter @shc/business-rules build
 RUN pnpm --filter @shc/utils build
-# Vitest parity suites need apps/mobile-customer (excluded from Railway context).
-RUN pnpm --filter @shc/ui typecheck
+# @shc/ui typecheck needs the full mobile peer graph (React 18 + Expo); this image only
+# copies packages + web, so typecheck the shipped surface instead.
+RUN pnpm --filter web typecheck
 RUN pnpm --filter @shc/api-client build
 RUN pnpm --filter web build
 
