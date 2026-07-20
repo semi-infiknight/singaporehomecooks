@@ -1,4 +1,4 @@
-// apps/mobile/lib/mock-service.ts
+// Legacy mock-service lineage (unified app removed 2026-07).
 // Sophisticated in-app mock "backend" for Phases 0-5 core flows.
 // Enforces @shc/business-rules + validates against @shc/types schemas.
 // Later replaced by real /store/shc API + TanStack + Medusa.

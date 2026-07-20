@@ -6,7 +6,6 @@
  */
 import React, { useCallback, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Trash2, MapPin } from 'lucide-react';
 import {
@@ -19,20 +18,20 @@ import {
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
 import { useAuth } from '../../lib/useAuth';
+import { useGuestAuthTray } from '../../lib/useGuestAuthTray';
 import { useAcceptBid, useBids, useMyRequests } from '../../lib/useOrder';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { persistCartCheckoutNotes } from '../../lib/cart-notes';
 import {
   GourmeatScreenHeader,
   GourmeatPayButton,
-  SHCEmptyState,
+  GourmeatCartLineItem,
+  GourmeatEmptyState,
   SHCButton,
   SHCSkeletonList,
   SHCSectionTitle,
   SHCCard,
   SHCBadge,
-  useSHCTrayWeb,
-  SHCTrayActionWeb,
 } from '../components/SHCWebComponents';
 
 type RequestRow = {
@@ -135,7 +134,7 @@ type CartItem = {
 export default function CartPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { openTray, dismiss } = useSHCTrayWeb();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart, isLoading } = useCart();
   const cartData = cart ?? { items: [] };
   const clear = useClearCart();
@@ -149,22 +148,13 @@ export default function CartPage() {
   const summary = computeOneTimeOrderSummary(items);
   const kitchen = cartKitchenLabel(items as Array<Record<string, unknown>>);
 
-  const showGuestAuthTray = useCallback(() => {
-    openTray(
-      { id: 'guest-auth', title: 'Sign in to checkout', height: 'compact' },
-      <SHCTrayActionWeb
-        message="Create an account or sign in to complete your order and track collection."
-        primaryLabel="Sign in"
-        onPrimary={() => {
-          dismiss();
-          router.push('/login?next=/checkout');
-        }}
-        secondaryLabel="Keep browsing"
-        onSecondary={dismiss}
-        testID="guest-auth-tray-web"
-      />
+  const promptGuestCheckout = useCallback(() => {
+    showGuestAuthTray(
+      'Sign in to checkout',
+      'Create an account or sign in to complete your order and track collection.',
+      '/checkout'
     );
-  }, [dismiss, openTray, router]);
+  }, [showGuestAuthTray]);
 
   if (isLoading && !cart) {
     return (
@@ -184,13 +174,11 @@ export default function CartPage() {
 
       {items.length === 0 ? (
         <div className="bg-card rounded-2xl shadow-[var(--shc-shadow-card)] p-8">
-          <SHCEmptyState
+          <GourmeatEmptyState
             title="Cart is empty"
-            action={
-              <Link href="/" className="inline-block mt-4">
-                <GourmeatPayButton label="Discover dishes" onClick={() => { window.location.href = '/'; }} />
-              </Link>
-            }
+            ctaLabel="Browse dishes"
+            onCta={() => router.push('/')}
+            testID="cart-empty-state"
           />
         </div>
       ) : (
@@ -225,20 +213,14 @@ export default function CartPage() {
                 const pid = it.product_id || it.productId;
                 const imgUrl = getDishImageUrl({ id: pid, name: it.name });
                 return (
-                  <li key={idx} className="py-3 px-4 flex items-center gap-3">
-                    <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden">
-                      <Image src={imgUrl} alt={it.name} fill className="object-cover" sizes="56px" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold truncate text-sm">{it.name}</div>
-                      <div className="text-xs text-muted-foreground font-medium tabular-nums">
-                        {it.qty} × S${Number(it.price).toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="font-extrabold text-primary tabular-nums shrink-0 text-sm">
-                      S${(it.qty * it.price).toFixed(2)}
-                    </div>
-                  </li>
+                  <GourmeatCartLineItem
+                    key={idx}
+                    name={it.name}
+                    qty={it.qty}
+                    price={Number(it.price)}
+                    imageUri={imgUrl}
+                    testID={`cart-line-${idx}`}
+                  />
                 );
               })}
             </ul>
@@ -352,7 +334,7 @@ export default function CartPage() {
                 testID="proceed-checkout-web"
                 onClick={() => {
                   if (!authLoading && !user && !isAuthenticated()) {
-                    showGuestAuthTray();
+                    promptGuestCheckout();
                     return;
                   }
                   persistCartCheckoutNotes({ cookingNotes, collectionNotes });

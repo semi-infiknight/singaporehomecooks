@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   useOrder,
   useChat,
@@ -46,6 +46,7 @@ type OrderReview = { rating: number; body?: string };
 type OrderDispute = { status?: string; type?: string; notes?: string };
 
 export default function TrackOrder() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
@@ -256,7 +257,7 @@ export default function TrackOrder() {
         submitReview={submitReview}
         submitOrderDispute={submitOrderDispute}
         onMessageCook={() => {
-          document.getElementById('order-chat-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          router.push(`/chat/${id}`);
         }}
       />
 

@@ -15,7 +15,7 @@ import {
 // Ensures no drift between contracts and consumers (mobile, medusa modules, api surface). Per production-hardening.md
 
 describe('Contract tests - mobile mocks & API payloads (Zod .strict() validation)', () => {
-  // From apps/mobile/app/(customer)/cart.tsx mock (adapted to full schema)
+  // From mobile-customer cart mock (adapted to full schema)
   it('validates one-cook cart derived payload (mobile cart.tsx)', () => {
     const cook = shcCookSchema.parse({
       id: 'cook_auntie_rose',

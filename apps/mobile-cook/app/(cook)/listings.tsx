@@ -62,6 +62,7 @@ import {
   getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { VirtualRowFlashList } from '../../components/VirtualLists';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
@@ -542,35 +543,42 @@ export default function CookListings() {
           <SHCBadge variant="default">No dishes match your search</SHCBadge>
         </SHCCard>
       )}
-      {filteredListings.map((p: any, index: number) => (
-        <Pressable
-          key={p.id}
-          onLongPress={() => showListingActions(p)}
-          delayLongPress={400}
-          testID={cookListingE2eTestId(p, index)}
-          accessibilityRole="button"
-          accessibilityLabel={`${p.name}, long press for options`}
-        >
-          <SHCCard style={styles.listingCard}>
-            <View style={styles.listingRow}>
-              <SHCFoodImage
-                uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine, image_url: p.image_url })}
-                width={64}
-                height={64}
-                rounded={shcRadii.md}
-              />
-              <View style={styles.listingInfo}>
-                <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
-                <View style={styles.listingBadges}>
-                  <SHCBadge variant="default">S${p.price}</SHCBadge>
-                  <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
-                  {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+      {filteredListings.length > 0 ? (
+        <VirtualRowFlashList
+          data={filteredListings}
+          scrollEnabled={false}
+          testID="cook-listings-virtual-list"
+          keyExtractor={(p: any) => String(p.id)}
+          renderItem={(p: any, index: number) => (
+            <Pressable
+              onLongPress={() => showListingActions(p)}
+              delayLongPress={400}
+              testID={cookListingE2eTestId(p, index)}
+              accessibilityRole="button"
+              accessibilityLabel={`${p.name}, long press for options`}
+            >
+              <SHCCard style={styles.listingCard}>
+                <View style={styles.listingRow}>
+                  <SHCFoodImage
+                    uri={getDishImageUrl({ name: p.name, cuisine: p.cuisine, image_url: p.image_url })}
+                    width={64}
+                    height={64}
+                    rounded={shcRadii.md}
+                  />
+                  <View style={styles.listingInfo}>
+                    <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
+                    <View style={styles.listingBadges}>
+                      <SHCBadge variant="default">S${p.price}</SHCBadge>
+                      <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
+                      {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
-          </SHCCard>
-        </Pressable>
-      ))}
+              </SHCCard>
+            </Pressable>
+          )}
+        />
+      ) : null}
 
       <View
         onLayout={(e) => {

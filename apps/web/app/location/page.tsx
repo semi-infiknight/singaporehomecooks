@@ -20,7 +20,21 @@ export default function LocationPage() {
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<SHCSavedAddress> | null>(null);
+
+  const nudgePin = useCallback((latDelta: number, lngDelta: number) => {
+    setDraft((d) =>
+      d
+        ? {
+            ...d,
+            lat: Math.max(1.15, Math.min(1.48, (d.lat ?? 1.3521) + latDelta)),
+            lng: Math.max(103.6, Math.min(104.1, (d.lng ?? 103.8198) + lngDelta)),
+            source: 'map',
+          }
+        : d
+    );
+  }, []);
 
   const runSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
@@ -84,8 +98,9 @@ export default function LocationPage() {
   }, [draft?.lat, draft?.lng, draft]);
 
   const onUseGps = () => {
+    setGpsError(null);
     if (!navigator.geolocation) {
-      alert('Geolocation not supported in this browser.');
+      setGpsError('Geolocation is not supported in this browser. Search by postal code instead.');
       return;
     }
     setLocating(true);
@@ -101,14 +116,22 @@ export default function LocationPage() {
             source: 'gps',
           });
         } catch (e: unknown) {
-          alert((e as Error)?.message ?? 'Could not resolve address');
+          setGpsError((e as Error)?.message ?? 'Could not resolve address from GPS.');
         } finally {
           setLocating(false);
         }
       },
-      () => {
+      (err) => {
         setLocating(false);
-        alert('Location permission denied. Search by postal code instead.');
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsError('Location permission denied. Enable location in browser settings or search by postal code.');
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          setGpsError('GPS signal unavailable. Try again or search by postal code.');
+        } else if (err.code === err.TIMEOUT) {
+          setGpsError('Location timed out. Try again or search by postal code.');
+        } else {
+          setGpsError('Could not get your location. Search by postal code instead.');
+        }
       },
       { enableHighAccuracy: false, timeout: 15000 }
     );
@@ -152,23 +175,38 @@ export default function LocationPage() {
           <button type="button" onClick={onUseGps} disabled={locating} className="shc-input w-full text-left font-bold" data-testid="location-use-gps">
             {locating ? 'Getting GPS…' : '📍 Use my current location'}
           </button>
+          {gpsError ? (
+            <p className="text-sm font-semibold text-red-600" data-testid="location-gps-error">
+              {gpsError}
+            </p>
+          ) : null}
           {saved.length > 0 && (
             <div>
               <p className="text-sm font-bold mb-2">Saved</p>
               {saved.map((addr) => (
-                <button
-                  key={addr.id}
-                  type="button"
-                  className="shc-input w-full text-left mb-2"
-                  onClick={() => {
-                    setActive(addr);
-                    router.back();
-                  }}
-                  data-testid={`saved-addr-${addr.id}`}
-                >
-                  <span className="font-bold capitalize">{addr.label}</span>
-                  <span className="block text-xs text-muted-foreground">{addr.line1}</span>
-                </button>
+                <div key={addr.id} className="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    className="shc-input flex-1 text-left"
+                    onClick={() => {
+                      setActive(addr);
+                      router.back();
+                    }}
+                    data-testid={`saved-addr-${addr.id}`}
+                  >
+                    <span className="font-bold capitalize">{addr.label}</span>
+                    <span className="block text-xs text-muted-foreground">{addr.line1}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="shc-input px-3 text-xs font-bold text-red-600 shrink-0"
+                    onClick={() => removeSaved(addr.id)}
+                    data-testid={`saved-addr-delete-${addr.id}`}
+                    aria-label={`Delete ${addr.label}`}
+                  >
+                    Delete
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -205,6 +243,18 @@ export default function LocationPage() {
       {step === 2 && draft && (
         <div data-testid="location-step-confirm" className="mt-6 space-y-3">
           <iframe title="Map" src={mapSrc} className="w-full h-56 rounded-xl border-2 border-[var(--shc-border-brutal)]" data-testid="location-map" />
+          <div className="grid grid-cols-3 gap-2" data-testid="location-pin-nudge">
+            <button type="button" className="shc-input py-2 text-xs font-bold" onClick={() => nudgePin(0.001, 0)}>
+              N ↑
+            </button>
+            <button type="button" className="shc-input py-2 text-xs font-bold" onClick={() => nudgePin(-0.001, 0)}>
+              S ↓
+            </button>
+            <button type="button" className="shc-input py-2 text-xs font-bold" onClick={() => nudgePin(0, 0.001)}>
+              E →
+            </button>
+          </div>
+          <p className="text-[11px] font-semibold text-muted-foreground">Drag pin on map or nudge to refine collection point.</p>
           <input value={draft.line1 ?? ''} onChange={(e) => setDraft({ ...draft, line1: e.target.value })} className="shc-input w-full" placeholder="Block & street" data-testid="location-line1" />
           <input value={draft.line2 ?? ''} onChange={(e) => setDraft({ ...draft, line2: e.target.value })} className="shc-input w-full" placeholder="Unit #05-123" data-testid="location-line2" />
           <input

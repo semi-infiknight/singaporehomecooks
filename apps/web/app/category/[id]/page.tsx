@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo, useState, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -12,10 +11,11 @@ import {
   topRatedCategoryDishes,
   categoryOfferCopy,
   getDishImageUrl,
-  getCookAvatarUrl,
+  getCookKitchenHeroUrl,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useAuth } from '../../../lib/useAuth';
+import { useGuestAuthGate } from '../../../lib/useGuestAuthGate';
 import { useCustomerLocation } from '../../../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../../../lib/useDiscoverPrefs';
 import { getCooks } from '../../../lib/api-client';
@@ -27,8 +27,10 @@ import {
   SHCButton,
   SHCSkeletonGrid,
   SHCSkeletonKitchenList,
+  TiffinKitchenCard,
   type DishCardProduct,
 } from '../../components/SHCWebComponents';
+import { VirtualRowList } from '../../components/VirtualLists';
 
 function toDishCard(product: Record<string, unknown>): DishCardProduct & { rating?: number; image_url?: string } {
   return {
@@ -56,6 +58,7 @@ export default function CategoryPage() {
   const categoryId = decodeURIComponent(String(rawId || ''));
   const router = useRouter();
   const { user } = useAuth();
+  const { requireAuth } = useGuestAuthGate();
   const { data: products, isLoading } = useProducts('');
   const productList = (products as Record<string, unknown>[]) ?? [];
   const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
@@ -91,13 +94,10 @@ export default function CategoryPage() {
 
   const handleAdd = useCallback(
     (productId: string) => {
-      if (!user) {
-        router.push('/login?next=' + encodeURIComponent(`/category/${encodeURIComponent(categoryId)}`));
-        return;
-      }
+      if (!requireAuth('Sign in to add dishes to your cart.', `/category/${encodeURIComponent(categoryId)}`)) return;
       addMut.mutate({ productId, qty: 1 });
     },
-    [user, router, addMut, categoryId]
+    [requireAuth, addMut, categoryId]
   );
 
   return (
@@ -190,45 +190,33 @@ export default function CategoryPage() {
         </div>
       ) : null}
 
-      <ul className="space-y-3 mt-3">
-        {kitchens.map((c) => {
+      <VirtualRowList
+        items={kitchens}
+        getKey={(c) => String(c.id || c.slug || '')}
+        testID="category-kitchen-list"
+        renderItem={(c) => {
           const cookId = String(c.id || c.slug || '');
           const cookName = String(c.display_name || c.name || 'Home kitchen');
           const slug = String(c.slug || c.id || '');
-          const cover = getCookAvatarUrl(cookId, cookName);
           return (
-            <li key={cookId}>
-              <button
-                type="button"
-                data-testid={`category-kitchen-${cookId}`}
-                className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
-                onClick={() => {
-                  if (slug) router.push(`/cook/${slug}`);
-                }}
-              >
-                <div className="relative h-36 w-full bg-muted">
-                  <Image src={cover} alt="" fill className="object-cover" sizes="640px" />
-                </div>
-                <div className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-black text-foreground truncate flex-1">{cookName}</p>
-                    <span className="text-xs font-bold shrink-0">
-                      ★ {c.rating != null ? Number(c.rating).toFixed(1) : '4.8'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground font-semibold line-clamp-1 mt-0.5">
-                    {c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
-                    {c.area ? ` · ${String(c.area)}` : ''}
-                  </p>
-                  <p className="text-sm font-extrabold text-green-700 mt-1">
-                    Open <span className="text-muted-foreground font-semibold">· HDB collection</span>
-                  </p>
-                </div>
-              </button>
-            </li>
+            <TiffinKitchenCard
+              cookId={cookId}
+              cookName={cookName}
+              area={c.area ? String(c.area) : undefined}
+              tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
+              coverUri={getCookKitchenHeroUrl(cookId)}
+              rating={c.rating != null ? Number(c.rating) : 4.8}
+              reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
+              isOpen
+              closesAt="HDB collection"
+              onPress={() => {
+                if (slug) router.push(`/cook/${slug}`);
+              }}
+              testID={`category-kitchen-${cookId}`}
+            />
           );
-        })}
-      </ul>
+        }}
+      />
     </section>
   );
 }

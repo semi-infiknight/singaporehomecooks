@@ -1,0 +1,29 @@
+# Skip customer onboarding carousel after clearState (AsyncStorage wiped → first-open gate).
+appId: com.singaporehomecooks.customer
+---
+- runFlow:
+    when:
+      visible:
+        id: "trust-safety-screen"
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "onboarding-skip-btn"
+          timeout: 30000
+      - tapOn:
+          id: "onboarding-skip-btn"
+      - extendedWaitUntil:
+          notVisible:
+            id: "trust-safety-screen"
+          timeout: 30000
+      - runFlow:
+          when:
+            visible:
+              id: "trust-safety-screen"
+          commands:
+            - tapOn:
+                text: "Explore as guest"
+            - extendedWaitUntil:
+                notVisible:
+                  id: "trust-safety-screen"
+                timeout: 30000

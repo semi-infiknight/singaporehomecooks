@@ -84,7 +84,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-customer-v36-bottom-pad-fix';
+config.cacheVersion = 'mobile-cook-v37-expo-router-fix';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;
@@ -137,7 +137,9 @@ config.resolver.resolveRequest = (context, realModuleName, platform, moduleName)
   return context.resolveRequest(context, realModuleName, platform, moduleName);
 };
 
-module.exports = withNativeWind(config, {
+module.exports = withNativeWind(
+  require('../../scripts/lib/metro-no-devtools').withNoDevToolsLaunch(config, projectRoot),
+  {
   input: './global.css',
   configPath: path.resolve(monorepoRoot, 'tailwind.config.js'),
 });

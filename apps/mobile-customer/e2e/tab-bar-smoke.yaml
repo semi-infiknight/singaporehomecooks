@@ -1,0 +1,93 @@
+# Tab bar + route smoke — guest browse, sign-in, main tabs, cook profile deep link
+# Covers: CustomerTabBar crash fix, cook/[slug]/index route, guest cart bar
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: customer-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- extendedWaitUntil:
+    visible:
+      id: "cuisine-gourmeat-row"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "guest-browse-bar"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "bottom-tab-bar"
+    timeout: 30000
+# Guest: account tabs show auth tray (no redbox)
+- tapOn:
+    id: "orders-tab"
+- extendedWaitUntil:
+    visible:
+      id: "guest-auth-tray"
+    timeout: 15000
+- tapOn:
+    text: "Keep browsing"
+- tapOn:
+    id: "cart-tab"
+- extendedWaitUntil:
+    visible:
+      id: "guest-auth-tray"
+    timeout: 15000
+- tapOn:
+    text: "Keep browsing"
+- tapOn:
+    id: "guest-browse-bar-cta"
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "bottom-tab-bar"
+    timeout: 120000
+# Signed-in tab navigation
+- tapOn:
+    id: "orders-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-orders-screen"
+    timeout: 60000
+    optional: true
+- tapOn:
+    id: "cart-tab"
+- extendedWaitUntil:
+    visible:
+      id: "cart-screen"
+    timeout: 60000
+    optional: true
+- tapOn:
+    id: "profile-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-profile-screen"
+    timeout: 60000
+- tapOn:
+    id: "discover-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 60000
+# Cook profile route (layout fix: cook/[slug]/index)
+- openLink: shc-customer:///(customer)/cook/auntie-rose-tampines
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "kitchen-page-screen"
+    timeout: 60000
+    optional: true

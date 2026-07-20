@@ -27,8 +27,7 @@
     { "path": "packages/business-rules" },
     { "path": "packages/shc-ui" },
     { "path": "packages/shc-utils" },
-    { "path": "apps/medusa" },
-    { "path": "apps/mobile" }
+    { "path": "apps/medusa" }
   ],
   // Note: shc-ui and shc-utils are empty skeletons; tsc may complain until implemented. For Medusa focus they can be excluded temporarily.
   "include": [],

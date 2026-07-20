@@ -16,8 +16,11 @@ import {
   Loader2,
   MapPin,
   Package,
+  Receipt,
   Search,
   Settings2,
+  User,
+  Bell,
   ShieldCheck,
   ShoppingBag,
   Star,
@@ -35,12 +38,15 @@ import {
   PROMO_BANNER_IMAGES,
   DEFAULT_PROMOS,
   getCookAvatarUrl,
+  getCookKitchenHeroUrl,
   COLLECTION_ORDER_TIMELINE,
   getOrderTimelineIndex,
   getOrderStatusLabel,
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
+  VIRTUAL_DISH_LIST_ROW_HEIGHT,
 } from '@shc/utils';
+import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
   pushTray,
   popTray,
@@ -324,40 +330,69 @@ function CategoryRailItem({
   );
 }
 
+export type PromoRailItem = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  imageUrl: string;
+  badge?: string;
+  iconKey?: 'discover' | 'orders' | 'cart' | 'profile' | 'people' | 'home';
+};
+
+const PROMO_RAIL_ICONS: Record<string, LucideIcon> = {
+  'promo-tiffin': Home,
+  'promo-raya': Leaf,
+  'promo-request': ChefHat,
+  'promo-family': Users,
+  'promo-paynow': CreditCard,
+  discover: Home,
+  people: Users,
+  home: Home,
+};
+
 export function PromoRail({
+  promos,
   onPromoClick,
+  onPromoPress,
+  testID = 'promo-rail',
 }: {
+  promos?: PromoRailItem[];
   onPromoClick?: (id: string) => void;
+  onPromoPress?: (id: string) => void;
+  testID?: string;
 }) {
-  const icons: Record<string, LucideIcon> = {
-    'promo-tiffin': Home,
-    'promo-raya': Leaf,
-    'promo-request': ChefHat,
-    'promo-family': Users,
-    'promo-paynow': CreditCard,
-  };
+  const handlePress = onPromoPress ?? onPromoClick;
+  const items: PromoRailItem[] =
+    promos ??
+    DEFAULT_PROMOS.map((promo) => ({
+      id: promo.id,
+      title: promo.title,
+      subtitle: promo.subtitle,
+      imageUrl: PROMO_BANNER_IMAGES[promo.imageKey],
+      badge: promo.badge,
+    }));
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid="promo-rail">
-      {DEFAULT_PROMOS.map((promo, i) => (
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid={testID}>
+      {items.map((promo, i) => (
         <button
           key={promo.id}
           type="button"
-          onClick={() => onPromoClick?.(promo.id)}
+          onClick={() => handlePress?.(promo.id)}
           data-testid={`promo-card-${promo.id}`}
           className="shc-promo-enter relative shrink-0 w-[260px] h-[100px] rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-left"
           style={{ animationDelay: `${i * 60}ms` }}
         >
-          <Image src={PROMO_BANNER_IMAGES[promo.imageKey]} alt="" fill className="object-cover" sizes="260px" />
+          <Image src={promo.imageUrl} alt="" fill className="object-cover" sizes="260px" />
           <div className="relative z-10 flex flex-col justify-between h-full p-3 bg-[rgba(36,24,18,0.45)]">
             <div className="flex justify-between items-start">
-              {icons[promo.id] && (
+              {(PROMO_RAIL_ICONS[promo.id] || (promo.iconKey && PROMO_RAIL_ICONS[promo.iconKey])) && (
                 <span
                   className="w-7 h-7 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]"
                   aria-hidden
                 >
                   {(() => {
-                    const PromoIcon = icons[promo.id];
-                    return <PromoIcon className="w-3.5 h-3.5 text-primary" />;
+                    const PromoIcon = PROMO_RAIL_ICONS[promo.id] || PROMO_RAIL_ICONS[promo.iconKey!];
+                    return PromoIcon ? <PromoIcon className="w-3.5 h-3.5 text-primary" /> : null;
                   })()}
                 </span>
               )}
@@ -386,6 +421,20 @@ const WEB_FILTER_ICONS: Record<string, LucideIcon> = {
   all: Flame,
   search: Search,
 };
+
+export function MindSectionTitle({
+  children,
+  testID = 'mind-section-title',
+}: {
+  children: React.ReactNode;
+  testID?: string;
+}) {
+  return (
+    <h2 className="text-base font-black text-foreground mb-2 mt-1" data-testid={testID}>
+      {children}
+    </h2>
+  );
+}
 
 export function FilterChipRow({
   chips,
@@ -724,7 +773,7 @@ export function SearchResultsDropdown({
   if (!query.trim()) return null;
   return (
     <div
-      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] max-h-80 overflow-y-auto ${
+      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] overflow-hidden ${
         inline ? 'mt-2 mb-2' : 'absolute left-0 right-0 top-full mt-1 z-50'
       }`}
       data-testid="search-results-panel"
@@ -740,9 +789,16 @@ export function SearchResultsDropdown({
       {products.length === 0 ? (
         <p className="p-4 text-sm text-muted-foreground text-center">No dishes match — try another occasion or filter</p>
       ) : (
-        products.slice(0, 8).map((p) => (
-          <SearchResultRow key={p.id} product={p} href={`/product/${p.id}`} onAdd={onAdd ? () => onAdd(p.id) : undefined} />
-        ))
+        <ContainedVirtualRowList
+          items={products}
+          getKey={(p) => p.id}
+          rowHeight={VIRTUAL_DISH_LIST_ROW_HEIGHT}
+          maxHeightClassName="max-h-72 overflow-y-auto"
+          testID="search-results-virtual-list"
+          renderItem={(p) => (
+            <SearchResultRow product={p} href={`/product/${p.id}`} onAdd={onAdd ? () => onAdd(p.id) : undefined} />
+          )}
+        />
       )}
     </div>
   );
@@ -1636,6 +1692,321 @@ export function CollectionSlotPicker({
 }
 
 /** Gourmeat pill cart bar — docked above floating nav */
+export type GourmeatBottomTab = {
+  key: string;
+  href: string;
+  label: string;
+  iconKey: 'discover' | 'orders' | 'cart' | 'profile';
+  testID: string;
+  badge?: string;
+  ordersLiveCue?: 'cooking';
+  needsAuth?: boolean;
+};
+
+const GOURMEAT_TAB_ICONS: Record<GourmeatBottomTab['iconKey'], LucideIcon> = {
+  discover: Home,
+  orders: Receipt,
+  cart: ShoppingBag,
+  profile: User,
+};
+
+/** Floating dark nav — pixel parity with @shc/ui GourmeatFloatingTabBar */
+export function GourmeatFloatingTabBar({
+  tabs,
+  activeKey,
+  onTabPress,
+  testID = 'bottom-tab-bar',
+}: {
+  tabs: GourmeatBottomTab[];
+  activeKey: string;
+  onTabPress: (key: string) => void;
+  testID?: string;
+}) {
+  return (
+    <nav
+      className="rounded-[28px] bg-[var(--shc-gourmeat-nav)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] px-1 py-2"
+      data-testid={testID}
+      aria-label="Main"
+    >
+      <div className="flex items-stretch min-h-[52px]">
+        {tabs.map((tab) => {
+          const active = tab.key === activeKey;
+          const Icon = GOURMEAT_TAB_ICONS[tab.iconKey];
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => onTabPress(tab.key)}
+              data-testid={tab.testID}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 relative"
+              aria-current={active ? 'page' : undefined}
+            >
+              <span className="relative mb-0.5">
+                {tab.iconKey === 'orders' && tab.ordersLiveCue === 'cooking' ? (
+                  <OrdersTabCookingIcon Icon={Icon} active={active} />
+                ) : (
+                  <Icon
+                    className={`w-[22px] h-[22px] ${active ? 'text-primary' : 'text-white/55'}`}
+                    strokeWidth={active ? 2.5 : 2}
+                    aria-hidden
+                  />
+                )}
+                {tab.badge ? (
+                  <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 flex items-center justify-center text-[8px] font-black bg-primary text-primary-foreground rounded-full px-0.5">
+                    {tab.badge}
+                  </span>
+                ) : null}
+              </span>
+              <span
+                className={`text-[10px] leading-none ${
+                  active ? 'font-bold text-primary' : 'font-medium text-white/55'
+                }`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+/** HomelyEats homepage promo — matches SHCTiffinHeroBanner */
+export function TiffinHeroBanner({
+  title = 'No time to cook?',
+  highlight = 'Explore tiffin plans',
+  bullets = [
+    'Nutritious home-cooked meals from HDB kitchens',
+    'Heritage cuisines — Peranakan, Malay, Indian & more',
+    'Flexible 2 · 3 · 4 meals per week',
+  ],
+  testID = 'tiffin-hero-banner',
+  className = '',
+}: {
+  title?: string;
+  highlight?: string;
+  bullets?: string[];
+  testID?: string;
+  className?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className={`rounded-2xl p-6 text-white shadow-[var(--shc-shadow-soft)] bg-primary ${className}`}
+    >
+      <p className="text-xl font-extrabold">{title}</p>
+      <p className="text-lg font-extrabold text-[#FFF8F0] mt-1 mb-2">{highlight}</p>
+      <ul className="text-[13px] font-semibold space-y-0.5 text-white/92">
+        {bullets.map((b) => (
+          <li key={b}>· {b}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Gourmeat order-mode chips — matches SHCTiffinFilterChips */
+export function TiffinFilterChips({
+  chips,
+  activeId,
+  onSelect,
+  testID = 'tiffin-filter-chips',
+}: {
+  chips: { id: string; label: string }[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" data-testid={testID}>
+      {chips.map((c) => {
+        const active = c.id === activeId;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onSelect(c.id)}
+            data-testid={`tiffin-filter-${c.id}`}
+            className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors ${
+              active
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-foreground border-[var(--shc-border)]'
+            }`}
+          >
+            {c.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** HomelyEats kitchen list card — matches SHCTiffinKitchenCard */
+export function TiffinKitchenCard({
+  cookId,
+  cookName,
+  area,
+  tagline,
+  coverUri,
+  rating = 4.8,
+  reviewCount,
+  subscriberCount,
+  priceFrom,
+  priceTo,
+  isOpen = true,
+  closesAt = 'HDB collection',
+  onPress,
+  testID,
+}: {
+  cookId: string;
+  cookName: string;
+  area?: string;
+  tagline?: string;
+  coverUri?: string;
+  rating?: number;
+  reviewCount?: number;
+  subscriberCount?: number;
+  priceFrom?: number;
+  priceTo?: number;
+  isOpen?: boolean;
+  closesAt?: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const cover = coverUri || getCookKitchenHeroUrl(cookId);
+  const priceLabel =
+    priceFrom != null && priceTo != null
+      ? `S$${priceFrom}–${priceTo}/meal`
+      : priceFrom != null
+        ? `from S$${priceFrom}/meal`
+        : null;
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      data-testid={testID || `tiffin-kitchen-${cookId}`}
+      className="w-full text-left rounded-2xl bg-card overflow-hidden shadow-[var(--shc-shadow-soft)] mb-4 hover:opacity-95 transition-opacity"
+    >
+      <div className="relative h-40 w-full bg-muted">
+        <Image src={cover} alt="" fill className="object-cover" sizes="640px" />
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-extrabold text-[17px] text-foreground truncate flex-1">{cookName}</p>
+          <span className="text-xs font-bold shrink-0 flex items-center gap-0.5">
+            <span className="text-[#F5A623]">★</span>
+            {rating.toFixed(1)}
+            {reviewCount != null ? ` (${reviewCount})` : ''}
+          </span>
+        </div>
+        {(tagline || area) && (
+          <p className="text-[13px] text-muted-foreground font-semibold line-clamp-1 mt-1">
+            {[tagline, area].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        <p className="text-[13px] font-extrabold mt-1.5">
+          <span className={isOpen ? 'text-[#2E7D32]' : 'text-destructive'}>{isOpen ? 'Open' : 'Closed'}</span>
+          {closesAt ? <span className="text-muted-foreground font-semibold"> · {closesAt}</span> : null}
+        </p>
+        <div className="flex justify-between items-center mt-2.5 gap-3">
+          {priceLabel ? <p className="text-[13px] font-extrabold text-foreground">{priceLabel}</p> : null}
+          {subscriberCount != null ? (
+            <p className="text-xs font-semibold text-muted-foreground ml-auto">👤 {subscriberCount} subscribers</p>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/** HomelyEats category circles — matches SHCTiffinCategoryRow */
+export function TiffinCategoryRow({
+  categories,
+  activeId,
+  onSelect,
+  testID = 'tiffin-category-row',
+}: {
+  categories: { id: string; label: string; emoji?: string }[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <div style={{ marginTop: 'var(--shc-category-stack-gap)', marginBottom: 'var(--shc-category-stack-gap)' }}>
+      <p
+        className="text-xs font-bold text-muted-foreground text-center"
+        style={{ marginBottom: 'var(--shc-category-stack-gap)', lineHeight: '12px' }}
+      >
+        Explore by categories
+      </p>
+      <div className="flex gap-3.5 overflow-x-auto scrollbar-hide" data-testid={testID}>
+        {categories.map((c) => {
+          const active = c.id === activeId;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onSelect(c.id)}
+              data-testid={`tiffin-cat-${c.id}`}
+              className="shrink-0 w-[72px] flex flex-col items-center"
+            >
+              <span
+                className={`w-16 h-16 rounded-full flex items-center justify-center text-[28px] border bg-card shadow-[var(--shc-shadow-soft)] ${
+                  active ? 'border-primary border-2' : 'border-[var(--shc-border)]'
+                }`}
+              >
+                {c.emoji || '🍲'}
+              </span>
+              <span
+                className={`text-[11px] leading-[14px] font-semibold text-center ${
+                  active ? 'text-primary font-extrabold' : 'text-muted-foreground'
+                }`}
+                style={{ marginTop: 'var(--shc-category-stack-gap)' }}
+              >
+                {c.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** HomelyEats empty state — matches SHCTiffinEmptyState */
+export function TiffinEmptyState({
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+  testID = 'tiffin-empty-state',
+}: {
+  title: string;
+  subtitle?: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className="flex flex-col items-center justify-center py-12 px-6 min-h-[280px] gap-4 text-center"
+    >
+      <span className="text-4xl" aria-hidden>
+        🍱
+      </span>
+      <p className="text-[15px] font-semibold text-muted-foreground leading-snug max-w-[260px]">{title}</p>
+      {subtitle ? <p className="text-[13px] text-muted-foreground leading-relaxed">{subtitle}</p> : null}
+      {actionLabel && onAction ? (
+        <SHCButton size="sm" variant="outline" onClick={onAction} testID="tiffin-empty-action">
+          {actionLabel}
+        </SHCButton>
+      ) : null}
+    </div>
+  );
+}
+
 export function StickyCartBar({
   itemCount,
   countLabel,
@@ -2000,6 +2371,7 @@ export function GourmeatHomeHeader({
   avatarUri,
   profileHref = '/profile',
   locationHref = '/location',
+  notificationHref = '/profile',
 }: {
   headline?: string;
   locationLabel?: string;
@@ -2007,6 +2379,7 @@ export function GourmeatHomeHeader({
   avatarUri?: string;
   profileHref?: string;
   locationHref?: string;
+  notificationHref?: string;
   onLocationPress?: () => void;
 }) {
   return (
@@ -2015,17 +2388,29 @@ export function GourmeatHomeHeader({
         <h1 className="text-[26px] md:text-3xl font-extrabold text-foreground tracking-[-0.5px] leading-8 flex-1">
           {headline}
         </h1>
-        <Link
-          href={profileHref}
-          className="w-11 h-11 rounded-full overflow-hidden bg-secondary shadow-[var(--shc-shadow-soft)] shrink-0"
-          data-testid="gourmeat-profile-avatar"
-        >
-          {avatarUri ? (
-            <Image src={avatarUri} alt="" width={44} height={44} className="object-cover w-full h-full" />
-          ) : (
-            <span className="flex items-center justify-center w-full h-full text-primary font-bold text-lg">👤</span>
-          )}
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={notificationHref}
+            className="w-10 h-10 rounded-full bg-card shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
+            data-testid="gourmeat-notifications"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-foreground" aria-hidden />
+          </Link>
+          <Link
+            href={profileHref}
+            className="w-11 h-11 rounded-full overflow-hidden bg-secondary shadow-[var(--shc-shadow-soft)]"
+            data-testid="gourmeat-profile-avatar"
+          >
+            {avatarUri ? (
+              <Image src={avatarUri} alt="" width={44} height={44} className="object-cover w-full h-full" />
+            ) : (
+              <span className="flex items-center justify-center w-full h-full text-primary">
+                <User className="w-[22px] h-[22px]" strokeWidth={2.5} aria-hidden />
+              </span>
+            )}
+          </Link>
+        </div>
       </div>
       <Link
         href={locationHref}
@@ -2130,6 +2515,247 @@ export function GourmeatAddButton({
     >
       +
     </button>
+  );
+}
+
+export function GourmeatDiscountBadge({ percent, testID }: { percent: number; testID?: string }) {
+  return (
+    <span
+      data-testid={testID}
+      className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg"
+    >
+      {percent}% OFF
+    </span>
+  );
+}
+
+/** PDP sticky qty + add — parity with GourmeatProductStickyBar */
+export function GourmeatProductStickyBar({
+  qty,
+  minQty,
+  lineTotal,
+  onDecrement,
+  onIncrement,
+  onAdd,
+  disabled,
+  loading,
+  testID = 'pdp-sticky-bar',
+}: {
+  qty: number;
+  minQty: number;
+  lineTotal: number;
+  onDecrement: () => void;
+  onIncrement: () => void;
+  onAdd: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className="flex items-center gap-2 bg-card border-t border-[var(--shc-border)] px-4 py-2 shadow-[var(--shc-shadow-soft)]"
+    >
+      <div className="flex items-center rounded-full bg-[var(--shc-surface-alt)]">
+        <button type="button" onClick={onDecrement} className="px-3 py-2 text-lg font-bold" aria-label="Decrease quantity">
+          −
+        </button>
+        <span className="text-[15px] font-extrabold min-w-6 text-center tabular-nums">{qty}</span>
+        <button type="button" onClick={onIncrement} className="px-3 py-2 text-lg font-bold" aria-label="Increase quantity">
+          +
+        </button>
+      </div>
+      <div className="flex-1 text-right">
+        <p className="text-[11px] text-muted-foreground">min {minQty}</p>
+        <p className="text-base font-extrabold tabular-nums">S${lineTotal.toFixed(0)}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={disabled || loading}
+        data-testid="add-to-cart-btn"
+        className="shrink-0 min-w-[72px] rounded-xl bg-primary text-primary-foreground px-4 py-3 text-sm font-extrabold disabled:opacity-60 hover:bg-[var(--shc-primary-dark)]"
+      >
+        {loading ? 'Adding…' : 'Add'}
+      </button>
+    </div>
+  );
+}
+
+/** dev.to ordering info block — parity with SHCDishOrderingInfo */
+export function DishOrderingInfo({
+  tier1 = [],
+  tier2 = [],
+  tier3 = [],
+  ingredients = [],
+  calories,
+  caloriesConfidence,
+  testID = 'dish-ordering-info',
+}: {
+  tier1?: string[];
+  tier2?: string[];
+  tier3?: string[];
+  ingredients?: Array<{ name?: string; qty?: string; quantity?: string; unit?: string } | string>;
+  calories?: number;
+  caloriesConfidence?: 'full' | 'category';
+  testID?: string;
+}) {
+  return (
+    <div data-testid={testID} className="space-y-2 text-sm">
+      <p className="text-sm font-black text-foreground">Ingredients &amp; allergens</p>
+      {tier1.length > 0 && (
+        <p className="text-xs font-bold text-[var(--shc-error)]">Contains: {tier1.join(', ')}</p>
+      )}
+      {tier2.length > 0 && (
+        <p className="text-xs font-semibold text-muted-foreground">May contain: {tier2.join(', ')}</p>
+      )}
+      {tier3.length > 0 && (
+        <p className="text-xs font-semibold text-muted-foreground">Trace: {tier3.join(', ')}</p>
+      )}
+      {ingredients.length > 0 && (
+        <div className="pt-2 mt-2 border-t border-[var(--shc-border)]">
+          <p className="text-[11px] font-extrabold text-muted-foreground mb-1">INGREDIENTS</p>
+          <ul className="space-y-0.5">
+            {ingredients.slice(0, 8).map((ing, i) => {
+              const label =
+                typeof ing === 'string'
+                  ? ing
+                  : `${ing.name || ''}${ing.qty || ing.quantity ? ` — ${ing.qty || ing.quantity}${ing.unit ? ` ${ing.unit}` : ''}` : ''}`;
+              return (
+                <li key={i} className="text-xs font-semibold text-foreground">
+                  · {label}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      {calories != null && (
+        <p className="text-[11px] font-bold text-muted-foreground">
+          ~{calories} cal per portion
+          {caloriesConfidence === 'category' ? ' (category estimate)' : ''}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function GourmeatCartLineItem({
+  name,
+  qty,
+  price,
+  imageUri,
+  testID,
+}: {
+  name: string;
+  qty: number;
+  price: number;
+  imageUri?: string;
+  testID?: string;
+}) {
+  const uri = imageUri || getDishImageUrl({ name });
+  return (
+    <li
+      data-testid={testID}
+      className="py-3 px-4 flex items-center gap-3 border-b border-[var(--shc-border)] last:border-b-0"
+    >
+      <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden">
+        <Image src={uri} alt={name} fill className="object-cover" sizes="56px" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-bold truncate text-sm">{name}</p>
+        <p className="text-xs text-muted-foreground font-medium tabular-nums">
+          {qty} × S${price.toFixed(2)}
+        </p>
+      </div>
+      <p className="font-extrabold text-primary tabular-nums shrink-0 text-sm">S${(qty * price).toFixed(2)}</p>
+    </li>
+  );
+}
+
+export type TiffinOrderCardStatus =
+  | 'indeterminate'
+  | 'scheduled'
+  | 'delivered'
+  | 'skipped'
+  | 'canceled_by_kitchen';
+
+/** HomelyEats order day card — parity with SHCTiffinOrderStatusCard */
+export function TiffinOrderStatusCard({
+  cookName,
+  planTitle,
+  status,
+  timeslot,
+  menuLines,
+  customizable,
+  menuPending,
+  onSkip,
+  onManage,
+  manageLabel = 'Manage',
+  testID,
+}: {
+  cookName: string;
+  planTitle?: string;
+  status: TiffinOrderCardStatus;
+  timeslot?: string;
+  menuLines?: string[];
+  customizable?: boolean;
+  menuPending?: boolean;
+  onSkip?: () => void;
+  onManage?: () => void;
+  manageLabel?: string;
+  testID?: string;
+}) {
+  const chip =
+    status === 'delivered'
+      ? { bg: '#E8F5E9', text: 'Delivered', color: '#2E7D32' }
+      : status === 'skipped'
+        ? { bg: '#FFF3E0', text: 'Skipped', color: '#E65100' }
+        : status === 'canceled_by_kitchen'
+          ? { bg: '#FFEBEE', text: 'Canceled by kitchen', color: '#C62828' }
+          : status === 'indeterminate'
+            ? { bg: '#F5F5F5', text: 'Upcoming', color: '#616161' }
+            : { bg: '#E3F2FD', text: 'Scheduled', color: '#1565C0' };
+
+  return (
+    <div
+      data-testid={testID || `tiffin-order-card-${status}`}
+      className="rounded-2xl bg-card p-4 shadow-[var(--shc-shadow-soft)]"
+    >
+      <div className="flex items-center flex-wrap gap-2 mb-2">
+        <span
+          className="text-[11px] font-extrabold px-2 py-1 rounded-lg"
+          style={{ background: chip.bg, color: chip.color }}
+        >
+          {chip.text}
+        </span>
+        {timeslot ? <span className="text-xs font-semibold text-muted-foreground">{timeslot}</span> : null}
+        {customizable ? (
+          <span className="text-[10px] font-black text-primary uppercase tracking-wide" data-testid="tiffin-customizable-tag">
+            CUSTOMIZABLE
+          </span>
+        ) : null}
+      </div>
+      <p className="font-extrabold text-base text-foreground">{cookName}</p>
+      {planTitle ? <p className="text-[13px] text-muted-foreground mt-0.5">{planTitle}</p> : null}
+      {menuPending ? (
+        <p className="text-xs italic text-muted-foreground mt-2">Menu yet to be updated</p>
+      ) : (
+        (menuLines || []).map((line) => (
+          <p key={line} className="text-[13px] text-foreground mt-1">
+            · {line}
+          </p>
+        ))
+      )}
+      <div className="flex flex-wrap gap-2 mt-4">
+        {onManage ? (
+          <GourmeatPrimaryButton label={manageLabel} variant="outline" size="sm" onClick={onManage} testID="tiffin-order-manage-btn" />
+        ) : null}
+        {onSkip && status === 'scheduled' ? (
+          <GourmeatPrimaryButton label="Skip day" variant="outline" size="sm" onClick={onSkip} testID="tiffin-order-skip-btn" />
+        ) : null}
+      </div>
+    </div>
   );
 }
 

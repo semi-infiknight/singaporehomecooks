@@ -18,12 +18,7 @@ appId: com.singaporehomecooks.cook
       - tapOn:
           text: "OK"
           optional: true
-- runFlow:
-    when:
-      visible: "Welcome, home cook"
-    commands:
-      - tapOn:
-          id: "cook-onboarding-finish-btn"
+- runFlow: cook-onboarding-if-needed.yaml
 - extendedWaitUntil:
     visible:
       id: "cook-dashboard"

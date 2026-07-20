@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
-  ScrollView,
   Text,
   TextInput,
   StyleSheet,
@@ -25,6 +24,7 @@ import {
 import { getDishImageUrl, getCookKitchenHeroUrl, kitchenDishPriceDollars, kitchenOpenStatus } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
+import { VirtualRowFlashList } from '../../../components/VirtualLists';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -75,7 +75,6 @@ export default function TiffinBrowseScreen() {
       list.sort((a, b) => (b.subscriber_count || 0) - (a.subscriber_count || 0));
     }
     if (filter === 'nearest' && location) {
-      // soft preference: area string match first
       list.sort((a, b) => {
         const aMatch = (a.cook?.area || '').includes(locationLabel || '') ? 0 : 1;
         const bMatch = (b.cook?.area || '').includes(locationLabel || '') ? 0 : 1;
@@ -85,23 +84,15 @@ export default function TiffinBrowseScreen() {
     return list;
   }, [kitchens, query, filter, category, location, locationLabel]);
 
-  /** Browse-first (Jakob’s Law): open kitchen detail without login; subscribe still auth-gated on kitchen page. */
-  const openKitchen = (cookId: string) => {
-    router.push(`/(customer)/tiffin/kitchen/${cookId}` as any);
-  };
+  const openKitchen = useCallback(
+    (cookId: string) => {
+      router.push(`/(customer)/tiffin/kitchen/${cookId}` as any);
+    },
+    [router]
+  );
 
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={{
-        paddingTop: insets.top + shcSpacing.sm,
-        paddingBottom: contentPadSafe(insets.bottom),
-        paddingHorizontal: shcSpacing.md,
-      }}
-      testID="tiffin-browse-screen"
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* Location + back — HomelyEats header chrome */}
+  const ListHeader = (
+    <>
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} hitSlop={12} testID="tiffin-browse-back">
           <Text style={styles.backChevron}>‹</Text>
@@ -136,7 +127,6 @@ export default function TiffinBrowseScreen() {
         </View>
       ) : null}
 
-      {/* Search — HomelyEats search bar */}
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>⌕</Text>
         <TextInput
@@ -149,75 +139,93 @@ export default function TiffinBrowseScreen() {
         />
       </View>
 
-      <SHCTiffinCategoryRow
-        categories={CATEGORIES}
-        activeId={category}
-        onSelect={setCategory}
-      />
+      <SHCTiffinCategoryRow categories={CATEGORIES} activeId={category} onSelect={setCategory} />
 
       <SHCTiffinFilterChips chips={FILTERS} activeId={filter} onSelect={setFilter} />
 
-      {/* Offer strip */}
       <View style={styles.offerCard} testID="tiffin-offer-card">
         <Text style={styles.offerTitle}>First week on us ✨</Text>
         <Text style={styles.offerSub}>New tiffin subscribers — flexible 2–4 meals/week from one kitchen.</Text>
       </View>
 
-      {isLoading ? (
-        <SHCSkeletonKitchenList count={4} />
-      ) : filtered.length === 0 ? (
-        <SHCTiffinEmptyState
-          title="No kitchens match"
-          subtitle="Try another cuisine filter or clear search."
-          actionLabel="Clear filters"
-          onAction={() => {
-            setQuery('');
-            setFilter('all');
-            setCategory('all');
-          }}
+      {isLoading ? <SHCSkeletonKitchenList count={4} /> : null}
+    </>
+  );
+
+  const renderKitchen = useCallback(
+    (k: any) => {
+      const prices = (k.dishes || [])
+        .map((d: any) => kitchenDishPriceDollars(d))
+        .filter((n: number | null): n is number => n != null && n > 0);
+      const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
+      const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
+      const open = kitchenOpenStatus({
+        display_name: k.cook?.display_name,
+        area: k.cook?.area,
+        status: k.enabled === false ? 'paused' : 'active',
+      });
+      return (
+        <SHCTiffinKitchenCard
+          cookId={k.cook_id}
+          cookName={k.cook?.display_name || 'Home kitchen'}
+          area={k.cook?.area}
+          tagline={k.tagline || 'Weekly home-cooked meals'}
+          mealsOptions={k.meals_per_week_options}
+          dishCount={(k.dishes || []).length}
+          subscriberCount={k.subscriber_count ?? 0}
+          priceFrom={Math.round(from)}
+          priceTo={Math.round(to)}
+          rating={4.8}
+          isOpen={open.isOpen}
+          closesAt={open.detail}
+          coverUri={
+            getDishImageUrl({
+              id: k.dishes?.[0]?.id,
+              name: k.dishes?.[0]?.name,
+              cuisine: k.dishes?.[0]?.cuisine,
+              image_url: k.dishes?.[0]?.image_url,
+            }) || getCookKitchenHeroUrl(k.cook_id)
+          }
+          onPress={() => openKitchen(k.cook_id)}
         />
-      ) : (
-        filtered.map((k: any) => {
-          // price is SGD dollars (kitchenDishPriceDollars) — never p>50/100
-          const prices = (k.dishes || [])
-            .map((d: any) => kitchenDishPriceDollars(d))
-            .filter((n: number | null): n is number => n != null && n > 0);
-          const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
-          const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
-          const open = kitchenOpenStatus({
-            display_name: k.cook?.display_name,
-            area: k.cook?.area,
-            status: k.enabled === false ? 'paused' : 'active',
-          });
-          return (
-            <SHCTiffinKitchenCard
-              key={k.cook_id}
-              cookId={k.cook_id}
-              cookName={k.cook?.display_name || 'Home kitchen'}
-              area={k.cook?.area}
-              tagline={k.tagline || 'Weekly home-cooked meals'}
-              mealsOptions={k.meals_per_week_options}
-              dishCount={(k.dishes || []).length}
-              subscriberCount={k.subscriber_count ?? 0}
-              priceFrom={Math.round(from)}
-              priceTo={Math.round(to)}
-              rating={4.8}
-              isOpen={open.isOpen}
-              closesAt={open.detail}
-              coverUri={
-                getDishImageUrl({
-                  id: k.dishes?.[0]?.id,
-                  name: k.dishes?.[0]?.name,
-                  cuisine: k.dishes?.[0]?.cuisine,
-                  image_url: k.dishes?.[0]?.image_url,
-                }) || getCookKitchenHeroUrl(k.cook_id)
-              }
-              onPress={() => openKitchen(k.cook_id)}
+      );
+    },
+    [openKitchen]
+  );
+
+  const listData = isLoading ? [] : filtered;
+
+  return (
+    <View
+      style={[styles.screen, { paddingTop: insets.top + shcSpacing.sm }]}
+      testID="tiffin-browse-screen"
+    >
+      <VirtualRowFlashList
+        data={listData}
+        testID="tiffin-kitchen-list"
+        keyExtractor={(k: any) => k.cook_id}
+        ListHeaderComponent={ListHeader}
+        contentContainerStyle={{
+          paddingHorizontal: shcSpacing.md,
+          paddingBottom: contentPadSafe(insets.bottom),
+        }}
+        renderItem={renderKitchen}
+        ListEmptyComponent={
+          !isLoading ? (
+            <SHCTiffinEmptyState
+              title="No kitchens match"
+              subtitle="Try another cuisine filter or clear search."
+              actionLabel="Clear filters"
+              onAction={() => {
+                setQuery('');
+                setFilter('all');
+                setCategory('all');
+              }}
             />
-          );
-        })
-      )}
-    </ScrollView>
+          ) : null
+        }
+      />
+    </View>
   );
 }
 

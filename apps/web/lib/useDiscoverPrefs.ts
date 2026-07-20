@@ -50,5 +50,10 @@ export function useDiscoverPrefs() {
     [persist, prefs]
   );
 
-  return { ...prefs, ready, toggleHalalOnly, toggleLight };
+  const setMaxCal = useCallback(
+    (maxCal: number | undefined) => persist({ ...prefs, maxCal }),
+    [persist, prefs]
+  );
+
+  return { ...prefs, ready, toggleHalalOnly, toggleLight, setMaxCal };
 }

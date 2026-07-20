@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/utils';
 import { useAuth } from '../../../lib/useAuth';
+import { useGuestAuthTray } from '../../../lib/useGuestAuthTray';
 import { useDrop, useAddDropToCart } from '../../../lib/useOrder';
 import { SHCBadge, SHCButton, SHCCard, SHCPageHeader, SHCSkeletonList } from '../../components/SHCWebComponents';
 
@@ -16,6 +17,7 @@ export default function DropOrderPage() {
   const id = String(params?.id || '');
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: drop, isLoading, error } = useDrop(id);
   const addMut = useAddDropToCart();
   const [qty, setQty] = useState(1);
@@ -32,7 +34,11 @@ export default function DropOrderPage() {
   async function goToCheckout() {
     setLocalError('');
     if (!user) {
-      router.push(`/login?next=/drops/${encodeURIComponent(id)}`);
+      showGuestAuthTray(
+        'Sign in to checkout',
+        'Create an account or sign in to reserve this cooking-soon batch.',
+        `/drops/${encodeURIComponent(id)}`
+      );
       return;
     }
     try {

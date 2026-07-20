@@ -1,47 +1,117 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import React, { useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Receipt, ShoppingBag, Wallet } from 'lucide-react';
 import { useCart } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
 import { useOrders } from '../../lib/useOrder';
 import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
-import { hideMobileTabBar } from '../../lib/mobile-chrome';
-import { StickyCartBar, OrdersTabCookingIcon } from './SHCWebComponents';
+import { hideMobileTabBar, hideMobileStickyCart } from '../../lib/mobile-chrome';
+import { useGuestAuthTray } from '../../lib/useGuestAuthTray';
+import { StickyCartBar, GourmeatFloatingTabBar, type GourmeatBottomTab } from './SHCWebComponents';
 
-const TABS = [
-  { href: '/', label: 'Home', icon: Home, testID: 'mobile-tab-discover', match: (p: string) => p === '/' || p.startsWith('/product') || p.startsWith('/cook') || p.startsWith('/category') || p.startsWith('/tiffin') },
-  { href: '/orders', label: 'Orders', icon: Receipt, testID: 'mobile-tab-orders', match: (p: string) => p.startsWith('/orders'), needsAuth: true },
-  { href: '/cart', label: 'Cart', icon: ShoppingBag, testID: 'mobile-tab-cart', match: (p: string) => p === '/cart' || p === '/checkout', needsAuth: true },
-  { href: '/profile', label: 'Wallet', icon: Wallet, testID: 'mobile-tab-profile', match: (p: string) => p.startsWith('/profile'), needsAuth: true },
+const TAB_ROUTES: Array<{
+  key: string;
+  href: string;
+  label: string;
+  iconKey: GourmeatBottomTab['iconKey'];
+  testID: string;
+  match: (p: string) => boolean;
+  needsAuth?: boolean;
+}> = [
+  {
+    key: 'index',
+    href: '/',
+    label: 'Home',
+    iconKey: 'discover',
+    testID: 'discover-tab',
+    match: (p) =>
+      p === '/' ||
+      p.startsWith('/product') ||
+      p.startsWith('/cook') ||
+      p.startsWith('/category') ||
+      p.startsWith('/tiffin'),
+  },
+  {
+    key: 'orders/index',
+    href: '/orders',
+    label: 'Orders',
+    iconKey: 'orders',
+    testID: 'orders-tab',
+    match: (p) => p === '/orders' || p.startsWith('/orders/'),
+    needsAuth: true,
+  },
+  {
+    key: 'cart',
+    href: '/cart',
+    label: 'Cart',
+    iconKey: 'cart',
+    testID: 'cart-tab',
+    match: (p) => p === '/cart' || p === '/checkout',
+    needsAuth: true,
+  },
+  {
+    key: 'profile/index',
+    href: '/profile',
+    label: 'Profile',
+    iconKey: 'profile',
+    testID: 'profile-tab',
+    match: (p) => p.startsWith('/profile'),
+    needsAuth: true,
+  },
 ];
 
-const HIDE_CART_BAR = /^\/(cart|checkout)(\/|$)/;
+function resolveActiveKey(pathname: string): string {
+  const hit = TAB_ROUTES.find((tab) => tab.match(pathname));
+  return hit?.key ?? 'index';
+}
 
 export function AppMobileTabBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart } = useCart();
   const { data: orders = [] } = useOrders();
   const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
-  const items = ((cart?.items ?? []) as Parameters<typeof summarizeCart>[0]) || [];
+
+  const canShowCart = Boolean(user) && !authLoading;
+  const rawItems = canShowCart ? cart?.items : undefined;
+  const items = Array.isArray(rawItems) ? rawItems : [];
   const firstItem = items[0];
   const firstName =
     firstItem && typeof firstItem === 'object' && firstItem !== null && 'name' in firstItem
       ? String((firstItem as { name?: string }).name || '')
       : undefined;
   const summary = summarizeCart(items, firstName);
-  if (hideMobileTabBar(pathname)) {
+
+  const tabBarHidden = hideMobileTabBar(pathname);
+  const cartBarHidden = hideMobileStickyCart(pathname);
+  const showCartBar = canShowCart && summary.hasItems && !cartBarHidden;
+
+  const tabs: GourmeatBottomTab[] = useMemo(
+    () =>
+      TAB_ROUTES.map((tab) => ({
+        key: tab.key,
+        href: tab.href,
+        label: tab.label,
+        iconKey: tab.iconKey,
+        testID: tab.testID,
+        badge: tab.key === 'cart' && canShowCart && summary.hasItems ? summary.badgeLabel : undefined,
+        ordersLiveCue: tab.key === 'orders/index' && ordersLiveCue === 'cooking' ? 'cooking' : undefined,
+        needsAuth: tab.needsAuth,
+      })),
+    [canShowCart, ordersLiveCue, summary.badgeLabel, summary.hasItems]
+  );
+
+  const activeKey = resolveActiveKey(pathname);
+
+  if (tabBarHidden && !showCartBar) {
     return null;
   }
-  // Guests never see sticky cart bar (cart requires sign-in)
-  const showCartBar = Boolean(user) && summary.hasItems && !HIDE_CART_BAR.test(pathname);
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none px-3 pb-[max(env(safe-area-inset-bottom),8px)]">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none px-4 pb-[max(env(safe-area-inset-bottom),8px)]">
       <div className="pointer-events-auto flex flex-col gap-2">
         {showCartBar && (
           <StickyCartBar
@@ -51,51 +121,31 @@ export function AppMobileTabBar() {
             previewName={summary.previewName}
           />
         )}
-        <nav
-          className="rounded-[28px] bg-[var(--shc-gourmeat-nav)] shadow-[0_8px_24px_rgba(0,0,0,0.25)] px-2 py-2"
-          data-testid="mobile-bottom-tab-bar"
-          aria-label="Main"
-        >
-          <div className="flex items-stretch min-h-[52px]">
-            {TABS.map((tab) => {
-              const active = tab.match(pathname);
-              const Icon = tab.icon;
-              const badge = user && tab.href === '/cart' && summary.hasItems ? summary.badgeLabel : null;
-              const needsAuth = 'needsAuth' in tab && tab.needsAuth && !authLoading && !user;
-              return (
-                <Link
-                  key={tab.href}
-                  href={needsAuth ? `/login?next=${encodeURIComponent(tab.href)}` : tab.href}
-                  data-testid={tab.testID}
-                  className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 relative ${
-                    active ? 'text-primary' : 'text-white/55'
-                  }`}
-                  aria-current={active ? 'page' : undefined}
-                  onClick={(e) => {
-                    if (needsAuth) {
-                      e.preventDefault();
-                      router.push(`/login?next=${encodeURIComponent(tab.href)}`);
-                    }
-                  }}
-                >
-                  <span className="relative">
-                    {tab.href === '/orders' && ordersLiveCue === 'cooking' ? (
-                      <OrdersTabCookingIcon Icon={Icon} active={active} />
-                    ) : (
-                      <Icon className={`w-[22px] h-[22px] ${active ? 'text-primary' : ''}`} strokeWidth={active ? 2.5 : 2} aria-hidden />
-                    )}
-                    {badge ? (
-                      <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-black bg-primary text-primary-foreground rounded-full px-1">
-                        {badge}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className={`text-[10px] ${active ? 'font-bold text-primary' : 'font-medium'}`}>{tab.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+        {!tabBarHidden && (
+          <GourmeatFloatingTabBar
+            tabs={tabs}
+            activeKey={activeKey}
+            onTabPress={(key) => {
+              const tab = TAB_ROUTES.find((t) => t.key === key);
+              if (!tab) return;
+              if (tab.needsAuth && !authLoading && !user) {
+                const title =
+                  tab.key === 'orders/index'
+                    ? 'Sign in to view orders'
+                    : tab.key === 'cart'
+                      ? 'Sign in to view cart'
+                      : 'Sign in for wallet & account';
+                showGuestAuthTray(
+                  title,
+                  'Browse kitchens on Home — sign in for orders, cart, and wallet.',
+                  tab.href
+                );
+                return;
+              }
+              router.push(tab.href);
+            }}
+          />
+        )}
       </div>
     </div>
   );

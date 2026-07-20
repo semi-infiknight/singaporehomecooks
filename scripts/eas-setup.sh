@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# EAS preview build setup — Sprint 6
+# EAS preview build setup — customer + cook split apps
 # Requires: Expo account (npx eas login)
 set -euo pipefail
-cd "$(dirname "$0")/../apps/mobile"
+ROOT="$(dirname "$0")/.."
 
 echo "=== Singapore Home Cooks — EAS Setup ==="
 if ! command -v eas >/dev/null 2>&1; then
@@ -13,20 +13,19 @@ fi
 echo "Step 1: eas login (interactive)"
 echo "  Run: npx eas login"
 
-echo "Step 2: Link project (creates real projectId in app.json)"
-if ! npx eas project:info >/dev/null 2>&1; then
-  echo "  Run: npx eas init"
-else
-  echo "  ✓ EAS project already linked"
-fi
+for app in mobile-customer mobile-cook; do
+  echo ""
+  echo "=== $app ==="
+  cd "$ROOT/apps/$app"
+  if ! npx eas project:info >/dev/null 2>&1; then
+    echo "  Run: cd apps/$app && npx eas init"
+  else
+    echo "  ✓ EAS project already linked"
+  fi
+  echo "  Preview: pnpm --filter $app eas:build:preview"
+  echo "  Production: pnpm --filter $app eas:build:prod"
+done
 
-echo "Step 3: Preview build (internal TestFlight / APK)"
-echo "  pnpm eas:build:preview"
-echo "  or: npx eas build --profile preview --platform all"
-
-echo "Step 4: Set staging Medusa URL in eas.json preview env or EAS secrets:"
-echo "  EXPO_PUBLIC_MEDUSA_BASE=https://your-medusa.up.railway.app"
-echo "  EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_..."
-echo "  EXPO_PUBLIC_USE_REAL_MEDUSA=true"
-
+echo ""
+echo "Railway Medusa URL is baked into eas.json env (see config/railway-client.json)."
 echo "Done. See blueprint/03-railway/03-railway.md for full launch checklist."

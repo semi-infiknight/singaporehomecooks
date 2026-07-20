@@ -1,5 +1,5 @@
 # Cook app — auth + dashboard
-# Run: pnpm cook:dev & maestro test apps/mobile-cook/e2e/cook-auth.yaml
+# Run: pnpm ios:dev && maestro test apps/mobile-cook/e2e/cook-auth.yaml
 appId: com.singaporehomecooks.cook
 ---
 - launchApp:
@@ -13,12 +13,7 @@ appId: com.singaporehomecooks.cook
 - tapOn:
     text: "OK"
     optional: true
-- runFlow:
-    when:
-      visible: "Welcome, home cook"
-    commands:
-      - tapOn:
-          id: "cook-onboarding-finish-btn"
+- runFlow: cook-onboarding-if-needed.yaml
 - extendedWaitUntil:
     visible:
       id: "cook-dashboard"

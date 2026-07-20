@@ -29,6 +29,8 @@ import {
   SHCSkeletonList,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
+import { useCustomerLocation } from '../../lib/useCustomerLocation';
+import { formatLocationLabel } from '@shc/utils';
 import { createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 
@@ -50,6 +52,7 @@ function extractOrderId(res: unknown): string | null {
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { active: collectionLocation } = useCustomerLocation();
   const { data: cart, isLoading: cartLoading } = useCart();
 
   useEffect(() => {
@@ -348,7 +351,7 @@ export default function CheckoutPage() {
   const placing = checkoutMut.isPending;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 shc-sticky-footer-pad md:shc-safe-bottom-pad" data-testid="checkout-form-screen">
+    <div className="max-w-xl mx-auto px-4 py-8 shc-sticky-footer-pad md:shc-safe-bottom-pad" data-testid="checkout-screen">
       <div className="relative h-24 overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] mb-4">
         <Image src={BENTO_ACTION_IMAGES.checkout} alt="" fill className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-[rgba(36,24,18,0.45)] flex flex-col justify-end p-4">
@@ -366,6 +369,23 @@ export default function CheckoutPage() {
       </p>
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
+
+      <SHCCard className="mb-6 shc-bento-mint">
+        <SHCSectionTitle>Your collection point</SHCSectionTitle>
+        <p className="text-sm font-semibold text-muted-foreground mb-3">
+          {collectionLocation
+            ? formatLocationLabel(collectionLocation)
+            : 'No location set — cooks sorted by default.'}
+        </p>
+        <SHCButton
+          variant="outline"
+          size="sm"
+          onClick={() => router.push('/location')}
+          testID="checkout-change-location"
+        >
+          Change location
+        </SHCButton>
+      </SHCCard>
 
       <SHCCard className="mb-6 shc-bento-peach">
         <div className="flex justify-between items-center">
@@ -411,7 +431,7 @@ export default function CheckoutPage() {
           type="checkbox"
           checked={pdpaConsent}
           onChange={(e) => setPdpaConsent(e.target.checked)}
-          data-testid="pdpa-consent-web"
+          data-testid="pdpa-consent"
           className="mt-0.5 w-4 h-4 accent-primary rounded"
         />
         <span className="font-medium">
@@ -443,7 +463,7 @@ export default function CheckoutPage() {
         size="lg"
         onClick={doCheckout}
         disabled={!checkoutReady || placing}
-        testID="complete-checkout-web"
+        testID="do-checkout"
       >
         {placing ? 'Placing order…' : effectiveSlot ? `Pay with PayNow · S$${amountDue.toFixed(2)}` : 'Select collection time'}
       </SHCButton>
@@ -460,7 +480,7 @@ export default function CheckoutPage() {
             size="lg"
             onClick={doCheckout}
             disabled={!checkoutReady || placing}
-            testID="complete-checkout-web-mobile"
+            testID="do-checkout"
           >
             {placing ? 'Placing…' : effectiveSlot ? 'Pay with PayNow' : 'Select collection time'}
           </SHCButton>
@@ -484,7 +504,7 @@ function AllergenGateTrayContentWeb({ onConfirm }: { onConfirm: () => void }) {
         size="lg"
         disabled={!localAck}
         onClick={onConfirm}
-        testID="allergen-tray-confirm-web"
+        testID="allergen-tray-confirm"
       >
         I understand — continue
       </SHCButton>

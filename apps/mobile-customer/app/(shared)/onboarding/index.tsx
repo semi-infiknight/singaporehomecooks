@@ -53,12 +53,12 @@ export default function CustomerOnboardingScreen() {
   const isLast = step === STEPS.length - 1;
   const current = STEPS[step];
 
-  const exploreGuest = async () => {
-    await markOnboardingSeen();
+  const exploreGuest = () => {
+    void markOnboardingSeen();
     router.replace('/(customer)' as any);
   };
-  const goAuth = async () => {
-    await markOnboardingSeen();
+  const goAuth = () => {
+    void markOnboardingSeen();
     router.push('/(shared)/auth' as any);
   };
 

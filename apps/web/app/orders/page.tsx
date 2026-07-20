@@ -16,7 +16,6 @@ import {
   cardsForDate,
   collectOrderDates,
   monthLabelForDate,
-  dayOrderStatusChip,
   primaryActionLabel,
   buildManageOrderQuery,
   emptyOrdersDayCopy,
@@ -37,6 +36,8 @@ import {
   SHCSkeletonOrderList,
   SHCSkeletonOrdersDayScreen,
   OrdersCalendarStrip,
+  TiffinOrderStatusCard,
+  type TiffinOrderCardStatus,
 } from '../components/SHCWebComponents';
 
 export default function OrdersList() {
@@ -197,85 +198,35 @@ export default function OrdersList() {
 
           <div className="space-y-3">
             {dayCards.map((card) => {
-              const chip = dayOrderStatusChip(card.status);
               const action = primaryActionLabel(card);
               return (
-                <div
-                  key={card.id}
-                  className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]"
-                  data-testid={`orders-day-card-${card.id}`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span
-                      className="text-[11px] font-extrabold px-2 py-1 rounded-md"
-                      style={{ background: chip.bg, color: chip.color }}
+                <div key={card.id} className="space-y-2">
+                  <TiffinOrderStatusCard
+                    cookName={card.cookName}
+                    planTitle={card.planTitle}
+                    status={card.status as TiffinOrderCardStatus}
+                    timeslot={card.timeslot}
+                    menuLines={card.menuLines}
+                    customizable={card.customizable && card.status === 'scheduled'}
+                    menuPending={card.menuPending}
+                    onManage={() => onManage(card)}
+                    manageLabel={action}
+                    onSkip={
+                      card.kind === 'tiffin' && card.status === 'scheduled'
+                        ? () => skipMut.mutate({ collectionDate: card.collectionDate })
+                        : undefined
+                    }
+                    testID={`orders-day-card-${card.id}`}
+                  />
+                  {card.kind === 'one_off' && card.hrefOrderId ? (
+                    <Link
+                      href={`/chat/${card.hrefOrderId}`}
+                      className="block text-sm font-bold text-primary pl-1"
+                      data-testid={`orders-chat-link-${card.id}`}
                     >
-                      {chip.label}
-                    </span>
-                    <span className="text-xs font-bold text-muted-foreground tabular-nums">
-                      {card.timeslot}
-                    </span>
-                  </div>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-black text-foreground truncate">{card.cookName}</p>
-                      <p className="text-sm font-semibold text-muted-foreground">{card.planTitle}</p>
-                    </div>
-                    {card.customizable && card.status === 'scheduled' ? (
-                      <span
-                        className="shrink-0 text-[10px] font-black text-primary uppercase tracking-wide"
-                        data-testid="orders-customizable-tag"
-                      >
-                        Customizable
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-3 rounded-xl bg-secondary/60 border border-[var(--shc-border-brutal)]/40 p-3">
-                    <p className="text-[11px] font-extrabold text-muted-foreground mb-1">
-                      Today&apos;s menu
-                    </p>
-                    {card.menuPending ? (
-                      <p className="text-sm font-semibold text-muted-foreground italic">
-                        Menu yet to be updated
-                      </p>
-                    ) : (
-                      <ul className="space-y-0.5">
-                        {card.menuLines.map((line) => (
-                          <li key={line} className="text-sm font-semibold">
-                            · {line}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-                    <SHCButton size="sm" variant="outline" onClick={() => onManage(card)}>
-                      {action}
-                    </SHCButton>
-                    {card.kind === 'tiffin' && card.status === 'scheduled' && (
-                      <SHCButton
-                        size="sm"
-                        variant="outline"
-                        testID={`orders-skip-${card.id}`}
-                        onClick={() =>
-                          skipMut.mutate({ collectionDate: card.collectionDate })
-                        }
-                        disabled={skipMut.isPending}
-                      >
-                        Skip day
-                      </SHCButton>
-                    )}
-                    {card.kind === 'one_off' && card.hrefOrderId && (
-                      <Link
-                        href={`/orders/${card.hrefOrderId}`}
-                        className="text-xs font-bold text-primary self-center ml-auto"
-                      >
-                        Details →
-                      </Link>
-                    )}
-                  </div>
+                      Chat with cook
+                    </Link>
+                  ) : null}
                 </div>
               );
             })}

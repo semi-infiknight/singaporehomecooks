@@ -10,9 +10,9 @@
 
 ## Summary of Final Polish + Stitch Deliverables
 1. **EAS + distribution**  
-   - `apps/mobile/eas.json` with dev/preview/prod profiles (internal distribution).  
-   - Mobile + root `package.json` scripts: `eas:build:preview`, `eas:mobile:preview`, submit for iOS/Android.  
-   - Instructions for internal TestFlight + Google Play (see LOCAL_TESTING.md, 03-railway/03-railway.md, `pnpm eas:mobile:preview`).  
+   - `apps/mobile-customer/eas.json` + `apps/mobile-cook/eas.json` with dev/preview/prod profiles.
+   - Root scripts: `pnpm eas:customer:preview`, `pnpm eas:cook:preview`, per-app `eas:build:prod`.
+   - Instructions for internal TestFlight + Google Play (see LOCAL_TESTING.md, `pnpm eas:customer:preview`, `pnpm eas:cook:preview`).  
    - Note: real push (Expo + backend tokens) works in EAS builds. Placeholder projectId in app.json — run `eas init` for real.
 
 2. **Real push notifications**  
@@ -25,7 +25,7 @@
 3. **Full Maestro in CI**  
    - Enhanced e2e/ yamls (comments for CI/device, coverage of PDPA/state/money/credits/push events).  
    - Added `.github/workflows/ci.yml`: `build-test-typecheck` (turbo build/test/typecheck/lint/seed/verify:local) + `maestro-e2e` job (macos notes + stub run; continue-on-error until device farm/EAS secrets; full on integrate branches).  
-   - Local: `maestro test apps/mobile/e2e/*.yaml`.  
+   - Local: Maestro under `apps/mobile-customer/e2e/` and `apps/mobile-cook/e2e/`.  
    - Updated `blueprint/production/testing-strategy.md` (CI pipeline + Maestro details + LOCAL_TESTING cross-ref).
 
 4. **Production deploys + notes**  
@@ -45,7 +45,7 @@
 
 ## Key Files Updated / Owned (per rules)
 - Root: package.json (fixed), STATUS.md (new), LOCAL_TESTING.md, LOCAL_TEST.md (refs), README.md (status), scripts/ (existing), .github/workflows/ci.yml (new)
-- apps/mobile: eas.json (new), app.json (EAS ready), package.json (EAS scripts), lib/api-client.ts + mock-service.ts (push + checkout parity), e2e/*.yaml
+- Split mobile apps: eas.json, package.json EAS scripts, e2e flows under `apps/mobile-customer` + `apps/mobile-cook`
 - apps/medusa: src/api/store/shc/push-token/route.ts (new), carts/demo-complete + checkout-credits (new), carts/[id]/complete/route.ts (polish), modules/shc-cook/service.ts (enhanced reg), subscribers/order-state-change.ts (push sends), other api for parity
 - blueprint/: 03-railway/03-railway.md, production/testing-strategy.md, 13-implementation-phases/phase-7.md + phase-10.md, 06-api-surface/06-api-surface.md, INDEX.md (self-updates + Last Updated)
 
@@ -63,10 +63,9 @@
 pnpm install
 npx tsx scripts/seed.ts --validate
 pnpm verify:local
-pnpm --filter mobile dev   # use DEV bar
-# Real backend + tunnel share (see full section in LOCAL_TESTING.md)
-# EAS internal: pnpm eas:mobile:preview
-# Maestro: maestro test apps/mobile/e2e/*.yaml
+pnpm ios:dev   # Metro customer + cook → Railway API
+# EAS: pnpm eas:customer:preview · pnpm eas:cook:preview
+# Maestro: apps/mobile-customer/e2e/*.yaml
 ```
 
 ## Next (Deferred)

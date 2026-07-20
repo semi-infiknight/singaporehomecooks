@@ -255,8 +255,9 @@ No founder secrets needed yet. Report any issues found in testing for the next s
 
 2. Mobile (Expo - primary, always use for UI):
    ```
-   pnpm --filter mobile dev
-   # or cd apps/mobile && npx expo start
+pnpm --filter mobile-customer start   # :8081
+pnpm --filter mobile-cook start      # :8082
+# or: pnpm ios:dev
    # Scan QR or w for web. Use top DEV switcher for instant customer<->cook.
    ```
 
@@ -275,7 +276,7 @@ No founder secrets needed yet. Report any issues found in testing for the next s
 
 4. Mixed mode (mock vs real):
    - Default: full mock (rule-enforcing, no net).
-   - Toggle real: in code set `setUseRealMedusa(true)` (call from dev tools or edit api-client for session) or `EXPO_PUBLIC_USE_REAL_MEDUSA=true pnpm --filter mobile dev`.
+   - All clients use Railway Medusa (`pnpm env:sync` on install). No mock toggle.
    - Supported real: listCooks/products (/store/shc/*), getOrders, /store/shc/carts/.../complete sim (full cart needs more backend), payment-confirm sim via api-client.simulatePaymentConfirm.
    - Fallback: if no docker / offline / no key, auto to mock + Zod parse on real responses.
    - Demo: start mobile mock for E2E rules; flip toggle, restart app to hit real lists/orders (Medusa must be seeded with matching shc_*).
@@ -301,7 +302,7 @@ No founder secrets needed yet. Report any issues found in testing for the next s
   - Obs: console [OBS] + perf marks in hooks; [SHC-AUDIT] entries with actor/action/before/after/state/money on all muts + medusa routes/subscribers
 - [ ] Real Medusa mixed: with toggle, /store/shc/cooks + products return data (pubkey handled, audit logged); complete order flow falls back gracefully if not 100% wired.
 - [ ] Money/ledger/credits after complete: in sim, order has pdpa/allergen timestamps; earnings 85%; subscriber posts commission ledger; console audits for ops.
-- [ ] Maestro: `maestro test apps/mobile/e2e/onboarding.yaml` and `full-order-fulfil.yaml` (testIDs: search-input, add-to-cart-btn, paynow-ref-input, confirm-paynow, allergen ack, PDPA consent text, order-card etc). Requires device/Expo + maestro CLI.
+- [ ] Maestro: `maestro test apps/mobile-customer/e2e/customer-auth.yaml` and `apps/mobile-cook/e2e/cook-auth.yaml` (Metro :8081/:8082 + device/simulator).
 - [ ] No core contract changes (safe cross-track stitch).
 - [ ] Update any failing -> fix then re-verify.
 
@@ -342,7 +343,7 @@ pnpm install
 EXPO_PUBLIC_USE_REAL_MEDUSA=true \
 EXPO_PUBLIC_MEDUSA_BASE=https://your-tunnel.trycloudflare.com \
 EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_xxx_from_bootstrap \
-cd apps/mobile && npx expo start
+pnpm ios:dev
 ```
 - Install **Expo Go** app on their phone.
 - Scan the QR code that appears.
@@ -364,7 +365,7 @@ See the "Full Local Host Section" above + use `localhost:9000` in the EXPO_PUBLI
 - [x] pnpm verify:local (seed + typecheck + sim flow/money/credits) — passed (manual tsc/vitest equiv for env)
 - [x] pnpm turbo build / test / typecheck (simulated direct + full intent; 97+ business tests + 26 types + mobile clean tsc)
 - [x] Maestro E2E stubs enhanced + .github/workflows/ci.yml (build/test/type + Maestro job + notes for device/cloud)
-- [x] EAS + distribution: apps/mobile/eas.json + scripts (eas:mobile:preview etc) + instructions (TestFlight/Play internal)
+- [x] EAS + distribution: `apps/mobile-customer` + `apps/mobile-cook` eas.json + `pnpm eas:customer:preview` / `pnpm eas:cook:preview`
 - [x] Real push: /store/shc/push-token route + enhanced shc-cook register/get + subscriber sends on paid/ready_for_collection/completed etc + api-client + mock register
 - [x] Production deploys: 03-railway.md enhanced (EAS, push Expo note, PayU stub+KYC deferred, tunnel)
 - [x] Edge polish: real cart/checkout-credits/demo-complete + complete route support pdpa/credits/corporate to match mock exactly (wiring toggle)
@@ -376,11 +377,11 @@ See the "Full Local Host Section" above + use `localhost:9000` in the EXPO_PUBLI
 1. Terminal A: pnpm docker:up (if real)
 2. Terminal B: pnpm medusa:dev ; pnpm bootstrap:medusa ; pnpm seed:medusa
 3. Terminal C: cloudflared tunnel --url http://localhost:9000  → copy https://xxx.trycloudflare.com
-4. Terminal D: EXPO_PUBLIC_USE_REAL_MEDUSA=true EXPO_PUBLIC_MEDUSA_BASE=https://xxx.trycloudflare.com EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY=pk_... pnpm --filter mobile dev
+4. Terminal D: `pnpm ios:dev` (Metro :8081 customer + :8082 cook → Railway API)
 5. (Optional real push test): in app (cook role) or via code call registerPushToken('cook_rose', 'ExponentPushToken[demo-xxx]') — then trigger ready_for_collection etc; see [PUSH] logs in medusa.
 6. Testers: clone, use same EXPO_ + Expo Go; full E2E incl. credits apply at checkout, corporate flag, notif bell, order events triggering backend push stubs, earnings/ledger in Admin.
-7. For EAS: from your machine with Expo acct: pnpm eas:mobile:preview (internal build for share via TestFlight/Play internal; tokens work with tunnel backend).
-- Maestro: `maestro test apps/mobile/e2e/*.yaml` locally on device.
+7. For EAS: `pnpm eas:customer:preview` and/or `pnpm eas:cook:preview` (TestFlight / internal APK).
+- Maestro: `maestro test apps/mobile-customer/e2e/*.yaml` and `apps/mobile-cook/e2e/*.yaml`
 
 **All previous summary gaps addressed.** "Ready for user to host on tunnel and share."
 

@@ -23,6 +23,13 @@ const SKIP_ONBOARDING_PREFIXES = [
   '/content',
 ];
 
+function isCustomerMarketplaceRoute(pathname: string): boolean {
+  if (!pathname || pathname === '/') return true;
+  if (SKIP_ONBOARDING_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return false;
+  if (pathname.startsWith('/cook-portal')) return false;
+  return true;
+}
+
 /**
  * New visitors landing on home → HomelyEats carousel (not sign-in wall).
  * Completing guest/sign-in marks `shc_onboarding_seen_v1` in localStorage.
@@ -35,11 +42,11 @@ function FirstVisitOnboardingGate() {
   useEffect(() => {
     if (loading) return;
     if (user) return;
-    if (SKIP_ONBOARDING_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
-    // Only gate marketplace entry (home) so deep links stay shareable
-    if (pathname !== '/') return;
+    if (pathname.startsWith('/onboarding')) return;
+    if (!isCustomerMarketplaceRoute(pathname)) return;
     if (hasSeenOnboarding()) return;
-    router.replace('/onboarding');
+    const next = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname)}`;
+    router.replace(`/onboarding${next}`);
   }, [loading, user, pathname, router]);
 
   return null;

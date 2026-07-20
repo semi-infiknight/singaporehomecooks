@@ -38,12 +38,15 @@ import {
   formatDropOrderBy,
   formatDropPrice,
   filterCustomerCookingSoonDrops,
+  getDropImageUrl,
   type KitchenReviewSort,
   type KitchenOrderLine,
+  VIRTUAL_KITCHEN_MENU_ROW_HEIGHT,
 } from '@shc/utils';
 import { useCook, useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useDrops } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
+import { useGuestAuthGate } from '../../../lib/useGuestAuthGate';
 import {
   SHCCard,
   SHCButton,
@@ -52,6 +55,7 @@ import {
   KitchenTrustCertsList,
 } from '../../components/SHCWebComponents';
 import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
+import { VirtualRowList } from '../../components/VirtualLists';
 
 type TabId = 'menu' | 'about' | 'hours' | 'reviews';
 
@@ -83,7 +87,8 @@ export default function KitchenPage() {
     [kitchenDropsRaw]
   );
   const { user } = useAuth();
-  const addMut = useAddToCart();
+  const { requireAuth } = useGuestAuthGate();
+  const addMut = useAddToCart({ silent: true });
   const [tab, setTab] = useState<TabId>('menu');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
@@ -140,13 +145,10 @@ export default function KitchenPage() {
 
   const openCustomize = useCallback(
     (dish: Record<string, unknown>) => {
-      if (!user) {
-        router.push(`/login?next=${encodeURIComponent(`/cook/${slug}`)}`);
-        return;
-      }
+      if (!requireAuth('Sign in to add dishes to your cart.', `/cook/${slug}`)) return;
       setCustomizeDish(dish);
     },
-    [user, router, slug]
+    [requireAuth, slug]
   );
 
   const confirmCustomize = useCallback(
@@ -159,6 +161,7 @@ export default function KitchenPage() {
 
   const bumpLineQty = useCallback(
     (productId: string, delta: number) => {
+      if (delta > 0 && !requireAuth('Sign in to add dishes to your cart.', `/cook/${slug}`)) return;
       setOrderLines((prev) => {
         const cur = lineQtyForProduct(prev, productId);
         const next = cur + delta;
@@ -167,7 +170,7 @@ export default function KitchenPage() {
         return setKitchenOrderLineQty(prev, productId, next);
       });
     },
-    [addMut]
+    [addMut, requireAuth, slug]
   );
 
   const orderCta = useMemo(() => formatKitchenOrderCta(orderLines), [orderLines]);
@@ -287,9 +290,18 @@ export default function KitchenPage() {
               type="button"
               data-testid={`kitchen-drop-${d.id}`}
               onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
-              className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] p-4 shadow-[var(--shc-shadow-brutal-sm)]"
+              className="w-full text-left rounded-2xl border border-[var(--shc-border)] bg-card overflow-hidden shadow-[var(--shc-shadow-soft)] hover:opacity-95"
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="relative h-24 w-full bg-muted">
+                <Image
+                  src={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="640px"
+                />
+              </div>
+              <div className="p-4 flex items-start justify-between gap-2">
                 <div>
                   <p className="font-black">{d.title}</p>
                   <p className="text-xs font-semibold text-muted-foreground">
@@ -383,12 +395,17 @@ export default function KitchenPage() {
                       <span className="text-lg font-light text-muted-foreground">{isOpen ? '⌃' : '⌄'}</span>
                     </button>
                     {isOpen && (
-                      <ul className="border-t-2 border-[var(--shc-border-brutal)] divide-y-2 divide-[var(--shc-border-brutal)]">
-                        {section.dishes.map((d) => {
+                      <div className="border-t-2 border-[var(--shc-border-brutal)]">
+                        <VirtualRowList
+                          items={section.dishes}
+                          getKey={(d) => String(d.id)}
+                          rowHeight={VIRTUAL_KITCHEN_MENU_ROW_HEIGHT}
+                          testID={`kitchen-menu-section-list-${section.id}`}
+                          renderItem={(d) => {
                           const price = kitchenDishPriceLabel(d);
                           const qty = lineQtyForProduct(orderLines, String(d.id));
                           return (
-                            <li key={String(d.id)} className="flex gap-3 items-center p-3" data-testid={`kitchen-menu-row-${d.id}`}>
+                            <div className="flex gap-3 items-center p-3 border-b-2 border-[var(--shc-border-brutal)] last:border-b-0" data-testid={`kitchen-menu-row-${d.id}`}>
                               <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-muted">
                                 <Image
                                   src={getDishImageUrl({
@@ -442,10 +459,11 @@ export default function KitchenPage() {
                                   + Add
                                 </SHCButton>
                               )}
-                            </li>
+                            </div>
                           );
-                        })}
-                      </ul>
+                        }}
+                        />
+                      </div>
                     )}
                   </div>
                 );

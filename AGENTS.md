@@ -33,6 +33,19 @@ FLAVOUR=wiring SCOPE=checkout pnpm verify:goal
 pnpm verify:full                            # milestone only
 ```
 
+## Local Mac dev (Railway API + local Metro)
+
+**Backend:** always Railway (`pnpm env:sync` on install). **JS bundle:** local Metro required for iOS/Android sim.
+
+| User asks | Do |
+|-----------|-----|
+| iOS simulator / both apps | **`pnpm ios:dev`** (one-shot; verifies bundles) |
+| Reload after UI edit | `pnpm customer:reload` · `pnpm cook:reload` |
+| Medusa admin / ops | Open `https://medusa-production-d2ba.up.railway.app/app` — **no Docker** |
+| Edit Medusa server code | Only then: `pnpm docker:up` + `pnpm medusa:dev:admin` (user must ask explicitly) |
+
+Redbox `Could not connect to development server` at `127.0.0.1:8081` → `METRO_CLEAR=1 pnpm ios:dev`
+
 ## Subagent delegation
 
 Pass subagents: goal name, `FLAVOUR`, `SCOPE`, and links to relevant blueprint section files. Subagents must self-update blueprint on completion.

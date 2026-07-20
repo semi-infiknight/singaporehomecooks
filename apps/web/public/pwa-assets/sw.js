@@ -1,5 +1,14 @@
-const CACHE_NAME = "shc-web-v2";
+const CACHE_NAME = "shc-web-v3";
 const APP_SHELL = ["/", "/manifest.json", "/icon.png", "/apple-touch-icon.png"];
+
+function resolvePushUrl(data) {
+  if (!data || typeof data !== "object") return "/";
+  if (typeof data.url === "string" && data.url.startsWith("/")) return data.url;
+  const orderId = data.orderId ? String(data.orderId) : "";
+  if (!orderId) return "/";
+  if (data.type === "chat") return `/chat/${orderId}`;
+  return `/orders/${orderId}`;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -51,17 +60,20 @@ self.addEventListener("fetch", (event) => {
 
 self.addEventListener("push", (event) => {
   const payload = event.data?.json?.() || { title: "Singapore Home Cooks", body: "You have a new update." };
+  const routeData = payload.data && typeof payload.data === "object" ? payload.data : {};
+  const url = resolvePushUrl(routeData);
   event.waitUntil(
     self.registration.showNotification(payload.title || "Singapore Home Cooks", {
       body: payload.body || "You have a new update.",
       icon: "/icon.png",
       badge: "/icon.png",
-      data: payload.url || "/",
+      data: { ...routeData, url },
     })
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data || "/"));
+  const target = resolvePushUrl(event.notification.data || {});
+  event.waitUntil(clients.openWindow(target));
 });

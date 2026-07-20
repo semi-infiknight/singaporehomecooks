@@ -108,7 +108,7 @@ EAS TestFlight scripts run mobile guards automatically before upload.
 
 - Root `.github/workflows/ci.yml`: runs `pnpm turbo build && turbo test && turbo typecheck && turbo lint + seed validate + verify:local` on push/PR to main/integrate/*.
 - Maestro job (macos or cloud): documents + runs stub E2E flows (onboarding.yaml, full-order-fulfil.yaml incl. PDPA/state/money/credits, credits-earnings-payout.yaml). 
-- Local: `maestro test apps/mobile/e2e/*.yaml` (Expo dev server running; testIDs on screens/hooks).
+- Local: `maestro test apps/mobile-customer/e2e/*.yaml` and `apps/mobile-cook/e2e/*.yaml` (Expo dev server running; testIDs on screens/hooks).
 - Device/cloud: Use Maestro Cloud (MAESTRO_CLOUD_TOKEN), EAS builds + device farm, or self-hosted macOS runner with simulators. Non-blocking in initial CI until secrets/device parity.
 - See LOCAL_TESTING.md for "how to share via tunnel" + full checklist including Maestro.
 - Mobile test script placeholder ready for jest + Maestro integration. All per phase-7/10 + stitching.

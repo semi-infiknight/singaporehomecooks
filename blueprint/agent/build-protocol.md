@@ -73,7 +73,7 @@ A **Turborepo** marketplace with three client surfaces and one Railway backend:
 
 Shared: `packages/shc-types`, `business-rules`, `shc-api-client`, `shc-ui`, `shc-utils`.
 
-**Deprecated:** `apps/mobile` — never add features there.
+**Removed:** legacy unified `apps/mobile` (Expo 51). Use `mobile-customer` + `mobile-cook` only.
 
 ---
 

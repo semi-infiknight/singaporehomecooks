@@ -33,3 +33,4 @@ export * from './order-chat';
 export * from './notifications';
 export * from './drop-display';
 export * from './compliance-courses';
+export * from './virtual-grid';

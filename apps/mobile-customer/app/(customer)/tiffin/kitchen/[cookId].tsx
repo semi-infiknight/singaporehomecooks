@@ -2,8 +2,8 @@
  * Tiffin kitchen page — HomelyEats restaurant IA + plan subscribe.
  * Hero · rating · open · plans · full menu · sticky subscribe CTA.
  */
-import React, { useState, useMemo } from 'react';
-import { View, ScrollView, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -20,7 +20,6 @@ import {
 } from '@shc/ui';
 import {
   getCookKitchenHeroUrl,
-  getDishImageUrl,
   kitchenOpenStatus,
   kitchenTagList,
   kitchenTiffinPlanRows,
@@ -34,6 +33,15 @@ import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
 import { useTiffinKitchen, useSubscribeTiffin } from '../../../../hooks/useTiffin';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useGuestAuthTray } from '../../../../hooks/useGuestAuthTray';
+import { VirtualRowFlashList } from '../../../../components/VirtualLists';
+
+type TiffinDishRow = {
+  id: string;
+  name: string;
+  price?: number;
+  cuisine?: string;
+  image_url?: string;
+};
 
 export default function TiffinKitchenScreen() {
   const { cookId } = useLocalSearchParams<{ cookId: string }>();
@@ -62,13 +70,17 @@ export default function TiffinKitchenScreen() {
     }
   }, [kitchen?.meals_per_week_options]);
 
-  const dishes = (kitchen?.dishes || []).map((d: any) => ({
-    id: d.id,
-    name: d.name,
-    price: d.price,
-    cuisine: d.cuisine,
-    image_url: d.image_url,
-  }));
+  const dishes: TiffinDishRow[] = useMemo(
+    () =>
+      (kitchen?.dishes || []).map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        price: d.price,
+        cuisine: d.cuisine,
+        image_url: d.image_url,
+      })),
+    [kitchen?.dishes]
+  );
 
   const cookName = kitchen?.cook?.display_name || 'Kitchen';
   const cookMeta = {
@@ -114,9 +126,27 @@ export default function TiffinKitchenScreen() {
     }
   };
 
+  const openMenu = useCallback(() => {
+    router.push(`/(customer)/tiffin/menu?cookId=${cookId}` as any);
+  }, [router, cookId]);
+
+  const renderDish = useCallback(
+    (d: TiffinDishRow) => (
+      <SHCTiffinMenuListItem
+        dish={d}
+        subtitle={d.cuisine ? `${d.cuisine} heritage recipe` : 'Home-cooked'}
+        onPress={openMenu}
+      />
+    ),
+    [openMenu]
+  );
+
   if (isLoading) {
     return (
-      <View style={[styles.screen, { paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md }]}>
+      <View
+        style={[styles.screen, { paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md }]}
+        testID="tiffin-kitchen-screen"
+      >
         <SHCSkeletonBone height={180} radius={16} style={{ marginBottom: shcSpacing.md }} />
         <SHCSkeletonBone height={22} width="60%" style={{ marginBottom: 8 }} />
         <SHCSkeletonBone height={14} width="40%" style={{ marginBottom: shcSpacing.md }} />
@@ -134,131 +164,132 @@ export default function TiffinKitchenScreen() {
     );
   }
 
+  const ListHeader = (
+    <>
+      <View style={styles.topBar}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn} testID="kitchen-back-btn">
+          <Text style={styles.backText}>‹</Text>
+        </Pressable>
+        <Text style={styles.topTitle} numberOfLines={1} testID="kitchen-page-title">
+          {cookName}
+        </Text>
+        <View style={styles.backBtn} />
+      </View>
+
+      <SHCTiffinKitchenHero
+        cookId={String(cookId)}
+        cookName={cookName}
+        tagline={kitchen.tagline || `${kitchen.cook?.area || 'Singapore'} · home-cooked tiffin`}
+        imageUri={getCookKitchenHeroUrl(String(cookId))}
+        rating={Number(cookMeta.rating)}
+        reviewCount={cookMeta.review_count != null ? Number(cookMeta.review_count) : undefined}
+        isOpen={open.isOpen}
+        openDetail={open.detail}
+        tags={tags}
+        story={kitchen.cook?.story || kitchen.tagline}
+        testID="kitchen-page-hero"
+      />
+
+      <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
+      <Text style={styles.sectionHint} testID="kitchen-plans-hint">
+        Choose meals per week — same kitchen every collection.
+      </Text>
+      <SHCTiffinMealsPicker options={mealsOptions} selected={mealsPerWeek} onSelect={setMealsPerWeek} />
+      <View testID="kitchen-plan-rows">
+        {planRows.map((row) => (
+          <Text key={row.meals} style={styles.planMeta}>
+            {row.label} · S${row.pricePerMeal.toFixed(2)}/meal
+          </Text>
+        ))}
+      </View>
+
+      <Text style={styles.sectionHint}>Select plan duration</Text>
+      <View style={styles.durationRow} testID="tiffin-plan-duration">
+        {durationOpts.map((d) => {
+          const active = d.id === planDuration;
+          return (
+            <Pressable
+              key={d.id}
+              onPress={() => setPlanDuration(d.id)}
+              style={[styles.durationChip, active && styles.durationChipOn]}
+              testID={`tiffin-duration-${d.id}`}
+            >
+              <Text style={[styles.durationLabel, active && styles.durationLabelOn]}>{d.label}</Text>
+              <Text style={[styles.durationHint, active && styles.durationLabelOn]} numberOfLines={2}>
+                {d.hint}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={styles.durationTotal} testID="tiffin-duration-total">
+        Plan estimate · {selectedDuration.label}: S${durationTotal.toFixed(2)}
+      </Text>
+
+      <SHCTiffinOrderSummary mealsPerWeek={mealsPerWeek} />
+
+      <GourmeatSectionTitle
+        title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
+        testID="kitchen-menu-header"
+      />
+      <Text style={styles.sectionHint}>Pick dishes when you build your weekly plan after subscribe.</Text>
+      {dishes[0] ? (
+        <GourmeatPrimaryButton
+          label="Order once (try without plan)"
+          variant="outline"
+          onPress={() => router.push(`/(customer)/product/${encodeURIComponent(dishes[0].id)}` as any)}
+          testID="kitchen-order-once-btn"
+          style={{ marginBottom: shcSpacing.sm }}
+        />
+      ) : null}
+    </>
+  );
+
+  const ListFooter = (
+    <>
+      <Text style={styles.collectionHint} testID="kitchen-collection-days">
+        Collection days:{' '}
+        {(kitchen.collection_days || [])
+          .map((d: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
+          .join(', ')}
+      </Text>
+      <Text style={styles.sectionHint} testID="kitchen-subscriber-proof">
+        👤 {kitchenSubscriberLabel(kitchen.subscriber_count)}
+      </Text>
+
+      <Text style={styles.sectionTitle}>Why subscribe</Text>
+      {subscribeTrustChips({
+        area: kitchen?.cook?.area,
+        cookName,
+      }).map((c) => (
+        <View key={c.id} style={styles.trustCard} testID={`subscribe-trust-${c.id}`}>
+          <Text style={styles.trustTitle}>✓ {c.label}</Text>
+          <Text style={styles.sectionHint}>{c.detail}</Text>
+        </View>
+      ))}
+    </>
+  );
+
   return (
     <View style={styles.screen} testID="tiffin-kitchen-screen">
-      <ScrollView
+      <VirtualRowFlashList
+        data={dishes}
+        testID="kitchen-menu-list"
+        keyExtractor={(d) => d.id}
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
         contentContainerStyle={{
           paddingTop: insets.top + shcSpacing.sm,
           paddingHorizontal: shcSpacing.md,
-          paddingBottom: 140,
+          paddingBottom: 140 + Math.max(insets.bottom, 12),
         }}
-      >
-        <View style={styles.topBar}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn} testID="kitchen-back-btn">
-            <Text style={styles.backText}>‹</Text>
-          </Pressable>
-          <Text style={styles.topTitle} numberOfLines={1} testID="kitchen-page-title">
-            {cookName}
-          </Text>
-          <View style={styles.backBtn} />
-        </View>
-
-        <SHCTiffinKitchenHero
-          cookId={String(cookId)}
-          cookName={cookName}
-          tagline={
-            kitchen.tagline || `${kitchen.cook?.area || 'Singapore'} · home-cooked tiffin`
-          }
-          imageUri={getCookKitchenHeroUrl(String(cookId))}
-          rating={Number(cookMeta.rating)}
-          reviewCount={cookMeta.review_count != null ? Number(cookMeta.review_count) : undefined}
-          isOpen={open.isOpen}
-          openDetail={open.detail}
-          tags={tags}
-          story={kitchen.cook?.story || kitchen.tagline}
-          testID="kitchen-page-hero"
-        />
-
-        <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
-        <Text style={styles.sectionHint} testID="kitchen-plans-hint">
-          Choose meals per week — same kitchen every collection.
-        </Text>
-        <SHCTiffinMealsPicker options={mealsOptions} selected={mealsPerWeek} onSelect={setMealsPerWeek} />
-        <View testID="kitchen-plan-rows">
-          {planRows.map((row) => (
-            <Text key={row.meals} style={styles.planMeta}>
-              {row.label} · S${row.pricePerMeal.toFixed(2)}/meal
-            </Text>
-          ))}
-        </View>
-
-        <Text style={styles.sectionHint}>Select plan duration</Text>
-        <View style={styles.durationRow} testID="tiffin-plan-duration">
-          {durationOpts.map((d) => {
-            const active = d.id === planDuration;
-            return (
-              <Pressable
-                key={d.id}
-                onPress={() => setPlanDuration(d.id)}
-                style={[styles.durationChip, active && styles.durationChipOn]}
-                testID={`tiffin-duration-${d.id}`}
-              >
-                <Text style={[styles.durationLabel, active && styles.durationLabelOn]}>{d.label}</Text>
-                <Text style={[styles.durationHint, active && styles.durationLabelOn]} numberOfLines={2}>
-                  {d.hint}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={styles.durationTotal} testID="tiffin-duration-total">
-          Plan estimate · {selectedDuration.label}: S${durationTotal.toFixed(2)}
-        </Text>
-
-        <SHCTiffinOrderSummary mealsPerWeek={mealsPerWeek} />
-
-        <GourmeatSectionTitle
-          title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
-          testID="kitchen-menu-header"
-        />
-        <Text style={styles.sectionHint}>Pick dishes when you build your weekly plan after subscribe.</Text>
-        {dishes[0] ? (
-          <GourmeatPrimaryButton
-            label="Order once (try without plan)"
-            variant="outline"
-            onPress={() =>
-              router.push(`/(customer)/product/${encodeURIComponent(dishes[0].id)}` as any)
-            }
-            testID="kitchen-order-once-btn"
-            style={{ marginBottom: shcSpacing.sm }}
-          />
-        ) : null}
-        {dishes.length === 0 ? (
+        renderItem={renderDish}
+        ListEmptyComponent={
           <Text style={styles.empty} testID="kitchen-menu-empty">
             No tiffin dishes listed for this kitchen yet.
           </Text>
-        ) : (
-          dishes.map((d: { id: string; name: string; price?: number; cuisine?: string }) => (
-            <SHCTiffinMenuListItem
-              key={d.id}
-              dish={d}
-              subtitle={d.cuisine ? `${d.cuisine} heritage recipe` : 'Home-cooked'}
-              onPress={() => router.push(`/(customer)/tiffin/menu?cookId=${cookId}` as any)}
-            />
-          ))
-        )}
-
-        <Text style={styles.collectionHint} testID="kitchen-collection-days">
-          Collection days:{' '}
-          {(kitchen.collection_days || [])
-            .map((d: number) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d])
-            .join(', ')}
-        </Text>
-        <Text style={styles.sectionHint} testID="kitchen-subscriber-proof">
-          👤 {kitchenSubscriberLabel(kitchen.subscriber_count)}
-        </Text>
-
-        <Text style={styles.sectionTitle}>Why subscribe</Text>
-        {subscribeTrustChips({
-          area: kitchen?.cook?.area,
-          cookName,
-        }).map((c) => (
-          <View key={c.id} style={styles.trustCard} testID={`subscribe-trust-${c.id}`}>
-            <Text style={styles.trustTitle}>✓ {c.label}</Text>
-            <Text style={styles.sectionHint}>{c.detail}</Text>
-          </View>
-        ))}
-      </ScrollView>
+        }
+      />
 
       <View
         style={[

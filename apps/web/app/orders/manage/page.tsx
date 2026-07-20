@@ -338,7 +338,7 @@ function ManageOrderInner() {
           if (!res.download_url) throw new Error('No invoice download URL from server');
           window.open(res.download_url, '_blank', 'noopener,noreferrer');
         }}
-        onChat={(oid) => router.push(`/orders/${oid}#order-chat-section`)}
+        onChat={(oid) => router.push(`/chat/${oid}`)}
         submitOrderDispute={submitOrderDispute}
         disputes={disputes}
       />

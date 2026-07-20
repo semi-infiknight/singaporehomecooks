@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useProducts, useAddToCart } from '../lib/useProducts';
 import { useOrders, useDrops } from '../lib/useOrder';
 import { useAuth } from '../lib/useAuth';
+import { useGuestAuthGate } from '../lib/useGuestAuthGate';
 import { useDiscoverSearch } from './providers';
 import {
   extractReorderDishes,
@@ -25,6 +26,8 @@ import {
   formatDropOrderBy,
   formatDropPrice,
   filterCustomerCookingSoonDrops,
+  getDropImageUrl,
+  getCookKitchenHeroUrl,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -46,12 +49,17 @@ import {
   FilterChipRow,
   SearchResultsPanel,
   RequestDishHomeCTA,
+  TiffinHeroBanner,
+  TiffinFilterChips,
+  TiffinKitchenCard,
+  PromoRail,
   type DishCardProduct,
 } from './components/SHCWebComponents';
+import { VirtualDishGrid } from './components/VirtualLists';
 
 const occasions = [
   { id: '', label: 'All' },
-  ...['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Christmas'].map((o) => ({
+  ...['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'].map((o) => ({
     id: o,
     label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
     imageUrl: getOccasionImageUrl(o),
@@ -75,26 +83,72 @@ function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: numb
 
 export default function DiscoverHome() {
   const router = useRouter();
+  const qc = useQueryClient();
   const { user } = useAuth();
+  const { requireAuth } = useGuestAuthGate();
   const { query, setQuery } = useDiscoverSearch();
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
   const [promoDismissed, setPromoDismissed] = useState(false);
-  const { data: products, isLoading } = useProducts('');
+  const [refreshing, setRefreshing] = useState(false);
+  const pullStartY = useRef(0);
+  const { data: products, isLoading, refetch: refetchProducts } = useProducts('');
   const productListRaw = products ?? [];
   const { data: orders = [] } = useOrders();
-  const { data: dropsRaw, isLoading: dropsLoading } = useDrops();
+  const { data: dropsRaw, isLoading: dropsLoading, refetch: refetchDrops } = useDrops();
   const drops = useMemo(
     () => filterCustomerCookingSoonDrops((dropsRaw as { cook_date?: string; status?: string }[]) || []),
     [dropsRaw]
   );
-  const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
+  const { data: cooks, isLoading: cooksLoading, refetch: refetchCooks } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
+
+  const refreshDiscover = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchProducts(),
+        refetchDrops(),
+        refetchCooks(),
+        qc.invalidateQueries({ queryKey: ['drops'] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [qc, refetchCooks, refetchDrops, refetchProducts]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void refetchDrops();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refetchDrops]);
+
+  useEffect(() => {
+    const onTouchStart = (e: TouchEvent) => {
+      if (window.scrollY <= 0) pullStartY.current = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (window.scrollY > 0 || refreshing) return;
+      const endY = e.changedTouches[0]?.clientY ?? 0;
+      if (endY - pullStartY.current > 72) void refreshDiscover();
+    };
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [refreshDiscover, refreshing]);
+
   const productList = useMemo(
     () => resolveDiscoverProductsForDisplay(productListRaw as DishCardProduct[], { evidence: evidenceMode }),
     [productListRaw, evidenceMode]
@@ -162,13 +216,10 @@ export default function DiscoverHome() {
 
   const handleAddToCart = useCallback(
     (productId: string, qty = 1) => {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
+      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
       addMut.mutate({ productId, qty });
     },
-    [addMut, router, user]
+    [addMut, requireAuth]
   );
 
   const handleFavorite = useCallback(
@@ -188,8 +239,13 @@ export default function DiscoverHome() {
     <section
       id="discover"
       className="max-w-6xl mx-auto px-4 py-4 md:py-6 shc-tab-bar-pad md:pb-8"
-      data-testid="customer-discover-screen discover-home"
+      data-testid="customer-discover-screen"
     >
+      {refreshing ? (
+        <p className="text-center text-xs font-bold text-primary mb-2" data-testid="discover-refresh-indicator">
+          Refreshing…
+        </p>
+      ) : null}
       {/* Mobile chrome — desktop uses AppHeader */}
       <div className="md:hidden">
         <GourmeatHomeHeader
@@ -228,7 +284,7 @@ export default function DiscoverHome() {
 
       {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
       {!query.trim() && !promoDismissed && (
-        <div className="relative" data-testid="home-tiffin-promo">
+        <div className="relative mb-4" data-testid="home-tiffin-promo">
           <button
             type="button"
             onClick={() => setPromoDismissed(true)}
@@ -238,19 +294,15 @@ export default function DiscoverHome() {
           >
             ✕
           </button>
-          <button
-            type="button"
-            onClick={() => router.push('/tiffin')}
-            className="w-full text-left rounded-2xl p-4 text-white shadow-[var(--shc-shadow-brutal-sm)]"
-            style={{ background: 'var(--shc-gourmeat-primary, #F87048)' }}
-          >
-            <p className="font-black text-lg">No time to cook?</p>
-            <p className="font-extrabold text-base opacity-95 mb-2">Explore tiffin plans ✨</p>
-            <ul className="text-sm font-semibold space-y-0.5 opacity-90">
-              <li>· Weekly home-cooked meals from one kitchen</li>
-              <li>· Or keep scrolling for single dishes &amp; events</li>
-              <li>· Flexible 2 · 3 · 4 meals per week</li>
-            </ul>
+          <button type="button" onClick={() => router.push('/tiffin')} className="w-full text-left">
+            <TiffinHeroBanner
+              highlight="Explore tiffin plans ✨"
+              bullets={[
+                'Weekly home-cooked meals from one kitchen',
+                'Or keep scrolling for single dishes & events',
+                'Flexible 2 · 3 · 4 meals per week',
+              ]}
+            />
           </button>
         </div>
       )}
@@ -275,24 +327,15 @@ export default function DiscoverHome() {
       {!query.trim() && (
         <div className="shc-section-gap mb-4">
           <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-2" data-testid="home-order-mode-chips">
-            {ORDER_MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => {
-                  setOrderMode(m.id);
-                  if (m.id === 'one-off') setOccasionFilter('');
-                }}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-bold border-2 ${
-                  orderMode === m.id
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card border-[var(--shc-border-brutal)]'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+          <div className="mb-2" data-testid="home-order-mode-chips">
+            <TiffinFilterChips
+              chips={ORDER_MODES}
+              activeId={orderMode}
+              onSelect={(id) => {
+                setOrderMode(id);
+                if (id === 'one-off') setOccasionFilter('');
+              }}
+            />
           </div>
           {(orderMode === 'popular' || orderMode === 'one-off') && reorderDishes.length > 0 && (
             <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
@@ -320,58 +363,40 @@ export default function DiscoverHome() {
 
       {/* Event / occasion rail — one-off party ordering */}
       {!query.trim() && (
-        <div className="flex gap-3 overflow-x-auto pb-2 mb-4 scrollbar-hide" data-testid="home-event-rail">
-          {[
-            {
-              id: 'hari-raya',
-              title: 'Hari Raya spreads',
-              subtitle: 'Order for the open house',
-              imageUrl: PROMO_BANNER_IMAGES.hariRaya,
-              badge: 'Event',
-            },
-            {
-              id: 'cny',
-              title: 'CNY reunion',
-              subtitle: 'Plan 2 weeks ahead',
-              imageUrl: PROMO_BANNER_IMAGES.family,
-              badge: 'Event',
-            },
-            {
-              id: 'request',
-              title: 'Request a dish',
-              subtitle: 'Custom occasion menu',
-              imageUrl: PROMO_BANNER_IMAGES.request,
-              badge: 'Custom',
-            },
-          ].map((promo) => (
-            <button
-              key={promo.id}
-              type="button"
-              onClick={() => {
-                if (promo.id === 'hari-raya') {
-                  setOrderMode('occasion');
-                  setOccasionFilter('Hari Raya');
-                } else if (promo.id === 'cny') {
-                  setOrderMode('occasion');
-                  setOccasionFilter('Chinese New Year');
-                } else {
-                  router.push('/request');
-                }
-              }}
-              className="relative shrink-0 w-[260px] h-[100px] rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] text-left"
-            >
-              <Image src={promo.imageUrl} alt="" fill className="object-cover" sizes="260px" />
-              <div className="relative z-10 flex flex-col justify-between h-full p-3 bg-[rgba(36,24,18,0.45)]">
-                <span className="self-end text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded border border-[var(--shc-border-brutal)]">
-                  {promo.badge}
-                </span>
-                <div>
-                  <div className="font-black text-white text-sm">{promo.title}</div>
-                  <div className="text-[11px] font-semibold text-white/90 mt-0.5">{promo.subtitle}</div>
-                </div>
-              </div>
-            </button>
-          ))}
+        <div className="mb-4 px-0" data-testid="home-event-rail">
+          <PromoRail
+            promos={[
+              {
+                id: 'hari-raya',
+                title: 'Hari Raya spreads',
+                subtitle: 'Order for the open house',
+                imageUrl: PROMO_BANNER_IMAGES.hariRaya,
+                badge: 'Event',
+                iconKey: 'people',
+              },
+              {
+                id: 'cny',
+                title: 'CNY reunion',
+                subtitle: 'Plan 2 weeks ahead',
+                imageUrl: PROMO_BANNER_IMAGES.family,
+                badge: 'Event',
+                iconKey: 'people',
+              },
+              {
+                id: 'request',
+                title: 'Request a dish',
+                subtitle: 'Custom occasion menu',
+                imageUrl: PROMO_BANNER_IMAGES.request,
+                badge: 'Custom',
+                iconKey: 'discover',
+              },
+            ]}
+            onPromoPress={(id) => {
+              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
+              else if (id === 'cny') setOccasionFilter('Chinese New Year');
+              else router.push('/request');
+            }}
+          />
         </div>
       )}
 
@@ -389,20 +414,28 @@ export default function DiscoverHome() {
                   type="button"
                   data-testid={`home-drop-${d.id}`}
                   onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
-                  className="snap-start shrink-0 w-[260px] rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 text-left shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
+                  className="snap-start shrink-0 w-[240px] rounded-2xl border-2 border-[var(--shc-border)] bg-card overflow-hidden text-left shadow-[var(--shc-shadow-soft)] hover:opacity-95"
                 >
-                  <p className="text-[11px] font-black uppercase tracking-wide text-primary">Cooking soon</p>
-                  <p className="mt-1 font-black text-foreground line-clamp-1">{d.title}</p>
-                  <p className="text-xs font-semibold text-muted-foreground line-clamp-1">
-                    {d.cook_name || 'Home kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
-                  </p>
-                  <p className="mt-2 text-sm font-extrabold text-primary">{formatDropPrice(d.price_cents, d.price)}</p>
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    {d.remaining_qty ?? d.max_qty - (d.ordered_qty || 0)} left · by {formatDropOrderBy(d.order_by)}
-                  </p>
-                  <span className="mt-3 inline-block rounded-xl bg-primary px-3 py-1.5 text-xs font-extrabold text-primary-foreground">
-                    Order
-                  </span>
+                  <div className="relative h-24 w-full bg-muted">
+                    <Image
+                      src={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="240px"
+                    />
+                  </div>
+                  <div className="p-3.5">
+                    <p className="text-[11px] font-black uppercase tracking-wide text-primary">Cooking soon</p>
+                    <p className="mt-1 font-black text-base text-foreground line-clamp-1">{d.title}</p>
+                    <p className="text-xs font-semibold text-muted-foreground line-clamp-1">
+                      {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
+                    </p>
+                    <p className="mt-2 text-sm font-extrabold text-primary">{formatDropPrice(d.price_cents, d.price)}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground">
+                      {d.remaining_qty ?? d.max_qty - (d.ordered_qty || 0)} left · by {formatDropOrderBy(d.order_by)}
+                    </p>
+                  </div>
                 </button>
               ))}
             </div>
@@ -445,47 +478,29 @@ export default function DiscoverHome() {
             }}
             testID="discover-filter-chips"
           />
-          <ul className="space-y-3 mt-3">
+          <ul className="mt-3">
             {cookList.slice(0, 4).map((c) => {
               const id = String(c.id || c.slug || '');
               const name = String(c.display_name || c.name || 'Home kitchen');
               const slug = String(c.slug || c.id || '');
-              const cover = getCookAvatarUrl(id, name);
               return (
                 <li key={id || slug}>
-                  <button
-                    type="button"
-                    data-testid={`home-kitchen-${id}`}
-                    className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95 transition-opacity"
-                    onClick={() => {
+                  <TiffinKitchenCard
+                    cookId={id || slug}
+                    cookName={name}
+                    area={c.area ? String(c.area) : undefined}
+                    tagline={c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
+                    coverUri={getCookKitchenHeroUrl(id || slug)}
+                    rating={c.rating != null ? Number(c.rating) : 4.8}
+                    reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
+                    subscriberCount={c.subscriber_count != null ? Number(c.subscriber_count) : undefined}
+                    isOpen
+                    closesAt="HDB collection"
+                    onPress={() => {
                       if (slug) router.push(`/cook/${slug}`);
                     }}
-                  >
-                    <div className="relative h-36 w-full bg-muted">
-                      <Image src={cover} alt="" fill className="object-cover" sizes="640px" />
-                    </div>
-                    <div className="p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-black text-foreground truncate flex-1">{name}</p>
-                        <span className="text-xs font-bold shrink-0">
-                          ★ {c.rating != null ? Number(c.rating).toFixed(1) : '4.8'}
-                          {c.review_count != null ? ` (${c.review_count})` : ''}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground font-semibold line-clamp-1 mt-0.5">
-                        {c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
-                        {c.area ? ` · ${String(c.area)}` : ''}
-                      </p>
-                      <p className="text-sm font-extrabold text-green-700 mt-1">
-                        Open <span className="text-muted-foreground font-semibold">· HDB collection</span>
-                      </p>
-                      {c.subscriber_count != null && (
-                        <p className="text-xs font-semibold text-muted-foreground mt-1">
-                          👤 {String(c.subscriber_count)} subscribers
-                        </p>
-                      )}
-                    </div>
-                  </button>
+                    testID={`home-kitchen-${id}`}
+                  />
                 </li>
               );
             })}
@@ -524,7 +539,7 @@ export default function DiscoverHome() {
         testID="all-dishes-header"
       />
       <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">
-        Add to cart for one meal · tiffin plans are in the banner above
+        Add to cart for one meal · switch to tiffin above for weekly plans
       </p>
 
       {isLoading && <SHCSkeletonGrid />}
@@ -548,23 +563,18 @@ export default function DiscoverHome() {
       )}
 
       {!isLoading && gridProducts.length > 0 && (
-        <div className="grid grid-cols-2 gap-3" data-testid="dish-list-container">
-          {gridProducts.map((p) => (
-            <GourmeatDishCard
-              key={p.id}
-              product={p}
-              isFavorite={isFavorite(p.id)}
-              onFavoritePress={() => handleFavorite(p)}
-              onAddPress={() => handleAddToCart(p.id, 1)}
-            />
-          ))}
-        </div>
+        <VirtualDishGrid
+          products={gridProducts}
+          isFavorite={isFavorite}
+          onFavoritePress={handleFavorite}
+          onAddPress={(id) => handleAddToCart(id, 1)}
+        />
       )}
 
       {!query.trim() && <RequestDishHomeCTA />}
 
-      <div className="mt-8 text-center md:block hidden">
-        <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline">
+      <div className="mt-8 text-center">
+        <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline" data-testid="discover-trust-link">
           Trust &amp; Safety →
         </Link>
       </div>

@@ -68,6 +68,7 @@ import {
   type KitchenOrderLine,
   type KitchenMealCustomizeDraft,
 } from '@shc/utils';
+import { VirtualRowFlashList } from '../../../../components/VirtualLists';
 import { useCook, useDiscovery, useAddToCart } from '../../../../hooks/useProducts';
 import { useDrops } from '../../../../hooks/useOrder';
 import { useGuestAuthGate } from '../../../../hooks/useGuestAuthGate';
@@ -339,11 +340,16 @@ export default function KitchenPage() {
                       </View>
                       <Text style={styles.chevron}>{isOpen ? '⌃' : '⌄'}</Text>
                     </Pressable>
-                    {isOpen &&
-                      section.dishes.map((d) => {
+                    {isOpen && (
+                      <VirtualRowFlashList
+                        data={section.dishes}
+                        scrollEnabled={false}
+                        keyExtractor={(d) => String(d.id)}
+                        testID={`kitchen-menu-section-list-${section.id}`}
+                        renderItem={(d) => {
                         const qty = lineQtyForProduct(orderLines, String(d.id));
                         return (
-                          <View key={String(d.id)} style={styles.dishRow} testID={`kitchen-menu-row-${d.id}`}>
+                          <View style={styles.dishRow} testID={`kitchen-menu-row-${d.id}`}>
                             <Image
                               source={{
                                 uri: getDishImageUrl({
@@ -386,7 +392,9 @@ export default function KitchenPage() {
                             )}
                           </View>
                         );
-                      })}
+                      }}
+                      />
+                    )}
                   </View>
                 );
               })

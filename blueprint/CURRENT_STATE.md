@@ -296,7 +296,7 @@ pnpm railway:verify-pwa           # Verify live PWA fingerprint without redeploy
 3. **Product IDs** — canonical `dish_*` from seed; re-run `pnpm seed` after migrate.
 4. **Cook login** — scrypt `password_hash` on `shc_cook`; seed sets hashes; `SHC_COOK_ALLOW_DEV_PLAINTEXT=false` disables env fallback in prod.
 5. **Cart** — Postgres `shc-cart` module in production paths; legacy Redis/in-memory store deprecated (`shc-cart-store.ts`).
-6. **Legacy `apps/mobile`** — deprecated; use `mobile-customer` + `mobile-cook`.
+6. **Removed `apps/mobile`** — unified Expo 51 app deleted; use `mobile-customer` + `mobile-cook` only.
 7. **Railway web service** — must use `railway.web.toml`; root `railway.toml` is Medusa-only (`pnpm railway:configure-web`).
 8. **Railway bootstrap** — use `MEDUSA_URL=https://...`; do not `railway run medusa user` from laptop (internal DB URL).
 9. **iOS `RNGestureHandlerModule`** — stale native binary without gesture-handler pods; run `scripts/rebuild-ios-apps.sh` after adding Reanimated/Gesture Handler.

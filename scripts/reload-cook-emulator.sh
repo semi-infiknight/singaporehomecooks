@@ -1,52 +1,17 @@
 #!/usr/bin/env bash
 # Ensure Cook Metro + iOS simulator are running, debug SHCCook is installed, then reload JS.
 # Use after code changes: pnpm cook:reload
-# Env: COOK_ROUTE=shc-cook:///(cook)/dashboard  FORCE_REINSTALL=1
+# Env: COOK_ROUTE=shc-cook:///(cook)/dashboard  FORCE_REINSTALL=1  METRO_CLEAR=1
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT=8082
 BUNDLE_ID="com.singaporehomecooks.cook"
 ROUTE="${COOK_ROUTE:-shc-cook:///(cook)/listings}"
-SIM_NAME="${IOS_SIMULATOR:-iPhone 16 Pro}"
 LOG_DIR="${ROOT}/.metro-logs"
-LOG_FILE="${LOG_DIR}/Cook-${PORT}.log"
+export ROOT LOG_DIR
 
-metro_running() {
-  curl -sf "http://127.0.0.1:${PORT}/status" >/dev/null 2>&1
-}
-
-start_metro() {
-  mkdir -p "$LOG_DIR"
-  echo "Starting Cook Metro on :${PORT} ..."
-  nohup bash -c "cd \"$ROOT/apps/mobile-cook\" && RCT_METRO_PORT=\"$PORT\" npx expo start --port \"$PORT\"" \
-    >"$LOG_FILE" 2>&1 &
-  for _ in $(seq 1 90); do
-    if metro_running; then
-      echo "Cook Metro ready on :${PORT}"
-      return 0
-    fi
-    sleep 1
-  done
-  echo "ERROR: Cook Metro failed to start (see $LOG_FILE)"
-  tail -20 "$LOG_FILE" || true
-  exit 1
-}
-
-ensure_simulator() {
-  if xcrun simctl list devices booted 2>/dev/null | grep -q Booted; then
-    echo "Simulator already booted"
-    return 0
-  fi
-  echo "Booting simulator: $SIM_NAME"
-  xcrun simctl boot "$SIM_NAME" 2>/dev/null || true
-  open -a Simulator 2>/dev/null || true
-  for _ in $(seq 1 30); do
-    xcrun simctl list devices booted 2>/dev/null | grep -q Booted && return 0
-    sleep 1
-  done
-  echo "ERROR: No booted iOS simulator"
-  exit 1
-}
+# shellcheck source=scripts/lib/metro-daemon.sh
+source "$ROOT/scripts/lib/metro-daemon.sh"
 
 find_debug_app() {
   find /Users/semi/Library/Developer/Xcode/DerivedData \
@@ -72,24 +37,10 @@ launch_app() {
   xcrun simctl launch booted "$BUNDLE_ID" >/dev/null
 }
 
-reload_js() {
-  curl -sf -X POST "http://127.0.0.1:${PORT}/reload" >/dev/null
-  echo "Sent Metro reload"
-}
-
-open_route() {
-  xcrun simctl openurl booted "$ROUTE" 2>/dev/null || true
-}
-
 echo "=== Cook emulator sync ==="
 
-if metro_running; then
-  echo "Cook Metro already running on :${PORT}"
-else
-  start_metro
-fi
-
-ensure_simulator
+metro_start_daemon "apps/mobile-cook" "$PORT" "Cook" "$BUNDLE_ID"
+ensure_ios_simulator
 
 DEBUG_APP="$(find_debug_app)"
 if [ -z "$DEBUG_APP" ]; then
@@ -110,7 +61,9 @@ else
   sleep 2
 fi
 
-reload_js
-open_route
+curl -sf -X POST "http://127.0.0.1:${PORT}/reload" >/dev/null 2>&1 || true
+echo "Sent Metro reload"
+xcrun simctl openurl booted "$ROUTE" 2>/dev/null || true
 
-echo "Cook app synced. Fast Refresh should apply saves; run pnpm cook:reload again if UI looks stale."
+metro_is_healthy "$PORT" "$BUNDLE_ID"
+echo "Cook app synced. Fast Refresh should apply saves; METRO_CLEAR=1 pnpm ios:dev if stale."

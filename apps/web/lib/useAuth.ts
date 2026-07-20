@@ -14,6 +14,12 @@ import {
 
 type User = ReturnType<typeof getCurrentUser>;
 
+function scheduleWebPushRegistration() {
+  void import('./web-push')
+    .then(({ registerWebPushSubscription }) => registerWebPushSubscription())
+    .catch(() => null);
+}
+
 export function useAuth() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User>(null);
@@ -30,6 +36,7 @@ export function useAuth() {
     const { token, user: u } = await apiLogin(email, password);
     await persistSession(token, u);
     setUser(u);
+    scheduleWebPushRegistration();
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
     return u;
@@ -39,6 +46,7 @@ export function useAuth() {
     const { token, user: u } = await apiRegister(email, password);
     await persistSession(token, u);
     setUser(u);
+    scheduleWebPushRegistration();
     await queryClient.invalidateQueries({ queryKey: ['cart'] });
     await queryClient.invalidateQueries({ queryKey: ['orders'] });
     return u;

@@ -12,6 +12,7 @@ import {
   resolveCookListingsForDisplay,
   cookListingE2eTestId,
   type CookListingStatusFilter,
+  VIRTUAL_LISTING_ROW_HEIGHT,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -42,6 +43,7 @@ import {
   PhotoTipsTrayContentWeb,
   CalorieBadge,
 } from '../../components/SHCWebComponents';
+import { VirtualRowList } from '../../components/VirtualLists';
 
 type ListingRow = Record<string, unknown> & {
   id?: string;
@@ -508,40 +510,45 @@ export default function CookListingsPage() {
           <SHCBadge variant="default">No dishes match your search</SHCBadge>
         </GourmeatCard>
       ) : (
-        filteredListings.map((p: ListingRow, index: number) => (
-          <div
-            key={String(p.id)}
-            className="mb-3 select-none touch-manipulation"
-            data-testid={cookListingE2eTestId(p, index)}
-            {...bindListingLongPress(p)}
-          >
-            <GourmeatCard className="mb-0">
-              <div className="flex gap-3">
-                <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                  <Image
-                    src={getDishImageUrl({
-                      name: String(p.name),
-                      cuisine: String(p.cuisine || ''),
-                      image_url: p.image_url as string | undefined,
-                    })}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
-                    <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
-                    {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+        <VirtualRowList
+          items={filteredListings}
+          getKey={(p) => String(p.id)}
+          rowHeight={VIRTUAL_LISTING_ROW_HEIGHT}
+          testID="cook-listings-virtual-list"
+          renderItem={(p: ListingRow, index) => (
+            <div
+              className="mb-3 select-none touch-manipulation"
+              data-testid={cookListingE2eTestId(p, index)}
+              {...bindListingLongPress(p)}
+            >
+              <GourmeatCard className="mb-0">
+                <div className="flex gap-3">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                    <Image
+                      src={getDishImageUrl({
+                        name: String(p.name),
+                        cuisine: String(p.cuisine || ''),
+                        image_url: p.image_url as string | undefined,
+                      })}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
+                      <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
+                      {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </GourmeatCard>
-          </div>
-        ))
+              </GourmeatCard>
+            </div>
+          )}
+        />
       )}
 
       <div ref={wizardRef}>

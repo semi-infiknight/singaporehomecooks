@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -14,11 +14,13 @@ import {
   type SHCDishCardData,
   shcColors,
   shcSpacing,
+  contentPadSafe,
 } from '@shc/ui';
 import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
+import { VirtualDishGridFlashList } from '../../components/VirtualLists';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
@@ -32,7 +34,7 @@ export default function SearchScreen() {
   const addMut = useAddToCart();
   const { requireAuth } = useGuestAuthGate();
 
-  const results = React.useMemo(() => {
+  const results = useMemo(() => {
     let list = rawResults as any[];
     const ql = q.trim().toLowerCase();
     if (ql) {
@@ -50,35 +52,44 @@ export default function SearchScreen() {
     return list;
   }, [rawResults, q, cuisine, occ, halalOnly, maxC]);
 
-  const goProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
+  const goProduct = useCallback((id: string) => router.push(`/(customer)/product/${id}` as any), [router]);
 
-  const toDish = (p: any): SHCDishCardData => ({
-    id: p.id,
-    name: p.name,
-    cook_name: p.cook_name,
-    price: p.price,
-    cuisine: p.cuisine,
-    rating: p.rating || 4.8,
-    image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name, image_url: p.image_url }),
-  });
+  const toDish = useCallback(
+    (p: any): SHCDishCardData => ({
+      id: p.id,
+      name: p.name,
+      cook_name: p.cook_name,
+      price: p.price,
+      cuisine: p.cuisine,
+      rating: p.rating || 4.8,
+      image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name, image_url: p.image_url }),
+    }),
+    []
+  );
 
-  const occasionChips = [
-    { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-    { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
-    { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
-    { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
-    { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
-  ];
+  const occasionChips = useMemo(
+    () => [
+      { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
+      { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
+      { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
+      { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
+      { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
+    ],
+    [occ]
+  );
 
-  const filterChips = [
-    { id: 'halal', label: 'Halal', iconKey: 'leaf' as const, active: halalOnly, testID: 'halal-filter' },
-    { id: 'peranakan', label: 'Peranakan', iconKey: 'restaurant' as const, active: cuisine === 'Peranakan' },
-    { id: 'eurasian', label: 'Eurasian', iconKey: 'restaurant' as const, active: cuisine === 'Eurasian' },
-    { id: 'light', label: 'Light (<500 cal)', iconKey: 'leaf' as const, active: maxCal === 500 },
-    { id: 'moderate', label: '≤550 cal', iconKey: 'restaurant' as const, active: maxCal === 550 },
-  ];
+  const filterChips = useMemo(
+    () => [
+      { id: 'halal', label: 'Halal', iconKey: 'leaf' as const, active: halalOnly, testID: 'halal-filter' },
+      { id: 'peranakan', label: 'Peranakan', iconKey: 'restaurant' as const, active: cuisine === 'Peranakan' },
+      { id: 'eurasian', label: 'Eurasian', iconKey: 'restaurant' as const, active: cuisine === 'Eurasian' },
+      { id: 'light', label: 'Light (<500 cal)', iconKey: 'leaf' as const, active: maxCal === 500 },
+      { id: 'moderate', label: '≤550 cal', iconKey: 'restaurant' as const, active: maxCal === 550 },
+    ],
+    [halalOnly, cuisine, maxCal]
+  );
 
-  const handleOccasion = (id: string) => {
+  const handleOccasion = useCallback((id: string) => {
     const map: Record<string, string> = {
       any: '',
       raya: 'Hari Raya',
@@ -87,21 +98,32 @@ export default function SearchScreen() {
       xmas: 'Christmas',
     };
     setOcc(map[id] ?? '');
-  };
+  }, []);
 
-  const handleFilter = (id: string) => {
-    if (id === 'halal') toggleHalalOnly();
-    else if (id === 'peranakan') setCuisine(cuisine === 'Peranakan' ? '' : 'Peranakan');
-    else if (id === 'eurasian') setCuisine(cuisine === 'Eurasian' ? '' : 'Eurasian');
-    else if (id === 'light') setMaxCal(maxCal === 500 ? undefined : 500);
-    else if (id === 'moderate') setMaxCal(maxCal === 550 ? undefined : 550);
-  };
+  const handleFilter = useCallback(
+    (id: string) => {
+      if (id === 'halal') toggleHalalOnly();
+      else if (id === 'peranakan') setCuisine(cuisine === 'Peranakan' ? '' : 'Peranakan');
+      else if (id === 'eurasian') setCuisine(cuisine === 'Eurasian' ? '' : 'Eurasian');
+      else if (id === 'light') setMaxCal(maxCal === 500 ? undefined : 500);
+      else if (id === 'moderate') setMaxCal(maxCal === 550 ? undefined : 550);
+    },
+    [cuisine, maxCal, toggleHalalOnly, setMaxCal]
+  );
 
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: 80 }]}
-    >
+  const handleAdd = useCallback(
+    (id: string) => {
+      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
+      addMut.mutate({ productId: id, qty: 1 });
+    },
+    [requireAuth, addMut]
+  );
+
+  const showQueryPanel = Boolean(q.trim());
+  const gridData = showQueryPanel ? [] : results;
+
+  const ListHeader = (
+    <>
       <View style={styles.header}>
         <SHCIcon name="search" size={24} color={shcColors.primary} active />
         <Text style={styles.title}>Advanced Search</Text>
@@ -115,39 +137,56 @@ export default function SearchScreen() {
       <SHCMindSectionTitle>Filters</SHCMindSectionTitle>
       <SHCFilterChipRow chips={filterChips} onChipPress={handleFilter} testID="search-filter-chips" />
       <Text style={styles.resultsTitle}>{results.length} results</Text>
-      {q.trim() ? (
+
+      {showQueryPanel ? (
         <SHCSearchResultsPanel
           query={q}
           dishes={results.map(toDish)}
           onDishPress={goProduct}
-          onAddPress={(id) => {
-            if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-            addMut.mutate({ productId: id, qty: 1 });
-          }}
+          onAddPress={handleAdd}
           testID="search-results-panel"
         />
-      ) : (
-        <View style={styles.grid}>
-          {results.map((p: any) => (
-            <View key={p.id} style={styles.gridItem}>
-              <SHCDishCard dish={toDish(p)} onPress={() => goProduct(p.id)} testID={`search-dish-${p.id}`} />
-            </View>
-          ))}
-        </View>
-      )}
-      <SHCButton onPress={() => router.back()} style={{ marginTop: shcSpacing.md }}>
-        <SHCButtonText>Back</SHCButtonText>
-      </SHCButton>
-    </ScrollView>
+      ) : null}
+    </>
+  );
+
+  const ListFooter = (
+    <SHCButton onPress={() => router.back()} style={{ marginTop: shcSpacing.md, marginBottom: shcSpacing.md }}>
+      <SHCButtonText>Back</SHCButtonText>
+    </SHCButton>
+  );
+
+  const renderItem = useCallback(
+    (p: any) => (
+      <SHCDishCard dish={toDish(p)} onPress={() => goProduct(p.id)} testID={`search-dish-${p.id}`} />
+    ),
+    [goProduct, toDish]
+  );
+
+  return (
+    <View
+      style={[styles.screen, { paddingTop: insets.top + shcSpacing.md }]}
+      testID="search-screen"
+    >
+      <VirtualDishGridFlashList
+        data={gridData}
+        numColumns={2}
+        testID="search-dish-grid"
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
+        contentContainerStyle={{
+          paddingHorizontal: shcSpacing.md,
+          paddingBottom: contentPadSafe(insets.bottom),
+        }}
+        renderItem={renderItem}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: shcColors.background },
-  content: { paddingHorizontal: shcSpacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   title: { fontSize: 24, fontWeight: '900', color: shcColors.text },
   resultsTitle: { fontSize: 13, fontWeight: '700', color: shcColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
-  gridItem: { width: '48%' },
 });

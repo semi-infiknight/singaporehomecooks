@@ -1,134 +1,36 @@
 #!/usr/bin/env bash
 # AGENT: Start Metro :8081 (customer) + :8082 (cook) → Railway API (not local Medusa).
-# Ports invariant — see blueprint/10-mobile/10-mobile.md. blueprint/agent/build-protocol.md
+# Prefer one-shot iOS: pnpm ios:dev
+# Ports invariant — blueprint/10-mobile/10-mobile.md
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOG_DIR="${ROOT}/.metro-logs"
+export ROOT LOG_DIR
+
+# shellcheck source=scripts/lib/metro-daemon.sh
+source "$ROOT/scripts/lib/metro-daemon.sh"
+
 mkdir -p "$LOG_DIR"
 
-start_metro() {
-  local app_dir="$1"
-  local port="$2"
-  local name="$3"
-  local log_file="${LOG_DIR}/${name// /-}-${port}.log"
-  if curl -sf "http://127.0.0.1:${port}/status" >/dev/null 2>&1; then
-    if [ "${METRO_CLEAR:-0}" = "1" ]; then
-      echo "$name Metro running — METRO_CLEAR=1, restarting with --clear ..."
-      lsof -ti ":${port}" | xargs kill -9 2>/dev/null || true
-      sleep 2
-    else
-      echo "$name Metro already running on :$port"
-      echo "  → UI stale? pnpm customer:reload or METRO_CLEAR=1 bash scripts/start-mobile-dev.sh"
-      return 0
-    fi
-  fi
-  echo "Starting $name Metro on :$port (log: $log_file) ..."
-  nohup bash -c "cd \"$ROOT/$app_dir\" && RCT_METRO_PORT=\"$port\" npx expo start --port \"$port\" --clear" \
-    >"$log_file" 2>&1 &
-  for _ in $(seq 1 90); do
-    if curl -sf "http://127.0.0.1:${port}/status" >/dev/null 2>&1; then
-      echo "$name Metro ready on :$port"
-      return 0
-    fi
-    sleep 1
-  done
-  echo "ERROR: $name Metro failed to start on :$port (see $log_file)"
-  tail -20 "$log_file" || true
-  return 1
-}
+if [ "${METRO_CLEAR:-0}" = "1" ]; then
+  metro_stop "Customer" 8081
+  metro_stop "Cook" 8082
+  sleep 2
+fi
 
-start_metro "apps/mobile-customer" 8081 "Customer"
-# Stagger cook Metro so customer file map finishes before cook indexes the monorepo.
+metro_start_daemon "apps/mobile-customer" 8081 "Customer" "com.singaporehomecooks.customer"
 sleep 3
-start_metro "apps/mobile-cook" 8082 "Cook"
+metro_start_daemon "apps/mobile-cook" 8082 "Cook" "com.singaporehomecooks.cook"
 
-if command -v adb >/dev/null 2>&1 && adb devices 2>/dev/null | grep -q emulator; then
+if command -v adb >/dev/null 2>&1 && adb devices 2>/dev/null | grep -qE 'emulator-[0-9]+[[:space:]]+device'; then
   adb reverse tcp:8081 tcp:8081 || true
   adb reverse tcp:8082 tcp:8082 || true
   echo "adb reverse configured for 8081 + 8082"
 fi
 
-echo "Mobile dev ready. All clients use Railway Medusa (config/railway-client.json / .env.local)."
+echo "Mobile Metro ready. All clients use Railway Medusa (config/railway-client.json / .env.local)."
 
-# Auto-launch debug builds on the booted simulator (bare workflow, not expo-dev-client).
-SIM_NAME="${IOS_SIMULATOR:-iPhone 16 Pro}"
-if ! xcrun simctl list devices booted 2>/dev/null | grep -q Booted; then
-  echo "Booting simulator: $SIM_NAME"
-  xcrun simctl boot "$SIM_NAME" 2>/dev/null || true
-  open -a Simulator 2>/dev/null || true
-  for _ in $(seq 1 30); do
-    xcrun simctl list devices booted 2>/dev/null | grep -q Booted && break
-    sleep 1
-  done
+# iOS sim + app launch (skip with LAUNCH_CUSTOMER=0 LAUNCH_COOK=0 or SKIP_IOS_LAUNCH=1)
+if [ "${SKIP_IOS_LAUNCH:-0}" != "1" ]; then
+  SKIP_METRO_START=1 exec "$ROOT/scripts/start-ios-dev.sh"
 fi
-
-wait_for_bundle() {
-  local port="$1"
-  local name="$2"
-  for _ in $(seq 1 120); do
-    local bytes
-    bytes=$(curl -sf "http://127.0.0.1:${port}/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&lazy=true&minify=false" | wc -c | tr -d ' ')
-    if [ "${bytes:-0}" -gt 500000 ]; then
-      echo "$name bundle ready (${bytes} bytes)"
-      return 0
-    fi
-    sleep 1
-  done
-  echo "WARN: $name bundle still small after 120s — launch may fail until Metro finishes indexing"
-  return 1
-}
-
-IP=$(ipconfig getifaddr en0 2>/dev/null || echo "localhost")
-CUST_APP=$(find /Users/semi/Library/Developer/Xcode/DerivedData -path '*SHCCustomer*/Debug-iphonesimulator/SHCCustomer.app' -type d 2>/dev/null | head -1)
-COOK_APP=$(find /Users/semi/Library/Developer/Xcode/DerivedData -path '*SHCCook*/Debug-iphonesimulator/SHCCook.app' -type d 2>/dev/null | head -1)
-
-wait_for_bundle 8081 "Customer" || true
-wait_for_bundle 8082 "Cook" || true
-
-launch_ios_app() {
-  local bundle_id="$1"
-  local app_path="$2"
-  local port="$3"
-  local route_url="$4"
-  local label="$5"
-
-  echo "Installing and launching $label (Metro :$port) ..."
-  xcrun simctl terminate booted "$bundle_id" 2>/dev/null || true
-  xcrun simctl uninstall booted "$bundle_id" 2>/dev/null || true
-  xcrun simctl install booted "$app_path" 2>/dev/null || true
-  xcrun simctl launch booted "$bundle_id" 2>/dev/null || true
-  sleep 8
-  xcrun simctl openurl booted "$route_url" 2>/dev/null || true
-  sleep 3
-}
-
-if [ -n "$CUST_APP" ] && [ "${LAUNCH_CUSTOMER:-1}" = "1" ]; then
-  launch_ios_app \
-    "com.singaporehomecooks.customer" \
-    "$CUST_APP" \
-    "8081" \
-    "shc-customer:///(customer)" \
-    "Customer"
-fi
-
-if [ -n "$COOK_APP" ] && [ "${LAUNCH_COOK:-1}" = "1" ]; then
-  launch_ios_app \
-    "com.singaporehomecooks.cook" \
-    "$COOK_APP" \
-    "8082" \
-    "shc-cook:///(cook)/dashboard" \
-    "Cook"
-fi
-
-if [ "${LAUNCH_CUSTOMER:-1}" != "1" ]; then
-  echo "Skipped Customer (LAUNCH_CUSTOMER=0)."
-fi
-if [ "${LAUNCH_COOK:-1}" != "1" ]; then
-  echo "Skipped Cook (LAUNCH_COOK=0). Run with LAUNCH_COOK=1 to start cook alone."
-fi
-
-echo ""
-echo "Debug builds load JS from Metro via .expo/.virtual-metro-entry (localhost:${IP})."
-echo "After @shc/ui / tab bar edits: pnpm customer:reload  (Fast Refresh often misses shared packages)"
-echo "If a app shows a redbox after rebuild, shake simulator > Reload, or rerun this script."
-echo "For TestFlight/production: eas build --profile production --platform ios (rebuild after this metro fix)."

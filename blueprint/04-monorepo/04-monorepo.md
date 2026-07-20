@@ -10,7 +10,7 @@
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-07-08 (Blueprint sync) — split apps (mobile-customer/cook), web cook PWA portal, Family Values `@shc/ui`, medusa-only api-client with `ShcRequestError`, Railway scripts (`railway:ship`, `railway:wire`). Legacy `apps/mobile` deprecated.
+**Last Updated:** 2026-07-20 — split apps (mobile-customer/cook); legacy unified `apps/mobile` removed.
 **Owner:** Infra Track
 
 ## Overview
@@ -96,7 +96,7 @@ turbo typecheck           # Strict type checking across the monorepo
 
 - **Infra Track** owns `turbo.json`, root `package.json`, `.github/workflows`, and Railway service definitions.
 - **Contracts Track** owns everything inside `packages/shc-types`.
-- **Mobile Track** owns `packages/shc-ui` and `apps/mobile`.
+- **Mobile Track** owns `packages/shc-ui`, `apps/mobile-customer`, and `apps/mobile-cook`.
 - **Web Track** owns `apps/web` (Next.js, port 3001).
 - **Contracts + Backend** co-own `packages/shc-api-client` (client contract; Medusa route parity).
 - **Backend Track** owns `apps/medusa` custom code.

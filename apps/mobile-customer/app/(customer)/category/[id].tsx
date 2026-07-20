@@ -23,6 +23,7 @@ import {
   gourmeatColors,
   shcSpacing,
   shcRadii,
+  contentPadSafe,
   type SHCDishCardData,
 } from '@shc/ui';
 import {
@@ -40,6 +41,7 @@ import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 import { useDiscoverPrefs } from '../../../hooks/useDiscoverPrefs';
 import { getCooks } from '../../../lib/api-client';
+import { VirtualRowFlashList } from '../../../components/VirtualLists';
 
 function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
   const id = String(product.id);
@@ -93,7 +95,6 @@ export default function CategoryExploreScreen() {
       list = [...list].sort((a, b) => {
         const aArea = String(a.area || '');
         const bArea = String(b.area || '');
-        // soft: kitchens with area listed first
         return (bArea ? 1 : 0) - (aArea ? 1 : 0);
       });
     }
@@ -109,6 +110,101 @@ export default function CategoryExploreScreen() {
   );
 
   const title = category?.label || category?.id || 'Category';
+
+  const ListHeader = (
+    <>
+      <View style={styles.offerBanner} testID="category-offer-banner">
+        <Text style={styles.offerTitle}>{offer.title}</Text>
+        <Text style={styles.offerSub}>{offer.subtitle}</Text>
+      </View>
+
+      {isLoading ? (
+        <View style={{ marginBottom: shcSpacing.md }}>
+          <SHCSkeletonDishGrid count={4} />
+        </View>
+      ) : null}
+
+      <GourmeatSectionTitle title="Top rated" testID="category-top-rated-header" />
+      {topRated.length === 0 && !isLoading ? (
+        <Text style={styles.empty} testID="category-dishes-empty">
+          No dishes in this category yet — try another cuisine from home.
+        </Text>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dishRail}
+          testID="category-top-rated-rail"
+        >
+          {topRated.map((p) => (
+            <View key={String(p.id)} style={styles.dishCardWrap}>
+              <GourmeatDishCard
+                dish={toDishCardData(p)}
+                onPress={() => router.push(`/(customer)/product/${p.id}` as any)}
+                onAddPress={() => handleAdd(String(p.id))}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      <GourmeatSectionTitle
+        title={kitchens.length ? `${kitchens.length} kitchen${kitchens.length === 1 ? '' : 's'}` : 'All kitchens'}
+        testID="category-kitchens-header"
+      />
+      <View style={{ marginBottom: shcSpacing.sm }}>
+        <SHCFilterChipRow
+          chips={[
+            { id: 'all', label: 'All', active: chip === 'all' },
+            { id: 'halal', label: 'Halal', active: chip === 'halal' || halalOnly },
+            { id: 'nearest', label: 'Nearest', active: chip === 'nearest' },
+          ]}
+          onChipPress={(cid) => {
+            setChip(cid);
+            if (cid === 'halal') toggleHalalOnly();
+            if (cid === 'nearest') router.push('/(customer)/location' as any);
+          }}
+          testID="category-filter-chips"
+        />
+      </View>
+
+      {kitchens.length === 0 && !(isLoading || cooksLoading) ? (
+        <Text style={styles.empty} testID="category-kitchens-empty">
+          No kitchens listed for this category yet.
+        </Text>
+      ) : (isLoading || cooksLoading) && kitchens.length === 0 ? (
+        <SHCSkeletonKitchenList count={3} />
+      ) : null}
+    </>
+  );
+
+  const renderKitchen = useCallback(
+    (c: Record<string, unknown>) => {
+      const cookId = String(c.id || c.slug || '');
+      const cookName = String(c.display_name || c.name || 'Home kitchen');
+      return (
+        <View style={{ marginBottom: shcSpacing.sm }}>
+          <SHCTiffinKitchenCard
+            cookId={cookId}
+            cookName={cookName}
+            area={c.area ? String(c.area) : undefined}
+            tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
+            rating={c.rating != null ? Number(c.rating) : 4.8}
+            reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
+            coverUri={getCookKitchenHeroUrl(cookId)}
+            isOpen
+            closesAt="HDB collection"
+            onPress={() => {
+              const slug = c.slug || c.id;
+              if (slug) router.push(`/(customer)/cook/${slug}` as any);
+            }}
+            testID={`category-kitchen-${cookId}`}
+          />
+        </View>
+      );
+    },
+    [router, title]
+  );
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]} testID="category-explore-screen">
@@ -128,100 +224,18 @@ export default function CategoryExploreScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Offer / promo banner */}
-        <View style={styles.offerBanner} testID="category-offer-banner">
-          <Text style={styles.offerTitle}>{offer.title}</Text>
-          <Text style={styles.offerSub}>{offer.subtitle}</Text>
-        </View>
-
-        {isLoading ? (
-          <View style={{ marginBottom: shcSpacing.md }}>
-            <SHCSkeletonDishGrid count={4} />
-          </View>
-        ) : null}
-
-        {/* Top rated dishes */}
-        <GourmeatSectionTitle title="Top rated" testID="category-top-rated-header" />
-        {topRated.length === 0 && !isLoading ? (
-          <Text style={styles.empty} testID="category-dishes-empty">
-            No dishes in this category yet — try another cuisine from home.
-          </Text>
-        ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dishRail}
-            testID="category-top-rated-rail"
-          >
-            {topRated.map((p) => (
-              <View key={String(p.id)} style={styles.dishCardWrap}>
-                <GourmeatDishCard
-                  dish={toDishCardData(p)}
-                  onPress={() => router.push(`/(customer)/product/${p.id}` as any)}
-                  onAddPress={() => handleAdd(String(p.id))}
-                />
-              </View>
-            ))}
-          </ScrollView>
-        )}
-
-        {/* All kitchens */}
-        <GourmeatSectionTitle
-          title={kitchens.length ? `${kitchens.length} kitchen${kitchens.length === 1 ? '' : 's'}` : 'All kitchens'}
-          testID="category-kitchens-header"
-        />
-        <View style={{ marginBottom: shcSpacing.sm }}>
-          <SHCFilterChipRow
-            chips={[
-              { id: 'all', label: 'All', active: chip === 'all' },
-              { id: 'halal', label: 'Halal', active: chip === 'halal' || halalOnly },
-              { id: 'nearest', label: 'Nearest', active: chip === 'nearest' },
-            ]}
-            onChipPress={(cid) => {
-              setChip(cid);
-              if (cid === 'halal') toggleHalalOnly();
-              if (cid === 'nearest') router.push('/(customer)/location' as any);
-            }}
-            testID="category-filter-chips"
-          />
-        </View>
-
-        {kitchens.length === 0 && !(isLoading || cooksLoading) ? (
-          <Text style={styles.empty} testID="category-kitchens-empty">
-            No kitchens listed for this category yet.
-          </Text>
-        ) : (isLoading || cooksLoading) && kitchens.length === 0 ? (
-          <SHCSkeletonKitchenList count={3} />
-        ) : (
-          kitchens.map((c) => {
-            const cookId = String(c.id || c.slug || '');
-            const cookName = String(c.display_name || c.name || 'Home kitchen');
-            return (
-              <View key={cookId} style={{ marginBottom: shcSpacing.sm }}>
-                <SHCTiffinKitchenCard
-                  cookId={cookId}
-                  cookName={cookName}
-                  area={c.area ? String(c.area) : undefined}
-                  tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
-                  rating={c.rating != null ? Number(c.rating) : 4.8}
-                  reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
-                  coverUri={getCookKitchenHeroUrl(cookId)}
-                  isOpen
-                  closesAt="HDB collection"
-                  onPress={() => {
-                    const slug = c.slug || c.id;
-                    if (slug) router.push(`/(customer)/cook/${slug}` as any);
-                  }}
-                  testID={`category-kitchen-${cookId}`}
-                />
-              </View>
-            );
-          })
-        )}
-
-        <View style={{ height: 120 }} />
-      </ScrollView>
+      <VirtualRowFlashList
+        data={kitchens}
+        testID="category-kitchen-list"
+        keyExtractor={(c) => String(c.id || c.slug || '')}
+        ListHeaderComponent={ListHeader}
+        contentContainerStyle={{
+          paddingHorizontal: shcSpacing.md,
+          paddingTop: shcSpacing.md,
+          paddingBottom: contentPadSafe(insets.bottom),
+        }}
+        renderItem={renderKitchen}
+      />
     </View>
   );
 }
@@ -245,7 +259,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: gourmeatColors.text,
   },
-  content: { paddingHorizontal: shcSpacing.md, paddingTop: shcSpacing.md },
   offerBanner: {
     backgroundColor: gourmeatColors.primary || '#F87048',
     borderRadius: shcRadii.lg,

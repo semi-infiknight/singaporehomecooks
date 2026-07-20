@@ -24,7 +24,7 @@ From repo root (`/Users/semi/Vibecode/SingaporeHomeCooks`):
    ```
    - iOS/Android: scan QR in Expo Go.
    - Web: press `w` (or `a` for Android emu, `i` for iOS).
-   - From root turbo: `pnpm --filter mobile dev` (or `pnpm turbo dev --filter=mobile`).
+   - From root: `pnpm customer:dev` / `pnpm cook:dev` (or `pnpm ios:dev` for both).
 
 4. (Parallel backend when needed — not required for full mobile E2E):
    ```
@@ -106,7 +106,7 @@ Use DEV switcher freely. Start as Customer.
 **Rules live everywhere (no bypass):** Try violating → red banners with codes (SHC-CART-001 etc). See ERROR_CODES.md + business-rules tests.
 
 ## TanStack Query + Polish Notes
-- Hooks in apps/mobile/hooks/: useProducts (discovery + filters + calorie), useCart, useAddToCart (mutations error SHC), useOrders/useMyOrders, useCheckout, useTransitionOrder, useChat (polling).
+- Hooks in `apps/mobile-customer/hooks/` and `apps/mobile-cook/hooks/`: useProducts, useCart, useAddToCart, useOrders, useCheckout, useChat.
 - Invalidate + optimistic on success. Ready to point at real fetch later.
 - shc-ui everywhere (no raw gluestack drift in most screens).
 - Calorie traffic: green/amber/red per confidence in product/search/discover.

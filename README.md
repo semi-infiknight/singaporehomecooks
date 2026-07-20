@@ -44,8 +44,7 @@ Quick start (root):
 ```
 pnpm install
 npx tsx scripts/seed.ts --validate
-pnpm --filter mobile dev   # Expo; use DEV bar to switch roles instantly
-# Optional real: pnpm docker:up ; pnpm medusa:dev ; then EXPO_PUBLIC_USE_REAL_MEDUSA=true pnpm --filter mobile dev (or setUseRealMedusa)
+pnpm ios:dev   # or: bash scripts/start-mobile-dev.sh
 pnpm verify:local
 ```
 See checklist + Maestro in LOCAL_TESTING.md. All hardening applied; local host production-like + documented.

@@ -30,6 +30,7 @@ import {
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
+import { useGuestAuthTray } from '../../../../lib/useGuestAuthTray';
 import {
   useTiffinKitchen,
   useSubscribeTiffin,
@@ -47,12 +48,14 @@ import {
   SubscribeTrustList,
   SHCSkeletonList,
 } from '../../../components/SHCWebComponents';
+import { VirtualRowList } from '../../../components/VirtualLists';
 
 export default function TiffinKitchenPage() {
   const params = useParams();
   const cookId = String(params?.cookId || '');
   const router = useRouter();
   const { user } = useAuth();
+  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId);
   const subscribeMut = useSubscribeTiffin();
   const mealsOptions: number[] = (kitchen as any)?.meals_per_week_options || [2, 3, 4];
@@ -125,8 +128,11 @@ export default function TiffinKitchenPage() {
       return;
     }
     if (!user) {
-      // Login page reads `next` (not returnTo)
-      router.push(`/login?next=${encodeURIComponent(`/tiffin/kitchen/${cookId}`)}`);
+      showGuestAuthTray(
+        'Sign in to subscribe',
+        'Browse kitchens freely — sign in to start a tiffin plan and pick meals.',
+        `/tiffin/kitchen/${cookId}`
+      );
       return;
     }
     try {
@@ -344,18 +350,25 @@ export default function TiffinKitchenPage() {
               No tiffin dishes listed for this kitchen yet.
             </p>
           ) : (
-            <ul className="space-y-2 mb-4" data-testid="kitchen-menu-list">
-              {dishes.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2"
+            <VirtualRowList
+              items={dishes}
+              getKey={(d) => d.id}
+              testID="kitchen-menu-list"
+              rowHeight={88}
+              className="mb-4"
+              renderItem={(d) => (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/tiffin/menu?cookId=${encodeURIComponent(cookId)}`)}
+                  className="flex w-full gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2 mb-2 text-left hover:bg-muted/40 transition-colors"
+                  data-testid={`kitchen-menu-item-${d.id}`}
                 >
                   <Image
                     src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
                     alt=""
                     width={48}
                     height={48}
-                    className="rounded-lg object-cover"
+                    className="rounded-lg object-cover shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{d.name}</p>
@@ -364,9 +377,9 @@ export default function TiffinKitchenPage() {
                   {kitchenDishPriceLabel(d) ? (
                     <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
                   ) : null}
-                </li>
-              ))}
-            </ul>
+                </button>
+              )}
+            />
           )}
 
           <p className="text-xs font-semibold text-primary mb-3" data-testid="kitchen-collection-days">

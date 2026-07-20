@@ -1,4 +1,4 @@
-// Simple unit tests for mock service (rule enforcement). Run via vitest if configured, or pnpm --filter mobile test.
+// Run via vitest if configured, or pnpm --filter mobile-customer test.
 // Tests core contracts + rules per production-hardening. Added earnings/credits + PDPA consent timestamp + rate/audit coverage.
 import { describe, it, expect } from 'vitest';
 import { api } from './mock-service';

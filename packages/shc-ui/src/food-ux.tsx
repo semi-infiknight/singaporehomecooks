@@ -1,7 +1,7 @@
 // Toptal food-app UX patterns: white space, search+ADD, checkout stepper, brand story.
 // @ts-nocheck
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, FlatList } from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
 import { SHCFoodImage, SHCZomatoAddButton } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
@@ -187,22 +187,28 @@ export function SHCSearchResultsPanel({
           </Pressable>
         )}
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-        {dishes.length === 0 ? (
-          <Text style={{ padding: shcSpacing.md, fontSize: 13, color: shcColors.textLight, textAlign: 'center' }}>
-            No dishes match — try another occasion or filter
-          </Text>
-        ) : (
-          dishes.slice(0, 8).map((dish) => (
+      {dishes.length === 0 ? (
+        <Text style={{ padding: shcSpacing.md, fontSize: 13, color: shcColors.textLight, textAlign: 'center' }}>
+          No dishes match — try another occasion or filter
+        </Text>
+      ) : (
+        <FlatList
+          data={dishes}
+          keyExtractor={(d) => d.id}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          initialNumToRender={8}
+          maxToRenderPerBatch={12}
+          windowSize={5}
+          renderItem={({ item: dish }) => (
             <SHCSearchResultRow
-              key={dish.id}
               dish={dish}
               onPress={() => onDishPress?.(dish.id)}
               onAddPress={onAddPress ? () => onAddPress(dish.id) : undefined}
             />
-          ))
-        )}
-      </ScrollView>
+          )}
+        />
+      )}
     </View>
   );
 }

@@ -39,6 +39,22 @@ function TabIndexSync({
   return <>{children}</>;
 }
 
+function resolveCustomerTabSceneTestId(pathname: string): string {
+  if (pathname === '/' || pathname.startsWith('/product') || pathname.startsWith('/cook') || pathname.startsWith('/category') || pathname.startsWith('/tiffin') || pathname.startsWith('/search') || pathname.startsWith('/drops')) {
+    return 'discover-tab-scene';
+  }
+  if (pathname === '/orders' || pathname.startsWith('/orders/') || pathname.startsWith('/chat/')) {
+    return 'orders-tab-scene';
+  }
+  if (pathname === '/cart' || pathname === '/checkout') {
+    return 'cart-tab-scene';
+  }
+  if (pathname.startsWith('/profile')) {
+    return 'profile-tab-scene';
+  }
+  return 'customer-web-tab-scene';
+}
+
 function DirectionalScene({
   children,
   testID,
@@ -61,8 +77,12 @@ export function DirectionalTabShell({
   mode: 'customer' | 'cook';
   children: React.ReactNode;
 }) {
+  const pathname = usePathname() || '';
   const routeOrder = mode === 'cook' ? COOK_TAB_ROUTES : CUSTOMER_TAB_ROUTES;
-  const testID = mode === 'cook' ? 'cook-web-tab-scene' : 'customer-web-tab-scene';
+  const testID =
+    mode === 'cook'
+      ? 'cook-web-tab-scene'
+      : resolveCustomerTabSceneTestId(pathname);
 
   return (
     <TabDirectionProviderWeb routeOrder={[...routeOrder]}>

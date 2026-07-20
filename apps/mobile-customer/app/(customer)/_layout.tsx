@@ -46,7 +46,9 @@ export default function CustomerLayout() {
 
       <Tabs.Screen name="search" options={{ href: null, title: 'Advanced Search', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="category/[id]" options={{ href: null, title: 'Category', headerShown: false, tabBarStyle: { display: 'none' } }} />
-      <Tabs.Screen name="cook/[slug]" options={{ href: null, title: 'Cook Profile', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="cook/[slug]/index" options={{ href: null, title: 'Cook Profile', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="cook/[slug]/ratings" options={{ href: null, title: 'Cook Ratings', tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="drops/[id]" options={{ href: null, title: 'Cooking soon', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="product/[id]" options={{ href: null, title: 'Dish', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="checkout" options={{ href: null, title: 'Checkout (PayNow)', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="orders/[id]" options={{ href: null, title: 'Your Order', tabBarStyle: { display: 'none' } }} />
@@ -60,6 +62,9 @@ export default function CustomerLayout() {
       <Tabs.Screen name="tiffin/menu" options={{ href: null, title: 'Tiffin Menu', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="tiffin/manage" options={{ href: null, title: 'Manage Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="tiffin/calendar" options={{ href: null, title: 'Tiffin Calendar', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/pause" options={{ href: null, title: 'Pause Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/recharge" options={{ href: null, title: 'Recharge Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="tiffin/subscriptions" options={{ href: null, title: 'Tiffin Subscriptions', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
     </CustomerTabIndexSync>
     </TabDirectionProvider>

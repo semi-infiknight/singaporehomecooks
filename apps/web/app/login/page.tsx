@@ -39,7 +39,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-10 shc-safe-bottom-pad" data-testid="web-onboarding-login">
+    <div className="max-w-md mx-auto px-4 py-10 shc-safe-bottom-pad" data-testid="auth-screen">
       {/* HomelyEats-style welcome — guest first reduces drop-off */}
       <div
         className="rounded-2xl p-5 mb-6 text-white shadow-[var(--shc-shadow-brutal-sm)]"
@@ -65,6 +65,7 @@ export default function LoginPage() {
             className="shc-input"
             placeholder="Email"
             required
+            data-testid="auth-email-input"
           />
           <input
             type="password"
@@ -73,9 +74,10 @@ export default function LoginPage() {
             className="shc-input"
             placeholder="Password"
             required
+            data-testid="auth-password-input"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <SHCButton type="submit" disabled={busy} size="lg" className="w-full min-h-[52px]" testID="web-signin-cta">
+          <SHCButton type="submit" disabled={busy} size="lg" className="w-full min-h-[52px]" testID="auth-submit-btn">
             {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </SHCButton>
         </form>
@@ -83,7 +85,7 @@ export default function LoginPage() {
           <button
             type="button"
             className="text-sm text-primary w-full text-center font-bold"
-            data-testid="login-new-here-tour"
+            data-testid="auth-new-here-tour"
             onClick={() => router.push('/onboarding')}
           >
             New here? See how it works
@@ -102,6 +104,7 @@ export default function LoginPage() {
             type="button"
             className="text-sm text-muted-foreground w-full text-center font-bold"
             onClick={() => setMode('register')}
+            data-testid="auth-mode-toggle"
           >
             Create an account
           </button>
@@ -109,7 +112,7 @@ export default function LoginPage() {
         <button
           type="button"
           className="w-full text-center text-sm font-bold text-muted-foreground underline py-2"
-          data-testid="onboarding-guest-btn"
+          data-testid="auth-browse-guest-btn"
           onClick={() => {
             markOnboardingSeen();
             router.push(nextPath.startsWith('/') ? nextPath : '/');

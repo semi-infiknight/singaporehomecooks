@@ -11,6 +11,7 @@ import {
   contentPadSafe,
 } from '@shc/ui';
 import { useTiffinKitchen } from '../../../hooks/useTiffin';
+import { VirtualRowFlashList } from '../../../components/VirtualLists';
 
 const CUISINE_FILTERS = ['All', 'Peranakan', 'Chinese', 'Malay', 'Indian', 'Western'];
 
@@ -33,20 +34,8 @@ export default function TiffinMenuScreen() {
     return all.filter((d: { cuisine?: string }) => String(d.cuisine || '').toLowerCase().includes(filter.toLowerCase()));
   }, [kitchen, filter]);
 
-  if (isLoading) {
-    return (
-      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
-        <SHCSkeletonList count={4} rowHeight={64} />
-      </View>
-    );
-  }
-
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={{ paddingTop: insets.top + shcSpacing.md, paddingHorizontal: shcSpacing.md, paddingBottom: contentPadSafe(insets.bottom) }}
-      testID="tiffin-menu-screen"
-    >
+  const ListHeader = (
+    <>
       <GourmeatScreenHeader
         title={kitchen?.cook?.display_name || 'Menu'}
         subtitle="Culinary inspiration"
@@ -63,15 +52,37 @@ export default function TiffinMenuScreen() {
           </Text>
         ))}
       </ScrollView>
-      {dishes.map((d: { id: string; name: string; price?: number; cuisine?: string; description?: string }) => (
-        <SHCTiffinMenuListItem
-          key={d.id}
-          dish={d}
-          subtitle={d.description || d.cuisine}
-          onPress={() => router.push(`/(customer)/product/${d.id}` as any)}
-        />
-      ))}
-    </ScrollView>
+    </>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={[styles.centered, { paddingHorizontal: shcSpacing.md }]}>
+        <SHCSkeletonList count={4} rowHeight={64} />
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={[styles.screen, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadSafe(insets.bottom) }]}
+      testID="tiffin-menu-screen"
+    >
+      <VirtualRowFlashList
+        data={dishes}
+        keyExtractor={(d) => d.id}
+        ListHeaderComponent={ListHeader}
+        contentContainerStyle={{ paddingHorizontal: shcSpacing.md }}
+        testID="tiffin-menu-list"
+        renderItem={(d: { id: string; name: string; price?: number; cuisine?: string; description?: string }) => (
+          <SHCTiffinMenuListItem
+            dish={d}
+            subtitle={d.description || d.cuisine}
+            onPress={() => router.push(`/(customer)/product/${d.id}` as any)}
+          />
+        )}
+      />
+    </View>
   );
 }
 

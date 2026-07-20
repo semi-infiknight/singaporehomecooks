@@ -22,7 +22,9 @@ const HIDE_CART_BAR = new Set([
   'cart',
   'checkout',
   'product/[id]',
-  'cook/[slug]',
+  'cook/[slug]/index',
+  'cook/[slug]/ratings',
+  'drops/[id]',
   'search',
   'orders/[id]',
   'request',
@@ -36,6 +38,9 @@ const HIDE_TAB_BAR = new Set([
   'location',
   'checkout',
   'product/[id]',
+  'cook/[slug]/index',
+  'cook/[slug]/ratings',
+  'drops/[id]',
   'orders/[id]',
   'orders/manage',
   'tiffin/kitchen/[cookId]',
@@ -60,29 +65,36 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
 
   // Guests browse signed-out — never show sticky cart or tab badge (web parity).
   const canShowCart = Boolean(user) && !authLoading;
-  const items = (canShowCart ? cart?.items : []) as Parameters<typeof summarizeCart>[0];
-  const firstName = items[0] && 'name' in (items[0] as object) ? String((items[0] as { name?: string }).name || '') : undefined;
+  const items = ((canShowCart ? cart?.items : undefined) ?? []) as Parameters<typeof summarizeCart>[0];
+  const firstItem = items[0];
+  const firstName =
+    firstItem && typeof firstItem === 'object' && firstItem !== null && 'name' in firstItem
+      ? String((firstItem as { name?: string }).name || '')
+      : undefined;
   const summary = summarizeCart(items, firstName);
+
+  if (!state?.routes?.length) return null;
 
   const visibleRoutes = state.routes.filter((route) => VISIBLE_TABS.has(route.name));
   const activeRoute = state.routes[state.index];
   const showCartBar = canShowCart && summary.hasItems && !HIDE_CART_BAR.has(activeRoute?.name ?? '');
   const hideTabBar = HIDE_TAB_BAR.has(activeRoute?.name ?? '');
 
-  const tabs: SHCBottomTab[] = visibleRoutes.map((route) => {
+  const tabs: SHCBottomTab[] = visibleRoutes.flatMap((route) => {
     const meta = TAB_META[route.name];
-    return {
+    if (!meta) return [];
+    return [{
       key: route.name,
       label: meta.label,
       iconKey: meta.iconKey,
       testID: meta.testID,
       badge: route.name === 'cart' && canShowCart && summary.hasItems ? summary.badgeLabel : undefined,
       ordersLiveCue: route.name === 'orders/index' && ordersLiveCue === 'cooking' ? 'cooking' : undefined,
-    };
+    }];
   });
 
   const openCart = useCallback(() => {
-    if (!authLoading && !user) {
+    if (!user) {
       showGuestAuthTray(
         'Sign in to view cart',
         'Browse freely — sign in to checkout and track orders.',
@@ -145,7 +157,7 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
           // Guest browse: Home only for free navigation; account tabs need sign-in
-          if (!authLoading && !user && key !== 'index') {
+          if (!user && key !== 'index') {
             const returnTo =
               key === 'orders/index'
                 ? '/(customer)/orders'

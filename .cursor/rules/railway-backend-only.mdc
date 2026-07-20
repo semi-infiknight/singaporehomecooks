@@ -40,12 +40,50 @@ pnpm web:dev                       # :3001 → Railway API
 
 Same backend as TestFlight/APK/Railway PWA — only the JS bundle packaging differs.
 
+## Localhost split (read this — prevents redbox + wrong Docker starts)
+
+| Local service | Port | Required for client dev? | Notes |
+|---------------|------|--------------------------|-------|
+| **Metro** (JS bundler) | `:8081` customer, `:8082` cook | **Yes** — sim/emulator loads JS from here | `127.0.0.1:8081` in redbox = Metro down, **not** a Railway problem |
+| **Medusa API** | `:9000` | **No** — clients use Railway | Never start `docker:up` / `medusa:dev` unless user **explicitly** asks for backend/server work |
+| **Medusa Admin UI** | Railway `/app` | Open URL — no local stack | `https://medusa-production-d2ba.up.railway.app/app` · `admin@shc.local` / `supersecret` |
+
+**Railway-only = API/data backend.** Metro on localhost is still normal and required for Expo dev builds.
+
+## Agent playbook: “start iOS simulator / emulator”
+
+**Never** `docker:up`, `medusa:dev`, `medusa:dev:admin`, or `open -a Docker` for simulator/emulator requests.
+
+**One command (Mac iOS):**
+
+```bash
+pnpm ios:dev   # Metro :8081+:8082 (daemon) → boot sim → launch customer + cook → verify bundles
+```
+
+Equivalent: `bash scripts/start-mobile-dev.sh` (also configures adb reverse when Android emulator is up).
+
+Stale/broken Metro (status OK but redbox / 500 bundle): `METRO_CLEAR=1 pnpm ios:dev`
+
+Per-app reload after UI edits: `pnpm customer:reload` · `pnpm cook:reload`
+
+Scripts detect **stale Metro** (dead pnpm paths after `pnpm install`) and auto-restart when bundle &lt; 5MB or HTTP 500.
+
+## Agent playbook: “medusa admin” / “ops dashboard”
+
+Open **Railway Admin** in browser — no local Postgres/Docker:
+
+`https://medusa-production-d2ba.up.railway.app/app` → SHC Ops at `/app/shc-ops`
+
+Local `pnpm medusa:dev:admin` is **backend-track only** when editing `apps/medusa` code — not the default answer.
+
 ## Forbidden
 
 - `EXPO_PUBLIC_MEDUSA_BASE=http://localhost:9000`
 - `NEXT_PUBLIC_SHC_API_BASE=http://localhost:9000`
 - Docs/scripts telling users to run `docker:up && medusa:dev` for client testing
 - `USE_REAL_MEDUSA` toggles or mock fallbacks in runtime api-clients
+- Starting **Docker / local Medusa** when user asks for simulator, emulator, or admin UI (see playbooks above)
+- Saying “ready” without verifying Metro `:8081/status` + bundle size when launching mobile sim
 
 ## Medusa app code (`apps/medusa`)
 
