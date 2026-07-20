@@ -1,0 +1,79 @@
+name: Railway Deploy
+
+# Deploy production Railway services after CI passes on main.
+# Requires GitHub secret: RAILWAY_API_TOKEN (team/account token — not RAILWAY_TOKEN).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'railway.web.toml'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            medusa:
+              - 'apps/medusa/**'
+              - 'packages/**'
+              - 'railway.toml'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            worker:
+              - 'apps/worker/**'
+              - 'packages/**'
+              - 'railway.worker.toml'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.com/install.sh | sh
+
+      - name: Deploy web
+        if: steps.changes.outputs.web == 'true'
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: 09a28324-88a2-4ad0-aa5f-54bc2198007b
+          RAILWAY_ENVIRONMENT_ID: 546be85e-73ad-4df7-b105-4bfd90b280c0
+        run: |
+          export PATH="$HOME/.railway/bin:$PATH"
+          node scripts/railway-deploy-services.mjs web
+
+      - name: Deploy medusa
+        if: steps.changes.outputs.medusa == 'true'
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: 09a28324-88a2-4ad0-aa5f-54bc2198007b
+          RAILWAY_ENVIRONMENT_ID: 546be85e-73ad-4df7-b105-4bfd90b280c0
+        run: |
+          export PATH="$HOME/.railway/bin:$PATH"
+          node scripts/railway-deploy-services.mjs medusa
+
+      - name: Deploy worker
+        if: steps.changes.outputs.worker == 'true'
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: 09a28324-88a2-4ad0-aa5f-54bc2198007b
+          RAILWAY_ENVIRONMENT_ID: 546be85e-73ad-4df7-b105-4bfd90b280c0
+        run: |
+          export PATH="$HOME/.railway/bin:$PATH"
+          node scripts/railway-deploy-services.mjs worker
+
+      - name: Skip notice
+        if: steps.changes.outputs.web != 'true' && steps.changes.outputs.medusa != 'true' && steps.changes.outputs.worker != 'true'
+        run: echo "No Railway service paths changed — skipped deploy."

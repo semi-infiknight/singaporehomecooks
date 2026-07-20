@@ -181,7 +181,45 @@ Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). N
 
 ---
 
-## 9. Troubleshooting
+## 9. Auto-deploy on push to `main`
+
+Two options (use both if you want belt-and-suspenders):
+
+### A. GitHub Actions (configured in-repo)
+
+After **CI passes** on `main`, `.github/workflows/railway-deploy.yml` redeploys only the services whose paths changed (`web`, `medusa`, `worker`).
+
+**One-time setup:** add a GitHub repo secret:
+
+| Secret | Value |
+|--------|--------|
+| `RAILWAY_API_TOKEN` | Railway **account/team** API token (same as local `railway login` token or Railway dashboard → Account → Tokens). **Do not** use a project-scoped `RAILWAY_TOKEN`. |
+
+Verify: push a web-only change to `main` → CI green → **Railway Deploy** workflow runs → new web deployment in Railway dashboard.
+
+Manual deploy (same as CI):
+
+```bash
+pnpm railway:deploy web
+pnpm railway:deploy web medusa
+```
+
+### B. Native Railway GitHub auto-deploy (optional)
+
+Services are linked to `semi-infiknight/singaporehomecooks` on `main`. Auto-deploy is currently **off** until a workspace member connects GitHub with contributor access to the repo.
+
+```bash
+railway login && railway link -p homecooks
+pnpm railway:enable-autodeploy
+```
+
+In Railway dashboard: each service → **Settings** → confirm **Auto-deploy** is **Enabled** and branch is `main`.
+
+If enable fails with *"No workspace member has their GitHub account connected"*: Railway **Account** → connect GitHub, grant the Railway GitHub App access to the repo, then re-run the command above.
+
+---
+
+## 10. Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
@@ -191,10 +229,12 @@ Admin is created automatically on each Medusa deploy (`docker-entrypoint.sh`). N
 | Cart 401 | Run `./scripts/railway-init.sh` (demo customer profile) |
 | Web shows stale API | Redeploy web after changing `NEXT_PUBLIC_*` |
 | Web runs Medusa / Postgres errors in web logs | Set web **Config file** to `railway.web.toml` (see §5) |
+| Push to `main` but homecooksg.com unchanged | Check **Railway Deploy** GitHub Action + `RAILWAY_API_TOKEN` secret; or `pnpm railway:deploy web` |
+| Railway auto-deploy toggle disabled | Connect GitHub in Railway account; run `pnpm railway:enable-autodeploy` (see §9) |
 
 ---
 
-## 10. Production checklist (later)
+## 11. Production checklist (later)
 
 - [ ] Rotate `JWT_SECRET` / `COOKIE_SECRET`
 - [x] Enable Medusa admin (`MEDUSA_DISABLE_ADMIN=false`) for ops — `/app` on medusa service

@@ -65,6 +65,8 @@
     "railway:configure-medusa": "node scripts/railway-configure-service.mjs --service medusa --config railway.toml --dockerfile apps/medusa/Dockerfile --health /health",
     "railway:configure-worker": "node scripts/railway-configure-service.mjs --service worker --config railway.worker.toml --dockerfile apps/worker/Dockerfile --health /health",
     "railway:configure-minio": "node scripts/railway-configure-service.mjs --service minio --config railway.minio.toml --dockerfile apps/minio/Dockerfile --no-redeploy",
+    "railway:enable-autodeploy": "node scripts/railway-enable-autodeploy.mjs",
+    "railway:deploy": "node scripts/railway-deploy-services.mjs",
     "railway:wire": "node scripts/railway-wire-references.mjs",
     "railway:cleanup": "node scripts/railway-cleanup.mjs",
     "railway:ship": "bash scripts/railway-ship-pwa.sh",
