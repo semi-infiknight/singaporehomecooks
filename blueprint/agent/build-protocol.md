@@ -75,6 +75,17 @@ Shared: `packages/shc-types`, `business-rules`, `shc-api-client`, `shc-ui`, `shc
 
 **Removed:** legacy unified `apps/mobile` (Expo 51). Use `mobile-customer` + `mobile-cook` only.
 
+### Package / app removal checklist (prevents CI regressions)
+
+When deleting an `apps/*` or `packages/*` workspace:
+
+1. `rg 'filter=!old-name|apps/old-name|\"old-name\"' .github package.json scripts/ blueprint/` — update every reference
+2. `bash scripts/verify-ci-config.sh` — turbo exclusions must match live package names
+3. `pnpm verify:ci` or at minimum `pnpm turbo build` before push (catches stale `@shc/ui` source-grep tests)
+4. If the package had Maestro flows or docs, move or delete them in the same commit
+
+**2026-07-20 lesson:** `91368d6` removed `apps/mobile` but left `--filter=!mobile` in CI → instant turbo failure on push.
+
 ---
 
 ## Railway-only backend (clients)

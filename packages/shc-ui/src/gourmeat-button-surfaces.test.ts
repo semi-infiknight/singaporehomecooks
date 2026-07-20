@@ -88,8 +88,8 @@ describe('cart checkout footer', () => {
   it('positions proceed-checkout above floating tab bar', () => {
     const cart = readFileSync(CART_SRC, 'utf8');
     expect(cart).toContain('testID="proceed-checkout"');
-    expect(cart).toContain('gourmeatLayout.tabBarClearance');
-    expect(cart).toContain('checkoutFooter');
+    expect(cart).toContain('contentPadForTabBar');
+    expect(cart).toContain('styles.footer');
     expect(cart).toMatch(/position:\s*'absolute'/);
     expect(cart).toContain('GourmeatPayButton');
   });

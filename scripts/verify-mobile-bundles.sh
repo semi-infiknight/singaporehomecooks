@@ -14,7 +14,8 @@ export_and_check() {
   (
     cd "$ROOT/$app_dir"
     rm -rf dist
-    npx expo export --platform ios --output-dir "$out_dir" >/dev/null
+    # Use workspace Expo CLI — bare `npx expo` can download a newer major (e.g. 57) and break export.
+    pnpm exec expo export --platform ios --output-dir "$out_dir" >/dev/null
   ) || {
     echo "FAIL: $name expo export --platform ios failed"
     FAIL=1
