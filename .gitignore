@@ -61,6 +61,7 @@ medusa/medusa-config.js
 !medusa/medusa-config.ts
 apps/medusa/.medusa/
 apps/medusa/dist/
+apps/medusa/public/
 
 # MinIO / local data
 data/
