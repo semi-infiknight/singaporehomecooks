@@ -2,6 +2,9 @@ import '@testing-library/jest-dom/vitest';
 import React from 'react';
 import { vi } from 'vitest';
 
+// jsdom does not implement scrollIntoView; chat panels auto-scroll on mount.
+Element.prototype.scrollIntoView = vi.fn();
+
 vi.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
   AntDesign: () => null,
