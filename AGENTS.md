@@ -28,9 +28,10 @@ Protocols: `blueprint/agent/build-protocol.md` · `design-taste.md` · `verify-p
 ## Quick verify
 
 ```bash
+pnpm verify:ci          # full mirror of ubuntu CI (before push to main)
+pnpm verify:ci-config   # fast static guards only (also runs on git pre-push)
 FLAVOUR=polish SCOPE=web pnpm verify:goal   # visual goal
-FLAVOUR=wiring SCOPE=checkout pnpm verify:goal
-pnpm verify:full                            # milestone only
+pnpm verify:full        # milestone only
 ```
 
 ## Local Mac dev (Railway API + local Metro)

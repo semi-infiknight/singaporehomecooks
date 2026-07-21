@@ -20,13 +20,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: bash scripts/verify-ci-config.sh
-      - run: pnpm turbo build --filter=!mobile-cook --filter=!mobile-customer
-      - run: pnpm turbo test --filter=!mobile-cook --filter=!mobile-customer
-      - run: pnpm turbo typecheck --filter=!mobile-cook --filter=!mobile-customer
-      - run: pnpm turbo lint --filter=web --filter=medusa --filter=mobile-customer --filter=mobile-cook || true
-      - run: npx tsx scripts/seed.ts --validate
-      - run: pnpm verify:local
+      - run: bash scripts/ci-gate.sh build-test-typecheck
 
   medusa-real-e2e:
     # Full API smoke hits live Railway — run on integrate branches or manual dispatch, not every main push.
@@ -58,9 +52,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: bash scripts/verify-ci-config.sh
-      - run: bash scripts/verify-mobile-deps.sh
-      - run: bash scripts/verify-mobile-bundles.sh
+      - run: bash scripts/ci-gate.sh mobile-ios-guard
 
   web-pwa-guard:
     runs-on: ubuntu-latest
@@ -74,8 +66,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: bash scripts/verify-ci-config.sh
-      - run: bash scripts/verify-web-pwa.sh
+      - run: bash scripts/ci-gate.sh web-pwa-guard
 
   maestro-e2e:
     runs-on: macos-latest

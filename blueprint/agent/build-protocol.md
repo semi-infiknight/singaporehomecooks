@@ -80,9 +80,13 @@ Shared: `packages/shc-types`, `business-rules`, `shc-api-client`, `shc-ui`, `shc
 When deleting an `apps/*` or `packages/*` workspace:
 
 1. `rg 'filter=!old-name|apps/old-name|\"old-name\"' .github package.json scripts/ blueprint/` — update every reference
-2. `bash scripts/verify-ci-config.sh` — turbo exclusions must match live package names
-3. `pnpm verify:ci` or at minimum `pnpm turbo build` before push (catches stale `@shc/ui` source-grep tests)
+2. `bash scripts/ci-gate.sh config` — turbo exclusions, ci.yml → ci-gate.sh wiring, no `rg` in guards
+3. `pnpm verify:ci` before push — exact local mirror of all three ubuntu CI jobs
 4. If the package had Maestro flows or docs, move or delete them in the same commit
+
+**CI single source of truth:** `.github/workflows/ci.yml` only calls `bash scripts/ci-gate.sh <target>`. Never duplicate guard steps in ci.yml.
+
+**Pre-push hook:** `pnpm install` installs `.githooks/pre-push` → runs `ci-gate config` on every `git push`.
 
 **2026-07-20 lesson:** `91368d6` removed `apps/mobile` but left `--filter=!mobile` in CI → instant turbo failure on push.
 

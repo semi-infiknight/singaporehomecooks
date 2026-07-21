@@ -1,0 +1,8 @@
+#!/bin/sh
+# Fast static CI guard before push. Full mirror: pnpm verify:ci
+set -e
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+echo "pre-push: running ci-gate config (static CI guards)..."
+bash scripts/ci-gate.sh config
+echo "pre-push: OK (run pnpm verify:ci before merging risky changes)"
