@@ -14,11 +14,19 @@ import {
   shcSpacing,
   AllergenAckCheckbox,
   SHCDishOrderingInfo,
+  SHCRecipeStoryCard,
   SHCFavoriteButton,
   SHCSkeletonBone,
   contentPadForStickyFooter,
 } from '@shc/ui';
-import { getDishImageUrl } from '@shc/utils';
+import {
+  getDishImageUrl,
+  recipeHeritageLead,
+  recipeAboutBlurb,
+  recipeAtAGlance,
+  recipeStepsForProduct,
+  recipeHasStory,
+} from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProduct, useAddToCart } from '../../../hooks/useProducts';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
@@ -71,6 +79,22 @@ export default function ProductDetail() {
   const tier1 = product.allergen_tiers?.tier1 || product.allergens || [];
   const calConfidence = (product.calories_confidence as 'full' | 'category') || 'category';
   const discount = gourmeatDiscountPercent(product.id);
+  const recipeSteps = recipeStepsForProduct({
+    id: product.id,
+    description: product.description,
+    heritage_note: (product as { heritage_note?: string }).heritage_note,
+    cuisine: product.cuisine,
+    cook_name: product.cook_name,
+    min_qty: product.min_qty,
+    ingredients: product.ingredients,
+  });
+  const showRecipe = recipeHasStory({
+    id: product.id,
+    description: product.description,
+    heritage_note: (product as { heritage_note?: string }).heritage_note,
+    ingredients: product.ingredients,
+    recipe_steps: recipeSteps,
+  });
 
   const handleAdd = async () => {
     setError(null);
@@ -159,6 +183,23 @@ export default function ProductDetail() {
             {product.halal ? <Text style={[styles.badge, styles.badgeHalal]}>Halal</Text> : null}
             <Text style={styles.badge}>min {product.min_qty}</Text>
           </View>
+
+          {showRecipe ? (
+            <SHCRecipeStoryCard
+              heritageLead={recipeHeritageLead({
+                description: product.description,
+                heritage_note: (product as { heritage_note?: string }).heritage_note,
+              })}
+              aboutBlurb={recipeAboutBlurb({ description: product.description })}
+              glanceChips={recipeAtAGlance(
+                { cuisine: product.cuisine, min_qty: product.min_qty },
+                recipeSteps.length
+              )}
+              ingredients={product.ingredients}
+              steps={recipeSteps}
+              cookName={product.cook_name}
+            />
+          ) : null}
 
           <GourmeatCard>
             <SHCDishOrderingInfo

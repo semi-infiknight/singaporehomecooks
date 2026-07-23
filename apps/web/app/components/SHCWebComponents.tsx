@@ -2890,6 +2890,117 @@ export function DishOrderingInfo({
   );
 }
 
+/** Kook-inspired recipe story — heritage lead, ingredients checklist, numbered steps. */
+export function RecipeStoryCard({
+  heritageLead,
+  aboutBlurb,
+  glanceChips = [],
+  ingredients = [],
+  steps = [],
+  cookName,
+  testID = 'recipe-story-card',
+}: {
+  heritageLead?: string | null;
+  aboutBlurb?: string | null;
+  glanceChips?: string[];
+  ingredients?: Array<{ name?: string; quantity?: number | string; unit?: string } | string>;
+  steps?: Array<{ order: number; instruction: string; tip?: string }>;
+  cookName?: string;
+  testID?: string;
+}) {
+  const formatIng = (ing: { name?: string; quantity?: number | string; unit?: string } | string) => {
+    if (typeof ing === 'string') return ing;
+    const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
+    const unit = ing.unit ? ` ${ing.unit}` : '';
+    const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
+    return `${ing.name || ''}${suffix}`.trim();
+  };
+
+  return (
+    <div data-testid={testID} className="space-y-4 mb-4">
+      <p className="text-[11px] font-extrabold text-muted-foreground tracking-wide">FAMILY RECIPE</p>
+
+      {heritageLead ? (
+        <div
+          data-testid={`${testID}-heritage`}
+          className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)]/60 p-4 shadow-[var(--shc-shadow-brutal-sm)]"
+        >
+          <p className="text-sm font-bold text-foreground leading-relaxed">{heritageLead}</p>
+        </div>
+      ) : null}
+
+      {aboutBlurb ? (
+        <p data-testid={`${testID}-about`} className="text-sm font-semibold text-muted-foreground leading-relaxed">
+          {aboutBlurb}
+        </p>
+      ) : null}
+
+      {glanceChips.length > 0 ? (
+        <div className="flex flex-wrap gap-2" data-testid={`${testID}-glance`}>
+          {glanceChips.map((chip) => (
+            <span
+              key={chip}
+              className="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-secondary border border-[var(--shc-border-brutal)]"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {ingredients.length > 0 ? (
+        <div
+          data-testid={`${testID}-ingredients`}
+          className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)]"
+        >
+          <p className="text-sm font-black text-foreground mb-3">What goes in</p>
+          <ul className="space-y-2">
+            {ingredients.map((ing, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs font-semibold text-foreground">
+                <span className="w-[18px] h-[18px] shrink-0 mt-0.5 rounded border-2 border-primary" aria-hidden />
+                {formatIng(ing)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {steps.length > 0 ? (
+        <div data-testid={`${testID}-steps`}>
+          <p className="text-sm font-black text-foreground mb-3">
+            How {cookName ? `${cookName.split(' ')[0]} makes it` : 'it is made'}
+          </p>
+          <ol className="space-y-3">
+            {steps.map((step) => (
+              <li
+                key={step.order}
+                data-testid={`${testID}-step-${step.order}`}
+                className="flex items-start gap-3 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-3 shadow-[var(--shc-shadow-brutal-sm)]"
+              >
+                <span className="w-7 h-7 shrink-0 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center">
+                  {step.order}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground leading-snug">{step.instruction}</p>
+                  {step.tip ? (
+                    <p className="text-[11px] font-semibold text-muted-foreground mt-1 leading-snug">{step.tip}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+
+      {cookName ? (
+        <p data-testid={`${testID}-footer`} className="text-[11px] font-bold text-muted-foreground">
+          Cooked fresh by {cookName} · HDB home kitchen
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function GourmeatCartLineItem({
   name,
   qty,

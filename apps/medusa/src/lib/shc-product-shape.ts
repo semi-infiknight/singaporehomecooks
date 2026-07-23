@@ -35,6 +35,7 @@ export async function shapeProduct(
     min_qty: meta.min_qty || 1,
     shc_availability: avail,
     description: meta.description || "",
+    heritage_note: meta.heritage_note || null,
     image_url: meta.image_url || null,
   };
 }

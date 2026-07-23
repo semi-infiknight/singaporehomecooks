@@ -573,3 +573,168 @@ export function SHCActiveOrderBanner({
     </Pressable>
   );
 }
+
+/** Kook-inspired recipe story — heritage lead, ingredients checklist, numbered steps. */
+export function SHCRecipeStoryCard({
+  heritageLead,
+  aboutBlurb,
+  glanceChips = [],
+  ingredients = [],
+  steps = [],
+  cookName,
+  testID = 'recipe-story-card',
+}: {
+  heritageLead?: string | null;
+  aboutBlurb?: string | null;
+  glanceChips?: string[];
+  ingredients?: Array<{ name?: string; quantity?: number | string; unit?: string } | string>;
+  steps?: Array<{ order: number; instruction: string; tip?: string }>;
+  cookName?: string;
+  testID?: string;
+}) {
+  const formatIng = (ing: { name?: string; quantity?: number | string; unit?: string } | string) => {
+    if (typeof ing === 'string') return ing;
+    const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
+    const unit = ing.unit ? ` ${ing.unit}` : '';
+    const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
+    return `${ing.name || ''}${suffix}`.trim();
+  };
+
+  return (
+    <View testID={testID} style={{ gap: shcSpacing.md, marginBottom: shcSpacing.md }}>
+      <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, letterSpacing: 0.6 }}>
+        FAMILY RECIPE
+      </Text>
+
+      {heritageLead ? (
+        <View
+          testID={`${testID}-heritage`}
+          style={{
+            backgroundColor: shcColors.bentoPeach,
+            borderWidth: shcBorders.brutal,
+            borderColor: shcColors.border,
+            borderRadius: shcRadii.lg,
+            padding: shcSpacing.md,
+            ...shcShadows.brutalSm,
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: shcColors.text, lineHeight: 20 }}>{heritageLead}</Text>
+        </View>
+      ) : null}
+
+      {aboutBlurb ? (
+        <Text testID={`${testID}-about`} style={{ fontSize: 13, fontWeight: '600', color: shcColors.textLight, lineHeight: 19 }}>
+          {aboutBlurb}
+        </Text>
+      ) : null}
+
+      {glanceChips.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }} testID={`${testID}-glance`}>
+          {glanceChips.map((chip) => (
+            <View
+              key={chip}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: shcRadii.pill,
+                backgroundColor: shcColors.surfaceAlt,
+                borderWidth: 1,
+                borderColor: shcColors.borderLight,
+              }}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.text }}>{chip}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {ingredients.length > 0 ? (
+        <View
+          testID={`${testID}-ingredients`}
+          style={{
+            backgroundColor: shcColors.surface,
+            borderWidth: shcBorders.brutal,
+            borderColor: shcColors.border,
+            borderRadius: shcRadii.lg,
+            padding: shcSpacing.md,
+            ...shcShadows.brutalSm,
+          }}
+        >
+          <Text style={{ fontSize: 13, fontWeight: '900', color: shcColors.text, marginBottom: shcSpacing.sm }}>
+            What goes in
+          </Text>
+          {ingredients.map((ing, i) => (
+            <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: i === 0 ? 0 : 6 }}>
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  borderWidth: 2,
+                  borderColor: shcColors.primary,
+                  marginTop: 1,
+                }}
+              />
+              <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: shcColors.text, lineHeight: 17 }}>
+                {formatIng(ing)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {steps.length > 0 ? (
+        <View testID={`${testID}-steps`}>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: shcColors.text, marginBottom: shcSpacing.sm }}>
+            How {cookName ? `${cookName.split(' ')[0]} makes it` : 'it is made'}
+          </Text>
+          {steps.map((step) => (
+            <View
+              key={step.order}
+              testID={`${testID}-step-${step.order}`}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                gap: shcSpacing.sm,
+                marginBottom: shcSpacing.sm,
+                backgroundColor: shcColors.surface,
+                borderWidth: shcBorders.brutal,
+                borderColor: shcColors.border,
+                borderRadius: shcRadii.md,
+                padding: shcSpacing.sm,
+                ...shcShadows.brutalSm,
+              }}
+            >
+              <View
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 14,
+                  backgroundColor: shcColors.primary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '900', color: shcColors.onPrimary }}>{step.order}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 18 }}>{step.instruction}</Text>
+                {step.tip ? (
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 15 }}>
+                    {step.tip}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {cookName ? (
+        <Text testID={`${testID}-footer`} style={{ fontSize: 11, fontWeight: '700', color: shcColors.textLight }}>
+          Cooked fresh by {cookName} · HDB home kitchen
+        </Text>
+      ) : null}
+    </View>
+  );
+}

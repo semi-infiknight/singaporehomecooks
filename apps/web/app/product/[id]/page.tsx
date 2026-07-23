@@ -3,7 +3,7 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getDishImageUrl, resolveProductForDisplay } from '@shc/utils';
+import { getDishImageUrl, resolveProductForDisplay, recipeHeritageLead, recipeAboutBlurb, recipeAtAGlance, recipeStepsForProduct, recipeHasStory } from '@shc/utils';
 import { useProduct, useAddToCart, useCollectionSlots, useAICalorieEstimate } from '../../../lib/useProducts';
 import {
   SHCCard,
@@ -19,6 +19,7 @@ import {
   GourmeatProductStickyBar,
   GourmeatCard,
   DishOrderingInfo,
+  RecipeStoryCard,
   FavoriteButton,
   SHCSharedDishImageWeb,
   gourmeatDiscountPercent,
@@ -127,6 +128,22 @@ function ProductDetailContent() {
   };
 
   const displayCal = aiCalories ?? product.calories ?? 450;
+  const recipeSteps = recipeStepsForProduct({
+    id: product.id,
+    description: product.description,
+    heritage_note: (product as { heritage_note?: string }).heritage_note,
+    cuisine: product.cuisine,
+    cook_name: product.cook_name,
+    min_qty: product.min_qty,
+    ingredients: product.ingredients,
+  });
+  const showRecipe = recipeHasStory({
+    id: product.id,
+    description: product.description,
+    heritage_note: (product as { heritage_note?: string }).heritage_note,
+    ingredients: product.ingredients,
+    recipe_steps: recipeSteps,
+  });
 
   return (
     <div className="min-h-screen bg-background" data-testid="product-detail-screen">
@@ -189,6 +206,23 @@ function ProductDetailContent() {
           {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
           {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
         </div>
+
+        {showRecipe ? (
+          <RecipeStoryCard
+            heritageLead={recipeHeritageLead({
+              description: product.description,
+              heritage_note: (product as { heritage_note?: string }).heritage_note,
+            })}
+            aboutBlurb={recipeAboutBlurb({ description: product.description })}
+            glanceChips={recipeAtAGlance(
+              { cuisine: product.cuisine, min_qty: product.min_qty },
+              recipeSteps.length
+            )}
+            ingredients={product.ingredients}
+            steps={recipeSteps}
+            cookName={product.cook_name}
+          />
+        ) : null}
 
         <GourmeatCard className="mb-4">
           <DishOrderingInfo
