@@ -246,7 +246,7 @@ export default function Cart() {
                 </View>
                 <View style={styles.summaryRow}>
                   <Text style={styles.summaryMuted}>HDB collection</Text>
-                  <Text style={[styles.summaryVal, { color: '#2E7D32' }]}>
+                  <Text style={[styles.summaryVal, { color: gourmeatColors.success }]}>
                     {summary.collectionFeeLabel}
                   </Text>
                 </View>

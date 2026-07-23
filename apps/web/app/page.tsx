@@ -352,7 +352,7 @@ export default function DiscoverHome() {
           type="button"
           data-testid="home-offer-card"
           onClick={() => router.push('/tiffin')}
-          className="w-full text-left rounded-2xl bg-[#1E3A5F] text-white p-4 shc-section-stack"
+          className="w-full text-left rounded-2xl shc-bg-offer text-white p-4 shc-section-stack"
         >
           <p className="font-black text-base">Subscribe for weekly tiffin</p>
           <p className="text-xs font-semibold opacity-90 mt-1">

@@ -70,6 +70,9 @@ import {
   type TrayHeight,
   type MilestoneId,
 } from '@shc/ui/family-values-core';
+import { tiffinMealStatusChip, type TiffinOrderCardStatus } from '@shc/ui';
+
+export type { TiffinOrderCardStatus };
 
 export type { TrayFrame, TrayHeight };
 
@@ -1796,7 +1799,7 @@ export function TiffinHeroBanner({
       className={`shc-section-stack rounded-2xl p-6 text-white shadow-[var(--shc-shadow-soft)] bg-primary ${className}`}
     >
       <p className="text-xl font-extrabold">{title}</p>
-      <p className="text-lg font-extrabold text-[#FFF8F0] mt-1 mb-2">{highlight}</p>
+      <p className="text-lg font-extrabold text-[var(--shc-hero-cream)] mt-1 mb-2">{highlight}</p>
       <ul className="text-[13px] font-semibold space-y-0.5 text-white/92">
         {bullets.map((b) => (
           <li key={b}>· {b}</li>
@@ -1895,7 +1898,7 @@ export function TiffinKitchenCard({
         <div className="flex items-start justify-between gap-2">
           <p className="font-extrabold text-[17px] text-foreground truncate flex-1">{cookName}</p>
           <span className="text-xs font-bold shrink-0 flex items-center gap-0.5">
-            <span className="text-[#F5A623]">★</span>
+            <span className="shc-text-rating">★</span>
             {rating.toFixed(1)}
             {reviewCount != null ? ` (${reviewCount})` : ''}
           </span>
@@ -1906,7 +1909,7 @@ export function TiffinKitchenCard({
           </p>
         )}
         <p className="text-[13px] font-extrabold mt-1.5">
-          <span className={isOpen ? 'text-[#2E7D32]' : 'text-destructive'}>{isOpen ? 'Open' : 'Closed'}</span>
+          <span className={isOpen ? 'text-[var(--shc-gourmeat-success)]' : 'text-destructive'}>{isOpen ? 'Open' : 'Closed'}</span>
           {closesAt ? <span className="text-muted-foreground font-semibold"> · {closesAt}</span> : null}
         </p>
         <div className="flex justify-between items-center mt-2.5 gap-3">
@@ -2420,7 +2423,7 @@ export function GourmeatHomeHeader({
         <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
         <span className="text-[11px] font-semibold text-muted-foreground">{locationHint}</span>
         <span className="text-xs font-bold text-foreground ml-1 truncate max-w-[200px]">{locationLabel}</span>
-        <span className="text-[10px] text-[#B0B0B0] ml-1">▼</span>
+        <span className="text-[10px] text-muted-foreground ml-1">▼</span>
       </Link>
     </div>
   );
@@ -2442,14 +2445,14 @@ export function GourmeatSearchBar({
   return (
     <div className="flex items-center gap-2 shc-header-gap">
       <div className="flex-1 flex items-center bg-card rounded-full px-4 py-3 shadow-[var(--shc-shadow-soft)] min-w-0">
-        <Search className="w-[18px] h-[18px] text-[#B0B0B0] shrink-0" aria-hidden />
+        <Search className="shc-icon-md text-muted-foreground shrink-0" aria-hidden />
         <input
           type="search"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           data-testid={testID}
-          className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-[#B0B0B0] min-w-0"
+          className="flex-1 ml-3 text-sm font-medium text-foreground bg-transparent outline-none placeholder:text-muted-foreground min-w-0"
         />
       </div>
       {onFilterPress ? (
@@ -2493,7 +2496,7 @@ export function GourmeatSectionTitle({
 
   return (
     <div className="flex items-center justify-between shc-title-block" data-testid={testID}>
-      <h2 className="text-lg font-extrabold text-foreground tracking-[-0.3px]">{title}</h2>
+      <h2 className="shc-type-section text-foreground tracking-[-0.3px]">{title}</h2>
       {action}
     </div>
   );
@@ -2673,13 +2676,6 @@ export function GourmeatCartLineItem({
   );
 }
 
-export type TiffinOrderCardStatus =
-  | 'indeterminate'
-  | 'scheduled'
-  | 'delivered'
-  | 'skipped'
-  | 'canceled_by_kitchen';
-
 /** HomelyEats order day card — parity with SHCTiffinOrderStatusCard */
 export function TiffinOrderStatusCard({
   cookName,
@@ -2706,16 +2702,7 @@ export function TiffinOrderStatusCard({
   manageLabel?: string;
   testID?: string;
 }) {
-  const chip =
-    status === 'delivered'
-      ? { bg: '#E8F5E9', text: 'Delivered', color: '#2E7D32' }
-      : status === 'skipped'
-        ? { bg: '#FFF3E0', text: 'Skipped', color: '#E65100' }
-        : status === 'canceled_by_kitchen'
-          ? { bg: '#FFEBEE', text: 'Canceled by kitchen', color: '#C62828' }
-          : status === 'indeterminate'
-            ? { bg: '#F5F5F5', text: 'Upcoming', color: '#616161' }
-            : { bg: '#E3F2FD', text: 'Scheduled', color: '#1565C0' };
+  const chip = tiffinMealStatusChip(status);
 
   return (
     <div
@@ -2924,7 +2911,7 @@ export function GourmeatDishCard({
               {product.name}
             </div>
             {product.cook_name ? (
-              <div className="text-[11px] text-[#8A8A8A] truncate mb-1" data-testid={`${cardTestID}-cook`}>
+              <div className="text-[11px] text-muted-foreground truncate mb-1" data-testid={`${cardTestID}-cook`}>
                 {product.cook_name}
               </div>
             ) : null}
@@ -2937,7 +2924,7 @@ export function GourmeatDishCard({
               <span className="text-[10px] text-accent" aria-hidden>
                 ★
               </span>
-              <span className="text-[10px] font-semibold text-[#8A8A8A]">{displayRating.toFixed(1)}</span>
+              <span className="text-[10px] font-semibold text-muted-foreground">{displayRating.toFixed(1)}</span>
             </div>
           </div>
         </SharedDishProductLink>
@@ -3090,8 +3077,8 @@ export function GourmeatCookHeader({
 }) {
   return (
     <div className="shc-header-gap" data-testid={testID}>
-      <h1 className="text-[28px] font-extrabold text-foreground tracking-[-0.5px]">{title}</h1>
-      {subtitle ? <p className="text-[13px] text-[#8A8A8A] mt-1">{subtitle}</p> : null}
+      <h1 className="shc-type-screen-title text-foreground">{title}</h1>
+      {subtitle ? <p className="text-[13px] text-muted-foreground mt-1">{subtitle}</p> : null}
       {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}
     </div>
   );

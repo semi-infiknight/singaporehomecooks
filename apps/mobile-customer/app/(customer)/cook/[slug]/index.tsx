@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: gourmeatColors.surface,
   },
-  tabChipOn: { borderColor: gourmeatColors.primary, backgroundColor: '#FFF0EB' },
+  tabChipOn: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight },
   tabChipText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.textLight },
   tabChipTextOn: { color: gourmeatColors.primary },
   sectionCard: {
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
   },
-  addBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  addBtnText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 13 },
   filterChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
   },
   filterChipOn: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
   filterChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
-  filterChipTextOn: { color: '#fff' },
+  filterChipTextOn: { color: gourmeatColors.onPrimary },
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 8,
   },
-  optRowOn: { borderColor: gourmeatColors.primary, backgroundColor: '#FFF0EB' },
+  optRowOn: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primaryLight },
   optLabel: { fontWeight: '700', fontSize: 14 },
   optPrice: { fontWeight: '800', fontSize: 13 },
   modalFooter: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  confirmBtnText: { color: '#fff', fontWeight: '900', fontSize: 13 },
+  confirmBtnText: { color: gourmeatColors.onPrimary, fontWeight: '900', fontSize: 13 },
   aboutPoint: { fontSize: 14, fontWeight: '600', color: gourmeatColors.text, marginTop: 8 },
   infoCard: {
     marginTop: shcSpacing.sm,
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
   ratingSub: { fontSize: 12, fontWeight: '700', color: gourmeatColors.textLight, marginBottom: 10 },
   barRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   barLabel: { width: 72, fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight },
-  barTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: '#EEE' },
+  barTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: gourmeatColors.surfaceAlt },
   barFill: { height: 6, borderRadius: 3, backgroundColor: gourmeatColors.primary },
   sortChip: {
     paddingHorizontal: 12,
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
   },
   sortChipOn: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
   sortChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
-  sortChipTextOn: { color: '#fff' },
+  sortChipTextOn: { color: gourmeatColors.onPrimary },
   stars: { color: gourmeatColors.primary, fontWeight: '800', marginTop: 2 },
   footer: {
     position: 'absolute',

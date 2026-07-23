@@ -66,7 +66,24 @@ Some shared form primitives (`ListingWizardStep`, allergen gates) still use brut
 - **Radius:** 8px inputs/chips; 12px cards; 999px pill chips
 - **Typography weight:** 700–900 headings; 600+ labels; 500 body
 
-### Token sources (must stay in sync)
+### Typography + icon rhythm
+
+| Token | Mobile (`theme.ts`) | Web (`globals.css`) | Use |
+|---|---|---|---|
+| `gourmeatTypography.*` | `homeHeadline`, `sectionTitle`, `search`, … | `.shc-type-display`, `.shc-type-section`, … | Gourmeat customer screens |
+| `shcTypography.*` | `display`, `h1`, `body`, `eyebrow`, … | semantic HTML + utility classes | Cook / brutal surfaces |
+| `shcIconSizes` | `xs`–`xl`, `nav`, `category` | `.shc-icon-sm`, `.shc-icon-md` | SHCIcon + lucide mirrors |
+
+### Semantic colors (no inline hex in screens)
+
+| Token | Hex | Use |
+|---|---|---|
+| `gourmeatColors.offerNavy` | `#1E3A5F` | Subscription offer banners |
+| `gourmeatColors.ratingStar` | `#F5A623` | ★ rating accent |
+| `gourmeatColors.heroCream` | `#FFF8F0` | Text on primary hero banners |
+| `gourmeatColors.overlayDark` | `rgba(36,24,18,0.45)` | Photo overlays on promo rails |
+| `tiffinMealStatusChip()` | shared map | Tiffin order status chips (mobile + web) |
+
 
 | Platform | File |
 |---|---|

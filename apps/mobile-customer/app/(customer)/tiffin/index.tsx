@@ -262,13 +262,13 @@ const styles = StyleSheet.create({
   searchIcon: { fontSize: 18, color: gourmeatColors.textLight, marginRight: 8 },
   searchInput: { flex: 1, fontSize: 15, color: gourmeatColors.text, paddingVertical: 8 },
   offerCard: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: gourmeatColors.offerNavy,
     borderRadius: 14,
     padding: shcSpacing.md,
     marginBottom: shcSpacing.md,
   },
-  offerTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
-  offerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4, lineHeight: 17 },
+  offerTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.onPrimary },
+  offerSub: { fontSize: 12, color: gourmeatColors.onHeroMuted, marginTop: 4, lineHeight: 17 },
   activeBanner: {
     backgroundColor: gourmeatColors.surface,
     borderRadius: 12,

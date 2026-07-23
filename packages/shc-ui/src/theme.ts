@@ -31,6 +31,15 @@ export const shcColors = {
   tierBronze: '#92400E',
   tierSilver: '#6B7280',
   tierGold: '#F59E0B',
+  /** Status chip surfaces (tiffin, orders) */
+  surfaceInfo: '#E3F2FD',
+  info: '#1565C0',
+  surfaceNeutral: '#F5F5F5',
+  neutral: '#616161',
+  surfaceSkipped: '#FFF3E0',
+  warningDark: '#E65100',
+  surfaceErrorAlt: '#FFEBEE',
+  errorDark: '#C62828',
 };
 
 export const shcSpacing = {
@@ -97,9 +106,42 @@ export const shcTypography = {
   h2: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3 },
   h3: { fontSize: 16, fontWeight: '700' as const },
   body: { fontSize: 14, fontWeight: '500' as const },
+  bodyBold: { fontSize: 14, fontWeight: '700' as const },
   caption: { fontSize: 12, fontWeight: '500' as const },
+  captionBold: { fontSize: 12, fontWeight: '700' as const },
+  micro: { fontSize: 11, fontWeight: '600' as const },
+  microBold: { fontSize: 11, fontWeight: '800' as const },
+  eyebrow: { fontSize: 10, fontWeight: '800' as const, letterSpacing: 1.2, textTransform: 'uppercase' as const },
   mono: { fontSize: 14, fontWeight: '600' as const, fontVariant: ['tabular-nums'] as const },
 };
+
+/** Gourmeat customer skin typography — Orbix Studio discover/checkout. */
+export const gourmeatTypography = {
+  homeHeadline: { fontSize: 26, fontWeight: '800' as const, letterSpacing: -0.5, lineHeight: 32 },
+  screenTitle: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5 },
+  sectionTitle: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3 },
+  cardTitle: { fontSize: 14, fontWeight: '700' as const },
+  cardMeta: { fontSize: 11, fontWeight: '500' as const },
+  price: { fontSize: 15, fontWeight: '800' as const },
+  locationHint: { fontSize: 11, fontWeight: '600' as const },
+  locationLabel: { fontSize: 12, fontWeight: '700' as const },
+  search: { fontSize: 14, fontWeight: '500' as const },
+  tabLabel: { fontSize: 10, fontWeight: '500' as const },
+  tabLabelActive: { fontSize: 10, fontWeight: '700' as const },
+  categoryLabel: { fontSize: 11, fontWeight: '500' as const, lineHeight: 14 },
+  categoryLabelActive: { fontSize: 11, fontWeight: '700' as const, lineHeight: 14 },
+};
+
+/** Standard icon sizes (SHCIcon, lucide web mirrors). */
+export const shcIconSizes = {
+  xs: 14,
+  sm: 16,
+  md: 18,
+  lg: 20,
+  xl: 24,
+  nav: 22,
+  category: 26,
+} as const;
 
 export const shcMotion = {
   springPress: { damping: 15, stiffness: 400, mass: 0.8 },
@@ -143,6 +185,18 @@ export const gourmeatColors = {
   discount: '#F87048',
   success: '#22C55E',
   error: '#EF4444',
+  /** Subscription offer banner (navy) */
+  offerNavy: '#1E3A5F',
+  /** Star rating accent */
+  ratingStar: '#F5A623',
+  /** Text on primary / hero banners */
+  heroCream: '#FFF8F0',
+  /** Photo overlay on cards/rails */
+  overlayDark: 'rgba(36,24,18,0.45)',
+  overlayHero: 'rgba(36,24,18,0.42)',
+  onHero: 'rgba(255,255,255,0.92)',
+  onHeroMuted: 'rgba(255,255,255,0.85)',
+  onHeroSubtle: 'rgba(255,255,255,0.95)',
 };
 
 export const gourmeatRadii = {
@@ -251,6 +305,6 @@ export const gourmeatTheme = {
   radii: gourmeatRadii,
   shadows: gourmeatShadows,
   spacing: shcSpacing,
-  typography: shcTypography,
+  typography: gourmeatTypography,
   layout: gourmeatLayout,
 };

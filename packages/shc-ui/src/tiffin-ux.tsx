@@ -228,7 +228,7 @@ export function SHCTiffinKitchenCard({
               </Text>
             ) : null}
             <View style={styles.openRow}>
-              <Text style={[styles.openDot, { color: isOpen ? '#2E7D32' : '#C62828' }]}>
+              <Text style={[styles.openDot, { color: isOpen ? gourmeatColors.success : gourmeatColors.error }]}>
                 {isOpen ? 'Open' : 'Closed'}
               </Text>
               {closesAt ? <Text style={styles.closesAt}> · {closesAt}</Text> : null}
@@ -301,7 +301,7 @@ export function SHCTiffinKitchenHero({
         <Text style={styles.kitchenHeroSubtitle}>
           {tagline || 'Home-cooked tiffin — collection from one HDB kitchen each week.'}
         </Text>
-        <Text style={[styles.kitchenHeroOpen, { color: isOpen ? '#2E7D32' : '#C62828' }]} testID="kitchen-open-status">
+        <Text style={[styles.kitchenHeroOpen, { color: isOpen ? gourmeatColors.success : gourmeatColors.error }]} testID="kitchen-open-status">
           {isOpen ? 'Open' : 'Closed'}
           <Text style={styles.kitchenHeroOpenDetail}> · {openDetail}</Text>
         </Text>
@@ -996,6 +996,22 @@ export type TiffinOrderCardStatus =
   | 'skipped'
   | 'canceled_by_kitchen';
 
+/** Tri-platform meal status chip colors — mobile + web share this map. */
+export function tiffinMealStatusChip(status: TiffinOrderCardStatus): { bg: string; text: string; color: string } {
+  switch (status) {
+    case 'delivered':
+      return { bg: shcColors.bentoMint, text: 'Delivered', color: shcColors.success };
+    case 'skipped':
+      return { bg: shcColors.surfaceSkipped, text: 'Skipped', color: shcColors.warningDark };
+    case 'canceled_by_kitchen':
+      return { bg: shcColors.surfaceErrorAlt, text: 'Canceled by kitchen', color: shcColors.errorDark };
+    case 'indeterminate':
+      return { bg: shcColors.surfaceNeutral, text: 'Upcoming', color: shcColors.neutral };
+    default:
+      return { bg: shcColors.surfaceInfo, text: 'Scheduled', color: shcColors.info };
+  }
+}
+
 /** HomelyEats ref 25 — order card status variants */
 export function SHCTiffinOrderStatusCard({
   cookName,
@@ -1020,16 +1036,7 @@ export function SHCTiffinOrderStatusCard({
   onManage?: () => void;
   testID?: string;
 }) {
-  const chip =
-    status === 'delivered'
-      ? { bg: '#E8F5E9', text: 'Delivered', color: '#2E7D32' }
-      : status === 'skipped'
-        ? { bg: '#FFF3E0', text: 'Skipped', color: '#E65100' }
-        : status === 'canceled_by_kitchen'
-          ? { bg: '#FFEBEE', text: 'Canceled by kitchen', color: '#C62828' }
-          : status === 'indeterminate'
-            ? { bg: '#F5F5F5', text: 'Upcoming', color: '#616161' }
-            : { bg: '#E3F2FD', text: 'Scheduled', color: '#1565C0' };
+  const chip = tiffinMealStatusChip(status);
   return (
     <View testID={testID || `tiffin-order-card-${status}`} style={styles.orderStatusCard}>
       <View style={styles.orderStatusHeader}>
@@ -1235,9 +1242,9 @@ const styles = StyleSheet.create({
     padding: shcSpacing.lg,
     ...gourmeatShadows.soft,
   },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: '#fff' },
-  heroHighlight: { fontSize: 18, fontWeight: '800', color: '#FFF8F0', marginTop: 4, marginBottom: 8 },
-  heroBullet: { fontSize: 13, color: 'rgba(255,255,255,0.92)', lineHeight: 20, marginTop: 2 },
+  heroTitle: { fontSize: 20, fontWeight: '800', color: gourmeatColors.onPrimary },
+  heroHighlight: { fontSize: 18, fontWeight: '800', color: gourmeatColors.heroCream, marginTop: 4, marginBottom: 8 },
+  heroBullet: { fontSize: 13, color: gourmeatColors.onHero, lineHeight: 20, marginTop: 2 },
   heroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 6, lineHeight: 18 },
   filterRow: { gap: 8, paddingBottom: shcSpacing.sm },
   filterChip: {
@@ -1250,7 +1257,7 @@ const styles = StyleSheet.create({
   },
   filterChipActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
   filterChipText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.text },
-  filterChipTextActive: { color: '#fff' },
+  filterChipTextActive: { color: gourmeatColors.onPrimary },
   sectionEyebrow: {
     fontSize: 12,
     lineHeight: 12,
@@ -1322,7 +1329,7 @@ const styles = StyleSheet.create({
   openDot: { fontSize: 13, fontWeight: '800' },
   closesAt: { fontSize: 12, color: gourmeatColors.textLight, fontWeight: '600' },
   ratingPill: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  ratingStar: { color: '#F5A623', fontSize: 13, fontWeight: '800' },
+  ratingStar: { color: gourmeatColors.ratingStar, fontSize: 13, fontWeight: '800' },
   ratingText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
   kitchenMetaRow: {
     flexDirection: 'row',
@@ -1350,18 +1357,18 @@ const styles = StyleSheet.create({
   kitchenHeroTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   kitchenHeroTitle: { flex: 1, fontSize: 20, fontWeight: '800', color: gourmeatColors.text },
   kitchenHeroRating: {
-    backgroundColor: '#1C1C1C',
+    backgroundColor: gourmeatColors.nav,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  kitchenHeroRatingText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  kitchenHeroRatingText: { color: gourmeatColors.onPrimary, fontSize: 12, fontWeight: '800' },
   kitchenHeroSubtitle: { fontSize: 13, color: gourmeatColors.textLight, marginTop: 4, lineHeight: 18 },
   kitchenHeroOpen: { fontSize: 13, fontWeight: '800', marginTop: 8 },
   kitchenHeroOpenDetail: { fontWeight: '600', color: gourmeatColors.textLight },
   kitchenHeroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   kitchenHeroTag: {
-    backgroundColor: '#FFF0EB',
+    backgroundColor: gourmeatColors.primaryLight,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -1469,7 +1476,7 @@ const styles = StyleSheet.create({
   manageMealsChipText: { fontSize: 15, fontWeight: '800', color: gourmeatColors.text },
   manageMealsChipTextActive: { color: gourmeatColors.primary },
   manageLink: { fontSize: 13, fontWeight: '800', color: gourmeatColors.primary, marginTop: shcSpacing.lg, letterSpacing: 0.3 },
-  manageCancelLink: { fontSize: 13, fontWeight: '700', color: '#c0392b', marginTop: shcSpacing.md },
+  manageCancelLink: { fontSize: 13, fontWeight: '700', color: gourmeatColors.error, marginTop: shcSpacing.md },
   dishChip: {
     width: 120,
     marginRight: shcSpacing.sm,
@@ -1539,7 +1546,7 @@ const styles = StyleSheet.create({
   pickerScroll: { paddingHorizontal: shcSpacing.md },
   plannerScreen: { flex: 1, backgroundColor: gourmeatColors.background },
   plannerScroll: { padding: shcSpacing.md },
-  plannerScheduled: { fontSize: 11, fontWeight: '800', color: '#2d8a4e', letterSpacing: 0.5 },
+  plannerScheduled: { fontSize: 11, fontWeight: '800', color: gourmeatColors.success, letterSpacing: 0.5 },
   plannerTitle: { fontSize: 26, fontWeight: '800', color: gourmeatColors.text },
   addMealRow: {
     flexDirection: 'row',
@@ -1578,7 +1585,7 @@ const styles = StyleSheet.create({
   manageWeek: { fontSize: 12, color: gourmeatColors.text, marginTop: shcSpacing.sm },
   manageActions: { marginTop: shcSpacing.lg },
   cancelLink: { alignItems: 'center', marginTop: shcSpacing.md, padding: shcSpacing.sm },
-  cancelText: { fontSize: 13, fontWeight: '700', color: '#c0392b' },
+  cancelText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.error },
   cookDishRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -69,6 +69,14 @@
     --shc-border: #E8E8E8;
     --shc-text: #1C1C1C;
     --shc-text-light: #8A8A8A;
+    --shc-text-muted: #B0B0B0;
+    --shc-primary-light: #FFF0EB;
+    --shc-gourmeat-success: #22C55E;
+    --shc-offer-navy: #1E3A5F;
+    --shc-rating-star: #F5A623;
+    --shc-hero-cream: #FFF8F0;
+    --shc-overlay-dark: rgba(36, 24, 18, 0.45);
+    --shc-overlay-hero: rgba(36, 24, 18, 0.42);
     --shc-gourmeat-nav: #1C1C1C;
     --shc-gourmeat-pay: #1C1C1C;
     --shc-shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -293,6 +301,74 @@ a {
 .shc-screen-inset {
   padding-left: var(--shc-md-gap);
   padding-right: var(--shc-md-gap);
+}
+
+/* Typography rhythm — mirrors gourmeatTypography + shcTypography */
+.shc-type-display {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.shc-type-screen-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.shc-type-section {
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.shc-type-body {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.shc-type-caption {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.shc-type-micro {
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.shc-type-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shc-text-muted {
+  color: var(--shc-text-muted);
+}
+
+.shc-text-light {
+  color: var(--shc-text-light);
+}
+
+.shc-text-rating {
+  color: var(--shc-rating-star);
+}
+
+.shc-bg-offer {
+  background-color: var(--shc-offer-navy);
+}
+
+.shc-icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.shc-icon-md {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .shc-skeleton {

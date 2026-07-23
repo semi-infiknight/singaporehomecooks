@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack, shcTitleBlock } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack, shcTitleBlock, gourmeatColors } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
@@ -226,7 +226,7 @@ export function SHCPromoRail({
               flex: 1,
               padding: shcSpacing.sm,
               justifyContent: 'space-between',
-              backgroundColor: 'rgba(36,24,18,0.45)',
+              backgroundColor: gourmeatColors.overlayDark,
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -251,7 +251,7 @@ export function SHCPromoRail({
                 {promo.title}
               </Text>
               {promo.subtitle && (
-                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
+                <Text style={{ color: gourmeatColors.onHeroMuted, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
                   {promo.subtitle}
                 </Text>
               )}

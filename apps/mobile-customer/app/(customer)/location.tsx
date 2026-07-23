@@ -3,6 +3,7 @@ import { View, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LocationPickerExperience, type PinNudgeDirection } from '@shc/ui/location-ux';
+import { gourmeatColors } from '@shc/ui';
 import type { SHCSavedAddress } from '@shc/types';
 import {
   nudgeCoordinates,
@@ -193,7 +194,7 @@ export default function LocationScreen() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#FAFAFA' }} testID="location-screen">
+    <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: gourmeatColors.background }} testID="location-screen">
       <LocationPickerExperience
         step={step}
         onStepChange={setStep}

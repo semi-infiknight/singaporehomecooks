@@ -578,12 +578,12 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
   offerCard: {
     ...shcSectionStack,
-    backgroundColor: '#1E3A5F',
+    backgroundColor: gourmeatColors.offerNavy,
     borderRadius: 14,
     padding: shcSpacing.md,
   },
-  offerTitle: { fontSize: 16, fontWeight: '800', color: '#fff' },
-  offerSub: { fontSize: 12, color: 'rgba(255,255,255,0.88)', marginTop: 4, lineHeight: 17 },
+  offerTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.onPrimary },
+  offerSub: { fontSize: 12, color: gourmeatColors.onHeroMuted, marginTop: 4, lineHeight: 17 },
   promoWrap: { position: 'relative' },
   promoClose: {
     position: 'absolute',
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  promoCloseText: { color: '#fff', fontWeight: '800', fontSize: 12 },
+  promoCloseText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 12 },
   gridHint: {
     paddingHorizontal: shcSpacing.md,
     fontSize: 12,

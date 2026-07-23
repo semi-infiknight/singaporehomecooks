@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, shcSectionStack, shcTitleBlock, shcHeaderGap, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
+import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, gourmeatTypography, shcSpacing, shcIconSizes, shcSectionStack, shcTitleBlock, shcHeaderGap, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
 
 export { gourmeatLayout, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe };
 import { SHCIcon, type SHCTabIconKey } from './icons';
@@ -57,11 +57,8 @@ export function GourmeatHomeHeader({
         <View style={{ flex: 1, paddingRight: shcSpacing.sm }}>
           <Text
             style={{
-              fontSize: 26,
-              fontWeight: '800',
+              ...gourmeatTypography.homeHeadline,
               color: gourmeatColors.text,
-              letterSpacing: -0.5,
-              lineHeight: 32,
             }}
           >
             {headline}
@@ -124,10 +121,10 @@ export function GourmeatHomeHeader({
         }}
         testID="gourmeat-location-chip"
       >
-        <SHCIcon name="location" size={14} color={gourmeatColors.primary} active />
+        <SHCIcon name="location" size={shcIconSizes.sm} color={gourmeatColors.primary} active />
         <View style={{ width: 4 }} />
-        <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight }}>{locationHint}</Text>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: gourmeatColors.text, marginLeft: 4 }} numberOfLines={1}>
+        <Text style={{ ...gourmeatTypography.locationHint, color: gourmeatColors.textLight }}>{locationHint}</Text>
+        <Text style={{ ...gourmeatTypography.locationLabel, color: gourmeatColors.text, marginLeft: 4 }} numberOfLines={1}>
           {locationLabel}
         </Text>
         <Text style={{ fontSize: 10, color: gourmeatColors.textMuted, marginLeft: 4 }}>▼</Text>
@@ -176,14 +173,14 @@ export function GourmeatSearchBar({
           ...gourmeatShadows.soft,
         }}
       >
-        <SHCIcon name="search" size={18} color={gourmeatColors.textMuted} />
+        <SHCIcon name="search" size={shcIconSizes.md} color={gourmeatColors.textMuted} />
         <View style={{ width: shcSpacing.sm }} />
         <TextInput
           placeholder={placeholder}
           value={value}
           onChangeText={onChangeText}
           testID={testID}
-          style={{ flex: 1, fontSize: 14, color: gourmeatColors.text, fontWeight: '500' }}
+          style={{ flex: 1, ...gourmeatTypography.search, color: gourmeatColors.text }}
           placeholderTextColor={gourmeatColors.textMuted}
         />
       </View>
@@ -201,7 +198,7 @@ export function GourmeatSearchBar({
           }}
           testID="gourmeat-filter-btn"
         >
-          <SHCIcon name="filters" size={20} color={gourmeatColors.text} />
+          <SHCIcon name="filters" size={shcIconSizes.lg} color={gourmeatColors.text} />
         </Pressable>
       )}
     </View>
@@ -243,8 +240,7 @@ export function GourmeatCategoryRow({
             <Text
               style={{
                 marginTop: gap,
-                fontSize: 11,
-                lineHeight: 14,
+                ...gourmeatTypography.categoryLabel,
                 fontWeight: active ? '700' : '500',
                 color: active ? gourmeatColors.primary : gourmeatColors.textLight,
                 textAlign: 'center',
@@ -434,7 +430,7 @@ export function GourmeatDishCard({
                     S${dish.price}
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 }}>
-                    <Text style={{ fontSize: 10, color: gourmeatColors.accent }}>★</Text>
+                    <Text style={{ fontSize: 10, color: gourmeatColors.ratingStar }}>★</Text>
                     <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
                   </View>
                 </View>
@@ -472,7 +468,7 @@ export function GourmeatSectionTitle({
         ...shcTitleBlock,
       }}
     >
-      <Text style={{ fontSize: 18, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.3 }}>{title}</Text>
+      <Text style={{ ...gourmeatTypography.sectionTitle, color: gourmeatColors.text }}>{title}</Text>
       {actionLabel && onActionPress && (
         <Pressable onPress={onActionPress}>
           <Text style={{ fontSize: 13, fontWeight: '600', color: gourmeatColors.primary }}>{actionLabel}</Text>
@@ -1128,7 +1124,7 @@ export function GourmeatCookHeader({
 }) {
   return (
     <View testID={testID} style={shcHeaderGap}>
-      <Text style={{ fontSize: 28, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.5 }}>{title}</Text>
+      <Text style={{ ...gourmeatTypography.screenTitle, color: gourmeatColors.text }}>{title}</Text>
       {subtitle ? (
         <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 }}>{subtitle}</Text>
       ) : null}

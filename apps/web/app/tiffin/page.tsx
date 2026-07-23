@@ -159,7 +159,7 @@ export default function TiffinBrowsePage() {
         <TiffinFilterChips chips={FILTERS} activeId={filter} onSelect={setFilter} testID="tiffin-filter-chips" />
       </div>
 
-      <div className="rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4" data-testid="tiffin-offer-card">
+      <div className="rounded-2xl shc-bg-offer text-white p-4 mb-4" data-testid="tiffin-offer-card">
         <p className="font-black text-base">First week on us ✨</p>
         <p className="text-xs font-semibold opacity-90 mt-1">
           New tiffin subscribers — flexible 2–4 meals/week from one kitchen.
