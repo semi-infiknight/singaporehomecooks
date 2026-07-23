@@ -32,6 +32,7 @@ import {
   SHCSectionTitle,
   SHCCard,
   SHCBadge,
+  SectionRegion,
 } from '../components/SHCWebComponents';
 
 type RequestRow = {
@@ -271,11 +272,9 @@ export default function CartPage() {
           )}
 
 
+          <SectionRegion eyebrow="Checkout" testID="cart-checkout-region">
           {/* Wireframe: Bill summary */}
-          <div
-            className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-3"
-            data-testid="cart-order-summary"
-          >
+          <div data-testid="cart-order-summary">
             <p className="font-extrabold mb-3">{CART_WIREFRAME_LABELS.bill}</p>
             <div className="flex justify-between text-sm font-semibold mb-1">
               <span className="text-muted-foreground">Item total</span>
@@ -302,7 +301,7 @@ export default function CartPage() {
 
           {/* Wireframe: Payment method */}
           <div
-            className="rounded-2xl border-2 border-primary bg-[var(--shc-bento-yellow)]/40 p-4 mb-3"
+            className="rounded-2xl border-2 border-primary bg-[var(--shc-bento-yellow)]/40 p-4 mt-3"
             data-testid="cart-payment-method"
           >
             <p className="text-xs font-bold text-muted-foreground mb-1">{CART_WIREFRAME_LABELS.payment}</p>
@@ -311,6 +310,7 @@ export default function CartPage() {
               Transfer after placing order · confirm with reference
             </p>
           </div>
+          </SectionRegion>
 
           <button
             type="button"

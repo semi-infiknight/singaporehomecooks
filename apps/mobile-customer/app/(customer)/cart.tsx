@@ -11,6 +11,7 @@ import {
   GourmeatCartLineItem,
   GourmeatPayButton,
   GourmeatEmptyState,
+  SHCSectionRegion,
   gourmeatColors,
   gourmeatLayout,
   contentPadForTabBar,
@@ -234,6 +235,7 @@ export default function Cart() {
                 />
               )}
 
+              <SHCSectionRegion eyebrow="Checkout" testID="cart-checkout-region" inset={false}>
               <View style={styles.summary} testID="cart-order-summary">
                 <Text style={styles.summaryTitle}>{CART_WIREFRAME_LABELS.bill}</Text>
                 <View style={styles.summaryRow}>
@@ -264,6 +266,7 @@ export default function Cart() {
                 <Text style={styles.summaryTitle}>{CART_WIREFRAME_LABELS.paynow}</Text>
                 <Text style={styles.cancelNote}>Transfer after order · confirm with reference</Text>
               </View>
+              </SHCSectionRegion>
 
               <Pressable onPress={() => clearMut.mutate()} style={{ marginTop: 8 }}>
                 <Text style={styles.clear}>Clear cart</Text>

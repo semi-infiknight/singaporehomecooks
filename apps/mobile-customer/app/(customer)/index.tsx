@@ -26,6 +26,9 @@ import {
   SHCTiffinHeroBanner,
   SHCTiffinKitchenCard,
   SHCTiffinFilterChips,
+  SHCSectionRegion,
+  SHCSectionEyebrow,
+  SHCFoodJourneyStrip,
   DirectionalTabScreen,
   SHCSkeletonDishGrid,
   SHCSkeletonCookingSoonRail,
@@ -53,6 +56,8 @@ import {
   discoverHomeHeadline,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
+  discoverZoneById,
+  foodCafeJourneySteps,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
@@ -260,6 +265,10 @@ export default function CustomerDiscover() {
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
   const homeGreeting = discoverHomeHeadline(user?.name);
+  const subscribeZone = discoverZoneById('subscribe');
+  const browseZone = discoverZoneById('browse');
+  const occasionsZone = discoverZoneById('occasions');
+  const journeySteps = foodCafeJourneySteps();
 
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
@@ -305,9 +314,17 @@ export default function CustomerDiscover() {
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
       )}
 
-      {/* ① Subscription promo only — encourages tiffin; rest of page is one-off / events */}
-      {!query && !promoDismissed && (
-        <View testID="home-tiffin-promo" style={styles.promoWrap}>
+      {!query && <SHCFoodJourneyStrip steps={journeySteps} />}
+
+      {/* ① Subscription promo — grouped region (Gestalt common region) */}
+      {!query && !promoDismissed && subscribeZone && (
+        <SHCSectionRegion
+          eyebrow={subscribeZone.eyebrow}
+          title={subscribeZone.title}
+          testID={subscribeZone.testID}
+          inset={false}
+        >
+          <View testID="home-tiffin-promo" style={styles.promoWrap}>
             <Pressable onPress={() => setPromoDismissed(true)} style={styles.promoClose} hitSlop={12} testID="home-promo-dismiss">
               <Text style={styles.promoCloseText}>✕</Text>
             </Pressable>
@@ -322,13 +339,16 @@ export default function CustomerDiscover() {
                 ]}
               />
             </Pressable>
-        </View>
+          </View>
+        </SHCSectionRegion>
       )}
 
-      {/* Meal-type chips — HomelyEats Breakfast · Lunch · Snacks · Dinner */}
-      {!query && (
+      {/* Meal-type chips — browse menu zone */}
+      {!query && browseZone && (
         <View testID="home-meal-type-chips">
-          <GourmeatSectionTitle title="Craving something?" />
+          <SHCSectionEyebrow testID={`${browseZone.testID}-eyebrow`} inset={false}>
+            {browseZone.eyebrow}
+          </SHCSectionEyebrow>
           <SHCTiffinFilterChips chips={MEAL_TYPE_CHIPS} activeId={mealType} onSelect={(id) => setMealType(id as MealTypeId)} />
         </View>
       )}
@@ -408,7 +428,11 @@ export default function CustomerDiscover() {
       )}
 
       {/* Event / occasion rail */}
-      {!query && (
+      {!query && occasionsZone && (
+        <View testID="discover-zone-occasions">
+          <SHCSectionEyebrow testID={`${occasionsZone.testID}-eyebrow`} inset={false}>
+            {occasionsZone.eyebrow}
+          </SHCSectionEyebrow>
         <SHCPromoRail
             promos={[
               { id: 'hari-raya', title: 'Hari Raya spreads', subtitle: 'Order for the open house', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Event', iconKey: 'people' },
@@ -421,6 +445,7 @@ export default function CustomerDiscover() {
               else router.push('/(customer)/request' as any);
             }}
         />
+        </View>
       )}
 
       {/* Cooking soon — skeleton while fetching; empty only when settled */}

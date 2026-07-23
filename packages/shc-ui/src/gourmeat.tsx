@@ -493,6 +493,135 @@ export function GourmeatSectionTitle({
   );
 }
 
+/**
+ * Gestalt “common region” — eyebrow + bordered group (cafe wireframe IA).
+ * Keeps related controls visually together (proximity + similarity).
+ */
+export function SHCSectionRegion({
+  eyebrow,
+  title,
+  children,
+  testID,
+  inset = true,
+}: {
+  eyebrow?: string;
+  title?: string;
+  children: React.ReactNode;
+  testID?: string;
+  /** When false, parent already applies horizontal padding. */
+  inset?: boolean;
+}) {
+  return (
+    <View testID={testID} style={[shcSectionStack, inset ? { paddingHorizontal: shcSpacing.md } : undefined]}>
+      {eyebrow ? (
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '800',
+            color: gourmeatColors.textLight,
+            letterSpacing: 0.6,
+            textTransform: 'uppercase',
+            marginBottom: 4,
+          }}
+          testID={testID ? `${testID}-eyebrow` : undefined}
+        >
+          {eyebrow}
+        </Text>
+      ) : null}
+      {title ? (
+        <Text
+          style={{
+            fontSize: 15,
+            fontWeight: '800',
+            color: gourmeatColors.text,
+            marginBottom: shcSpacing.sm,
+          }}
+          testID={testID ? `${testID}-title` : undefined}
+        >
+          {title}
+        </Text>
+      ) : null}
+      <View
+        style={{
+          borderRadius: gourmeatRadii.lg,
+          borderWidth: 2,
+          borderColor: gourmeatColors.border,
+          backgroundColor: gourmeatColors.surface,
+          padding: shcSpacing.md,
+          ...gourmeatShadows.soft,
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** Section label only — for horizontal rails that should not be boxed in. */
+export function SHCSectionEyebrow({
+  children,
+  testID,
+  inset = true,
+}: {
+  children: string;
+  testID?: string;
+  inset?: boolean;
+}) {
+  return (
+    <Text
+      testID={testID}
+      style={{
+        fontSize: 11,
+        fontWeight: '800',
+        color: gourmeatColors.textLight,
+        letterSpacing: 0.6,
+        textTransform: 'uppercase',
+        marginBottom: shcSpacing.xs,
+        ...(inset ? { paddingHorizontal: shcSpacing.md } : {}),
+        ...shcTitleBlock,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
+/** Inline cafe journey — Browse · Order · Collect (wireframe narrative). */
+export function SHCFoodJourneyStrip({
+  steps,
+  testID = 'food-journey-strip',
+}: {
+  steps: Array<{ id: string; label: string; detail: string }>;
+  testID?: string;
+}) {
+  return (
+    <View
+      testID={testID}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: shcSpacing.sm,
+        paddingHorizontal: shcSpacing.md,
+      }}
+    >
+      {steps.map((s, i) => (
+        <React.Fragment key={s.id}>
+          {i > 0 ? (
+            <Text style={{ fontSize: 12, fontWeight: '700', color: gourmeatColors.textMuted }}>·</Text>
+          ) : null}
+          <View style={{ alignItems: 'center' }} testID={`food-journey-${s.id}`}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: gourmeatColors.primary }}>{s.label}</Text>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{s.detail}</Text>
+          </View>
+        </React.Fragment>
+      ))}
+    </View>
+  );
+}
+
 export function GourmeatFloatingTabBar({
   tabs,
   activeKey,

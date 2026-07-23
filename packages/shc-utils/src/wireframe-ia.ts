@@ -132,3 +132,56 @@ export function tiffinPlanDurationTotal(
   const w = Math.max(1, Number(weeks) || 1);
   return Math.round(m * p * w * 100) / 100;
 }
+
+/**
+ * Cafe wireframe IA (Vrindavan case study) — discover → menu → cart → collect.
+ * Gestalt “common region”: each zone gets a distinct eyebrow + grouped content.
+ */
+export type DiscoverJourneyZone = {
+  id: string;
+  eyebrow: string;
+  title?: string;
+  testID: string;
+};
+
+export function discoverJourneyZones(): DiscoverJourneyZone[] {
+  return [
+    {
+      id: 'subscribe',
+      eyebrow: 'Weekly tiffin',
+      title: 'Subscribe from one home kitchen',
+      testID: 'discover-zone-subscribe',
+    },
+    {
+      id: 'browse',
+      eyebrow: 'Browse menu',
+      title: 'Find dishes by meal or cuisine',
+      testID: 'discover-zone-browse',
+    },
+    {
+      id: 'occasions',
+      eyebrow: 'Plan an occasion',
+      title: 'Party spreads & custom requests',
+      testID: 'discover-zone-occasions',
+    },
+    {
+      id: 'order',
+      eyebrow: 'Order once',
+      title: 'Add a single dish to your cart',
+      testID: 'discover-zone-order',
+    },
+  ];
+}
+
+/** Three-step food cafe journey (paper wireframe narrative). */
+export function foodCafeJourneySteps(): Array<{ id: string; label: string; detail: string }> {
+  return [
+    { id: 'browse', label: 'Browse', detail: 'Menus & home kitchens near you' },
+    { id: 'order', label: 'Order', detail: 'Cart or weekly tiffin plan' },
+    { id: 'collect', label: 'Collect', detail: 'HDB pickup on your slot' },
+  ];
+}
+
+export function discoverZoneById(id: string): DiscoverJourneyZone | undefined {
+  return discoverJourneyZones().find((z) => z.id === id);
+}

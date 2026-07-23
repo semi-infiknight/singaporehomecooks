@@ -1421,6 +1421,85 @@ export function TiffinHowItWorks({ testID = 'tiffin-how-it-works' }: { testID?: 
   );
 }
 
+/** Gestalt common region — eyebrow + bordered group (cafe wireframe IA). */
+export function SectionRegion({
+  eyebrow,
+  title,
+  children,
+  testID,
+  className = '',
+}: {
+  eyebrow?: string;
+  title?: string;
+  children: React.ReactNode;
+  testID?: string;
+  className?: string;
+}) {
+  return (
+    <div data-testid={testID} className={`shc-section-stack ${className}`}>
+      {eyebrow ? (
+        <p
+          className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide mb-1"
+          data-testid={testID ? `${testID}-eyebrow` : undefined}
+        >
+          {eyebrow}
+        </p>
+      ) : null}
+      {title ? (
+        <p className="text-base font-extrabold mb-2" data-testid={testID ? `${testID}-title` : undefined}>
+          {title}
+        </p>
+      ) : null}
+      <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-soft)]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function SectionEyebrow({
+  children,
+  testID,
+}: {
+  children: string;
+  testID?: string;
+}) {
+  return (
+    <p
+      data-testid={testID}
+      className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wide shc-title-block"
+    >
+      {children}
+    </p>
+  );
+}
+
+/** Browse → Order → Collect journey strip */
+export function FoodJourneyStrip({
+  steps,
+  testID = 'food-journey-strip',
+}: {
+  steps: Array<{ id: string; label: string; detail: string }>;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className="flex flex-wrap items-center justify-center gap-2 mb-3 text-center"
+    >
+      {steps.map((s, i) => (
+        <React.Fragment key={s.id}>
+          {i > 0 ? <span className="text-muted-foreground font-bold text-sm">·</span> : null}
+          <div data-testid={`food-journey-${s.id}`}>
+            <p className="text-xs font-extrabold text-primary">{s.label}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground">{s.detail}</p>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
 /** Selected-plan ✓/✗ feature list */
 export function TiffinPlanFeatureList({
   features,

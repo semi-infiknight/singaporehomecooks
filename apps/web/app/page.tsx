@@ -31,6 +31,8 @@ import {
   discoverHomeHeadline,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
+  discoverZoneById,
+  foodCafeJourneySteps,
   type MealTypeId,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
@@ -57,6 +59,9 @@ import {
   TiffinFilterChips,
   TiffinKitchenCard,
   PromoRail,
+  SectionRegion,
+  SectionEyebrow,
+  FoodJourneyStrip,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 import { VirtualDishGrid } from './components/VirtualLists';
@@ -224,6 +229,10 @@ export default function DiscoverHome() {
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
   const homeGreeting = discoverHomeHeadline(user?.name);
+  const subscribeZone = discoverZoneById('subscribe');
+  const browseZone = discoverZoneById('browse');
+  const occasionsZone = discoverZoneById('occasions');
+  const journeySteps = foodCafeJourneySteps();
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
@@ -300,35 +309,41 @@ export default function DiscoverHome() {
         <GuestBrowseBar onSignInClick={() => router.push('/login')} />
       )}
 
-      {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
-      {!query.trim() && !promoDismissed && (
-        <div className="relative" data-testid="home-tiffin-promo">
-          <button
-            type="button"
-            onClick={() => setPromoDismissed(true)}
-            className="absolute top-2.5 right-3 z-10 w-7 h-7 rounded-full bg-white/35 text-white font-extrabold text-xs"
-            aria-label="Dismiss subscription promo"
-            data-testid="home-promo-dismiss"
-          >
-            ✕
-          </button>
-          <button type="button" onClick={() => router.push('/tiffin')} className="w-full text-left">
-            <TiffinHeroBanner
-              highlight="Explore tiffin plans ✨"
-              bullets={[
-                'Weekly home-cooked meals from one kitchen',
-                'Skip days with flex — your plan extends automatically',
-                'Flexible 2 · 3 · 4 meals per week',
-              ]}
-            />
-          </button>
-        </div>
+      {!query.trim() && <FoodJourneyStrip steps={journeySteps} />}
+
+      {!query.trim() && !promoDismissed && subscribeZone && (
+        <SectionRegion
+          eyebrow={subscribeZone.eyebrow}
+          title={subscribeZone.title}
+          testID={subscribeZone.testID}
+        >
+          <div className="relative" data-testid="home-tiffin-promo">
+            <button
+              type="button"
+              onClick={() => setPromoDismissed(true)}
+              className="absolute top-2.5 right-3 z-10 w-7 h-7 rounded-full bg-white/35 text-white font-extrabold text-xs"
+              aria-label="Dismiss subscription promo"
+              data-testid="home-promo-dismiss"
+            >
+              ✕
+            </button>
+            <button type="button" onClick={() => router.push('/tiffin')} className="w-full text-left">
+              <TiffinHeroBanner
+                highlight="Explore tiffin plans ✨"
+                bullets={[
+                  'Weekly home-cooked meals from one kitchen',
+                  'Skip days with flex — your plan extends automatically',
+                  'Flexible 2 · 3 · 4 meals per week',
+                ]}
+              />
+            </button>
+          </div>
+        </SectionRegion>
       )}
 
-      {/* Meal-type chips — HomelyEats Breakfast · Lunch · Snacks · Dinner */}
-      {!query.trim() && (
+      {!query.trim() && browseZone && (
         <div data-testid="home-meal-type-chips">
-          <GourmeatSectionTitle title="Craving something?" />
+          <SectionEyebrow testID={`${browseZone.testID}-eyebrow`}>{browseZone.eyebrow}</SectionEyebrow>
           <TiffinFilterChips chips={MEAL_TYPE_CHIPS} activeId={mealType} onSelect={(id) => setMealType(id as MealTypeId)} />
         </div>
       )}
@@ -396,7 +411,9 @@ export default function DiscoverHome() {
       )}
 
       {/* Event / occasion rail — one-off party ordering */}
-      {!query.trim() && (
+      {!query.trim() && occasionsZone && (
+        <div data-testid="discover-zone-occasions">
+          <SectionEyebrow testID={`${occasionsZone.testID}-eyebrow`}>{occasionsZone.eyebrow}</SectionEyebrow>
           <PromoRail
             promos={[
               {
@@ -430,6 +447,7 @@ export default function DiscoverHome() {
               else router.push('/request');
             }}
           />
+        </div>
       )}
 
       {/* Cooking soon — skeleton while fetching; empty only when settled */}

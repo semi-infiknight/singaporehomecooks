@@ -6,6 +6,9 @@ import {
   tiffinPlanDurationOptions,
   tiffinPlanDurationTotal,
   CART_WIREFRAME_LABELS,
+  discoverJourneyZones,
+  foodCafeJourneySteps,
+  discoverZoneById,
 } from './wireframe-ia';
 
 describe('wireframe-ia (paper wireframes)', () => {
@@ -41,5 +44,15 @@ describe('wireframe-ia (paper wireframes)', () => {
   it('cart labels include bill summary and coupon', () => {
     expect(CART_WIREFRAME_LABELS.bill).toMatch(/Bill/i);
     expect(CART_WIREFRAME_LABELS.coupon).toMatch(/coupon/i);
+  });
+
+  it('discover journey zones follow cafe wireframe IA', () => {
+    const zones = discoverJourneyZones();
+    expect(zones.map((z) => z.id)).toEqual(['subscribe', 'browse', 'occasions', 'order']);
+    expect(discoverZoneById('browse')?.eyebrow).toMatch(/Browse menu/i);
+  });
+
+  it('food cafe journey is browse → order → collect', () => {
+    expect(foodCafeJourneySteps().map((s) => s.id)).toEqual(['browse', 'order', 'collect']);
   });
 });
