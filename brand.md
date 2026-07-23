@@ -99,7 +99,13 @@ References:
 | 5. Seamless onboarding | Guest browse — `SHCGuestBrowseBar` / `GuestBrowseBar`; sign in only at cart/checkout (`useGuestAuthGate`) |
 | 6. Mobile + trust | `SHCTrustStrip` / `TrustStrip`; Trust & Safety page; allergen ack before checkout |
 
-- **White space** — `shcSpacing.section` / `--shc-section-gap` between discover blocks; photos lead, UI stays quiet
+- **White space** — spacing rhythm tokens in `theme.ts` / `globals.css`:
+  - `shcSectionStack` / `.shc-section-stack` — 12px top / 20px bottom between major blocks (banners, rails, promo)
+  - `shcTitleBlock` / `.shc-title-block` — section headings (12px above, 8px below)
+  - `shcCardGap` / `.shc-card-gap` — 12px between stacked list cards (kitchen, order, listing rows)
+  - `shcFieldStack` / `.shc-field-stack` — 8px between form fields / wizard inputs
+  - `shcHeaderGap` / `.shc-header-gap` — 16px after screen headers before search/filters
+  - `shcInsetStack` / `.shc-inset-stack` — in-flow callouts (alerts, timelines, personalized headers)
 - **Search + ADD** — `SHCSearchResultsPanel` / `SearchResultsDropdown`: thumbnail, price, add-to-cart without visiting PDP
 - **Short journey** — `SHCCheckoutStepper`: Collection → Safety → PayNow (3 steps max)
 - **Memorable story** — `SHCHeritageStoryBanner` local HDB cooks + trust link

@@ -509,14 +509,14 @@ export default function DiscoverHome() {
       )}
 
       {!query.trim() && savedDishes.length > 0 && (
-        <div className="shc-section-gap mb-4">
+        <div className="shc-section-stack mb-4">
           <GourmeatSectionTitle title="Saved for later" />
           <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </div>
       )}
 
       {evidenceMode && productList.length > 0 && (
-        <div className="mb-4" data-testid="evidence-dish-card">
+        <div className="shc-card-gap" data-testid="evidence-dish-card">
           <GourmeatSectionTitle title="Featured dish (evidence)" />
           <GourmeatDishCard
             product={productList.find((p) => p.id === OFFLINE_DISCOVER_PRODUCT.id) ?? productList[0]}
@@ -571,7 +571,7 @@ export default function DiscoverHome() {
 
       {!query.trim() && <RequestDishHomeCTA />}
 
-      <div className="mt-8 text-center">
+      <div className="shc-section-stack text-center">
         <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline" data-testid="discover-trust-link">
           Trust &amp; Safety →
         </Link>

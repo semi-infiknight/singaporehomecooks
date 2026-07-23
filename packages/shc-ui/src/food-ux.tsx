@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, FlatList } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack } from './theme';
 import { SHCFoodImage, SHCZomatoAddButton } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
 import { SHCIcon } from './icons';
@@ -20,7 +20,7 @@ export function SHCCheckoutStepper({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+    <View testID={testID} style={shcSectionStack}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         {steps.map((step, i) => {
           const n = i + 1;

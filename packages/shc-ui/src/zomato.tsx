@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack, shcTitleBlock } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
@@ -31,8 +31,7 @@ export function SHCZomatoSectionHeader({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: shcSpacing.xs,
-        marginTop: shcSpacing.sm,
+        ...shcTitleBlock,
       }}
     >
       <Text style={{ fontSize: 16, fontWeight: '900', color: shcColors.text, letterSpacing: -0.3 }}>{title}</Text>
@@ -280,8 +279,7 @@ export function SHCMindSectionTitle({
         fontSize: 16,
         fontWeight: '900',
         color: shcColors.text,
-        marginTop: shcSpacing.sm,
-        marginBottom: 2,
+        ...shcTitleBlock,
         letterSpacing: -0.3,
       }}
     >

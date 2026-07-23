@@ -1,7 +1,16 @@
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import {
+  shcColors,
+  shcRadii,
+  shcSpacing,
+  shcBorders,
+  shcShadows,
+  shcTypography,
+  shcSectionStack,
+  shcTitleBlock,
+} from './theme';
 import { SHCIcon, SHCTabIcon, type SHCTabIconKey } from './icons';
 
 type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
@@ -157,7 +166,7 @@ export function SHCBentoGrid({
           flexDirection: 'row',
           flexWrap: 'wrap',
           gap,
-          marginBottom: shcSpacing.md,
+          marginBottom: shcSpacing.section,
         },
         style,
       ]}
@@ -285,6 +294,23 @@ export function SHCInput(props: any) {
   );
 }
 
+/** Wraps a major stacked block with section rhythm (12px top / 20px bottom). */
+export function SHCSectionStack({
+  children,
+  style,
+  testID,
+}: {
+  children: React.ReactNode;
+  style?: any;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={[shcSectionStack, style]}>
+      {children}
+    </View>
+  );
+}
+
 export function SHCSectionTitle({ children, style }: { children: React.ReactNode; style?: any }) {
   return (
     <Text
@@ -292,8 +318,7 @@ export function SHCSectionTitle({ children, style }: { children: React.ReactNode
         {
           ...shcTypography.h2,
           color: shcColors.text,
-          marginBottom: shcSpacing.sm,
-          marginTop: shcSpacing.md,
+          ...shcTitleBlock,
         },
         style,
       ]}

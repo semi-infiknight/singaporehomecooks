@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, shcSectionStack, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
+import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, shcSectionStack, shcTitleBlock, shcHeaderGap, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
 
 export { gourmeatLayout, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe };
 import { SHCIcon, type SHCTabIconKey } from './icons';
@@ -469,8 +469,7 @@ export function GourmeatSectionTitle({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: shcSpacing.md,
-        marginBottom: shcSpacing.sm,
-        marginTop: shcSpacing.stack,
+        ...shcTitleBlock,
       }}
     >
       <Text style={{ fontSize: 18, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.3 }}>{title}</Text>
@@ -1128,7 +1127,7 @@ export function GourmeatCookHeader({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+    <View testID={testID} style={shcHeaderGap}>
       <Text style={{ fontSize: 28, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.5 }}>{title}</Text>
       {subtitle ? (
         <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 }}>{subtitle}</Text>

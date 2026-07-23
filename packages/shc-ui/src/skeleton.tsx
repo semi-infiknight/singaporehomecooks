@@ -6,7 +6,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, ScrollView, View } from 'react-native';
-import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcRadii, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcRadii, shcSpacing, shcCardGap } from './theme';
 import { shouldReduceMotion } from './family-values-core';
 
 const BONE = shcColors.borderLight;
@@ -176,7 +176,7 @@ export function SHCSkeletonKitchenRow({ testID }: { testID?: string }) {
         flexDirection: 'row',
         gap: shcSpacing.md,
         padding: shcSpacing.md,
-        marginBottom: shcSpacing.sm,
+        ...shcCardGap,
         borderRadius: gourmeatRadii.lg,
         backgroundColor: gourmeatColors.surface,
         borderWidth: 2,
@@ -221,7 +221,7 @@ export function SHCSkeletonOrderCard({ testID }: { testID?: string }) {
         borderColor: gourmeatColors.border,
         backgroundColor: gourmeatColors.surface,
         padding: shcSpacing.md,
-        marginBottom: shcSpacing.sm,
+        ...shcCardGap,
         gap: 10,
         ...gourmeatShadows.card,
       }}
@@ -251,7 +251,7 @@ export function SHCSkeletonOrderRow({ testID }: { testID?: string }) {
         flexDirection: 'row',
         gap: shcSpacing.sm,
         padding: shcSpacing.sm,
-        marginBottom: shcSpacing.sm,
+        ...shcCardGap,
         borderRadius: gourmeatRadii.lg,
         backgroundColor: gourmeatColors.surface,
         ...gourmeatShadows.card,

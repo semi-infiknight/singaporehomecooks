@@ -171,7 +171,7 @@ export function SHCSectionTitle({
   subtitle?: string;
 }) {
   return (
-    <div className="mt-8 mb-3">
+    <div className="shc-title-block">
       <h2 className="text-lg font-bold text-foreground">{children}</h2>
       {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
     </div>
@@ -190,7 +190,7 @@ export function SHCPageHeader({
   backLabel?: string;
 }) {
   return (
-    <div className="mb-6">
+    <div className="shc-header-gap">
       {backHref && (
         <a
           href={backHref}
@@ -430,7 +430,7 @@ export function MindSectionTitle({
   testID?: string;
 }) {
   return (
-    <h2 className="text-base font-black text-foreground mb-2 mt-1" data-testid={testID}>
+    <h2 className="text-base font-black text-foreground shc-title-block" data-testid={testID}>
       {children}
     </h2>
   );
@@ -689,7 +689,7 @@ export function CheckoutStepper({
   testID?: string;
 }) {
   return (
-    <div className="mb-6" data-testid={testID}>
+    <div className="shc-section-stack" data-testid={testID}>
       <div className="flex items-start gap-1">
         {steps.map((step, i) => {
           const n = i + 1;
@@ -1253,7 +1253,7 @@ export function BottomStickyBar({
 export function SHCErrorBanner({ code, message }: { code?: string; message: string }) {
   return (
     <div
-      className="flex gap-3 bg-red-50 border-2 border-[var(--shc-border-brutal)] rounded-lg p-4 my-3 shadow-[var(--shc-shadow-brutal-sm)]"
+      className="flex gap-3 bg-red-50 border-2 border-[var(--shc-border-brutal)] rounded-lg p-4 shc-inset-stack shadow-[var(--shc-shadow-brutal-sm)]"
       role="alert"
       aria-live="polite"
     >
@@ -2134,7 +2134,7 @@ export function TrustStrip() {
     { label: 'Allergen disclosure', sub: 'Mandatory before checkout', Icon: ShieldCheck },
   ];
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="shc-section-stack grid grid-cols-2 md:grid-cols-4 gap-3">
       {items.map((item) => (
         <div
           key={item.label}
@@ -2156,7 +2156,7 @@ export function OrderTimeline({ status, live = false, testID = 'order-timeline' 
   const current = getOrderTimelineIndex(status);
   const cancelled = status === 'cancelled' || status === 'disputed';
   return (
-    <div data-testid={testID} className="space-y-3">
+    <div data-testid={testID} className="shc-inset-stack space-y-3">
       {live && current >= 0 && !cancelled && (
         <p className="text-[11px] font-extrabold text-[var(--shc-success)] flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[var(--shc-success)]" /> Live updates
@@ -2440,7 +2440,7 @@ export function GourmeatSearchBar({
   testID?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div className="flex items-center gap-2 shc-header-gap">
       <div className="flex-1 flex items-center bg-card rounded-full px-4 py-3 shadow-[var(--shc-shadow-soft)] min-w-0">
         <Search className="w-[18px] h-[18px] text-[#B0B0B0] shrink-0" aria-hidden />
         <input
@@ -2492,7 +2492,7 @@ export function GourmeatSectionTitle({
     ) : null;
 
   return (
-    <div className="flex items-center justify-between mb-2 mt-[var(--shc-stack-gap)]" data-testid={testID}>
+    <div className="flex items-center justify-between shc-title-block" data-testid={testID}>
       <h2 className="text-lg font-extrabold text-foreground tracking-[-0.3px]">{title}</h2>
       {action}
     </div>
@@ -2961,7 +2961,7 @@ export function GourmeatScreenHeader({
   backLabel?: string;
 }) {
   return (
-    <div className="mb-6">
+    <div className="shc-header-gap">
       {backHref && (
         <Link href={backHref} className="text-sm font-bold text-primary mb-2 inline-block">
           {backLabel}
@@ -3089,7 +3089,7 @@ export function GourmeatCookHeader({
   testID?: string;
 }) {
   return (
-    <div className="mb-4" data-testid={testID}>
+    <div className="shc-header-gap" data-testid={testID}>
       <h1 className="text-[28px] font-extrabold text-foreground tracking-[-0.5px]">{title}</h1>
       {subtitle ? <p className="text-[13px] text-[#8A8A8A] mt-1">{subtitle}</p> : null}
       {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}

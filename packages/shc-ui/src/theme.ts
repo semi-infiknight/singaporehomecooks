@@ -184,6 +184,43 @@ export const shcSectionStack = {
   marginBottom: shcSpacing.section,
 } as const;
 
+/** Section title: stack above, sm below content. */
+export const shcTitleBlock = {
+  marginTop: shcSpacing.stack,
+  marginBottom: shcSpacing.sm,
+} as const;
+
+/** Gap between stacked list cards (kitchen, order, listing rows). */
+export const shcCardGap = {
+  marginBottom: shcSpacing.stack,
+} as const;
+
+/** Form fields, inputs, wizard steps. */
+export const shcFieldStack = {
+  marginBottom: shcSpacing.sm,
+} as const;
+
+/** Screen header block → first content (search, filters). */
+export const shcHeaderGap = {
+  marginBottom: shcSpacing.md,
+} as const;
+
+/** In-flow callout / alert / inset banner (not a full section break). */
+export const shcInsetStack = {
+  marginTop: shcSpacing.stack,
+  marginBottom: shcSpacing.sm,
+} as const;
+
+/** Screen horizontal inset (FlashList / ScrollView content). */
+export const shcScreenInset = {
+  paddingHorizontal: shcSpacing.md,
+} as const;
+
+/** Empty state vertical breathing room. */
+export const shcEmptyStatePad = {
+  paddingVertical: shcSpacing.xl,
+} as const;
+
 /** Bottom inset for content/CTAs above the floating customer tab bar (+ optional sticky cart). */
 export const gourmeatLayout = {
   /** Floating nav pill + margins (no sticky cart). */

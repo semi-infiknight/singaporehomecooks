@@ -50,6 +50,8 @@
     --shc-bento-yellow: #FFF3C4;
     --shc-section-gap: 1.25rem;
     --shc-stack-gap: 0.75rem;
+    --shc-sm-gap: 0.5rem;
+    --shc-md-gap: 1rem;
     --shc-category-stack-gap: 0.5rem;
     --shc-mobile-tab-pad: 5.5rem;
     --shc-sticky-footer-pad: 5rem;
@@ -264,6 +266,33 @@ a {
 .shc-section-stack {
   margin-top: var(--shc-stack-gap);
   margin-bottom: var(--shc-section-gap);
+}
+
+.shc-title-block {
+  margin-top: var(--shc-stack-gap);
+  margin-bottom: var(--shc-sm-gap);
+}
+
+.shc-card-gap {
+  margin-bottom: var(--shc-stack-gap);
+}
+
+.shc-header-gap {
+  margin-bottom: var(--shc-md-gap);
+}
+
+.shc-field-stack {
+  margin-bottom: var(--shc-sm-gap);
+}
+
+.shc-inset-stack {
+  margin-top: var(--shc-stack-gap);
+  margin-bottom: var(--shc-sm-gap);
+}
+
+.shc-screen-inset {
+  padding-left: var(--shc-md-gap);
+  padding-right: var(--shc-md-gap);
 }
 
 .shc-skeleton {

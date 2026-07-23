@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcSectionStack } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcSectionStack, shcInsetStack } from './theme';
 import { SHCIcon, type SHCIconKey } from './icons';
 import { SHCButton } from './primitives';
 import {
@@ -260,7 +260,7 @@ export function SHCPersonalizedSectionHeader({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.xs }}>
+    <View testID={testID} style={{ ...shcInsetStack }}>
       <Text style={{ fontSize: 16, fontWeight: '900', color: shcColors.text, letterSpacing: -0.3 }}>{title}</Text>
       {subtitle ? (
         <Text style={{ fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginTop: 2 }}>{subtitle}</Text>
@@ -285,8 +285,7 @@ export function SHCTrustStrip({ testID = 'trust-strip' }: { testID?: string }) {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: shcSpacing.sm,
-        marginTop: shcSpacing.section,
-        marginBottom: shcSpacing.md,
+        ...shcSectionStack,
       }}
     >
       {TRUST_ITEMS.map((item) => (
@@ -342,7 +341,7 @@ export function SHCOrderTimeline({
   const isCancelled = status === 'cancelled' || status === 'disputed';
 
   return (
-    <View testID={testID} style={{ marginVertical: shcSpacing.md }}>
+    <View testID={testID} style={shcInsetStack}>
       {live && current >= 0 && !isCancelled && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: shcSpacing.sm }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: shcColors.success }} />

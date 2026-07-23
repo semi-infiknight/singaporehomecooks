@@ -330,9 +330,9 @@ export default function CustomerDiscover() {
 
       {/* ③ Most popular for one meal / event orders */}
       {!query && (
-        <View style={{ marginBottom: shcSpacing.sm }}>
+        <View>
           <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
-          <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm }}>
+          <View style={{ marginBottom: shcSpacing.sm }}>
             <SHCTiffinFilterChips
               chips={ORDER_MODES}
               activeId={orderMode}

@@ -16,7 +16,7 @@ import {
 import { SHCFoodImage } from './visuals';
 import { SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
-import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors as colors, shcSpacing, shcRadii, shcBorders, shcShadows, shcTypography, shcCardGap, shcSectionStack } from './theme';
 import { RequestDishExperience } from './request-ux';
 
 export type SHCDishCardData = {
@@ -63,7 +63,7 @@ export function SHCDishCard({
       dishId={dish.id}
       onNavigate={onPress}
       testID={cardTestID}
-      style={{ marginBottom: shcSpacing.sm, flex: compact ? 1 : undefined }}
+      style={{ ...shcCardGap, flex: compact ? 1 : undefined }}
     >
       {({ measureRef }) => (
       <View
@@ -139,7 +139,7 @@ export function SHCCartPageHero({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+    <View testID={testID} style={shcSectionStack}>
       <View style={{ borderRadius: shcRadii.lg, overflow: 'hidden', borderWidth: shcBorders.brutal, borderColor: colors.border, ...shcShadows.brutalSm }}>
         <SHCFoodImage
           uri={imageUri}
@@ -220,7 +220,7 @@ export function SHCProfileHero({
         flexDirection: 'row',
         alignItems: 'center',
         gap: shcSpacing.md,
-        marginBottom: shcSpacing.md,
+        ...shcCardGap,
         padding: shcSpacing.md,
         backgroundColor: colors.surface,
         borderRadius: shcRadii.lg,
@@ -290,7 +290,7 @@ export function SHCCookStoreHero({
     <View
       testID={testID}
       style={{
-        marginBottom: shcSpacing.md,
+        ...shcCardGap,
         borderRadius: shcRadii.lg,
         overflow: 'hidden',
         borderWidth: shcBorders.brutal,
@@ -375,7 +375,7 @@ export function OrderStatusBadge({ status }: { status: string }) {
 export function CookCard({ cook, onPress }: { cook: any; onPress?: () => void }) {
   return (
     <Pressable onPress={onPress} testID="cook-card">
-      <SHCCard style={{ marginBottom: 12 }}>
+      <SHCCard style={shcCardGap}>
         <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text }}>{cook.display_name || cook.name}</Text>
         <Text style={{ color: colors.textLight, fontSize: 13 }}>{cook.area} • {cook.rating ? `${cook.rating}★` : ''} ({cook.orders || 0} orders)</Text>
         {cook.story && <Text style={{ color: colors.heritage, fontSize: 12, fontStyle: 'italic', marginTop: 4 }}>{cook.story.slice(0, 72)}...</Text>}
@@ -422,7 +422,7 @@ export function SHCZomatoOrderRow({
         borderColor: colors.border,
         backgroundColor: colors.surface,
         ...shcShadows.brutalSm,
-        marginBottom: shcSpacing.sm,
+        ...shcCardGap,
       }}
     >
       <View style={{ flexDirection: 'row', padding: shcSpacing.sm, gap: shcSpacing.sm }}>
@@ -483,7 +483,7 @@ export function SHCZomatoOrderRow({
 export function OrderCard({ order, onPress, onAction, actionLabel }: { order: any; onPress?: () => void; onAction?: () => void; actionLabel?: string }) {
   return (
     <Pressable onPress={onPress} testID={`order-card-${order.id}`}>
-      <SHCCard style={{ marginBottom: 10 }}>
+      <SHCCard style={shcCardGap}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ fontWeight: '600' }}>{order.id}</Text>
           <OrderStatusBadge status={order.shc_status || order.status} />
@@ -700,7 +700,7 @@ export function SHCCookPageHero({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+    <View testID={testID} style={shcSectionStack}>
       <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text }}>{title}</Text>
       {subtitle && (
         <Text style={{ fontSize: 13, color: colors.textLight, marginTop: 4, marginBottom: shcSpacing.sm }}>{subtitle}</Text>
