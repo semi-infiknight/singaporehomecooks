@@ -1012,6 +1012,144 @@ export function tiffinMealStatusChip(status: TiffinOrderCardStatus): { bg: strin
   }
 }
 
+/** Compact trust chips above subscribe CTA (HomelyEats kitchen footer). */
+export function SHCSubscribeTrustChips({
+  chips,
+  compact = true,
+  testID = 'subscribe-trust-chips',
+}: {
+  chips: Array<{ id: string; label: string; detail?: string }>;
+  compact?: boolean;
+  testID?: string;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      testID={testID}
+      contentContainerStyle={{ gap: 8, paddingBottom: shcSpacing.sm }}
+    >
+      {chips.map((c) => (
+        <View
+          key={c.id}
+          testID={`subscribe-trust-${c.id}`}
+          style={{
+            maxWidth: compact ? 200 : 280,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: gourmeatColors.border,
+            backgroundColor: gourmeatColors.surface,
+            paddingHorizontal: 12,
+            paddingVertical: compact ? 8 : 10,
+          }}
+        >
+          <Text style={{ fontSize: 12, fontWeight: '800', color: gourmeatColors.text }}>
+            ✓ {c.label}
+          </Text>
+          {!compact && c.detail ? (
+            <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 }}>
+              {c.detail}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
+
+export type SubscriptionCardKind = 'active' | 'paused' | 'expires_soon' | 'canceled' | 'expired';
+
+/** HomelyEats ref 28 — subscription card with status badge variants. */
+export function SHCSubscriptionStateCard({
+  kind,
+  kitchenName,
+  badge,
+  mealsPerWeek,
+  weeklySubtotal,
+  deliveriesLeft,
+  flexRemaining,
+  flexQuota,
+  expiresOn,
+  primaryCta,
+  secondaryCta,
+  onPrimary,
+  onSecondary,
+  primaryLoading,
+  testID,
+}: {
+  kind: SubscriptionCardKind;
+  kitchenName: string;
+  badge: string;
+  mealsPerWeek?: number | string;
+  weeklySubtotal?: string;
+  deliveriesLeft?: number | string | null;
+  flexRemaining?: number | string | null;
+  flexQuota?: number | string | null;
+  expiresOn?: string | null;
+  primaryCta: string;
+  secondaryCta: string;
+  onPrimary: () => void;
+  onSecondary: () => void;
+  primaryLoading?: boolean;
+  testID?: string;
+}) {
+  const badgeStyle =
+    kind === 'paused' || kind === 'expires_soon'
+      ? { bg: shcColors.bentoYellow, color: shcColors.warningDark }
+      : kind === 'canceled' || kind === 'expired'
+        ? { bg: shcColors.surfaceNeutral, color: shcColors.neutral }
+        : { bg: shcColors.bentoMint, color: shcColors.success };
+
+  return (
+    <View
+      testID={testID || `subscription-card-${kind}`}
+      style={{
+        backgroundColor: gourmeatColors.surface,
+        borderRadius: gourmeatRadii.lg,
+        padding: shcSpacing.md,
+        ...gourmeatShadows.soft,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <Text style={{ flex: 1, fontSize: 18, fontWeight: '900', color: gourmeatColors.text }}>{kitchenName}</Text>
+        <View style={{ borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: badgeStyle.bg }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: badgeStyle.color }}>{badge}</Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+        {mealsPerWeek != null ? (
+          <View style={styles.subMetaChip}>
+            <Text style={styles.subMetaChipText}>{mealsPerWeek} meals/wk</Text>
+          </View>
+        ) : null}
+        {weeklySubtotal ? (
+          <View style={styles.subMetaChip}>
+            <Text style={styles.subMetaChipText}>{weeklySubtotal}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={{ fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 8 }}>
+        Deliveries {deliveriesLeft ?? '—'} · Flex {flexRemaining ?? '—'}/{flexQuota ?? '—'}
+        {expiresOn ? ` · Exp ${String(expiresOn).slice(0, 10)}` : ''}
+      </Text>
+      <GourmeatPrimaryButton
+        label={primaryCta}
+        onPress={onPrimary}
+        loading={primaryLoading}
+        testID="sub-primary-btn"
+        style={{ marginTop: shcSpacing.md }}
+      />
+      <GourmeatPrimaryButton
+        label={secondaryCta}
+        variant="outline"
+        onPress={onSecondary}
+        testID="sub-secondary-btn"
+        style={{ marginTop: shcSpacing.sm }}
+      />
+    </View>
+  );
+}
+
 /** HomelyEats ref 25 — order card status variants */
 export function SHCTiffinOrderStatusCard({
   cookName,
@@ -1023,6 +1161,7 @@ export function SHCTiffinOrderStatusCard({
   menuPending,
   onSkip,
   onManage,
+  manageLabel = 'Manage',
   testID,
 }: {
   cookName: string;
@@ -1034,6 +1173,7 @@ export function SHCTiffinOrderStatusCard({
   menuPending?: boolean;
   onSkip?: () => void;
   onManage?: () => void;
+  manageLabel?: string;
   testID?: string;
 }) {
   const chip = tiffinMealStatusChip(status);
@@ -1063,7 +1203,7 @@ export function SHCTiffinOrderStatusCard({
       )}
       <View style={styles.orderCardActions}>
         {onManage ? (
-          <GourmeatPrimaryButton label="Manage" variant="outline" onPress={onManage} testID="tiffin-order-manage-btn" />
+          <GourmeatPrimaryButton label={manageLabel} variant="outline" onPress={onManage} testID="tiffin-order-manage-btn" />
         ) : null}
         {onSkip && status === 'scheduled' ? (
           <GourmeatPrimaryButton label="Skip day" variant="outline" onPress={onSkip} testID="tiffin-order-skip-btn" />
@@ -1207,6 +1347,13 @@ const styles = StyleSheet.create({
   menuPending: { fontSize: 12, fontStyle: 'italic', color: gourmeatColors.textLight, marginTop: 8 },
   menuLine: { fontSize: 13, color: gourmeatColors.text, marginTop: 4 },
   orderCardActions: { flexDirection: 'row', gap: 8, marginTop: shcSpacing.md },
+  subMetaChip: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: shcColors.bentoYellow,
+  },
+  subMetaChipText: { fontSize: 11, fontWeight: '800', color: gourmeatColors.text },
   metricsRow: {
     flexDirection: 'row',
     backgroundColor: gourmeatColors.surface,

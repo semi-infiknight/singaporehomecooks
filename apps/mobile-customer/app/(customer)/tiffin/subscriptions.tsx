@@ -11,6 +11,7 @@ import {
   GourmeatCard,
   SHCSkeletonList,
   SHCAuthSessionSection,
+  SHCSubscriptionStateCard,
   gourmeatColors,
   shcSpacing,
   tiffinWeeklySubtotal,
@@ -122,53 +123,33 @@ export default function MySubscriptionsScreen() {
       {tab === 'active' ? (
         isActiveKind && sub && copy ? (
           <View style={styles.cardPad}>
-            <GourmeatCard testID={`subscription-card-${kind}`}>
-              <Text style={styles.kitchenName}>{kitchen?.cook?.display_name || 'Tiffin kitchen'}</Text>
-              <Text style={styles.badge}>{copy.badge}</Text>
-              <Text style={styles.meta}>
-                {sub.meals_per_week} meals/wk · S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}
-                /wk
-              </Text>
-              <Text style={styles.meta}>
-                Deliveries {sub.deliveries_left ?? '—'} · Flex {sub.flex_remaining ?? '—'}/
-                {sub.flex_quota ?? '—'}
-              </Text>
-              {kind === 'paused' ? (
-                <GourmeatPrimaryButton
-                  label={copy.primaryCta}
-                  onPress={() => resumeMut.mutate()}
-                  loading={resumeMut.isPending}
-                  testID="sub-resume-btn"
-                  style={{ marginTop: shcSpacing.md }}
-                />
-              ) : copy.showRecharge ? (
-                <GourmeatPrimaryButton
-                  label={copy.primaryCta}
-                  onPress={() => router.push('/(customer)/tiffin/recharge' as any)}
-                  testID="sub-recharge-btn"
-                  style={{ marginTop: shcSpacing.md }}
-                />
-              ) : (
-                <GourmeatPrimaryButton
-                  label={copy.primaryCta}
-                  onPress={() => router.push('/(customer)/tiffin/manage' as any)}
-                  testID="sub-manage-btn"
-                  style={{ marginTop: shcSpacing.md }}
-                />
-              )}
-              <GourmeatPrimaryButton
-                label={copy.secondaryCta}
-                variant="outline"
-                onPress={() =>
-                  router.push(
-                    (copy.showRecharge || kind === 'paused'
-                      ? '/(customer)/tiffin/manage'
-                      : '/(customer)/tiffin/calendar') as any
-                  )
-                }
-                style={{ marginTop: shcSpacing.sm }}
-              />
-            </GourmeatCard>
+            <SHCSubscriptionStateCard
+              kind={kind!}
+              kitchenName={kitchen?.cook?.display_name || 'Tiffin kitchen'}
+              badge={copy.badge}
+              mealsPerWeek={sub.meals_per_week}
+              weeklySubtotal={`S$${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk`}
+              deliveriesLeft={sub.deliveries_left}
+              flexRemaining={sub.flex_remaining}
+              flexQuota={sub.flex_quota}
+              expiresOn={sub.expires_on}
+              primaryCta={copy.primaryCta}
+              secondaryCta={copy.secondaryCta}
+              primaryLoading={kind === 'paused' ? resumeMut.isPending : false}
+              onPrimary={() => {
+                if (kind === 'paused') resumeMut.mutate();
+                else if (copy.showRecharge) router.push('/(customer)/tiffin/recharge' as any);
+                else router.push('/(customer)/tiffin/manage' as any);
+              }}
+              onSecondary={() =>
+                router.push(
+                  (copy.showRecharge || kind === 'paused'
+                    ? '/(customer)/tiffin/manage'
+                    : '/(customer)/tiffin/calendar') as any
+                )
+              }
+              testID={`subscription-card-${kind}`}
+            />
           </View>
         ) : (
           <GourmeatEmptyState

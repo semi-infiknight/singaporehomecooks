@@ -2369,6 +2369,7 @@ export function gourmeatDiscountPercent(id: string): number {
 
 export function GourmeatHomeHeader({
   headline = 'Hungry? Order & Eat.',
+  subtitle,
   locationLabel = 'Katong, Singapore',
   locationHint = 'Collect from',
   avatarUri,
@@ -2377,6 +2378,7 @@ export function GourmeatHomeHeader({
   notificationHref = '/profile',
 }: {
   headline?: string;
+  subtitle?: string;
   locationLabel?: string;
   locationHint?: string;
   avatarUri?: string;
@@ -2388,9 +2390,16 @@ export function GourmeatHomeHeader({
   return (
     <div className="mb-3" data-testid="gourmeat-home-header">
       <div className="flex items-start justify-between gap-2 mb-4">
-        <h1 className="text-[26px] md:text-3xl font-extrabold text-foreground tracking-[-0.5px] leading-8 flex-1">
-          {headline}
-        </h1>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-[26px] md:text-3xl font-extrabold text-foreground tracking-[-0.5px] leading-8">
+            {headline}
+          </h1>
+          {subtitle ? (
+            <p className="text-sm font-semibold text-muted-foreground mt-1" data-testid="gourmeat-home-subtitle">
+              {subtitle}
+            </p>
+          ) : null}
+        </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href={notificationHref}

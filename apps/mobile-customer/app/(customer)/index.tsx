@@ -50,6 +50,10 @@ import {
   formatDropOrderBy,
   formatDropPrice,
   filterCustomerCookingSoonDrops,
+  discoverHomeHeadline,
+  MEAL_TYPE_CHIPS,
+  topRatedCategoryDishes,
+  type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -97,6 +101,7 @@ export default function CustomerDiscover() {
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
+  const [mealType, setMealType] = useState<MealTypeId>('all');
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
@@ -189,13 +194,19 @@ export default function CustomerDiscover() {
       query,
       occasion: occasionFilter || undefined,
       cuisine: cuisineFilter || undefined,
+      mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       maxCal,
     });
     return collectionLocation?.lat != null && collectionLocation?.lng != null
       ? sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng })
       : list;
-  }, [productList, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, maxCal, collectionLocation]);
+
+  const topRatedDishes = useMemo(() => {
+    if (query.trim()) return [];
+    return topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map(toDishCardData);
+  }, [productList, query]);
 
   const dishList = useMemo(() => filteredProducts.map(toDishCardData), [filteredProducts]);
 
@@ -248,6 +259,7 @@ export default function CustomerDiscover() {
   );
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
+  const homeGreeting = discoverHomeHeadline(user?.name);
 
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
@@ -257,7 +269,8 @@ export default function CustomerDiscover() {
     <>
       {/* Full marketplace homepage — subscription is only a banner, not the whole page */}
       <GourmeatHomeHeader
-        headline="Hungry? Order & Eat."
+        headline={homeGreeting.headline}
+        subtitle={homeGreeting.subtitle}
         locationLabel={headerLocationLabel}
         locationHint="Collect from"
         avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
@@ -304,11 +317,27 @@ export default function CustomerDiscover() {
                 highlight="Explore tiffin plans ✨"
                 bullets={[
                   'Weekly home-cooked meals from one kitchen',
-                  'Or keep scrolling to order single dishes & events',
+                  'Skip days with flex — your plan extends automatically',
                   'Flexible 2 · 3 · 4 meals per week',
                 ]}
               />
             </Pressable>
+        </View>
+      )}
+
+      {/* Meal-type chips — HomelyEats Breakfast · Lunch · Snacks · Dinner */}
+      {!query && (
+        <View testID="home-meal-type-chips">
+          <GourmeatSectionTitle title="Craving something?" />
+          <SHCTiffinFilterChips chips={MEAL_TYPE_CHIPS} activeId={mealType} onSelect={(id) => setMealType(id as MealTypeId)} />
+        </View>
+      )}
+
+      {/* Top rated rail */}
+      {!query && topRatedDishes.length > 0 && (
+        <View testID="home-top-rated-rail">
+          <GourmeatSectionTitle title="Top rated near you" />
+          <SHCZomatoDishRowRail title="" dishes={topRatedDishes} onDishPress={goToProduct} testID="top-rated-rail" />
         </View>
       )}
 
@@ -373,7 +402,7 @@ export default function CustomerDiscover() {
         >
           <Text style={styles.offerTitle}>Subscribe for weekly tiffin</Text>
           <Text style={styles.offerSub}>
-            Banner only — below you can still order one dish or a full occasion spread.
+            One kitchen · flexible skip days · from S$22/wk for 2 meals.
           </Text>
         </Pressable>
       )}
@@ -504,8 +533,8 @@ export default function CustomerDiscover() {
                     isOpen
                     closesAt="HDB collection"
                     onPress={() => {
-                      const slug = c.slug || c.id;
-                      if (slug) router.push(`/(customer)/cook/${slug}` as any);
+                      const id = c.id || c.slug;
+                      if (id) router.push(`/(customer)/tiffin/kitchen/${id}` as any);
                     }}
                   />
                 </View>

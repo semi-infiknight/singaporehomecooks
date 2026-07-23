@@ -216,5 +216,8 @@ export function primaryActionLabel(card: DayOrderCard): string {
   if (card.status === 'delivered' || card.status === 'skipped' || card.status === 'canceled_by_kitchen') {
     return 'View';
   }
+  if (card.customizable && card.status === 'scheduled') {
+    return 'Customize';
+  }
   return 'Manage';
 }

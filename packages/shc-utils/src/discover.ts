@@ -1,9 +1,11 @@
 import { productMatchesOccasion } from './occasion';
+import { filterProductsByMealType, type MealTypeId } from './meal-type';
 
 export type DiscoverFilterOpts = {
   query?: string;
   occasion?: string;
   cuisine?: string;
+  mealType?: MealTypeId;
   halalOnly?: boolean;
   maxCal?: number;
 };
@@ -30,6 +32,7 @@ export function filterDiscoverProducts(
     });
   }
   if (opts.cuisine) list = list.filter((p) => String(p.cuisine || '') === opts.cuisine);
+  if (opts.mealType) list = filterProductsByMealType(list, opts.mealType);
   if (opts.occasion) {
     list = list.filter((p) =>
       productMatchesOccasion(

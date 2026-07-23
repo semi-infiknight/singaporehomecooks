@@ -11,6 +11,7 @@ import {
   SHCTiffinMealsPicker,
   SHCTiffinOrderSummary,
   SHCTiffinMenuListItem,
+  SHCSubscribeTrustChips,
   GourmeatPrimaryButton,
   GourmeatSectionTitle,
   SHCSkeletonBone,
@@ -27,6 +28,13 @@ import {
   tiffinPlanDurationTotal,
   subscribeTrustChips,
   kitchenSubscriberLabel,
+  kitchenAboutPoints,
+  kitchenCollectionHours,
+  kitchenChefBackground,
+  kitchenTrustCerts,
+  kitchenDemoReviews,
+  sortKitchenReviews,
+  kitchenRatingSummary,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
@@ -52,6 +60,7 @@ export default function TiffinKitchenScreen() {
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId || '');
   const subscribeMut = useSubscribeTiffin();
   const [subscribeError, setSubscribeError] = useState('');
+  const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
 
   const mealsOptions: number[] = kitchen?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(mealsOptions[1] || 3);
@@ -100,6 +109,22 @@ export default function TiffinKitchenScreen() {
     () => kitchenTiffinPlanRows(mealsOptions, (n) => uiTiffinPrice(n)),
     [mealsOptions]
   );
+  const ratingSum = kitchenRatingSummary(cookMeta);
+  const hours = kitchenCollectionHours({
+    collection_days: kitchen?.collection_days,
+    collection_instructions: kitchen?.cook?.collection_instructions,
+  });
+  const aboutPoints = kitchenAboutPoints(cookMeta);
+  const trustCerts = kitchenTrustCerts({
+    ...cookMeta,
+    sfa_reg_number: kitchen?.cook?.sfa_reg_number,
+  });
+  const chefBg = kitchenChefBackground(cookMeta);
+  const reviews = sortKitchenReviews(kitchenDemoReviews(cookId || ''), 'recent');
+  const trustChips = subscribeTrustChips({
+    area: kitchen?.cook?.area,
+    cookName,
+  });
 
   const handleSubscribe = async () => {
     setSubscribeError('');
@@ -190,6 +215,74 @@ export default function TiffinKitchenScreen() {
         testID="kitchen-page-hero"
       />
 
+      <View style={styles.tabRow} testID="kitchen-tabs">
+        {(
+          [
+            { id: 'plan' as const, label: 'Plans' },
+            { id: 'about' as const, label: 'About' },
+            { id: 'hours' as const, label: 'Hours' },
+            { id: 'reviews' as const, label: 'Reviews' },
+          ] as const
+        ).map((t) => {
+          const on = tab === t.id;
+          return (
+            <Pressable
+              key={t.id}
+              onPress={() => setTab(t.id)}
+              style={[styles.tabBtn, on && styles.tabBtnOn]}
+              testID={`kitchen-tab-${t.id}`}
+            >
+              <Text style={[styles.tabBtnText, on && styles.tabBtnTextOn]}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {tab === 'about' ? (
+        <View testID="kitchen-tab-panel-about">
+          <Text style={styles.panelTitle}>Chef&apos;s background</Text>
+          <Text style={styles.sectionHint}>{chefBg}</Text>
+          {aboutPoints.map((p) => (
+            <Text key={p} style={styles.bullet}>
+              ✓ {p}
+            </Text>
+          ))}
+          {trustCerts.map((c) => (
+            <View key={c.id} style={styles.trustCard} testID={`kitchen-trust-${c.id}`}>
+              <Text style={styles.trustTitle}>{c.label}</Text>
+              <Text style={styles.sectionHint}>{c.detail}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {tab === 'hours' ? (
+        <View testID="kitchen-tab-panel-hours">
+          {hours.map((h) => (
+            <View key={h.id} style={styles.trustCard}>
+              <Text style={styles.trustTitle}>{h.label}</Text>
+              <Text style={styles.sectionHint}>{h.window}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {tab === 'reviews' ? (
+        <View testID="kitchen-tab-panel-reviews">
+          <Text style={styles.ratingBig}>{ratingSum.rating.toFixed(1)} / 5</Text>
+          <Text style={styles.sectionHint}>{ratingSum.reviewCount} reviews</Text>
+          {reviews.map((r) => (
+            <View key={r.id} style={styles.trustCard}>
+              <Text style={styles.trustTitle}>{r.author}</Text>
+              <Text style={styles.bullet}>{'★'.repeat(r.rating)}</Text>
+              <Text style={styles.sectionHint}>{r.body}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {tab === 'plan' ? (
+        <>
       <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
       <Text style={styles.sectionHint} testID="kitchen-plans-hint">
         Choose meals per week — same kitchen every collection.
@@ -242,10 +335,12 @@ export default function TiffinKitchenScreen() {
           style={{ marginBottom: shcSpacing.sm }}
         />
       ) : null}
+        </>
+      ) : null}
     </>
   );
 
-  const ListFooter = (
+  const ListFooter = tab === 'plan' ? (
     <>
       <Text style={styles.collectionHint} testID="kitchen-collection-days">
         Collection days:{' '}
@@ -256,24 +351,15 @@ export default function TiffinKitchenScreen() {
       <Text style={styles.sectionHint} testID="kitchen-subscriber-proof">
         👤 {kitchenSubscriberLabel(kitchen.subscriber_count)}
       </Text>
-
-      <Text style={styles.sectionTitle}>Why subscribe</Text>
-      {subscribeTrustChips({
-        area: kitchen?.cook?.area,
-        cookName,
-      }).map((c) => (
-        <View key={c.id} style={styles.trustCard} testID={`subscribe-trust-${c.id}`}>
-          <Text style={styles.trustTitle}>✓ {c.label}</Text>
-          <Text style={styles.sectionHint}>{c.detail}</Text>
-        </View>
-      ))}
     </>
-  );
+  ) : null;
+
+  const showDishList = tab === 'plan';
 
   return (
     <View style={styles.screen} testID="tiffin-kitchen-screen">
       <VirtualRowFlashList
-        data={dishes}
+        data={showDishList ? dishes : []}
         testID="kitchen-menu-list"
         keyExtractor={(d) => d.id}
         ListHeaderComponent={ListHeader}
@@ -307,6 +393,13 @@ export default function TiffinKitchenScreen() {
             {subscribeError}
           </Text>
         ) : null}
+        {tab !== 'plan' ? (
+          <Pressable onPress={() => setTab('plan')} style={{ marginBottom: shcSpacing.sm }}>
+            <Text style={styles.planTabHint}>Plan tab · choose meals/week first ↑</Text>
+          </Pressable>
+        ) : (
+          <SHCSubscribeTrustChips chips={trustChips.slice(0, 3)} compact testID="subscribe-trust-chips" />
+        )}
         <GourmeatPrimaryButton
           label={
             subscribeMut.isPending
@@ -375,6 +468,27 @@ const styles = StyleSheet.create({
     marginTop: shcSpacing.md,
     marginBottom: shcSpacing.sm,
   },
+  panelTitle: { fontSize: 14, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
+  bullet: { fontSize: 13, fontWeight: '600', color: gourmeatColors.text, marginBottom: 6 },
+  tabRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 2,
+    borderBottomColor: gourmeatColors.border,
+    marginBottom: shcSpacing.md,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    marginBottom: -2,
+  },
+  tabBtnOn: { borderBottomColor: gourmeatColors.primary },
+  tabBtnText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.textLight },
+  tabBtnTextOn: { color: gourmeatColors.primary, fontWeight: '800' },
+  ratingBig: { fontSize: 28, fontWeight: '900', color: gourmeatColors.text },
+  planTabHint: { fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
   trustCard: {
     backgroundColor: gourmeatColors.surface,
     borderRadius: 12,

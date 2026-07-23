@@ -28,6 +28,10 @@ import {
   filterCustomerCookingSoonDrops,
   getDropImageUrl,
   getCookKitchenHeroUrl,
+  discoverHomeHeadline,
+  MEAL_TYPE_CHIPS,
+  topRatedCategoryDishes,
+  type MealTypeId,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
@@ -90,6 +94,7 @@ export default function DiscoverHome() {
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
+  const [mealType, setMealType] = useState<MealTypeId>('all');
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
@@ -159,6 +164,7 @@ export default function DiscoverHome() {
       query,
       occasion: occasionFilter || undefined,
       cuisine: cuisineFilter || undefined,
+      mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       maxCal,
     });
@@ -166,7 +172,14 @@ export default function DiscoverHome() {
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
       collectionLocation
     ) as DishCardProduct[];
-  }, [productList, query, cuisineFilter, occasionFilter, halalOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, maxCal, collectionLocation]);
+
+  const topRatedDishes = useMemo(() => {
+    if (query.trim()) return [];
+    return topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map((p) =>
+      toDishCard(p as DishCardProduct)
+    );
+  }, [productList, query]);
 
   const gridProducts = useMemo(() => (query.trim() ? [] : filteredProducts), [filteredProducts, query]);
 
@@ -210,6 +223,7 @@ export default function DiscoverHome() {
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
+  const homeGreeting = discoverHomeHeadline(user?.name);
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
@@ -249,7 +263,8 @@ export default function DiscoverHome() {
       {/* Mobile chrome — desktop uses AppHeader */}
       <div className="md:hidden">
         <GourmeatHomeHeader
-          headline="Hungry? Order & Eat."
+          headline={homeGreeting.headline}
+          subtitle={homeGreeting.subtitle}
           locationLabel={headerLocation}
           locationHint="Collect from"
           avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
@@ -262,9 +277,14 @@ export default function DiscoverHome() {
           onFilterPress={() => router.push('/search')}
         />
       </div>
-      <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-4">
-        Hungry? Order &amp; Eat.
+      <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-1">
+        {homeGreeting.headline}
       </h1>
+      {homeGreeting.subtitle ? (
+        <p className="hidden md:block text-sm font-semibold text-muted-foreground mb-4">{homeGreeting.subtitle}</p>
+      ) : (
+        <div className="hidden md:block mb-4" />
+      )}
 
       {query.trim().length > 0 && (
         <SearchResultsPanel
@@ -277,9 +297,7 @@ export default function DiscoverHome() {
       )}
 
       {isGuest && (
-        <div className="md:hidden">
-          <GuestBrowseBar onSignInClick={() => router.push('/login')} />
-        </div>
+        <GuestBrowseBar onSignInClick={() => router.push('/login')} />
       )}
 
       {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
@@ -299,11 +317,27 @@ export default function DiscoverHome() {
               highlight="Explore tiffin plans ✨"
               bullets={[
                 'Weekly home-cooked meals from one kitchen',
-                'Or keep scrolling for single dishes & events',
+                'Skip days with flex — your plan extends automatically',
                 'Flexible 2 · 3 · 4 meals per week',
               ]}
             />
           </button>
+        </div>
+      )}
+
+      {/* Meal-type chips — HomelyEats Breakfast · Lunch · Snacks · Dinner */}
+      {!query.trim() && (
+        <div data-testid="home-meal-type-chips">
+          <GourmeatSectionTitle title="Craving something?" />
+          <TiffinFilterChips chips={MEAL_TYPE_CHIPS} activeId={mealType} onSelect={(id) => setMealType(id as MealTypeId)} />
+        </div>
+      )}
+
+      {/* Top rated rail */}
+      {!query.trim() && topRatedDishes.length > 0 && (
+        <div data-testid="home-top-rated-rail">
+          <GourmeatSectionTitle title="Top rated near you" />
+          <ZomatoDishRowRail title="" products={topRatedDishes} onDishPress={goToProduct} testID="top-rated-rail" />
         </div>
       )}
 
@@ -356,7 +390,7 @@ export default function DiscoverHome() {
         >
           <p className="font-black text-base">Subscribe for weekly tiffin</p>
           <p className="text-xs font-semibold opacity-90 mt-1">
-            Banner only — below you can still order one dish or a full occasion spread.
+            One kitchen · flexible skip days · from S$22/wk for 2 meals.
           </p>
         </button>
       )}
@@ -495,7 +529,7 @@ export default function DiscoverHome() {
                     isOpen
                     closesAt="HDB collection"
                     onPress={() => {
-                      if (slug) router.push(`/cook/${slug}`);
+                      if (id) router.push(`/tiffin/kitchen/${encodeURIComponent(id)}`);
                     }}
                     testID={`home-kitchen-${id}`}
                   />

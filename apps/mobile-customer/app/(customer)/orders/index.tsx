@@ -33,6 +33,7 @@ import {
   monthLabelForDate,
   buildManageOrderQuery,
   emptyOrdersDayCopy,
+  primaryActionLabel,
   type DayOrderCard,
 } from '@shc/utils';
 import { useMyOrders } from '../../../hooks/useOrder';
@@ -223,6 +224,7 @@ export default function MyOrdersList() {
                     customizable={card.customizable && card.status === 'scheduled'}
                     menuPending={card.menuPending}
                     onManage={() => onManage(card)}
+                    manageLabel={primaryActionLabel(card)}
                     onSkip={
                       card.kind === 'tiffin' && card.status === 'scheduled'
                         ? () => skipMut.mutate({ collectionDate: card.collectionDate })

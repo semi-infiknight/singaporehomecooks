@@ -31,6 +31,7 @@ export type GourmeatCategoryItem = {
 
 export function GourmeatHomeHeader({
   headline = 'Hungry? Order & Eat.',
+  subtitle,
   locationLabel = 'Katong, Singapore',
   locationHint = 'Deliver to',
   avatarUri,
@@ -41,6 +42,7 @@ export function GourmeatHomeHeader({
   testID = 'gourmeat-home-header',
 }: {
   headline?: string;
+  subtitle?: string;
   locationLabel?: string;
   locationHint?: string;
   avatarUri?: string;
@@ -63,6 +65,19 @@ export function GourmeatHomeHeader({
           >
             {headline}
           </Text>
+          {subtitle ? (
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: gourmeatColors.textLight,
+                marginTop: 4,
+              }}
+              testID="gourmeat-home-subtitle"
+            >
+              {subtitle}
+            </Text>
+          ) : null}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm }}>
           {onNotificationPress && (

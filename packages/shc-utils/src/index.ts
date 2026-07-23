@@ -12,6 +12,8 @@ export * from './favorites';
 export * from './sg-areas';
 export * from './location';
 export * from './discover';
+export * from './discover-home';
+export * from './meal-type';
 export * from './category';
 export * from './kitchen';
 export * from './kitchen-order';
