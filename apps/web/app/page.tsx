@@ -284,7 +284,7 @@ export default function DiscoverHome() {
 
       {/* ① Subscription promo only — full homepage is marketplace, not tiffin-only */}
       {!query.trim() && !promoDismissed && (
-        <div className="relative mb-4" data-testid="home-tiffin-promo">
+        <div className="relative" data-testid="home-tiffin-promo">
           <button
             type="button"
             onClick={() => setPromoDismissed(true)}
@@ -325,7 +325,7 @@ export default function DiscoverHome() {
 
       {/* ③ Most popular — one meal / event order modes */}
       {!query.trim() && (
-        <div className="shc-section-gap mb-4">
+        <div>
           <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
           <div className="mb-2" data-testid="home-order-mode-chips">
             <TiffinFilterChips
@@ -352,7 +352,7 @@ export default function DiscoverHome() {
           type="button"
           data-testid="home-offer-card"
           onClick={() => router.push('/tiffin')}
-          className="w-full text-left rounded-2xl bg-[#1E3A5F] text-white p-4 mb-4"
+          className="w-full text-left rounded-2xl bg-[#1E3A5F] text-white p-4 shc-section-stack"
         >
           <p className="font-black text-base">Subscribe for weekly tiffin</p>
           <p className="text-xs font-semibold opacity-90 mt-1">
@@ -363,7 +363,6 @@ export default function DiscoverHome() {
 
       {/* Event / occasion rail — one-off party ordering */}
       {!query.trim() && (
-        <div className="mb-4 px-0" data-testid="home-event-rail">
           <PromoRail
             promos={[
               {
@@ -397,12 +396,11 @@ export default function DiscoverHome() {
               else router.push('/request');
             }}
           />
-        </div>
       )}
 
       {/* Cooking soon — skeleton while fetching; empty only when settled */}
       {!query.trim() && (
-        <div className="mb-6" data-testid="home-cooking-soon-rail">
+        <div data-testid="home-cooking-soon-rail">
           <GourmeatSectionTitle title="Cooking soon near you" />
           {dropsLoading && !(Array.isArray(drops) && drops.length > 0) ? (
             <SHCSkeletonCookingSoonRail />
@@ -455,7 +453,7 @@ export default function DiscoverHome() {
 
       {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
       {!query.trim() && (cooksLoading || cookList.length > 0) && (
-        <div className="mb-6" data-testid="home-kitchens-section">
+        <div data-testid="home-kitchens-section">
           <GourmeatSectionTitle
             title={cooksLoading && cookList.length === 0 ? 'Kitchens near you' : `${cookList.length} kitchens near you`}
             actionLabel="Tiffin"

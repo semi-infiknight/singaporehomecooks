@@ -261,6 +261,11 @@ a {
   margin-top: var(--shc-section-gap);
 }
 
+.shc-section-stack {
+  margin-top: var(--shc-stack-gap);
+  margin-bottom: var(--shc-section-gap);
+}
+
 .shc-skeleton {
   background: linear-gradient(90deg, var(--secondary) 25%, var(--card) 50%, var(--secondary) 75%);
   background-size: 200% 100%;

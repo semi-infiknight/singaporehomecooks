@@ -372,7 +372,7 @@ export function PromoRail({
       badge: promo.badge,
     }));
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid={testID}>
+    <div className="shc-section-stack flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" data-testid={testID}>
       {items.map((promo, i) => (
         <button
           key={promo.id}
@@ -832,7 +832,7 @@ export function SearchResultsPanel({
 
 export function RequestDishHomeCTA({ href = '/request' }: { href?: string }) {
   return (
-    <Link href={href} className="block group mt-8" data-testid="open-request-page-btn">
+    <Link href={href} className="block group shc-section-stack" data-testid="open-request-page-btn">
       <div className="relative min-h-[180px] overflow-hidden rounded-xl border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-transform group-hover:-translate-y-0.5">
         <Image src={BENTO_ACTION_IMAGES.request} alt="" fill className="object-cover opacity-40 group-hover:opacity-50 transition-opacity" sizes="100vw" />
         <SHCCard className="relative z-10 m-4 bg-card/95 backdrop-blur-sm border-0 shadow-none">
@@ -1793,7 +1793,7 @@ export function TiffinHeroBanner({
   return (
     <div
       data-testid={testID}
-      className={`rounded-2xl p-6 text-white shadow-[var(--shc-shadow-soft)] bg-primary ${className}`}
+      className={`shc-section-stack rounded-2xl p-6 text-white shadow-[var(--shc-shadow-soft)] bg-primary ${className}`}
     >
       <p className="text-xl font-extrabold">{title}</p>
       <p className="text-lg font-extrabold text-[#FFF8F0] mt-1 mb-2">{highlight}</p>
@@ -1886,7 +1886,7 @@ export function TiffinKitchenCard({
       type="button"
       onClick={onPress}
       data-testid={testID || `tiffin-kitchen-${cookId}`}
-      className="w-full text-left rounded-2xl bg-card overflow-hidden shadow-[var(--shc-shadow-soft)] mb-4 hover:opacity-95 transition-opacity"
+      className="w-full text-left rounded-2xl bg-card overflow-hidden shadow-[var(--shc-shadow-soft)] mb-[var(--shc-stack-gap)] hover:opacity-95 transition-opacity"
     >
       <div className="relative h-40 w-full bg-muted">
         <Image src={cover} alt="" fill className="object-cover" sizes="640px" />
@@ -2300,7 +2300,7 @@ export function ActiveOrderBanner({
     <Link
       href={href}
       data-testid={testID}
-      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-mint)] border-2 border-[var(--shc-border-brutal)] rounded-lg px-4 py-3 mb-[var(--shc-section-gap)] shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
+      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-mint)] border-2 border-[var(--shc-border-brutal)] rounded-lg px-4 py-3 mt-[var(--shc-stack-gap)] mb-[var(--shc-section-gap)] shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
     >
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-extrabold text-[var(--shc-success)] flex items-center gap-2">
@@ -2492,7 +2492,7 @@ export function GourmeatSectionTitle({
     ) : null;
 
   return (
-    <div className="flex items-center justify-between mb-2 mt-4" data-testid={testID}>
+    <div className="flex items-center justify-between mb-2 mt-[var(--shc-stack-gap)]" data-testid={testID}>
       <h2 className="text-lg font-extrabold text-foreground tracking-[-0.3px]">{title}</h2>
       {action}
     </div>
@@ -2814,7 +2814,7 @@ export function GourmeatCategoryRow({
   return (
     <div
       data-testid={testID ? `${testID}-section` : 'gourmeat-category-section'}
-      style={{ marginTop: gap, marginBottom: gap }}
+      className="shc-section-stack"
     >
       <p
         className="text-xs font-bold text-muted-foreground text-center"

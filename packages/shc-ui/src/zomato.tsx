@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
@@ -199,12 +199,13 @@ export function SHCPromoRail({
   testID?: string;
 }) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      testID={testID}
-      contentContainerStyle={{ gap: shcSpacing.sm, paddingVertical: shcSpacing.sm }}
-    >
+    <View style={shcSectionStack}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        testID={testID}
+        contentContainerStyle={{ gap: shcSpacing.sm }}
+      >
       {promos.map((promo, i) => (
         <SHCStaggerIn key={promo.id} index={i}>
         <Pressable
@@ -260,7 +261,8 @@ export function SHCPromoRail({
         </Pressable>
         </SHCStaggerIn>
       ))}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

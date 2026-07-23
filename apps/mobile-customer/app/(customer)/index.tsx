@@ -15,6 +15,7 @@ import {
   type GourmeatCategoryItem,
   type SHCDishCardData,
   shcSpacing,
+  shcSectionStack,
   SHCFoodImage,
   SHCSearchResultsPanel,
   SHCGuestBrowseBar,
@@ -293,8 +294,7 @@ export default function CustomerDiscover() {
 
       {/* ① Subscription promo only — encourages tiffin; rest of page is one-off / events */}
       {!query && !promoDismissed && (
-        <View style={{ paddingHorizontal: shcSpacing.md }} testID="home-tiffin-promo">
-          <View style={styles.promoWrap}>
+        <View testID="home-tiffin-promo" style={styles.promoWrap}>
             <Pressable onPress={() => setPromoDismissed(true)} style={styles.promoClose} hitSlop={12} testID="home-promo-dismiss">
               <Text style={styles.promoCloseText}>✕</Text>
             </Pressable>
@@ -309,7 +309,6 @@ export default function CustomerDiscover() {
                 ]}
               />
             </Pressable>
-          </View>
         </View>
       )}
 
@@ -381,8 +380,7 @@ export default function CustomerDiscover() {
 
       {/* Event / occasion rail */}
       {!query && (
-        <View style={{ paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.md }}>
-          <SHCPromoRail
+        <SHCPromoRail
             promos={[
               { id: 'hari-raya', title: 'Hari Raya spreads', subtitle: 'Order for the open house', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Event', iconKey: 'people' },
               { id: 'cny', title: 'CNY reunion', subtitle: 'Plan 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.family, badge: 'Event', iconKey: 'people' },
@@ -393,13 +391,12 @@ export default function CustomerDiscover() {
               else if (id === 'cny') setOccasionFilter('Chinese New Year');
               else router.push('/(customer)/request' as any);
             }}
-          />
-        </View>
+        />
       )}
 
       {/* Cooking soon — skeleton while fetching; empty only when settled */}
       {!query && (
-        <View style={{ marginBottom: shcSpacing.md }} testID="home-cooking-soon-rail">
+        <View testID="home-cooking-soon-rail">
           <GourmeatSectionTitle title="Cooking soon near you" />
           {dropsLoading && !(Array.isArray(drops) && drops.length > 0) ? (
             <SHCSkeletonCookingSoonRail />
@@ -468,7 +465,7 @@ export default function CustomerDiscover() {
 
       {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
       {!query && (cooksLoading || cookList.length > 0) && (
-        <View style={{ marginBottom: shcSpacing.md }} testID="home-kitchens-section">
+        <View testID="home-kitchens-section">
           <GourmeatSectionTitle
             title={cooksLoading && cookList.length === 0 ? 'Kitchens near you' : `${cookList.length} kitchens near you`}
             actionLabel="Tiffin"
@@ -519,7 +516,7 @@ export default function CustomerDiscover() {
       )}
 
       {!query && savedDishes.length > 0 && (
-        <View style={{ marginBottom: shcSpacing.section }}>
+        <View>
           <GourmeatSectionTitle title="Saved for later" />
           <SHCZomatoDishRowRail title="" dishes={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
         </View>
@@ -580,8 +577,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
   offerCard: {
-    marginHorizontal: shcSpacing.md,
-    marginBottom: shcSpacing.md,
+    ...shcSectionStack,
     backgroundColor: '#1E3A5F',
     borderRadius: 14,
     padding: shcSpacing.md,

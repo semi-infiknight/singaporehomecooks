@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Image, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcSpacing } from './theme';
+import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcSpacing, shcSectionStack } from './theme';
 import { SHCFoodImage } from './visuals';
 import { GourmeatPrimaryButton } from './gourmeat';
 import { getDishImageUrl, getCookKitchenHeroUrl } from '@shc/utils';
@@ -54,7 +54,7 @@ export function SHCTiffinHeroBanner({
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={styles.heroBanner}>
+    <View testID={testID} style={[styles.heroBanner, shcSectionStack]}>
       <Text style={styles.heroTitle}>{title}</Text>
       <Text style={styles.heroHighlight}>{highlight}</Text>
       {bullets.map((b) => (
@@ -116,7 +116,7 @@ export function SHCTiffinCategoryRow({
 }) {
   const gap = shcSpacing.categoryStackGap;
   return (
-    <View testID={testID} style={{ marginTop: gap, marginBottom: gap }}>
+    <View testID={testID} style={shcSectionStack}>
       <Text style={[styles.sectionEyebrow, { marginBottom: gap }]}>Explore by categories</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
         {categories.map((c) => {
@@ -1284,7 +1284,7 @@ const styles = StyleSheet.create({
   kitchenCardFeatured: {
     backgroundColor: gourmeatColors.surface,
     borderRadius: gourmeatRadii.lg,
-    marginBottom: shcSpacing.md,
+    marginBottom: shcSpacing.stack,
     overflow: 'hidden',
     ...gourmeatShadows.soft,
   },

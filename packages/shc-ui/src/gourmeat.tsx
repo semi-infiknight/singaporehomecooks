@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
-import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
+import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, shcSpacing, shcSectionStack, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
 
 export { gourmeatLayout, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe };
 import { SHCIcon, type SHCTabIconKey } from './icons';
@@ -263,7 +263,7 @@ export function GourmeatCategoryRow({
 
   return (
     <View
-      style={{ marginTop: gap, marginBottom: gap }}
+      style={shcSectionStack}
       testID={testID ? `${testID}-section` : 'gourmeat-category-section'}
     >
       <Text
@@ -470,7 +470,7 @@ export function GourmeatSectionTitle({
         justifyContent: 'space-between',
         paddingHorizontal: shcSpacing.md,
         marginBottom: shcSpacing.sm,
-        marginTop: shcSpacing.md,
+        marginTop: shcSpacing.stack,
       }}
     >
       <Text style={{ fontSize: 18, fontWeight: '800', color: gourmeatColors.text, letterSpacing: -0.3 }}>{title}</Text>

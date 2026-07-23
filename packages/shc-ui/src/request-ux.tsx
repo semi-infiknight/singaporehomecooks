@@ -3,7 +3,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, gourmeatColors } from './theme';
+import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, shcSectionStack, gourmeatColors } from './theme';
 import { SHCFoodImage } from './visuals';
 import { SHCIcon } from './icons';
 import { SHCButton, SHCButtonText, SHCCard } from './primitives';
@@ -349,7 +349,7 @@ export function SHCRequestDishHomeCTA({
   testID?: string;
 }) {
   return (
-    <Pressable onPress={onPress} testID={testID} style={{ marginTop: shcSpacing.section }}>
+    <Pressable onPress={onPress} testID={testID} style={shcSectionStack}>
       <View
         style={{
           minHeight: 168,
