@@ -263,6 +263,7 @@ export default function CustomerDiscover() {
         onProfilePress={() => router.push('/(customer)/profile' as any)}
         onLocationPress={() => router.push('/(customer)/location' as any)}
         onNotificationPress={() => router.push('/(customer)/profile' as any)}
+        edgeInset={false}
       />
 
       <GourmeatSearchBar
@@ -270,7 +271,7 @@ export default function CustomerDiscover() {
         onChangeText={setQuery}
         placeholder="Search kitchen, dish or cuisine"
         onFilterPress={() => router.push('/(customer)/search' as any)}
-        marginBottom={0}
+        edgeInset={false}
         testID="search-input"
       />
 

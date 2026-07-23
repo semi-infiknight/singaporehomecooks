@@ -37,6 +37,7 @@ export function GourmeatHomeHeader({
   onLocationPress,
   onProfilePress,
   onNotificationPress,
+  edgeInset = true,
   testID = 'gourmeat-home-header',
 }: {
   headline?: string;
@@ -46,10 +47,12 @@ export function GourmeatHomeHeader({
   onLocationPress?: () => void;
   onProfilePress?: () => void;
   onNotificationPress?: () => void;
+  /** When false, parent already applies horizontal padding (e.g. FlashList content). */
+  edgeInset?: boolean;
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={{ paddingHorizontal: shcSpacing.md, paddingBottom: shcSpacing.sm }}>
+    <View testID={testID} style={{ paddingHorizontal: edgeInset ? shcSpacing.md : 0, paddingBottom: shcSpacing.sm }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: shcSpacing.md }}>
         <View style={{ flex: 1, paddingRight: shcSpacing.sm }}>
           <Text
@@ -139,6 +142,7 @@ export function GourmeatSearchBar({
   placeholder = 'Search dishes, cooks…',
   onFilterPress,
   marginBottom = shcSpacing.md,
+  edgeInset = true,
   testID = 'search-input',
 }: {
   value: string;
@@ -146,6 +150,8 @@ export function GourmeatSearchBar({
   placeholder?: string;
   onFilterPress?: () => void;
   marginBottom?: number;
+  /** When false, parent already applies horizontal padding (e.g. FlashList content). */
+  edgeInset?: boolean;
   testID?: string;
 }) {
   return (
@@ -153,7 +159,7 @@ export function GourmeatSearchBar({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: shcSpacing.md,
+        marginHorizontal: edgeInset ? shcSpacing.md : 0,
         marginBottom,
         gap: shcSpacing.sm,
       }}

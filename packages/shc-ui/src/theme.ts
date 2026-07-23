@@ -41,6 +41,8 @@ export const shcSpacing = {
   xl: 32,
   /** Toptal: generous white space between discover sections */
   section: 20,
+  /** Vertical gap between stacked cards/rails (search → banner → section). */
+  stack: 12,
   /** Equal vertical rhythm: section above → eyebrow → circle → label (8px each) */
   categoryStackGap: 8,
   /** @deprecated use categoryStackGap */
@@ -175,6 +177,12 @@ export const gourmeatShadows = {
     elevation: 12,
   },
 };
+
+/** Vertical rhythm for stacked homepage / discover cards (Neo-Brutalist bento). */
+export const shcSectionStack = {
+  marginTop: shcSpacing.stack,
+  marginBottom: shcSpacing.section,
+} as const;
 
 /** Bottom inset for content/CTAs above the floating customer tab bar (+ optional sticky cart). */
 export const gourmeatLayout = {

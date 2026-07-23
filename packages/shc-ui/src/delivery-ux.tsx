@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows } from './theme';
+import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcSectionStack } from './theme';
 import { SHCIcon, type SHCIconKey } from './icons';
 import { SHCButton } from './primitives';
 import {
@@ -224,8 +224,8 @@ const guestBrowseStyles = {
     borderRadius: shcRadii.lg,
     paddingVertical: shcSpacing.md,
     paddingHorizontal: shcSpacing.md,
-    marginBottom: shcSpacing.section,
     minHeight: 60,
+    ...shcSectionStack,
     ...shcShadows.brutal,
   },
   copyWrap: {
@@ -551,7 +551,7 @@ export function SHCActiveOrderBanner({
         borderColor: shcColors.border,
         borderRadius: shcRadii.md,
         padding: shcSpacing.md,
-        marginBottom: shcSpacing.section,
+        ...shcSectionStack,
         ...shcShadows.brutalSm,
       }}
     >
