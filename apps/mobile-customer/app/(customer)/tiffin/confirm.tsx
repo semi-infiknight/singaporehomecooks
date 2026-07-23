@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SHCTiffinConfirmBanner,
   SHCTiffinUpcomingWeeks,
+  SHCSubscribeFunnelProgress,
   GourmeatPrimaryButton,
   gourmeatColors,
   shcSpacing,
@@ -64,6 +65,8 @@ export default function TiffinConfirmScreen() {
           paddingBottom: contentPadSafe(insets.bottom),
         }}
       >
+        <SHCSubscribeFunnelProgress current="pay" />
+
         <SHCTiffinConfirmBanner
           subtitle={`${cookName} · changes until midnight before each collection day.`}
         />

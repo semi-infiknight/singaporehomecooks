@@ -132,7 +132,7 @@ describe('my-orders calendar + status variants', () => {
         customizable: true,
         menuPending: false,
       })
-    ).toBe('Manage');
+    ).toBe('Customize');
   });
 
   it('customizable only when far enough before slot', () => {

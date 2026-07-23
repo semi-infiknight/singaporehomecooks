@@ -1,7 +1,101 @@
 /**
  * Subscribe funnel trust + social proof copy (HomelyEats Wave 4 / paper wireframe).
+ * Plan comparison + progress patterns from Tifinco redesign (Prateek Mishra, 2024).
  * Pure helpers — no I/O.
  */
+
+import { defaultFlexQuota } from '@shc/business-rules';
+
+export type SubscribeFunnelStepId = 'plan' | 'pay' | 'pick';
+
+export type SubscribeFunnelStep = {
+  id: SubscribeFunnelStepId;
+  label: string;
+  question: string;
+};
+
+/** Three-step subscribe funnel — progress indicator + browse “How it works”. */
+export function subscribeFunnelSteps(): SubscribeFunnelStep[] {
+  return [
+    {
+      id: 'plan',
+      label: 'Choose plan',
+      question: 'How many meals would you like each week?',
+    },
+    {
+      id: 'pay',
+      label: 'Confirm',
+      question: 'Review your plan and pay with PayNow.',
+    },
+    {
+      id: 'pick',
+      label: 'Pick meals',
+      question: 'Which dishes repeat on each collection day?',
+    },
+  ];
+}
+
+export type TiffinPlanFeature = {
+  id: string;
+  label: string;
+  included: boolean;
+};
+
+/** Feature matrix for selected tier — ✓/✗ comparison (loss aversion on lower tiers). */
+export function tiffinPlanFeaturesForTier(mealsPerWeek: number): TiffinPlanFeature[] {
+  const meals = Math.max(2, Math.floor(mealsPerWeek || 2));
+  const flex = defaultFlexQuota(meals);
+  return [
+    { id: 'collection', label: 'Weekly HDB collection from one kitchen', included: true },
+    { id: 'menu', label: 'Swap dishes until midnight before collection', included: true },
+    { id: 'flex', label: `${flex} flex skip days each period`, included: true },
+    {
+      id: 'volume',
+      label: 'Volume discount — lower price per meal',
+      included: meals >= 3,
+    },
+    {
+      id: 'variety',
+      label: 'More weekly variety (3–4 meal cadence)',
+      included: meals >= 3,
+    },
+    {
+      id: 'priority',
+      label: 'Priority slots on busy collection days',
+      included: meals >= 4,
+    },
+  ];
+}
+
+/** Meals/week option that gets the “Best value” tag (highest tier in list). */
+export function tiffinPlanBestValueMeals(mealsOptions: number[] = [2, 3, 4]): number {
+  if (!mealsOptions.length) return 4;
+  return Math.max(...mealsOptions);
+}
+
+/** Strikethrough anchor price — base tier per-meal rate for savings callout. */
+export function tiffinPlanStrikethroughPrice(
+  mealsPerWeek: number,
+  priceForMeals: (n: number) => number,
+  baseMeals = 2
+): string | null {
+  const base = priceForMeals(baseMeals);
+  const current = priceForMeals(mealsPerWeek);
+  if (mealsPerWeek <= baseMeals || current >= base) return null;
+  return `S$${base.toFixed(2)}`;
+}
+
+/** Savings copy when user picks a higher meals/week tier. */
+export function tiffinPlanSavingsLabel(
+  mealsPerWeek: number,
+  priceForMeals: (n: number) => number,
+  baseMeals = 2
+): string | null {
+  const strike = tiffinPlanStrikethroughPrice(mealsPerWeek, priceForMeals, baseMeals);
+  if (!strike) return null;
+  const saved = priceForMeals(baseMeals) - priceForMeals(mealsPerWeek);
+  return `Save S$${saved.toFixed(2)}/meal vs ${baseMeals}/wk`;
+}
 
 export type SubscribeTrustChip = {
   id: string;

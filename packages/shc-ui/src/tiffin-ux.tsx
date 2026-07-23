@@ -328,15 +328,165 @@ export function SHCTiffinKitchenHero({
   );
 }
 
+/** Tifinco-style 3-step progress — Choose plan · Confirm · Pick meals */
+export function SHCSubscribeFunnelProgress({
+  current,
+  testID = 'subscribe-funnel-progress',
+}: {
+  current: import('@shc/utils').SubscribeFunnelStepId;
+  testID?: string;
+}) {
+  const steps = [
+    { id: 'plan', label: 'Choose plan' },
+    { id: 'pay', label: 'Confirm' },
+    { id: 'pick', label: 'Pick meals' },
+  ] as const;
+  const currentIdx = steps.findIndex((s) => s.id === current);
+  return (
+    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+      <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+        {steps.map((s, i) => {
+          const done = i < currentIdx;
+          const active = i === currentIdx;
+          return (
+            <View
+              key={s.id}
+              style={{
+                flex: 1,
+                height: 6,
+                borderRadius: 99,
+                backgroundColor: done || active ? gourmeatColors.primary : gourmeatColors.border,
+                opacity: done || active ? 1 : 0.35,
+              }}
+              testID={`subscribe-funnel-bar-${s.id}`}
+            />
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {steps.map((s, i) => {
+          const active = i === currentIdx;
+          return (
+            <Text
+              key={s.id}
+              style={{
+                flex: 1,
+                textAlign: i === 0 ? 'left' : i === steps.length - 1 ? 'right' : 'center',
+                fontSize: 10,
+                fontWeight: active ? '800' : '600',
+                color: active ? gourmeatColors.primary : gourmeatColors.textLight,
+              }}
+              testID={`subscribe-funnel-label-${s.id}`}
+            >
+              {s.label}
+            </Text>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** Browse-page “How it works” — reduces cognitive load before kitchen pick */
+export function SHCTiffinHowItWorks({
+  testID = 'tiffin-how-it-works',
+}: {
+  testID?: string;
+}) {
+  const steps = [
+    { n: '1', title: 'Pick a kitchen', body: 'One home cook · one weekly menu' },
+    { n: '2', title: 'Choose your plan', body: '2–4 meals/week · flex skip days' },
+    { n: '3', title: 'Collect & enjoy', body: 'PayNow · HDB pickup on your slot' },
+  ];
+  return (
+    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+      <Text style={styles.sectionEyebrow}>HOW IT WORKS</Text>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: shcSpacing.sm }}>
+        {steps.map((s) => (
+          <View
+            key={s.n}
+            style={{
+              flex: 1,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: gourmeatColors.border,
+              backgroundColor: gourmeatColors.surface,
+              padding: 10,
+            }}
+            testID={`tiffin-how-step-${s.n}`}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '900', color: gourmeatColors.primary }}>{s.n}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: gourmeatColors.text, marginTop: 4 }}>
+              {s.title}
+            </Text>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2, lineHeight: 14 }}>
+              {s.body}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** Selected-plan feature list — ✓ included · ✗ not on this tier */
+export function SHCTiffinPlanFeatureList({
+  features,
+  testID = 'tiffin-plan-features',
+}: {
+  features: Array<{ id: string; label: string; included: boolean }>;
+  testID?: string;
+}) {
+  return (
+    <View testID={testID} style={{ marginBottom: shcSpacing.md }}>
+      <Text style={styles.sectionQuestion}>What&apos;s included in your plan?</Text>
+      {features.map((f) => (
+        <View
+          key={f.id}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 6,
+            opacity: f.included ? 1 : 0.5,
+          }}
+          testID={`tiffin-plan-feature-${f.id}`}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '800', color: f.included ? gourmeatColors.success : gourmeatColors.textLight }}>
+            {f.included ? '✓' : '✗'}
+          </Text>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: 13,
+              fontWeight: f.included ? '700' : '600',
+              color: gourmeatColors.text,
+              textDecorationLine: f.included ? 'none' : 'line-through',
+            }}
+          >
+            {f.label}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function SHCTiffinMealsPicker({
   options,
   selected,
   onSelect,
+  bestValueAt,
+  strikethroughFor,
+  savingsLabel,
   testID = 'tiffin-meals-picker',
 }: {
   options: number[];
   selected: number;
   onSelect: (n: number) => void;
+  bestValueAt?: number;
+  strikethroughFor?: (n: number) => string | null;
+  savingsLabel?: (n: number) => string | null;
   testID?: string;
 }) {
   return (
@@ -346,6 +496,9 @@ export function SHCTiffinMealsPicker({
         {options.map((n) => {
           const active = n === selected;
           const price = tiffinPricePerServing(n);
+          const strike = strikethroughFor?.(n);
+          const savings = savingsLabel?.(n);
+          const isBest = bestValueAt != null && n === bestValueAt;
           return (
             <Pressable
               key={n}
@@ -353,10 +506,21 @@ export function SHCTiffinMealsPicker({
               testID={`tiffin-meals-${n}`}
               style={[styles.mealsPill, active && styles.mealsPillActive]}
             >
+              {isBest ? (
+                <View style={styles.bestValueBadge} testID={`tiffin-meals-best-${n}`}>
+                  <Text style={styles.bestValueText}>Best value</Text>
+                </View>
+              ) : null}
               <Text style={[styles.mealsPillNum, active && styles.mealsPillNumActive]}>{n} meals</Text>
+              {strike ? (
+                <Text style={[styles.mealsPillStrike, active && styles.mealsPillStrikeActive]}>{strike}/meal</Text>
+              ) : null}
               <Text style={[styles.mealsPillPrice, active && styles.mealsPillPriceActive]}>
                 S${price.toFixed(2)}/meal
               </Text>
+              {savings ? (
+                <Text style={[styles.mealsPillSavings, active && styles.mealsPillSavingsActive]}>{savings}</Text>
+              ) : null}
             </Pressable>
           );
         })}
@@ -762,6 +926,7 @@ export function SHCTiffinPlannerScreen({
     <View testID={testID} style={styles.plannerScreen}>
       <ScrollView contentContainerStyle={[styles.plannerScroll, { paddingBottom: 120 + insets.bottom }]}>
         <Text style={styles.plannerScheduled}>{mode === 'next-week' ? 'NEXT WEEK' : 'SCHEDULED'}</Text>
+        <SHCSubscribeFunnelProgress current="pick" />
         <Text style={styles.plannerTitle}>{title}</Text>
         {subtitle ? <Text style={styles.plannerSubtitle}>{subtitle}</Text> : null}
         {weekLabel ? <Text style={styles.plannerWeek}>{weekLabel}</Text> : null}
@@ -1540,6 +1705,24 @@ const styles = StyleSheet.create({
   mealsPillNumActive: { color: gourmeatColors.primary },
   mealsPillPrice: { fontSize: 11, color: gourmeatColors.textLight, marginTop: 4 },
   mealsPillPriceActive: { color: gourmeatColors.primary, fontWeight: '600' },
+  mealsPillStrike: {
+    fontSize: 10,
+    color: gourmeatColors.textMuted,
+    textDecorationLine: 'line-through',
+    marginTop: 2,
+  },
+  mealsPillStrikeActive: { color: gourmeatColors.textLight },
+  mealsPillSavings: { fontSize: 10, fontWeight: '700', color: gourmeatColors.success, marginTop: 4 },
+  mealsPillSavingsActive: { color: gourmeatColors.onPrimary },
+  bestValueBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: gourmeatColors.nav,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 6,
+  },
+  bestValueText: { fontSize: 9, fontWeight: '900', color: gourmeatColors.onPrimary, textTransform: 'uppercase' },
   orderSummary: {
     backgroundColor: gourmeatColors.surfaceAlt,
     borderRadius: gourmeatRadii.md,

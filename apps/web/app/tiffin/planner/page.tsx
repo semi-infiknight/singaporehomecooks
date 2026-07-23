@@ -17,6 +17,7 @@ import {
   SHCBadge,
   SHCErrorBanner,
   SubscribeTrustList,
+  SubscribeFunnelProgress,
 } from '../../components/SHCWebComponents';
 
 export default function TiffinPlannerPage() {
@@ -116,6 +117,8 @@ function TiffinPlannerInner() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-planner-screen">
+      <SubscribeFunnelProgress current="pick" />
+
       <SHCPageHeader
         title={isNextWeek ? 'Plan next week' : 'Your weekly menu'}
         subtitle={

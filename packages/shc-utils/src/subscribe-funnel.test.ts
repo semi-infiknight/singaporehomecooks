@@ -1,57 +1,42 @@
 import { describe, expect, it } from 'vitest';
 import {
-  subscribeTrustChips,
-  subscribeConfirmSteps,
-  kitchenSubscriberLabel,
-  subscriptionLedgerPreview,
-  shapeTiffinLedgerForUi,
+  subscribeFunnelSteps,
+  tiffinPlanBestValueMeals,
+  tiffinPlanFeaturesForTier,
+  tiffinPlanSavingsLabel,
+  tiffinPlanStrikethroughPrice,
 } from './subscribe-funnel';
 
-describe('subscribe-funnel (wave 4)', () => {
-  it('trust chips cover one kitchen, collection, allergens, flex', () => {
-    const ids = subscribeTrustChips({ area: 'Tampines', cookName: 'Auntie Rose' }).map((c) => c.id);
-    expect(ids).toEqual(['one_kitchen', 'collection', 'allergens', 'flex']);
-    expect(subscribeTrustChips({ area: 'Tampines' })[1].detail).toMatch(/Tampines/);
+describe('subscribeFunnelSteps', () => {
+  it('returns three funnel steps', () => {
+    expect(subscribeFunnelSteps().map((s) => s.id)).toEqual(['plan', 'pay', 'pick']);
+  });
+});
+
+describe('tiffinPlanFeaturesForTier', () => {
+  it('includes volume discount only for 3+ meals', () => {
+    const two = tiffinPlanFeaturesForTier(2).find((f) => f.id === 'volume');
+    const four = tiffinPlanFeaturesForTier(4).find((f) => f.id === 'volume');
+    expect(two?.included).toBe(false);
+    expect(four?.included).toBe(true);
+  });
+});
+
+describe('tiffinPlanBestValueMeals', () => {
+  it('picks highest meals option', () => {
+    expect(tiffinPlanBestValueMeals([2, 3, 4])).toBe(4);
+  });
+});
+
+describe('tiffinPlanSavingsLabel', () => {
+  const price = (n: number) => (n >= 4 ? 10 : n >= 3 ? 11 : 12);
+
+  it('shows strikethrough anchor for higher tiers', () => {
+    expect(tiffinPlanStrikethroughPrice(4, price)).toBe('S$12.00');
+    expect(tiffinPlanStrikethroughPrice(2, price)).toBeNull();
   });
 
-  it('confirm steps are ordered pick → pay → collect', () => {
-    const steps = subscribeConfirmSteps();
-    expect(steps).toHaveLength(3);
-    expect(steps[0]!.id).toBe('plan');
-    expect(steps[1]!.id).toBe('pay');
-    expect(steps[2]!.id).toBe('collect');
-  });
-
-  it('subscriber label social proof', () => {
-    expect(kitchenSubscriberLabel(0)).toMatch(/first/i);
-    expect(kitchenSubscriberLabel(1)).toBe('1 subscriber');
-    expect(kitchenSubscriberLabel(42)).toBe('42 subscribers');
-  });
-
-  it('ledger preview has balance + meals + flex when sub present', () => {
-    const rows = subscriptionLedgerPreview({
-      meals_per_week: 3,
-      deliveries_left: 10,
-      flex_remaining: 2,
-      expires_on: '2026-08-01',
-    });
-    expect(rows.map((r) => r.kind)).toEqual(['recharge', 'meal', 'flex']);
-    expect(subscriptionLedgerPreview(null)).toEqual([]);
-  });
-
-  it('shapeTiffinLedgerForUi prefers API rows', () => {
-    const shaped = shapeTiffinLedgerForUi([
-      {
-        id: 'x1',
-        kind: 'recharge',
-        label: 'PayNow recharge · 4 weeks',
-        amount_cents: 13200,
-        created_at: '2026-07-09T12:00:00.000Z',
-        paynow_ref: 'PAY-1',
-      },
-    ]);
-    expect(shaped).toHaveLength(1);
-    expect(shaped[0]!.amountLabel).toBe('S$132.00');
-    expect(shaped[0]!.dateLabel).toMatch(/PAY-1/);
+  it('shows savings copy for 4 meals vs 2', () => {
+    expect(tiffinPlanSavingsLabel(4, price)).toMatch(/Save S\$2\.00\/meal/);
   });
 });

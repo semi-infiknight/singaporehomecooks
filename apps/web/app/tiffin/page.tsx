@@ -19,6 +19,7 @@ import {
   TiffinFilterChips,
   TiffinKitchenCard,
   TiffinEmptyState,
+  TiffinHowItWorks,
 } from '../components/SHCWebComponents';
 import { VirtualRowList } from '../components/VirtualLists';
 
@@ -108,6 +109,8 @@ export default function TiffinBrowsePage() {
       <div className="mb-4">
         <TiffinHeroBanner />
       </div>
+
+      <TiffinHowItWorks />
 
       {sub ? (
         <div data-testid="tiffin-active-banner">

@@ -12,6 +12,8 @@ import {
   SHCTiffinOrderSummary,
   SHCTiffinMenuListItem,
   SHCSubscribeTrustChips,
+  SHCSubscribeFunnelProgress,
+  SHCTiffinPlanFeatureList,
   GourmeatPrimaryButton,
   GourmeatSectionTitle,
   SHCSkeletonBone,
@@ -35,6 +37,10 @@ import {
   kitchenDemoReviews,
   sortKitchenReviews,
   kitchenRatingSummary,
+  tiffinPlanFeaturesForTier,
+  tiffinPlanBestValueMeals,
+  tiffinPlanStrikethroughPrice,
+  tiffinPlanSavingsLabel,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
@@ -125,6 +131,12 @@ export default function TiffinKitchenScreen() {
     area: kitchen?.cook?.area,
     cookName,
   });
+  const bestValueAt = tiffinPlanBestValueMeals(mealsOptions);
+  const planFeatures = useMemo(
+    () => tiffinPlanFeaturesForTier(mealsPerWeek),
+    [mealsPerWeek]
+  );
+  const priceFn = useCallback((n: number) => uiTiffinPrice(n), []);
 
   const handleSubscribe = async () => {
     setSubscribeError('');
@@ -283,11 +295,20 @@ export default function TiffinKitchenScreen() {
 
       {tab === 'plan' ? (
         <>
+      <SHCSubscribeFunnelProgress current="plan" />
       <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
       <Text style={styles.sectionHint} testID="kitchen-plans-hint">
         Choose meals per week — same kitchen every collection.
       </Text>
-      <SHCTiffinMealsPicker options={mealsOptions} selected={mealsPerWeek} onSelect={setMealsPerWeek} />
+      <SHCTiffinMealsPicker
+        options={mealsOptions}
+        selected={mealsPerWeek}
+        onSelect={setMealsPerWeek}
+        bestValueAt={bestValueAt}
+        strikethroughFor={(n) => tiffinPlanStrikethroughPrice(n, priceFn)}
+        savingsLabel={(n) => tiffinPlanSavingsLabel(n, priceFn)}
+      />
+      <SHCTiffinPlanFeatureList features={planFeatures} />
       <View testID="kitchen-plan-rows">
         {planRows.map((row) => (
           <Text key={row.meals} style={styles.planMeta}>
@@ -296,7 +317,7 @@ export default function TiffinKitchenScreen() {
         ))}
       </View>
 
-      <Text style={styles.sectionHint}>Select plan duration</Text>
+      <Text style={styles.sectionQuestion}>How long would you like to subscribe?</Text>
       <View style={styles.durationRow} testID="tiffin-plan-duration">
         {durationOpts.map((d) => {
           const active = d.id === planDuration;
@@ -489,6 +510,7 @@ const styles = StyleSheet.create({
   tabBtnTextOn: { color: gourmeatColors.primary, fontWeight: '800' },
   ratingBig: { fontSize: 28, fontWeight: '900', color: gourmeatColors.text },
   planTabHint: { fontSize: 12, fontWeight: '700', color: gourmeatColors.primary },
+  sectionQuestion: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
   trustCard: {
     backgroundColor: gourmeatColors.surface,
     borderRadius: 12,

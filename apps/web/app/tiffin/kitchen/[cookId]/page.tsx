@@ -27,6 +27,10 @@ import {
   tiffinPlanDurationTotal,
   subscribeTrustChips,
   kitchenSubscriberLabel,
+  tiffinPlanFeaturesForTier,
+  tiffinPlanBestValueMeals,
+  tiffinPlanStrikethroughPrice,
+  tiffinPlanSavingsLabel,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
@@ -46,6 +50,8 @@ import {
   GourmeatSectionTitle,
   KitchenTrustCertsList,
   SubscribeTrustList,
+  SubscribeFunnelProgress,
+  TiffinPlanFeatureList,
   SHCSkeletonList,
 } from '../../../components/SHCWebComponents';
 import { VirtualRowList } from '../../../components/VirtualLists';
@@ -120,6 +126,11 @@ export default function TiffinKitchenPage() {
     area: (kitchen as any)?.cook?.area,
     cookName,
   });
+  const bestValueAt = tiffinPlanBestValueMeals(mealsOptions);
+  const planFeatures = useMemo(
+    () => tiffinPlanFeaturesForTier(mealsPerWeek),
+    [mealsPerWeek]
+  );
 
   const handleSubscribe = async () => {
     setSubscribeError('');
@@ -259,29 +270,53 @@ export default function TiffinKitchenPage() {
 
       {tab === 'plan' && (
         <>
+          <SubscribeFunnelProgress current="plan" />
           <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
-          <p className="text-xs font-semibold text-muted-foreground mb-2">How many meals each week?</p>
+          <p className="text-base font-extrabold mb-2">How many meals would you like each week?</p>
           <div className="flex gap-2 mb-3" data-testid="tiffin-meals-picker">
             {mealsOptions.map((n) => {
               const active = n === mealsPerWeek;
+              const price = tiffinPricePerServing(n);
+              const strike = tiffinPlanStrikethroughPrice(n, tiffinPricePerServing);
+              const savings = tiffinPlanSavingsLabel(n, tiffinPricePerServing);
+              const isBest = n === bestValueAt;
               return (
                 <button
                   key={n}
                   type="button"
                   data-testid={`tiffin-meals-${n}`}
                   onClick={() => setMealsPerWeek(n)}
-                  className={`flex-1 rounded-xl border-2 px-3 py-3 text-center ${
+                  className={`relative flex-1 rounded-xl border-2 px-3 py-3 text-center ${
                     active
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-[var(--shc-border-brutal)] bg-card'
                   }`}
                 >
+                  {isBest ? (
+                    <span
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase bg-foreground text-background px-2 py-0.5 rounded-md"
+                      data-testid={`tiffin-meals-best-${n}`}
+                    >
+                      Best value
+                    </span>
+                  ) : null}
                   <div className="font-black text-lg">{n}</div>
-                  <div className="text-[10px] font-bold opacity-90">S${tiffinPricePerServing(n)}/meal</div>
+                  {strike ? (
+                    <div className={`text-[10px] line-through opacity-70 ${active ? '' : 'text-muted-foreground'}`}>
+                      {strike}/meal
+                    </div>
+                  ) : null}
+                  <div className="text-[10px] font-bold opacity-90">S${price.toFixed(2)}/meal</div>
+                  {savings ? (
+                    <div className={`text-[10px] font-bold mt-1 ${active ? 'text-primary-foreground/90' : 'text-[var(--shc-success)]'}`}>
+                      {savings}
+                    </div>
+                  ) : null}
                 </button>
               );
             })}
           </div>
+          <TiffinPlanFeatureList features={planFeatures} />
           <div className="mb-3" data-testid="kitchen-plan-rows">
             {planRows.map((row) => (
               <p key={row.meals} className="text-xs font-semibold text-muted-foreground">
@@ -290,8 +325,8 @@ export default function TiffinKitchenPage() {
             ))}
           </div>
 
-          {/* Wireframe: Select plan duration (7 days · 1 month · custom) */}
-          <p className="text-xs font-semibold text-muted-foreground mb-2">Select plan duration</p>
+          {/* Wireframe: plan duration */}
+          <p className="text-base font-extrabold mb-2">How long would you like to subscribe?</p>
           <div className="flex gap-2 mb-3" data-testid="tiffin-plan-duration">
             {durationOpts.map((d) => {
               const active = d.id === planDuration;

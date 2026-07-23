@@ -1352,6 +1352,104 @@ export function SubscribeTrustList({
   );
 }
 
+/** Tifinco-style 3-step progress — Choose plan · Confirm · Pick meals */
+export function SubscribeFunnelProgress({
+  current,
+  testID = 'subscribe-funnel-progress',
+}: {
+  current: 'plan' | 'pay' | 'pick';
+  testID?: string;
+}) {
+  const steps = [
+    { id: 'plan', label: 'Choose plan' },
+    { id: 'pay', label: 'Confirm' },
+    { id: 'pick', label: 'Pick meals' },
+  ] as const;
+  const currentIdx = steps.findIndex((s) => s.id === current);
+  return (
+    <div data-testid={testID} className="mb-4" aria-label={`Step ${currentIdx + 1} of ${steps.length}`}>
+      <div className="flex gap-1.5 mb-2">
+        {steps.map((s, i) => (
+          <div
+            key={s.id}
+            className={`h-1.5 flex-1 rounded-full transition-colors ${
+              i <= currentIdx ? 'bg-primary' : 'bg-border opacity-35'
+            }`}
+            data-testid={`subscribe-funnel-bar-${s.id}`}
+          />
+        ))}
+      </div>
+      <div className="flex justify-between text-[10px] font-bold">
+        {steps.map((s, i) => (
+          <span
+            key={s.id}
+            className={i === currentIdx ? 'text-primary' : 'text-muted-foreground'}
+            data-testid={`subscribe-funnel-label-${s.id}`}
+          >
+            {s.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Browse-page how-it-works strip */
+export function TiffinHowItWorks({ testID = 'tiffin-how-it-works' }: { testID?: string }) {
+  const steps = [
+    { n: '1', title: 'Pick a kitchen', body: 'One home cook · one weekly menu' },
+    { n: '2', title: 'Choose your plan', body: '2–4 meals/week · flex skip days' },
+    { n: '3', title: 'Collect & enjoy', body: 'PayNow · HDB pickup on your slot' },
+  ];
+  return (
+    <div data-testid={testID} className="mb-4">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide text-center">How it works</p>
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {steps.map((s) => (
+          <div
+            key={s.n}
+            className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2.5"
+            data-testid={`tiffin-how-step-${s.n}`}
+          >
+            <p className="text-[11px] font-black text-primary">{s.n}</p>
+            <p className="text-xs font-extrabold mt-1">{s.title}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-snug">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Selected-plan ✓/✗ feature list */
+export function TiffinPlanFeatureList({
+  features,
+  testID = 'tiffin-plan-features',
+}: {
+  features: Array<{ id: string; label: string; included: boolean }>;
+  testID?: string;
+}) {
+  return (
+    <div data-testid={testID} className="mb-4">
+      <p className="text-base font-extrabold mb-2">What&apos;s included in your plan?</p>
+      <ul className="space-y-1.5">
+        {features.map((f) => (
+          <li
+            key={f.id}
+            className={`flex items-start gap-2 text-sm ${f.included ? '' : 'opacity-50'}`}
+            data-testid={`tiffin-plan-feature-${f.id}`}
+          >
+            <span className={`font-extrabold ${f.included ? 'text-[var(--shc-success)]' : 'text-muted-foreground'}`}>
+              {f.included ? '✓' : '✗'}
+            </span>
+            <span className={`font-semibold ${f.included ? '' : 'line-through'}`}>{f.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** Wireframe kitchen trust certs — Licenses · Food safety · Hygiene */
 export function KitchenTrustCertsList({
   certs,

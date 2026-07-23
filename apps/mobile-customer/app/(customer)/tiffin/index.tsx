@@ -14,6 +14,7 @@ import {
   SHCTiffinEmptyState,
   SHCTiffinFilterChips,
   SHCTiffinCategoryRow,
+  SHCTiffinHowItWorks,
   SHCSkeletonKitchenList,
   gourmeatColors,
   shcSpacing,
@@ -115,6 +116,8 @@ export default function TiffinBrowseScreen() {
       </Text>
 
       <SHCTiffinHeroBanner />
+
+      <SHCTiffinHowItWorks />
 
       {hasSub ? (
         <View style={styles.activeBanner}>

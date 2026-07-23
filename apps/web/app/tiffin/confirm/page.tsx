@@ -12,6 +12,7 @@ import {
   SHCCard,
   SHCPageHeader,
   SubscribeTrustList,
+  SubscribeFunnelProgress,
   SHCSkeletonList,
 } from '../../components/SHCWebComponents';
 
@@ -54,6 +55,8 @@ export default function TiffinConfirmPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-36" data-testid="tiffin-confirm-screen">
+      <SubscribeFunnelProgress current="pay" />
+
       <SHCPageHeader
         title="You're subscribed!"
         subtitle={`${cookName} · pick meals for your weekly plan next.`}
