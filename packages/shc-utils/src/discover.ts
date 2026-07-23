@@ -1,5 +1,6 @@
 import { productMatchesOccasion } from './occasion';
 import { filterProductsByMealType, type MealTypeId } from './meal-type';
+import { isVegetarianDish } from './restaurant-ux';
 
 export type DiscoverFilterOpts = {
   query?: string;
@@ -7,6 +8,7 @@ export type DiscoverFilterOpts = {
   cuisine?: string;
   mealType?: MealTypeId;
   halalOnly?: boolean;
+  vegetarianOnly?: boolean;
   maxCal?: number;
 };
 
@@ -42,6 +44,7 @@ export function filterDiscoverProducts(
     );
   }
   if (opts.halalOnly) list = list.filter((p) => Boolean(p.halal));
+  if (opts.vegetarianOnly) list = list.filter((p) => isVegetarianDish(p));
   if (opts.maxCal != null) list = list.filter((p) => ((p.calories as number) || 999) <= opts.maxCal!);
   return list;
 }

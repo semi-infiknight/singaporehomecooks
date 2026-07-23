@@ -32,6 +32,7 @@ type DishGridProps = {
   products: DishCardProduct[];
   columns?: number;
   isFavorite?: (id: string) => boolean;
+  isPopular?: (product: DishCardProduct) => boolean;
   onFavoritePress?: (product: DishCardProduct) => void;
   onAddPress?: (id: string) => void;
   testID?: string;
@@ -43,6 +44,7 @@ export function VirtualDishGrid({
   products,
   columns = 2,
   isFavorite,
+  isPopular,
   onFavoritePress,
   onAddPress,
   testID = 'dish-list-container',
@@ -94,6 +96,7 @@ export function VirtualDishGrid({
                     key={p.id}
                     product={p}
                     isFavorite={isFavorite?.(p.id)}
+                    showPopular={isPopular?.(p)}
                     onFavoritePress={onFavoritePress ? () => onFavoritePress(p) : undefined}
                     onAddPress={onAddPress ? () => onAddPress(p.id) : undefined}
                   />

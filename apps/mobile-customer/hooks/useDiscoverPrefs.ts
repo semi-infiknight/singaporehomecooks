@@ -5,10 +5,11 @@ const PREFS_KEY = 'shc_discover_prefs';
 
 type DiscoverPrefs = {
   halalOnly: boolean;
+  vegetarianOnly: boolean;
   maxCal?: number;
 };
 
-const DEFAULT: DiscoverPrefs = { halalOnly: false, maxCal: undefined };
+const DEFAULT: DiscoverPrefs = { halalOnly: false, vegetarianOnly: false, maxCal: undefined };
 
 export function useDiscoverPrefs() {
   const [prefs, setPrefs] = useState<DiscoverPrefs>(DEFAULT);
@@ -57,5 +58,10 @@ export function useDiscoverPrefs() {
     [persist, prefs]
   );
 
-  return { ...prefs, ready, setHalalOnly, toggleHalalOnly, setMaxCal, toggleLight };
+  const toggleVegetarianOnly = useCallback(
+    () => persist({ ...prefs, vegetarianOnly: !prefs.vegetarianOnly }),
+    [persist, prefs]
+  );
+
+  return { ...prefs, ready, setHalalOnly, toggleHalalOnly, setMaxCal, toggleLight, toggleVegetarianOnly };
 }

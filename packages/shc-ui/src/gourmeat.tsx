@@ -342,6 +342,22 @@ export function GourmeatDiscountBadge({ percent, testID }: { percent: number; te
   );
 }
 
+export function GourmeatPopularBadge({ testID }: { testID?: string }) {
+  return (
+    <View
+      testID={testID}
+      style={{
+        backgroundColor: gourmeatColors.accent,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: gourmeatRadii.sm,
+      }}
+    >
+      <Text style={{ fontSize: 10, fontWeight: '800', color: gourmeatColors.onPrimary }}>Popular</Text>
+    </View>
+  );
+}
+
 export function GourmeatAddButton({ onPress, testID }: { onPress?: () => void; testID?: string }) {
   return (
     <Pressable onPress={onPress} testID={testID} accessibilityRole="button">
@@ -370,6 +386,7 @@ export function GourmeatDishCard({
   discountPercent,
   isFavorite,
   onFavoritePress,
+  showPopular,
   testID,
 }: {
   dish: SHCDishCardData;
@@ -378,6 +395,7 @@ export function GourmeatDishCard({
   discountPercent?: number;
   isFavorite?: boolean;
   onFavoritePress?: () => void;
+  showPopular?: boolean;
   testID?: string;
 }) {
   const cardTestID = testID ?? `dish-card-${dish.id}`;
@@ -420,7 +438,10 @@ export function GourmeatDishCard({
                     alignItems: 'flex-start',
                   }}
                 >
-                  <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
+                  <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap', maxWidth: '70%' }}>
+                    <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
+                    {showPopular ? <GourmeatPopularBadge testID={`${cardTestID}-popular`} /> : null}
+                  </View>
                   {onFavoritePress ? (
                     <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 16 }} pointerEvents="box-none">
                       <SHCFavoriteButton active={!!isFavorite} onPress={onFavoritePress} testID={`${cardTestID}-favorite`} />
@@ -583,6 +604,76 @@ export function SHCSectionEyebrow({
     >
       {children}
     </Text>
+  );
+}
+
+/** Restaurant-app quick actions — icon + label row (discover home). */
+export function SHCRestaurantQuickActions({
+  actions,
+  onActionPress,
+  testID = 'restaurant-quick-actions',
+}: {
+  actions: Array<{
+    id: string;
+    label: string;
+    iconKey: 'restaurant' | 'home' | 'cart' | 'location' | 'orders';
+    testID: string;
+    accessibilityLabel: string;
+  }>;
+  onActionPress: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <View
+      testID={testID}
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: shcSpacing.sm,
+        marginBottom: shcSpacing.md,
+        paddingHorizontal: shcSpacing.md,
+      }}
+    >
+      {actions.map((action) => (
+        <Pressable
+          key={action.id}
+          onPress={() => onActionPress(action.id)}
+          testID={action.testID}
+          accessibilityRole="button"
+          accessibilityLabel={action.accessibilityLabel}
+          style={({ pressed }) => ({
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 72,
+            paddingVertical: shcSpacing.sm,
+            paddingHorizontal: 4,
+            borderRadius: gourmeatRadii.lg,
+            backgroundColor: pressed ? gourmeatColors.primaryLight : gourmeatColors.surface,
+            borderWidth: 2,
+            borderColor: gourmeatColors.border,
+            ...gourmeatShadows.soft,
+          })}
+        >
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: gourmeatColors.primaryLight,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 6,
+            }}
+          >
+            <SHCIcon name={action.iconKey} size={20} color={gourmeatColors.primary} active />
+          </View>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: gourmeatColors.text, textAlign: 'center' }}>
+            {action.label}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 

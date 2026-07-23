@@ -14,6 +14,8 @@ import {
   cartKitchenLabel,
   cartCollectionHint,
   CART_WIREFRAME_LABELS,
+  checkoutTrustLine,
+  collectionEtaHint,
 } from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
@@ -33,6 +35,7 @@ import {
   SHCCard,
   SHCBadge,
   SectionRegion,
+  CheckoutTrustLine,
 } from '../components/SHCWebComponents';
 
 type RequestRow = {
@@ -202,9 +205,14 @@ export default function CartPage() {
                 <Link href="/location" className="text-primary font-bold text-xs">
                   Change
                 </Link>
+                <p className="text-[11px] font-semibold text-muted-foreground mt-1" data-testid="cart-collection-eta">
+                  {collectionEtaHint(locationLabel)}
+                </p>
               </div>
             </div>
           </div>
+
+          <CheckoutTrustLine line={checkoutTrustLine()} />
 
           {/* Wireframe: Itemize */}
           <p className="text-sm font-extrabold mb-2">{CART_WIREFRAME_LABELS.items}</p>

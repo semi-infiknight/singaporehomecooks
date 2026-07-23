@@ -31,6 +31,8 @@ import {
   cartKitchenLabel,
   cartCollectionHint,
   CART_WIREFRAME_LABELS,
+  checkoutTrustLine,
+  collectionEtaHint,
 } from '@shc/utils';
 import { useCart, useClearCart } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
@@ -179,7 +181,14 @@ export default function Cart() {
                     📍 {collectionLocation ? locationLabel : 'Set collection location'} · Change
                   </Text>
                 </Pressable>
+                <Text style={styles.etaHint} testID="cart-collection-eta">
+                  {collectionEtaHint(locationLabel)}
+                </Text>
               </View>
+
+              <Text style={styles.trustLine} testID="checkout-trust-line">
+                {checkoutTrustLine()}
+              </Text>
 
               <Text style={styles.sectionTitle}>{CART_WIREFRAME_LABELS.items}</Text>
               <GourmeatCard style={{ padding: shcSpacing.sm }}>
@@ -309,6 +318,18 @@ const styles = StyleSheet.create({
   kitchenLabel: { fontSize: 11, fontWeight: '700', color: gourmeatColors.textLight },
   kitchenName: { fontSize: 18, fontWeight: '900', color: gourmeatColors.text, marginTop: 2 },
   locText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.primary, marginTop: 8 },
+  etaHint: { fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 },
+  trustLine: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: gourmeatColors.textLight,
+    textAlign: 'center',
+    backgroundColor: gourmeatColors.primaryLight,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
   sectionTitle: { fontSize: 14, fontWeight: '800', marginBottom: 8 },
   itemBorder: { borderTopWidth: 1, borderTopColor: gourmeatColors.border },
   addMore: {

@@ -1500,6 +1500,67 @@ export function FoodJourneyStrip({
   );
 }
 
+const QUICK_ACTION_ICONS = {
+  restaurant: UtensilsCrossed,
+  home: Home,
+  cart: ShoppingBag,
+  location: MapPin,
+  orders: Package,
+} as const;
+
+/** Restaurant-app quick actions — icon + label (discover home). */
+export function RestaurantQuickActions({
+  actions,
+  testID = 'restaurant-quick-actions',
+}: {
+  actions: Array<{
+    id: string;
+    label: string;
+    iconKey: keyof typeof QUICK_ACTION_ICONS;
+    webHref: string;
+    testID: string;
+    accessibilityLabel: string;
+  }>;
+  testID?: string;
+}) {
+  return (
+    <div
+      data-testid={testID}
+      className="grid grid-cols-4 gap-2 mb-4"
+    >
+      {actions.map((action) => {
+        const Icon = QUICK_ACTION_ICONS[action.iconKey];
+        return (
+          <Link
+            key={action.id}
+            href={action.webHref}
+            data-testid={action.testID}
+            aria-label={action.accessibilityLabel}
+            className="flex flex-col items-center justify-center min-h-[72px] rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow p-2"
+          >
+            <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
+              <Icon className="w-5 h-5 text-primary" aria-hidden />
+            </span>
+            <span className="text-[11px] font-extrabold text-foreground text-center">{action.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Checkout trust line — no hidden fees, PayNow, final price. */
+export function CheckoutTrustLine({ line, testID = 'checkout-trust-line' }: { line: string; testID?: string }) {
+  return (
+    <p
+      data-testid={testID}
+      className="text-[11px] font-semibold text-muted-foreground text-center bg-secondary/50 rounded-lg px-3 py-2 mb-3"
+    >
+      {line}
+    </p>
+  );
+}
+
 /** Selected-plan ✓/✗ feature list */
 export function TiffinPlanFeatureList({
   features,
@@ -3042,12 +3103,14 @@ export function GourmeatDishCard({
   isFavorite,
   onFavoritePress,
   rating,
+  showPopular,
 }: {
   product: DishCardProduct;
   onAddPress?: () => void;
   isFavorite?: boolean;
   onFavoritePress?: () => void;
   rating?: number;
+  showPopular?: boolean;
 }) {
   const imageUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   const discount = gourmeatDiscountPercent(product.id);
@@ -3074,9 +3137,19 @@ export function GourmeatDishCard({
               />
             </div>
             <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
-              <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg pointer-events-auto" data-testid={`${cardTestID}-discount`}>
-                {discount}% OFF
-              </span>
+              <div className="flex flex-wrap gap-1 max-w-[70%] pointer-events-auto">
+                <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg" data-testid={`${cardTestID}-discount`}>
+                  {discount}% OFF
+                </span>
+                {showPopular ? (
+                  <span
+                    className="bg-accent text-accent-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg"
+                    data-testid={`${cardTestID}-popular`}
+                  >
+                    Popular
+                  </span>
+                ) : null}
+              </div>
               {onFavoritePress ? (
                 <div
                   className="bg-white/90 rounded-2xl pointer-events-auto"

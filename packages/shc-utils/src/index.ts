@@ -22,6 +22,7 @@ export * from './order-manage';
 export * from './one-time-order';
 export * from './empty-screens';
 export * from './wireframe-ia';
+export * from './restaurant-ux';
 export * from './cook-tiffin-os';
 export * from './subscribe-funnel';
 export * from './cook-listings';

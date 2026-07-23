@@ -29,6 +29,7 @@ import {
   SHCSectionRegion,
   SHCSectionEyebrow,
   SHCFoodJourneyStrip,
+  SHCRestaurantQuickActions,
   DirectionalTabScreen,
   SHCSkeletonDishGrid,
   SHCSkeletonCookingSoonRail,
@@ -58,6 +59,8 @@ import {
   topRatedCategoryDishes,
   discoverZoneById,
   foodCafeJourneySteps,
+  discoverQuickActions,
+  isPopularDish,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
@@ -109,7 +112,7 @@ export default function CustomerDiscover() {
   const [mealType, setMealType] = useState<MealTypeId>('all');
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
+  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const { user } = useAuth();
   const { isGuest, requireAuth } = useGuestAuthGate();
   const addMut = useAddToCart();
@@ -201,12 +204,13 @@ export default function CustomerDiscover() {
       cuisine: cuisineFilter || undefined,
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
+      vegetarianOnly: vegetarianOnly || undefined,
       maxCal,
     });
     return collectionLocation?.lat != null && collectionLocation?.lng != null
       ? sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng })
       : list;
-  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
 
   const topRatedDishes = useMemo(() => {
     if (query.trim()) return [];
@@ -248,6 +252,11 @@ export default function CustomerDiscover() {
     [toggle]
   );
 
+  const checkPopular = useCallback(
+    (item: Record<string, unknown>) => isPopularDish(item, productList as Record<string, unknown>[]),
+    [productList]
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Record<string, unknown> }) => (
       <View style={{ width: colWidth, paddingBottom: shcSpacing.md }}>
@@ -257,10 +266,11 @@ export default function CustomerDiscover() {
           onAddPress={() => handleAddToCart(String(item.id), 1)}
           isFavorite={isFavorite(String(item.id))}
           onFavoritePress={() => handleFavorite(item)}
+          showPopular={checkPopular(item)}
         />
       </View>
     ),
-    [colWidth, handleAddToCart, handleFavorite, isFavorite]
+    [colWidth, handleAddToCart, handleFavorite, isFavorite, checkPopular]
   );
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
@@ -269,6 +279,15 @@ export default function CustomerDiscover() {
   const browseZone = discoverZoneById('browse');
   const occasionsZone = discoverZoneById('occasions');
   const journeySteps = foodCafeJourneySteps();
+  const quickActions = discoverQuickActions();
+
+  const handleQuickAction = useCallback(
+    (id: string) => {
+      const action = quickActions.find((a) => a.id === id);
+      if (action) router.push(action.mobileRoute as any);
+    },
+    [quickActions, router]
+  );
 
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
@@ -315,6 +334,10 @@ export default function CustomerDiscover() {
       )}
 
       {!query && <SHCFoodJourneyStrip steps={journeySteps} />}
+
+      {!query && (
+        <SHCRestaurantQuickActions actions={quickActions} onActionPress={handleQuickAction} />
+      )}
 
       {/* ① Subscription promo — grouped region (Gestalt common region) */}
       {!query && !promoDismissed && subscribeZone && (
@@ -533,11 +556,13 @@ export default function CustomerDiscover() {
                 <SHCFilterChipRow
                   chips={[
                     { id: 'halal', label: 'Halal', active: halalOnly },
+                    { id: 'veg', label: 'Vegetarian', active: vegetarianOnly },
                     { id: 'light', label: 'Light', active: maxCal === 500 },
                     { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
                   ]}
                   onChipPress={(id) => {
                     if (id === 'halal') toggleHalalOnly();
+                    if (id === 'veg') toggleVegetarianOnly();
                     if (id === 'light') toggleLight();
                     if (id === 'nearest') router.push('/(customer)/location' as any);
                   }}

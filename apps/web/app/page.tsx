@@ -33,6 +33,8 @@ import {
   topRatedCategoryDishes,
   discoverZoneById,
   foodCafeJourneySteps,
+  discoverQuickActions,
+  isPopularDish,
   type MealTypeId,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
@@ -62,6 +64,7 @@ import {
   SectionRegion,
   SectionEyebrow,
   FoodJourneyStrip,
+  RestaurantQuickActions,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 import { VirtualDishGrid } from './components/VirtualLists';
@@ -114,7 +117,7 @@ export default function DiscoverHome() {
   const { data: cooks, isLoading: cooksLoading, refetch: refetchCooks } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
-  const { halalOnly, maxCal, toggleHalalOnly, toggleLight } = useDiscoverPrefs();
+  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
 
@@ -171,13 +174,14 @@ export default function DiscoverHome() {
       cuisine: cuisineFilter || undefined,
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
+      vegetarianOnly: vegetarianOnly || undefined,
       maxCal,
     });
     return sortByCookProximity(
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
       collectionLocation
     ) as DishCardProduct[];
-  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
 
   const topRatedDishes = useMemo(() => {
     if (query.trim()) return [];
@@ -233,7 +237,13 @@ export default function DiscoverHome() {
   const browseZone = discoverZoneById('browse');
   const occasionsZone = discoverZoneById('occasions');
   const journeySteps = foodCafeJourneySteps();
+  const quickActions = discoverQuickActions();
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
+
+  const checkPopular = useCallback(
+    (product: DishCardProduct) => isPopularDish(product as Record<string, unknown>, productList as Record<string, unknown>[]),
+    [productList]
+  );
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
 
@@ -310,6 +320,8 @@ export default function DiscoverHome() {
       )}
 
       {!query.trim() && <FoodJourneyStrip steps={journeySteps} />}
+
+      {!query.trim() && <RestaurantQuickActions actions={quickActions} />}
 
       {!query.trim() && !promoDismissed && subscribeZone && (
         <SectionRegion
@@ -518,11 +530,13 @@ export default function DiscoverHome() {
           <FilterChipRow
             chips={[
               { id: 'halal', label: 'Halal', active: halalOnly },
+              { id: 'veg', label: 'Vegetarian', active: vegetarianOnly },
               { id: 'light', label: 'Light', active: maxCal === 500 },
               { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
             ]}
             onChipClick={(id) => {
               if (id === 'halal') toggleHalalOnly();
+              if (id === 'veg') toggleVegetarianOnly();
               if (id === 'light') toggleLight();
               if (id === 'nearest') router.push('/location');
             }}
@@ -616,6 +630,7 @@ export default function DiscoverHome() {
         <VirtualDishGrid
           products={gridProducts}
           isFavorite={isFavorite}
+          isPopular={checkPopular}
           onFavoritePress={handleFavorite}
           onAddPress={(id) => handleAddToCart(id, 1)}
         />
