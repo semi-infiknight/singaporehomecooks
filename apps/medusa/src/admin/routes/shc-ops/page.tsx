@@ -2,6 +2,14 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { ChartBar } from "@medusajs/icons"
 import { Badge, Button, Container, Heading, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
+import {
+  CookSupplyChart,
+  OpsQueueChart,
+  OrdersTrendChart,
+  Sparkline,
+  StatusBarChart,
+  StatusDonutChart,
+} from "../../components/shc-charts"
 import { shcGet, errMessage } from "../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../lib/shc-format"
 import { withShcQuery } from "../../lib/shc-query"
@@ -30,6 +38,12 @@ type OverviewResponse = {
   generated_at?: string
 }
 
+type AnalyticsResponse = {
+  series: Array<{ date: string; orders: number; paid: number; gmv_cents: number }>
+  conversion_rate_pct?: number
+  awaiting_pay?: number
+}
+
 type HealthResponse = {
   status?: string
   ok?: boolean
@@ -42,6 +56,11 @@ const ShcOpsOverviewPage = () => {
     queryFn: () => shcGet<OverviewResponse>("/admin/shc/overview"),
     refetchInterval: 60_000,
   })
+  const analyticsQ = useQuery({
+    queryKey: ["shc-ops", "analytics", "overview"],
+    queryFn: () => shcGet<AnalyticsResponse>("/admin/shc/analytics?days=14"),
+    refetchInterval: 60_000,
+  })
   const healthQ = useQuery({
     queryKey: ["shc-ops", "health"],
     queryFn: () => shcGet<HealthResponse>("/admin/shc/health"),
@@ -50,8 +69,12 @@ const ShcOpsOverviewPage = () => {
 
   const ov = overviewQ.data?.overview
   const recent = overviewQ.data?.recent_orders || []
+  const series = analyticsQ.data?.series || []
   const loading = overviewQ.isLoading
   const error = overviewQ.error || healthQ.error
+
+  const orderSpark = series.map((r) => r.orders)
+  const gmvSpark = series.map((r) => r.gmv_cents)
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -59,7 +82,7 @@ const ShcOpsOverviewPage = () => {
         <div>
           <Heading level="h1">SHC Ops</Heading>
           <Text size="small" className="text-ui-fg-subtle">
-            Marketplace monitoring · customer & cook apps · catalog presets
+            Marketplace monitoring · charts show what needs action and why
           </Text>
         </div>
         <div className="flex items-center gap-x-2">
@@ -88,6 +111,7 @@ const ShcOpsOverviewPage = () => {
             variant="secondary"
             onClick={() => {
               void overviewQ.refetch()
+              void analyticsQ.refetch()
               void healthQ.refetch()
             }}
             isLoading={overviewQ.isFetching}
@@ -109,12 +133,15 @@ const ShcOpsOverviewPage = () => {
         <KpiCard
           label="Active orders"
           value={loading ? "…" : String(ov?.orders_active ?? "—")}
-          hint="paid → ready_for_collection"
+          hint="paid → ready_for_collection — cooks must fulfil these"
+          spark={orderSpark}
         />
         <KpiCard
           label="GMV (sample)"
           value={loading ? "…" : formatSgd(ov?.gmv_cents_sample, "cents")}
-          hint={`${ov?.orders_total_sample ?? 0} recent orders`}
+          hint={`${ov?.orders_total_sample ?? 0} recent orders in snapshot`}
+          spark={gmvSpark}
+          sparkUnit="cents"
         />
         <KpiCard
           label="Cooks active"
@@ -122,19 +149,55 @@ const ShcOpsOverviewPage = () => {
           hint={`${ov?.cooks_pending ?? 0} pending verification`}
         />
         <KpiCard
-          label="Open issues"
+          label="Needs your action"
           value={
             loading
               ? "…"
-              : String((ov?.open_disputes ?? 0) + (ov?.open_requests ?? 0))
+              : String(
+                  (ov?.open_disputes ?? 0) +
+                    (ov?.open_requests ?? 0) +
+                    (ov?.compliance_pending ?? 0)
+                )
           }
-          hint={`${ov?.open_disputes ?? 0} disputes · ${ov?.open_requests ?? 0} collab requests · ${ov?.compliance_pending ?? 0} compliance docs`}
+          hint={`${ov?.compliance_pending ?? 0} compliance · ${ov?.open_requests ?? 0} collab · ${ov?.open_disputes ?? 0} disputes`}
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <OpsQueueChart
+          disputes={ov?.open_disputes ?? 0}
+          requests={ov?.open_requests ?? 0}
+          compliance={ov?.compliance_pending ?? 0}
+        />
+        <CookSupplyChart active={ov?.cooks_active ?? 0} pending={ov?.cooks_pending ?? 0} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <StatusDonutChart
+          byStatus={ov?.orders_by_status || {}}
+          title="Order pipeline snapshot"
+          caption="Share of recent orders by fulfilment status. Hover for counts — click status chips below to drill into orders."
+        />
+        {series.length > 0 ? (
+          <OrdersTrendChart series={series} />
+        ) : (
+          <Container className="p-4">
+            <Heading level="h2">14-day trend</Heading>
+            <Text size="small" className="mt-2 text-ui-fg-subtle">
+              {analyticsQ.isLoading ? "Loading analytics…" : "No trend data yet."}
+            </Text>
+          </Container>
+        )}
+      </div>
+
+      <StatusBarChart
+        byStatus={ov?.orders_by_status || {}}
+        caption="Sorted by volume. Cart + pending_payment = checkout drop-off. Ready_for_collection = waiting pickup."
+      />
+
       <Container className="divide-y p-0">
         <div className="flex items-center justify-between px-6 py-4">
-          <Heading level="h2">Orders by status</Heading>
+          <Heading level="h2">Quick filter by status</Heading>
         </div>
         <div className="flex flex-wrap gap-2 px-6 py-4">
           {loading && <Text size="small">Loading…</Text>}
@@ -205,6 +268,9 @@ const ShcOpsOverviewPage = () => {
           {healthQ.data?.status || healthQ.data?.ok ? "API OK" : healthQ.isLoading ? "Checking…" : "Unknown"}
           {" · "}
           service {healthQ.data?.service || "admin-shc"}
+          {analyticsQ.data?.conversion_rate_pct != null
+            ? ` · ${analyticsQ.data.conversion_rate_pct}% paid conversion (14d)`
+            : ""}
           {overviewQ.data?.generated_at
             ? ` · snapshot ${new Date(overviewQ.data.generated_at).toLocaleString()}`
             : ""}
@@ -218,10 +284,14 @@ const KpiCard = ({
   label,
   value,
   hint,
+  spark,
+  sparkUnit,
 }: {
   label: string
   value: string
   hint: string
+  spark?: number[]
+  sparkUnit?: "cents"
 }) => (
   <Container className="p-4">
     <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
@@ -233,6 +303,12 @@ const KpiCard = ({
     <Text size="xsmall" className="mt-1 text-ui-fg-muted">
       {hint}
     </Text>
+    {spark && spark.length > 1 ? (
+      <Sparkline
+        values={sparkUnit === "cents" ? spark.map((c) => c / 100) : spark}
+        color={sparkUnit === "cents" ? "#D96C4A" : "#3B82F6"}
+      />
+    ) : null}
   </Container>
 )
 

@@ -1,6 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { PayoutBatchChart } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
@@ -115,6 +116,32 @@ const ShcOpsControlsPage = () => {
         <Stat label="Payout batches" value={data?.payouts.length ?? "…"} />
         <Stat label="Feature flags" value={data?.flags.length ?? "…"} />
         <Stat label="Open disputes" value={data?.disputes.length ?? "…"} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <PayoutBatchChart batches={data?.payouts || []} />
+        <Container className="p-4">
+          <Heading level="h2">Feature flags at a glance</Heading>
+          <Text size="small" className="mt-1 text-ui-fg-subtle">
+            Green = live for customers/cooks. Orange = paused gate — no redeploy needed.
+          </Text>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(data?.flags || []).length === 0 && !coreQ.isLoading && (
+              <Text size="small" className="text-ui-fg-subtle">
+                No feature flags configured.
+              </Text>
+            )}
+            {(data?.flags || []).map((flag) => (
+              <Badge key={flag.key} size="small" color={flag.enabled ? "green" : "orange"}>
+                {flag.key}: {flag.enabled ? "ON" : "OFF"}
+              </Badge>
+            ))}
+          </div>
+          <Text size="xsmall" className="mt-4 text-ui-fg-muted">
+            {(data?.flags || []).filter((f) => f.enabled).length} of {(data?.flags || []).length} gates
+            open · {(data?.disputes || []).length} disputes need resolution
+          </Text>
+        </Container>
       </div>
 
       <Container className="divide-y p-0">

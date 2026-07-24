@@ -53,11 +53,14 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 
 | Path | Purpose |
 |------|---------|
-| `/app/shc-ops` | Overview KPIs, status breakdown, recent activity, health |
-| `/app/shc-ops/insights` | Trends (orders/GMV charts) + HitPay payment-requests + manual confirm |
+| `/app/shc-ops` | Overview KPIs, **charts** (ops queue, cook supply, status donut, 14d trend), recent activity |
+| `/app/shc-ops/insights` | **Recharts** trends (orders/GMV/conversion), status mix, HitPay donut + table, manual confirm |
 | `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
 | `/app/shc-ops/catalog` | Browse category presets (not cook-owned) |
-| `/app/shc-ops/controls` | Feature flags, disputes, payouts, commission/search snapshot |
+| `/app/shc-ops/compliance` | **Compliance funnel chart**, SFA/WSQ review queue |
+| `/app/shc-ops/controls` | Feature flags, disputes, **payout chart**, commission/search snapshot |
+
+Charts: `apps/medusa/src/admin/components/shc-charts.tsx` (Recharts). Each chart includes an ops caption explaining what the data means.
 
 Source: `apps/medusa/src/admin/routes/shc-ops/**`  
 Uses `@medusajs/ui` + session-auth JS SDK → existing `/admin/shc/*` APIs.
@@ -69,7 +72,7 @@ Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`)
 | Route | Purpose |
 |-------|---------|
 | `GET /admin/shc/overview` | KPI snapshot |
-| `GET /admin/shc/analytics` | 14d order/GMV trends from `shc_order_meta` |
+| `GET /admin/shc/analytics` | Order/GMV trends + conversion rate (`?days=7–90`) |
 | `GET /admin/shc/hitpay` | HitPay payment-requests list (Railway `HITPAY_API_KEY`) |
 | `GET /admin/shc/orders` | Cross-app order feed |
 | `GET /admin/shc/listings` | Cook product metas (Products + Price Lists mirrors) |

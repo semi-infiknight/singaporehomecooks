@@ -111,12 +111,18 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       return Math.round(((recent - prior) / prior) * 100)
     }
 
+    const orders_in_window = series.reduce((n, r) => n + r.orders, 0)
+    const conversion_rate_pct =
+      orders_in_window > 0 ? Math.round((paid_window / orders_in_window) * 100) : 0
+
     res.json({
       window_days: days,
       orders_total: orderCount ?? metas?.length ?? 0,
+      orders_in_window,
       gmv_window_cents,
       paid_window,
       awaiting_pay,
+      conversion_rate_pct,
       by_status,
       series,
       trend: {

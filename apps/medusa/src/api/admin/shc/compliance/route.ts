@@ -68,10 +68,27 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
   const pending_count = enriched.filter((d) => !d.verified_at).length;
 
+  const [allRaw] = await complianceService
+    .listAndCountComplianceDocs({}, { take: 500, order: { created_at: "DESC" } })
+    .catch(() => [[]]);
+  const allDocs = (allRaw as any[]) || [];
+  const summary = {
+    total: allDocs.length,
+    pending: allDocs.filter((d) => !d.verified_at).length,
+    verified: allDocs.filter((d) => Boolean(d.verified_at)).length,
+    pending_sfa: allDocs.filter((d) => !d.verified_at && d.type === "sfa").length,
+    pending_wsq: allDocs.filter((d) => !d.verified_at && d.type === "wsq").length,
+    by_type: {
+      sfa: allDocs.filter((d) => d.type === "sfa").length,
+      wsq: allDocs.filter((d) => d.type === "wsq").length,
+    },
+  };
+
   res.json({
     docs: enriched,
     count: enriched.length,
     pending_count,
+    summary,
     filters: { status, cook_id: cook_id || null },
     note: "Verify docs so cooks can Accept orders (SHC-COMPLIANCE-002 gate).",
   });
