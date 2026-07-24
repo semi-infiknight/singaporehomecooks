@@ -13,6 +13,11 @@ import {
   cookListingE2eTestId,
   type CookListingStatusFilter,
   VIRTUAL_LISTING_ROW_HEIGHT,
+  buildCookListingPayload,
+  emptyAllergenTiers,
+  DEFAULT_LISTING_AVAILABILITY,
+  allergenTiersFromListing,
+  availabilityFromListing,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -42,6 +47,11 @@ import {
   SHCSkeletonList,
   PhotoTipsTrayContentWeb,
   CalorieBadge,
+  AllergenTierPickerWeb,
+  HalalToggleWeb,
+  ListingAvailabilityEditorWeb,
+  ListingDescriptionInputWeb,
+  LastMinutePremiumInputWeb,
 } from '../../components/SHCWebComponents';
 import { VirtualRowList } from '../../components/VirtualLists';
 
@@ -51,10 +61,19 @@ type ListingRow = Record<string, unknown> & {
   price?: number;
   min_qty?: number;
   cuisine?: string;
+  description?: string;
+  halal?: boolean;
+  allergen_tiers?: { tier1?: string[]; tier2?: string[]; tier3?: string[] };
+  last_minute_premium_pct?: number | null;
   occasion_tags?: string[];
   ingredients?: Array<{ name: string; quantity: number; unit: string }>;
   image_url?: string;
-  shc_availability?: { paused?: boolean };
+  shc_availability?: {
+    paused?: boolean;
+    portions_per_day?: number;
+    collection_days?: number[];
+    time_slots?: string[];
+  };
   calories?: number;
   calories_confidence?: string;
 };
@@ -100,9 +119,16 @@ export default function CookListingsPage() {
   };
 
   const [name, setName] = useState(DEFAULT_FORM.name);
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState(DEFAULT_FORM.price);
   const [minQty, setMinQty] = useState(DEFAULT_FORM.minQty);
   const [cuisine, setCuisine] = useState(DEFAULT_FORM.cuisine);
+  const [halal, setHalal] = useState(false);
+  const [allergenTiers, setAllergenTiers] = useState(emptyAllergenTiers);
+  const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
+  const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
+  const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+  const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -272,9 +298,16 @@ export default function CookListingsPage() {
     setListingImageUrl(null);
     setAiPhotoNote(null);
     setName(DEFAULT_FORM.name);
+    setDescription('');
     setPrice(DEFAULT_FORM.price);
     setMinQty(DEFAULT_FORM.minQty);
     setCuisine(DEFAULT_FORM.cuisine);
+    setHalal(false);
+    setAllergenTiers(emptyAllergenTiers());
+    setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
+    setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
+    setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+    setLastMinutePremiumPct(null);
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
     setPublished(null);
@@ -285,9 +318,19 @@ export default function CookListingsPage() {
   const startEdit = useCallback((listing: ListingRow) => {
     setEditingId(String(listing.id));
     setName(String(listing.name || 'Dish'));
+    setDescription(String(listing.description || ''));
     setPrice(Number(listing.price) || 12);
     setMinQty(Number(listing.min_qty) || 4);
     setCuisine(String(listing.cuisine || 'Singapore'));
+    setHalal(!!listing.halal);
+    setAllergenTiers(allergenTiersFromListing(listing.allergen_tiers));
+    const avail = availabilityFromListing(listing.shc_availability);
+    setPortionsPerDay(avail.portions_per_day);
+    setCollectionDays(avail.collection_days);
+    setTimeSlots(avail.time_slots);
+    setLastMinutePremiumPct(
+      typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null
+    );
     setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
@@ -321,22 +364,26 @@ export default function CookListingsPage() {
 
   const publish = async () => {
     setPublishing(true);
-    const input: Record<string, unknown> = {
+    const input = buildCookListingPayload({
       name,
+      description,
       price,
       min_qty: minQty,
       cuisine,
       occasion_tags: occasionTags,
       ingredients,
-      allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
+      allergen_tiers: allergenTiers,
+      halal,
+      portions_per_day: portionsPerDay,
+      collection_days: collectionDays,
+      time_slots: timeSlots,
+      last_minute_premium_pct: lastMinutePremiumPct,
       image_url:
         listingImageUrl ||
         `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
-    };
-    if (aiCal) {
-      input.calories = aiCal.calories;
-      input.calories_confidence = aiCal.confidence;
-    }
+      calories: aiCal?.calories,
+      calories_confidence: aiCal?.confidence,
+    });
     try {
       const prod = editingId
         ? await updateListing.mutateAsync({ id: editingId, input })
@@ -585,6 +632,7 @@ export default function CookListingsPage() {
                   placeholder="Min qty"
                 />
               </div>
+              <ListingDescriptionInputWeb value={description} onChange={setDescription} />
             </div>
           )}
 
@@ -637,6 +685,8 @@ export default function CookListingsPage() {
                   </button>
                 ))}
               </div>
+              <HalalToggleWeb value={halal} onChange={setHalal} />
+              <AllergenTierPickerWeb value={allergenTiers} onChange={setAllergenTiers} />
             </div>
           )}
 
@@ -752,6 +802,15 @@ export default function CookListingsPage() {
               <p className="text-xs text-muted-foreground">
                 Earnings preview: S${Math.floor(price * minQty * 0.85)} per minimum order
               </p>
+              <ListingAvailabilityEditorWeb
+                portionsPerDay={portionsPerDay}
+                collectionDays={collectionDays}
+                timeSlots={timeSlots}
+                onPortionsChange={setPortionsPerDay}
+                onCollectionDaysChange={setCollectionDays}
+                onTimeSlotsChange={setTimeSlots}
+              />
+              <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">
                 {occasionTags.map((t) => (
                   <SHCBadge key={t} variant="heritage">

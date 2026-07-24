@@ -42,7 +42,7 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
   const { cookId, meta, metaService } = owned;
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
-  const { paused, price, price_cents, ...rest } = parse.data;
+  const { paused, price, price_cents, portions_per_day, collection_days, time_slots, ...rest } = parse.data;
 
   try {
     const patch: Record<string, unknown> = { product_id: id, cook_id: cookId };
@@ -57,13 +57,29 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     if (rest.ingredients !== undefined) patch.ingredients = rest.ingredients;
     if (rest.min_qty !== undefined) patch.min_qty = rest.min_qty;
     if (rest.image_url !== undefined) patch.image_url = rest.image_url;
+    if (rest.last_minute_premium_pct !== undefined) patch.last_minute_premium_pct = rest.last_minute_premium_pct;
     if (price !== undefined || price_cents !== undefined) {
       patch.price_cents = listingPriceCents({ price, price_cents });
     }
 
     const updated = await metaService.upsertProductMeta(patch as any);
-    if (paused !== undefined) {
-      await availService.upsertAvailability({ product_id: id, paused } as any);
+    const availPatch: Record<string, unknown> = { product_id: id };
+    let availTouched = paused !== undefined;
+    if (paused !== undefined) availPatch.paused = paused;
+    if (portions_per_day !== undefined) {
+      availPatch.portions_per_day = portions_per_day;
+      availTouched = true;
+    }
+    if (collection_days !== undefined) {
+      availPatch.collection_days = collection_days;
+      availTouched = true;
+    }
+    if (time_slots !== undefined) {
+      availPatch.time_slots = time_slots;
+      availTouched = true;
+    }
+    if (availTouched) {
+      await availService.upsertAvailability(availPatch as any);
     }
     const product = await shapeProduct(updated, req.scope);
     return res.json({ product, listing: product });

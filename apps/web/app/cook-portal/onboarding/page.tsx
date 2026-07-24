@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, SG_AREA_CENTROIDS } from '@shc/utils';
 import { markCookOnboardingSeen } from '../../../lib/onboarding';
 import { updateCookProfile } from '../../../lib/cook-api-client';
 import { SHCButton } from '../../components/SHCWebComponents';
@@ -30,8 +30,8 @@ const STEP_META: Record<
   },
   kitchen: {
     imageUri: BENTO_ACTION_IMAGES.compliance,
-    title: 'Collection instructions',
-    subtitle: 'How should customers collect from your block? Shared after you accept an order.',
+    title: 'Kitchen & collection',
+    subtitle: 'Your area, HDB block address, and pickup instructions — shared after you accept an order.',
     nextLabel: 'Continue',
     skippable: true,
   },
@@ -52,6 +52,8 @@ export default function CookPortalOnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('welcome');
   const [story, setStory] = useState('');
+  const [area, setArea] = useState('');
+  const [collectionAddress, setCollectionAddress] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,6 +78,8 @@ export default function CookPortalOnboardingPage() {
     try {
       await updateCookProfile({
         story: story.trim() || undefined,
+        area: area.trim() || undefined,
+        collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
         pdpa_consent: true,
       });
@@ -143,14 +147,45 @@ export default function CookPortalOnboardingPage() {
         )}
 
         {step === 'kitchen' && (
-          <textarea
-            value={collectionInstructions}
-            onChange={(e) => setCollectionInstructions(e.target.value)}
-            placeholder="e.g. Block 123, lift lobby B — WhatsApp when you arrive"
-            rows={5}
-            className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold mb-4"
-            data-testid="cook-onboarding-collection-input"
-          />
+          <div className="space-y-3 mb-4">
+            <div>
+              <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
+              <input
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                list="cook-area-suggestions"
+                placeholder="e.g. Tampines"
+                className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+                data-testid="cook-onboarding-area-input"
+              />
+              <datalist id="cook-area-suggestions">
+                {SG_AREA_CENTROIDS.map((a) => (
+                  <option key={a.name} value={a.name} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <p className="text-xs font-extrabold text-muted-foreground mb-1">Collection address</p>
+              <input
+                value={collectionAddress}
+                onChange={(e) => setCollectionAddress(e.target.value)}
+                placeholder="e.g. Blk 456 Tampines Street 42, #05-123"
+                className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+                data-testid="cook-onboarding-address-input"
+              />
+            </div>
+            <div>
+              <p className="text-xs font-extrabold text-muted-foreground mb-1">Collection instructions</p>
+              <textarea
+                value={collectionInstructions}
+                onChange={(e) => setCollectionInstructions(e.target.value)}
+                placeholder="e.g. Lift lobby B — WhatsApp when you arrive"
+                rows={4}
+                className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+                data-testid="cook-onboarding-collection-input"
+              />
+            </div>
+          </div>
         )}
 
         {step === 'consent' && (

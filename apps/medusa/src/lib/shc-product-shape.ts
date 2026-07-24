@@ -33,6 +33,7 @@ export async function shapeProduct(
     calories_confidence: meta.calories_confidence || "category",
     ingredients: meta.ingredients || [],
     min_qty: meta.min_qty || 1,
+    last_minute_premium_pct: meta.last_minute_premium_pct ?? null,
     shc_availability: avail,
     description: meta.description || "",
     image_url: meta.image_url || null,

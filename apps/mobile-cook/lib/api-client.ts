@@ -82,6 +82,7 @@ export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
   story?: string;
+  collection_address?: string;
   collection_instructions?: string;
   pdpa_consent?: boolean;
 }) => client.updateCookProfile(input);

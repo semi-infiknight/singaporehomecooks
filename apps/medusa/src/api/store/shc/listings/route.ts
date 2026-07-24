@@ -56,12 +56,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       min_qty: parse.data.min_qty,
       price_cents: priceCents,
       image_url: parse.data.image_url,
+      last_minute_premium_pct: parse.data.last_minute_premium_pct ?? null,
     } as any);
     await availService.upsertAvailability({
       product_id: productId,
-      portions_per_day: 18,
-      collection_days: [0, 1, 2, 3, 4, 5, 6],
-      time_slots: ["17:00-19:00", "18:00-20:00"],
+      portions_per_day: parse.data.portions_per_day ?? 18,
+      collection_days: parse.data.collection_days ?? [0, 1, 2, 3, 4, 5, 6],
+      time_slots: parse.data.time_slots ?? ["17:00-19:00", "18:00-20:00"],
       paused: parse.data.paused ?? false,
     } as any);
     const product = await shapeProduct(meta, req.scope);

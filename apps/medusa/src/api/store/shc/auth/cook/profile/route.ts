@@ -9,6 +9,7 @@ const BodySchema = z
     display_name: z.string().min(2).max(80).optional(),
     area: z.string().min(2).max(80).optional(),
     story: z.string().max(800).optional(),
+    collection_address: z.string().max(200).optional(),
     collection_instructions: z.string().max(400).optional(),
     pdpa_consent: z.boolean().optional(),
   })
@@ -32,6 +33,9 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   if (parse.data.display_name !== undefined) data.display_name = parse.data.display_name.trim();
   if (parse.data.area !== undefined) data.area = parse.data.area.trim();
   if (parse.data.story !== undefined) data.story = parse.data.story.trim();
+  if (parse.data.collection_address !== undefined) {
+    data.collection_address = parse.data.collection_address.trim();
+  }
   if (parse.data.collection_instructions !== undefined) {
     data.collection_instructions = parse.data.collection_instructions.trim();
   }
@@ -52,6 +56,7 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
           display_name: cook.display_name,
           area: cook.area,
           story: cook.story,
+          collection_address: cook.collection_address,
           collection_instructions: cook.collection_instructions,
           status: cook.status,
         }

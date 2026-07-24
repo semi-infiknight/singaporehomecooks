@@ -28,8 +28,8 @@ const STEP_META: Record<
   },
   kitchen: {
     imageUri: BENTO_ACTION_IMAGES.compliance,
-    title: 'Collection instructions',
-    subtitle: 'How should customers collect from your block? Shared after you accept an order.',
+    title: 'Kitchen & collection',
+    subtitle: 'Your area, HDB block address, and pickup instructions — shared after you accept an order.',
     nextLabel: 'Continue',
     skippable: true,
   },
@@ -45,6 +45,8 @@ export default function CookOnboarding() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('welcome');
   const [story, setStory] = useState('');
+  const [area, setArea] = useState('');
+  const [collectionAddress, setCollectionAddress] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
   const [pdpaConsent, setPdpaConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,6 +69,8 @@ export default function CookOnboarding() {
     try {
       await updateCookProfile({
         story: story.trim() || undefined,
+        area: area.trim() || undefined,
+        collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
         pdpa_consent: true,
       });
@@ -112,15 +116,36 @@ export default function CookOnboarding() {
       )}
 
       {step === 'kitchen' && (
-        <TextInput
-          value={collectionInstructions}
-          onChangeText={setCollectionInstructions}
-          placeholder="e.g. Block 123, lift lobby B — WhatsApp when you arrive"
-          placeholderTextColor={shcColors.textLight}
-          multiline
-          style={styles.input}
-          testID="cook-onboarding-collection-input"
-        />
+        <>
+          <Text style={styles.fieldLabel}>Area</Text>
+          <TextInput
+            value={area}
+            onChangeText={setArea}
+            placeholder="e.g. Tampines"
+            placeholderTextColor={shcColors.textLight}
+            style={styles.inputShort}
+            testID="cook-onboarding-area-input"
+          />
+          <Text style={styles.fieldLabel}>Collection address</Text>
+          <TextInput
+            value={collectionAddress}
+            onChangeText={setCollectionAddress}
+            placeholder="e.g. Blk 456 Tampines Street 42, #05-123"
+            placeholderTextColor={shcColors.textLight}
+            style={styles.inputShort}
+            testID="cook-onboarding-address-input"
+          />
+          <Text style={styles.fieldLabel}>Collection instructions</Text>
+          <TextInput
+            value={collectionInstructions}
+            onChangeText={setCollectionInstructions}
+            placeholder="e.g. Block 123, lift lobby B — WhatsApp when you arrive"
+            placeholderTextColor={shcColors.textLight}
+            multiline
+            style={styles.input}
+            testID="cook-onboarding-collection-input"
+          />
+        </>
       )}
 
       {step === 'consent' && (
@@ -142,6 +167,17 @@ export default function CookOnboarding() {
 }
 
 const styles = StyleSheet.create({
+  fieldLabel: { fontSize: 12, fontWeight: '800', color: shcColors.text, marginBottom: 4, marginTop: 4 },
+  inputShort: {
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    borderRadius: shcRadii.lg,
+    padding: shcSpacing.md,
+    backgroundColor: '#FAFAFA',
+    color: shcColors.text,
+    fontSize: 16,
+    marginBottom: shcSpacing.sm,
+  },
   input: {
     borderWidth: 1,
     borderColor: '#E5E5E5',

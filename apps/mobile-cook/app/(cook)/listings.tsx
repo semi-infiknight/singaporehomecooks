@@ -38,6 +38,11 @@ import {
   shcShadows,
   DirectionalTabScreen,
   contentPadForTabBar,
+  SHCAllergenTierPicker,
+  SHCHalalToggle,
+  SHCListingAvailabilityEditor,
+  SHCListingDescriptionInput,
+  SHCLastMinutePremiumInput,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -49,6 +54,11 @@ import {
   cookListingE2eTestId,
   E2E_COOK_SEED_LISTING,
   type CookListingStatusFilter,
+  buildCookListingPayload,
+  emptyAllergenTiers,
+  DEFAULT_LISTING_AVAILABILITY,
+  allergenTiersFromListing,
+  availabilityFromListing,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -126,9 +136,16 @@ export default function CookListings() {
   }, [step]);
 
   const [name, setName] = useState('New Nyonya Dish');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState(14);
   const [minQty, setMinQty] = useState(4);
   const [cuisine, setCuisine] = useState('Peranakan');
+  const [halal, setHalal] = useState(false);
+  const [allergenTiers, setAllergenTiers] = useState(emptyAllergenTiers);
+  const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
+  const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
+  const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+  const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [published, setPublished] = useState<any>(null);
@@ -226,9 +243,16 @@ export default function CookListings() {
     setListingImageUrl(null);
     setAiPhotoNote(null);
     setName('New Nyonya Dish');
+    setDescription('');
     setPrice(14);
     setMinQty(4);
     setCuisine('Peranakan');
+    setHalal(false);
+    setAllergenTiers(emptyAllergenTiers());
+    setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
+    setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
+    setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+    setLastMinutePremiumPct(null);
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
     setPublished(null);
@@ -239,9 +263,19 @@ export default function CookListings() {
   const startEdit = (listing: any) => {
     setEditingId(listing.id);
     setName(listing.name || 'Dish');
+    setDescription(listing.description || '');
     setPrice(Number(listing.price) || 12);
     setMinQty(Number(listing.min_qty) || 4);
     setCuisine(listing.cuisine || 'Singapore');
+    setHalal(!!listing.halal);
+    setAllergenTiers(allergenTiersFromListing(listing.allergen_tiers));
+    const avail = availabilityFromListing(listing.shc_availability);
+    setPortionsPerDay(avail.portions_per_day);
+    setCollectionDays(avail.collection_days);
+    setTimeSlots(avail.time_slots);
+    setLastMinutePremiumPct(
+      typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null
+    );
     setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
     setIngredients(
       listing.ingredients?.length
@@ -450,22 +484,24 @@ export default function CookListings() {
       return;
     }
     setPublishing(true);
-    const input: any = {
+    const input = buildCookListingPayload({
       name,
+      description,
       price,
       min_qty: minQty,
       cuisine,
       occasion_tags: occasionTags,
       ingredients,
-      allergen_tiers: { tier1: ['Nuts'], tier2: [], tier3: [] },
-    };
-
-    input.image_url = listingImageUrl || getDishImageUrl({ name, cuisine });
-
-    if (aiCal) {
-      input.calories = aiCal.calories;
-      input.calories_confidence = aiCal.confidence;
-    }
+      allergen_tiers: allergenTiers,
+      halal,
+      portions_per_day: portionsPerDay,
+      collection_days: collectionDays,
+      time_slots: timeSlots,
+      last_minute_premium_pct: lastMinutePremiumPct,
+      image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
+      calories: aiCal?.calories,
+      calories_confidence: aiCal?.confidence,
+    });
     try {
       const prod = editingId
         ? await updateCookListing(editingId, input)
@@ -610,6 +646,7 @@ export default function CookListings() {
             placeholder="Min Qty"
             style={inputStyle}
           />
+          <SHCListingDescriptionInput value={description} onChange={setDescription} />
         </ListingWizardStep>
       )}
 
@@ -637,6 +674,8 @@ export default function CookListings() {
             testID="listing-cuisine-input"
           />
           <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
+          <SHCHalalToggle value={halal} onChange={setHalal} />
+          <SHCAllergenTierPicker value={allergenTiers} onChange={setAllergenTiers} />
         </ListingWizardStep>
       )}
 
@@ -745,6 +784,15 @@ export default function CookListings() {
             }
           />
           <PriceEarningsCalc price={price} qty={minQty} minQty={minQty} />
+          <SHCListingAvailabilityEditor
+            portionsPerDay={portionsPerDay}
+            collectionDays={collectionDays}
+            timeSlots={timeSlots}
+            onPortionsChange={setPortionsPerDay}
+            onCollectionDaysChange={setCollectionDays}
+            onTimeSlotsChange={setTimeSlots}
+          />
+          <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
           <View style={styles.tagRow}>
             {occasionTags.map((t) => (
               <SHCBadge key={t} variant="heritage">{t}</SHCBadge>

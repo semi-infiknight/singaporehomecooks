@@ -112,6 +112,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       display_name?: string;
       area?: string;
       story?: string;
+      collection_address?: string;
       collection_instructions?: string;
       pdpa_consent?: boolean;
     }) {

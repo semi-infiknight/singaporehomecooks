@@ -50,6 +50,10 @@ import {
   recipeStoryProps,
   tiffinMealStatusChip,
   type TiffinOrderCardStatus,
+  ALLERGEN_TIER1_PRESETS,
+  COLLECTION_TIME_SLOT_PRESETS,
+  WEEKDAY_LABELS,
+  type AllergenTiers,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -4052,4 +4056,213 @@ export function SHCSharedDishImageWeb({
   }
 
   return img;
+}
+
+/** Cook listing wizard — allergen tier-1 picker (web mirror of @shc/ui/listing-form). */
+export function AllergenTierPickerWeb({
+  value,
+  onChange,
+  testID = 'listing-allergen-picker',
+}: {
+  value: AllergenTiers;
+  onChange: (next: AllergenTiers) => void;
+  testID?: string;
+}) {
+  const toggle = (allergen: string) => {
+    const tier1 = value.tier1.includes(allergen)
+      ? value.tier1.filter((a) => a !== allergen)
+      : [...value.tier1, allergen];
+    onChange({ ...value, tier1 });
+  };
+  return (
+    <div data-testid={testID}>
+      <p className="text-xs font-extrabold text-foreground mb-2">Allergens (tier 1 — mandatory disclosure)</p>
+      <div className="flex flex-wrap gap-2">
+        {ALLERGEN_TIER1_PRESETS.map((allergen) => {
+          const sel = value.tier1.includes(allergen);
+          return (
+            <button
+              key={allergen}
+              type="button"
+              onClick={() => toggle(allergen)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+            >
+              {allergen}
+            </button>
+          );
+        })}
+      </div>
+      {value.tier1.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground mt-2">
+          Select all that apply — customers must acknowledge before checkout.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function HalalToggleWeb({
+  value,
+  onChange,
+  testID = 'listing-halal-toggle',
+}: {
+  value: boolean;
+  onChange: (next: boolean) => void;
+  testID?: string;
+}) {
+  return (
+    <label
+      className="flex items-center justify-between gap-3 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-3 cursor-pointer"
+      data-testid={testID}
+    >
+      <div>
+        <p className="text-sm font-extrabold">Halal certified dish</p>
+        <p className="text-[11px] text-muted-foreground">Toggle on only if prepared halal in your kitchen.</p>
+      </div>
+      <input
+        type="checkbox"
+        checked={value}
+        onChange={(e) => onChange(e.target.checked)}
+        className="w-5 h-5 accent-[var(--shc-primary)]"
+      />
+    </label>
+  );
+}
+
+export function ListingAvailabilityEditorWeb({
+  portionsPerDay,
+  collectionDays,
+  timeSlots,
+  onPortionsChange,
+  onCollectionDaysChange,
+  onTimeSlotsChange,
+  testID = 'listing-availability-editor',
+}: {
+  portionsPerDay: number;
+  collectionDays: number[];
+  timeSlots: string[];
+  onPortionsChange: (n: number) => void;
+  onCollectionDaysChange: (days: number[]) => void;
+  onTimeSlotsChange: (slots: string[]) => void;
+  testID?: string;
+}) {
+  const toggleDay = (day: number) => {
+    onCollectionDaysChange(
+      collectionDays.includes(day)
+        ? collectionDays.filter((d) => d !== day)
+        : [...collectionDays, day].sort((a, b) => a - b)
+    );
+  };
+  const toggleSlot = (slot: string) => {
+    onTimeSlotsChange(
+      timeSlots.includes(slot) ? timeSlots.filter((s) => s !== slot) : [...timeSlots, slot]
+    );
+  };
+  return (
+    <div className="space-y-3" data-testid={testID}>
+      <p className="text-xs font-extrabold">Availability</p>
+      <p className="text-[11px] text-muted-foreground">Portions you can prepare per collection day</p>
+      <input
+        type="number"
+        min={1}
+        value={portionsPerDay}
+        onChange={(e) => onPortionsChange(Math.max(1, parseInt(e.target.value, 10) || 1))}
+        className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+        data-testid="listing-portions-input"
+      />
+      <p className="text-[11px] font-bold text-muted-foreground pt-1">Collection days</p>
+      <div className="flex flex-wrap gap-2">
+        {WEEKDAY_LABELS.map((label, day) => {
+          const sel = collectionDays.includes(day);
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => toggleDay(day)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+              data-testid={`collection-day-${day}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] font-bold text-muted-foreground pt-1">Time slots</p>
+      <div className="flex flex-wrap gap-2">
+        {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+          const sel = timeSlots.includes(slot);
+          return (
+            <button
+              key={slot}
+              type="button"
+              onClick={() => toggleSlot(slot)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+              data-testid={`time-slot-${slot}`}
+            >
+              {slot}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function ListingDescriptionInputWeb({
+  value,
+  onChange,
+  testID = 'listing-description-input',
+}: {
+  value: string;
+  onChange: (text: string) => void;
+  testID?: string;
+}) {
+  return (
+    <div data-testid={testID}>
+      <p className="text-xs font-extrabold text-foreground mb-2">Dish story / description</p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. Ah Mah's rempah — slow-cooked for family gatherings…"
+        rows={4}
+        className="w-full rounded-xl border border-border px-3 py-2 text-sm font-medium"
+      />
+    </div>
+  );
+}
+
+export function LastMinutePremiumInputWeb({
+  value,
+  onChange,
+  testID = 'listing-last-minute-premium',
+}: {
+  value: number | null;
+  onChange: (n: number | null) => void;
+  testID?: string;
+}) {
+  return (
+    <div data-testid={testID}>
+      <p className="text-xs font-extrabold text-foreground mb-1">Last-minute premium % (optional)</p>
+      <p className="text-[11px] text-muted-foreground mb-2">Extra % for orders within 24h — leave empty for none.</p>
+      <input
+        type="number"
+        min={0}
+        max={50}
+        value={value != null && value > 0 ? value : ''}
+        onChange={(e) => {
+          const t = e.target.value;
+          const n = parseInt(t, 10);
+          onChange(t.trim() === '' || Number.isNaN(n) ? null : Math.min(50, Math.max(0, n)));
+        }}
+        placeholder="e.g. 15"
+        className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+      />
+    </div>
+  );
 }

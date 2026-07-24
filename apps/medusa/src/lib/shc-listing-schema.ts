@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const timeSlotSchema = z.string().regex(/^\d{2}:\d{2}-\d{2}:\d{2}$/);
+
 export const ListingCreateSchema = z.object({
   name: z.string().min(3),
   description: z.string().optional(),
@@ -17,6 +19,10 @@ export const ListingCreateSchema = z.object({
     tier3: z.array(z.string()).optional(),
   }).optional(),
   halal: z.boolean().optional(),
+  last_minute_premium_pct: z.number().int().min(0).max(50).optional(),
+  portions_per_day: z.number().int().positive().optional(),
+  collection_days: z.array(z.number().int().min(0).max(6)).optional(),
+  time_slots: z.array(timeSlotSchema).optional(),
   image_url: z.string().min(1).optional(),
   paused: z.boolean().optional(),
 }).strict();
