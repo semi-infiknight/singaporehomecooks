@@ -116,3 +116,16 @@ export function recipeHasStory(product: RecipeProductInput): boolean {
       (product.ingredients?.length ?? 0) > 0
   );
 }
+
+/** Props bundle for RecipeStoryCard / RecipeStoryPreview. */
+export function recipeStoryProps(dish: RecipeProductInput, cookName?: string) {
+  const steps = recipeStepsForProduct(dish);
+  return {
+    heritageLead: recipeHeritageLead(dish),
+    aboutBlurb: recipeAboutBlurb(dish),
+    glanceChips: recipeAtAGlance(dish, steps.length),
+    ingredients: dish.ingredients || [],
+    steps,
+    cookName,
+  };
+}

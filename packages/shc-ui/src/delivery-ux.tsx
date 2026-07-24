@@ -9,6 +9,10 @@ import {
   COLLECTION_ORDER_TIMELINE,
   getOrderTimelineIndex,
   getOrderStatusLabel,
+  recipeHasStory,
+  recipeHeritageLead,
+  recipeStoryProps,
+  type RecipeProductInput,
 } from '@shc/utils';
 
 /**
@@ -735,6 +739,70 @@ export function SHCRecipeStoryCard({
           Cooked fresh by {cookName} · HDB home kitchen
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+/** Collapsible recipe block for kitchen / tiffin menus (Kook step-by-step on tap). */
+export function SHCRecipeStoryPreview({
+  dish,
+  cookName,
+  expanded,
+  onToggle,
+  onOpenDish,
+  testID = 'recipe-story-preview',
+}: {
+  dish: RecipeProductInput;
+  cookName?: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenDish?: () => void;
+  testID?: string;
+}) {
+  if (!recipeHasStory(dish)) return null;
+  const lead = recipeHeritageLead(dish);
+  const props = recipeStoryProps(dish, cookName);
+
+  return (
+    <View testID={testID} style={{ marginTop: shcSpacing.sm }}>
+      {!expanded ? (
+        <Pressable
+          onPress={onToggle}
+          testID={`${testID}-toggle`}
+          accessibilityRole="button"
+          accessibilityLabel={`View recipe for ${dish.name || 'dish'}`}
+          style={{
+            borderWidth: shcBorders.brutal,
+            borderColor: shcColors.border,
+            borderRadius: shcRadii.md,
+            padding: shcSpacing.sm,
+            backgroundColor: shcColors.surfaceAlt,
+          }}
+        >
+          {lead ? (
+            <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, lineHeight: 17 }} numberOfLines={2}>
+              {lead}
+            </Text>
+          ) : null}
+          <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.primary, marginTop: 4 }}>
+            View family recipe →
+          </Text>
+        </Pressable>
+      ) : (
+        <View>
+          <SHCRecipeStoryCard {...props} testID={`${testID}-card`} />
+          <View style={{ flexDirection: 'row', gap: shcSpacing.sm, marginTop: shcSpacing.xs }}>
+            <Pressable onPress={onToggle} testID={`${testID}-collapse`}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.textLight }}>Hide recipe</Text>
+            </Pressable>
+            {onOpenDish ? (
+              <Pressable onPress={onOpenDish} testID={`${testID}-open-dish`}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.primary }}>Full dish page →</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      )}
     </View>
   );
 }

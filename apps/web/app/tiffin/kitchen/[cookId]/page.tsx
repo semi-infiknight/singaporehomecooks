@@ -53,6 +53,7 @@ import {
   SubscribeFunnelProgress,
   TiffinPlanFeatureList,
   SHCSkeletonList,
+  RecipeStoryPreview,
 } from '../../../components/SHCWebComponents';
 import { VirtualRowList } from '../../../components/VirtualLists';
 
@@ -69,6 +70,7 @@ export default function TiffinKitchenPage() {
   const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
   const [subscribeError, setSubscribeError] = useState('');
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (mealsOptions.length) {
@@ -81,6 +83,10 @@ export default function TiffinKitchenPage() {
     name: string;
     price?: number;
     cuisine?: string;
+    description?: string;
+    heritage_note?: string | null;
+    ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
+    min_qty?: number;
   }>;
 
   const cookName = (kitchen as any)?.cook?.display_name || 'Kitchen';
@@ -392,27 +398,37 @@ export default function TiffinKitchenPage() {
               rowHeight={88}
               className="mb-4"
               renderItem={(d) => (
-                <button
-                  type="button"
-                  onClick={() => router.push(`/tiffin/menu?cookId=${encodeURIComponent(cookId)}`)}
-                  className="flex w-full gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2 mb-2 text-left hover:bg-muted/40 transition-colors"
-                  data-testid={`kitchen-menu-item-${d.id}`}
-                >
-                  <Image
-                    src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
-                    alt=""
-                    width={48}
-                    height={48}
-                    className="rounded-lg object-cover shrink-0"
+                <div className="mb-2" data-testid={`kitchen-menu-wrap-${d.id}`}>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/product/${encodeURIComponent(d.id)}`)}
+                    className="flex w-full gap-3 items-center rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-2 text-left hover:bg-muted/40 transition-colors"
+                    data-testid={`kitchen-menu-item-${d.id}`}
+                  >
+                    <Image
+                      src={getDishImageUrl({ id: d.id, cuisine: d.cuisine, name: d.name })}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="rounded-lg object-cover shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">{d.name}</p>
+                      <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
+                    </div>
+                    {kitchenDishPriceLabel(d) ? (
+                      <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
+                    ) : null}
+                  </button>
+                  <RecipeStoryPreview
+                    dish={d}
+                    cookName={cookName}
+                    expanded={expandedRecipeId === d.id}
+                    onToggle={() => setExpandedRecipeId((cur) => (cur === d.id ? null : d.id))}
+                    onOpenDish={() => router.push(`/product/${encodeURIComponent(d.id)}`)}
+                    testID={`kitchen-recipe-${d.id}`}
                   />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm truncate">{d.name}</p>
-                    <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
-                  </div>
-                  {kitchenDishPriceLabel(d) ? (
-                    <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
-                  ) : null}
-                </button>
+                </div>
               )}
             />
           )}

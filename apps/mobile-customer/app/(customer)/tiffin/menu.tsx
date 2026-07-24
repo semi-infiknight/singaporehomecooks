@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GourmeatScreenHeader,
   SHCTiffinMenuListItem,
+  SHCRecipeStoryPreview,
   gourmeatColors,
   shcSpacing,
   SHCSkeletonList,
@@ -21,6 +22,8 @@ export default function TiffinMenuScreen() {
   const insets = useSafeAreaInsets();
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId || '');
   const [filter, setFilter] = useState('All');
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
+  const cookName = kitchen?.cook?.display_name || 'Kitchen';
 
   const dishes = useMemo(() => {
     const all = (kitchen?.dishes || []).map((d: any) => ({
@@ -29,6 +32,10 @@ export default function TiffinMenuScreen() {
       price: d.price,
       cuisine: d.cuisine,
       description: d.description,
+      heritage_note: d.heritage_note,
+      ingredients: d.ingredients,
+      min_qty: d.min_qty,
+      image_url: d.image_url,
     }));
     if (filter === 'All') return all;
     return all.filter((d: { cuisine?: string }) => String(d.cuisine || '').toLowerCase().includes(filter.toLowerCase()));
@@ -74,12 +81,33 @@ export default function TiffinMenuScreen() {
         ListHeaderComponent={ListHeader}
         contentContainerStyle={{ paddingHorizontal: shcSpacing.md }}
         testID="tiffin-menu-list"
-        renderItem={(d: { id: string; name: string; price?: number; cuisine?: string; description?: string }) => (
-          <SHCTiffinMenuListItem
-            dish={d}
-            subtitle={d.description || d.cuisine}
-            onPress={() => router.push(`/(customer)/product/${d.id}` as any)}
-          />
+        renderItem={(d: {
+          id: string;
+          name: string;
+          price?: number;
+          cuisine?: string;
+          description?: string;
+          heritage_note?: string | null;
+          ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
+          min_qty?: number;
+          image_url?: string;
+        }) => (
+          <View style={{ marginBottom: shcSpacing.sm }} testID={`tiffin-menu-wrap-${d.id}`}>
+            <SHCTiffinMenuListItem
+              dish={d}
+              subtitle={d.cuisine || 'Home-cooked'}
+              onPress={() => router.push(`/(customer)/product/${d.id}` as any)}
+              testID={`tiffin-menu-item-${d.id}`}
+            />
+            <SHCRecipeStoryPreview
+              dish={d}
+              cookName={cookName}
+              expanded={expandedRecipeId === d.id}
+              onToggle={() => setExpandedRecipeId((cur) => (cur === d.id ? null : d.id))}
+              onOpenDish={() => router.push(`/(customer)/product/${d.id}` as any)}
+              testID={`tiffin-menu-recipe-${d.id}`}
+            />
+          </View>
         )}
       />
     </View>

@@ -5,6 +5,7 @@ import {
   recipeHeritageLead,
   recipeStepsForProduct,
   SEED_RECIPE_STEPS,
+  recipeStoryProps,
 } from './recipe-ux';
 
 describe('recipe-ux', () => {
@@ -33,5 +34,11 @@ describe('recipe-ux', () => {
       '~60 min',
       'Min 5 portions',
     ]);
+  });
+
+  it('recipeStoryProps bundles card fields', () => {
+    const props = recipeStoryProps({ id: 'dish_nasi_lemak_prawn_001', cuisine: 'Peranakan' }, 'Auntie Rose');
+    expect(props.steps.length).toBeGreaterThan(0);
+    expect(props.cookName).toBe('Auntie Rose');
   });
 });

@@ -18,6 +18,7 @@ import {
   GourmeatSectionTitle,
   SHCSkeletonBone,
   SHCSkeletonList,
+  SHCRecipeStoryPreview,
   gourmeatColors,
   shcSpacing,
 } from '@shc/ui';
@@ -55,6 +56,10 @@ type TiffinDishRow = {
   price?: number;
   cuisine?: string;
   image_url?: string;
+  description?: string;
+  heritage_note?: string | null;
+  ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
+  min_qty?: number;
 };
 
 export default function TiffinKitchenScreen() {
@@ -67,6 +72,7 @@ export default function TiffinKitchenScreen() {
   const subscribeMut = useSubscribeTiffin();
   const [subscribeError, setSubscribeError] = useState('');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
   const mealsOptions: number[] = kitchen?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(mealsOptions[1] || 3);
@@ -93,6 +99,10 @@ export default function TiffinKitchenScreen() {
         price: d.price,
         cuisine: d.cuisine,
         image_url: d.image_url,
+        description: d.description,
+        heritage_note: d.heritage_note,
+        ingredients: d.ingredients,
+        min_qty: d.min_qty,
       })),
     [kitchen?.dishes]
   );
@@ -163,19 +173,26 @@ export default function TiffinKitchenScreen() {
     }
   };
 
-  const openMenu = useCallback(() => {
-    router.push(`/(customer)/tiffin/menu?cookId=${cookId}` as any);
-  }, [router, cookId]);
-
   const renderDish = useCallback(
     (d: TiffinDishRow) => (
-      <SHCTiffinMenuListItem
-        dish={d}
-        subtitle={d.cuisine ? `${d.cuisine} heritage recipe` : 'Home-cooked'}
-        onPress={openMenu}
-      />
+      <View style={{ marginBottom: shcSpacing.sm }} testID={`kitchen-menu-wrap-${d.id}`}>
+        <SHCTiffinMenuListItem
+          dish={d}
+          subtitle={d.cuisine ? `${d.cuisine} heritage recipe` : 'Home-cooked'}
+          onPress={() => router.push(`/(customer)/product/${encodeURIComponent(d.id)}` as any)}
+          testID={`kitchen-menu-item-${d.id}`}
+        />
+        <SHCRecipeStoryPreview
+          dish={d}
+          cookName={cookName}
+          expanded={expandedRecipeId === d.id}
+          onToggle={() => setExpandedRecipeId((cur) => (cur === d.id ? null : d.id))}
+          onOpenDish={() => router.push(`/(customer)/product/${encodeURIComponent(d.id)}` as any)}
+          testID={`kitchen-recipe-${d.id}`}
+        />
+      </View>
     ),
-    [openMenu]
+    [cookName, expandedRecipeId, router]
   );
 
   if (isLoading) {

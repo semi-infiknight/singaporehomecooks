@@ -45,6 +45,9 @@ import {
   MIND_CUISINE_CATEGORIES,
   getCollectionSlotLabel,
   VIRTUAL_DISH_LIST_ROW_HEIGHT,
+  recipeHasStory,
+  recipeHeritageLead,
+  recipeStoryProps,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -2997,6 +3000,68 @@ export function RecipeStoryCard({
           Cooked fresh by {cookName} · HDB home kitchen
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/** Collapsible recipe block for kitchen / tiffin menus. */
+export function RecipeStoryPreview({
+  dish,
+  cookName,
+  expanded,
+  onToggle,
+  onOpenDish,
+  testID = 'recipe-story-preview',
+}: {
+  dish: {
+    id?: string;
+    name?: string;
+    description?: string;
+    heritage_note?: string | null;
+    cuisine?: string;
+    min_qty?: number;
+    ingredients?: Array<{ name?: string; quantity?: number | string; unit?: string }>;
+  };
+  cookName?: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onOpenDish?: () => void;
+  testID?: string;
+}) {
+  const input = dish as import('@shc/utils').RecipeProductInput;
+  if (!recipeHasStory(input)) return null;
+  const lead = recipeHeritageLead(input);
+  const props = recipeStoryProps(input, cookName);
+
+  return (
+    <div data-testid={testID} className="mt-2">
+      {!expanded ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          data-testid={`${testID}-toggle`}
+          className="w-full text-left rounded-xl border-2 border-[var(--shc-border-brutal)] bg-secondary/40 p-3 hover:bg-secondary/60 transition-colors"
+        >
+          {lead ? (
+            <p className="text-xs font-semibold text-muted-foreground line-clamp-2 leading-relaxed">{lead}</p>
+          ) : null}
+          <p className="text-xs font-extrabold text-primary mt-1">View family recipe →</p>
+        </button>
+      ) : (
+        <div>
+          <RecipeStoryCard {...props} testID={`${testID}-card`} />
+          <div className="flex gap-4 mt-2">
+            <button type="button" onClick={onToggle} data-testid={`${testID}-collapse`} className="text-xs font-extrabold text-muted-foreground">
+              Hide recipe
+            </button>
+            {onOpenDish ? (
+              <button type="button" onClick={onOpenDish} data-testid={`${testID}-open-dish`} className="text-xs font-extrabold text-primary">
+                Full dish page →
+              </button>
+            ) : null}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

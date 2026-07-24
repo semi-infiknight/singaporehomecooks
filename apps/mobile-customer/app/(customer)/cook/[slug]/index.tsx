@@ -23,7 +23,13 @@ import {
   shcSpacing,
   shcRadii,
   contentPadForStickyFooter,
+  SHCRecipeStoryPreview,
+  SHCRecipeStoryCard,
 } from '@shc/ui';
+import {
+  recipeStoryProps,
+  recipeHasStory,
+} from '@shc/utils';
 import {
   getDishImageUrl,
   getDropImageUrl,
@@ -104,6 +110,7 @@ export default function KitchenPage() {
   const [orderLines, setOrderLines] = useState<KitchenOrderLine[]>([]);
   const [customizeDish, setCustomizeDish] = useState<Record<string, unknown> | null>(null);
   const [draft, setDraft] = useState<KitchenMealCustomizeDraft | null>(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
   const listings = useMemo(
     () =>
@@ -349,22 +356,27 @@ export default function KitchenPage() {
                         renderItem={(d) => {
                         const qty = lineQtyForProduct(orderLines, String(d.id));
                         return (
+                          <View key={String(d.id)} testID={`kitchen-menu-wrap-${d.id}`}>
                           <View style={styles.dishRow} testID={`kitchen-menu-row-${d.id}`}>
-                            <Image
-                              source={{
-                                uri: getDishImageUrl({
-                                  id: String(d.id),
-                                  cuisine: d.cuisine ? String(d.cuisine) : undefined,
-                                  name: String(d.name),
-                                  image_url: (d as { image_url?: string }).image_url,
-                                }),
-                              }}
-                              style={styles.dishThumb}
-                            />
+                            <Pressable onPress={() => router.push(`/(customer)/product/${String(d.id)}` as any)}>
+                              <Image
+                                source={{
+                                  uri: getDishImageUrl({
+                                    id: String(d.id),
+                                    cuisine: d.cuisine ? String(d.cuisine) : undefined,
+                                    name: String(d.name),
+                                    image_url: (d as { image_url?: string }).image_url,
+                                  }),
+                                }}
+                                style={styles.dishThumb}
+                              />
+                            </Pressable>
                             <View style={{ flex: 1 }}>
-                              <Text style={styles.dishName} numberOfLines={1}>
-                                {String(d.name)}
-                              </Text>
+                              <Pressable onPress={() => router.push(`/(customer)/product/${String(d.id)}` as any)}>
+                                <Text style={styles.dishName} numberOfLines={1}>
+                                  {String(d.name)}
+                                </Text>
+                              </Pressable>
                               <Text style={styles.dishMeta} numberOfLines={1}>
                                 {kitchenDishPriceLabel(d) || ''}/portion · Customizable
                               </Text>
@@ -390,6 +402,17 @@ export default function KitchenPage() {
                                 <Text style={styles.addBtnText}>+ Add</Text>
                               </Pressable>
                             )}
+                          </View>
+                          <SHCRecipeStoryPreview
+                            dish={d as Record<string, unknown>}
+                            cookName={cook.display_name}
+                            expanded={expandedRecipeId === String(d.id)}
+                            onToggle={() =>
+                              setExpandedRecipeId((cur) => (cur === String(d.id) ? null : String(d.id)))
+                            }
+                            onOpenDish={() => router.push(`/(customer)/product/${String(d.id)}` as any)}
+                            testID={`kitchen-recipe-${d.id}`}
+                          />
                           </View>
                         );
                       }}
@@ -519,6 +542,12 @@ export default function KitchenPage() {
           <View style={styles.modalSheet}>
             {draft && customizeDish ? (
               <>
+                {recipeHasStory(customizeDish as Record<string, unknown>) ? (
+                  <SHCRecipeStoryCard
+                    {...recipeStoryProps(customizeDish as Record<string, unknown>, cook.display_name)}
+                    testID="kitchen-customize-recipe"
+                  />
+                ) : null}
                 <Text style={styles.modalTitle} testID="kitchen-customize-title">
                   {draft.productName}
                 </Text>

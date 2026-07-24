@@ -19,8 +19,10 @@ import {
   draftToOrderLine,
   type KitchenMealCustomizeDraft,
   type KitchenOrderLine,
+  recipeHasStory,
+  recipeStoryProps,
 } from '@shc/utils';
-import { SHCButton } from './SHCWebComponents';
+import { SHCButton, RecipeStoryCard } from './SHCWebComponents';
 
 export function KitchenMealCustomizeSheet({
   dish,
@@ -93,6 +95,13 @@ export function KitchenMealCustomizeSheet({
             sizes="400px"
           />
         </div>
+
+        {recipeHasStory(dish) ? (
+          <RecipeStoryCard
+            {...recipeStoryProps(dish, dish.cook_name ? String(dish.cook_name) : undefined)}
+            testID="kitchen-customize-recipe"
+          />
+        ) : null}
 
         <div className="flex flex-wrap gap-2 mb-4" data-testid="kitchen-customize-chips">
           {chips.map((c) => (

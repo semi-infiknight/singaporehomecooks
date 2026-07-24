@@ -53,6 +53,7 @@ import {
   SHCBadge,
   SHCSkeletonGrid,
   KitchenTrustCertsList,
+  RecipeStoryPreview,
 } from '../../components/SHCWebComponents';
 import { KitchenMealCustomizeSheet } from '../../components/KitchenMealCustomize';
 import { VirtualRowList } from '../../components/VirtualLists';
@@ -95,6 +96,7 @@ export default function KitchenPage() {
   const [menuFilter, setMenuFilter] = useState('all');
   const [orderLines, setOrderLines] = useState<KitchenOrderLine[]>([]);
   const [customizeDish, setCustomizeDish] = useState<Record<string, unknown> | null>(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
   const cookProducts = useMemo(
     () =>
@@ -405,8 +407,13 @@ export default function KitchenPage() {
                           const price = kitchenDishPriceLabel(d);
                           const qty = lineQtyForProduct(orderLines, String(d.id));
                           return (
-                            <div className="flex gap-3 items-center p-3 border-b-2 border-[var(--shc-border-brutal)] last:border-b-0" data-testid={`kitchen-menu-row-${d.id}`}>
-                              <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-muted">
+                            <div data-testid={`kitchen-menu-wrap-${d.id}`}>
+                              <div className="flex gap-3 items-center p-3 border-b-2 border-[var(--shc-border-brutal)] last:border-b-0" data-testid={`kitchen-menu-row-${d.id}`}>
+                              <button
+                                type="button"
+                                className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-muted"
+                                onClick={() => router.push(`/product/${encodeURIComponent(String(d.id))}`)}
+                              >
                                 <Image
                                   src={getDishImageUrl({
                                     id: String(d.id),
@@ -418,12 +425,18 @@ export default function KitchenPage() {
                                   className="object-cover"
                                   sizes="56px"
                                 />
-                              </div>
+                              </button>
                               <div className="flex-1 min-w-0">
-                                <p className="font-bold text-sm truncate">{String(d.name)}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-1">
-                                  {d.cuisine ? String(d.cuisine) : 'Home-cooked'}
-                                </p>
+                                <button
+                                  type="button"
+                                  className="text-left w-full"
+                                  onClick={() => router.push(`/product/${encodeURIComponent(String(d.id))}`)}
+                                >
+                                  <p className="font-bold text-sm truncate">{String(d.name)}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {d.cuisine ? String(d.cuisine) : 'Home-cooked'}
+                                  </p>
+                                </button>
                                 {price && (
                                   <p className="text-sm font-black text-primary mt-0.5">{price}/portion</p>
                                 )}
@@ -459,6 +472,17 @@ export default function KitchenPage() {
                                   + Add
                                 </SHCButton>
                               )}
+                              </div>
+                              <RecipeStoryPreview
+                                dish={d as Record<string, unknown>}
+                                cookName={cook.display_name}
+                                expanded={expandedRecipeId === String(d.id)}
+                                onToggle={() =>
+                                  setExpandedRecipeId((cur) => (cur === String(d.id) ? null : String(d.id)))
+                                }
+                                onOpenDish={() => router.push(`/product/${encodeURIComponent(String(d.id))}`)}
+                                testID={`kitchen-recipe-${d.id}`}
+                              />
                             </div>
                           );
                         }}
