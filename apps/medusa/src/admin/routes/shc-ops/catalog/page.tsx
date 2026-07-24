@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, type FormEvent } from "react"
 import { DataBarChart, DataDonutChart } from "../../../components/shc-charts"
 import { shcDelete, shcGet, shcPost, errMessage } from "../../../lib/shc-api"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQuery } from "../../../lib/shc-ops-polling"
 import { ShcTableCell } from "../../../lib/table-cell"
 
 type CatalogCategory = {
@@ -28,11 +29,13 @@ const ShcOpsCatalogPage = () => {
   const catsQ = useQuery({
     queryKey: ["shc-ops", "categories"],
     queryFn: () => shcGet<CategoriesResponse>("/admin/shc/categories"),
+    ...shcOpsLiveQuery,
   })
 
   const chartsQ = useQuery({
     queryKey: ["shc-ops", "charts", "catalog"],
     queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
+    ...shcOpsLiveQuery,
   })
 
   const saveMut = useMutation({
@@ -40,7 +43,7 @@ const ShcOpsCatalogPage = () => {
     onSuccess: () => {
       toast.success("Category saved")
       setForm({ id: "", label: "", imageUrl: "", sort_order: "60" })
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "categories"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -56,7 +59,7 @@ const ShcOpsCatalogPage = () => {
       }),
     onSuccess: () => {
       toast.success("Category updated")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "categories"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -65,7 +68,7 @@ const ShcOpsCatalogPage = () => {
     mutationFn: (id: string) => shcDelete(`/admin/shc/categories?id=${encodeURIComponent(id)}`),
     onSuccess: () => {
       toast.success("Category removed")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "categories"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })

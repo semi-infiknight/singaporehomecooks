@@ -68,6 +68,20 @@ Uses `@medusajs/ui` + session-auth JS SDK → existing `/admin/shc/*` APIs.
 
 Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`) so `useQuery` / `useMutation` share a QueryClient from the same `@tanstack/react-query` instance (pnpm + Medusa dashboard otherwise throws “No QueryClient set”). In-page nav uses `/app/shc-ops/*` anchors (not `react-router-dom` `Link`) to avoid a second router instance.
 
+### Near-realtime refresh (not WebSocket push)
+
+SHC Ops does **not** use WebSockets or SSE. All tables and charts stay current via **React Query polling** plus **cache invalidation after ops actions**:
+
+| Surface | Auto-refresh | Notes |
+|---------|--------------|-------|
+| SHC Ops pages (overview, charts, catalog, controls) | every **45s** | `shcOpsLiveQuery` in `shc-ops-polling.ts` |
+| Orders board, compliance queue, HitPay | every **30s** | `shcOpsLiveQueryFast` |
+| Native sidebar mirrors (Orders / Products / Inventory / Price Lists widgets) | **45s** (orders mirror **30s**) | same polling helpers |
+| Tab focus / reconnect | immediate refetch | `refetchOnWindowFocus` + `refetchOnReconnect` in `shc-query.tsx` |
+| After mutations (flags, payouts, compliance, payment confirm, catalog) | immediate | `invalidateShcOpsDashboard()` invalidates all `shc-ops` + `shc-mirror` queries |
+
+Polling pauses when the tab is in the background (`refetchIntervalInBackground: false`). Customer/cook apps poll orders faster (5–8s); admin is intentionally slower to reduce API load. Expect **up to ~30–45s** lag for passive viewing; ops actions refresh the full dashboard immediately.
+
 ### APIs (same as before)
 
 | Route | Purpose |

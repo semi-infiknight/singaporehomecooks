@@ -5,7 +5,8 @@ import { useMemo, useState } from "react"
 import { ComplianceFunnelChart } from "../../../components/shc-charts"
 import { shcGet, shcPatch, errMessage } from "../../../lib/shc-api"
 import { shortId } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 
 type ComplianceDocRow = {
   id: string
@@ -44,7 +45,7 @@ const ShcOpsCompliancePage = () => {
       const q = new URLSearchParams({ status: statusFilter, limit: "120" })
       return shcGet<ComplianceResponse>(`/admin/shc/compliance?${q.toString()}`)
     },
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const docs = complianceQ.data?.docs || []
@@ -69,7 +70,7 @@ const ShcOpsCompliancePage = () => {
       shcPatch(`/admin/shc/compliance/${encodeURIComponent(doc.id)}/verify`, { verified: true }),
     onSuccess: () => {
       toast.success("Compliance document verified")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "compliance"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -79,7 +80,7 @@ const ShcOpsCompliancePage = () => {
       shcPatch(`/admin/shc/compliance/${encodeURIComponent(doc.id)}/verify`, { verified: false }),
     onSuccess: () => {
       toast.success("Verification removed")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "compliance"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })

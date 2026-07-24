@@ -6,6 +6,7 @@ import { DataBarChart, DataDonutChart } from "../../../components/shc-charts"
 import { shcGet, errMessage } from "../../../lib/shc-api"
 import { formatSgd, statusChartColor, statusLabel, shortId } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
+import { shcOpsLiveQuery, shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 import { ShcTableCell } from "../../../lib/table-cell"
 
 type OrderRow = {
@@ -42,13 +43,13 @@ const ShcOpsOrdersPage = () => {
       if (statusFilter) q.set("status", statusFilter)
       return shcGet<OrdersResponse>(`/admin/shc/orders?${q.toString()}`)
     },
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const chartsQ = useQuery({
     queryKey: ["shc-ops", "charts", "orders"],
     queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const orders = ordersQ.data?.orders || []

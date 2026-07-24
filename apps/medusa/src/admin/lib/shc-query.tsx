@@ -5,18 +5,26 @@
  * fix so SHC Ops routes always have a client from the same module as their useQuery hooks.
  */
 import React, { useState } from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClient, QueryClientProvider, type QueryClient as QC } from "@tanstack/react-query"
 
 function createShcQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
+        staleTime: 15_000,
         retry: 1,
-        refetchOnWindowFocus: false,
+        /** Tab back → immediate refresh (ops expects live data). */
+        refetchOnWindowFocus: true,
+        refetchOnReconnect: true,
       },
     },
   })
+}
+
+/** After any ops mutation, invalidate all dashboard queries so charts/tables sync. */
+export function invalidateShcOpsDashboard(qc: QC) {
+  void qc.invalidateQueries({ queryKey: ["shc-ops"] })
+  void qc.invalidateQueries({ queryKey: ["shc-mirror"] })
 }
 
 export function ShcQueryProvider({ children }: { children: React.ReactNode }) {

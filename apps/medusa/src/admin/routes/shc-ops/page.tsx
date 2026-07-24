@@ -13,6 +13,7 @@ import {
 import { shcGet, errMessage } from "../../lib/shc-api"
 import { formatSgd, statusLabel, shortId } from "../../lib/shc-format"
 import { withShcQuery } from "../../lib/shc-query"
+import { shcOpsLiveQuery } from "../../lib/shc-ops-polling"
 
 type OverviewResponse = {
   overview: {
@@ -54,17 +55,17 @@ const ShcOpsOverviewPage = () => {
   const overviewQ = useQuery({
     queryKey: ["shc-ops", "overview"],
     queryFn: () => shcGet<OverviewResponse>("/admin/shc/overview"),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
   const analyticsQ = useQuery({
     queryKey: ["shc-ops", "analytics", "overview"],
     queryFn: () => shcGet<AnalyticsResponse>("/admin/shc/analytics?days=14"),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
   const healthQ = useQuery({
     queryKey: ["shc-ops", "health"],
     queryFn: () => shcGet<HealthResponse>("/admin/shc/health"),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const ov = overviewQ.data?.overview

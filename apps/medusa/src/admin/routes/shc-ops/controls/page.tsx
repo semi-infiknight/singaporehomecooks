@@ -4,7 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { PayoutBatchChart, DataBarChart, DataDonutChart, RevenueSplitChart } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQuery } from "../../../lib/shc-ops-polling"
 
 type Flag = { id?: string; key: string; enabled: boolean; cohort_filter?: Record<string, unknown> }
 type Dispute = { id: string; order_id: string; type?: string; raised_by?: string; status?: string }
@@ -40,13 +41,13 @@ const ShcOpsControlsPage = () => {
         stats: (stats.stats || []) as unknown[],
       }
     },
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const chartsQ = useQuery({
     queryKey: ["shc-ops", "charts", "controls"],
     queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const data = coreQ.data
@@ -60,7 +61,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Feature flag updated")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -73,7 +74,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Dispute resolved")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -85,7 +86,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Payout approved")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })

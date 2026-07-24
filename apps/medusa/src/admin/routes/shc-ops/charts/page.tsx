@@ -18,6 +18,7 @@ import {
 import { shcGet, errMessage } from "../../../lib/shc-api"
 import { formatSgd, statusChartColor, statusLabel } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
+import { shcOpsLiveQuery } from "../../../lib/shc-ops-polling"
 
 type ChartsResponse = {
   window_days: number
@@ -77,7 +78,7 @@ const ShcOpsChartsPage = () => {
   const chartsQ = useQuery({
     queryKey: ["shc-ops", "charts", days],
     queryFn: () => shcGet<ChartsResponse>(`/admin/shc/charts?days=${days}`),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const c = chartsQ.data

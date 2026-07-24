@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { errMessage, shcGet } from "../lib/shc-api"
 import { formatSgd, shortId, statusLabel } from "../lib/shc-format"
 import { withShcQuery } from "../lib/shc-query"
+import { shcOpsLiveQuery, shcOpsLiveQueryFast } from "../lib/shc-ops-polling"
 import { ShcTableCell } from "../lib/table-cell"
 
 type OrderRow = {
@@ -40,7 +41,7 @@ const ShcOrderListMirror = () => {
       if (statusFilter) q.set("status", statusFilter)
       return shcGet<OrdersResponse>(`/admin/shc/orders?${q.toString()}`)
     },
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const orders = useMemo(() => {

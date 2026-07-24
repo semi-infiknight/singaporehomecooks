@@ -10,7 +10,7 @@ import {
   Text,
   toast,
 } from "@medusajs/ui"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, type FormEvent } from "react"
 import {
   GmvTrendChart,
@@ -21,7 +21,8 @@ import {
 } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd, shortId } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQuery, shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 
 type AnalyticsResponse = {
   window_days: number
@@ -74,6 +75,7 @@ function pctLabel(n: number): string {
 }
 
 const ShcOpsInsightsPage = () => {
+  const qc = useQueryClient()
   const [orderId, setOrderId] = useState("")
   const [payRef, setPayRef] = useState("")
   const [days, setDays] = useState(14)
@@ -81,13 +83,13 @@ const ShcOpsInsightsPage = () => {
   const analyticsQ = useQuery({
     queryKey: ["shc-ops", "analytics", days],
     queryFn: () => shcGet<AnalyticsResponse>(`/admin/shc/analytics?days=${days}`),
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const hitpayQ = useQuery({
     queryKey: ["shc-ops", "hitpay"],
     queryFn: () => shcGet<HitPayResponse>("/admin/shc/hitpay?per_page=40"),
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const confirmPay = useMutation({
@@ -101,7 +103,7 @@ const ShcOpsInsightsPage = () => {
       toast.success("Payment confirmed")
       setOrderId("")
       setPayRef("")
-      void analyticsQ.refetch()
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
