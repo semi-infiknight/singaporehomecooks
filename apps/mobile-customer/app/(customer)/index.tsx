@@ -28,8 +28,6 @@ import {
   SHCTiffinFilterChips,
   SHCSectionRegion,
   SHCSectionEyebrow,
-  SHCFoodJourneyStrip,
-  SHCRestaurantQuickActions,
   DirectionalTabScreen,
   SHCSkeletonDishGrid,
   SHCSkeletonCookingSoonRail,
@@ -58,8 +56,6 @@ import {
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   discoverZoneById,
-  foodCafeJourneySteps,
-  discoverQuickActions,
   isPopularDish,
   type MealTypeId,
 } from '@shc/utils';
@@ -278,17 +274,6 @@ export default function CustomerDiscover() {
   const subscribeZone = discoverZoneById('subscribe');
   const browseZone = discoverZoneById('browse');
   const occasionsZone = discoverZoneById('occasions');
-  const journeySteps = foodCafeJourneySteps();
-  const quickActions = discoverQuickActions();
-
-  const handleQuickAction = useCallback(
-    (id: string) => {
-      const action = quickActions.find((a) => a.id === id);
-      if (action) router.push(action.mobileRoute as any);
-    },
-    [quickActions, router]
-  );
-
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
   ) : null;
@@ -331,12 +316,6 @@ export default function CustomerDiscover() {
 
       {isGuest && (
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
-      )}
-
-      {!query && <SHCFoodJourneyStrip steps={journeySteps} />}
-
-      {!query && (
-        <SHCRestaurantQuickActions actions={quickActions} onActionPress={handleQuickAction} />
       )}
 
       {/* ① Subscription promo — grouped region (Gestalt common region) */}

@@ -32,8 +32,6 @@ import {
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   discoverZoneById,
-  foodCafeJourneySteps,
-  discoverQuickActions,
   isPopularDish,
   type MealTypeId,
 } from '@shc/utils';
@@ -63,8 +61,6 @@ import {
   PromoRail,
   SectionRegion,
   SectionEyebrow,
-  FoodJourneyStrip,
-  RestaurantQuickActions,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 import { VirtualDishGrid } from './components/VirtualLists';
@@ -236,8 +232,6 @@ export default function DiscoverHome() {
   const subscribeZone = discoverZoneById('subscribe');
   const browseZone = discoverZoneById('browse');
   const occasionsZone = discoverZoneById('occasions');
-  const journeySteps = foodCafeJourneySteps();
-  const quickActions = discoverQuickActions();
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
 
   const checkPopular = useCallback(
@@ -318,10 +312,6 @@ export default function DiscoverHome() {
       {isGuest && (
         <GuestBrowseBar onSignInClick={() => router.push('/login')} />
       )}
-
-      {!query.trim() && <FoodJourneyStrip steps={journeySteps} />}
-
-      {!query.trim() && <RestaurantQuickActions actions={quickActions} />}
 
       {!query.trim() && !promoDismissed && subscribeZone && (
         <SectionRegion
