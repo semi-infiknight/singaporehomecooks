@@ -13,7 +13,6 @@
 | `natural_language_search` | false | Phase 5 | Claude-powered contextual meal search |
 | `behavioural_personalisation` | false | Phase 6 | Allergy alerts + 7 notification types |
 | `cook_collaboration` | false | Phase 3 | Large order board & collective listings |
-| `heritage_archive` | false | Phase 7 | Permanent recipe archive & library |
 | `dynamic_pricing_ui` | false | Phase 4 | Real-time earnings calculator + last-minute premiums |
 
 Flags are managed via Admin and evaluated in both backend and mobile.

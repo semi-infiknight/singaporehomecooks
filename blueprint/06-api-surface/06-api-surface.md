@@ -19,8 +19,8 @@
 | Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots`, search |
 | Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` + `checkout-credits` + complete route (PDPA, credits, corporate) |
 | Orders + messages + transitions + review | ✅ Implemented | Full per-order list (enriched with id + items snapshot + total for UI) /detail/transition/messages/review. Items+total snapshotted at checkout. |
-| Growth (credits, requests, bids, heritage, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
-| Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); persist name/price/description/heritage; compliance DB-backed; notifications via shc-notification; push wired |
+| Growth (credits, requests, bids, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
+| Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); persist name/price/description; compliance DB-backed; notifications via shc-notification; push wired |
 | Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
 | Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook register/login/profile (SHC JWT + scrypt hash on shc_cook) + /me |
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
@@ -125,6 +125,5 @@ Protected by WORKER_API_KEY (certificates, payouts, analytics, digest).
 - /store/shc/requests (GET list open, POST create; + /[id] GET)
 - /store/shc/bids (GET list by cook/request, POST create; /[id]/accept POST for matched order-originated)
 - /store/shc/credits (GET balance+history, POST redeem with ledger post)
-- /store/shc/heritage (GET by cook, POST add entry; published archive)
 - /store/shc/ai (POST calorie-estimate from ingredients [stub + Claude notes/rate/cost], GET photo-tips)
-Tied corporate flag, notifs via events. Enhanced /store/shc/carts/[id]/complete + /orders + payment-confirm + workflows/subscribers for credits/requests/corporate + ledger credit flows + full audits (actor/action/before-after) + Zod/SHCError on all. New minimal modules shc-request/shc-bid/shc-credit-wallet/shc-heritage (extend order-meta/ledger for parity). Seed updated. Mobile (toggle) now gets real data. "Backend-Completion done". See 11-medusa + phases.
+Tied corporate flag, notifs via events. Enhanced /store/shc/carts/[id]/complete + /orders + payment-confirm + workflows/subscribers for credits/requests/corporate + ledger credit flows + full audits (actor/action/before-after) + Zod/SHCError on all. New minimal modules shc-request/shc-bid/shc-credit-wallet (extend order-meta/ledger for parity). Seed updated. Mobile (toggle) now gets real data. "Backend-Completion done". See 11-medusa + phases.

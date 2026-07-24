@@ -53,7 +53,7 @@
 - Full customer: discover (search/synonyms/calorie filters/traffic badges), cook profile (heritage/HDB), product (mandatory allergen + PDPA + earnings + min qty), cart (one-cook), checkout (slots + credits redeem + corporate + PayNow ref + transition), orders/track + chat (polling), profile (credits/notifs).
 - Full cook: dashboard, accept/prep/ready/collected (state machine + audits + address release), listings wizard (AI/photo tips stubs + schema), earnings (live 85% + ledger sim), compliance.
 - Money: double-entry ledger on complete/confirm, weekly-payout sim (idempotent), Admin payouts/ledger, cook earnings_summary.
-- Growth: Home Credits (5% earn on complete, redeem at checkout), recipe requests + bids (collab board), heritage archive (permanent), corporate orders.
+- Growth: Home Credits (5% earn on complete, redeem at checkout), recipe requests + bids (collab board), corporate orders.
 - Hardening: explicit PDPA consents (checkout/onboarding) + timestamps + structured [SHC-AUDIT] before/after (state+money), ErrorBoundary, rate limit stub, obs/perf in hooks, all rule enforcement via @shc/business-rules + @shc/types (no bypass).
 - Real toggle: EXPO_PUBLIC_USE_REAL_MEDUSA=true hits Medusa /store/shc/* (cooks/products/orders/complete-compat/push-token) + fallback.
 - Dev: role switcher (instant customer<->cook), testIDs for Maestro, rich SG seeds/content.

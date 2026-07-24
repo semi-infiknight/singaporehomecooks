@@ -21,7 +21,7 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 - shc-cook (models/cook + login_email/password_hash (scrypt), service with status/push/findByLoginEmail, migrations incl. 2025-06-20 hash)
 - shc-product-meta, shc-order-meta (+ messages), shc-availability
 - shc-ledger + shc-payout-batch (money)
-- shc-request, shc-bid, shc-credit-wallet, shc-heritage (growth)
+- shc-request, shc-bid, shc-credit-wallet (growth)
 - **shc-review** (full review lifecycle)
 - **shc-cart** (Postgres one-cook cart)
 - **shc-notification** (DB-backed in-app inbox)
@@ -35,7 +35,7 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 - No schema change (use frozen types).
 
 **Backend-Completion Wave (Phase 8-9 final, 2026-06-14):** 
-- Added shc-request (models/migrations/service for create/listOpen/get/updateStatus; frozen shcRequestSchema), shc-bid (similar + accept; shcBidSchema), shc-credit-wallet (balance/tier/redeem/award + history; ties ledger postCreditIssuance/Redemption for money flows), shc-heritage (getArchiveForCook/addEntry for permanent published entries).
+- Added shc-request (models/migrations/service for create/listOpen/get/updateStatus; frozen shcRequestSchema), shc-bid (similar + accept; shcBidSchema), shc-credit-wallet (balance/tier/redeem/award + history; ties ledger postCreditIssuance/Redemption for money flows).
 - Registered + services in modules/index.ts (resolve names shc*Service).
 - Enhanced shc-order-meta (added origin_request_id/credits_applied_cents/is_corporate/corporate_note in model/service for wiring without contract change), shc-ledger (credit post methods).
 - API: /store/shc/* growth routes (Zod/SHC/audit/health), enhanced carts complete (credits redeem + flags + request origin + PDPA), /orders (growth metadata), payment-confirm/transitions/subscriber (credit award on complete, new flows, full before/after audits).

@@ -331,7 +331,7 @@ All 4 + MinIO auth hardening + notifications deeper (read UI, per-type limits, m
 - All core screens confirmed wired: customer discover (Zomato bento + rails + heritage + filters), search (direct ADD panel), pdp (allergen mandatory + qty + add), cart/checkout (stepper, credits, PDPA, PayNow), orders (track + review + chat), profile (credits redeem + saved + requests).
 - Cook: dashboard (bento quick actions + collab), orders (full state machine transitions + chat + details), listings (full wizard + AI/photo + publish), earnings (live), compliance.
 - Web: equivalent flows + review form.
-- Growth (requests/bids/credits/heritage/ai), push reg (on login), auth (real JWT), cart (shc-cart postgres one-cook) all connected via @shc/api-client to backend.
+- Growth (requests/bids/credits/ai), push reg (on login), auth (real JWT), cart (shc-cart postgres one-cook) all connected via @shc/api-client to backend.
 - Remaining small: cook full Medusa auth actors, Sharp image processing on upload, real production MinIO creds/buckets. Core MinIO server upload + auth + notif features done.
 Full audit confirmed no major orphaned screens or disconnected top level flows after the UI refresh; the primary breakage was missing items/total in order responses (now fixed + blueprint synced).
 Real api-client everywhere. 05/06/10/11/CURRENT updated.

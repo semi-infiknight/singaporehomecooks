@@ -363,7 +363,7 @@ async function seed() {
     await pg.end().catch(() => {});
   }
 
-  // Backend-Completion (Phase 8-9): seed sample requests, bids, credits, heritage for growth routes parity with mock.
+  // Backend-Completion (Phase 8-9): seed sample requests, bids, credits for growth routes parity with mock.
   // Uses frozen @shc/types where applicable (req/bid). Direct pg for new tables (migrations run first).
   console.log("[SEED][BACKEND-COMPLETE-GROWTH] Seeding sample requests/bids...");
   const pg2 = new Client({ connectionString: dbUrl });

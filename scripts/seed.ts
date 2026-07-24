@@ -18,7 +18,7 @@
  * When Contracts expands (full product, availability, etc.), extend validation here.
  *
  * "Heritage in every dish" — this seed makes the platform feel like real Singapore HDB kitchens.
- * Backend-Completion: growth samples (requests/bids/credits/heritage) now in apps/medusa/scripts/seed.ts (pg inserts for new modules + frozen types).
+ * Backend-Completion: growth samples (requests/bids/credits) now in apps/medusa/scripts/seed.ts (pg inserts for new modules + frozen types).
  */
 
 import fs from 'fs';
