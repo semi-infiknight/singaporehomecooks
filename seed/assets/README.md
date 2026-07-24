@@ -9,13 +9,13 @@ Structured, typed seed data for dishes, cooks, occasions, and supporting assets.
 ## Structure
 - `cooks.json` — 2 full personas with rich stories (Auntie Rose Tampines 3rd-gen Katong 1972; Auntie Doris Katong Eurasian)
 - `dishes.json` — 3+ dishes: Nasi Lemak Sambal Prawn, Ayam Buah Keluak (Peranakan), Eurasian Devil's Curry. Includes full product-meta aligned fields + heritage descriptions + festive notes + image placeholders.
-- `occasions.json` — 7+ tags with SG cultural + festive timing (Hari Raya, Deepavali, CNY, Christmas, Full Moon, etc.)
+- `occasions.json` — 7+ tags with SG cultural occasions (Hari Raya, Deepavali, CNY, Christmas, Full Moon, etc.)
 - `image-placeholders.md` — Detailed production notes for real photos/videos (MinIO, AI quality, derivatives)
 - This README
 
 ## Data Principles
 - **Rich & On-Brand:** Every description captures "Heritage in every dish". Full family stories, HDB block specifics (Blk 456 Tampines St 42 #05-123, Blk 89 Joo Chiat Place), realistic SG details.
-- **Schema Aligned:** Cooks match `shcCookSchema` (packages/shc-types). Dishes include `shcProductMetaSchema` fields (cuisine, occasion_tags, allergen_tiers, ingredients array, halal, calories_*, min_qty, etc.) + extras for display (description, heritage_note, festive_timing, price).
+- **Schema Aligned:** Cooks match `shcCookSchema` (packages/shc-types). Dishes include `shcProductMetaSchema` fields (cuisine, occasion_tags, allergen_tiers, ingredients array, halal, calories_*, min_qty, description, price, etc.).
 - **Singapore Authentic:** HDB collection instructions, common local allergens (prawns, belacan/crustacean, peanuts, buah keluak/candlenut, eggs, mustard, pork in Eurasian/Peranakan), festive calendars, one-cook reality, non-halal flags on classics.
 - **Consumable Uniformly:** JSON is plain + easily importable. scripts/seed.ts loads + validates + re-exports typed objects.
 

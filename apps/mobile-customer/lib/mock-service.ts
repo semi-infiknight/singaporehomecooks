@@ -77,7 +77,7 @@ function auditLog(actor: string, action: string, before?: any, after?: any, meta
 // Seeded Singapore heritage data (validated at load)
 // Now sourced from canonical Content+Seed assets (seed/index.ts + JSONs) for exact shared typed data
 // between mobile mocks and future Medusa. The 2 cooks + 3+ dishes (Nasi Lemak, Ayam Buah Keluak, Eurasian Devil's Curry)
-// with full stories, HDB addresses, realistic allergens, festive timing, occasion tags.
+// with full stories, HDB addresses, realistic allergens, occasion tags.
 function seed() {
   if (cooks.length > 0) return;
 
@@ -112,7 +112,6 @@ function seed() {
       cook_area: cook?.area,
       ...meta,
       description: d.description,
-      // festive_timing: d.festive_timing, // seed-only; not on live API
       image_placeholder: d.image_placeholder,
     };
   });

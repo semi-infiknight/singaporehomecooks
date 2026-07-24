@@ -162,7 +162,7 @@ Real Medusa backend (modules, workflows, API surface) is under active constructi
 ## What "Fully Working" Means Here (Blueprint Fidelity)
 - All locked decisions: one-cook cart, PayNow manual confirm, 15% commission + earnings preview, address release 2h pre-collection, weekly payout cadence (sim), min qty, allergen ack mandatory.
 - Order state machine (cart/paid/accepted/preparing/ready_for_collection/collected/completed + cancelled/disputed) with no invalid jumps.
-- Rich SG heritage: specific dishes, Peranakan/Eurasian stories from 1972 Katong, HDB block + practical collection instructions, festive timing, common local allergens explicitly declared in tiers.
+- Rich SG heritage: specific dishes, Peranakan/Eurasian stories from 1972 Katong, HDB block + practical collection instructions, common local allergens explicitly declared in tiers.
 - Trust layers 1-3+ visible and interactive.
 - Contracts: every important object validated against frozen @shc/types; rules from @shc/business-rules.
 - Dev experience: instant role switch, error codes visible, typed everything.

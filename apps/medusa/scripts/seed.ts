@@ -55,7 +55,6 @@ async function seed() {
       allergens: ["Shellfish", "Nuts"],
       calories: 450,
       min_qty: 5,
-      heritage: "Family recipe since 1972",
     },
     {
       id: "dish_ayam_buah_keluak_002",
@@ -67,7 +66,6 @@ async function seed() {
       allergens: ["Nuts"],
       calories: 380,
       min_qty: 4,
-      heritage: "Signature heritage dish",
     },
     {
       id: "dish_devils_curry_003",
@@ -79,7 +77,6 @@ async function seed() {
       allergens: ["Mustard"],
       calories: 520,
       min_qty: 5,
-      heritage: "Katong Eurasian heritage",
     },
   ];
 
