@@ -48,6 +48,8 @@ import {
   recipeHasStory,
   recipeHeritageLead,
   recipeStoryProps,
+  tiffinMealStatusChip,
+  type TiffinOrderCardStatus,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -73,7 +75,6 @@ import {
   type TrayHeight,
   type MilestoneId,
 } from '@shc/ui/family-values-core';
-import { tiffinMealStatusChip, type TiffinOrderCardStatus } from '@shc/ui';
 
 export type { TiffinOrderCardStatus };
 

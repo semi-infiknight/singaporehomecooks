@@ -7,7 +7,11 @@ import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcSpacing, 
 import { SHCFoodImage } from './visuals';
 import { GourmeatPrimaryButton } from './gourmeat';
 import { getDishImageUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { tiffinMealStatusChip, type TiffinOrderCardStatus } from '@shc/utils';
 import { EmptyIllustration } from './empty-illustrations';
+
+export type { TiffinOrderCardStatus };
+export { tiffinMealStatusChip };
 
 export const TIFFIN_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
@@ -1152,29 +1156,6 @@ export function SHCTiffinCalendarStrip({
       })}
     </ScrollView>
   );
-}
-
-export type TiffinOrderCardStatus =
-  | 'indeterminate'
-  | 'scheduled'
-  | 'delivered'
-  | 'skipped'
-  | 'canceled_by_kitchen';
-
-/** Tri-platform meal status chip colors — mobile + web share this map. */
-export function tiffinMealStatusChip(status: TiffinOrderCardStatus): { bg: string; text: string; color: string } {
-  switch (status) {
-    case 'delivered':
-      return { bg: shcColors.bentoMint, text: 'Delivered', color: shcColors.success };
-    case 'skipped':
-      return { bg: shcColors.surfaceSkipped, text: 'Skipped', color: shcColors.warningDark };
-    case 'canceled_by_kitchen':
-      return { bg: shcColors.surfaceErrorAlt, text: 'Canceled by kitchen', color: shcColors.errorDark };
-    case 'indeterminate':
-      return { bg: shcColors.surfaceNeutral, text: 'Upcoming', color: shcColors.neutral };
-    default:
-      return { bg: shcColors.surfaceInfo, text: 'Scheduled', color: shcColors.info };
-  }
 }
 
 /** Compact trust chips above subscribe CTA (HomelyEats kitchen footer). */

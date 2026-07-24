@@ -26,6 +26,7 @@ export * from './restaurant-ux';
 export * from './recipe-ux';
 export * from './cook-tiffin-os';
 export * from './subscribe-funnel';
+export * from './tiffin-status';
 export * from './cook-listings';
 export * from './e2e-cart';
 export * from './e2e-order';
