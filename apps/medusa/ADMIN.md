@@ -53,6 +53,7 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 
 | Path | Purpose |
 |------|---------|
+| `/app/shc-ops/charts` | **Visual data explorer** — all datasets (orders, listings, payouts, disputes, compliance, ledger) |
 | `/app/shc-ops` | Overview KPIs, **charts** (ops queue, cook supply, status donut, 14d trend), recent activity |
 | `/app/shc-ops/insights` | **Recharts** trends (orders/GMV/conversion), status mix, HitPay donut + table, manual confirm |
 | `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
@@ -72,6 +73,7 @@ Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`)
 | Route | Purpose |
 |-------|---------|
 | `GET /admin/shc/overview` | KPI snapshot |
+| `GET /admin/shc/charts` | Unified chart payloads for all ops domains (`?days=7–90`) |
 | `GET /admin/shc/analytics` | Order/GMV trends + conversion rate (`?days=7–90`) |
 | `GET /admin/shc/hitpay` | HitPay payment-requests list (Railway `HITPAY_API_KEY`) |
 | `GET /admin/shc/orders` | Cross-app order feed |

@@ -95,6 +95,9 @@ const ShcOpsOverviewPage = () => {
             </a>
           </Button>
           <Button size="small" variant="secondary" asChild>
+            <a href="/app/shc-ops/charts">Visual charts</a>
+          </Button>
+          <Button size="small" variant="secondary" asChild>
             <a href="/app/shc-ops/insights">Insights & HitPay</a>
           </Button>
           <Button size="small" variant="secondary" asChild>

@@ -2,6 +2,7 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Input, Label, Table, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, type FormEvent } from "react"
+import { DataBarChart, DataDonutChart } from "../../../components/shc-charts"
 import { shcDelete, shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { withShcQuery } from "../../../lib/shc-query"
 import { ShcTableCell } from "../../../lib/table-cell"
@@ -27,6 +28,11 @@ const ShcOpsCatalogPage = () => {
   const catsQ = useQuery({
     queryKey: ["shc-ops", "categories"],
     queryFn: () => shcGet<CategoriesResponse>("/admin/shc/categories"),
+  })
+
+  const chartsQ = useQuery({
+    queryKey: ["shc-ops", "charts", "catalog"],
+    queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
   })
 
   const saveMut = useMutation({
@@ -96,6 +102,31 @@ const ShcOpsCatalogPage = () => {
           </Text>
         </Container>
       )}
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <DataBarChart
+          title="Cuisine mix (live listings)"
+          caption="What cooks actually publish — compare with Discover presets below."
+          data={chartsQ.data?.listings?.by_cuisine || []}
+          layout="horizontal"
+        />
+        <DataDonutChart
+          title="Listing health"
+          caption="Active vs paused dishes across the marketplace."
+          data={chartsQ.data?.listings?.by_status || []}
+        />
+        <DataBarChart
+          title="Price bands"
+          caption="How dishes are priced — helps set category positioning."
+          data={chartsQ.data?.listings?.by_price_bucket || []}
+        />
+        <DataDonutChart
+          title="Discover presets"
+          caption="Enabled cuisine chips on customer home screen."
+          data={chartsQ.data?.categories?.on_off || []}
+          emptyMessage="Default presets in use."
+        />
+      </div>
 
       <Container className="divide-y p-0">
         <div className="px-6 py-4">

@@ -565,3 +565,168 @@ export function Sparkline({
     </div>
   )
 }
+
+/** Generic donut from name/value slices — reusable across all ops data. */
+export function DataDonutChart({
+  title,
+  caption,
+  data,
+  height = 280,
+  emptyMessage = "No data yet.",
+}: {
+  title: string
+  caption: string
+  data: ChartDatum[]
+  height?: number
+  emptyMessage?: string
+}) {
+  const slices = data.filter((d) => d.value > 0)
+  if (slices.length === 0) {
+    return (
+      <ChartCard title={title} caption={caption} height={160}>
+        <Text size="small" className="text-ui-fg-subtle">
+          {emptyMessage}
+        </Text>
+      </ChartCard>
+    )
+  }
+  const colored = slices.map((d, i) => ({
+    ...d,
+    fill: d.fill || PIE_PALETTE[i % PIE_PALETTE.length],
+  }))
+  return (
+    <ChartCard title={title} caption={caption} height={height}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={colored}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={50}
+            outerRadius={85}
+            paddingAngle={2}
+            label={({ name, percent }) =>
+              percent > 0.06 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
+            }
+          >
+            {colored.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  )
+}
+
+/** Generic bar chart — vertical columns or horizontal rows. */
+export function DataBarChart({
+  title,
+  caption,
+  data,
+  layout = "vertical",
+  valueFormatter,
+  height,
+}: {
+  title: string
+  caption: string
+  data: ChartDatum[]
+  layout?: "vertical" | "horizontal"
+  valueFormatter?: (v: number) => string
+  height?: number
+}) {
+  const slices = data.filter((d) => d.value > 0)
+  const h = height ?? (layout === "horizontal" ? Math.max(200, slices.length * 36 + 60) : 260)
+  if (slices.length === 0) {
+    return (
+      <ChartCard title={title} caption={caption} height={160}>
+        <Text size="small" className="text-ui-fg-subtle">
+          No data yet.
+        </Text>
+      </ChartCard>
+    )
+  }
+  const colored = slices.map((d, i) => ({
+    ...d,
+    fill: d.fill || PIE_PALETTE[i % PIE_PALETTE.length],
+  }))
+  const fmt = valueFormatter || ((v: number) => String(v))
+
+  return (
+    <ChartCard title={title} caption={caption} height={h}>
+      <ResponsiveContainer width="100%" height="100%">
+        {layout === "horizontal" ? (
+          <BarChart data={colored} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+            <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(v: number) => [fmt(v), "Count"]} />
+            <Bar dataKey="value" name="Count" radius={[0, 4, 4, 0]}>
+              {colored.map((entry) => (
+                <Cell key={entry.name} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        ) : (
+          <BarChart data={colored} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={36} />
+            <Tooltip formatter={(v: number) => [fmt(v), "Value"]} />
+            <Bar dataKey="value" name="Value" radius={[4, 4, 0, 0]}>
+              {colored.map((entry) => (
+                <Cell key={entry.name} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </ChartCard>
+  )
+}
+
+/** Ledger revenue split — cook vs platform. */
+export function RevenueSplitChart({
+  cookCents,
+  platformCents,
+}: {
+  cookCents: number
+  platformCents: number
+}) {
+  return (
+    <DataDonutChart
+      title="Revenue split (ledger)"
+      caption="Cook earnings vs platform fees from double-entry ledger. Should track GMV minus commission."
+      data={[
+        { name: "Cook earnings", value: cookCents, fill: CHART_COLORS.success },
+        { name: "Platform fees", value: platformCents, fill: CHART_COLORS.primary },
+      ]}
+    />
+  )
+}
+
+export function ChartSection({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string
+  subtitle: string
+  children: ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <Heading level="h1">{title}</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          {subtitle}
+        </Text>
+      </div>
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">{children}</div>
+    </div>
+  )
+}

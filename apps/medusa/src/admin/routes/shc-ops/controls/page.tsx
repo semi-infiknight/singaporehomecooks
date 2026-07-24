@@ -1,7 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { PayoutBatchChart } from "../../../components/shc-charts"
+import { PayoutBatchChart, DataBarChart, DataDonutChart, RevenueSplitChart } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
@@ -40,6 +40,12 @@ const ShcOpsControlsPage = () => {
         stats: (stats.stats || []) as unknown[],
       }
     },
+    refetchInterval: 60_000,
+  })
+
+  const chartsQ = useQuery({
+    queryKey: ["shc-ops", "charts", "controls"],
+    queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
     refetchInterval: 60_000,
   })
 
@@ -120,6 +126,22 @@ const ShcOpsControlsPage = () => {
 
       <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
         <PayoutBatchChart batches={data?.payouts || []} />
+        <RevenueSplitChart
+          cookCents={chartsQ.data?.ledger?.summary?.cook_earnings_cents ?? 0}
+          platformCents={chartsQ.data?.ledger?.summary?.platform_fees_cents ?? 0}
+        />
+        <DataBarChart
+          title="Disputes by type"
+          caption="Open disputes listed below — resolve to unblock customer/cook trust."
+          data={chartsQ.data?.disputes?.by_type || []}
+          layout="horizontal"
+        />
+        <DataBarChart
+          title="Cook expenses by category"
+          caption="Reimbursement volume ops should track against payout batches."
+          data={chartsQ.data?.expenses?.by_category_cents || []}
+          valueFormatter={(v) => formatSgd(v, "cents")}
+        />
         <Container className="p-4">
           <Heading level="h2">Feature flags at a glance</Heading>
           <Text size="small" className="mt-1 text-ui-fg-subtle">
@@ -142,6 +164,12 @@ const ShcOpsControlsPage = () => {
             open · {(data?.disputes || []).length} disputes need resolution
           </Text>
         </Container>
+        <DataDonutChart
+          title="Feature flags"
+          caption="Paused gates hide features without redeploying."
+          data={chartsQ.data?.flags?.on_off || []}
+          emptyMessage="No feature flags configured."
+        />
       </div>
 
       <Container className="divide-y p-0">
