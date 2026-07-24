@@ -1,17 +1,20 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-19 — EAS Android dev APKs; emulator scripts for KVM-less VMs; compliance ops notify + preview.
+**Last Updated:** 2026-07-24 — Cook-editable listing fields; SHCMetaBadge warm semantics; admin charts + near-realtime polling; heritage_note / shc_heritage removed.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-18)
+## 0. New-session handoff (2026-07-24)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
 | Topic | State |
 |-------|--------|
+| **Cook listings** | Cooks edit allergens, availability (portions/days/slots), description, collection address via shared `@shc/ui` `listing-form` + `@shc/utils/listing-form` (web cook-portal + mobile-cook wizard/onboarding). Dish story = `description` (no `heritage_note`). |
+| **Badges** | `SHCMetaBadge` + `@shc/utils/badge-ux` — semantic `kind` → variant (`warm` for cuisine/occasion/price, etc.). Tri-platform; do not hand-pick `variant="warm"`. |
+| **Admin / Ops** | SHC Ops **Recharts** on all pages + `/app/shc-ops/charts` visual explorer (`GET /admin/shc/charts`). **Near-realtime** via React Query 30–45s poll + tab-focus refetch + `invalidateShcOpsDashboard` after mutations (not WebSocket). See `apps/medusa/ADMIN.md`. |
 | **Payments** | **HitPay only** — order PayNow + tiffin recharge. QR fetch **once per order/weeks** (no re-fetch loop); poll until webhook. `PayNowPanel` keeps QR visible during refresh. |
 | **Checkout UX** | `GourmeatPayButton` **disabled** until collection slot + allergen + PDPA; hint text above CTA. Web mirrors. |
 | **Bottom insets** | Removed tab `sceneStyle.paddingBottom` (was double-stacking ~100px). Tokens: `gourmeatLayout` + `contentPadForTabBar` / `contentPadForStickyFooter` / `contentPadSafe` in `@shc/ui`; web `--shc-mobile-tab-pad`, `shc-tab-bar-pad`, `shc-sticky-footer-pad`, `shc-safe-bottom-pad`; `hideMobileTabBar()` hides tab bar on checkout/PDP/stack routes. |
@@ -63,7 +66,7 @@ Singapore Home Cooks is a **Turborepo monorepo** for a two-sided marketplace (ho
 | **Cooking soon (drops)** | ✅ | 7-day customer window; cart→checkout; capacity CAS |
 | **Listing AI photos** | ✅ full | FLUX + CF env for Generate |
 | **Production deploy** | ✅ | Railway `homecooks`; see `RAILWAY_DEPLOY.md` |
-| **Admin / Ops** | ✅ | Medusa Admin + SHC Ops (`/app/shc-ops`); native Orders/Products/Inventory/Price Lists widgets read `shc_*` via `/admin/shc/orders|listings|availability` (no dual-write); `ShcQueryProvider` for QueryClient |
+| **Admin / Ops** | ✅ | Medusa Admin + SHC Ops (`/app/shc-ops`, `/app/shc-ops/charts`); Recharts on overview/insights/orders/catalog/compliance/controls; unified `GET /admin/shc/charts`; near-realtime 30–45s poll (`shc-ops-polling.ts`); native list mirrors (no dual-write); `ShcQueryProvider` + `invalidateShcOpsDashboard` |
 
 **Do not trust `STATUS.md` alone.** This file + blueprint sections are canonical. Update blueprint after route/module/UI changes.
 
@@ -128,7 +131,7 @@ Bootstrap creates auth identity **and** Medusa store customer profile (required 
 | `POST /store/shc/auth/customer/register` | Register + auto-create store customer |
 | `POST /store/shc/auth/cook/register` | New cook sign-up → `shc_cook` + SHC JWT |
 | `POST /store/shc/auth/cook/login` | SHC JWT; verifies cook exists in `shc_cook` |
-| `PATCH /store/shc/auth/cook/profile` | Cook JWT; onboarding story, collection instructions, PDPA |
+| `PATCH /store/shc/auth/cook/profile` | Cook JWT; onboarding story, **collection_address**, collection instructions, PDPA |
 | `GET /store/shc/auth/me` | Current user from Bearer token |
 
 Protected routes use `getCustomerId` / `getCookId` from JWT — **not** `x-shc-*` headers.
@@ -210,8 +213,8 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/orders/:id/review` | GET, POST | POST: customer JWT (post-collection) |
 | `/store/shc/earnings` | GET | cook JWT |
 | `/store/shc/notifications` | GET | customer or cook JWT |
-| `/store/shc/listings` | GET, POST | cook JWT |
-| `/store/shc/listings/:id` | PATCH, DELETE | cook JWT (owner only) |
+| `/store/shc/listings` | GET, POST | cook JWT; POST/PATCH persist allergens, availability, description, price, cuisine, halal, min_qty |
+| `/store/shc/listings/:id` | PATCH, DELETE | cook JWT (owner only); PATCH accepts full listing form payload |
 | `/store/shc/tiffin/kitchens` | GET | public |
 | `/store/shc/tiffin/kitchens/:cookId` | GET | public |
 | `/store/shc/tiffin/subscription` | GET, POST, DELETE | customer JWT |
@@ -233,6 +236,8 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `shc-tiffin-shape.ts` | Kitchen/subscription DTO mapper |
 | `shc-tiffin-weekly-orders.ts` | Idempotent weekly order materialization (`TIFFIN-{subId}-{week}-{day}`) |
 | `shc-cf-image.ts` | Cloudflare FLUX generate + sharp polish; cuisine presets; public status |
+| `shc-admin-chart-aggregate.ts` | Unified chart payloads for `GET /admin/shc/charts` |
+| `shc-listing-schema.ts` | Zod for cook listing create/update (allergens, availability, etc.) |
 
 ### Tiffin (`apps/medusa/src/modules/shc-tiffin/`)
 

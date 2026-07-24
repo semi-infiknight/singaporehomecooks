@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-18 — Layout padding tokens, category stack gap, PayNow panel stability, food image fallbacks, tri-platform bottom inset sync.
+**Last Updated:** 2026-07-24 — `SHCMetaBadge` + `badge-ux`; cook `listing-form`; admin charts (Medusa-only).
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -41,8 +41,9 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
 | `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton`, `GourmeatSearchBar`, layout re-exports |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
+| `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 
@@ -107,7 +108,8 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 |---|---|
 | `SHCButton` / `SHCButtonText` | Primary, outline, accent, ghost variants with brutal shadow press |
 | `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow` variants |
-| `SHCBadge` | Status chips (`success`, `warning`, `error`, `warm`) — prefer `SHCMetaBadge` with semantic `kind` |
+| `SHCBadge` | Status chips (`success`, `warning`, `error`, `warm`) — prefer **`SHCMetaBadge`** with semantic `kind` |
+| `SHCMetaBadge` | Product/ops chips — `kind` from `@shc/utils/badge-ux` maps to variant + label (cuisine → warm, price → warm, status → success/warning/error) |
 | `SHCInput` | Brutal-bordered input shell |
 | `SHCSearchBar` | Full-width search with icon |
 | `SHCSectionTitle` | H2 section headers |
@@ -150,6 +152,7 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 | `CollectionSlotPicker` | HDB collection date/slot selector |
 | `AllergenAckCheckbox` | Mandatory tier-1 allergen acknowledgment |
 | `ListingWizardStep` | Cook listing wizard step shell |
+| `SHCAllergenTierPicker` / `SHCAvailabilityFields` | From `listing-form.tsx` — tri-platform cook listing edit |
 | `CreditBadge` / `WalletCard` | Home Credits wallet |
 | `AICalorieBadge` | Traffic-light calorie estimate |
 | `RequestDishForm` | Custom dish request bidding form |

@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-09 — Tiffin OS complete (pause/resume/recharge + ledger). Verify: `pnpm smoke:tiffin`.
+**Last Updated:** 2026-07-24 — Cook listing form fields; admin charts API; near-realtime ops polling; `shc-heritage` removed.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -69,7 +69,11 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 | Path | Purpose |
 |------|---------|
 | `GET /admin/shc/overview` | KPI snapshot: active orders, GMV sample, cooks, disputes, requests |
+| `GET /admin/shc/charts` | Unified chart payloads for all ops domains (`?days=7–90`) — orders, listings, payouts, compliance, disputes, ledger |
+| `GET /admin/shc/analytics` | Order/GMV trends + conversion rate (`?days=7–90`) |
+| `GET /admin/shc/hitpay` | HitPay payment-requests list (Railway `HITPAY_API_KEY`) |
 | `GET /admin/shc/orders` | Cross-app order board (status/cook/customer filters) |
+| `GET /admin/shc/compliance` | SFA/WSQ review queue + summary funnel |
 | `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets (not cook-owned) |
 | `GET/POST /store/shc/drops` | Cooking soon marketplace list + cook create batch |
 | `GET/PATCH /store/shc/drops/:id` | Drop detail + cook pause/close/extend |
@@ -77,13 +81,16 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 | `GET /store/shc/categories` | Public mind-row categories for discover |
 | Existing | feature-flags, disputes, payouts, ledger, commission-rules, search-synonyms, platform-stats, payment-confirm |
 
+**Admin refresh policy:** SHC Ops UI uses React Query polling (30s hot paths, 45s default) + refetch on tab focus — not WebSocket push. See `apps/medusa/ADMIN.md` + `src/admin/lib/shc-ops-polling.ts`.
+
 **Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
 
-**Listings routes (2026-07-04):**
+**Listings routes (2026-07-24):**
 - `GET /store/shc/listings` — cook JWT; returns cook's listings
-- `POST /store/shc/listings` — cook JWT; create listing
-- `PATCH /store/shc/listings/:id` — cook JWT; update owned listing (`ListingUpdateSchema`)
+- `POST /store/shc/listings` — cook JWT; create listing (name, price, description, cuisine, allergens, availability, halal, min_qty)
+- `PATCH /store/shc/listings/:id` — cook JWT; update owned listing (`ListingUpdateSchema` from `shc-listing-schema.ts`)
 - `DELETE /store/shc/listings/:id` — cook JWT; soft-delete owned listing
+- Cook profile: `PATCH /store/shc/auth/cook/profile` accepts `collection_address` + `collection_instructions`
 
 Client methods: `getCookListings`, `createCookListing`, `updateCookListing`, `deleteCookListing`.
 
@@ -97,7 +104,7 @@ Client methods: `getCookListings`, `createCookListing`, `updateCookListing`, `de
 |-------|--------|------|---------|
 | `/store/shc/auth/cook/register` | POST | Public | New cook sign-up → `shc_cook` + JWT |
 | `/store/shc/auth/cook/login` | POST | Public | Existing cook login |
-| `/store/shc/auth/cook/profile` | PATCH | Cook JWT | Onboarding/profile (story, collection_instructions, pdpa_consent) |
+| `/store/shc/auth/cook/profile` | PATCH | Cook JWT | Onboarding/profile (story, **collection_address**, collection_instructions, pdpa_consent) |
 
 Cook login uses SHC JWT (issueCookToken) verifying against `shc_cook.login_email` + `password_hash` (scrypt). Dev plaintext fallback behind `SHC_COOK_ALLOW_DEV_PLAINTEXT`. Customer uses Medusa auth + ensureStoreCustomer. See 07-auth.md + shc-auth.ts + seed.
 
@@ -126,4 +133,4 @@ Protected by WORKER_API_KEY (certificates, payouts, analytics, digest).
 - /store/shc/bids (GET list by cook/request, POST create; /[id]/accept POST for matched order-originated)
 - /store/shc/credits (GET balance+history, POST redeem with ledger post)
 - /store/shc/ai (POST calorie-estimate from ingredients [stub + Claude notes/rate/cost], GET photo-tips)
-Tied corporate flag, notifs via events. Enhanced /store/shc/carts/[id]/complete + /orders + payment-confirm + workflows/subscribers for credits/requests/corporate + ledger credit flows + full audits (actor/action/before-after) + Zod/SHCError on all. New minimal modules shc-request/shc-bid/shc-credit-wallet (extend order-meta/ledger for parity). Seed updated. Mobile (toggle) now gets real data. "Backend-Completion done". See 11-medusa + phases.
+Tied corporate flag, notifs via events. Enhanced /store/shc/carts/[id]/complete + /orders + payment-confirm + workflows/subscribers for credits/requests/corporate + ledger credit flows + full audits (actor/action/before-after) + Zod/SHCError on all. New minimal modules shc-request/shc-bid/shc-credit-wallet (extend order-meta/ledger for parity). **`shc-heritage` module removed 2026-07-24** (unwired; dish story = `description`). Seed updated. Mobile (toggle) now gets real data. "Backend-Completion done". See 11-medusa + phases.

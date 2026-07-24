@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-18 — Image fallbacks, checkout/ PayNow polish, layout padding, category spacing. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-24 — Cook listing form, SHCMetaBadge, admin charts + near-realtime polling. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,16 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-24 — Cook portal + admin ops parity)
+
+| Area | Delivered |
+|------|-----------|
+| **Cook listings** | Shared `@shc/ui/listing-form` + `@shc/utils/listing-form` — allergens, availability, description, collection address (web + mobile-cook) |
+| **Badges** | `SHCMetaBadge` + `badge-ux.ts` — semantic `kind` → `warm`/`success`/etc.; tri-platform migration from manual variants |
+| **Heritage cleanup** | `heritage_note` column dropped; unwired `shc_heritage` module removed; dish story = `description` |
+| **Admin charts** | Recharts on all SHC Ops pages; `GET /admin/shc/charts`; `/app/shc-ops/charts` visual explorer |
+| **Admin realtime** | Unified 30s/45s React Query polling + tab-focus refetch + `invalidateShcOpsDashboard` after mutations |
 
 ## Progress Update (2026-07-18 — Marketplace polish + layout)
 

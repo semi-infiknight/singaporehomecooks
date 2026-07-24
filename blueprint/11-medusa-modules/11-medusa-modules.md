@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-07-09 — **shc-tiffin** module (kitchen config, subscription, weekly plan tables + service). Prior: launch-readiness modules; compliance; product-meta listing fields.
+**Last Updated:** 2026-07-24 — `shc-heritage` module removed; `heritage_note` column dropped from `shc_product_meta`; cook listing form fields wired.
 **Owner:** Backend Track
 
 ## Overview
@@ -22,6 +22,7 @@ Medusa v2 serves as the commerce foundation. Custom SHC functionality is deliver
 - shc-product-meta, shc-order-meta (+ messages), shc-availability
 - shc-ledger + shc-payout-batch (money)
 - shc-request, shc-bid, shc-credit-wallet (growth)
+- ~~shc-heritage~~ **removed 2026-07-24** (unwired; dish story uses `shc_product_meta.description`)
 - **shc-review** (full review lifecycle)
 - **shc-cart** (Postgres one-cook cart)
 - **shc-notification** (DB-backed in-app inbox)
