@@ -156,14 +156,14 @@ export function SHCBadge({
   variant = 'default',
 }: {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'heritage';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'peach';
 }) {
   const styles: Record<string, string> = {
     default: 'bg-secondary text-foreground',
     success: 'bg-[var(--shc-bento-mint)] text-[var(--shc-success)]',
     warning: 'bg-[var(--shc-bento-yellow)] text-[var(--shc-warning)]',
     error: 'bg-red-50 text-[var(--shc-error)]',
-    heritage: 'bg-[var(--shc-bento-peach)] text-[var(--shc-heritage)]',
+    peach: 'bg-[var(--shc-bento-peach)] text-[var(--shc-heritage)]',
   };
   return (
     <span
@@ -1040,7 +1040,7 @@ export function DishCard({
           {product.cook_name && (
             <span className="text-[11px] font-semibold text-muted-foreground truncate flex-1">{product.cook_name}</span>
           )}
-          {product.cuisine && <SHCBadge variant="heritage">{product.cuisine}</SHCBadge>}
+          {product.cuisine && <SHCBadge variant="peach">{product.cuisine}</SHCBadge>}
         </div>
       </SHCCard>
     </div>

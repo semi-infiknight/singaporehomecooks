@@ -190,7 +190,7 @@ export default function ComplianceUpload() {
         <SHCCard style={styles.uploadCard}>
           <View style={styles.uploadHeader}>
             <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
-            <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
+            <SHCBadge variant="peach">{type.toUpperCase()} upload</SHCBadge>
           </View>
           <Text style={styles.uploadHint}>
             Upload a photo of your certificate, or enter a reference if you will email the PDF to ops.

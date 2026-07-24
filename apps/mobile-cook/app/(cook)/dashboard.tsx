@@ -179,7 +179,7 @@ export default function CookDashboard() {
                 <View style={styles.earningsOverlay}>
                   <View style={styles.earningsTopRow}>
                     <SHCBentoIconBadge iconKey="earnings" size={28} />
-                    {/* <SHCBadge variant="heritage">85% payout</SHCBadge> */}
+                    {/* <SHCBadge variant="peach">85% payout</SHCBadge> */}
                   </View>
                   <Text style={styles.earningsLabel}>This week</Text>
                   <Text style={styles.earningsValue}>S${earnings}</Text>
@@ -300,7 +300,7 @@ export default function CookDashboard() {
               </View>
               <View style={styles.orderBadges}>
                 <SHCBadge variant="default">S${o.total}</SHCBadge>
-                <SHCBadge variant="heritage">{o.collection_date}</SHCBadge>
+                <SHCBadge variant="peach">{o.collection_date}</SHCBadge>
               </View>
             </View>
             <Text style={styles.orderChevron}>›</Text>

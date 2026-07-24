@@ -118,7 +118,7 @@ export function SHCDishCard({
           <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textLight, flex: 1 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
             {dish.cook_name}
           </Text>
-          {dish.cuisine && <SHCBadge variant="heritage">{dish.cuisine}</SHCBadge>}
+          {dish.cuisine && <SHCBadge variant="peach">{dish.cuisine}</SHCBadge>}
         </View>
       </View>
       )}
@@ -246,7 +246,7 @@ export function SHCProfileHero({
         {subtitle && <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>{subtitle}</Text>}
         {tier && (
           <View style={{ marginTop: 6, alignSelf: 'flex-start' }}>
-            <SHCBadge variant="heritage">{tier} tier</SHCBadge>
+            <SHCBadge variant="peach">{tier} tier</SHCBadge>
           </View>
         )}
       </View>

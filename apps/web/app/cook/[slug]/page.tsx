@@ -268,7 +268,7 @@ export default function KitchenPage() {
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3" data-testid="kitchen-tags">
               {tags.map((t) => (
-                <SHCBadge key={t} variant="heritage">
+                <SHCBadge key={t} variant="peach">
                   {t}
                 </SHCBadge>
               ))}

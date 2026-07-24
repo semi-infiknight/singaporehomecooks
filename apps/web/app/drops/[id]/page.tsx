@@ -79,7 +79,7 @@ export default function DropOrderPage() {
 
       <SHCCard className="mt-4 p-5 space-y-3">
         <div className="flex flex-wrap gap-2">
-          <SHCBadge variant="heritage">{formatDropCookDate(drop.cook_date)}</SHCBadge>
+          <SHCBadge variant="peach">{formatDropCookDate(drop.cook_date)}</SHCBadge>
           <SHCBadge variant="default">{drop.collection_slot}</SHCBadge>
           <SHCBadge variant={open ? 'success' : 'warning'}>{String(drop.status).replace(/_/g, ' ')}</SHCBadge>
         </div>

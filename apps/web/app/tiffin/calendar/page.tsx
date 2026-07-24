@@ -93,7 +93,7 @@ export default function TiffinCalendarPage() {
                 <SHCBadge variant={m.status === 'skipped' ? 'warning' : m.status === 'delivered' ? 'success' : 'default'}>
                   {m.status}
                 </SHCBadge>
-                {m.customizable ? <SHCBadge variant="heritage">CUSTOMIZABLE</SHCBadge> : null}
+                {m.customizable ? <SHCBadge variant="peach">CUSTOMIZABLE</SHCBadge> : null}
                 {m.collection_slot ? <span className="text-xs font-bold text-muted-foreground">{m.collection_slot}</span> : null}
               </div>
               <p className="font-black">{kitchen?.cook?.display_name || 'Kitchen'}</p>

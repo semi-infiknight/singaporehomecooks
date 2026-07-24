@@ -47,8 +47,18 @@ Some shared form primitives (`ListingWizardStep`, allergen gates) still use brut
 | `fg-base` | `#241812` | Body text + brutal borders |
 | `fg-muted` | `#5C5144` | Secondary copy, metadata |
 | `bento-mint` | `#E8F5E9` | Wallet, credits, success bento |
-| `bento-peach` | `#FFE8DC` | Heritage, featured dishes |
+| `bento-peach` | `#FFE8DC` | `SHCBadge variant="peach"` — warm metadata chips (cuisine, occasions, dates) |
 | `bento-yellow` | `#FFF3C4` | Profile, promos, allergen surfaces |
+
+### SHCBadge variants
+
+| Variant | Use |
+|---|---|
+| `default` | Neutral metadata (price, generic labels) |
+| `success` | Positive state (live, paid, verified, Halal) |
+| `warning` | Needs attention (paused, pending, open requests) |
+| `error` | Validation / problem state |
+| `peach` | Warm secondary chip — `bento-peach` bg + brown text (`shcColors.heritage`) |
 
 ### Semantic colors
 
@@ -57,7 +67,7 @@ Some shared form primitives (`ListingWizardStep`, allergen gates) still use brut
 | `success` | `#15803D` | Collected, paid, traffic-green |
 | `warning` | `#CA8A04` | Pending, traffic-amber |
 | `error` | `#B91C1C` | Validation, traffic-red |
-| `heritage` | `#8B5E3C` | Cook stories, occasion copy |
+| `heritage` | `#8B5E3C` | Brown text on peach badges; cook story / occasion copy |
 
 ### Brutalist rules
 

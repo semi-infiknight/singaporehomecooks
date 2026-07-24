@@ -150,7 +150,7 @@ export default function MySubscriptionsPage() {
               </SHCBadge>
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
-              <SHCBadge variant="heritage">{String(sub.meals_per_week || '')} meals/wk</SHCBadge>
+              <SHCBadge variant="peach">{String(sub.meals_per_week || '')} meals/wk</SHCBadge>
               <SHCBadge variant="default">
                 S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3).toFixed(2)}/wk
               </SHCBadge>

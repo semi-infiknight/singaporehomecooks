@@ -132,7 +132,7 @@ export default function CookCompliancePage() {
       )}
 
       <GourmeatCard>
-        <SHCBadge variant="heritage">{type.toUpperCase()} upload</SHCBadge>
+        <SHCBadge variant="peach">{type.toUpperCase()} upload</SHCBadge>
         <p className="mt-2 text-xs text-muted-foreground">
           After your course: upload the certificate filename / reference for ops review.
         </p>

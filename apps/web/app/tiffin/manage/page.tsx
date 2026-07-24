@@ -72,7 +72,7 @@ export default function TiffinManagePage() {
       {/* Metrics — top priority */}
       <SHCCard className="mb-4" data-testid="tiffin-plan-metrics-card">
         <div className="flex flex-wrap gap-2 mb-3">
-          <SHCBadge variant="heritage">{sub.meals_per_week} meals/wk</SHCBadge>
+          <SHCBadge variant="peach">{sub.meals_per_week} meals/wk</SHCBadge>
           <SHCBadge variant="default">S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk</SHCBadge>
           <SHCBadge variant={isPaused ? 'warning' : 'success'}>{sub.status}</SHCBadge>
         </div>

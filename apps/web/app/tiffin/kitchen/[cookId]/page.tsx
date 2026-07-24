@@ -236,7 +236,7 @@ export default function TiffinKitchenPage() {
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3" data-testid="kitchen-tags">
               {tags.map((t) => (
-                <SHCBadge key={t} variant="heritage">
+                <SHCBadge key={t} variant="peach">
                   {t}
                 </SHCBadge>
               ))}
@@ -416,7 +416,7 @@ export default function TiffinKitchenPage() {
                       <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
                     </div>
                     {kitchenDishPriceLabel(d) ? (
-                      <SHCBadge variant="heritage">{kitchenDishPriceLabel(d)}</SHCBadge>
+                      <SHCBadge variant="peach">{kitchenDishPriceLabel(d)}</SHCBadge>
                     ) : null}
                   </button>
                   <RecipeStoryPreview

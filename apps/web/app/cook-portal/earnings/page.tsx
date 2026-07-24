@@ -48,7 +48,7 @@ export default function CookEarningsPage() {
         subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <>
-            <SHCBadge variant="heritage">This week</SHCBadge>
+            <SHCBadge variant="peach">This week</SHCBadge>
             <SHCBadge variant="success">S${weekTotal}</SHCBadge>
           </>
         }

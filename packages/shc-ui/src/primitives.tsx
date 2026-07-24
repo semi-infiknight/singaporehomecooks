@@ -233,14 +233,14 @@ export function SHCBadge({
   variant = 'default',
 }: {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'heritage';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'peach';
 }) {
   const styles: Record<string, { bg: string; color: string }> = {
     default: { bg: shcColors.surfaceAlt, color: shcColors.text },
     success: { bg: shcColors.surfaceSuccess, color: shcColors.success },
     warning: { bg: shcColors.surfaceWarning, color: shcColors.warning },
     error: { bg: shcColors.surfaceError, color: shcColors.error },
-    heritage: { bg: shcColors.bentoPeach, color: shcColors.heritage },
+    peach: { bg: shcColors.bentoPeach, color: shcColors.heritage },
   };
   const s = styles[variant];
   return (

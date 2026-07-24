@@ -240,7 +240,7 @@ export default function CookOrdersPage() {
               >
                 <p className="font-bold text-sm line-clamp-3">{r.body || 'Custom request'}</p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <SHCBadge variant="heritage">{r.party_size || '?'} guests</SHCBadge>
+                  <SHCBadge variant="peach">{r.party_size || '?'} guests</SHCBadge>
                   <SHCBadge variant="default">
                     Budget S$
                     {r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}

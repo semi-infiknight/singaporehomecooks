@@ -77,7 +77,7 @@ export default function Earnings() {
         subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <View style={styles.heroBadges}>
-            <SHCBadge variant="heritage">This week</SHCBadge>
+            <SHCBadge variant="peach">This week</SHCBadge>
             <SHCBadge variant="success">S${weekTotal}</SHCBadge>
           </View>
         }
@@ -139,7 +139,7 @@ export default function Earnings() {
             <Text style={styles.statLabel}>Recorded this year</Text>
             <Text style={styles.statValue}>S${expenseTotal}</Text>
           </View>
-          <SHCBadge variant="heritage">IRAS</SHCBadge>
+          <SHCBadge variant="peach">IRAS</SHCBadge>
         </View>
         <View style={styles.expenseForm}>
           <TextInput

@@ -282,7 +282,7 @@ export default function CookOrders() {
                 {r.body || r.title || 'Custom request'}
               </Text>
               <View style={styles.collabBadges}>
-                <SHCBadge variant="heritage">{r.party_size || '?'} guests</SHCBadge>
+                <SHCBadge variant="peach">{r.party_size || '?'} guests</SHCBadge>
                 <SHCBadge variant="default">
                   Budget S${r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
                 </SHCBadge>

@@ -587,7 +587,7 @@ export default function CookListingsPage() {
                     <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
-                      <SHCBadge variant="heritage">min {String(p.min_qty)}</SHCBadge>
+                      <SHCBadge variant="peach">min {String(p.min_qty)}</SHCBadge>
                       {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
                     </div>
                   </div>
@@ -785,7 +785,7 @@ export default function CookListingsPage() {
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
                   <Image src={BENTO_ACTION_IMAGES.listings} alt="" fill className="object-cover" sizes="48px" />
                 </div>
-                <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
+                <SHCBadge variant="peach">📸 Photo tips</SHCBadge>
               </button>
             </div>
           )}
@@ -813,7 +813,7 @@ export default function CookListingsPage() {
               <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">
                 {occasionTags.map((t) => (
-                  <SHCBadge key={t} variant="heritage">
+                  <SHCBadge key={t} variant="peach">
                     {t}
                   </SHCBadge>
                 ))}

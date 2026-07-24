@@ -605,7 +605,7 @@ export default function CookListings() {
                     <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
                     <View style={styles.listingBadges}>
                       <SHCBadge variant="default">S${p.price}</SHCBadge>
-                      <SHCBadge variant="heritage">min {p.min_qty}</SHCBadge>
+                      <SHCBadge variant="peach">min {p.min_qty}</SHCBadge>
                       {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
                     </View>
                   </View>
@@ -764,7 +764,7 @@ export default function CookListings() {
             style={styles.photoTipsBtn}
           >
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-            <SHCBadge variant="heritage">📸 Photo tips</SHCBadge>
+            <SHCBadge variant="peach">📸 Photo tips</SHCBadge>
           </Pressable>
         </ListingWizardStep>
       )}
@@ -795,7 +795,7 @@ export default function CookListings() {
           <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
           <View style={styles.tagRow}>
             {occasionTags.map((t) => (
-              <SHCBadge key={t} variant="heritage">{t}</SHCBadge>
+              <SHCBadge key={t} variant="peach">{t}</SHCBadge>
             ))}
           </View>
           {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
