@@ -63,7 +63,6 @@ export interface SeedDish extends Partial<SHCProductMeta> {
   description: string;
   price: number;
   currency: string;
-  heritage_note: string;
   festive_timing: string;
   image_placeholder: string;
   status: string;
@@ -82,7 +81,6 @@ export const seedDishes: SeedDish[] = [
     min_qty: 5,
     calories: 450,
     calories_confidence: 'full',
-    heritage_note: 'Peranakan family recipe since 1972, Katong. My grandmother used fresh prawns from the market every morning. Still made the same way in our Tampines HDB kitchen.',
     cuisine: 'Peranakan',
     occasion_tags: ['Family Gathering', 'Hari Raya', 'Birthday', 'Chinese New Year'],
     festive_timing: 'Hari Raya: ideal for breakfast or lunch on the eve or 1st day. CNY: popular as light lunch after visiting. Book 5-7 days ahead for large parties during festive peaks.',
@@ -115,7 +113,6 @@ export const seedDishes: SeedDish[] = [
     min_qty: 4,
     calories: 380,
     calories_confidence: 'category',
-    heritage_note: 'Signature heritage dish passed from my grandmother\'s Katong kitchen, 1972. The buah keluak ritual — soaking for days, scraping the flesh — is the same one my mother taught me in the Tampines HDB.',
     cuisine: 'Peranakan',
     occasion_tags: ['Family Gathering', 'Hari Raya', 'Birthday', 'Deepavali'],
     festive_timing: 'Labour of love — best ordered 3-5 days ahead. Popular centrepiece for Hari Raya and birthday celebrations. During Chinese New Year, pairs beautifully with other Nyonya dishes for reunion meals.',
@@ -147,7 +144,6 @@ export const seedDishes: SeedDish[] = [
     min_qty: 5,
     calories: 520,
     calories_confidence: 'full',
-    heritage_note: 'Eurasian Kristang heritage from my grandmother\'s 1950s Katong kitchen. The devilish heat and sour tang tell the story of our Portuguese-Malay-Chinese roots. Still made exactly as Nenek taught in our Joo Chiat HDB.',
     cuisine: 'Eurasian',
     occasion_tags: ['Family Gathering', 'Christmas', 'Wedding', 'Full Moon / Baby Full Month', 'Birthday'],
     festive_timing: 'Christmas Eve and Day centrepiece. Also popular for Eurasian weddings and Full Moon celebrations year-round. Book early for December — many families order 10+ portions. Last-minute premiums apply on 23-25 Dec.',
@@ -264,7 +260,7 @@ export function getFeaturedForHome() {
       name: rose?.display_name || 'Auntie Rose (Tampines)',
       dish: nasi?.name || 'Nasi Lemak Sambal Prawn',
       price: nasi?.price || 12,
-      heritage: nasi?.heritage_note || 'Peranakan family recipe since 1972',
+      heritage: nasi?.description?.split(/(?<=[.!?])\s+/)[0]?.trim() || 'Peranakan family recipe since 1972',
       slug: rose?.slug,
     },
     {
@@ -272,7 +268,7 @@ export function getFeaturedForHome() {
       name: 'Auntie Doris (Katong)',
       dish: devil?.name || "Eurasian Devil's Curry (Chicken)",
       price: devil?.price || 14,
-      heritage: (devil?.heritage_note || '').slice(0, 80) + '...',
+      heritage: (devil?.description || '').slice(0, 80) + '...',
       slug: 'auntie-doris-katong',
     },
   ];

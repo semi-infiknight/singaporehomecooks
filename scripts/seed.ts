@@ -49,7 +49,6 @@ export interface SeedDish extends Partial<SHCProductMeta> {
   description: string;
   price: number;
   currency: string;
-  heritage_note: string;
   festive_timing: string;
   image_placeholder: string;
   status: string;
@@ -150,8 +149,8 @@ export function validateSeed(): { success: boolean; errors: string[]; data?: See
 
     // Basic shape for display fields
     const dish = raw as any;
-    if (!dish.id || !dish.name || !dish.description || typeof dish.price !== 'number' || !dish.heritage_note) {
-      errors.push(`Dish #${i} missing required display fields (id/name/desc/price/heritage_note)`);
+    if (!dish.id || !dish.name || !dish.description || typeof dish.price !== 'number') {
+      errors.push(`Dish #${i} missing required display fields (id/name/desc/price)`);
     }
 
     validatedDishes.push({
@@ -162,7 +161,6 @@ export function validateSeed(): { success: boolean; errors: string[]; data?: See
       description: dish.description,
       price: dish.price,
       currency: dish.currency || 'SGD',
-      heritage_note: dish.heritage_note,
       festive_timing: dish.festive_timing || '',
       image_placeholder: dish.image_placeholder || 'TODO: add hero image',
       status: dish.status || 'active',
@@ -241,7 +239,7 @@ export function getFeaturedForHome() {
       name: rose?.display_name || 'Auntie Rose (Tampines)',
       dish: nasi?.name || 'Nasi Lemak Sambal Prawn',
       price: nasi?.price || 12,
-      heritage: nasi?.heritage_note || 'Peranakan family recipe since 1972',
+      heritage: nasi?.description?.split(/(?<=[.!?])\s+/)[0]?.trim() || 'Peranakan family recipe since 1972',
       slug: rose?.slug,
     },
     {
@@ -249,7 +247,7 @@ export function getFeaturedForHome() {
       name: 'Auntie Doris (Katong)',
       dish: devil?.name || "Eurasian Devil's Curry (Chicken)",
       price: devil?.price || 14,
-      heritage: devil?.heritage_note?.slice(0, 80) + '...' || 'Eurasian Kristang heritage from 1950s Katong',
+      heritage: devil?.description?.slice(0, 80) + '...' || 'Eurasian Kristang heritage from 1950s Katong',
       slug: 'auntie-doris-katong',
     },
   ];

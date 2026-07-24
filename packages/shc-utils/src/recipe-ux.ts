@@ -19,7 +19,6 @@ export type RecipeProductInput = {
   id?: string;
   name?: string;
   description?: string;
-  heritage_note?: string | null;
   cuisine?: string;
   cook_name?: string;
   min_qty?: number;
@@ -61,8 +60,6 @@ export function formatRecipeIngredient(ing: RecipeIngredient | string): string {
 }
 
 export function recipeHeritageLead(product: RecipeProductInput): string | null {
-  const note = product.heritage_note?.trim();
-  if (note) return note;
   const desc = product.description?.trim();
   if (!desc) return null;
   const first = desc.split(/(?<=[.!?])\s+/)[0]?.trim();

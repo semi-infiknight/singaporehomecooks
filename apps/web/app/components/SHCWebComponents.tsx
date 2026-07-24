@@ -3018,7 +3018,6 @@ export function RecipeStoryPreview({
     id?: string;
     name?: string;
     description?: string;
-    heritage_note?: string | null;
     cuisine?: string;
     min_qty?: number;
     ingredients?: Array<{ name?: string; quantity?: number | string; unit?: string }>;

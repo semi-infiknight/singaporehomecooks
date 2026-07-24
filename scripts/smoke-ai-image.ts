@@ -152,7 +152,6 @@ async function main() {
       mode: "generate",
       dish_name: "Nasi Lemak Smoke",
       cuisine: "Malay",
-      heritage_note: "Railway smoke test plate",
     }),
   });
   if (gen.status === 503) {

@@ -84,7 +84,6 @@ export default function TiffinKitchenPage() {
     price?: number;
     cuisine?: string;
     description?: string;
-    heritage_note?: string | null;
     ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
     min_qty?: number;
   }>;

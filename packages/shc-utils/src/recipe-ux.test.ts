@@ -15,13 +15,12 @@ describe('recipe-ux', () => {
     expect(steps[0].instruction).toMatch(/coconut rice/i);
   });
 
-  it('prefers heritage_note for lead copy', () => {
+  it('derives lead copy from description', () => {
     expect(
       recipeHeritageLead({
-        heritage_note: 'Family recipe since 1972',
-        description: 'Long description that should not win.',
+        description: 'Family recipe since 1972. Still made the same way in our HDB kitchen.',
       })
-    ).toBe('Family recipe since 1972');
+    ).toBe('Family recipe since 1972.');
   });
 
   it('formats ingredient lines with quantity and unit', () => {

@@ -32,7 +32,6 @@ export default function TiffinMenuScreen() {
       price: d.price,
       cuisine: d.cuisine,
       description: d.description,
-      heritage_note: d.heritage_note,
       ingredients: d.ingredients,
       min_qty: d.min_qty,
       image_url: d.image_url,
@@ -87,7 +86,6 @@ export default function TiffinMenuScreen() {
           price?: number;
           cuisine?: string;
           description?: string;
-          heritage_note?: string | null;
           ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
           min_qty?: number;
           image_url?: string;

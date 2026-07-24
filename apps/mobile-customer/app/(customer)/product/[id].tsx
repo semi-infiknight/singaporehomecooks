@@ -82,7 +82,6 @@ export default function ProductDetail() {
   const recipeSteps = recipeStepsForProduct({
     id: product.id,
     description: product.description,
-    heritage_note: (product as { heritage_note?: string }).heritage_note,
     cuisine: product.cuisine,
     cook_name: product.cook_name,
     min_qty: product.min_qty,
@@ -91,7 +90,6 @@ export default function ProductDetail() {
   const showRecipe = recipeHasStory({
     id: product.id,
     description: product.description,
-    heritage_note: (product as { heritage_note?: string }).heritage_note,
     ingredients: product.ingredients,
     recipe_steps: recipeSteps,
   });
@@ -186,10 +184,7 @@ export default function ProductDetail() {
 
           {showRecipe ? (
             <SHCRecipeStoryCard
-              heritageLead={recipeHeritageLead({
-                description: product.description,
-                heritage_note: (product as { heritage_note?: string }).heritage_note,
-              })}
+              heritageLead={recipeHeritageLead({ description: product.description })}
               aboutBlurb={recipeAboutBlurb({ description: product.description })}
               glanceChips={recipeAtAGlance(
                 { cuisine: product.cuisine, min_qty: product.min_qty },

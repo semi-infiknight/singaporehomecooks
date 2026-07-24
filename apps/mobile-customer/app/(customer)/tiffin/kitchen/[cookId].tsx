@@ -57,7 +57,6 @@ type TiffinDishRow = {
   cuisine?: string;
   image_url?: string;
   description?: string;
-  heritage_note?: string | null;
   ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
   min_qty?: number;
 };
@@ -100,7 +99,6 @@ export default function TiffinKitchenScreen() {
         cuisine: d.cuisine,
         image_url: d.image_url,
         description: d.description,
-        heritage_note: d.heritage_note,
         ingredients: d.ingredients,
         min_qty: d.min_qty,
       })),
