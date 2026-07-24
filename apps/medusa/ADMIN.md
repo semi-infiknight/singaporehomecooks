@@ -53,23 +53,42 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 
 | Path | Purpose |
 |------|---------|
-| `/app/shc-ops` | Overview KPIs, status breakdown, recent activity, health |
-| `/app/shc-ops/insights` | Trends (orders/GMV charts) + HitPay payment-requests + manual confirm |
+| `/app/shc-ops/charts` | **Visual data explorer** — all datasets (orders, listings, payouts, disputes, compliance, ledger) |
+| `/app/shc-ops` | Overview KPIs, **charts** (ops queue, cook supply, status donut, 14d trend), recent activity |
+| `/app/shc-ops/insights` | **Recharts** trends (orders/GMV/conversion), status mix, HitPay donut + table, manual confirm |
 | `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
 | `/app/shc-ops/catalog` | Browse category presets (not cook-owned) |
-| `/app/shc-ops/controls` | Feature flags, disputes, payouts, commission/search snapshot |
+| `/app/shc-ops/compliance` | **Compliance funnel chart**, SFA/WSQ review queue |
+| `/app/shc-ops/controls` | Feature flags, disputes, **payout chart**, commission/search snapshot |
+
+Charts: `apps/medusa/src/admin/components/shc-charts.tsx` (Recharts). Each chart includes an ops caption explaining what the data means.
 
 Source: `apps/medusa/src/admin/routes/shc-ops/**`  
 Uses `@medusajs/ui` + session-auth JS SDK → existing `/admin/shc/*` APIs.
 
 Each SHC Ops page is wrapped with `withShcQuery` (`src/admin/lib/shc-query.tsx`) so `useQuery` / `useMutation` share a QueryClient from the same `@tanstack/react-query` instance (pnpm + Medusa dashboard otherwise throws “No QueryClient set”). In-page nav uses `/app/shc-ops/*` anchors (not `react-router-dom` `Link`) to avoid a second router instance.
 
+### Near-realtime refresh (not WebSocket push)
+
+SHC Ops does **not** use WebSockets or SSE. All tables and charts stay current via **React Query polling** plus **cache invalidation after ops actions**:
+
+| Surface | Auto-refresh | Notes |
+|---------|--------------|-------|
+| SHC Ops pages (overview, charts, catalog, controls) | every **45s** | `shcOpsLiveQuery` in `shc-ops-polling.ts` |
+| Orders board, compliance queue, HitPay | every **30s** | `shcOpsLiveQueryFast` |
+| Native sidebar mirrors (Orders / Products / Inventory / Price Lists widgets) | **45s** (orders mirror **30s**) | same polling helpers |
+| Tab focus / reconnect | immediate refetch | `refetchOnWindowFocus` + `refetchOnReconnect` in `shc-query.tsx` |
+| After mutations (flags, payouts, compliance, payment confirm, catalog) | immediate | `invalidateShcOpsDashboard()` invalidates all `shc-ops` + `shc-mirror` queries |
+
+Polling pauses when the tab is in the background (`refetchIntervalInBackground: false`). Customer/cook apps poll orders faster (5–8s); admin is intentionally slower to reduce API load. Expect **up to ~30–45s** lag for passive viewing; ops actions refresh the full dashboard immediately.
+
 ### APIs (same as before)
 
 | Route | Purpose |
 |-------|---------|
 | `GET /admin/shc/overview` | KPI snapshot |
-| `GET /admin/shc/analytics` | 14d order/GMV trends from `shc_order_meta` |
+| `GET /admin/shc/charts` | Unified chart payloads for all ops domains (`?days=7–90`) |
+| `GET /admin/shc/analytics` | Order/GMV trends + conversion rate (`?days=7–90`) |
 | `GET /admin/shc/hitpay` | HitPay payment-requests list (Railway `HITPAY_API_KEY`) |
 | `GET /admin/shc/orders` | Cross-app order feed |
 | `GET /admin/shc/listings` | Cook product metas (Products + Price Lists mirrors) |

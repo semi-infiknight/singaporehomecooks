@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { errMessage, shcGet } from "../lib/shc-api"
 import { formatSgd, shortId, statusLabel } from "../lib/shc-format"
 import { withShcQuery } from "../lib/shc-query"
+import { shcOpsLiveQuery } from "../lib/shc-ops-polling"
 import { ShcTableCell } from "../lib/table-cell"
 
 type ListingRow = {
@@ -37,7 +38,7 @@ const ShcPriceListMirror = () => {
       if (statusFilter) q.set("status", statusFilter)
       return shcGet<ListingsResponse>(`/admin/shc/listings?${q.toString()}`)
     },
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const listings = useMemo(() => {

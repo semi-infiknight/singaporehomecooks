@@ -2,9 +2,11 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Select, Table, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
+import { ComplianceFunnelChart } from "../../../components/shc-charts"
 import { shcGet, shcPatch, errMessage } from "../../../lib/shc-api"
 import { shortId } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 
 type ComplianceDocRow = {
   id: string
@@ -21,6 +23,14 @@ type ComplianceResponse = {
   docs: ComplianceDocRow[]
   count?: number
   pending_count?: number
+  summary?: {
+    total: number
+    pending: number
+    verified: number
+    pending_sfa: number
+    pending_wsq: number
+    by_type: { sfa: number; wsq: number }
+  }
 }
 
 const docTypeLabel = (type: string) => (type === "sfa" ? "SFA licence" : type === "wsq" ? "WSQ cert" : type)
@@ -35,7 +45,7 @@ const ShcOpsCompliancePage = () => {
       const q = new URLSearchParams({ status: statusFilter, limit: "120" })
       return shcGet<ComplianceResponse>(`/admin/shc/compliance?${q.toString()}`)
     },
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const docs = complianceQ.data?.docs || []
@@ -60,7 +70,7 @@ const ShcOpsCompliancePage = () => {
       shcPatch(`/admin/shc/compliance/${encodeURIComponent(doc.id)}/verify`, { verified: true }),
     onSuccess: () => {
       toast.success("Compliance document verified")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "compliance"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -70,7 +80,7 @@ const ShcOpsCompliancePage = () => {
       shcPatch(`/admin/shc/compliance/${encodeURIComponent(doc.id)}/verify`, { verified: false }),
     onSuccess: () => {
       toast.success("Verification removed")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "compliance"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -135,6 +145,47 @@ const ShcOpsCompliancePage = () => {
           </Text>
         </Container>
       )}
+
+      {complianceQ.data?.summary && (
+        <ComplianceFunnelChart summary={complianceQ.data.summary} />
+      )}
+
+      <div className="grid grid-cols-1 gap-4 small:grid-cols-3">
+        <Container className="p-4">
+          <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
+            Total uploads
+          </Text>
+          <Heading level="h1" className="mt-1">
+            {complianceQ.data?.summary?.total ?? "—"}
+          </Heading>
+          <Text size="xsmall" className="mt-1 text-ui-fg-muted">
+            SFA + WSQ certificates on file
+          </Text>
+        </Container>
+        <Container className="p-4">
+          <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
+            Verified
+          </Text>
+          <Heading level="h1" className="mt-1">
+            {complianceQ.data?.summary?.verified ?? "—"}
+          </Heading>
+          <Text size="xsmall" className="mt-1 text-ui-fg-muted">
+            Cooks can Accept paid orders
+          </Text>
+        </Container>
+        <Container className="p-4">
+          <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
+            Awaiting review
+          </Text>
+          <Heading level="h1" className="mt-1">
+            {complianceQ.data?.summary?.pending ?? complianceQ.data?.pending_count ?? "—"}
+          </Heading>
+          <Text size="xsmall" className="mt-1 text-ui-fg-muted">
+            {complianceQ.data?.summary?.pending_sfa ?? 0} SFA ·{" "}
+            {complianceQ.data?.summary?.pending_wsq ?? 0} WSQ pending
+          </Text>
+        </Container>
+      </div>
 
       {statusFilter === "pending" && cooksPending.length > 0 && (
         <Container className="divide-y p-0">

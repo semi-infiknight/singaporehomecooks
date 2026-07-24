@@ -2,9 +2,11 @@ import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Select, Table, Text } from "@medusajs/ui"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
+import { DataBarChart, DataDonutChart } from "../../../components/shc-charts"
 import { shcGet, errMessage } from "../../../lib/shc-api"
-import { formatSgd, statusLabel, shortId } from "../../../lib/shc-format"
+import { formatSgd, statusChartColor, statusLabel, shortId } from "../../../lib/shc-format"
 import { withShcQuery } from "../../../lib/shc-query"
+import { shcOpsLiveQuery, shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 import { ShcTableCell } from "../../../lib/table-cell"
 
 type OrderRow = {
@@ -41,7 +43,13 @@ const ShcOpsOrdersPage = () => {
       if (statusFilter) q.set("status", statusFilter)
       return shcGet<OrdersResponse>(`/admin/shc/orders?${q.toString()}`)
     },
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
+  })
+
+  const chartsQ = useQuery({
+    queryKey: ["shc-ops", "charts", "orders"],
+    queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
+    ...shcOpsLiveQuery,
   })
 
   const orders = ordersQ.data?.orders || []
@@ -107,6 +115,28 @@ const ShcOpsOrdersPage = () => {
           </Text>
         </Container>
       )}
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <DataDonutChart
+          title="Status mix (sample)"
+          caption="Full breakdown in Visual charts. Filter table below by status."
+          data={(chartsQ.data?.orders?.by_status || []).map((d: { name: string; value: number }) => ({
+            ...d,
+            name: statusLabel(d.name),
+            fill: statusChartColor(d.name),
+          }))}
+        />
+        <DataBarChart
+          title="Top cooks by GMV"
+          caption="Which kitchens generate the most revenue in the last 30 days."
+          data={(chartsQ.data?.orders?.top_cooks_by_gmv_cents || []).map((d: { name: string; value: number }) => ({
+            name: d.name,
+            value: d.value / 100,
+          }))}
+          layout="horizontal"
+          valueFormatter={(v) => formatSgd(v)}
+        />
+      </div>
 
       <Container className="divide-y p-0 overflow-hidden">
         <div className="px-6 py-4">

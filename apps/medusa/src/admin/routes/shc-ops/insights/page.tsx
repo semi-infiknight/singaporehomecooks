@@ -10,18 +10,28 @@ import {
   Text,
   toast,
 } from "@medusajs/ui"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { useMemo, useState, type FormEvent } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, type FormEvent } from "react"
+import {
+  GmvTrendChart,
+  HitPayStatusChart,
+  OrdersTrendChart,
+  StatusBarChart,
+  StatusDonutChart,
+} from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
-import { formatSgd, shortId, statusLabel } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { formatSgd, shortId } from "../../../lib/shc-format"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQuery, shcOpsLiveQueryFast } from "../../../lib/shc-ops-polling"
 
 type AnalyticsResponse = {
   window_days: number
   orders_total: number
+  orders_in_window?: number
   gmv_window_cents: number
   paid_window: number
   awaiting_pay: number
+  conversion_rate_pct?: number
   by_status: Record<string, number>
   series: Array<{ date: string; orders: number; paid: number; gmv_cents: number }>
   trend: {
@@ -30,6 +40,7 @@ type AnalyticsResponse = {
     paid_pct: number
   }
   generated_at?: string
+  note?: string
 }
 
 type HitPayResponse = {
@@ -63,60 +74,22 @@ function pctLabel(n: number): string {
   return "→ 0%"
 }
 
-function BarChart({
-  title,
-  rows,
-  valueKey,
-  formatValue,
-}: {
-  title: string
-  rows: AnalyticsResponse["series"]
-  valueKey: "orders" | "gmv_cents" | "paid"
-  formatValue?: (n: number) => string
-}) {
-  const max = Math.max(1, ...rows.map((r) => r[valueKey]))
-  return (
-    <Container className="p-4">
-      <Heading level="h2">{title}</Heading>
-      <div className="mt-4 flex items-end gap-1" style={{ height: 140 }}>
-        {rows.map((r) => {
-          const v = r[valueKey]
-          const h = Math.max(4, Math.round((v / max) * 120))
-          return (
-            <div
-              key={r.date}
-              className="flex flex-1 flex-col items-center justify-end gap-1"
-              title={`${r.date}: ${formatValue ? formatValue(v) : v}`}
-            >
-              <div
-                className="w-full rounded-t bg-ui-bg-interactive"
-                style={{ height: h, minHeight: v > 0 ? 4 : 2, opacity: v > 0 ? 1 : 0.25 }}
-              />
-              <Text size="xsmall" className="text-ui-fg-muted">
-                {r.date.slice(5)}
-              </Text>
-            </div>
-          )
-        })}
-      </div>
-    </Container>
-  )
-}
-
 const ShcOpsInsightsPage = () => {
+  const qc = useQueryClient()
   const [orderId, setOrderId] = useState("")
   const [payRef, setPayRef] = useState("")
+  const [days, setDays] = useState(14)
 
   const analyticsQ = useQuery({
-    queryKey: ["shc-ops", "analytics"],
-    queryFn: () => shcGet<AnalyticsResponse>("/admin/shc/analytics?days=14"),
-    refetchInterval: 60_000,
+    queryKey: ["shc-ops", "analytics", days],
+    queryFn: () => shcGet<AnalyticsResponse>(`/admin/shc/analytics?days=${days}`),
+    ...shcOpsLiveQuery,
   })
 
   const hitpayQ = useQuery({
     queryKey: ["shc-ops", "hitpay"],
     queryFn: () => shcGet<HitPayResponse>("/admin/shc/hitpay?per_page=40"),
-    refetchInterval: 45_000,
+    ...shcOpsLiveQueryFast,
   })
 
   const confirmPay = useMutation({
@@ -130,7 +103,7 @@ const ShcOpsInsightsPage = () => {
       toast.success("Payment confirmed")
       setOrderId("")
       setPayRef("")
-      void analyticsQ.refetch()
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -146,10 +119,13 @@ const ShcOpsInsightsPage = () => {
 
   const a = analyticsQ.data
   const hp = hitpayQ.data
-  const maxStatus = useMemo(() => {
-    const vals = Object.values(a?.by_status || {})
-    return Math.max(1, ...vals)
-  }, [a?.by_status])
+  const hitpayByStatus =
+    hp?.by_status ||
+    (hp?.payment_requests || []).reduce<Record<string, number>>((acc, row) => {
+      const s = row.status || "unknown"
+      acc[s] = (acc[s] || 0) + 1
+      return acc
+    }, {})
 
   return (
     <div className="flex flex-col gap-y-4">
@@ -157,13 +133,23 @@ const ShcOpsInsightsPage = () => {
         <div>
           <Heading level="h1">Insights & HitPay</Heading>
           <Text size="small" className="text-ui-fg-subtle">
-            Trends from marketplace orders · payment requests from HitPay API
+            Trends from marketplace orders · payment health from HitPay API
           </Text>
         </div>
         <div className="flex items-center gap-x-2">
           <Button size="small" variant="secondary" asChild>
             <a href="/app/shc-ops">Overview</a>
           </Button>
+          <select
+            className="rounded-md border border-ui-border-base bg-ui-bg-base px-2 py-1 text-sm"
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+          >
+            <option value={7}>7 days</option>
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
+            <option value={90}>90 days</option>
+          </select>
           <Button
             size="small"
             variant="secondary"
@@ -188,22 +174,28 @@ const ShcOpsInsightsPage = () => {
 
       <div className="grid grid-cols-1 gap-4 small:grid-cols-2 large:grid-cols-4">
         <Kpi
-          label="Orders (14d sample)"
-          value={analyticsQ.isLoading ? "…" : String(a?.orders_total ?? "—")}
-          hint={a ? pctLabel(a.trend.orders_pct) + " vs prior half" : "—"}
+          label={`Orders (${days}d)`}
+          value={analyticsQ.isLoading ? "…" : String(a?.orders_in_window ?? a?.orders_total ?? "—")}
+          hint={a ? `${pctLabel(a.trend.orders_pct)} vs prior half-window` : "—"}
         />
         <Kpi
           label="GMV window"
           value={analyticsQ.isLoading ? "…" : formatSgd(a?.gmv_window_cents, "cents")}
-          hint={a ? pctLabel(a.trend.gmv_pct) + " vs prior half" : "—"}
+          hint={a ? `${pctLabel(a.trend.gmv_pct)} vs prior half-window` : "—"}
         />
         <Kpi
-          label="Paid / progressing"
-          value={analyticsQ.isLoading ? "…" : String(a?.paid_window ?? "—")}
-          hint={`${a?.awaiting_pay ?? 0} still in cart (awaiting PayNow)`}
+          label="Payment conversion"
+          value={
+            analyticsQ.isLoading
+              ? "…"
+              : a?.conversion_rate_pct != null
+                ? `${a.conversion_rate_pct}%`
+                : "—"
+          }
+          hint={`${a?.paid_window ?? 0} paid+ · ${a?.awaiting_pay ?? 0} still in cart`}
         />
         <Kpi
-          label="HitPay"
+          label="HitPay requests"
           value={
             hitpayQ.isLoading
               ? "…"
@@ -213,56 +205,36 @@ const ShcOpsInsightsPage = () => {
           }
           hint={
             hp?.config
-              ? `${hp.config.env} · ${hp.config.webhook_salt_set ? "webhook salt OK" : "salt missing"}`
+              ? `${hp.config.env} · ${hp.config.webhook_salt_set ? "webhook OK" : "webhook salt missing"}`
               : "—"
           }
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 large:grid-cols-3">
-        <BarChart title="Orders / day" rows={a?.series || []} valueKey="orders" />
-        <BarChart
-          title="GMV / day"
-          rows={a?.series || []}
-          valueKey="gmv_cents"
-          formatValue={(n) => formatSgd(n, "cents")}
+      {a?.note && (
+        <Text size="xsmall" className="text-ui-fg-muted">
+          {a.note}
+        </Text>
+      )}
+
+      <OrdersTrendChart series={a?.series || []} />
+
+      <GmvTrendChart series={a?.series || []} />
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <StatusDonutChart
+          byStatus={a?.by_status || {}}
+          title="Status mix (window)"
+          caption="Proportion of orders in each state during the selected window. Large cart slice = checkout abandonment."
         />
-        <BarChart title="Paid+ progress / day" rows={a?.series || []} valueKey="paid" />
+        <HitPayStatusChart byStatus={hitpayByStatus} />
       </div>
 
-      <Container className="divide-y p-0">
-        <div className="px-6 py-4">
-          <Heading level="h2">Status mix</Heading>
-          <Text size="small" className="text-ui-fg-subtle">
-            Share of recent order metas
-          </Text>
-        </div>
-        <div className="flex flex-col gap-2 px-6 py-4">
-          {Object.entries(a?.by_status || {}).length === 0 && (
-            <Text size="small" className="text-ui-fg-subtle">
-              {analyticsQ.isLoading ? "Loading…" : "No status data."}
-            </Text>
-          )}
-          {Object.entries(a?.by_status || {})
-            .sort((x, y) => y[1] - x[1])
-            .map(([status, n]) => (
-              <div key={status} className="flex items-center gap-3">
-                <Text size="small" className="w-36 shrink-0">
-                  {statusLabel(status)}
-                </Text>
-                <div className="h-2 flex-1 overflow-hidden rounded bg-ui-bg-subtle">
-                  <div
-                    className="h-full bg-ui-bg-interactive"
-                    style={{ width: `${Math.round((n / maxStatus) * 100)}%` }}
-                  />
-                </div>
-                <Text size="small" weight="plus" className="w-8 text-right">
-                  {n}
-                </Text>
-              </div>
-            ))}
-        </div>
-      </Container>
+      <StatusBarChart
+        byStatus={a?.by_status || {}}
+        title="Status breakdown (counts)"
+        caption="Exact counts per status — use with the order board to clear bottlenecks (e.g. stuck in preparing)."
+      />
 
       <Container className="divide-y p-0">
         <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4">

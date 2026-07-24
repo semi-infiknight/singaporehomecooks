@@ -1,9 +1,11 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { PayoutBatchChart, DataBarChart, DataDonutChart, RevenueSplitChart } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
-import { withShcQuery } from "../../../lib/shc-query"
+import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
+import { shcOpsLiveQuery } from "../../../lib/shc-ops-polling"
 
 type Flag = { id?: string; key: string; enabled: boolean; cohort_filter?: Record<string, unknown> }
 type Dispute = { id: string; order_id: string; type?: string; raised_by?: string; status?: string }
@@ -39,7 +41,13 @@ const ShcOpsControlsPage = () => {
         stats: (stats.stats || []) as unknown[],
       }
     },
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
+  })
+
+  const chartsQ = useQuery({
+    queryKey: ["shc-ops", "charts", "controls"],
+    queryFn: () => shcGet<any>("/admin/shc/charts?days=30"),
+    ...shcOpsLiveQuery,
   })
 
   const data = coreQ.data
@@ -53,7 +61,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Feature flag updated")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -66,7 +74,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Dispute resolved")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -78,7 +86,7 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Payout approved")
-      void qc.invalidateQueries({ queryKey: ["shc-ops", "controls"] })
+      void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
   })
@@ -115,6 +123,54 @@ const ShcOpsControlsPage = () => {
         <Stat label="Payout batches" value={data?.payouts.length ?? "…"} />
         <Stat label="Feature flags" value={data?.flags.length ?? "…"} />
         <Stat label="Open disputes" value={data?.disputes.length ?? "…"} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <PayoutBatchChart batches={data?.payouts || []} />
+        <RevenueSplitChart
+          cookCents={chartsQ.data?.ledger?.summary?.cook_earnings_cents ?? 0}
+          platformCents={chartsQ.data?.ledger?.summary?.platform_fees_cents ?? 0}
+        />
+        <DataBarChart
+          title="Disputes by type"
+          caption="Open disputes listed below — resolve to unblock customer/cook trust."
+          data={chartsQ.data?.disputes?.by_type || []}
+          layout="horizontal"
+        />
+        <DataBarChart
+          title="Cook expenses by category"
+          caption="Reimbursement volume ops should track against payout batches."
+          data={chartsQ.data?.expenses?.by_category_cents || []}
+          valueFormatter={(v) => formatSgd(v, "cents")}
+        />
+        <Container className="p-4">
+          <Heading level="h2">Feature flags at a glance</Heading>
+          <Text size="small" className="mt-1 text-ui-fg-subtle">
+            Green = live for customers/cooks. Orange = paused gate — no redeploy needed.
+          </Text>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(data?.flags || []).length === 0 && !coreQ.isLoading && (
+              <Text size="small" className="text-ui-fg-subtle">
+                No feature flags configured.
+              </Text>
+            )}
+            {(data?.flags || []).map((flag) => (
+              <Badge key={flag.key} size="small" color={flag.enabled ? "green" : "orange"}>
+                {flag.key}: {flag.enabled ? "ON" : "OFF"}
+              </Badge>
+            ))}
+          </div>
+          <Text size="xsmall" className="mt-4 text-ui-fg-muted">
+            {(data?.flags || []).filter((f) => f.enabled).length} of {(data?.flags || []).length} gates
+            open · {(data?.disputes || []).length} disputes need resolution
+          </Text>
+        </Container>
+        <DataDonutChart
+          title="Feature flags"
+          caption="Paused gates hide features without redeploying."
+          data={chartsQ.data?.flags?.on_off || []}
+          emptyMessage="No feature flags configured."
+        />
       </div>
 
       <Container className="divide-y p-0">

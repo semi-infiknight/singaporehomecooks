@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { errMessage, shcGet } from "../lib/shc-api"
 import { shortId, statusLabel } from "../lib/shc-format"
 import { withShcQuery } from "../lib/shc-query"
+import { shcOpsLiveQuery } from "../lib/shc-ops-polling"
 import { ShcTableCell } from "../lib/table-cell"
 
 type AvailabilityRow = {
@@ -38,7 +39,7 @@ const ShcInventoryListMirror = () => {
       if (statusFilter === "active") q.set("paused", "false")
       return shcGet<AvailabilityResponse>(`/admin/shc/availability?${q.toString()}`)
     },
-    refetchInterval: 60_000,
+    ...shcOpsLiveQuery,
   })
 
   const rows = useMemo(() => {
