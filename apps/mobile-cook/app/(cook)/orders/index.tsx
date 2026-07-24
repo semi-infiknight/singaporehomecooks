@@ -16,13 +16,14 @@ import {
   SHCErrorBanner,
   SHCFadeIn,
   SHCBadge,
+  SHCMetaBadge,
   SHCSectionTitle,
   SHCSkeletonOrderList,
   gourmeatColors,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders } from '@shc/utils';
+import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, shcPartySizeBadgeLabel } from '@shc/utils';
 
 import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
@@ -282,11 +283,11 @@ export default function CookOrders() {
                 {r.body || r.title || 'Custom request'}
               </Text>
               <View style={styles.collabBadges}>
-                <SHCBadge variant="peach">{r.party_size || '?'} guests</SHCBadge>
-                <SHCBadge variant="default">
+                <SHCMetaBadge kind="party_size">{shcPartySizeBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                <SHCMetaBadge kind="price">
                   Budget S${r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
-                </SHCBadge>
-                {r.date ? <SHCBadge variant="default">{r.date}</SHCBadge> : null}
+                </SHCMetaBadge>
+                {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
               </View>
               <TextInput
                 placeholder="Your bid in S$ (e.g. 14)"

@@ -11,6 +11,7 @@ import {
   shcSectionStack,
   shcTitleBlock,
 } from './theme';
+import { shcBadgeVariant, type ShcBadgeSemanticKind } from '@shc/utils';
 import { SHCIcon, SHCTabIcon, type SHCTabIconKey } from './icons';
 
 type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
@@ -233,14 +234,14 @@ export function SHCBadge({
   variant = 'default',
 }: {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'peach';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'warm';
 }) {
   const styles: Record<string, { bg: string; color: string }> = {
     default: { bg: shcColors.surfaceAlt, color: shcColors.text },
     success: { bg: shcColors.surfaceSuccess, color: shcColors.success },
     warning: { bg: shcColors.surfaceWarning, color: shcColors.warning },
     error: { bg: shcColors.surfaceError, color: shcColors.error },
-    peach: { bg: shcColors.bentoPeach, color: shcColors.heritage },
+    warm: { bg: shcColors.bentoPeach, color: shcColors.heritage },
   };
   const s = styles[variant];
   return (
@@ -257,6 +258,16 @@ export function SHCBadge({
       <Text style={{ fontSize: 12, color: s.color, fontWeight: '600' }}>{children}</Text>
     </View>
   );
+}
+
+export function SHCMetaBadge({
+  kind,
+  children,
+}: {
+  kind: ShcBadgeSemanticKind;
+  children: React.ReactNode;
+}) {
+  return <SHCBadge variant={shcBadgeVariant(kind)}>{children}</SHCBadge>;
 }
 
 export function SHCErrorBanner({ code, message }: { code?: string; message: string }) {

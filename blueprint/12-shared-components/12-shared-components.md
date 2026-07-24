@@ -107,7 +107,7 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 |---|---|
 | `SHCButton` / `SHCButtonText` | Primary, outline, accent, ghost variants with brutal shadow press |
 | `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow` variants |
-| `SHCBadge` | Status chips (success, warning, error, peach) |
+| `SHCBadge` | Status chips (`success`, `warning`, `error`, `warm`) — prefer `SHCMetaBadge` with semantic `kind` |
 | `SHCInput` | Brutal-bordered input shell |
 | `SHCSearchBar` | Full-width search with icon |
 | `SHCSectionTitle` | H2 section headers |

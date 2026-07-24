@@ -13,6 +13,7 @@ import {
   formatBidCentsAsDollars,
   isCookComplianceVerified,
   partitionCookOrders,
+  shcPartySizeBadgeLabel,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -30,6 +31,7 @@ import {
   GourmeatCard,
   GourmeatEmptyState,
   SHCBadge,
+  SHCMetaBadge,
   SHCSkeletonOrderList,
 } from '../../components/SHCWebComponents';
 
@@ -240,12 +242,12 @@ export default function CookOrdersPage() {
               >
                 <p className="font-bold text-sm line-clamp-3">{r.body || 'Custom request'}</p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <SHCBadge variant="peach">{r.party_size || '?'} guests</SHCBadge>
-                  <SHCBadge variant="default">
+                  <SHCMetaBadge kind="party_size">{shcPartySizeBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                  <SHCMetaBadge kind="price">
                     Budget S$
                     {r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
-                  </SHCBadge>
-                  {r.date ? <SHCBadge variant="default">{r.date}</SHCBadge> : null}
+                  </SHCMetaBadge>
+                  {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
                 </div>
                 <input
                   className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold"

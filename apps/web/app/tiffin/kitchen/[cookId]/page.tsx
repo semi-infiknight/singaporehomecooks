@@ -46,6 +46,7 @@ import {
   SHCButton,
   SHCCard,
   SHCBadge,
+  SHCMetaBadge,
   SHCErrorBanner,
   GourmeatSectionTitle,
   KitchenTrustCertsList,
@@ -236,9 +237,9 @@ export default function TiffinKitchenPage() {
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3" data-testid="kitchen-tags">
               {tags.map((t) => (
-                <SHCBadge key={t} variant="peach">
+                <SHCMetaBadge key={t} kind="occasion">
                   {t}
-                </SHCBadge>
+                </SHCMetaBadge>
               ))}
             </div>
           )}
@@ -416,7 +417,7 @@ export default function TiffinKitchenPage() {
                       <p className="text-xs text-muted-foreground">{d.cuisine || 'Home-cooked'}</p>
                     </div>
                     {kitchenDishPriceLabel(d) ? (
-                      <SHCBadge variant="peach">{kitchenDishPriceLabel(d)}</SHCBadge>
+                      <SHCMetaBadge kind="price">{kitchenDishPriceLabel(d)}</SHCMetaBadge>
                     ) : null}
                   </button>
                   <RecipeStoryPreview

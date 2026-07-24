@@ -6,6 +6,7 @@ import {
   complianceLinksForType,
   hasComplianceDocOfType,
   missingComplianceTypes,
+  shcUploadTypeBadgeLabel,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useComplianceDocs, useSubmitComplianceDoc } from '../../../lib/useCookPortal';
@@ -14,6 +15,7 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCBadge,
+  SHCMetaBadge,
   VisualBentoTile,
   SHCCelebrationWeb,
   useMilestoneCelebrationWeb,
@@ -132,7 +134,7 @@ export default function CookCompliancePage() {
       )}
 
       <GourmeatCard>
-        <SHCBadge variant="peach">{type.toUpperCase()} upload</SHCBadge>
+        <SHCMetaBadge kind="upload_type">{shcUploadTypeBadgeLabel(type)}</SHCMetaBadge>
         <p className="mt-2 text-xs text-muted-foreground">
           After your course: upload the certificate filename / reference for ops review.
         </p>

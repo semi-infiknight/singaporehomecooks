@@ -13,6 +13,7 @@ import {
   SHCVisualBentoTile,
   SHCFoodImage,
   SHCBadge,
+  SHCMetaBadge,
   GourmeatCookHeader,
   SHCFadeIn,
   SHCBentoIconBadge,
@@ -179,7 +180,7 @@ export default function CookDashboard() {
                 <View style={styles.earningsOverlay}>
                   <View style={styles.earningsTopRow}>
                     <SHCBentoIconBadge iconKey="earnings" size={28} />
-                    {/* <SHCBadge variant="peach">85% payout</SHCBadge> */}
+                    {/* <SHCMetaBadge kind="label">85% payout</SHCMetaBadge> */}
                   </View>
                   <Text style={styles.earningsLabel}>This week</Text>
                   <Text style={styles.earningsValue}>S${earnings}</Text>
@@ -299,8 +300,8 @@ export default function CookDashboard() {
                 <OrderStatusBadge status={o.shc_status} />
               </View>
               <View style={styles.orderBadges}>
-                <SHCBadge variant="default">S${o.total}</SHCBadge>
-                <SHCBadge variant="peach">{o.collection_date}</SHCBadge>
+                <SHCMetaBadge kind="price">S${o.total}</SHCMetaBadge>
+                <SHCMetaBadge kind="cook_date">{o.collection_date}</SHCMetaBadge>
               </View>
             </View>
             <Text style={styles.orderChevron}>›</Text>

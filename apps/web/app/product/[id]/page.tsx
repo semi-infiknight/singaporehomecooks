@@ -9,6 +9,7 @@ import {
   SHCCard,
   SHCButton,
   SHCBadge,
+  SHCMetaBadge,
   SHCSectionTitle,
   AllergenAckCheckbox,
   SHCErrorBanner,
@@ -199,9 +200,9 @@ function ProductDetailContent() {
         </div>
 
         <div className="flex flex-wrap gap-2 my-4">
-          {product.cuisine ? <SHCBadge variant="peach">{product.cuisine}</SHCBadge> : null}
+          {product.cuisine ? <SHCMetaBadge kind="cuisine">{product.cuisine}</SHCMetaBadge> : null}
           <CalorieBadge calories={displayCal} />
-          {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
+          {product.halal && <SHCMetaBadge kind="halal">Halal</SHCMetaBadge>}
         </div>
 
         {showRecipe ? (

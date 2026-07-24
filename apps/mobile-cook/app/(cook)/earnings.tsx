@@ -11,6 +11,7 @@ import {
   SHCButtonText,
   SHCVisualBentoTile,
   SHCBadge,
+  SHCMetaBadge,
   SHCFadeIn,
   shcSpacing,
   contentPadForTabBar,
@@ -77,8 +78,8 @@ export default function Earnings() {
         subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <View style={styles.heroBadges}>
-            <SHCBadge variant="peach">This week</SHCBadge>
-            <SHCBadge variant="success">S${weekTotal}</SHCBadge>
+            <SHCMetaBadge kind="period">This week</SHCMetaBadge>
+            <SHCMetaBadge kind="earnings">S${weekTotal}</SHCMetaBadge>
           </View>
         }
       />
@@ -139,7 +140,7 @@ export default function Earnings() {
             <Text style={styles.statLabel}>Recorded this year</Text>
             <Text style={styles.statValue}>S${expenseTotal}</Text>
           </View>
-          <SHCBadge variant="peach">IRAS</SHCBadge>
+          <SHCMetaBadge kind="tax">IRAS</SHCMetaBadge>
         </View>
         <View style={styles.expenseForm}>
           <TextInput

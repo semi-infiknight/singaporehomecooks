@@ -10,6 +10,7 @@ import {
   SHCCard,
   SHCPageHeader,
   SHCBadge,
+  SHCMetaBadge,
   IllustratedEmptyState,
 } from '../../components/SHCWebComponents';
 
@@ -93,7 +94,7 @@ export default function TiffinCalendarPage() {
                 <SHCBadge variant={m.status === 'skipped' ? 'warning' : m.status === 'delivered' ? 'success' : 'default'}>
                   {m.status}
                 </SHCBadge>
-                {m.customizable ? <SHCBadge variant="peach">CUSTOMIZABLE</SHCBadge> : null}
+                {m.customizable ? <SHCMetaBadge kind="customizable">CUSTOMIZABLE</SHCMetaBadge> : null}
                 {m.collection_slot ? <span className="text-xs font-bold text-muted-foreground">{m.collection_slot}</span> : null}
               </div>
               <p className="font-black">{kitchen?.cook?.display_name || 'Kitchen'}</p>

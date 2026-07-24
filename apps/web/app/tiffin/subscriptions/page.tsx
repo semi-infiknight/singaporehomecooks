@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import {
   emptyActiveSubscriptionsCopy,
   emptyPastSubscriptionsCopy,
+  shcMealPlanBadgeLabel,
 } from '@shc/utils';
 import {
   subscriptionCardKind,
@@ -19,6 +20,7 @@ import {
   SHCButton,
   SHCCard,
   SHCBadge,
+  SHCMetaBadge,
   IllustratedEmptyState,
   GourmeatScreenHeader,
   SHCSkeletonList,
@@ -150,10 +152,8 @@ export default function MySubscriptionsPage() {
               </SHCBadge>
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
-              <SHCBadge variant="peach">{String(sub.meals_per_week || '')} meals/wk</SHCBadge>
-              <SHCBadge variant="default">
-                S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3).toFixed(2)}/wk
-              </SHCBadge>
+              <SHCMetaBadge kind="meal_plan">{shcMealPlanBadgeLabel(Number(sub.meals_per_week) || 0)}</SHCMetaBadge>
+              <SHCMetaBadge kind="price">S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3).toFixed(2)}/wk</SHCMetaBadge>
             </div>
             <p className="text-xs font-semibold text-muted-foreground mb-3">
               Deliveries {String(sub.deliveries_left ?? '—')} · Flex {String(sub.flex_remaining ?? '—')}/

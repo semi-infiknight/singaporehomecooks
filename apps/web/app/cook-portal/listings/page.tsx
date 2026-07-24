@@ -18,6 +18,8 @@ import {
   DEFAULT_LISTING_AVAILABILITY,
   allergenTiersFromListing,
   availabilityFromListing,
+  shcPortionMinBadgeLabel,
+  shcUploadTypeBadgeLabel,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -35,6 +37,7 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCBadge,
+  SHCMetaBadge,
   SHCSectionTitle,
   SHCButton,
   useSHCTrayWeb,
@@ -550,11 +553,11 @@ export default function CookListingsPage() {
           <div className="relative h-20 rounded-xl overflow-hidden mb-2">
             <Image src={CUISINE_IMAGE.Peranakan} alt="" fill className="object-cover" sizes="100vw" />
           </div>
-          <SHCBadge variant="default">No listings yet</SHCBadge>
+          <SHCMetaBadge kind="label">No listings yet</SHCMetaBadge>
         </GourmeatCard>
       ) : filteredListings.length === 0 && !listingsLoading ? (
         <GourmeatCard className="mb-4 bg-[var(--shc-bento-mint)] text-center">
-          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+          <SHCMetaBadge kind="label">No dishes match your search</SHCMetaBadge>
         </GourmeatCard>
       ) : (
         <VirtualRowList
@@ -586,9 +589,9 @@ export default function CookListingsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-extrabold text-sm truncate">{String(p.name)}</p>
                     <div className="flex flex-wrap gap-1.5 mt-1">
-                      <SHCBadge variant="default">S${String(p.price)}</SHCBadge>
-                      <SHCBadge variant="peach">min {String(p.min_qty)}</SHCBadge>
-                      {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                      <SHCMetaBadge kind="price">S${String(p.price)}</SHCMetaBadge>
+                      <SHCMetaBadge kind="portion_min">{shcPortionMinBadgeLabel(p.min_qty ?? 0)}</SHCMetaBadge>
+                      {p.shc_availability?.paused ? <SHCMetaBadge kind="paused">Paused</SHCMetaBadge> : null}
                     </div>
                   </div>
                 </div>
@@ -785,7 +788,7 @@ export default function CookListingsPage() {
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
                   <Image src={BENTO_ACTION_IMAGES.listings} alt="" fill className="object-cover" sizes="48px" />
                 </div>
-                <SHCBadge variant="peach">📸 Photo tips</SHCBadge>
+                <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
               </button>
             </div>
           )}
@@ -796,7 +799,7 @@ export default function CookListingsPage() {
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
                 <div className="absolute inset-0 bg-black/35 flex items-end p-3 gap-2">
                   <p className="text-white font-extrabold flex-1">{name}</p>
-                  <SHCBadge variant="default">S${price}</SHCBadge>
+                  <SHCMetaBadge kind="price">S${price}</SHCMetaBadge>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -813,9 +816,9 @@ export default function CookListingsPage() {
               <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">
                 {occasionTags.map((t) => (
-                  <SHCBadge key={t} variant="peach">
+                  <SHCMetaBadge key={t} kind="occasion">
                     {t}
-                  </SHCBadge>
+                  </SHCMetaBadge>
                 ))}
               </div>
               {editingId ? (

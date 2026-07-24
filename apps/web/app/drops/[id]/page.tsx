@@ -10,7 +10,8 @@ import { formatDropCookDate, formatDropOrderBy, formatDropPrice } from '@shc/uti
 import { useAuth } from '../../../lib/useAuth';
 import { useGuestAuthTray } from '../../../lib/useGuestAuthTray';
 import { useDrop, useAddDropToCart } from '../../../lib/useOrder';
-import { SHCBadge, SHCButton, SHCCard, SHCPageHeader, SHCSkeletonList } from '../../components/SHCWebComponents';
+import { SHCBadge, SHCButton, SHCCard, SHCPageHeader, SHCSkeletonList, SHCMetaBadge } from '../../components/SHCWebComponents';
+import { shcDropStatusBadgeVariant } from '@shc/utils';
 
 export default function DropOrderPage() {
   const params = useParams<{ id: string }>();
@@ -79,9 +80,9 @@ export default function DropOrderPage() {
 
       <SHCCard className="mt-4 p-5 space-y-3">
         <div className="flex flex-wrap gap-2">
-          <SHCBadge variant="peach">{formatDropCookDate(drop.cook_date)}</SHCBadge>
-          <SHCBadge variant="default">{drop.collection_slot}</SHCBadge>
-          <SHCBadge variant={open ? 'success' : 'warning'}>{String(drop.status).replace(/_/g, ' ')}</SHCBadge>
+          <SHCMetaBadge kind="cook_date">{formatDropCookDate(drop.cook_date)}</SHCMetaBadge>
+          <SHCMetaBadge kind="slot">{drop.collection_slot}</SHCMetaBadge>
+          <SHCBadge variant={shcDropStatusBadgeVariant(open)}>{String(drop.status).replace(/_/g, ' ')}</SHCBadge>
         </div>
         <p className="text-2xl font-black text-primary">{formatDropPrice(drop.price_cents, drop.price)}</p>
         <p className="text-sm font-semibold text-muted-foreground">

@@ -17,7 +17,8 @@ import {
   TIFFIN_DAY_LABELS,
   tiffinWeeklySubtotal,
 } from '../../../lib/useTiffin';
-import { SHCButton, SHCCard, SHCPageHeader, SHCBadge } from '../../components/SHCWebComponents';
+import { SHCButton, SHCCard, SHCPageHeader, SHCBadge, SHCMetaBadge } from '../../components/SHCWebComponents';
+import { shcMealPlanBadgeLabel, shcSubscriptionStatusBadgeVariant } from '@shc/utils';
 
 const CANCEL_REASONS = ['Moving away', 'Too expensive', 'Quality concerns', 'Trying another kitchen', 'Other'];
 
@@ -72,9 +73,9 @@ export default function TiffinManagePage() {
       {/* Metrics — top priority */}
       <SHCCard className="mb-4" data-testid="tiffin-plan-metrics-card">
         <div className="flex flex-wrap gap-2 mb-3">
-          <SHCBadge variant="peach">{sub.meals_per_week} meals/wk</SHCBadge>
-          <SHCBadge variant="default">S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk</SHCBadge>
-          <SHCBadge variant={isPaused ? 'warning' : 'success'}>{sub.status}</SHCBadge>
+          <SHCMetaBadge kind="meal_plan">{shcMealPlanBadgeLabel(sub.meals_per_week)}</SHCMetaBadge>
+          <SHCMetaBadge kind="price">S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk</SHCMetaBadge>
+          <SHCBadge variant={shcSubscriptionStatusBadgeVariant(isPaused)}>{sub.status}</SHCBadge>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center" data-testid="tiffin-plan-metrics">
           <div>

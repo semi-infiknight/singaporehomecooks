@@ -9,6 +9,7 @@ import {
   GourmeatCookHeader,
   SHCSectionTitle,
   SHCBadge,
+  SHCMetaBadge,
   SHCIcon,
   SHCFadeIn,
   gourmeatColors,
@@ -28,6 +29,7 @@ import {
   complianceLinksForType,
   hasComplianceDocOfType,
   missingComplianceTypes,
+  shcUploadTypeBadgeLabel,
 } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
@@ -190,7 +192,7 @@ export default function ComplianceUpload() {
         <SHCCard style={styles.uploadCard}>
           <View style={styles.uploadHeader}>
             <SHCIcon name="compliance" size={22} color={shcColors.primary} active />
-            <SHCBadge variant="peach">{type.toUpperCase()} upload</SHCBadge>
+            <SHCMetaBadge kind="upload_type">{shcUploadTypeBadgeLabel(type)}</SHCMetaBadge>
           </View>
           <Text style={styles.uploadHint}>
             Upload a photo of your certificate, or enter a reference if you will email the PDF to ops.

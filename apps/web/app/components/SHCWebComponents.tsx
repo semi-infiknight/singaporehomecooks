@@ -54,6 +54,15 @@ import {
   COLLECTION_TIME_SLOT_PRESETS,
   WEEKDAY_LABELS,
   type AllergenTiers,
+  shcBadgeVariant,
+  type ShcBadgeSemanticKind,
+  shcOrderStatusBadgeVariant,
+  shcDropStatusBadgeVariant,
+  shcSubscriptionStatusBadgeVariant,
+  shcCollabRequestBadgeVariant,
+  shcMealPlanBadgeLabel,
+  shcPartySizeBadgeLabel,
+  shcPortionMinBadgeLabel,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -156,14 +165,14 @@ export function SHCBadge({
   variant = 'default',
 }: {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'peach';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'warm';
 }) {
   const styles: Record<string, string> = {
     default: 'bg-secondary text-foreground',
     success: 'bg-[var(--shc-bento-mint)] text-[var(--shc-success)]',
     warning: 'bg-[var(--shc-bento-yellow)] text-[var(--shc-warning)]',
     error: 'bg-red-50 text-[var(--shc-error)]',
-    peach: 'bg-[var(--shc-bento-peach)] text-[var(--shc-heritage)]',
+    warm: 'bg-[var(--shc-bento-peach)] text-[var(--shc-heritage)]',
   };
   return (
     <span
@@ -172,6 +181,17 @@ export function SHCBadge({
       {children}
     </span>
   );
+}
+
+/** Product-logic badge — pass semantic kind, not raw variant. */
+export function SHCMetaBadge({
+  kind,
+  children,
+}: {
+  kind: ShcBadgeSemanticKind;
+  children: React.ReactNode;
+}) {
+  return <SHCBadge variant={shcBadgeVariant(kind)}>{children}</SHCBadge>;
 }
 
 export function SHCSectionTitle({
@@ -527,7 +547,7 @@ export function ZomatoOrderRow({
   href: string;
 }) {
   const imgUrl = getDishImageUrl({ id: productId, name: dishName });
-  const badgeVariant = status === 'completed' || status === 'collected' ? 'success' : 'default';
+  const badgeVariant = shcOrderStatusBadgeVariant(status);
   return (
     <Link href={href} data-testid={`order-row-${orderId}`}>
       <SHCCard hover className="p-0 overflow-hidden">
@@ -1040,7 +1060,7 @@ export function DishCard({
           {product.cook_name && (
             <span className="text-[11px] font-semibold text-muted-foreground truncate flex-1">{product.cook_name}</span>
           )}
-          {product.cuisine && <SHCBadge variant="peach">{product.cuisine}</SHCBadge>}
+          {product.cuisine && <SHCMetaBadge kind="cuisine">{product.cuisine}</SHCMetaBadge>}
         </div>
       </SHCCard>
     </div>

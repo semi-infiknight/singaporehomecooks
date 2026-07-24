@@ -10,6 +10,7 @@ import {
   GourmeatCard,
   GourmeatPrimaryButton,
   SHCBadge,
+  SHCMetaBadge,
   VisualBentoTile,
 } from '../../components/SHCWebComponents';
 
@@ -48,8 +49,8 @@ export default function CookEarningsPage() {
         subtitle={`${user?.name || 'Chef'} · PayNow weekly`}
         badges={
           <>
-            <SHCBadge variant="peach">This week</SHCBadge>
-            <SHCBadge variant="success">S${weekTotal}</SHCBadge>
+            <SHCMetaBadge kind="period">This week</SHCMetaBadge>
+            <SHCMetaBadge kind="earnings">S${weekTotal}</SHCMetaBadge>
           </>
         }
       />

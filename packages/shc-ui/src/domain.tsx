@@ -3,12 +3,13 @@
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, Switch, Image, Linking, ActivityIndicator } from 'react-native';
-import { getDishImageUrl, getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { getDishImageUrl, getCookAvatarUrl, getCookKitchenHeroUrl, shcOrderStatusBadgeVariant, shcOrderStatusBadgeLabel, shcTierBadgeLabel } from '@shc/utils';
 import { SHCZomatoAddButton, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon } from './icons';
 import {
   SHCCard,
   SHCBadge,
+  SHCMetaBadge,
   SHCButton,
   SHCButtonText,
   SHCSectionTitle,
@@ -118,7 +119,7 @@ export function SHCDishCard({
           <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textLight, flex: 1 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
             {dish.cook_name}
           </Text>
-          {dish.cuisine && <SHCBadge variant="peach">{dish.cuisine}</SHCBadge>}
+          {dish.cuisine && <SHCMetaBadge kind="cuisine">{dish.cuisine}</SHCMetaBadge>}
         </View>
       </View>
       )}
@@ -246,7 +247,7 @@ export function SHCProfileHero({
         {subtitle && <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 2 }}>{subtitle}</Text>}
         {tier && (
           <View style={{ marginTop: 6, alignSelf: 'flex-start' }}>
-            <SHCBadge variant="peach">{tier} tier</SHCBadge>
+            <SHCMetaBadge kind="tier">{shcTierBadgeLabel(tier)}</SHCMetaBadge>
           </View>
         )}
       </View>
@@ -368,8 +369,11 @@ export function SHCCookStoreHero({
 }
 
 export function OrderStatusBadge({ status }: { status: string }) {
-  const v = (['paid','ready_for_collection','accepted'].includes(status) ? 'warning' : status === 'completed' || status === 'collected' ? 'success' : 'default') as any;
-  return <SHCBadge variant={v}>{status.replace(/_/g, ' ')}</SHCBadge>;
+  return (
+    <SHCBadge variant={shcOrderStatusBadgeVariant(status)}>
+      {shcOrderStatusBadgeLabel(status)}
+    </SHCBadge>
+  );
 }
 
 export function CookCard({ cook, onPress }: { cook: any; onPress?: () => void }) {

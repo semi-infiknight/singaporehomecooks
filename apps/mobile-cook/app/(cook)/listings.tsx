@@ -14,6 +14,7 @@ import {
   SHCSectionTitle,
   SHCFoodImage,
   SHCBadge,
+  SHCMetaBadge,
   GourmeatCookHeader,
   GourmeatSearchBar,
   SHCFilterChipRow,
@@ -59,6 +60,7 @@ import {
   DEFAULT_LISTING_AVAILABILITY,
   allergenTiersFromListing,
   availabilityFromListing,
+  shcPortionMinBadgeLabel,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -571,12 +573,12 @@ export default function CookListings() {
       {!listingsLoading && listingsForDisplay.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
           <SHCFoodImage uri={CUISINE_IMAGE.Peranakan} height={80} rounded={shcRadii.md} />
-          <SHCBadge variant="default">No listings yet</SHCBadge>
+          <SHCMetaBadge kind="label">No listings yet</SHCMetaBadge>
         </SHCCard>
       )}
       {listingsForDisplay.length > 0 && filteredListings.length === 0 && (
         <SHCCard variant="bento-mint" style={styles.emptyListings}>
-          <SHCBadge variant="default">No dishes match your search</SHCBadge>
+          <SHCMetaBadge kind="label">No dishes match your search</SHCMetaBadge>
         </SHCCard>
       )}
       {filteredListings.length > 0 ? (
@@ -604,9 +606,9 @@ export default function CookListings() {
                   <View style={styles.listingInfo}>
                     <Text style={styles.listingName} numberOfLines={1}>{p.name}</Text>
                     <View style={styles.listingBadges}>
-                      <SHCBadge variant="default">S${p.price}</SHCBadge>
-                      <SHCBadge variant="peach">min {p.min_qty}</SHCBadge>
-                      {p.shc_availability?.paused ? <SHCBadge variant="warning">Paused</SHCBadge> : null}
+                      <SHCMetaBadge kind="price">S${p.price}</SHCMetaBadge>
+                      <SHCMetaBadge kind="portion_min">{shcPortionMinBadgeLabel(p.min_qty)}</SHCMetaBadge>
+                      {p.shc_availability?.paused ? <SHCMetaBadge kind="paused">Paused</SHCMetaBadge> : null}
                     </View>
                   </View>
                 </View>
@@ -764,7 +766,7 @@ export default function CookListings() {
             style={styles.photoTipsBtn}
           >
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-            <SHCBadge variant="peach">📸 Photo tips</SHCBadge>
+            <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
           </Pressable>
         </ListingWizardStep>
       )}
@@ -779,7 +781,7 @@ export default function CookListings() {
             overlay={
               <View style={styles.reviewOverlay}>
                 <Text style={styles.reviewName}>{name}</Text>
-                <SHCBadge variant="default">S${price}</SHCBadge>
+                <SHCMetaBadge kind="price">S${price}</SHCMetaBadge>
               </View>
             }
           />
@@ -795,7 +797,7 @@ export default function CookListings() {
           <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
           <View style={styles.tagRow}>
             {occasionTags.map((t) => (
-              <SHCBadge key={t} variant="peach">{t}</SHCBadge>
+              <SHCMetaBadge key={t} kind="occasion">{t}</SHCMetaBadge>
             ))}
           </View>
           {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
@@ -810,7 +812,7 @@ export default function CookListings() {
           {published && (
             <SHCCard variant="bento-mint" style={styles.publishedCard}>
               <SHCIcon name="checkmark" size={28} color={shcColors.success} active />
-              <SHCBadge variant="success">{published.name} live</SHCBadge>
+              <SHCMetaBadge kind="live">{published.name} live</SHCMetaBadge>
             </SHCCard>
           )}
         </ListingWizardStep>

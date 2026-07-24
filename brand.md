@@ -47,18 +47,31 @@ Some shared form primitives (`ListingWizardStep`, allergen gates) still use brut
 | `fg-base` | `#241812` | Body text + brutal borders |
 | `fg-muted` | `#5C5144` | Secondary copy, metadata |
 | `bento-mint` | `#E8F5E9` | Wallet, credits, success bento |
-| `bento-peach` | `#FFE8DC` | `SHCBadge variant="peach"` — warm metadata chips (cuisine, occasions, dates) |
+| `bento-peach` | `#FFE8DC` | `SHCBadge variant="warm"` — food/culture metadata chips |
 | `bento-yellow` | `#FFF3C4` | Profile, promos, allergen surfaces |
 
 ### SHCBadge variants
 
+Screens use **`SHCMetaBadge kind="…"`** — never hand-pick `warm` vs `default`. Kinds and mapping live in `packages/shc-utils/src/badge-ux.ts`.
+
 | Variant | Use |
 |---|---|
-| `default` | Neutral metadata (price, generic labels) |
-| `success` | Positive state (live, paid, verified, Halal) |
-| `warning` | Needs attention (paused, pending, open requests) |
+| `default` | Operational metadata (price, slot, date, labels, upload type, tax) |
+| `success` | Positive state (halal, live, earnings total, collected) |
+| `warning` | Needs attention (paused, pending, in-progress order) |
 | `error` | Validation / problem state |
-| `peach` | Warm secondary chip — `bento-peach` bg + brown text (`shcColors.heritage`) |
+| `warm` | Food & culture context — cuisine, occasions, cook dates, portions, meal plans |
+
+#### Semantic kinds → variant
+
+| Kind | Variant | Example |
+|---|---|---|
+| `cuisine`, `occasion`, `party_size`, `cook_date`, `portion_min`, `meal_plan`, `customizable`, `photo_tips`, `tier`, `period` | `warm` | Peranakan, Hari Raya, 12 guests, min 2 |
+| `price`, `slot`, `date`, `label`, `upload_type`, `tax` | `default` | S$14, 6–8pm slot, IRAS |
+| `halal`, `live`, `earnings` | `success` | Halal, listing live, S$240 |
+| `paused` | `warning` | Paused listing |
+
+Status chips use helpers: `shcOrderStatusBadgeVariant()`, `shcDropStatusBadgeVariant()`, `shcSubscriptionStatusBadgeVariant()`.
 
 ### Semantic colors
 
@@ -67,7 +80,7 @@ Some shared form primitives (`ListingWizardStep`, allergen gates) still use brut
 | `success` | `#15803D` | Collected, paid, traffic-green |
 | `warning` | `#CA8A04` | Pending, traffic-amber |
 | `error` | `#B91C1C` | Validation, traffic-red |
-| `heritage` | `#8B5E3C` | Brown text on peach badges; cook story / occasion copy |
+| `heritage` | `#8B5E3C` | Brown text on warm badges; cook story / occasion copy |
 
 ### Brutalist rules
 
