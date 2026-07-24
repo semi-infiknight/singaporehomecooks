@@ -202,7 +202,6 @@ function ProductDetailContent() {
           {product.cuisine ? <SHCBadge variant="heritage">{product.cuisine}</SHCBadge> : null}
           <CalorieBadge calories={displayCal} />
           {product.halal && <SHCBadge variant="success">Halal</SHCBadge>}
-          {product.festive_timing && <SHCBadge>{product.festive_timing}</SHCBadge>}
         </div>
 
         {showRecipe ? (

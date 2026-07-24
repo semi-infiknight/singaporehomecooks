@@ -17,7 +17,7 @@ export const ProductMeta = model.define("shc_product_meta", {
   min_qty: model.number().default(1),
   price_cents: model.number().nullable(),
   last_minute_premium_pct: model.number().nullable(),
-  heritage_note: model.text().nullable(),
+  // heritage_note: model.text().nullable(), // removed from API — dormant DB column
   image_url: model.text().nullable(), // for dish photos / listings (small gap fix for media)
 });
 

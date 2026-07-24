@@ -28,8 +28,7 @@ import {
   contentPadForStickyFooter,
 } from '@shc/ui';
 import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
-import { useCart } from '../../hooks/useProducts';
-import { useCollectionSlots } from '../../hooks/useProducts';
+import { useCart, useCollectionSlots, useProduct } from '../../hooks/useProducts';
 import { checkout, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 import { authRouteWithReturn } from '../../lib/auth-return';
@@ -39,11 +38,9 @@ import { useCustomerLocation } from '../../hooks/useCustomerLocation';
 import { formatLocationLabel } from '@shc/utils';
 
 function AllergenGateTrayContent({
-  allergens,
   tier1,
   onConfirm,
 }: {
-  allergens?: string[];
   tier1?: string[];
   onConfirm: () => void;
 }) {
@@ -54,7 +51,7 @@ function AllergenGateTrayContent({
       <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 18 }}>
         Please review and acknowledge allergens before placing your order.
       </Text>
-      <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} allergens={allergens} tier1={tier1} />
+      <AllergenAckCheckbox checked={localAck} onChange={setLocalAck} tier1={tier1} />
       <GourmeatPrimaryButton
         label="I understand — continue"
         onPress={onConfirm}
@@ -120,6 +117,11 @@ export default function Checkout() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const firstProdId = getFirstCartProductId(cart.items || []);
+  const { data: checkoutProduct } = useProduct(firstProdId || '');
+  const checkoutAllergenTier1 =
+    checkoutProduct?.allergen_tiers?.tier1?.length
+      ? checkoutProduct.allergen_tiers.tier1
+      : ['Shellfish / Nuts (typical)'];
   const { data: slots = [] } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
   const total = (cart.items || []).reduce((s: number, i: any) => s + i.price * i.qty, 0);
   const amountDue = total;
@@ -142,15 +144,14 @@ export default function Checkout() {
     openTray(
       { id: 'allergen-gate', title: 'Allergen acknowledgment', height: 'medium' },
       <AllergenGateTrayContent
-        allergens={(cart.items[0] as any)?.allergens}
-        tier1={['Shellfish / Nuts (typical)']}
+        tier1={checkoutAllergenTier1}
         onConfirm={() => {
           setAllergenAck(true);
           dismiss();
         }}
       />
     );
-  }, [cart.items, dismiss, openTray]);
+  }, [checkoutAllergenTier1, dismiss, openTray]);
 
   const handleCheckout = async () => {
     setError(null);
@@ -369,8 +370,7 @@ export default function Checkout() {
             <AllergenAckCheckbox
               checked={allergenAck}
               onChange={setAllergenAck}
-              allergens={(cart.items[0] as any)?.allergens}
-              tier1={['Shellfish / Nuts (typical)']}
+              tier1={checkoutAllergenTier1}
             />
           </SHCCard>
 

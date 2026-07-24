@@ -110,7 +110,7 @@ function seed() {
       cook_name: cookName,
       ...meta,
       description: d.description,
-      festive_timing: d.festive_timing,
+      // festive_timing: d.festive_timing, // seed-only; not on live API
       image_placeholder: d.image_placeholder,
     };
   });

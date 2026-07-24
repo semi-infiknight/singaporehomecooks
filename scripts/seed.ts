@@ -49,7 +49,6 @@ export interface SeedDish extends Partial<SHCProductMeta> {
   description: string;
   price: number;
   currency: string;
-  festive_timing: string;
   image_placeholder: string;
   status: string;
   // extras for convenience
@@ -161,7 +160,6 @@ export function validateSeed(): { success: boolean; errors: string[]; data?: See
       description: dish.description,
       price: dish.price,
       currency: dish.currency || 'SGD',
-      festive_timing: dish.festive_timing || '',
       image_placeholder: dish.image_placeholder || 'TODO: add hero image',
       status: dish.status || 'active',
     } as SeedDish);

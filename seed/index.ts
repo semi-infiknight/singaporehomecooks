@@ -63,7 +63,6 @@ export interface SeedDish extends Partial<SHCProductMeta> {
   description: string;
   price: number;
   currency: string;
-  festive_timing: string;
   image_placeholder: string;
   status: string;
   cook_display_name?: string;
@@ -83,7 +82,6 @@ export const seedDishes: SeedDish[] = [
     calories_confidence: 'full',
     cuisine: 'Peranakan',
     occasion_tags: ['Family Gathering', 'Hari Raya', 'Birthday', 'Chinese New Year'],
-    festive_timing: 'Hari Raya: ideal for breakfast or lunch on the eve or 1st day. CNY: popular as light lunch after visiting. Book 5-7 days ahead for large parties during festive peaks.',
     halal: false,
     allergen_tiers: {
       tier1: ['Shellfish (Prawns, Ikan Bilis)', 'Crustaceans (Belacan in sambal)', 'Nuts (Peanuts)', 'Eggs'],
@@ -115,7 +113,6 @@ export const seedDishes: SeedDish[] = [
     calories_confidence: 'category',
     cuisine: 'Peranakan',
     occasion_tags: ['Family Gathering', 'Hari Raya', 'Birthday', 'Deepavali'],
-    festive_timing: 'Labour of love — best ordered 3-5 days ahead. Popular centrepiece for Hari Raya and birthday celebrations. During Chinese New Year, pairs beautifully with other Nyonya dishes for reunion meals.',
     halal: false,
     allergen_tiers: {
       tier1: ['Nuts (Buah Keluak / Candlenut family)', 'Shellfish (possible belacan trace in rempah base)'],
@@ -146,7 +143,6 @@ export const seedDishes: SeedDish[] = [
     calories_confidence: 'full',
     cuisine: 'Eurasian',
     occasion_tags: ['Family Gathering', 'Christmas', 'Wedding', 'Full Moon / Baby Full Month', 'Birthday'],
-    festive_timing: 'Christmas Eve and Day centrepiece. Also popular for Eurasian weddings and Full Moon celebrations year-round. Book early for December — many families order 10+ portions. Last-minute premiums apply on 23-25 Dec.',
     halal: false,
     allergen_tiers: {
       tier1: ['Mustard seeds', 'Chillies (nightshade)', 'Chicken'],
