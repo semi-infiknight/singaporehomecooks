@@ -193,7 +193,20 @@ After **CI passes** on `main`, `.github/workflows/railway-deploy.yml` redeploys 
 
 | Secret | Value |
 |--------|--------|
-| `RAILWAY_API_TOKEN` | Railway **account/team** API token (same as local `railway login` token or Railway dashboard → Account → Tokens). **Do not** use a project-scoped `RAILWAY_TOKEN`. |
+| `RAILWAY_API_TOKEN` | Railway **account/team** API token (Railway dashboard → **Account → Tokens**). **Do not** use a project-scoped `RAILWAY_TOKEN` — the CLI returns `Unauthorized` in CI. |
+
+**Rotate / fix CI auth** (repo owner):
+
+```bash
+# Create token in Railway → Account → Tokens, then:
+gh secret set RAILWAY_API_TOKEN --repo semi-infiknight/singaporehomecooks
+# paste token when prompted
+
+# Local smoke (same token the workflow uses):
+RAILWAY_API_TOKEN=your_token node scripts/railway-deploy-services.mjs --check-token
+```
+
+**Install note:** the workflow runs `curl … | bash` (not `sh`) — Railway's install script uses bash-only syntax.
 
 Verify: push a web-only change to `main` → CI green → **Railway Deploy** workflow runs → new web deployment in Railway dashboard.
 
@@ -230,6 +243,8 @@ If enable fails with *"No workspace member has their GitHub account connected"*:
 | Web shows stale API | Redeploy web after changing `NEXT_PUBLIC_*` |
 | Web runs Medusa / Postgres errors in web logs | Set web **Config file** to `railway.web.toml` (see §5) |
 | Push to `main` but homecooksg.com unchanged | Check **Railway Deploy** GitHub Action + `RAILWAY_API_TOKEN` secret; or `pnpm railway:deploy web` |
+| Railway Deploy: `Unauthorized` | GitHub secret `RAILWAY_API_TOKEN` is wrong/expired — rotate per §9 (account token, not project `RAILWAY_TOKEN`) |
+| Railway Deploy: `Bad substitution` | Fixed — workflow uses `curl … \| bash` (not `sh`) |
 | Railway auto-deploy toggle disabled | Connect GitHub in Railway account; run `pnpm railway:enable-autodeploy` (see §9) |
 
 ---

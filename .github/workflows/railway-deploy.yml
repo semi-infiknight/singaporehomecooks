@@ -48,6 +48,14 @@ jobs:
           curl -fsSL https://railway.com/install.sh | bash
           echo "$HOME/.railway/bin" >> "$GITHUB_PATH"
 
+      - name: Verify Railway token
+        if: steps.changes.outputs.web == 'true' || steps.changes.outputs.medusa == 'true' || steps.changes.outputs.worker == 'true'
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: 09a28324-88a2-4ad0-aa5f-54bc2198007b
+          RAILWAY_ENVIRONMENT_ID: 546be85e-73ad-4df7-b105-4bfd90b280c0
+        run: node scripts/railway-deploy-services.mjs --check-token
+
       - name: Deploy web
         if: steps.changes.outputs.web == 'true'
         env:
