@@ -67,7 +67,7 @@ The `RAILWAY_TOKEN` secret is actually an **account/team API token** (workspace:
 - The CLI must receive it as `RAILWAY_API_TOKEN`, and `RAILWAY_TOKEN` must be **unset** (otherwise the CLI treats it as an invalid project token: "Invalid RAILWAY_TOKEN").
 - Team tokens have no user identity, so `railway whoami`, `railway link`, and `railway list` fail. Select the project/env via env vars instead of `railway link`.
 - Target project `homecooks` / env `production`: `RAILWAY_PROJECT_ID=09a28324-88a2-4ad0-aa5f-54bc2198007b`, `RAILWAY_ENVIRONMENT_ID=546be85e-73ad-4df7-b105-4bfd90b280c0`. Services: `medusa`, `web`, `worker`, `minio`, `Postgres`, `Redis`. The live Medusa is `medusa-production-d2ba.up.railway.app`.
-- The CLI is not part of the update script; if missing on a fresh VM, install with `curl -fsSL https://railway.com/install.sh | sh` (lands in `~/.railway/bin`). Then e.g. `railway status`, `railway variables -s medusa`.
+- The CLI is not part of the update script; if missing on a fresh VM, install with `curl -fsSL https://railway.com/install.sh | bash` (lands in `~/.railway/bin`). Then e.g. `railway status`, `railway variables -s medusa`.
 - The raw GraphQL API also works with the same token: `POST https://backboard.railway.com/graphql/v2` with header `Authorization: Bearer $RAILWAY_TOKEN`.
 
 ### Mobile (Expo / EAS)
