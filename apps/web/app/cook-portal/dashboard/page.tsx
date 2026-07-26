@@ -1,18 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  BENTO_ACTION_IMAGES,
+  cookPortalGreeting,
+  getOrderStatusLabel,
+  orderIdFromNotificationType,
+} from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { clearCookOnboardingSeen } from '../../../lib/onboarding';
-import { useCookOrders, useOpenRequests } from '../../../lib/useCookPortal';
+import { useCookOrders, useOpenRequests, useCookNotifications } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatOrderRow,
   SHCBadge,
   VisualBentoTile,
+  CookNotifBell,
 } from '../../components/SHCWebComponents';
-import { getOrderStatusLabel } from '@shc/utils';
 
 const QUICK_ACTIONS = [
   { href: '/cook-portal/batches', label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
@@ -24,9 +31,13 @@ const QUICK_ACTIONS = [
 ];
 
 export default function CookDashboardPage() {
+  const router = useRouter();
   const { user } = useCookAuth();
   const { data: orders = [] } = useCookOrders();
   const { data: openReqs = [] } = useOpenRequests();
+  const { data: notifs = [], markRead } = useCookNotifications();
+  const [showNotifs, setShowNotifs] = useState(false);
+  const greeting = cookPortalGreeting();
 
   const earnings = orders
     .filter((o: { shc_status?: string }) => o.shc_status === 'completed')
@@ -37,10 +48,57 @@ export default function CookDashboardPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-dashboard">
       <GourmeatCookHeader
-        title="Good morning, Chef"
+        title={greeting}
         subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
+        action={
+          <CookNotifBell
+            notifications={notifs as Array<{ id?: string; body?: string; read?: boolean; type?: string }>}
+            open={showNotifs}
+            onToggle={() => {
+              const next = !showNotifs;
+              setShowNotifs(next);
+              if (next && (notifs as any[]).some((n) => !n.read)) {
+                markRead({ all: true });
+              }
+            }}
+          />
+        }
       />
+
+      {showNotifs ? (
+        <GourmeatCard className="mb-4" testID="cook-notifs-panel">
+          <p className="font-black text-sm mb-2">Order alerts</p>
+          {(notifs as any[]).length === 0 ? (
+            <p className="text-xs font-semibold text-muted-foreground">
+              No new alerts — paid orders will ping you here.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {(notifs as any[]).map((n, i) => {
+                const orderId = orderIdFromNotificationType(n.type);
+                const row = (
+                  <p className={`text-xs font-semibold ${!n.read ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+                    {!n.read ? '● ' : ''}
+                    {n.body}
+                  </p>
+                );
+                return (
+                  <li key={n.id || i}>
+                    {orderId ? (
+                      <button type="button" className="text-left w-full" onClick={() => router.push(`/cook-portal/orders/${orderId}`)}>
+                        {row}
+                      </button>
+                    ) : (
+                      row
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </GourmeatCard>
+      ) : null}
 
       <Link
         href="/cook-portal/onboarding"

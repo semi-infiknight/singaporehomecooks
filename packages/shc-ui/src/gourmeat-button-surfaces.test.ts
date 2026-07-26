@@ -36,7 +36,7 @@ describe('Gourmeat button surfaces (mobile-customer)', () => {
   it('GourmeatStickyCartBar uses inner View with border and shadow', () => {
     const block = extractFunctionBlock(gourmeat, 'GourmeatStickyCartBar', 'GourmeatPayButton');
     expectInnerViewBackground(block, 'GourmeatStickyCartBar');
-    expect(block).toContain('borderWidth: 3');
+    expect(block).toContain('borderWidth: 0');
     expect(block).toContain('gourmeatShadows.nav');
   });
 

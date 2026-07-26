@@ -108,3 +108,6 @@ export const createBid = (requestId: string, priceCents: number, message?: strin
 export const listMyDrops = () => cookClient.listDrops({ mine: true });
 export const createDrop = (input: Record<string, unknown>) => cookClient.createDrop(input);
 export const patchDrop = (id: string, input: Record<string, unknown>) => cookClient.patchDrop(id, input);
+export const getCookNotifications = () => cookClient.getNotifications({ role: 'cook' });
+export const markCookNotificationsRead = (ids?: string[], all = false) =>
+  cookClient.markNotificationsRead(ids, all, 'cook');

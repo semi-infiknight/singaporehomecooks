@@ -2383,11 +2383,11 @@ export function StickyCartBar({
     <Link
       href={href}
       data-testid={testID}
-      className="shc-btn-primary flex items-center justify-between gap-3 w-full rounded-xl border-[3px] border-[var(--shc-border-brutal)] px-4 py-3.5 min-h-[58px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] hover:brightness-105 active:translate-x-px active:translate-y-px transition-all"
+      className="shc-btn-primary flex items-center justify-between gap-3 w-full rounded-xl px-4 py-3.5 min-h-[58px] shadow-[0_8px_24px_rgba(0,0,0,0.18)] hover:brightness-105 active:scale-[0.99] transition-all"
       aria-label={`View cart, ${countLabel}, ${totalLabel}`}
     >
       <span className="flex items-center gap-3 min-w-0 flex-1">
-        <span className="w-10 h-10 shrink-0 rounded-full bg-primary-foreground border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+        <span className="w-10 h-10 shrink-0 rounded-full bg-primary-foreground flex items-center justify-center">
           <ShoppingBag className="w-5 h-5 text-primary" aria-hidden />
         </span>
         <span className="min-w-0">
@@ -2399,7 +2399,7 @@ export function StickyCartBar({
         </span>
       </span>
       <span className="flex items-center gap-2 shrink-0">
-        <span className="min-w-[26px] h-[26px] flex items-center justify-center rounded-full bg-[var(--shc-accent)] text-[11px] font-black text-foreground border-2 border-[var(--shc-border-brutal)] px-1.5">
+        <span className="min-w-[26px] h-[26px] flex items-center justify-center rounded-full bg-[var(--shc-accent)] text-[11px] font-black text-foreground px-1.5">
           {badge}
         </span>
         <span className="font-black text-[17px] tabular-nums">{totalLabel}</span>
@@ -3613,19 +3613,54 @@ export function GourmeatCookHeader({
   title,
   subtitle,
   badges,
+  action,
   testID,
 }: {
   title: string;
   subtitle?: string;
   badges?: React.ReactNode;
+  action?: React.ReactNode;
   testID?: string;
 }) {
   return (
-    <div className="shc-header-gap" data-testid={testID}>
-      <h1 className="shc-type-screen-title text-foreground">{title}</h1>
-      {subtitle ? <p className="text-[13px] text-muted-foreground mt-1">{subtitle}</p> : null}
-      {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}
+    <div className="flex items-start justify-between gap-3" data-testid={testID}>
+      <div className="flex-1 min-w-0 shc-header-gap">
+        <h1 className="shc-type-screen-title text-foreground">{title}</h1>
+        {subtitle ? <p className="text-[13px] text-muted-foreground mt-1">{subtitle}</p> : null}
+        {badges ? <div className="flex flex-wrap gap-2 mt-3">{badges}</div> : null}
+      </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
+  );
+}
+
+export function CookNotifBell({
+  notifications,
+  open,
+  onToggle,
+}: {
+  notifications: Array<{ id?: string; body?: string; read?: boolean; type?: string }>;
+  open?: boolean;
+  onToggle: () => void;
+}) {
+  const unread = notifications.filter((n) => !n.read).length;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`relative w-10 h-10 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)] ${
+        open ? 'ring-2 ring-primary' : ''
+      }`}
+      data-testid="cook-notif-bell"
+      aria-label="Notifications"
+    >
+      <Bell className="w-5 h-5 text-foreground" aria-hidden />
+      {unread > 0 ? (
+        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+          {unread}
+        </span>
+      ) : null}
+    </button>
   );
 }
 

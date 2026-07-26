@@ -191,3 +191,24 @@ export function usePatchDrop() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-drops'] }),
   });
 }
+
+export function useCookNotifications() {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['notifications', 'cook'],
+    queryFn: async () => {
+      const { getCookNotifications } = await import('./cook-api-client');
+      return getCookNotifications();
+    },
+    enabled: isCookAuthenticated(),
+    refetchInterval: 8000,
+  });
+  const markRead = useMutation({
+    mutationFn: async (opts: { ids?: string[]; all?: boolean } = {}) => {
+      const { markCookNotificationsRead } = await import('./cook-api-client');
+      await markCookNotificationsRead(opts.ids, !!opts.all);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications', 'cook'] }),
+  });
+  return { ...query, markRead: markRead.mutate, markReadAsync: markRead.mutateAsync };
+}

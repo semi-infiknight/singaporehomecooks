@@ -4,12 +4,14 @@ import 'react-native-reanimated';
 import '../global.css';
 
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SHCTrayProvider } from '@shc/ui';
+import { useSHCFonts } from '@shc/ui/fonts';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -20,11 +22,43 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppShell() {
+  const fontsLoaded = useSHCFonts();
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: shcColors.background }}>
+        <ActivityIndicator color={shcColors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <StatusBar style="dark" />
+      <ErrorBoundary>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: shcColors.primary },
+            headerTintColor: shcColors.background,
+            headerTitleStyle: { fontWeight: '600' },
+            headerTitle: 'SHC — Cook',
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(cook)" options={{ headerShown: false }} />
+          <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
+          <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
+          <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
+        </Stack>
+      </ErrorBoundary>
+    </>
+  );
+}
+
 /**
  * Provider order matters:
  * SafeArea → Query → Tray (outer) → ErrorBoundary (inner) → Stack
- * Tray must wrap all screens that call useSHCTray; ErrorBoundary must not
- * sit outside Tray or recovery remounts can drop context for children.
  */
 export default function RootLayout() {
   return (
@@ -32,23 +66,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <SHCTrayProvider queryClient={queryClient}>
-            <StatusBar style="dark" />
-            <ErrorBoundary>
-              <Stack
-                screenOptions={{
-                  headerStyle: { backgroundColor: shcColors.primary },
-                  headerTintColor: shcColors.background,
-                  headerTitleStyle: { fontWeight: '600' },
-                  headerTitle: 'SHC — Cook',
-                }}
-              >
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(cook)" options={{ headerShown: false }} />
-                <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
-                <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
-                <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
-              </Stack>
-            </ErrorBoundary>
+            <AppShell />
           </SHCTrayProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

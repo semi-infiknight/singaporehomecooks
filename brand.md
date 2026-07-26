@@ -176,7 +176,7 @@ References:
 | Caption | 11–12px | 500–600 | Metadata, disclaimers |
 | Mono | 14–16px | 600 | Prices, order IDs, PayNow refs (`tabular-nums`) |
 
-- **Display + body:** DM Sans (web via `next/font`; mobile system fallback until custom font wired)
+- **Display + body:** DM Sans (web via `next/font`; mobile via `useSHCFonts` + `@expo-google-fonts/dm-sans`)
 - **Mono:** DM Mono for S$ amounts and references
 
 ---

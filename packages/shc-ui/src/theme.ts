@@ -100,36 +100,60 @@ export const shcShadows = {
   },
 };
 
+/** DM Sans / DM Mono — loaded via useSHCFonts on mobile; web uses next/font CSS vars. */
+export const shcFontFamilies = {
+  regular: 'DMSans_400Regular',
+  medium: 'DMSans_500Medium',
+  bold: 'DMSans_700Bold',
+  black: 'DMSans_800ExtraBold',
+  mono: 'DMMono_500Medium',
+} as const;
+
+export function shcFontFamilyForWeight(fontWeight?: string | number | null): string {
+  const raw = fontWeight ?? 400;
+  const w = typeof raw === 'string' ? parseInt(raw, 10) || 400 : raw;
+  if (w >= 800) return shcFontFamilies.black;
+  if (w >= 600) return shcFontFamilies.bold;
+  if (w >= 500) return shcFontFamilies.medium;
+  return shcFontFamilies.regular;
+}
+
 export const shcTypography = {
-  display: { fontSize: 28, fontWeight: '900' as const, letterSpacing: -0.5 },
-  h1: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.3 },
-  h2: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3 },
-  h3: { fontSize: 16, fontWeight: '700' as const },
-  body: { fontSize: 14, fontWeight: '500' as const },
-  bodyBold: { fontSize: 14, fontWeight: '700' as const },
-  caption: { fontSize: 12, fontWeight: '500' as const },
-  captionBold: { fontSize: 12, fontWeight: '700' as const },
-  micro: { fontSize: 11, fontWeight: '600' as const },
-  microBold: { fontSize: 11, fontWeight: '800' as const },
-  eyebrow: { fontSize: 10, fontWeight: '800' as const, letterSpacing: 1.2, textTransform: 'uppercase' as const },
-  mono: { fontSize: 14, fontWeight: '600' as const, fontVariant: ['tabular-nums'] as const },
+  display: { fontSize: 28, fontWeight: '900' as const, letterSpacing: -0.5, fontFamily: shcFontFamilies.black },
+  h1: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.3, fontFamily: shcFontFamilies.black },
+  h2: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3, fontFamily: shcFontFamilies.black },
+  h3: { fontSize: 16, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  body: { fontSize: 14, fontWeight: '500' as const, fontFamily: shcFontFamilies.regular },
+  bodyBold: { fontSize: 14, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  caption: { fontSize: 12, fontWeight: '500' as const, fontFamily: shcFontFamilies.regular },
+  captionBold: { fontSize: 12, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  micro: { fontSize: 11, fontWeight: '600' as const, fontFamily: shcFontFamilies.medium },
+  microBold: { fontSize: 11, fontWeight: '800' as const, fontFamily: shcFontFamilies.black },
+  eyebrow: { fontSize: 10, fontWeight: '800' as const, letterSpacing: 1.2, textTransform: 'uppercase' as const, fontFamily: shcFontFamilies.black },
+  mono: { fontSize: 14, fontWeight: '600' as const, fontVariant: ['tabular-nums'] as const, fontFamily: shcFontFamilies.mono },
+};
+
+/** Customer Gourmeat card chrome — soft 1px borders (not neo-brutal cook/forms). */
+export const gourmeatSurfaces = {
+  cardBorderWidth: 1,
+  cardBorderColor: '#E8E8E8',
 };
 
 /** Gourmeat customer skin typography — Orbix Studio discover/checkout. */
 export const gourmeatTypography = {
-  homeHeadline: { fontSize: 26, fontWeight: '800' as const, letterSpacing: -0.5, lineHeight: 32 },
-  screenTitle: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5 },
-  sectionTitle: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3 },
-  cardTitle: { fontSize: 14, fontWeight: '700' as const },
-  cardMeta: { fontSize: 11, fontWeight: '500' as const },
-  price: { fontSize: 15, fontWeight: '800' as const },
-  locationHint: { fontSize: 11, fontWeight: '600' as const },
-  locationLabel: { fontSize: 12, fontWeight: '700' as const },
-  search: { fontSize: 14, fontWeight: '500' as const },
-  tabLabel: { fontSize: 10, fontWeight: '500' as const },
-  tabLabelActive: { fontSize: 10, fontWeight: '700' as const },
-  categoryLabel: { fontSize: 11, fontWeight: '500' as const, lineHeight: 14 },
-  categoryLabelActive: { fontSize: 11, fontWeight: '700' as const, lineHeight: 14 },
+  homeHeadline: { fontSize: 26, fontWeight: '800' as const, letterSpacing: -0.5, lineHeight: 32, fontFamily: shcFontFamilies.black },
+  screenTitle: { fontSize: 28, fontWeight: '800' as const, letterSpacing: -0.5, fontFamily: shcFontFamilies.black },
+  sectionTitle: { fontSize: 18, fontWeight: '800' as const, letterSpacing: -0.3, fontFamily: shcFontFamilies.black },
+  cardTitle: { fontSize: 14, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  cardMeta: { fontSize: 11, fontWeight: '500' as const, fontFamily: shcFontFamilies.regular },
+  price: { fontSize: 15, fontWeight: '800' as const, fontFamily: shcFontFamilies.black },
+  locationHint: { fontSize: 11, fontWeight: '600' as const, fontFamily: shcFontFamilies.medium },
+  locationLabel: { fontSize: 12, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  search: { fontSize: 14, fontWeight: '500' as const, fontFamily: shcFontFamilies.regular },
+  tabLabel: { fontSize: 10, fontWeight: '500' as const, fontFamily: shcFontFamilies.regular },
+  tabLabelActive: { fontSize: 10, fontWeight: '700' as const, fontFamily: shcFontFamilies.bold },
+  categoryLabel: { fontSize: 11, fontWeight: '500' as const, lineHeight: 14, fontFamily: shcFontFamilies.regular },
+  categoryLabelActive: { fontSize: 11, fontWeight: '700' as const, lineHeight: 14, fontFamily: shcFontFamilies.bold },
 };
 
 /** Standard icon sizes (SHCIcon, lucide web mirrors). */

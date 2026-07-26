@@ -843,8 +843,7 @@ export function GourmeatStickyCartBar({
             justifyContent: 'space-between',
             backgroundColor: pressed ? gourmeatColors.primaryDark : gourmeatColors.primary,
             borderRadius: gourmeatRadii.lg,
-            borderWidth: 3,
-            borderColor: gourmeatColors.borderDark,
+            borderWidth: 0,
             paddingVertical: shcSpacing.md,
             paddingHorizontal: shcSpacing.md,
             minHeight: 58,
@@ -858,8 +857,7 @@ export function GourmeatStickyCartBar({
                 height: 40,
                 borderRadius: 20,
                 backgroundColor: gourmeatColors.onPrimary,
-                borderWidth: 2,
-                borderColor: gourmeatColors.borderDark,
+                borderWidth: 0,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
@@ -887,8 +885,7 @@ export function GourmeatStickyCartBar({
                 height: 26,
                 borderRadius: 13,
                 backgroundColor: gourmeatColors.accent,
-                borderWidth: 2,
-                borderColor: gourmeatColors.borderDark,
+                borderWidth: 0,
                 alignItems: 'center',
                 justifyContent: 'center',
                 paddingHorizontal: 5,
@@ -1350,20 +1347,25 @@ export function GourmeatCookHeader({
   title,
   subtitle,
   badges,
+  action,
   testID,
 }: {
   title: string;
   subtitle?: string;
   badges?: React.ReactNode;
+  action?: React.ReactNode;
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={shcHeaderGap}>
-      <Text style={{ ...gourmeatTypography.screenTitle, color: gourmeatColors.text }}>{title}</Text>
-      {subtitle ? (
-        <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 }}>{subtitle}</Text>
-      ) : null}
-      {badges ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.sm }}>{badges}</View> : null}
+    <View testID={testID} style={[shcHeaderGap, { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm }]}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ ...gourmeatTypography.screenTitle, color: gourmeatColors.text }}>{title}</Text>
+        {subtitle ? (
+          <Text style={{ fontSize: 13, color: gourmeatColors.textLight, marginTop: 4 }}>{subtitle}</Text>
+        ) : null}
+        {badges ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.sm }}>{badges}</View> : null}
+      </View>
+      {action ? <View style={{ flexShrink: 0 }}>{action}</View> : null}
     </View>
   );
 }

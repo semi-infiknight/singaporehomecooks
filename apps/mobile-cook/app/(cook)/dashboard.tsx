@@ -28,7 +28,7 @@ import {
   SHCSkeletonBone,
   contentPadForTabBar,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getDishImageUrl, isCookComplianceVerified, orderIdFromNotificationType } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getDishImageUrl, isCookComplianceVerified, orderIdFromNotificationType, cookPortalGreeting } from '@shc/utils';
 import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
@@ -73,6 +73,8 @@ export default function CookDashboard() {
     .filter((o: any) => o.shc_status === 'completed')
     .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
 
+  const greeting = cookPortalGreeting();
+
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
 
@@ -81,34 +83,32 @@ export default function CookDashboard() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
       testID="cook-dashboard"
     >
-      <View style={styles.headerRow}>
-        <View style={styles.headerMain}>
-          <GourmeatCookHeader
-            title="Good morning, Chef"
-            subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
-            testID="cook-dashboard-hero"
-          />
-        </View>
-        <Pressable
-          onPress={() => {
-            const next = !showNotifs;
-            setShowNotifs(next);
-            if (next && notifs.some((n: any) => !n.read)) {
-              markRead({ all: true });
-            }
-          }}
-          testID="cook-notif-bell"
-          accessibilityLabel="Notifications"
-          style={styles.bellBtn}
-        >
-          <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
-          {notifs.filter((n: any) => !n.read).length > 0 && (
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellCount}>{notifs.filter((n: any) => !n.read).length}</Text>
-            </View>
-          )}
-        </Pressable>
-      </View>
+      <GourmeatCookHeader
+        title={greeting}
+        subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
+        testID="cook-dashboard-hero"
+        action={
+          <Pressable
+            onPress={() => {
+              const next = !showNotifs;
+              setShowNotifs(next);
+              if (next && notifs.some((n: any) => !n.read)) {
+                markRead({ all: true });
+              }
+            }}
+            testID="cook-notif-bell"
+            accessibilityLabel="Notifications"
+            style={styles.bellBtn}
+          >
+            <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
+            {notifs.filter((n: any) => !n.read).length > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellCount}>{notifs.filter((n: any) => !n.read).length}</Text>
+              </View>
+            )}
+          </Pressable>
+        }
+      />
 
       {showNotifs ? (
         <SHCCard style={styles.notifsCard} testID="cook-notifs-panel">
