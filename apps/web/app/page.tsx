@@ -26,7 +26,6 @@ import {
   getDropImageUrl,
   getCookKitchenHeroUrl,
   discoverHomeHeadline,
-  discoverHomePromoCarousel,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   isPopularDish,
@@ -46,6 +45,7 @@ import {
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
+import { useDiscoverPromos } from '../lib/useDiscoverPromos';
 import { getCooks } from '../lib/api-client';
 import {
   SHCButton,
@@ -203,7 +203,7 @@ export default function DiscoverHome() {
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
-  const homePromos = useMemo(() => discoverHomePromoCarousel(), []);
+  const { promos: homePromos } = useDiscoverPromos();
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
   const gridHeading = discoverGridHeading(mode, filters);
   const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));

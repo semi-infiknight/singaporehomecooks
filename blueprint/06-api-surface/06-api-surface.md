@@ -75,10 +75,12 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 | `GET /admin/shc/orders` | Cross-app order board (status/cook/customer filters) |
 | `GET /admin/shc/compliance` | SFA/WSQ review queue + summary funnel |
 | `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets (not cook-owned) |
+| `GET/POST/DELETE /admin/shc/discover-promos` | Discover home promo carousel slides |
 | `GET/POST /store/shc/drops` | Cooking soon marketplace list + cook create batch |
 | `GET/PATCH /store/shc/drops/:id` | Drop detail + cook pause/close/extend |
 | `POST /store/shc/drops/:id/order` | Customer capacity-aware batch order (fixed collection) |
 | `GET /store/shc/categories` | Public mind-row categories for discover |
+| `GET /store/shc/discover-promos` | Public discover home promo carousel slides |
 | Existing | feature-flags, disputes, payouts, ledger, commission-rules, search-synonyms, platform-stats, payment-confirm |
 
 **Admin refresh policy:** SHC Ops UI uses React Query polling (30s hot paths, 45s default) + refetch on tab focus — not WebSocket push. See `apps/medusa/ADMIN.md` + `src/admin/lib/shc-ops-polling.ts`.

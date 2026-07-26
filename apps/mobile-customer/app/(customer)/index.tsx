@@ -47,7 +47,6 @@ import {
   formatDropPrice,
   filterCustomerCookingSoonDrops,
   discoverHomeHeadline,
-  discoverHomePromoCarousel,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   isPopularDish,
@@ -72,6 +71,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
+import { useDiscoverPromos } from '../../hooks/useDiscoverPromos';
 import { useQuery } from '@tanstack/react-query';
 import { getCooks } from '../../lib/api-client';
 
@@ -200,7 +200,7 @@ export default function CustomerDiscover() {
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
-  const homePromos = useMemo(() => discoverHomePromoCarousel(), []);
+  const { promos: homePromos } = useDiscoverPromos();
   const gridHeading = discoverGridHeading(mode, filters);
   const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
   const emptyCopy = discoverEmptyCopy(mode, filters);
