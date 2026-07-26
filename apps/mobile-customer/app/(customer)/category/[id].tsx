@@ -86,8 +86,11 @@ export default function CategoryExploreScreen() {
   const [chip, setChip] = useState('all');
   const [mealType, setMealType] = useState<MealTypeId>('all');
 
-  const { config: browseConfig } = useCustomerConfig();
-  const category = useMemo(() => getCuisineCategoryById(categoryId), [categoryId]);
+  const { config: browseConfig, categories: mindCategories } = useCustomerConfig();
+  const category = useMemo(
+    () => getCuisineCategoryById(categoryId, mindCategories),
+    [categoryId, mindCategories]
+  );
   const offer = useMemo(
     () => customerCategoryOfferCopy(browseConfig, category?.label || category?.id || 'Heritage'),
     [browseConfig, category]
@@ -100,14 +103,14 @@ export default function CategoryExploreScreen() {
   const activeFilterCount = discoverActiveFilterCount(filters);
 
   const categoryProducts = useMemo(() => {
-    const scoped = scopeProductsByCategory(productList, categoryId);
+    const scoped = scopeProductsByCategory(productList, categoryId, mindCategories);
     return filterDiscoverProducts(scoped, {
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       vegetarianOnly: vegetarianOnly || undefined,
       maxCal,
     });
-  }, [productList, categoryId, mealType, halalOnly, vegetarianOnly, maxCal]);
+  }, [productList, categoryId, mindCategories, mealType, halalOnly, vegetarianOnly, maxCal]);
 
   const clearFilters = useCallback(() => {
     const cleared = clearedDiscoverFilters();

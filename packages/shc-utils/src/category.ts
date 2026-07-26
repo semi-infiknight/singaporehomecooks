@@ -1,5 +1,5 @@
 /**
- * Category browse helpers — scope dishes/kitchens by cuisine id from MIND_CUISINE_CATEGORIES.
+ * Category browse helpers — scope dishes/kitchens by cuisine id from admin or default categories.
  * Pure functions for category pages (web + mobile-customer).
  */
 import { MIND_CUISINE_CATEGORIES } from './food-visuals';
@@ -7,17 +7,32 @@ import { filterDiscoverProducts } from './discover';
 
 export type CuisineCategory = { id: string; label: string; imageUrl: string };
 
+function categorySource(categories?: readonly CuisineCategory[]): CuisineCategory[] {
+  if (categories?.length) {
+    return categories.map((c) => ({
+      id: c.id,
+      label: c.label,
+      imageUrl: c.imageUrl,
+    }));
+  }
+  return MIND_CUISINE_CATEGORIES.map((c) => ({ ...c }));
+}
+
 /** Resolve a cuisine category by id (e.g. "Peranakan"). Empty id = All. */
-export function getCuisineCategoryById(categoryId: string | undefined | null): CuisineCategory | null {
+export function getCuisineCategoryById(
+  categoryId: string | undefined | null,
+  categories?: readonly CuisineCategory[]
+): CuisineCategory | null {
+  const source = categorySource(categories);
   if (categoryId == null) return null;
   const decoded = decodeURIComponent(String(categoryId)).trim();
   // "All" is not a dedicated category page destination
   if (!decoded || decoded === 'all' || decoded === 'All') {
-    return MIND_CUISINE_CATEGORIES.find((c) => c.id === '') ?? { id: '', label: 'All', imageUrl: '' };
+    return source.find((c) => c.id === '') ?? { id: '', label: 'All', imageUrl: '' };
   }
-  const exact = MIND_CUISINE_CATEGORIES.find((c) => c.id === decoded);
+  const exact = source.find((c) => c.id === decoded);
   if (exact) return exact;
-  const byLabel = MIND_CUISINE_CATEGORIES.find(
+  const byLabel = source.find(
     (c) => c.label.toLowerCase() === decoded.toLowerCase() || c.id.toLowerCase() === decoded.toLowerCase()
   );
   return byLabel ?? null;
@@ -30,20 +45,22 @@ export function getCuisineCategoryById(categoryId: string | undefined | null): C
  */
 export function scopeProductsByCategory(
   products: Record<string, unknown>[],
-  categoryId: string | undefined | null
+  categoryId: string | undefined | null,
+  categories?: readonly CuisineCategory[]
 ): Record<string, unknown>[] {
+  const source = categorySource(categories);
   if (categoryId == null) return [];
   const decoded = decodeURIComponent(String(categoryId)).trim();
   if (!decoded || decoded === 'all' || decoded === 'All') {
     return [...products];
   }
-  const cat = getCuisineCategoryById(decoded);
+  const cat = getCuisineCategoryById(decoded, source);
   if (!cat || !cat.id) {
     // Unknown id — honest empty, not unscoped dump
-    if (!MIND_CUISINE_CATEGORIES.some((c) => c.id && c.id.toLowerCase() === decoded.toLowerCase())) {
+    if (!source.some((c) => c.id && c.id.toLowerCase() === decoded.toLowerCase())) {
       // try case-insensitive cuisine match on products only if category not in mind list
       const matched = products.filter((p) => String(p.cuisine || '').toLowerCase() === decoded.toLowerCase());
-      if (matched.length === 0 && !MIND_CUISINE_CATEGORIES.some((c) => c.id)) return [];
+      if (matched.length === 0 && !source.some((c) => c.id)) return [];
       if (matched.length > 0) return matched;
       return [];
     }
