@@ -16,7 +16,7 @@ import {
   shcSpacing,
   contentPadSafe,
 } from '@shc/ui';
-import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@shc/utils';
+import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion, coerceRating } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
@@ -61,7 +61,7 @@ export default function SearchScreen() {
       cook_name: p.cook_name,
       price: p.price,
       cuisine: p.cuisine,
-      rating: p.rating || 4.8,
+      rating: coerceRating(p.rating),
       image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name, image_url: p.image_url }),
     }),
     []

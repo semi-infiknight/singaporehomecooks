@@ -8,7 +8,7 @@ import { useAuth } from '../../lib/useAuth';
 import { useGuestAuthGate } from '../../lib/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
 import { useFavorites } from '../../lib/useFavorites';
-import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion } from '@shc/utils';
+import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion, coerceRating } from '@shc/utils';
 import {
   SHCButton,
   GourmeatDishCard,
@@ -65,7 +65,7 @@ export default function SearchPage() {
         cook_name: p.cook_name || '',
         price: Number(p.price || 0),
         cuisine: p.cuisine,
-        rating: p.rating != null ? Number(p.rating) : 4.8,
+        rating: coerceRating(p.rating),
         image_url: getDishImageUrl({ id: p.id, cuisine: p.cuisine, name: p.name }),
       })),
     [results]

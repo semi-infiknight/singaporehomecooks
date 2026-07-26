@@ -24,6 +24,7 @@ import {
   occasionBrowseHeading,
   isPopularDish,
   BENTO_ACTION_IMAGES,
+  coerceRating,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
@@ -37,7 +38,7 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
     cook_name: String(product.cook_name),
     price: Number(product.price),
     cuisine: product.cuisine ? String(product.cuisine) : undefined,
-    rating: product.rating != null ? Number(product.rating) : undefined,
+    rating: coerceRating(product.rating),
     halal: Boolean(product.halal),
     collection_slot: getCollectionSlotLabel(id),
     image_url: getDishImageUrl({

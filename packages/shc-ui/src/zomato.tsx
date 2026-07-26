@@ -452,7 +452,7 @@ export function SHCZomatoDishRow({
   const cardTestID = testID ?? `dish-row-${dish.id}`;
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const slot = dish.collection_slot || getCollectionSlotLabel(dish.id);
-  const rating = dish.rating ?? 4.8;
+  const rating = dish.rating != null && Number.isFinite(Number(dish.rating)) ? Number(dish.rating) : undefined;
   return (
     <SharedDishNavSurface
       dishId={dish.id}
@@ -508,7 +508,7 @@ export function SHCZomatoDishRow({
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 8 }}>
-            <SHCZomatoRatingPill rating={rating} reviewCount={42} testID={`${cardTestID}-rating`} />
+            {rating != null ? <SHCZomatoRatingPill rating={rating} testID={`${cardTestID}-rating`} /> : null}
             <Text style={{ ...shcTypography.mono, fontSize: 13, fontWeight: '800', color: shcColors.text }} testID={`${cardTestID}-price`}>
               S${dish.price}
             </Text>

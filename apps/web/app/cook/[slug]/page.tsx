@@ -130,7 +130,7 @@ export default function KitchenPage() {
   }, [menuSections]);
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => kitchenRatingBuckets(ratingSum.rating), [ratingSum.rating]);
+  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
   const reviews = useMemo(
     () => sortKitchenReviews(kitchenDemoReviews(String(cook?.id || slug || 'kitchen')), reviewSort),
     [cook?.id, slug, reviewSort]
@@ -248,14 +248,16 @@ export default function KitchenPage() {
                 {cook.orders ? ` · ${cook.orders}+ orders` : ''}
               </p>
             </div>
-            <button
-              type="button"
-              className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
-              data-testid="kitchen-rating-pill"
-              onClick={() => router.push(`/cook/${slug}/ratings`)}
-            >
-              ★ {ratingSum.label}
-            </button>
+            {ratingSum ? (
+              <button
+                type="button"
+                className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
+                data-testid="kitchen-rating-pill"
+                onClick={() => router.push(`/cook/${slug}/ratings`)}
+              >
+                ★ {ratingSum.label}
+              </button>
+            ) : null}
           </div>
         </div>
         <div className="p-4">
@@ -570,28 +572,34 @@ export default function KitchenPage() {
             className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4"
             data-testid="kitchen-rating-breakdown"
           >
-            <div className="flex items-end gap-4 mb-4">
-              <div>
-                <p className="text-4xl font-black tabular-nums">{ratingSum.rating.toFixed(1)}</p>
-                <p className="text-xs font-bold text-muted-foreground">/ 5.0</p>
-                <p className="text-xs font-semibold text-muted-foreground mt-1">
-                  {ratingSum.reviewCount} reviews
-                </p>
-              </div>
-              <div className="flex-1 space-y-1.5">
-                {buckets.map((b) => (
-                  <div key={b.key} className="flex items-center gap-2 text-xs font-semibold">
-                    <span className="w-20 shrink-0 text-muted-foreground">{b.label}</span>
-                    <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${Math.round(b.share * 100)}%` }}
-                      />
+            {ratingSum ? (
+              <div className="flex items-end gap-4 mb-4">
+                <div>
+                  <p className="text-4xl font-black tabular-nums">{ratingSum.rating.toFixed(1)}</p>
+                  <p className="text-xs font-bold text-muted-foreground">/ 5.0</p>
+                  {ratingSum.reviewCount != null ? (
+                    <p className="text-xs font-semibold text-muted-foreground mt-1">
+                      {ratingSum.reviewCount} reviews
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  {buckets.map((b) => (
+                    <div key={b.key} className="flex items-center gap-2 text-xs font-semibold">
+                      <span className="w-20 shrink-0 text-muted-foreground">{b.label}</span>
+                      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${Math.round(b.share * 100)}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <p className="text-sm font-semibold text-muted-foreground mb-4">No ratings yet for this kitchen.</p>
+            )}
             <p className="text-xs font-semibold text-muted-foreground">
               Community samples for this kitchen · leave a review after you collect an order.
             </p>

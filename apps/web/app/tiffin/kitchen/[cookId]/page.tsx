@@ -96,7 +96,7 @@ export default function TiffinKitchenPage() {
     area: (kitchen as any)?.cook?.area,
     story: (kitchen as any)?.tagline || (kitchen as any)?.cook?.story,
     cuisine: dishes[0]?.cuisine,
-    rating: (kitchen as any)?.rating ?? (kitchen as any)?.cook?.rating ?? 4.8,
+    rating: (kitchen as any)?.rating ?? (kitchen as any)?.cook?.rating,
     review_count: (kitchen as any)?.review_count,
     subscriber_count: (kitchen as any)?.subscriber_count,
     status: (kitchen as any)?.enabled === false ? 'paused' : 'active',
@@ -127,7 +127,7 @@ export default function TiffinKitchenPage() {
     selectedDuration.weeks
   );
   const reviews = sortKitchenReviews(kitchenDemoReviews(cookId), 'recent');
-  const buckets = kitchenRatingBuckets(ratingSum.rating);
+  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
   const avatar = getCookAvatarUrl(cookId, cookName);
   const trustChips = subscribeTrustChips({
     area: (kitchen as any)?.cook?.area,
@@ -221,12 +221,14 @@ export default function TiffinKitchenPage() {
                   `${(kitchen as any).cook?.area || 'Singapore'} · home-cooked tiffin`}
               </p>
             </div>
-            <span
-              className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
-              data-testid="kitchen-rating-pill"
-            >
-              ★ {ratingSum.label}
-            </span>
+            {ratingSum ? (
+              <span
+                className="shrink-0 rounded-lg bg-black px-2 py-1 text-xs font-extrabold text-white"
+                data-testid="kitchen-rating-pill"
+              >
+                ★ {ratingSum.label}
+              </span>
+            ) : null}
           </div>
           <p
             className={`text-sm font-extrabold mt-2 ${open.isOpen ? 'text-green-700' : 'text-red-700'}`}
@@ -495,16 +497,24 @@ export default function TiffinKitchenPage() {
       {tab === 'reviews' && (
         <div className="space-y-3 mb-8" data-testid="kitchen-tab-panel-reviews">
           <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] p-4">
-            <p className="text-3xl font-black">{ratingSum.rating.toFixed(1)} / 5</p>
-            <p className="text-xs font-semibold text-muted-foreground mb-3">{ratingSum.reviewCount} reviews</p>
-            {buckets.map((b) => (
-              <div key={b.key} className="flex items-center gap-2 text-xs mb-1">
-                <span className="w-20 text-muted-foreground font-semibold">{b.label}</span>
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: `${Math.round(b.share * 100)}%` }} />
-                </div>
-              </div>
-            ))}
+            {ratingSum ? (
+              <>
+                <p className="text-3xl font-black">{ratingSum.rating.toFixed(1)} / 5</p>
+                {ratingSum.reviewCount != null ? (
+                  <p className="text-xs font-semibold text-muted-foreground mb-3">{ratingSum.reviewCount} reviews</p>
+                ) : null}
+                {buckets.map((b) => (
+                  <div key={b.key} className="flex items-center gap-2 text-xs mb-1">
+                    <span className="w-20 text-muted-foreground font-semibold">{b.label}</span>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${Math.round(b.share * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p className="text-sm font-semibold text-muted-foreground">No ratings yet for this kitchen.</p>
+            )}
           </div>
           {reviews.map((r) => (
             <SHCCard key={r.id}>

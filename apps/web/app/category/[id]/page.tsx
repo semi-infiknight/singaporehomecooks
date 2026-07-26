@@ -12,6 +12,7 @@ import {
   categoryOfferCopy,
   getDishImageUrl,
   getCookKitchenHeroUrl,
+  coerceRating,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useAuth } from '../../../lib/useAuth';
@@ -39,7 +40,7 @@ function toDishCard(product: Record<string, unknown>): DishCardProduct & { ratin
     cook_name: String(product.cook_name || product.cook_display_name || ''),
     price: Number(product.price),
     cuisine: product.cuisine ? String(product.cuisine) : undefined,
-    rating: product.rating != null ? Number(product.rating) : 4.8,
+    rating: coerceRating(product.rating),
     image_url: getDishImageUrl({
       id: String(product.id),
       cuisine: product.cuisine ? String(product.cuisine) : undefined,
@@ -205,10 +206,8 @@ export default function CategoryPage() {
               area={c.area ? String(c.area) : undefined}
               tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
               coverUri={getCookKitchenHeroUrl(cookId)}
-              rating={c.rating != null ? Number(c.rating) : 4.8}
+              rating={coerceRating(c.rating)}
               reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
-              isOpen
-              closesAt="HDB collection"
               onPress={() => {
                 if (slug) router.push(`/cook/${slug}`);
               }}

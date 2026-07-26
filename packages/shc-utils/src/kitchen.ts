@@ -194,25 +194,21 @@ function hashSeed(s: string): number {
   return s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
 }
 
-/** Effective rating + count for hero (defaults when cook has no aggregates). */
+/** Effective rating + count for kitchen hero — null when API sends no rating (never invent 4.8). */
 export function kitchenRatingSummary(cook?: KitchenIdentity | null): {
   rating: number;
-  reviewCount: number;
+  reviewCount?: number;
   label: string;
-} {
+} | null {
   const rating =
-    cook?.rating != null && Number.isFinite(Number(cook.rating)) ? Number(cook.rating) : 4.8;
+    cook?.rating != null && Number.isFinite(Number(cook.rating)) ? Number(cook.rating) : null;
+  if (rating == null) return null;
   const reviewCount =
     cook?.review_count != null && Number(cook.review_count) > 0
       ? Number(cook.review_count)
-      : cook?.orders != null && Number(cook.orders) > 0
-        ? Math.min(Number(cook.orders), 99)
-        : 24;
-  return {
-    rating,
-    reviewCount,
-    label: `${rating.toFixed(1)} (${reviewCount})`,
-  };
+      : undefined;
+  const label = kitchenRatingLabel(rating, reviewCount) ?? rating.toFixed(1);
+  return { rating, reviewCount, label };
 }
 
 /**

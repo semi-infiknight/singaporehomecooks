@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { Suspense, useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -9,6 +9,7 @@ import {
   occasionBrowseCategories,
   occasionBrowseHeading,
   isPopularDish,
+  coerceRating,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../lib/useProducts';
 import { useGuestAuthGate } from '../../lib/useGuestAuthGate';
@@ -33,7 +34,7 @@ function toDishCard(product: Record<string, unknown>): DishCardProduct & { ratin
     cook_name: String(product.cook_name || ''),
     price: Number(product.price),
     cuisine: product.cuisine ? String(product.cuisine) : undefined,
-    rating: product.rating != null ? Number(product.rating) : undefined,
+    rating: coerceRating(product.rating),
     image_url: getDishImageUrl({
       id,
       cuisine: product.cuisine ? String(product.cuisine) : undefined,
@@ -44,6 +45,14 @@ function toDishCard(product: Record<string, unknown>): DishCardProduct & { ratin
 }
 
 export default function OccasionsPage() {
+  return (
+    <Suspense fallback={<SHCSkeletonGrid />}>
+      <OccasionsPageContent />
+    </Suspense>
+  );
+}
+
+function OccasionsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialOccasion = searchParams.get('occasion') || '';

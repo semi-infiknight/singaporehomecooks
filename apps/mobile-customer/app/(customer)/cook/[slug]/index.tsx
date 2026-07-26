@@ -180,7 +180,7 @@ export default function KitchenPage() {
     : 0;
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => kitchenRatingBuckets(ratingSum.rating), [ratingSum.rating]);
+  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
   const reviews = useMemo(
     () => sortKitchenReviews(kitchenDemoReviews(String(cook?.id || slug || 'k')), reviewSort),
     [cook?.id, slug, reviewSort]
@@ -243,7 +243,7 @@ export default function KitchenPage() {
           cookId={cook.id}
           name={cook.display_name}
           area={cook.area}
-          rating={ratingSum.rating}
+          rating={ratingSum?.rating}
           orders={cook.orders}
           avatarUri={getCookAvatarUrl(cook.id, cook.display_name)}
           isOpen={open.isOpen}
@@ -252,12 +252,14 @@ export default function KitchenPage() {
           story={cook.story}
           testID="kitchen-page-hero"
         />
-        <Pressable
-          onPress={() => router.push(`/(customer)/cook/${slug}/ratings` as any)}
-          testID="kitchen-rating-pill"
-        >
-          <Text style={styles.ratingLink}>★ {ratingSum.label} · See all ratings</Text>
-        </Pressable>
+        {ratingSum ? (
+          <Pressable
+            onPress={() => router.push(`/(customer)/cook/${slug}/ratings` as any)}
+            testID="kitchen-rating-pill"
+          >
+            <Text style={styles.ratingLink}>★ {ratingSum.label} · See all ratings</Text>
+          </Pressable>
+        ) : null}
 
         {(kitchenDrops as any[]).filter((d) => d.status === 'open' || d.status === 'sold_out').length > 0 && (
           <View style={{ marginTop: 12, marginBottom: 8 }} testID="kitchen-cooking-soon">
@@ -479,16 +481,25 @@ export default function KitchenPage() {
         {tab === 'reviews' && (
           <View testID="kitchen-tab-panel-reviews">
             <View style={styles.ratingCard} testID="kitchen-rating-breakdown">
-              <Text style={styles.ratingBig}>{ratingSum.rating.toFixed(1)}</Text>
-              <Text style={styles.ratingSub}>/ 5.0 · {ratingSum.reviewCount} reviews</Text>
-              {buckets.map((b) => (
-                <View key={b.key} style={styles.barRow}>
-                  <Text style={styles.barLabel}>{b.label}</Text>
-                  <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { width: `${Math.round(b.share * 100)}%` }]} />
-                  </View>
-                </View>
-              ))}
+              {ratingSum ? (
+                <>
+                  <Text style={styles.ratingBig}>{ratingSum.rating.toFixed(1)}</Text>
+                  <Text style={styles.ratingSub}>
+                    / 5.0
+                    {ratingSum.reviewCount != null ? ` · ${ratingSum.reviewCount} reviews` : ''}
+                  </Text>
+                  {buckets.map((b) => (
+                    <View key={b.key} style={styles.barRow}>
+                      <Text style={styles.barLabel}>{b.label}</Text>
+                      <View style={styles.barTrack}>
+                        <View style={[styles.barFill, { width: `${Math.round(b.share * 100)}%` }]} />
+                      </View>
+                    </View>
+                  ))}
+                </>
+              ) : (
+                <Text style={styles.ratingSub}>No ratings yet for this kitchen.</Text>
+              )}
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {(['recent', 'highest', 'lowest', 'photos'] as KitchenReviewSort[]).map((s) => (

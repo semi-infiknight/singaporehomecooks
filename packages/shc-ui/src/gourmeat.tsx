@@ -353,7 +353,8 @@ function GourmeatCategoryCircle({ cat, active }: { cat: GourmeatCategoryItem; ac
   );
 }
 
-export function GourmeatDiscountBadge({ percent, testID }: { percent: number; testID?: string }) {
+export function GourmeatDiscountBadge({ percent, testID }: { percent?: number; testID?: string }) {
+  if (percent == null || percent <= 0) return null;
   return (
     <View
       testID={testID}
@@ -427,8 +428,7 @@ export function GourmeatDishCard({
 }) {
   const cardTestID = testID ?? `dish-card-${dish.id}`;
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
-  const discount = discountPercent ?? gourmeatDiscountPercent(dish.id);
-  const rating = dish.rating ?? 4.8;
+  const displayRating = dish.rating != null && Number.isFinite(Number(dish.rating)) ? Number(dish.rating) : undefined;
 
   return (
     <View
@@ -466,7 +466,7 @@ export function GourmeatDishCard({
                   }}
                 >
                   <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap', maxWidth: '70%' }}>
-                    <GourmeatDiscountBadge percent={discount} testID={`${cardTestID}-discount`} />
+                    <GourmeatDiscountBadge percent={discountPercent} testID={`${cardTestID}-discount`} />
                     {showPopular ? <GourmeatPopularBadge testID={`${cardTestID}-popular`} /> : null}
                   </View>
                   {onFavoritePress ? (
@@ -492,10 +492,14 @@ export function GourmeatDishCard({
                   <Text style={{ fontSize: 15, fontWeight: '800', color: gourmeatColors.primary }} testID={`${cardTestID}-price`}>
                     S${dish.price}
                   </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 }}>
-                    <Text style={{ fontSize: 10, color: gourmeatColors.ratingStar }}>★</Text>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>{rating.toFixed(1)}</Text>
-                  </View>
+                  {displayRating != null ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, gap: 2 }}>
+                      <Text style={{ fontSize: 10, color: gourmeatColors.ratingStar }}>★</Text>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: gourmeatColors.textLight }}>
+                        {displayRating.toFixed(1)}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             </>

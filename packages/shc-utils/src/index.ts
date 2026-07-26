@@ -19,6 +19,7 @@ export * from './cook-portal';
 export * from './meal-type';
 export * from './category';
 export * from './kitchen';
+export * from './ratings';
 export * from './kitchen-order';
 export * from './my-orders';
 export * from './order-manage';

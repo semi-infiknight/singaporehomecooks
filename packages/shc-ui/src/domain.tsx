@@ -56,7 +56,7 @@ export function SHCDishCard({
   const imageUri =
     dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
   const imageHeight = compact ? 128 : 168;
-  const rating = dish.rating ?? 4.8;
+  const rating = dish.rating;
   const handleAdd = onAddPress ?? onPress;
 
   return (

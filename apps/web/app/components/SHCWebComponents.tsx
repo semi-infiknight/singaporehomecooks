@@ -515,7 +515,8 @@ export function FilterChipRow({
   );
 }
 
-export function ZomatoRatingPill({ rating = 4.8, reviewCount }: { rating?: number; reviewCount?: number }) {
+export function ZomatoRatingPill({ rating, reviewCount }: { rating?: number; reviewCount?: number }) {
+  if (rating == null || !Number.isFinite(rating)) return null;
   return (
     <span className="inline-flex items-center gap-0.5 text-[11px] font-extrabold text-[var(--shc-success)] bg-[var(--shc-bento-mint)] px-1.5 py-0.5 rounded border border-[var(--shc-border-brutal)]">
       <Star className="w-3 h-3 fill-[var(--shc-success)]" aria-hidden />
@@ -608,6 +609,8 @@ export function DishRowCard({
     (product as { image_url?: string }).image_url ||
     getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
   const slot = getCollectionSlotLabel(product.id);
+  const rowRating =
+    product.rating != null && Number.isFinite(Number(product.rating)) ? Number(product.rating) : undefined;
   const className =
     'shrink-0 w-[300px] flex flex-col border-2 border-[var(--shc-border-brutal)] rounded-xl overflow-hidden bg-card shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] transition-shadow text-left';
   const inner = (
@@ -629,7 +632,7 @@ export function DishRowCard({
             </div>
           </div>
           <div className="flex items-center gap-2 mt-1.5">
-            <ZomatoRatingPill reviewCount={42} />
+            {rowRating != null ? <ZomatoRatingPill rating={rowRating} /> : null}
             {product.price !== undefined && (
               <span className="font-mono font-extrabold text-foreground text-sm">S${product.price}</span>
             )}
@@ -3086,7 +3089,8 @@ export function GourmeatAddButton({
   );
 }
 
-export function GourmeatDiscountBadge({ percent, testID }: { percent: number; testID?: string }) {
+export function GourmeatDiscountBadge({ percent, testID }: { percent?: number; testID?: string }) {
+  if (percent == null || percent <= 0) return null;
   return (
     <span
       data-testid={testID}
@@ -3603,8 +3607,8 @@ export function GourmeatDishCard({
   showPopular?: boolean;
 }) {
   const imageUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
-  const discount = gourmeatDiscountPercent(product.id);
-  const displayRating = rating ?? (product.rating != null ? Number(product.rating) : 4.8);
+  const displayRating =
+    rating ?? (product.rating != null && Number.isFinite(Number(product.rating)) ? Number(product.rating) : undefined);
   const cardTestID = `dish-card-${product.id}`;
   const productHref = `/product/${product.id}`;
   const handleAddClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -3628,9 +3632,6 @@ export function GourmeatDishCard({
             </div>
             <div className="absolute top-2 left-2 right-2 flex justify-between items-start pointer-events-none">
               <div className="flex flex-wrap gap-1 max-w-[70%] pointer-events-auto">
-                <span className="bg-primary text-primary-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg" data-testid={`${cardTestID}-discount`}>
-                  {discount}% OFF
-                </span>
                 {showPopular ? (
                   <span
                     className="bg-accent text-accent-foreground text-[10px] font-extrabold px-2 py-1 rounded-lg"
@@ -3669,12 +3670,14 @@ export function GourmeatDishCard({
                 S${product.price}
               </div>
             )}
-            <div className="flex items-center gap-0.5 mt-0.5">
-              <span className="text-[10px] text-accent" aria-hidden>
-                ★
-              </span>
-              <span className="text-[10px] font-semibold text-muted-foreground">{displayRating.toFixed(1)}</span>
-            </div>
+            {displayRating != null ? (
+              <div className="flex items-center gap-0.5 mt-0.5">
+                <span className="text-[10px] text-accent" aria-hidden>
+                  ★
+                </span>
+                <span className="text-[10px] font-semibold text-muted-foreground">{displayRating.toFixed(1)}</span>
+              </div>
+            ) : null}
           </div>
         </SharedDishProductLink>
         <div className="absolute bottom-3 right-3 z-10">

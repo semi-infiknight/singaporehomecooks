@@ -11,10 +11,11 @@ export function SHCZomatoRatingPill({
   reviewCount,
   testID,
 }: {
-  rating: number;
+  rating?: number;
   reviewCount?: number;
   testID?: string;
 }) {
+  if (rating == null || !Number.isFinite(rating)) return null;
   return (
     <View
       testID={testID}

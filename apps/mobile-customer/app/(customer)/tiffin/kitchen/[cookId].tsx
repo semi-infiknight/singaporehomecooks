@@ -112,7 +112,7 @@ export default function TiffinKitchenScreen() {
     area: kitchen?.cook?.area,
     story: kitchen?.tagline || kitchen?.cook?.story,
     cuisine: dishes[0]?.cuisine,
-    rating: kitchen?.rating ?? kitchen?.cook?.rating ?? 4.8,
+    rating: kitchen?.rating ?? kitchen?.cook?.rating,
     review_count: kitchen?.review_count ?? kitchen?.cook?.review_count,
     subscriber_count: kitchen?.subscriber_count,
     status: kitchen?.enabled === false ? 'paused' : 'active',
@@ -297,8 +297,16 @@ export default function TiffinKitchenScreen() {
 
       {tab === 'reviews' ? (
         <View testID="kitchen-tab-panel-reviews">
-          <Text style={styles.ratingBig}>{ratingSum.rating.toFixed(1)} / 5</Text>
-          <Text style={styles.sectionHint}>{ratingSum.reviewCount} reviews</Text>
+          {ratingSum ? (
+            <>
+              <Text style={styles.ratingBig}>{ratingSum.rating.toFixed(1)} / 5</Text>
+              {ratingSum.reviewCount != null ? (
+                <Text style={styles.sectionHint}>{ratingSum.reviewCount} reviews</Text>
+              ) : null}
+            </>
+          ) : (
+            <Text style={styles.sectionHint}>No ratings yet for this kitchen.</Text>
+          )}
           {reviews.map((r) => (
             <View key={r.id} style={styles.trustCard}>
               <Text style={styles.trustTitle}>{r.author}</Text>

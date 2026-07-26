@@ -30,6 +30,7 @@ import {
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   isPopularDish,
+  coerceRating,
   DISCOVER_MODES,
   DISCOVER_OCCASIONS_NAV,
   discoverSections,
@@ -71,7 +72,7 @@ import { VirtualDishGrid } from './components/VirtualLists';
 function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
   return {
     ...product,
-    rating: product.rating != null ? Number(product.rating) : 4.8,
+    rating: coerceRating(product.rating),
     image_url: getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name }),
   };
 }

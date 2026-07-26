@@ -178,11 +178,23 @@ describe('kitchenDishPriceDollars / Label', () => {
 });
 
 describe('kitchenRatingSummary + buckets', () => {
-  it('formats rating with review count', () => {
+  it('formats rating with review count when API provides both', () => {
     const s = kitchenRatingSummary(ROSE);
-    expect(s.rating).toBe(4.8);
-    expect(s.reviewCount).toBe(24);
-    expect(s.label).toBe('4.8 (24)');
+    expect(s?.rating).toBe(4.8);
+    expect(s?.reviewCount).toBe(24);
+    expect(s?.label).toBe('4.8 (24)');
+  });
+
+  it('returns null when cook has no rating', () => {
+    expect(kitchenRatingSummary({ ...ROSE, rating: undefined })).toBeNull();
+    expect(kitchenRatingSummary({ id: 'x', display_name: 'Test' })).toBeNull();
+  });
+
+  it('omits review count when API sends none', () => {
+    const s = kitchenRatingSummary({ ...ROSE, review_count: undefined });
+    expect(s?.rating).toBe(4.8);
+    expect(s?.reviewCount).toBeUndefined();
+    expect(s?.label).toBe('4.8');
   });
 
   it('returns 5 buckets summing to ~1', () => {

@@ -16,14 +16,12 @@ import {
   CollectionSlotPicker,
   SHCLoading,
   CalorieBadge,
-  GourmeatDiscountBadge,
   GourmeatProductStickyBar,
   GourmeatCard,
   DishOrderingInfo,
   RecipeStoryCard,
   FavoriteButton,
   SHCSharedDishImageWeb,
-  gourmeatDiscountPercent,
 } from '../../components/SHCWebComponents';
 import { useFavorites } from '../../../lib/useFavorites';
 import { useGuestAuthGate } from '../../../lib/useGuestAuthGate';
@@ -94,7 +92,6 @@ function ProductDetailContent() {
   const minQty = product.min_qty || 1;
   const effectiveQty = Math.max(minQty, qty);
   const calConfidence = ((product as { calories_confidence?: string }).calories_confidence as 'full' | 'category') || 'category';
-  const discount = gourmeatDiscountPercent(product.id);
   const heroImage = getDishImageUrl({
     id: product.id,
     cuisine: product.cuisine,
@@ -165,7 +162,6 @@ function ProductDetailContent() {
             ← Back
           </button>
           <div className="flex items-center gap-2">
-            <GourmeatDiscountBadge percent={discount} testID={`dish-card-${product.id}-discount`} />
             <FavoriteButton
               active={isFavorite(product.id)}
               onClick={() =>

@@ -3,14 +3,12 @@ import { View, Text, ScrollView, StyleSheet, Pressable, Image, Dimensions } from
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  GourmeatDiscountBadge,
   GourmeatProductStickyBar,
   GourmeatCard,
   SHCSharedDishImage,
   gourmeatColors,
   gourmeatRadii,
   gourmeatShadows,
-  gourmeatDiscountPercent,
   shcSpacing,
   AllergenAckCheckbox,
   SHCDishOrderingInfo,
@@ -78,7 +76,6 @@ export default function ProductDetail() {
 
   const tier1 = product.allergen_tiers?.tier1 || product.allergens || [];
   const calConfidence = (product.calories_confidence as 'full' | 'category') || 'category';
-  const discount = gourmeatDiscountPercent(product.id);
   const recipeSteps = recipeStepsForProduct({
     id: product.id,
     description: product.description,
@@ -143,7 +140,6 @@ export default function ProductDetail() {
                 <Text style={styles.backIcon}>←</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <GourmeatDiscountBadge percent={discount} />
                 <View style={styles.iconBtn}>
                   <SHCFavoriteButton
                     active={isFavorite(product.id)}

@@ -39,7 +39,7 @@ export default function KitchenRatingsScreen() {
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => kitchenRatingBuckets(ratingSum.rating), [ratingSum.rating]);
+  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
   const reviews = useMemo(
     () =>
       sortKitchenReviews(
@@ -96,24 +96,32 @@ export default function KitchenRatingsScreen() {
           </View>
 
           <View style={styles.breakdown} testID="kitchen-rating-breakdown">
-            <View style={styles.scoreCol}>
-              <Text style={styles.score} testID="ratings-score">
-                {ratingSum.rating.toFixed(1)}
-              </Text>
-              <Text style={styles.meta}>out of 5.0</Text>
-              <Text style={styles.meta}>{ratingSum.reviewCount} reviews</Text>
-            </View>
-            <View style={{ flex: 1, gap: 6 }}>
-              {buckets.map((b) => (
-                <View key={b.key} style={styles.bucketRow}>
-                  <Text style={styles.bucketLabel}>{b.label}</Text>
-                  <View style={styles.bucketTrack}>
-                    <View style={[styles.bucketFill, { width: `${Math.round(b.share * 100)}%` }]} />
-                  </View>
-                  <Text style={styles.bucketPct}>{Math.round(b.share * 100)}%</Text>
+            {ratingSum ? (
+              <>
+                <View style={styles.scoreCol}>
+                  <Text style={styles.score} testID="ratings-score">
+                    {ratingSum.rating.toFixed(1)}
+                  </Text>
+                  <Text style={styles.meta}>out of 5.0</Text>
+                  {ratingSum.reviewCount != null ? (
+                    <Text style={styles.meta}>{ratingSum.reviewCount} reviews</Text>
+                  ) : null}
                 </View>
-              ))}
-            </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  {buckets.map((b) => (
+                    <View key={b.key} style={styles.bucketRow}>
+                      <Text style={styles.bucketLabel}>{b.label}</Text>
+                      <View style={styles.bucketTrack}>
+                        <View style={[styles.bucketFill, { width: `${Math.round(b.share * 100)}%` }]} />
+                      </View>
+                      <Text style={styles.bucketPct}>{Math.round(b.share * 100)}%</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <Text style={styles.meta}>No ratings yet for this kitchen.</Text>
+            )}
           </View>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortRow}>
