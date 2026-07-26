@@ -77,6 +77,7 @@ export const logout = () => clearSession();
 export const getCooks = () => client.getCooks();
 export const getDiscoverPromos = () => client.getDiscoverPromos();
 export const getCustomerConfig = () => client.getCustomerConfig();
+export const getCookConfig = () => client.getCookConfig();
 export const searchProducts = (q?: string, f?: unknown) => client.searchProducts(q || '', f);
 export const getCookBySlug = (slug: string) => client.getCookBySlug(slug);
 export const getCookReviews = (slug: string, opts?: { limit?: number; offset?: number }) =>

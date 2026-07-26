@@ -19,6 +19,7 @@ export * from './customer-browse-config';
 export * from './business-rules-config';
 export * from './discover-layout';
 export * from './cook-portal';
+export * from './cook-portal-config';
 export * from './meal-type';
 export * from './category';
 export * from './kitchen';

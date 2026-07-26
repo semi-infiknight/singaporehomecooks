@@ -62,8 +62,11 @@ export const COMPLIANCE_COURSE_LINKS: ComplianceCourseLink[] = [
   },
 ];
 
-export function complianceLinksForType(type: 'sfa' | 'wsq'): ComplianceCourseLink[] {
-  return COMPLIANCE_COURSE_LINKS.filter((l) => l.for === type || l.for === 'both');
+export function complianceLinksForType(
+  type: 'sfa' | 'wsq',
+  links: readonly ComplianceCourseLink[] = COMPLIANCE_COURSE_LINKS
+): ComplianceCourseLink[] {
+  return links.filter((l) => l.for === type || l.for === 'both');
 }
 
 /** True if cook has submitted (or verified) a doc of this type */

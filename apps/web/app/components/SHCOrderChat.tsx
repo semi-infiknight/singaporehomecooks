@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   buildChatThreadItems,
-  chatQuickReplies,
   chatSenderLabel,
+  cookChatQuickReplies,
   formatChatTime,
   isOutgoingChatMessage,
   isSystemChatActor,
@@ -13,6 +13,7 @@ import {
 } from '@shc/utils';
 import type { OrderChatContext } from '@shc/utils';
 import { SHCButton } from './SHCWebComponents';
+import { useCookConfig } from '../../lib/useCookConfig';
 
 export type { OrderChatContext as SHCOrderChatContext };
 
@@ -24,6 +25,7 @@ export function SHCOrderChatPanel({
   sending,
   isLoading,
   testID = 'order-chat-panel',
+  quickReplies,
 }: {
   viewerRole: ChatViewerRole;
   context: OrderChatContext;
@@ -32,9 +34,12 @@ export function SHCOrderChatPanel({
   sending?: boolean;
   isLoading?: boolean;
   testID?: string;
+  quickReplies?: readonly string[];
 }) {
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { config } = useCookConfig();
+  const resolvedQuickReplies = quickReplies ?? cookChatQuickReplies(viewerRole, config);
   const threadItems = useMemo(() => buildChatThreadItems(messages), [messages]);
 
   useEffect(() => {
@@ -121,7 +126,7 @@ export function SHCOrderChatPanel({
 
       <div className="border-t-2 border-[var(--shc-border-brutal)] bg-card p-3 space-y-2">
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {chatQuickReplies(viewerRole).map((text) => (
+          {resolvedQuickReplies.map((text) => (
             <button
               key={text}
               type="button"

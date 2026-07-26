@@ -78,6 +78,7 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 | `GET/POST/DELETE /admin/shc/discover-promos` | Discover home promo carousel slides |
 | `GET/POST /admin/shc/customer-config` | Aggregated browse chrome (occasions, copy, thresholds) |
 | `GET/POST /admin/shc/business-rules` | Marketplace tunables (commission fallback, drops window, tiffin cutoff, cart, reviews) |
+| `GET/POST /admin/shc/cook-config` | Cook portal chrome (dashboard tiles, compliance links, listing presets, chat replies) |
 | `GET/POST /store/shc/drops` | Cooking soon marketplace list + cook create batch |
 | `GET/PATCH /store/shc/drops/:id` | Drop detail + cook pause/close/extend |
 | `POST /store/shc/drops/:id/order` | Customer capacity-aware batch order (fixed collection) |
@@ -85,6 +86,7 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 | `GET /store/shc/discover-promos` | Public discover home promo carousel slides |
 | `GET /store/shc/customer-config` | Aggregated customer browse chrome (categories + promos + occasions + copy) |
 | `GET /store/shc/business-rules` | Public marketplace rule hints (tiffin cutoff, cart policy, drop window) |
+| `GET /store/shc/cook-config` | Cook portal chrome + order chat quick replies |
 | Existing | feature-flags, disputes, payouts, ledger, commission-rules, search-synonyms, platform-stats, payment-confirm |
 
 **Admin refresh policy:** SHC Ops UI uses React Query polling (30s hot paths, 45s default) + refetch on tab focus — not WebSocket push. See `apps/medusa/ADMIN.md` + `src/admin/lib/shc-ops-polling.ts`.

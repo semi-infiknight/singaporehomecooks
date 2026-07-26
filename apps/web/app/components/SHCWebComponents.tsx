@@ -4419,10 +4419,12 @@ export function AllergenTierPickerWeb({
   value,
   onChange,
   testID = 'listing-allergen-picker',
+  tier1Presets,
 }: {
   value: AllergenTiers;
   onChange: (next: AllergenTiers) => void;
   testID?: string;
+  tier1Presets?: readonly string[];
 }) {
   const toggle = (allergen: string) => {
     const tier1 = value.tier1.includes(allergen)
@@ -4434,7 +4436,7 @@ export function AllergenTierPickerWeb({
     <div data-testid={testID}>
       <p className="text-xs font-extrabold text-foreground mb-2">Allergens (tier 1 — mandatory disclosure)</p>
       <div className="flex flex-wrap gap-2">
-        {ALLERGEN_TIER1_PRESETS.map((allergen) => {
+        {(tier1Presets ?? ALLERGEN_TIER1_PRESETS).map((allergen) => {
           const sel = value.tier1.includes(allergen);
           return (
             <button
@@ -4495,6 +4497,7 @@ export function ListingAvailabilityEditorWeb({
   onCollectionDaysChange,
   onTimeSlotsChange,
   testID = 'listing-availability-editor',
+  timeSlotPresets,
 }: {
   portionsPerDay: number;
   collectionDays: number[];
@@ -4503,6 +4506,7 @@ export function ListingAvailabilityEditorWeb({
   onCollectionDaysChange: (days: number[]) => void;
   onTimeSlotsChange: (slots: string[]) => void;
   testID?: string;
+  timeSlotPresets?: readonly string[];
 }) {
   const toggleDay = (day: number) => {
     onCollectionDaysChange(
@@ -4549,7 +4553,7 @@ export function ListingAvailabilityEditorWeb({
       </div>
       <p className="text-[11px] font-bold text-muted-foreground pt-1">Time slots</p>
       <div className="flex flex-wrap gap-2">
-        {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+        {(timeSlotPresets ?? COLLECTION_TIME_SLOT_PRESETS).map((slot) => {
           const sel = timeSlots.includes(slot);
           return (
             <button

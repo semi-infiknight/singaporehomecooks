@@ -21,10 +21,12 @@ export function SHCAllergenTierPicker({
   value,
   onChange,
   testID = 'listing-allergen-picker',
+  tier1Presets,
 }: {
   value: AllergenTiers;
   onChange: (next: AllergenTiers) => void;
   testID?: string;
+  tier1Presets?: readonly string[];
 }) {
   const toggle = (allergen: string) => {
     const tier1 = value.tier1.includes(allergen)
@@ -39,7 +41,7 @@ export function SHCAllergenTierPicker({
         Allergens (tier 1 — mandatory disclosure)
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {ALLERGEN_TIER1_PRESETS.map((allergen) => {
+        { (tier1Presets ?? ALLERGEN_TIER1_PRESETS).map((allergen) => {
           const sel = value.tier1.includes(allergen);
           return (
             <Pressable
@@ -113,6 +115,7 @@ export function SHCListingAvailabilityEditor({
   onCollectionDaysChange,
   onTimeSlotsChange,
   testID = 'listing-availability-editor',
+  timeSlotPresets,
 }: {
   portionsPerDay: number;
   collectionDays: number[];
@@ -121,6 +124,7 @@ export function SHCListingAvailabilityEditor({
   onCollectionDaysChange: (days: number[]) => void;
   onTimeSlotsChange: (slots: string[]) => void;
   testID?: string;
+  timeSlotPresets?: readonly string[];
 }) {
   const toggleDay = (day: number) => {
     onCollectionDaysChange(
@@ -178,7 +182,7 @@ export function SHCListingAvailabilityEditor({
         Time slots
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+        {(timeSlotPresets ?? COLLECTION_TIME_SLOT_PRESETS).map((slot) => {
           const sel = timeSlots.includes(slot);
           return (
             <Pressable

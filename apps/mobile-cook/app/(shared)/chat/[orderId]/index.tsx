@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { SHCOrderChatPane } from '@shc/ui';
-import { buildOrderChatContext, getOrderStatusLabel } from '@shc/utils';
+import { buildOrderChatContext, cookChatQuickReplies, getOrderStatusLabel } from '@shc/utils';
 import { useOrder, useOrderChat } from '../../../../hooks/useOrder';
 import { useAuth } from '../../../../hooks/useAuth';
+import { useCookConfig } from '../../../../hooks/useCookConfig';
 
 export default function OrderChatScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
@@ -13,6 +14,7 @@ export default function OrderChatScreen() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   useAuth();
+  const { config } = useCookConfig();
 
   const order = orderRaw as Record<string, unknown> | undefined;
   const context = useMemo(() => {
@@ -53,6 +55,7 @@ export default function OrderChatScreen() {
       onSend={handleSend}
       sending={sending}
       isLoading={orderLoading || chatLoading}
+      quickReplies={cookChatQuickReplies('cook', config)}
     />
   );
 }
