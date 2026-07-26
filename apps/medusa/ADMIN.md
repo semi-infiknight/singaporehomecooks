@@ -94,6 +94,7 @@ Polling pauses when the tab is in the background (`refetchIntervalInBackground: 
 | `GET /admin/shc/listings` | Cook product metas (Products + Price Lists mirrors) |
 | `GET /admin/shc/availability` | Portion/day slots (Inventory mirror) |
 | `GET/POST/DELETE /admin/shc/categories` | Catalog cuisine presets |
+| `GET/POST/DELETE /admin/shc/discover-promos` | Discover home promo carousel slides |
 | `POST /admin/shc/payment-confirm` | Manual PayNow confirm |
 | `GET /admin/shc/ledger` | Ledger inspection |
 | `GET/POST /admin/shc/payouts` | Weekly payout batches |
