@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-24 — Cook listing form, SHCMetaBadge, admin charts + near-realtime polling. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-27 — Discover promo carousel (16:9) + greeting email fallback. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -61,7 +61,7 @@ End-to-end **tiffin subscription** (single kitchen, 2/3/4 meals/week, recurring 
 
 - **Backend:** `shc-tiffin` module + migration; routes under `/store/shc/tiffin/*`; `materializeTiffinWeeklyOrders()`; worker cron Mon 08:00 UTC (`apps/worker/src/index.ts`).
 - **Packages:** `@shc/business-rules/tiffin`, `@shc/api-client` tiffin methods, `@shc/ui/tiffin-ux.tsx`.
-- **Mobile customer:** `apps/mobile-customer/app/(customer)/tiffin/` — browse, kitchen subscribe, confirm, planner, menu, manage. Entry: discover promo + profile tile.
+- **Mobile customer:** `apps/mobile-customer/app/(customer)/tiffin/` — browse, kitchen subscribe, confirm, planner, menu, manage. Entry: discover **16:9 promo carousel** + profile tile.
 - **Mobile cook:** `apps/mobile-cook/app/(cook)/tiffin/` — kitchen config (enable, tagline, days, eligible dishes). Dashboard quick action.
 - **Maestro:** `tiffin-config.yaml`, `tiffin-subscribe.yaml`, `tiffin-flex-os.yaml`, `scripts/run-tiffin-e2e.sh`.
 - **Fixes:** SecureStore-safe milestone keys; cook app crash on listings/compliance; `product.name` (not `title`) in weekly order SQL; CI lockfile + worker ESM `.js` imports.

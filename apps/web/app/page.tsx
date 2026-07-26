@@ -21,7 +21,6 @@ import {
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
   OFFLINE_DISCOVER_PRODUCT,
-  PROMO_BANNER_IMAGES,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
@@ -29,6 +28,7 @@ import {
   getDropImageUrl,
   getCookKitchenHeroUrl,
   discoverHomeHeadline,
+  discoverHomePromoCarousel,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   discoverZoneById,
@@ -55,11 +55,9 @@ import {
   FilterChipRow,
   SearchResultsPanel,
   RequestDishHomeCTA,
-  TiffinHeroBanner,
+  HomePromoCarousel,
   TiffinFilterChips,
   TiffinKitchenCard,
-  PromoRail,
-  SectionRegion,
   SectionEyebrow,
   type DishCardProduct,
 } from './components/SHCWebComponents';
@@ -99,7 +97,6 @@ export default function DiscoverHome() {
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
   const [mealType, setMealType] = useState<MealTypeId>('all');
-  const [promoDismissed, setPromoDismissed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const { data: products, isLoading, refetch: refetchProducts } = useProducts('');
@@ -228,10 +225,9 @@ export default function DiscoverHome() {
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
-  const homeGreeting = discoverHomeHeadline(user?.name);
-  const subscribeZone = discoverZoneById('subscribe');
+  const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
   const browseZone = discoverZoneById('browse');
-  const occasionsZone = discoverZoneById('occasions');
+  const homePromos = useMemo(() => discoverHomePromoCarousel(), []);
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
 
   const checkPopular = useCallback(
@@ -260,6 +256,20 @@ export default function DiscoverHome() {
       });
     },
     [toggle]
+  );
+
+  const handleHomePromoPress = useCallback(
+    (id: string) => {
+      const promo = homePromos.find((item) => item.id === id);
+      if (!promo) return;
+      if (promo.occasionFilter) {
+        setOccasionFilter(promo.occasionFilter);
+        setOrderMode('occasion');
+        return;
+      }
+      router.push(promo.webRoute);
+    },
+    [homePromos, router]
   );
 
   return (
@@ -313,34 +323,8 @@ export default function DiscoverHome() {
         <GuestBrowseBar onSignInClick={() => router.push('/login')} />
       )}
 
-      {!query.trim() && !promoDismissed && subscribeZone && (
-        <SectionRegion
-          eyebrow={subscribeZone.eyebrow}
-          title={subscribeZone.title}
-          testID={subscribeZone.testID}
-        >
-          <div className="relative" data-testid="home-tiffin-promo">
-            <button
-              type="button"
-              onClick={() => setPromoDismissed(true)}
-              className="absolute top-2.5 right-3 z-10 w-7 h-7 rounded-full bg-white/35 text-white font-extrabold text-xs"
-              aria-label="Dismiss subscription promo"
-              data-testid="home-promo-dismiss"
-            >
-              ✕
-            </button>
-            <button type="button" onClick={() => router.push('/tiffin')} className="w-full text-left">
-              <TiffinHeroBanner
-                highlight="Explore tiffin plans ✨"
-                bullets={[
-                  'Weekly home-cooked meals from one kitchen',
-                  'Skip days with flex — your plan extends automatically',
-                  'Flexible 2 · 3 · 4 meals per week',
-                ]}
-              />
-            </button>
-          </div>
-        </SectionRegion>
+      {!query.trim() && (
+        <HomePromoCarousel promos={homePromos} onPromoPress={handleHomePromoPress} />
       )}
 
       {!query.trim() && browseZone && (
@@ -394,61 +378,6 @@ export default function DiscoverHome() {
           {orderMode === 'occasion' && (
             <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
           )}
-        </div>
-      )}
-
-      {/* Offer — encourage subscription without taking over the page */}
-      {!query.trim() && (
-        <button
-          type="button"
-          data-testid="home-offer-card"
-          onClick={() => router.push('/tiffin')}
-          className="w-full text-left rounded-2xl shc-bg-offer text-white p-4 shc-section-stack"
-        >
-          <p className="font-black text-base">Subscribe for weekly tiffin</p>
-          <p className="text-xs font-semibold opacity-90 mt-1">
-            One kitchen · flexible skip days · from S$22/wk for 2 meals.
-          </p>
-        </button>
-      )}
-
-      {/* Event / occasion rail — one-off party ordering */}
-      {!query.trim() && occasionsZone && (
-        <div data-testid="discover-zone-occasions">
-          <SectionEyebrow testID={`${occasionsZone.testID}-eyebrow`}>{occasionsZone.eyebrow}</SectionEyebrow>
-          <PromoRail
-            promos={[
-              {
-                id: 'hari-raya',
-                title: 'Hari Raya spreads',
-                subtitle: 'Order for the open house',
-                imageUrl: PROMO_BANNER_IMAGES.hariRaya,
-                badge: 'Event',
-                iconKey: 'people',
-              },
-              {
-                id: 'cny',
-                title: 'CNY reunion',
-                subtitle: 'Plan 2 weeks ahead',
-                imageUrl: PROMO_BANNER_IMAGES.family,
-                badge: 'Event',
-                iconKey: 'people',
-              },
-              {
-                id: 'request',
-                title: 'Request a dish',
-                subtitle: 'Custom occasion menu',
-                imageUrl: PROMO_BANNER_IMAGES.request,
-                badge: 'Custom',
-                iconKey: 'discover',
-              },
-            ]}
-            onPromoPress={(id) => {
-              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
-              else if (id === 'cny') setOccasionFilter('Chinese New Year');
-              else router.push('/request');
-            }}
-          />
         </div>
       )}
 

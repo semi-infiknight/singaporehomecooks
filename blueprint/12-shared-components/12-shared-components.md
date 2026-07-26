@@ -43,7 +43,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 
@@ -71,7 +71,8 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 |---|---|
 | `SHCZomatoStickyHeader` | Location + search sticky zone |
 | `SHCZomatoLocationBar` | Location row with delivery/collection label |
-| `SHCPromoRail` | Horizontal promo cards with food photos |
+| `SHCPromoRail` | Horizontal promo cards with food photos (compact rail) |
+| `SHCHomePromoCarousel` | Full-width **16:9** paging promo carousel for discover home (`home-promo-carousel`, `home-promo-dots`) |
 | `SHCFilterChipRow` | Halal, light, occasion filter chips |
 | `SHCZomatoDishRow` / `SHCZomatoDishRowRail` | List/rail dish rows with image, price, ADD |
 | `SHCZomatoSectionHeader` / `SHCMindSectionTitle` | Section titles with optional action |

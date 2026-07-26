@@ -44,6 +44,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       role: "customer",
       id: auth.actor_id,
       email: auth.email,
+      name: auth.email?.split("@")[0] || auth.name,
     },
   });
 }

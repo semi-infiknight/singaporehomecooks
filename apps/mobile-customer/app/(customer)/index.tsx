@@ -21,12 +21,10 @@ import {
   SHCGuestBrowseBar,
   SHCZomatoDishRowRail,
   SHCFilterChipRow,
-  SHCPromoRail,
+  SHCHomePromoCarousel,
   SHCRequestDishHomeCTA,
-  SHCTiffinHeroBanner,
   SHCTiffinKitchenCard,
   SHCTiffinFilterChips,
-  SHCSectionRegion,
   SHCSectionEyebrow,
   DirectionalTabScreen,
   SHCSkeletonDishGrid,
@@ -37,7 +35,6 @@ import {
 import {
   getOccasionImageUrl,
   BENTO_ACTION_IMAGES,
-  PROMO_BANNER_IMAGES,
   getDishImageUrl,
   getCookKitchenHeroUrl,
   getDropImageUrl,
@@ -53,6 +50,7 @@ import {
   formatDropPrice,
   filterCustomerCookingSoonDrops,
   discoverHomeHeadline,
+  discoverHomePromoCarousel,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
   discoverZoneById,
@@ -106,7 +104,6 @@ export default function CustomerDiscover() {
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [orderMode, setOrderMode] = useState('popular');
   const [mealType, setMealType] = useState<MealTypeId>('all');
-  const [promoDismissed, setPromoDismissed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const { user } = useAuth();
@@ -270,10 +267,23 @@ export default function CustomerDiscover() {
   );
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
-  const homeGreeting = discoverHomeHeadline(user?.name);
-  const subscribeZone = discoverZoneById('subscribe');
+  const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
   const browseZone = discoverZoneById('browse');
-  const occasionsZone = discoverZoneById('occasions');
+  const homePromos = useMemo(() => discoverHomePromoCarousel(), []);
+
+  const handleHomePromoPress = useCallback(
+    (id: string) => {
+      const promo = homePromos.find((item) => item.id === id);
+      if (!promo) return;
+      if (promo.occasionFilter) {
+        setOccasionFilter(promo.occasionFilter);
+        setOrderMode('occasion');
+        return;
+      }
+      router.push(promo.mobileRoute as any);
+    },
+    [homePromos, router]
+  );
   const ListFooter = !query.trim() ? (
     <SHCRequestDishHomeCTA onPress={() => router.push('/(customer)/request' as any)} />
   ) : null;
@@ -318,31 +328,8 @@ export default function CustomerDiscover() {
         <SHCGuestBrowseBar onSignInPress={() => router.push('/(shared)/auth' as any)} />
       )}
 
-      {/* ① Subscription promo — grouped region (Gestalt common region) */}
-      {!query && !promoDismissed && subscribeZone && (
-        <SHCSectionRegion
-          eyebrow={subscribeZone.eyebrow}
-          title={subscribeZone.title}
-          testID={subscribeZone.testID}
-          inset={false}
-        >
-          <View testID="home-tiffin-promo" style={styles.promoWrap}>
-            <Pressable onPress={() => setPromoDismissed(true)} style={styles.promoClose} hitSlop={12} testID="home-promo-dismiss">
-              <Text style={styles.promoCloseText}>✕</Text>
-            </Pressable>
-            <Pressable onPress={() => router.push('/(customer)/tiffin' as any)}>
-              <SHCTiffinHeroBanner
-                title="No time to cook?"
-                highlight="Explore tiffin plans ✨"
-                bullets={[
-                  'Weekly home-cooked meals from one kitchen',
-                  'Skip days with flex — your plan extends automatically',
-                  'Flexible 2 · 3 · 4 meals per week',
-                ]}
-              />
-            </Pressable>
-          </View>
-        </SHCSectionRegion>
+      {!query && (
+        <SHCHomePromoCarousel promos={homePromos} onPromoPress={handleHomePromoPress} />
       )}
 
       {/* Meal-type chips — browse menu zone */}
@@ -412,41 +399,6 @@ export default function CustomerDiscover() {
               onSelect={setOccasionFilter}
             />
           )}
-        </View>
-      )}
-
-      {/* Offer — weekly tiffin subscription */}
-      {!query && (
-        <Pressable
-          style={styles.offerCard}
-          testID="home-offer-card"
-          onPress={() => router.push('/(customer)/tiffin' as any)}
-        >
-          <Text style={styles.offerTitle}>Subscribe for weekly tiffin</Text>
-          <Text style={styles.offerSub}>
-            One kitchen · flexible skip days · from S$22/wk for 2 meals.
-          </Text>
-        </Pressable>
-      )}
-
-      {/* Event / occasion rail */}
-      {!query && occasionsZone && (
-        <View testID="discover-zone-occasions">
-          <SHCSectionEyebrow testID={`${occasionsZone.testID}-eyebrow`} inset={false}>
-            {occasionsZone.eyebrow}
-          </SHCSectionEyebrow>
-        <SHCPromoRail
-            promos={[
-              { id: 'hari-raya', title: 'Hari Raya spreads', subtitle: 'Order for the open house', imageUrl: PROMO_BANNER_IMAGES.hariRaya, badge: 'Event', iconKey: 'people' },
-              { id: 'cny', title: 'CNY reunion', subtitle: 'Plan 2 weeks ahead', imageUrl: PROMO_BANNER_IMAGES.family, badge: 'Event', iconKey: 'people' },
-              { id: 'request', title: 'Request a dish', subtitle: 'Custom occasion menu', imageUrl: PROMO_BANNER_IMAGES.request, badge: 'Custom', iconKey: 'discover' },
-            ]}
-            onPromoPress={(id) => {
-              if (id === 'hari-raya') setOccasionFilter('Hari Raya');
-              else if (id === 'cny') setOccasionFilter('Chinese New Year');
-              else router.push('/(customer)/request' as any);
-            }}
-        />
         </View>
       )}
 
@@ -634,28 +586,6 @@ const styles = StyleSheet.create({
   loading: { textAlign: 'center', fontSize: 24, marginVertical: shcSpacing.md, color: gourmeatColors.textMuted },
   empty: { alignItems: 'center', paddingVertical: shcSpacing.xl, gap: shcSpacing.sm },
   emptyText: { fontSize: 13, color: gourmeatColors.textLight, fontWeight: '500' },
-  offerCard: {
-    ...shcSectionStack,
-    backgroundColor: gourmeatColors.offerNavy,
-    borderRadius: 14,
-    padding: shcSpacing.md,
-  },
-  offerTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.onPrimary },
-  offerSub: { fontSize: 12, color: gourmeatColors.onHeroMuted, marginTop: 4, lineHeight: 17 },
-  promoWrap: { position: 'relative' },
-  promoClose: {
-    position: 'absolute',
-    top: 10,
-    right: 14,
-    zIndex: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  promoCloseText: { color: gourmeatColors.onPrimary, fontWeight: '800', fontSize: 12 },
   gridHint: {
     paddingHorizontal: shcSpacing.md,
     fontSize: 12,

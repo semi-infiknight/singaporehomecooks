@@ -2041,6 +2041,92 @@ export function GourmeatFloatingTabBar({
   );
 }
 
+/** Full-width paging promo carousel for discover home. */
+export function HomePromoCarousel({
+  promos,
+  onPromoPress,
+  testID = 'home-promo-carousel',
+}: {
+  promos: PromoRailItem[];
+  onPromoPress?: (id: string) => void;
+  testID?: string;
+}) {
+  const [active, setActive] = React.useState(0);
+  const scrollerRef = React.useRef<HTMLDivElement>(null);
+
+  const syncActiveIndex = () => {
+    const node = scrollerRef.current;
+    if (!node || node.clientWidth <= 0) return;
+    const next = Math.round(node.scrollLeft / node.clientWidth);
+    if (next >= 0 && next < promos.length) setActive(next);
+  };
+
+  if (promos.length === 0) return null;
+
+  return (
+    <div className="shc-section-stack" data-testid={testID}>
+      <div
+        ref={scrollerRef}
+        onScroll={syncActiveIndex}
+        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth"
+      >
+        {promos.map((promo) => (
+          <button
+            key={promo.id}
+            type="button"
+            onClick={() => onPromoPress?.(promo.id)}
+            data-testid={`promo-card-${promo.id}`}
+            className="snap-center shrink-0 w-full text-left"
+          >
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)]">
+              <Image src={promo.imageUrl} alt="" fill className="object-cover" sizes="100vw" />
+              <div className="relative z-10 flex flex-col justify-between h-full p-3 bg-[rgba(36,24,18,0.45)]">
+                <div className="flex justify-between items-start">
+                  {(PROMO_RAIL_ICONS[promo.id] || (promo.iconKey && PROMO_RAIL_ICONS[promo.iconKey])) && (
+                    <span
+                      className="w-7 h-7 rounded-full bg-card border-2 border-[var(--shc-border-brutal)] flex items-center justify-center shadow-[var(--shc-shadow-brutal-sm)]"
+                      aria-hidden
+                    >
+                      {(() => {
+                        const PromoIcon = PROMO_RAIL_ICONS[promo.id] || PROMO_RAIL_ICONS[promo.iconKey!];
+                        return PromoIcon ? <PromoIcon className="w-3.5 h-3.5 text-primary" /> : null;
+                      })()}
+                    </span>
+                  )}
+                  {promo.badge ? (
+                    <span className="text-[10px] font-black bg-[var(--shc-accent)] text-foreground px-2 py-0.5 rounded border border-[var(--shc-border-brutal)]">
+                      {promo.badge}
+                    </span>
+                  ) : null}
+                </div>
+                <div>
+                  <div className="font-black text-white text-sm">{promo.title}</div>
+                  {promo.subtitle ? (
+                    <div className="text-[11px] font-semibold text-white/90 mt-0.5">{promo.subtitle}</div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+      {promos.length > 1 ? (
+        <div className="flex gap-1.5 mt-3 justify-center" data-testid="home-promo-dots" role="progressbar">
+          {promos.map((promo, i) => (
+            <span
+              key={promo.id}
+              className={`h-1.5 rounded-full transition-all ${
+                i === active ? 'w-6 bg-primary' : 'w-1.5 bg-muted-foreground/30'
+              }`}
+              aria-current={i === active ? 'step' : undefined}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** HomelyEats homepage promo — matches SHCTiffinHeroBanner */
 export function TiffinHeroBanner({
   title = 'No time to cook?',

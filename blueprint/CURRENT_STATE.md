@@ -1,12 +1,22 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-24 — Cook-editable listing fields; SHCMetaBadge warm semantics; admin charts + near-realtime polling; heritage_note / shc_heritage removed.
+**Last Updated:** 2026-07-27 — Discover home promo carousel (16:9); personalized greeting uses email when name empty; journey strip removed.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-24)
+## 0. New-session handoff (2026-07-27)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Discover home** | Top zone = **`SHCHomePromoCarousel`** (16:9 paging carousel, `home-promo-carousel`) fed by `@shc/utils` `discoverHomePromoCarousel()` — tiffin, Hari Raya, request, family, PayNow. Removed: Browse→Order→Collect journey strip, icon quick-actions, weekly-tiffin section region, duplicate navy offer card, separate occasions promo rail. |
+| **Home greeting** | `discoverHomeHeadline(name, email)` → signed-in: `Hi, {first}` + subtitle; guest: `Hungry? Order & Eat.` Uses **email local-part** when `user.name` empty (fixes Profile “You” vs Home guest mismatch). `/store/shc/auth/me` fallback now sets `name` from email prefix. |
+| **Metro dev** | Root `devDependencies.metro-runtime` + `.npmrc` hoist — fixes Expo CLI `Cannot find module metro-runtime` after `METRO_CLEAR=1`. |
+
+## 0a. Prior handoff (2026-07-24)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 

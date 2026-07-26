@@ -1,12 +1,23 @@
 // Zomato/Swiggy layout primitives — location bar, promo rail, filter row, horizontal dish rows.
 // @ts-nocheck
-import React from 'react';
-import { View, Text, Pressable, ScrollView, Image } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Image,
+  FlatList,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { shcColors, shcRadii, shcSpacing, shcBorders, shcShadows, shcTypography, shcSectionStack, shcTitleBlock, gourmeatColors } from './theme';
 import { SHCSearchBar } from './primitives';
 import { SHCFoodImage, SHCZomatoRatingPill } from './visuals';
 import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
 import { SHCStaggerIn } from './motion';
+import { SHCOnboardingDots } from './onboarding-ux';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
 import { getDishImageUrl, getCollectionSlotLabel } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
@@ -207,60 +218,133 @@ export function SHCPromoRail({
       >
       {promos.map((promo, i) => (
         <SHCStaggerIn key={promo.id} index={i}>
-        <Pressable
-          onPress={() => onPromoPress?.(promo.id)}
-          testID={`promo-card-${promo.id}`}
-          style={{
-            width: 260,
-            height: 100,
-            borderRadius: shcRadii.lg,
-            overflow: 'hidden',
-            borderWidth: shcBorders.brutal,
-            borderColor: shcColors.border,
-            ...shcShadows.brutalSm,
-          }}
-        >
-          <Image source={{ uri: promo.imageUrl }} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
-          <View
-            style={{
-              flex: 1,
-              padding: shcSpacing.sm,
-              justifyContent: 'space-between',
-              backgroundColor: gourmeatColors.overlayDark,
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              {promo.iconKey ? <SHCBentoIconBadge iconKey={promo.iconKey} size={28} /> : <View />}
-              {promo.badge && (
-                <View
-                  style={{
-                    backgroundColor: shcColors.accent,
-                    paddingHorizontal: 8,
-                    paddingVertical: 2,
-                    borderRadius: shcRadii.sm,
-                    borderWidth: 1,
-                    borderColor: shcColors.border,
-                  }}
-                >
-                  <Text style={{ fontSize: 10, fontWeight: '900', color: shcColors.text }}>{promo.badge}</Text>
-                </View>
-              )}
-            </View>
-            <View>
-              <Text style={{ color: shcColors.onPrimary, fontWeight: '900', fontSize: 15 }} numberOfLines={1}>
-                {promo.title}
-              </Text>
-              {promo.subtitle && (
-                <Text style={{ color: gourmeatColors.onHeroMuted, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
-                  {promo.subtitle}
-                </Text>
-              )}
-            </View>
-          </View>
-        </Pressable>
+          <SHCPromoCard promo={promo} width={260} height={100} onPress={() => onPromoPress?.(promo.id)} />
         </SHCStaggerIn>
       ))}
       </ScrollView>
+    </View>
+  );
+}
+
+/** 16:9 promo carousel slide height from width. */
+export function shcPromoCarouselSlideHeight(width: number): number {
+  return Math.round((width * 9) / 16);
+}
+
+function SHCPromoCard({
+  promo,
+  width,
+  height = 120,
+  onPress,
+}: {
+  promo: SHCPromoItem;
+  width: number;
+  height?: number;
+  onPress?: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      testID={`promo-card-${promo.id}`}
+      style={{
+        width,
+        height,
+        borderRadius: shcRadii.lg,
+        overflow: 'hidden',
+        borderWidth: shcBorders.brutal,
+        borderColor: shcColors.border,
+        ...shcShadows.brutalSm,
+      }}
+    >
+      <Image source={{ uri: promo.imageUrl }} style={{ position: 'absolute', width: '100%', height: '100%' }} resizeMode="cover" />
+      <View
+        style={{
+          flex: 1,
+          padding: shcSpacing.sm,
+          justifyContent: 'space-between',
+          backgroundColor: gourmeatColors.overlayDark,
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          {promo.iconKey ? <SHCBentoIconBadge iconKey={promo.iconKey} size={28} /> : <View />}
+          {promo.badge ? (
+            <View
+              style={{
+                backgroundColor: shcColors.accent,
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: shcRadii.sm,
+                borderWidth: 1,
+                borderColor: shcColors.border,
+              }}
+            >
+              <Text style={{ fontSize: 10, fontWeight: '900', color: shcColors.text }}>{promo.badge}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View>
+          <Text style={{ color: shcColors.onPrimary, fontWeight: '900', fontSize: 15 }} numberOfLines={1}>
+            {promo.title}
+          </Text>
+          {promo.subtitle ? (
+            <Text style={{ color: gourmeatColors.onHeroMuted, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1}>
+              {promo.subtitle}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+/** Full-width paging promo carousel for discover home. */
+export function SHCHomePromoCarousel({
+  promos,
+  onPromoPress,
+  slideWidth,
+  testID = 'home-promo-carousel',
+}: {
+  promos: SHCPromoItem[];
+  onPromoPress?: (id: string) => void;
+  slideWidth?: number;
+  testID?: string;
+}) {
+  const { width: windowWidth } = useWindowDimensions();
+  const cardWidth = slideWidth ?? Math.max(windowWidth - shcSpacing.md * 2, 280);
+  const cardHeight = shcPromoCarouselSlideHeight(cardWidth);
+  const [active, setActive] = useState(0);
+
+  const syncActiveIndex = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(event.nativeEvent.contentOffset.x / cardWidth);
+    if (next >= 0 && next < promos.length && next !== active) {
+      setActive(next);
+    }
+  };
+
+  if (promos.length === 0) return null;
+
+  return (
+    <View testID={testID} style={shcSectionStack}>
+      <FlatList
+        data={promos}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        onMomentumScrollEnd={syncActiveIndex}
+        onScroll={syncActiveIndex}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
+        getItemLayout={(_, index) => ({ length: cardWidth, offset: cardWidth * index, index })}
+        renderItem={({ item }) => (
+          <SHCPromoCard promo={item} width={cardWidth} height={cardHeight} onPress={() => onPromoPress?.(item.id)} />
+        )}
+      />
+      {promos.length > 1 ? (
+        <View style={{ marginTop: shcSpacing.sm }}>
+          <SHCOnboardingDots total={promos.length} active={active} testID="home-promo-dots" />
+        </View>
+      ) : null}
     </View>
   );
 }
