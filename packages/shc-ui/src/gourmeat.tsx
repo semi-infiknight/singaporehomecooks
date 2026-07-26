@@ -15,12 +15,12 @@ import type { SHCDishCardData } from './domain';
 import type { SHCBottomTab } from './primitives';
 import { EmptyIllustration } from './empty-illustrations';
 
-/** Deterministic promo badge per dish id (10–25% off). */
-export function gourmeatDiscountPercent(id: string): number {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash + id.charCodeAt(i) * (i + 1)) % 100;
-  return 10 + (hash % 16);
-}
+/** @deprecated Fake hash discount — honest browse shows badge only when API sends percent. */
+// export function gourmeatDiscountPercent(id: string): number {
+//   let hash = 0;
+//   for (let i = 0; i < id.length; i++) hash = (hash + id.charCodeAt(i) * (i + 1)) % 100;
+//   return 10 + (hash % 16);
+// }
 
 export type GourmeatCategoryItem = {
   id: string;

@@ -190,9 +190,9 @@ const RATING_LABELS: Record<KitchenRatingBucket['key'], string> = {
   terrible: 'Terrible',
 };
 
-function hashSeed(s: string): number {
-  return s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-}
+// function hashSeed(s: string): number {
+//   return s.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+// }
 
 /** Effective rating + count for kitchen hero — null when API sends no rating (never invent 4.8). */
 export function kitchenRatingSummary(cook?: KitchenIdentity | null): {
@@ -301,45 +301,45 @@ export function kitchenRatingBuckets(averageRating: number): KitchenRatingBucket
 }
 
 /**
- * Deterministic community reviews for a kitchen (until cook-level review API).
- * Seeded by cook id so the same kitchen always shows the same sample set.
+ * @deprecated Deterministic fake reviews — replaced by GET /store/shc/cooks/:slug/reviews.
+ * Seeded by cook id so the same kitchen always showed the same sample set.
  */
-export function kitchenDemoReviews(cookId: string, count = 6): KitchenReview[] {
-  const seed = hashSeed(cookId || 'kitchen');
-  const authors = [
-    'Mei Ling',
-    'Priya S.',
-    'Aisha R.',
-    'David Tan',
-    'Siti N.',
-    'Wei Jie',
-    'Hannah L.',
-    'Raj K.',
-  ];
-  const bodies = [
-    'Excellent home-cooked meals. Good quantity and taste. Collection was smooth at the HDB lobby.',
-    'Food is really good. Would appreciate if portions can be slightly larger for family orders.',
-    'Been ordering for months. Packaging is careful and the menu has real heritage options.',
-    'Authentic flavours — tastes like my auntie’s kitchen. Clear allergen notes too.',
-    'On-time collection window. Dish was still warm and well packed for the MRT ride home.',
-    'Great for festive gatherings. Ordered ahead for our reunion and everything arrived as planned.',
-  ];
-  const n = Math.min(count, authors.length, bodies.length);
-  const out: KitchenReview[] = [];
-  for (let i = 0; i < n; i++) {
-    const idx = (seed + i * 3) % authors.length;
-    const rating = 5 - ((seed + i) % 5 === 0 ? 1 : 0) - ((seed + i) % 7 === 0 ? 1 : 0);
-    out.push({
-      id: `rev_${cookId}_${i}`,
-      author: authors[idx],
-      rating: Math.max(3, Math.min(5, rating)),
-      body: bodies[(seed + i) % bodies.length],
-      daysAgo: 1 + ((seed + i * 5) % 21),
-      hasPhoto: (seed + i) % 3 === 0,
-    });
-  }
-  return out;
-}
+// export function kitchenDemoReviews(cookId: string, count = 6): KitchenReview[] {
+//   const seed = hashSeed(cookId || 'kitchen');
+//   const authors = [
+//     'Mei Ling',
+//     'Priya S.',
+//     'Aisha R.',
+//     'David Tan',
+//     'Siti N.',
+//     'Wei Jie',
+//     'Hannah L.',
+//     'Raj K.',
+//   ];
+//   const bodies = [
+//     'Excellent home-cooked meals. Good quantity and taste. Collection was smooth at the HDB lobby.',
+//     'Food is really good. Would appreciate if portions can be slightly larger for family orders.',
+//     'Been ordering for months. Packaging is careful and the menu has real heritage options.',
+//     'Authentic flavours — tastes like my auntie’s kitchen. Clear allergen notes too.',
+//     'On-time collection window. Dish was still warm and well packed for the MRT ride home.',
+//     'Great for festive gatherings. Ordered ahead for our reunion and everything arrived as planned.',
+//   ];
+//   const n = Math.min(count, authors.length, bodies.length);
+//   const out: KitchenReview[] = [];
+//   for (let i = 0; i < n; i++) {
+//     const idx = (seed + i * 3) % authors.length;
+//     const rating = 5 - ((seed + i) % 5 === 0 ? 1 : 0) - ((seed + i) % 7 === 0 ? 1 : 0);
+//     out.push({
+//       id: `rev_${cookId}_${i}`,
+//       author: authors[idx],
+//       rating: Math.max(3, Math.min(5, rating)),
+//       body: bodies[(seed + i) % bodies.length],
+//       daysAgo: 1 + ((seed + i * 5) % 21),
+//       hasPhoto: (seed + i) % 3 === 0,
+//     });
+//   }
+//   return out;
+// }
 
 export type KitchenReviewSort = 'recent' | 'highest' | 'lowest' | 'photos';
 
