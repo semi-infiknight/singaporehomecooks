@@ -41,7 +41,7 @@
 | **Checkout UX** | `GourmeatPayButton` **disabled** until collection slot + allergen + PDPA; hint text above CTA. Web mirrors. |
 | **Bottom insets** | Removed tab `sceneStyle.paddingBottom` (was double-stacking ~100px). Tokens: `gourmeatLayout` + `contentPadForTabBar` / `contentPadForStickyFooter` / `contentPadSafe` in `@shc/ui`; web `--shc-mobile-tab-pad`, `shc-tab-bar-pad`, `shc-sticky-footer-pad`, `shc-safe-bottom-pad`; `hideMobileTabBar()` hides tab bar on checkout/PDP/stack routes. |
 | **Category UI** | `categoryStackGap` (8px) — eyebrow → circles → labels; `GourmeatCategoryRow title=` prop; verified Unsplash IDs in `@shc/utils/food-visuals`; `SHCFoodImage` onError fallback. |
-| **Discover** | Admin-managed promo carousel via `GET /store/shc/discover-promos` (SHC Ops → Catalog); code defaults when unset. |
+| **Discover** | Admin-managed customer browse via `GET /store/shc/customer-config` (categories, promos, occasions, copy, chips, thresholds). SHC Ops → Catalog. Cook-owned: listings, `collection_instructions`, story, images. |
 | **Reload scripts** | `pnpm customer:reload` / `METRO_CLEAR=1 pnpm customer:reload` → `scripts/reload-customer-emulator.sh`. |
 | **Railway medusa** | Deploy fixed (`shc-order-invoice-from-meta` types); `pnpm railway:configure-medusa`. |
 | **HitPay env** | `HITPAY_API_KEY`, `HITPAY_WEBHOOK_SALT`, `HITPAY_ENV=sandbox`. Webhook: `/hooks/shc/hitpay`. |

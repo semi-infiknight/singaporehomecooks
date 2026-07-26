@@ -32,20 +32,20 @@ import {
   scopeProductsByCategory,
   scopeKitchensByCategory,
   topRatedCategoryDishes,
-  categoryOfferCopy,
+  customerCategoryOfferCopy,
   getDishImageUrl,
   getCookKitchenHeroUrl,
   coerceRating,
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
-  MEAL_TYPE_CHIPS,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../hooks/useProducts';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 import { useDiscoverPrefs } from '../../../hooks/useDiscoverPrefs';
+import { useCustomerConfig } from '../../../hooks/useCustomerConfig';
 import { getCooks } from '../../../lib/api-client';
 import { VirtualRowFlashList } from '../../../components/VirtualLists';
 
@@ -86,8 +86,12 @@ export default function CategoryExploreScreen() {
   const [chip, setChip] = useState('all');
   const [mealType, setMealType] = useState<MealTypeId>('all');
 
+  const { config: browseConfig } = useCustomerConfig();
   const category = useMemo(() => getCuisineCategoryById(categoryId), [categoryId]);
-  const offer = useMemo(() => categoryOfferCopy(category), [category]);
+  const offer = useMemo(
+    () => customerCategoryOfferCopy(browseConfig, category?.label || category?.id || 'Heritage'),
+    [browseConfig, category]
+  );
 
   const filters = useMemo(
     () => ({ mealType, halalOnly, vegetarianOnly, maxCal }),
@@ -118,7 +122,7 @@ export default function CategoryExploreScreen() {
       { id: 'category-filters', title: 'Filters', height: 'tall' },
       () => (
         <SHCDiscoverFilterSheet
-          mealTypeChips={MEAL_TYPE_CHIPS}
+          mealTypeChips={browseConfig.meal_type_chips}
           mealType={mealType}
           onMealTypeChange={(id) => setMealType(id as MealTypeId)}
           cuisines={[]}

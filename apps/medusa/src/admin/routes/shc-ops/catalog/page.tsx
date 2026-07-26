@@ -55,6 +55,22 @@ const ShcOpsCatalogPage = () => {
     occasion_filter: "",
     sort_order: "10",
   })
+  const [occasionForm, setOccasionForm] = useState({
+    id: "",
+    label: "",
+    short_label: "",
+    image_url: "",
+    sort_order: "10",
+  })
+  const [copyForm, setCopyForm] = useState({
+    guest_headline: "",
+    signed_in_subtitle: "",
+    category_offer_title: "",
+    category_offer_subtitle: "",
+    min_rating: "4.7",
+    location_label: "",
+    kitchen_open_fallback: "",
+  })
 
   const catsQ = useQuery({
     queryKey: ["shc-ops", "categories"],
@@ -65,6 +81,12 @@ const ShcOpsCatalogPage = () => {
   const promosQ = useQuery({
     queryKey: ["shc-ops", "discover-promos"],
     queryFn: () => shcGet<PromosResponse>("/admin/shc/discover-promos"),
+    ...shcOpsLiveQuery,
+  })
+
+  const customerCfgQ = useQuery({
+    queryKey: ["shc-ops", "customer-config"],
+    queryFn: () => shcGet<any>("/admin/shc/customer-config"),
     ...shcOpsLiveQuery,
   })
 
@@ -159,8 +181,19 @@ const ShcOpsCatalogPage = () => {
     onError: (e) => toast.error(errMessage(e)),
   })
 
+  const saveBrowseMut = useMutation({
+    mutationFn: (payload: Record<string, unknown>) => shcPost("/admin/shc/customer-config", payload),
+    onSuccess: () => {
+      toast.success("Browse config saved")
+      void invalidateShcOpsDashboard(qc)
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  })
+
   const categories = catsQ.data?.categories || []
   const promos = promosQ.data?.promos || []
+  const browseConfig = customerCfgQ.data?.config
+  const occasions = browseConfig?.occasions || []
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -191,14 +224,51 @@ const ShcOpsCatalogPage = () => {
     })
   }
 
+  const onOccasionSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!occasionForm.id.trim() || !occasionForm.label.trim()) return
+    const current = occasions as Array<Record<string, unknown>>
+    const idx = current.findIndex((o) => o.id === occasionForm.id.trim())
+    const row = {
+      id: occasionForm.id.trim(),
+      label: occasionForm.label.trim(),
+      short_label: occasionForm.short_label.trim() || undefined,
+      image_url: occasionForm.image_url.trim(),
+      sort_order: Number(occasionForm.sort_order) || 10,
+      enabled: true,
+    }
+    const next = [...current]
+    if (idx >= 0) next[idx] = row
+    else next.push(row)
+    saveBrowseMut.mutate({ occasions: next })
+    setOccasionForm({ id: "", label: "", short_label: "", image_url: "", sort_order: "10" })
+  }
+
+  const onCopySubmit = (e: FormEvent) => {
+    e.preventDefault()
+    saveBrowseMut.mutate({
+      copy: {
+        guest_headline: copyForm.guest_headline,
+        signed_in_subtitle: copyForm.signed_in_subtitle,
+        category_offer_title: copyForm.category_offer_title,
+        category_offer_subtitle: copyForm.category_offer_subtitle,
+      },
+      popular: { min_rating: Number(copyForm.min_rating) || 4.7 },
+      defaults: {
+        location_label: copyForm.location_label,
+        kitchen_open_fallback: copyForm.kitchen_open_fallback,
+      },
+    })
+  }
+
   return (
     <div className="flex flex-col gap-y-4">
       <div>
-        <Heading level="h1">Catalog presets</Heading>
+        <Heading level="h1">Customer browse</Heading>
         <Text size="small" className="text-ui-fg-subtle">
-          Browse cuisine chips + discover home promo carousel. Public APIs:{" "}
-          <code className="text-ui-fg-base">GET /store/shc/categories</code>,{" "}
-          <code className="text-ui-fg-base">GET /store/shc/discover-promos</code>
+          Admin-managed discover chrome (categories, promos, occasions, copy). Cook listings &amp; collection
+          windows stay in the cook app. Public API:{" "}
+          <code className="text-ui-fg-base">GET /store/shc/customer-config</code>
           {catsQ.data?.source ? ` · categories: ${catsQ.data.source}` : ""}
           {promosQ.data?.source ? ` · promos: ${promosQ.data.source}` : ""}
         </Text>
@@ -598,6 +668,103 @@ const ShcOpsCatalogPage = () => {
             </Table.Body>
           </Table>
         </div>
+      </Container>
+
+      <Container className="divide-y p-0">
+        <div className="px-6 py-4">
+          <Heading level="h2">Occasions</Heading>
+          <Text size="small" className="text-ui-fg-subtle">
+            Occasion browse rail + search filters on web and mobile.
+          </Text>
+        </div>
+        <form onSubmit={onOccasionSubmit} className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2 large:grid-cols-5">
+          <div className="flex flex-col gap-y-1">
+            <Label>Id</Label>
+            <Input value={occasionForm.id} onChange={(e) => setOccasionForm((f) => ({ ...f, id: e.target.value }))} required />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Label</Label>
+            <Input value={occasionForm.label} onChange={(e) => setOccasionForm((f) => ({ ...f, label: e.target.value }))} required />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Short label</Label>
+            <Input value={occasionForm.short_label} onChange={(e) => setOccasionForm((f) => ({ ...f, short_label: e.target.value }))} />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Image URL</Label>
+            <Input value={occasionForm.image_url} onChange={(e) => setOccasionForm((f) => ({ ...f, image_url: e.target.value }))} />
+          </div>
+          <div className="flex items-end">
+            <Button type="submit" isLoading={saveBrowseMut.isPending} className="w-full">
+              Save occasion
+            </Button>
+          </div>
+        </form>
+        <div className="px-6 py-4 flex flex-wrap gap-2">
+          {occasions.map((o: { id: string; label: string; enabled?: boolean }) => (
+            <Badge key={o.id} size="small" color={o.enabled !== false ? "green" : "orange"}>
+              {o.label}
+            </Badge>
+          ))}
+        </div>
+      </Container>
+
+      <Container className="divide-y p-0">
+        <div className="px-6 py-4">
+          <Heading level="h2">Copy &amp; thresholds</Heading>
+          <Text size="small" className="text-ui-fg-subtle">
+            Headlines, category banners, popular badge threshold, default location label.
+          </Text>
+        </div>
+        <form onSubmit={onCopySubmit} className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2">
+          <div className="flex flex-col gap-y-1">
+            <Label>Guest headline</Label>
+            <Input
+              placeholder={browseConfig?.copy?.guest_headline || "Hungry? Order & Eat."}
+              value={copyForm.guest_headline}
+              onChange={(e) => setCopyForm((f) => ({ ...f, guest_headline: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Signed-in subtitle</Label>
+            <Input
+              placeholder={browseConfig?.copy?.signed_in_subtitle || "What would you like today?"}
+              value={copyForm.signed_in_subtitle}
+              onChange={(e) => setCopyForm((f) => ({ ...f, signed_in_subtitle: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Category offer title (use {"{{label}}"})</Label>
+            <Input
+              placeholder={browseConfig?.copy?.category_offer_title}
+              value={copyForm.category_offer_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, category_offer_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Popular min rating</Label>
+            <Input
+              type="number"
+              step="0.1"
+              placeholder={String(browseConfig?.popular?.min_rating ?? 4.7)}
+              value={copyForm.min_rating}
+              onChange={(e) => setCopyForm((f) => ({ ...f, min_rating: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1 small:col-span-2">
+            <Label>Default location label</Label>
+            <Input
+              placeholder={browseConfig?.defaults?.location_label}
+              value={copyForm.location_label}
+              onChange={(e) => setCopyForm((f) => ({ ...f, location_label: e.target.value }))}
+            />
+          </div>
+          <div className="flex items-end small:col-span-2">
+            <Button type="submit" isLoading={saveBrowseMut.isPending}>
+              Save copy &amp; thresholds
+            </Button>
+          </div>
+        </form>
       </Container>
     </div>
   )

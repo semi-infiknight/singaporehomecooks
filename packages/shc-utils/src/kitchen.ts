@@ -74,7 +74,10 @@ export function kitchenRatingLabel(
 }
 
 /** Open/closed + collection hint for familiar food-app status row. */
-export function kitchenOpenStatus(cook?: KitchenIdentity | null): {
+export function kitchenOpenStatus(
+  cook?: KitchenIdentity | null,
+  opts?: { openFallback?: string }
+): {
   isOpen: boolean;
   label: string;
   detail: string;
@@ -86,7 +89,7 @@ export function kitchenOpenStatus(cook?: KitchenIdentity | null): {
     label: closed ? 'Closed' : 'Open',
     detail: cook?.collection_instructions
       ? String(cook.collection_instructions).slice(0, 60)
-      : 'HDB collection evenings',
+      : opts?.openFallback || 'HDB collection evenings',
   };
 }
 

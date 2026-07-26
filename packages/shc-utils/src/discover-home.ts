@@ -16,7 +16,11 @@ function greetingFirstName(name?: string | null, email?: string | null): string 
   return null;
 }
 
-export function discoverHomeHeadline(userName?: string | null, userEmail?: string | null): {
+export function discoverHomeHeadline(
+  userName?: string | null,
+  userEmail?: string | null,
+  copy?: { guest_headline?: string; guest_subtitle?: string; signed_in_subtitle?: string }
+): {
   headline: string;
   subtitle?: string;
 } {
@@ -24,8 +28,11 @@ export function discoverHomeHeadline(userName?: string | null, userEmail?: strin
   if (first) {
     return {
       headline: `Hi, ${first}`,
-      subtitle: 'What would you like today?',
+      subtitle: copy?.signed_in_subtitle || 'What would you like today?',
     };
   }
-  return { headline: 'Hungry? Order & Eat.' };
+  return {
+    headline: copy?.guest_headline || 'Hungry? Order & Eat.',
+    subtitle: copy?.guest_subtitle,
+  };
 }

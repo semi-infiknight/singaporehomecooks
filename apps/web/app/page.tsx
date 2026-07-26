@@ -15,7 +15,6 @@ import {
   favoritesToReorderDishes,
   getCookAvatarUrl,
   getDishImageUrl,
-  MIND_CUISINE_CATEGORIES,
   sortByCookProximity,
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
@@ -26,18 +25,16 @@ import {
   getDropImageUrl,
   getCookKitchenHeroUrl,
   discoverHomeHeadline,
-  MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
-  isPopularDish,
   coerceRating,
-  DISCOVER_MODES,
-  DISCOVER_OCCASIONS_NAV,
   discoverSections,
-  discoverForYouRail,
   discoverActiveFilterCount,
   discoverGridHeading,
   discoverKitchensHeading,
-  discoverEmptyCopy,
+  discoverActiveFilters,
+  customerDiscoverEmptyCopy,
+  customerForYouRail,
+  customerIsPopularDish,
   occasionBrowseRoute,
   type DiscoverModeId,
   type MealTypeId,
@@ -45,7 +42,7 @@ import {
 import { useFavorites } from '../lib/useFavorites';
 import { useCustomerLocation } from '../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../lib/useDiscoverPrefs';
-import { useDiscoverPromos } from '../lib/useDiscoverPromos';
+import { useCustomerConfig } from '../lib/useCustomerConfig';
 import { getCooks } from '../lib/api-client';
 import {
   SHCButton,
@@ -184,30 +181,30 @@ export default function DiscoverHome() {
     [filteredProducts, isSearching]
   );
 
+  const { categories: cuisineItems, promos: homePromos, config: browseConfig } = useCustomerConfig();
+
   const forYou = useMemo(() => {
     if (isSearching) return null;
     const asCards = (items: Array<{ id: string; name: string; cook_name?: string; price: number; cuisine?: string }>) =>
       items.map((d) =>
         toDishCard({ id: d.id, name: d.name, cook_name: d.cook_name || '', price: d.price, cuisine: d.cuisine })
       ) as DishCardProduct[];
-    return discoverForYouRail<DishCardProduct>({
+    return customerForYouRail(browseConfig, {
       reorder: asCards(extractReorderDishes(orders as Record<string, unknown>[])),
       saved: asCards(favoritesToReorderDishes(favorites)),
       topRated: topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map((p) =>
         toDishCard(p as DishCardProduct)
       ) as DishCardProduct[],
     });
-  }, [isSearching, orders, favorites, productList]);
+  }, [isSearching, orders, favorites, productList, browseConfig]);
 
-  const cuisineItems = MIND_CUISINE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, imageUrl: c.imageUrl }));
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
-  const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
-  const { promos: homePromos } = useDiscoverPromos();
+  const homeGreeting = discoverHomeHeadline(user?.name, user?.email, browseConfig.copy);
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
   const gridHeading = discoverGridHeading(mode, filters);
   const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
-  const emptyCopy = discoverEmptyCopy(mode, filters);
+  const emptyCopy = customerDiscoverEmptyCopy(browseConfig, mode, discoverActiveFilters(filters).length > 0);
 
   const sections = useMemo(
     () =>
@@ -222,8 +219,9 @@ export default function DiscoverHome() {
   );
 
   const checkPopular = useCallback(
-    (product: DishCardProduct) => isPopularDish(product as Record<string, unknown>, productList as Record<string, unknown>[]),
-    [productList]
+    (product: DishCardProduct) =>
+      customerIsPopularDish(product as Record<string, unknown>, productList as Record<string, unknown>[], browseConfig.popular),
+    [productList, browseConfig.popular]
   );
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
@@ -356,13 +354,13 @@ export default function DiscoverHome() {
         return (
           <div className="shc-section-stack">
             <GourmeatModeSwitch
-              modes={DISCOVER_MODES}
+              modes={browseConfig.discover_modes}
               activeId={mode}
               onSelect={(id) => setMode(id as DiscoverModeId)}
               navAction={{
-                label: DISCOVER_OCCASIONS_NAV.label,
+                label: browseConfig.occasions_nav.label,
                 href: occasionBrowseRoute().web,
-                testID: DISCOVER_OCCASIONS_NAV.testID,
+                testID: browseConfig.occasions_nav.testID,
               }}
             />
           </div>
@@ -532,7 +530,7 @@ export default function DiscoverHome() {
       <DiscoverFilterSheet
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealTypeChips={browseConfig.meal_type_chips}
         mealType={mealType}
         onMealTypeChange={(id) => setMealType(id as MealTypeId)}
         cuisines={[{ id: '', label: 'All' }, ...cuisineItems]}

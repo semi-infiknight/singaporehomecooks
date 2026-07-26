@@ -13,11 +13,10 @@ import {
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
-  MEAL_TYPE_CHIPS,
-  MIND_CUISINE_CATEGORIES,
   type MealTypeId,
   coerceRating,
 } from '@shc/utils';
+import { useCustomerConfig } from '../../lib/useCustomerConfig';
 import {
   SHCButton,
   GourmeatDishCard,
@@ -71,9 +70,11 @@ export default function SearchPage() {
     if (maxCal != null) toggleLight();
   }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
 
+  const { categories, config: browseConfig } = useCustomerConfig();
+
   const cuisineOptions = useMemo(
-    () => [{ id: '', label: 'All' }, ...MIND_CUISINE_CATEGORIES.filter((c) => c.id).map((c) => ({ id: c.id, label: c.label }))],
-    []
+    () => categories.map((c) => ({ id: c.id, label: c.label || 'All' })),
+    [categories]
   );
 
   const searchDishes = useMemo(
@@ -90,23 +91,25 @@ export default function SearchPage() {
     [results]
   );
 
-  const occasionChips = [
-    { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-    { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
-    { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
-    { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
-    { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
-  ];
+  const occasionChips = useMemo(() => {
+    const opts = browseConfig.occasions.filter((o) => o.enabled);
+    return [
+      { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
+      ...opts.map((o) => ({
+        id: o.id,
+        label: o.short_label || o.label,
+        imageUrl: o.image_url || getOccasionImageUrl(o.id),
+        active: occ === o.id,
+      })),
+    ];
+  }, [browseConfig.occasions, occ]);
 
   const handleOccasion = (id: string) => {
-    const map: Record<string, string> = {
-      any: '',
-      raya: 'Hari Raya',
-      cny: 'Chinese New Year',
-      family: 'Family Gathering',
-      xmas: 'Christmas',
-    };
-    setOcc(map[id] ?? '');
+    if (id === 'any') {
+      setOcc('');
+      return;
+    }
+    setOcc(id);
   };
 
   const handleAdd = (id: string) => {
@@ -174,7 +177,7 @@ export default function SearchPage() {
       <DiscoverFilterSheet
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealTypeChips={browseConfig.meal_type_chips}
         mealType={mealType}
         onMealTypeChange={(id) => setMealType(id as MealTypeId)}
         cuisines={cuisineOptions}

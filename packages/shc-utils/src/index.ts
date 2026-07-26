@@ -15,6 +15,7 @@ export * from './location';
 export * from './discover';
 export * from './discover-home';
 export * from './discover-promos';
+export * from './customer-browse-config';
 export * from './discover-layout';
 export * from './cook-portal';
 export * from './meal-type';
