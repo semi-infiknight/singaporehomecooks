@@ -523,13 +523,24 @@ export default function KitchenPage() {
                 </Pressable>
               ))}
             </ScrollView>
-            {reviews.map((r) => (
-              <View key={r.id} style={styles.infoCard} testID={`kitchen-review-${r.id}`}>
-                <Text style={styles.infoBody}>{r.author}</Text>
-                <Text style={styles.stars}>{'★'.repeat(r.rating)}</Text>
-                <Text style={styles.infoMuted}>{r.body}</Text>
-              </View>
-            ))}
+            <Text style={styles.infoMuted}>
+              {reviews.length > 0
+                ? 'Verified reviews from customers who collected their orders.'
+                : 'No reviews yet. Leave one after you collect an order.'}
+            </Text>
+            {reviews.length === 0 ? (
+              <Text style={styles.infoMuted} testID="kitchen-reviews-empty">
+                No written reviews yet for this kitchen.
+              </Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r.id} style={styles.infoCard} testID={`kitchen-review-${r.id}`}>
+                  <Text style={styles.infoBody}>{r.author}</Text>
+                  <Text style={styles.stars}>{'★'.repeat(r.rating)}</Text>
+                  <Text style={styles.infoMuted}>{r.body}</Text>
+                </View>
+              ))
+            )}
           </View>
         )}
       </ScrollView>

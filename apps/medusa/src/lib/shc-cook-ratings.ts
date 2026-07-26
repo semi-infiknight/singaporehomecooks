@@ -6,8 +6,13 @@ export async function getCookRatingSummary(
   scope: any,
   cookId: string
 ): Promise<CookRatingSummary> {
-  const reviewService: ShcReviewModuleService = scope.resolve("shcReview") as any;
-  return reviewService.getCookRatingSummary(cookId).catch(() => ({ rating: null, review_count: 0 }));
+  if (!cookId) return { rating: null, review_count: 0 };
+  try {
+    const reviewService: ShcReviewModuleService = scope.resolve("shcReview") as any;
+    return reviewService.getCookRatingSummary(cookId).catch(() => ({ rating: null, review_count: 0 }));
+  } catch {
+    return { rating: null, review_count: 0 };
+  }
 }
 
 /** Batch cook rating lookups for product/kitchen lists (deduped). */

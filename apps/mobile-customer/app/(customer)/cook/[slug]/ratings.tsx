@@ -131,6 +131,12 @@ export default function KitchenRatingsScreen() {
             )}
           </View>
 
+          <Text style={styles.hint}>
+            {reviews.length > 0
+              ? 'Verified reviews from customers who collected their orders.'
+              : 'No reviews yet. Leave one after you collect an order.'}
+          </Text>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortRow}>
             {REVIEW_SORTS.map((s) => {
               const on = reviewSort === s.id;
@@ -146,19 +152,25 @@ export default function KitchenRatingsScreen() {
             })}
           </ScrollView>
 
-          {reviews.map((r) => (
-            <View key={r.id} style={styles.reviewCard} testID={`kitchen-review-${r.id}`}>
-              <View style={styles.reviewHead}>
-                <Text style={styles.author}>{r.author}</Text>
-                <Text style={styles.meta}>
-                  {r.daysAgo === 1 ? '1 day ago' : `${r.daysAgo} days ago`}
-                </Text>
+          {reviews.length === 0 ? (
+            <Text style={styles.meta} testID="kitchen-reviews-empty">
+              No written reviews yet for this kitchen.
+            </Text>
+          ) : (
+            reviews.map((r) => (
+              <View key={r.id} style={styles.reviewCard} testID={`kitchen-review-${r.id}`}>
+                <View style={styles.reviewHead}>
+                  <Text style={styles.author}>{r.author}</Text>
+                  <Text style={styles.meta}>
+                    {r.daysAgo === 1 ? '1 day ago' : `${r.daysAgo} days ago`}
+                  </Text>
+                </View>
+                <Text style={styles.stars}>{'★'.repeat(r.rating)}</Text>
+                <Text style={styles.body}>{r.body}</Text>
+                {r.hasPhoto ? <Text style={styles.photoTag}>Photo review</Text> : null}
               </View>
-              <Text style={styles.stars}>{'★'.repeat(r.rating)}</Text>
-              <Text style={styles.body}>{r.body}</Text>
-              {r.hasPhoto ? <Text style={styles.photoTag}>Photo review</Text> : null}
-            </View>
-          ))}
+            ))
+          )}
 
           <GourmeatPrimaryButton
             label="View menu & order"
@@ -224,6 +236,7 @@ const styles = StyleSheet.create({
   },
   bucketFill: { height: '100%', backgroundColor: gourmeatColors.primary, borderRadius: 4 },
   bucketPct: { width: 32, fontSize: 10, fontWeight: '700', color: gourmeatColors.textLight, textAlign: 'right' },
+  hint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 17 },
   sortRow: { marginBottom: shcSpacing.sm, maxHeight: 40 },
   sortChip: {
     paddingHorizontal: 12,

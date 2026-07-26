@@ -612,16 +612,20 @@ export default function KitchenPage() {
               <p className="text-sm font-semibold text-muted-foreground mb-4">No ratings yet for this kitchen.</p>
             )}
             <p className="text-xs font-semibold text-muted-foreground">
-              Community samples for this kitchen · leave a review after you collect an order.
+              {reviews.length > 0
+                ? 'Verified reviews from customers who collected their orders.'
+                : 'No reviews yet. Leave one after you collect an order (PayNow → collected).'}
             </p>
-            <button
-              type="button"
-              className="mt-3 text-sm font-bold text-primary"
-              data-testid="kitchen-see-all-ratings"
-              onClick={() => router.push(`/cook/${slug}/ratings`)}
-            >
-              Open full ratings →
-            </button>
+            {ratingSum ? (
+              <button
+                type="button"
+                className="mt-3 text-sm font-bold text-primary"
+                data-testid="kitchen-see-all-ratings"
+                onClick={() => router.push(`/cook/${slug}/ratings`)}
+              >
+                Open full ratings →
+              </button>
+            ) : null}
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" data-testid="kitchen-review-sorts">
@@ -642,7 +646,12 @@ export default function KitchenPage() {
           </div>
 
           <ul className="space-y-3" data-testid="kitchen-reviews-list">
-            {reviews.map((r) => (
+            {reviews.length === 0 ? (
+              <li className="text-sm font-semibold text-muted-foreground" data-testid="kitchen-reviews-empty">
+                No written reviews yet for this kitchen.
+              </li>
+            ) : (
+              reviews.map((r) => (
               <li
                 key={r.id}
                 className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-3"
@@ -660,7 +669,8 @@ export default function KitchenPage() {
                 </p>
                 <p className="text-sm font-semibold text-muted-foreground mt-1 leading-relaxed">{r.body}</p>
               </li>
-            ))}
+              ))
+            )}
           </ul>
         </div>
       )}

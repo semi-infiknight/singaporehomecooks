@@ -129,8 +129,9 @@ export default function KitchenRatingsPage() {
           <p className="text-sm font-semibold text-muted-foreground mb-4">No ratings yet for this kitchen.</p>
         )}
         <p className="text-xs font-semibold text-muted-foreground leading-relaxed">
-          Community samples for this kitchen. Leave a verified review after you collect an order
-          (PayNow confirm → collected).
+          {reviews.length > 0
+            ? 'Verified reviews from customers who collected their orders.'
+            : 'No reviews yet. Leave one after you collect an order (PayNow confirm → collected).'}
         </p>
       </SHCCard>
 
@@ -152,7 +153,12 @@ export default function KitchenRatingsPage() {
       </div>
 
       <ul className="space-y-3 mb-6" data-testid="kitchen-reviews-list">
-        {reviews.map((r) => (
+        {reviews.length === 0 ? (
+          <li className="text-sm font-semibold text-muted-foreground" data-testid="kitchen-reviews-empty">
+            No written reviews yet for this kitchen.
+          </li>
+        ) : (
+          reviews.map((r) => (
           <li
             key={r.id}
             className="rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-3"
@@ -172,7 +178,8 @@ export default function KitchenRatingsPage() {
               </span>
             ) : null}
           </li>
-        ))}
+          ))
+        )}
       </ul>
 
       <div className="flex flex-col gap-2">
