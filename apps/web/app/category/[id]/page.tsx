@@ -13,6 +13,11 @@ import {
   getDishImageUrl,
   getCookKitchenHeroUrl,
   coerceRating,
+  filterDiscoverProducts,
+  discoverActiveFilterCount,
+  clearedDiscoverFilters,
+  MEAL_TYPE_CHIPS,
+  type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useAuth } from '../../../lib/useAuth';
@@ -23,12 +28,12 @@ import { getCooks } from '../../../lib/api-client';
 import {
   GourmeatDishCard,
   GourmeatSectionTitle,
-  FilterChipRow,
   SHCEmptyState,
   SHCButton,
   SHCSkeletonGrid,
   SHCSkeletonKitchenList,
   TiffinKitchenCard,
+  DiscoverFilterSheet,
   type DishCardProduct,
 } from '../../components/SHCWebComponents';
 import { VirtualRowList } from '../../components/VirtualLists';
@@ -65,19 +70,39 @@ export default function CategoryPage() {
   const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const cookList = (cooks as Record<string, unknown>[]) ?? [];
   const { active: collectionLocation } = useCustomerLocation();
-  const { halalOnly, toggleHalalOnly } = useDiscoverPrefs();
+  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const addMut = useAddToCart();
+  const [mealType, setMealType] = useState<MealTypeId>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [chip, setChip] = useState('all');
 
   const category = useMemo(() => getCuisineCategoryById(categoryId), [categoryId]);
   const offer = useMemo(() => categoryOfferCopy(category), [category]);
   const title = category?.label || category?.id || 'Category';
 
+  const filters = useMemo(
+    () => ({ mealType, halalOnly, vegetarianOnly, maxCal }),
+    [mealType, halalOnly, vegetarianOnly, maxCal]
+  );
+  const activeFilterCount = discoverActiveFilterCount(filters);
+
   const categoryProducts = useMemo(() => {
-    let list = scopeProductsByCategory(productList, categoryId);
-    if (halalOnly || chip === 'halal') list = list.filter((p) => Boolean(p.halal));
-    return list;
-  }, [productList, categoryId, halalOnly, chip]);
+    const scoped = scopeProductsByCategory(productList, categoryId);
+    return filterDiscoverProducts(scoped, {
+      mealType: mealType !== 'all' ? mealType : undefined,
+      halalOnly: halalOnly || undefined,
+      vegetarianOnly: vegetarianOnly || undefined,
+      maxCal,
+    });
+  }, [productList, categoryId, mealType, halalOnly, vegetarianOnly, maxCal]);
+
+  const clearFilters = useCallback(() => {
+    const cleared = clearedDiscoverFilters();
+    setMealType(cleared.mealType);
+    if (halalOnly) toggleHalalOnly();
+    if (vegetarianOnly) toggleVegetarianOnly();
+    if (maxCal != null) toggleLight();
+  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
 
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
@@ -118,7 +143,20 @@ export default function CategoryPage() {
         <h1 className="flex-1 text-center text-xl font-black text-foreground truncate" data-testid="category-title">
           {title}
         </h1>
-        <span className="w-10" />
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          className="relative w-10 h-10 flex items-center justify-center text-lg"
+          data-testid="category-filter-btn"
+          aria-label="Filters"
+        >
+          ☰
+          {activeFilterCount > 0 ? (
+            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-extrabold flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          ) : null}
+        </button>
       </div>
 
       <div
@@ -165,19 +203,22 @@ export default function CategoryPage() {
         title={kitchens.length ? `${kitchens.length} kitchen${kitchens.length === 1 ? '' : 's'}` : 'All kitchens'}
         testID="category-kitchens-header"
       />
-      <FilterChipRow
-        chips={[
-          { id: 'all', label: 'All', active: chip === 'all' },
-          { id: 'halal', label: 'Halal', active: chip === 'halal' || halalOnly },
-          { id: 'nearest', label: 'Nearest', active: chip === 'nearest' },
-        ]}
-        onChipClick={(cid) => {
-          setChip(cid);
-          if (cid === 'halal') toggleHalalOnly();
-          if (cid === 'nearest') router.push('/location');
-        }}
-        testID="category-filter-chips"
-      />
+      <div className="flex gap-2 mb-3" data-testid="category-filter-chips">
+        <button
+          type="button"
+          onClick={() => setChip(chip === 'nearest' ? 'all' : 'nearest')}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${
+            chip === 'nearest' ? 'border-primary bg-primary text-primary-foreground' : 'border-[var(--shc-border-brutal)]'
+          }`}
+        >
+          Nearest
+        </button>
+        {chip === 'nearest' ? (
+          <button type="button" onClick={() => router.push('/location')} className="text-xs font-bold text-primary underline">
+            Set collection location
+          </button>
+        ) : null}
+      </div>
 
       {!isLoading && !cooksLoading && kitchens.length === 0 && (
         <p className="text-sm font-semibold text-muted-foreground mt-3" data-testid="category-kitchens-empty">
@@ -215,6 +256,28 @@ export default function CategoryPage() {
             />
           );
         }}
+      />
+
+      <DiscoverFilterSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealType={mealType}
+        onMealTypeChange={(id) => setMealType(id as MealTypeId)}
+        cuisines={[]}
+        cuisine=""
+        onCuisineChange={() => {}}
+        halalOnly={halalOnly}
+        vegetarianOnly={vegetarianOnly}
+        lightOnly={maxCal != null}
+        onToggleHalal={toggleHalalOnly}
+        onToggleVegetarian={toggleVegetarianOnly}
+        onToggleLight={toggleLight}
+        onClear={clearFilters}
+        resultCount={categoryProducts.length}
+        activeCount={activeFilterCount}
+        hideCuisine
+        testID="category-filter-sheet"
       />
     </section>
   );

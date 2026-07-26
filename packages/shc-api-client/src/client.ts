@@ -157,6 +157,30 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).cook;
     },
 
+    async getCookReviews(slug: string, opts?: { limit?: number; offset?: number }) {
+      const q = new URLSearchParams();
+      if (opts?.limit != null) q.set("limit", String(opts.limit));
+      if (opts?.offset != null) q.set("offset", String(opts.offset));
+      const qs = q.toString();
+      const r = await request(
+        `/store/shc/cooks/${encodeURIComponent(slug)}/reviews${qs ? `?${qs}` : ""}`,
+        { method: "GET" }
+      );
+      return r as {
+        cook_id: string;
+        summary: { rating: number | null; review_count: number };
+        count: number;
+        reviews: Array<{
+          id: string;
+          order_id: string;
+          rating: number;
+          body: string;
+          created_at?: string;
+          author_label?: string;
+        }>;
+      };
+    },
+
     async getProduct(id: string) {
       const r = await request(`/store/shc/products/${encodeURIComponent(id)}`, { method: "GET" });
       return (r as any).product;

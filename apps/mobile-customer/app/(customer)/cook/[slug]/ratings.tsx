@@ -18,11 +18,12 @@ import {
   getCookAvatarUrl,
   kitchenRatingSummary,
   kitchenRatingBuckets,
-  kitchenDemoReviews,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   sortKitchenReviews,
   type KitchenReviewSort,
 } from '@shc/utils';
-import { useCook } from '../../../../hooks/useProducts';
+import { useCook, useCookReviews } from '../../../../hooks/useProducts';
 
 const REVIEW_SORTS: { id: KitchenReviewSort; label: string }[] = [
   { id: 'recent', label: 'Most recent' },
@@ -36,17 +37,23 @@ export default function KitchenRatingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data: cook, isLoading } = useCook(String(slug || ''));
+  const { data: reviewsPayload } = useCookReviews(String(slug || ''), { limit: 50 });
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
+  const buckets = useMemo(() => {
+    const fromReviews = kitchenRatingBucketsFromReviews(reviewsPayload?.reviews || []);
+    if (fromReviews) return fromReviews;
+    if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
+    return [];
+  }, [reviewsPayload?.reviews, ratingSum]);
   const reviews = useMemo(
     () =>
       sortKitchenReviews(
-        kitchenDemoReviews(String(cook?.id || slug || 'kitchen'), 10),
+        (reviewsPayload?.reviews || []).map(kitchenReviewFromApi),
         reviewSort
       ),
-    [cook?.id, slug, reviewSort]
+    [reviewsPayload?.reviews, reviewSort]
   );
   const avatar = getCookAvatarUrl(String(cook?.id || slug), cook?.display_name || 'Cook');
 

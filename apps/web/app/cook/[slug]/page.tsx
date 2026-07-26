@@ -17,7 +17,8 @@ import {
   kitchenTagList,
   kitchenRatingSummary,
   kitchenRatingBuckets,
-  kitchenDemoReviews,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   sortKitchenReviews,
   kitchenCollectionHours,
   kitchenAboutPoints,
@@ -43,7 +44,7 @@ import {
   type KitchenOrderLine,
   VIRTUAL_KITCHEN_MENU_ROW_HEIGHT,
 } from '@shc/utils';
-import { useCook, useProducts, useAddToCart } from '../../../lib/useProducts';
+import { useCook, useCookReviews, useProducts, useAddToCart } from '../../../lib/useProducts';
 import { useDrops } from '../../../lib/useOrder';
 import { useAuth } from '../../../lib/useAuth';
 import { useGuestAuthGate } from '../../../lib/useGuestAuthGate';
@@ -80,6 +81,7 @@ export default function KitchenPage() {
   const slug = params?.slug as string;
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug);
+  const { data: reviewsPayload } = useCookReviews(slug, { limit: 50 });
   const { data: products = [] } = useProducts('');
   const { data: kitchenDropsRaw = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
     enabled: Boolean(cook?.id),
@@ -130,10 +132,19 @@ export default function KitchenPage() {
   }, [menuSections]);
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
+  const buckets = useMemo(() => {
+    const fromReviews = kitchenRatingBucketsFromReviews(reviewsPayload?.reviews || []);
+    if (fromReviews) return fromReviews;
+    if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
+    return [];
+  }, [reviewsPayload?.reviews, ratingSum]);
   const reviews = useMemo(
-    () => sortKitchenReviews(kitchenDemoReviews(String(cook?.id || slug || 'kitchen')), reviewSort),
-    [cook?.id, slug, reviewSort]
+    () =>
+      sortKitchenReviews(
+        (reviewsPayload?.reviews || []).map(kitchenReviewFromApi),
+        reviewSort
+      ),
+    [reviewsPayload?.reviews, reviewSort]
   );
   const hours = useMemo(
     () =>

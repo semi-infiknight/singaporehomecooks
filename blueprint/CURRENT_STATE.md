@@ -1,12 +1,24 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-27 — Discover home promo carousel (16:9); personalized greeting uses email when name empty; journey strip removed.
+**Last Updated:** 2026-07-26 — Discover IA systemized; honest ratings; filter sheet parity on category/search.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-27)
+## 0. New-session handoff (2026-07-26)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Discover home** | Shared `@shc/utils` `discoverSections()` spine: promo carousel → cooking soon → for-you rail → **Dishes \| Kitchens** mode switch + **Occasions** nav link → mode content (cuisine rail + dish grid OR kitchen list) → request CTA. Filter tray/sheet via `SHCDiscoverFilterSheet` / `DiscoverFilterSheet` + `filterDiscoverProducts`. |
+| **Occasions** | Dedicated route `/occasions` (web) · `/(customer)/occasions` (mobile) — not an inline discover mode. `occasion-browse.ts` + `occasionBrowseRoute()`. |
+| **Honest browse** | `coerceRating()` — no fake 4.8/24. Discount badges only when API sends percent. `kitchenRatingSummary()` null without rating. Product/tiffin APIs attach cook `rating` + `review_count`. Cook review lists from `GET /store/shc/cooks/:slug/reviews` (not `kitchenDemoReviews`). |
+| **Filter parity** | Category + advanced search use same filter sheet as discover (meal type, cuisine on search, dietary). Category hides cuisine group (`hideCuisine`) — locked by route. |
+| **Collection slots** | Dish cards show `collection_slot` only when API sends it — no `getCollectionSlotLabel()` hash fallback on browse. |
+
+## 0a. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 

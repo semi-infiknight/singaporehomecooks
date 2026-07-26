@@ -41,7 +41,8 @@ import {
   kitchenTagList,
   kitchenRatingSummary,
   kitchenRatingBuckets,
-  kitchenDemoReviews,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   sortKitchenReviews,
   kitchenCollectionHours,
   kitchenAboutPoints,
@@ -75,7 +76,7 @@ import {
   type KitchenMealCustomizeDraft,
 } from '@shc/utils';
 import { VirtualRowFlashList } from '../../../../components/VirtualLists';
-import { useCook, useDiscovery, useAddToCart } from '../../../../hooks/useProducts';
+import { useCook, useCookReviews, useDiscovery, useAddToCart } from '../../../../hooks/useProducts';
 import { useDrops } from '../../../../hooks/useOrder';
 import { useGuestAuthGate } from '../../../../hooks/useGuestAuthGate';
 
@@ -93,6 +94,7 @@ export default function KitchenPage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug || '');
+  const { data: reviewsPayload } = useCookReviews(slug || '', { limit: 50 });
   const { data: kitchenDropsRaw = [] } = useDrops(cook?.id ? String(cook.id) : undefined, {
     enabled: Boolean(cook?.id),
   });
@@ -180,10 +182,19 @@ export default function KitchenPage() {
     : 0;
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
+  const buckets = useMemo(() => {
+    const fromReviews = kitchenRatingBucketsFromReviews(reviewsPayload?.reviews || []);
+    if (fromReviews) return fromReviews;
+    if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
+    return [];
+  }, [reviewsPayload?.reviews, ratingSum]);
   const reviews = useMemo(
-    () => sortKitchenReviews(kitchenDemoReviews(String(cook?.id || slug || 'k')), reviewSort),
-    [cook?.id, slug, reviewSort]
+    () =>
+      sortKitchenReviews(
+        (reviewsPayload?.reviews || []).map(kitchenReviewFromApi),
+        reviewSort
+      ),
+    [reviewsPayload?.reviews, reviewSort]
   );
   const hours = useMemo(
     () => kitchenCollectionHours({ collection_instructions: cook?.collection_instructions }),

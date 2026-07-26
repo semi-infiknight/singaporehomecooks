@@ -11,11 +11,12 @@ import {
   getCookAvatarUrl,
   kitchenRatingSummary,
   kitchenRatingBuckets,
-  kitchenDemoReviews,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   sortKitchenReviews,
   type KitchenReviewSort,
 } from '@shc/utils';
-import { useCook } from '../../../../lib/useProducts';
+import { useCook, useCookReviews } from '../../../../lib/useProducts';
 import { SHCButton, SHCCard, SHCSkeletonList } from '../../../components/SHCWebComponents';
 
 const REVIEW_SORTS: { id: KitchenReviewSort; label: string }[] = [
@@ -30,13 +31,23 @@ export default function KitchenRatingsPage() {
   const slug = params?.slug as string;
   const router = useRouter();
   const { data: cook, isLoading } = useCook(slug);
+  const { data: reviewsPayload } = useCookReviews(slug, { limit: 50 });
   const [reviewSort, setReviewSort] = useState<KitchenReviewSort>('recent');
 
   const ratingSum = useMemo(() => kitchenRatingSummary(cook as any), [cook]);
-  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
+  const buckets = useMemo(() => {
+    const fromReviews = kitchenRatingBucketsFromReviews(reviewsPayload?.reviews || []);
+    if (fromReviews) return fromReviews;
+    if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
+    return [];
+  }, [reviewsPayload?.reviews, ratingSum]);
   const reviews = useMemo(
-    () => sortKitchenReviews(kitchenDemoReviews(String(cook?.id || slug || 'kitchen'), 10), reviewSort),
-    [cook?.id, slug, reviewSort]
+    () =>
+      sortKitchenReviews(
+        (reviewsPayload?.reviews || []).map(kitchenReviewFromApi),
+        reviewSort
+      ),
+    [reviewsPayload?.reviews, reviewSort]
   );
   const avatar = getCookAvatarUrl(String(cook?.id || slug), cook?.display_name || 'Cook');
 

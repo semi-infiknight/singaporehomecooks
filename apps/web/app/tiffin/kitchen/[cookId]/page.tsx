@@ -20,9 +20,10 @@ import {
   kitchenAboutPoints,
   kitchenChefBackground,
   kitchenTrustCerts,
-  kitchenDemoReviews,
-  sortKitchenReviews,
   kitchenRatingBuckets,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
+  sortKitchenReviews,
   tiffinPlanDurationOptions,
   tiffinPlanDurationTotal,
   subscribeTrustChips,
@@ -42,6 +43,7 @@ import {
   tiffinWeeklySubtotal,
   TIFFIN_DAY_LABELS,
 } from '../../../../lib/useTiffin';
+import { useCookReviews } from '../../../../lib/useProducts';
 import {
   SHCButton,
   SHCCard,
@@ -65,6 +67,8 @@ export default function TiffinKitchenPage() {
   const { user } = useAuth();
   const { showGuestAuthTray } = useGuestAuthTray();
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId);
+  const cookSlug = String((kitchen as any)?.cook?.slug || '');
+  const { data: reviewsPayload } = useCookReviews(cookSlug, { limit: 50 });
   const subscribeMut = useSubscribeTiffin();
   const mealsOptions: number[] = (kitchen as any)?.meals_per_week_options || [2, 3, 4];
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(3);
@@ -126,8 +130,16 @@ export default function TiffinKitchenPage() {
     tiffinPricePerServing(mealsPerWeek),
     selectedDuration.weeks
   );
-  const reviews = sortKitchenReviews(kitchenDemoReviews(cookId), 'recent');
-  const buckets = useMemo(() => (ratingSum ? kitchenRatingBuckets(ratingSum.rating) : []), [ratingSum]);
+  const reviews = useMemo(
+    () => sortKitchenReviews((reviewsPayload?.reviews || []).map(kitchenReviewFromApi), 'recent'),
+    [reviewsPayload?.reviews]
+  );
+  const buckets = useMemo(() => {
+    const fromReviews = kitchenRatingBucketsFromReviews(reviewsPayload?.reviews || []);
+    if (fromReviews) return fromReviews;
+    if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
+    return [];
+  }, [reviewsPayload?.reviews, ratingSum]);
   const avatar = getCookAvatarUrl(cookId, cookName);
   const trustChips = subscribeTrustChips({
     area: (kitchen as any)?.cook?.area,

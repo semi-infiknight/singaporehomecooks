@@ -19,6 +19,22 @@ class ShcReviewModuleService extends MedusaService({ Review }) {
     return { rating: Math.round(average * 10) / 10, review_count: reviews.length };
   }
 
+  async listCookReviews(
+    cookId: string,
+    opts?: { limit?: number; offset?: number }
+  ): Promise<{ reviews: any[]; count: number }> {
+    const limit = Math.min(Math.max(opts?.limit ?? 20, 1), 100);
+    const offset = Math.max(opts?.offset ?? 0, 0);
+    const [rows] = await this.listAndCountReviews({ cook_id: cookId } as any, { take: 500 }).catch(() => [[]]);
+    const sorted = ((rows as any[]) || []).sort(
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+    );
+    return {
+      reviews: sorted.slice(offset, offset + limit),
+      count: sorted.length,
+    };
+  }
+
   async createReview(input: {
     order_id: string;
     cook_id: string;

@@ -17,9 +17,10 @@ import {
   GourmeatDishCard,
   GourmeatSectionTitle,
   SHCTiffinKitchenCard,
-  SHCFilterChipRow,
   SHCSkeletonDishGrid,
   SHCSkeletonKitchenList,
+  SHCDiscoverFilterSheet,
+  useSHCTray,
   gourmeatColors,
   shcSpacing,
   shcRadii,
@@ -33,9 +34,13 @@ import {
   topRatedCategoryDishes,
   categoryOfferCopy,
   getDishImageUrl,
-  getCollectionSlotLabel,
   getCookKitchenHeroUrl,
   coerceRating,
+  filterDiscoverProducts,
+  discoverActiveFilterCount,
+  clearedDiscoverFilters,
+  MEAL_TYPE_CHIPS,
+  type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../hooks/useProducts';
 import { useGuestAuthGate } from '../../../hooks/useGuestAuthGate';
@@ -54,7 +59,7 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
     cuisine: product.cuisine ? String(product.cuisine) : undefined,
     rating: coerceRating(product.rating),
     halal: Boolean(product.halal),
-    collection_slot: getCollectionSlotLabel(id),
+    ...(product.collection_slot ? { collection_slot: String(product.collection_slot) } : {}),
     image_url: getDishImageUrl({
       id,
       cuisine: product.cuisine ? String(product.cuisine) : undefined,
@@ -75,18 +80,79 @@ export default function CategoryExploreScreen() {
   const productList = (products as Record<string, unknown>[]) ?? [];
   const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const cookList = (cooks as Record<string, unknown>[]) ?? [];
+  const { openTray, dismiss } = useSHCTray();
   const { active: collectionLocation } = useCustomerLocation();
-  const { halalOnly, toggleHalalOnly } = useDiscoverPrefs();
+  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const [chip, setChip] = useState('all');
+  const [mealType, setMealType] = useState<MealTypeId>('all');
 
   const category = useMemo(() => getCuisineCategoryById(categoryId), [categoryId]);
   const offer = useMemo(() => categoryOfferCopy(category), [category]);
 
+  const filters = useMemo(
+    () => ({ mealType, halalOnly, vegetarianOnly, maxCal }),
+    [mealType, halalOnly, vegetarianOnly, maxCal]
+  );
+  const activeFilterCount = discoverActiveFilterCount(filters);
+
   const categoryProducts = useMemo(() => {
-    let list = scopeProductsByCategory(productList, categoryId);
-    if (halalOnly || chip === 'halal') list = list.filter((p) => Boolean(p.halal));
-    return list;
-  }, [productList, categoryId, halalOnly, chip]);
+    const scoped = scopeProductsByCategory(productList, categoryId);
+    return filterDiscoverProducts(scoped, {
+      mealType: mealType !== 'all' ? mealType : undefined,
+      halalOnly: halalOnly || undefined,
+      vegetarianOnly: vegetarianOnly || undefined,
+      maxCal,
+    });
+  }, [productList, categoryId, mealType, halalOnly, vegetarianOnly, maxCal]);
+
+  const clearFilters = useCallback(() => {
+    const cleared = clearedDiscoverFilters();
+    setMealType(cleared.mealType);
+    if (halalOnly) toggleHalalOnly();
+    if (vegetarianOnly) toggleVegetarianOnly();
+    if (maxCal != null) toggleLight();
+  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+
+  const openFilters = useCallback(() => {
+    openTray(
+      { id: 'category-filters', title: 'Filters', height: 'tall' },
+      () => (
+        <SHCDiscoverFilterSheet
+          mealTypeChips={MEAL_TYPE_CHIPS}
+          mealType={mealType}
+          onMealTypeChange={(id) => setMealType(id as MealTypeId)}
+          cuisines={[]}
+          cuisine=""
+          onCuisineChange={() => {}}
+          halalOnly={halalOnly}
+          vegetarianOnly={vegetarianOnly}
+          lightOnly={maxCal != null}
+          onToggleHalal={toggleHalalOnly}
+          onToggleVegetarian={toggleVegetarianOnly}
+          onToggleLight={toggleLight}
+          onClear={clearFilters}
+          onApply={dismiss}
+          resultCount={categoryProducts.length}
+          activeCount={activeFilterCount}
+          hideCuisine
+          testID="category-filter-sheet"
+        />
+      )
+    );
+  }, [
+    openTray,
+    dismiss,
+    mealType,
+    halalOnly,
+    vegetarianOnly,
+    maxCal,
+    toggleHalalOnly,
+    toggleVegetarianOnly,
+    toggleLight,
+    clearFilters,
+    categoryProducts.length,
+    activeFilterCount,
+  ]);
 
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
@@ -153,20 +219,18 @@ export default function CategoryExploreScreen() {
         title={kitchens.length ? `${kitchens.length} kitchen${kitchens.length === 1 ? '' : 's'}` : 'All kitchens'}
         testID="category-kitchens-header"
       />
-      <View style={{ marginBottom: shcSpacing.sm }}>
-        <SHCFilterChipRow
-          chips={[
-            { id: 'all', label: 'All', active: chip === 'all' },
-            { id: 'halal', label: 'Halal', active: chip === 'halal' || halalOnly },
-            { id: 'nearest', label: 'Nearest', active: chip === 'nearest' },
-          ]}
-          onChipPress={(cid) => {
-            setChip(cid);
-            if (cid === 'halal') toggleHalalOnly();
-            if (cid === 'nearest') router.push('/(customer)/location' as any);
-          }}
-          testID="category-filter-chips"
-        />
+      <View style={{ marginBottom: shcSpacing.sm, flexDirection: 'row', alignItems: 'center', gap: 8 }} data-testid="category-filter-chips">
+        <Pressable
+          onPress={() => setChip(chip === 'nearest' ? 'all' : 'nearest')}
+          style={[styles.nearestChip, chip === 'nearest' && styles.nearestChipOn]}
+        >
+          <Text style={[styles.nearestChipText, chip === 'nearest' && styles.nearestChipTextOn]}>Nearest</Text>
+        </Pressable>
+        {chip === 'nearest' ? (
+          <Pressable onPress={() => router.push('/(customer)/location' as any)}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: gourmeatColors.primary }}>Set location</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {kitchens.length === 0 && !(isLoading || cooksLoading) ? (
@@ -220,7 +284,14 @@ export default function CategoryExploreScreen() {
         <Text style={styles.headerTitle} numberOfLines={1} testID="category-title">
           {title}
         </Text>
-        <View style={styles.backBtn} />
+        <Pressable onPress={openFilters} style={styles.backBtn} testID="category-filter-btn" accessibilityLabel="Filters">
+          <Text style={styles.backText}>☰</Text>
+          {activeFilterCount > 0 ? (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
       </View>
 
       <VirtualRowFlashList
@@ -258,6 +329,29 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: gourmeatColors.text,
   },
+  filterBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: gourmeatColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+  nearestChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+  },
+  nearestChipOn: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primary },
+  nearestChipText: { fontSize: 12, fontWeight: '700', color: gourmeatColors.text },
+  nearestChipTextOn: { color: '#fff' },
   offerBanner: {
     backgroundColor: gourmeatColors.primary || '#F87048',
     borderRadius: shcRadii.lg,

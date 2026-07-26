@@ -67,6 +67,8 @@ export const logout = () => clearSession();
 export const getCooks = () => client.getCooks();
 export const searchProducts = (q: string, f?: unknown) => client.searchProducts(q, f);
 export const getCookBySlug = (slug: string) => client.getCookBySlug(slug);
+export const getCookReviews = (slug: string, opts?: { limit?: number; offset?: number }) =>
+  client.getCookReviews(slug, opts);
 export const getProduct = (id: string) => client.getProduct(id);
 export const getSlots = (productId: string) => client.getSlots(productId);
 export const addToCart = (productId: string, qty: number) => client.addToCart(productId, qty);

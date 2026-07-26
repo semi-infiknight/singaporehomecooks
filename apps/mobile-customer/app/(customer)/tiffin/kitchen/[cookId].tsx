@@ -35,7 +35,8 @@ import {
   kitchenCollectionHours,
   kitchenChefBackground,
   kitchenTrustCerts,
-  kitchenDemoReviews,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   sortKitchenReviews,
   kitchenRatingSummary,
   tiffinPlanFeaturesForTier,
@@ -46,6 +47,7 @@ import {
 } from '@shc/utils';
 import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
 import { useTiffinKitchen, useSubscribeTiffin } from '../../../../hooks/useTiffin';
+import { useCookReviews } from '../../../../hooks/useProducts';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useGuestAuthTray } from '../../../../hooks/useGuestAuthTray';
 import { VirtualRowFlashList } from '../../../../components/VirtualLists';
@@ -68,6 +70,8 @@ export default function TiffinKitchenScreen() {
   const { user } = useAuth();
   const { showGuestAuthTray } = useGuestAuthTray();
   const { data: kitchen, isLoading } = useTiffinKitchen(cookId || '');
+  const cookSlug = String(kitchen?.cook?.slug || '');
+  const { data: reviewsPayload } = useCookReviews(cookSlug, { limit: 50 });
   const subscribeMut = useSubscribeTiffin();
   const [subscribeError, setSubscribeError] = useState('');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
@@ -135,7 +139,10 @@ export default function TiffinKitchenScreen() {
     sfa_reg_number: kitchen?.cook?.sfa_reg_number,
   });
   const chefBg = kitchenChefBackground(cookMeta);
-  const reviews = sortKitchenReviews(kitchenDemoReviews(cookId || ''), 'recent');
+  const reviews = useMemo(
+    () => sortKitchenReviews((reviewsPayload?.reviews || []).map(kitchenReviewFromApi), 'recent'),
+    [reviewsPayload?.reviews]
+  );
   const trustChips = subscribeTrustChips({
     area: kitchen?.cook?.area,
     cookName,

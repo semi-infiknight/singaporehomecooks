@@ -2,6 +2,7 @@ import ShcProductMetaModuleService from "../modules/shc-product-meta/service";
 import { listProductMetasFromDb } from "./shc-product-meta-pg";
 import { shapeProduct } from "./shc-product-shape";
 import { productTitleFromId } from "./shc-product-titles";
+import { getCookRatingMap } from "./shc-cook-ratings";
 
 export type ShcProductListFilters = {
   cook_id?: string;
@@ -70,7 +71,15 @@ export async function listShcProducts(scope: any, filters: ShcProductListFilters
 
   const total = filtered.length;
   const page = filtered.slice(offset, offset + limit);
-  const shaped = await Promise.all(page.map((meta) => shapeProduct(meta, scope)));
+  const ratingMap = await getCookRatingMap(
+    scope,
+    page.map((m) => m.cook_id)
+  );
+  const shaped = await Promise.all(
+    page.map((meta) =>
+      shapeProduct(meta, scope, { cookRating: ratingMap.get(meta.cook_id) })
+    )
+  );
   const products = shaped.filter((p) => !p.shc_availability?.paused);
 
   return { products, count: products.length, total: products.length };

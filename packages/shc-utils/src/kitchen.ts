@@ -211,6 +211,59 @@ export function kitchenRatingSummary(cook?: KitchenIdentity | null): {
   return { rating, reviewCount, label };
 }
 
+function daysAgoFromIso(iso?: string | null): number {
+  if (!iso) return 0;
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms)) return 0;
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
+/** Map API review row → kitchen UI model. */
+export function kitchenReviewFromApi(row: {
+  id: string;
+  rating: number;
+  body?: string | null;
+  created_at?: string | null;
+  author_label?: string | null;
+}): KitchenReview {
+  return {
+    id: row.id,
+    author: row.author_label || 'Guest',
+    rating: Number(row.rating),
+    body: row.body || '',
+    daysAgo: daysAgoFromIso(row.created_at),
+    hasPhoto: false,
+  };
+}
+
+/** Star distribution from real reviews (5★ → excellent … 1★ → terrible). */
+export function kitchenRatingBucketsFromReviews(
+  reviews: Array<{ rating: number }>
+): KitchenRatingBucket[] | null {
+  if (!reviews.length) return null;
+  const counts: Record<KitchenRatingBucket['key'], number> = {
+    excellent: 0,
+    very_good: 0,
+    average: 0,
+    poor: 0,
+    terrible: 0,
+  };
+  for (const r of reviews) {
+    const n = Number(r.rating);
+    if (n >= 5) counts.excellent++;
+    else if (n >= 4) counts.very_good++;
+    else if (n >= 3) counts.average++;
+    else if (n >= 2) counts.poor++;
+    else counts.terrible++;
+  }
+  const total = reviews.length;
+  return (['excellent', 'very_good', 'average', 'poor', 'terrible'] as const).map((key) => ({
+    key,
+    label: RATING_LABELS[key],
+    share: counts[key] / total,
+  }));
+}
+
 /**
  * Distribution bars for rating breakdown (HomelyEats).
  * Skews higher when average rating is high — pure, deterministic.

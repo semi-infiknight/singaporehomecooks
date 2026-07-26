@@ -10,6 +10,8 @@ import {
   kitchenDishPriceLabel,
   kitchenRatingSummary,
   kitchenRatingBuckets,
+  kitchenRatingBucketsFromReviews,
+  kitchenReviewFromApi,
   kitchenDemoReviews,
   sortKitchenReviews,
   kitchenCollectionHours,
@@ -203,6 +205,28 @@ describe('kitchenRatingSummary + buckets', () => {
     expect(buckets[0]?.key).toBe('excellent');
     const sum = buckets.reduce((a, b) => a + b.share, 0);
     expect(sum).toBeCloseTo(1, 5);
+  });
+
+  it('builds buckets from real review rows', () => {
+    const buckets = kitchenRatingBucketsFromReviews([
+      { rating: 5 },
+      { rating: 4 },
+      { rating: 5 },
+    ]);
+    expect(buckets).not.toBeNull();
+    expect(buckets?.[0]?.share).toBeCloseTo(2 / 3, 5);
+  });
+
+  it('maps API review rows to kitchen UI model', () => {
+    const row = kitchenReviewFromApi({
+      id: 'rev_1',
+      rating: 5,
+      body: 'Great',
+      author_label: 'Guest •1234',
+      created_at: new Date().toISOString(),
+    });
+    expect(row.author).toBe('Guest •1234');
+    expect(row.rating).toBe(5);
   });
 });
 

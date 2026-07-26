@@ -1,21 +1,24 @@
 import ShcAvailabilityModuleService from "../modules/shc-availability/service";
 import ShcCookModuleService from "../modules/shc-cook/service";
 import { productTitleFromId } from "./shc-product-titles";
+import { getCookRatingSummary, type CookRatingSummary } from "./shc-cook-ratings";
 
 /** Shape product meta + availability into client-friendly object (mock parity). */
 export async function shapeProduct(
   meta: any,
   scope: any,
-  cookService?: ShcCookModuleService,
-  availService?: ShcAvailabilityModuleService
+  opts?: { cookRating?: CookRatingSummary }
 ) {
-  const cookSvc: ShcCookModuleService = cookService || scope.resolve("shcCook");
-  const availSvc: ShcAvailabilityModuleService = availService || scope.resolve("shcAvailability");
+  const cookSvc: ShcCookModuleService = scope.resolve("shcCook");
+  const availSvc: ShcAvailabilityModuleService = scope.resolve("shcAvailability");
   const avail = await availSvc.getAvailability(meta.product_id).catch(() => null);
   const [cooks] = await cookSvc.listAndCountCooks({ id: meta.cook_id } as any, { take: 1 }).catch(() => [[]]);
   const cook = (cooks as any[])?.[0];
   const title = meta.name || productTitleFromId(meta.product_id);
   const priceCents = typeof meta.price_cents === "number" && meta.price_cents > 0 ? meta.price_cents : null;
+  const ratingSummary =
+    opts?.cookRating ??
+    (meta.cook_id ? await getCookRatingSummary(scope, meta.cook_id) : { rating: null, review_count: 0 });
   return {
     id: meta.product_id,
     name: title,
@@ -37,5 +40,7 @@ export async function shapeProduct(
     shc_availability: avail,
     description: meta.description || "",
     image_url: meta.image_url || null,
+    rating: ratingSummary.rating,
+    review_count: ratingSummary.review_count,
   };
 }

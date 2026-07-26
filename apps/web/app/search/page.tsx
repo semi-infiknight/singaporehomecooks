@@ -1,14 +1,23 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search as SearchIcon } from 'lucide-react';
 import { useProducts, useAddToCart } from '../../lib/useProducts';
-import { useAuth } from '../../lib/useAuth';
 import { useGuestAuthGate } from '../../lib/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
 import { useFavorites } from '../../lib/useFavorites';
-import { getDishImageUrl, getOccasionImageUrl, productMatchesOccasion, coerceRating } from '@shc/utils';
+import {
+  getDishImageUrl,
+  getOccasionImageUrl,
+  filterDiscoverProducts,
+  discoverActiveFilterCount,
+  clearedDiscoverFilters,
+  MEAL_TYPE_CHIPS,
+  MIND_CUISINE_CATEGORIES,
+  type MealTypeId,
+  coerceRating,
+} from '@shc/utils';
 import {
   SHCButton,
   GourmeatDishCard,
@@ -17,45 +26,55 @@ import {
   FilterChipRow,
   MindSectionTitle,
   SHCSkeletonList,
+  DiscoverFilterSheet,
   type DishCardProduct,
 } from '../components/SHCWebComponents';
 import { VirtualDishGrid } from '../components/VirtualLists';
 
 export default function SearchPage() {
   const router = useRouter();
-  const { user } = useAuth();
   const { requireAuth } = useGuestAuthGate();
   const [q, setQ] = useState('');
   const [occ, setOcc] = useState('');
   const [cuisine, setCuisine] = useState('');
-  const { halalOnly, maxCal, toggleHalalOnly, toggleLight, setMaxCal } = useDiscoverPrefs();
-  const maxC = maxCal ?? 700;
+  const [mealType, setMealType] = useState<MealTypeId>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const { data: products = [], isLoading } = useProducts('');
   const addMut = useAddToCart();
   const { toggle, isFavorite } = useFavorites();
 
+  const filters = useMemo(
+    () => ({ mealType, cuisine, halalOnly, vegetarianOnly, maxCal }),
+    [mealType, cuisine, halalOnly, vegetarianOnly, maxCal]
+  );
+  const activeFilterCount = discoverActiveFilterCount(filters);
+
   const results = useMemo(() => {
-    let list = products as Record<string, unknown>[];
-    const ql = q.trim().toLowerCase();
-    if (ql) {
-      list = list.filter((p) => {
-        const name = String(p.name || '').toLowerCase();
-        const cook = String(p.cook_name || '').toLowerCase();
-        const cuisineName = String(p.cuisine || '').toLowerCase();
-        return (
-          name.includes(ql) ||
-          cook.includes(ql) ||
-          cuisineName.includes(ql) ||
-          String(p.id || '').toLowerCase().includes(ql)
-        );
-      });
-    }
-    if (cuisine) list = list.filter((p) => String(p.cuisine || '').toLowerCase().includes(cuisine.toLowerCase()));
-    if (occ) list = list.filter((p) => productMatchesOccasion(p.occasion_tags as string[] | undefined, occ));
-    if (halalOnly) list = list.filter((p) => Boolean(p.halal));
-    if (maxC != null) list = list.filter((p) => ((p.calories as number) || 999) <= maxC);
-    return list as DishCardProduct[];
-  }, [products, q, cuisine, occ, halalOnly, maxC]);
+    return filterDiscoverProducts(products as Record<string, unknown>[], {
+      query: q,
+      occasion: occ || undefined,
+      cuisine: cuisine || undefined,
+      mealType: mealType !== 'all' ? mealType : undefined,
+      halalOnly: halalOnly || undefined,
+      vegetarianOnly: vegetarianOnly || undefined,
+      maxCal,
+    }) as DishCardProduct[];
+  }, [products, q, cuisine, occ, mealType, halalOnly, vegetarianOnly, maxCal]);
+
+  const clearFilters = useCallback(() => {
+    const cleared = clearedDiscoverFilters();
+    setMealType(cleared.mealType);
+    setCuisine(cleared.cuisine);
+    if (halalOnly) toggleHalalOnly();
+    if (vegetarianOnly) toggleVegetarianOnly();
+    if (maxCal != null) toggleLight();
+  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+
+  const cuisineOptions = useMemo(
+    () => [{ id: '', label: 'All' }, ...MIND_CUISINE_CATEGORIES.filter((c) => c.id).map((c) => ({ id: c.id, label: c.label }))],
+    []
+  );
 
   const searchDishes = useMemo(
     () =>
@@ -79,14 +98,6 @@ export default function SearchPage() {
     { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
   ];
 
-  const filterChips = [
-    { id: 'halal', label: 'Halal', iconKey: 'halal' as const, active: halalOnly, testID: 'halal-filter' },
-    { id: 'peranakan', label: 'Peranakan', iconKey: 'filters' as const, active: cuisine === 'Peranakan' },
-    { id: 'eurasian', label: 'Eurasian', iconKey: 'filters' as const, active: cuisine === 'Eurasian' },
-    { id: 'light', label: 'Light (<500 cal)', iconKey: 'light' as const, active: maxCal === 500 },
-    { id: 'moderate', label: '≤550 cal', iconKey: 'moderate' as const, active: maxCal === 550 },
-  ];
-
   const handleOccasion = (id: string) => {
     const map: Record<string, string> = {
       any: '',
@@ -96,14 +107,6 @@ export default function SearchPage() {
       xmas: 'Christmas',
     };
     setOcc(map[id] ?? '');
-  };
-
-  const handleFilter = (id: string) => {
-    if (id === 'halal') toggleHalalOnly();
-    else if (id === 'peranakan') setCuisine(cuisine === 'Peranakan' ? '' : 'Peranakan');
-    else if (id === 'eurasian') setCuisine(cuisine === 'Eurasian' ? '' : 'Eurasian');
-    else if (id === 'light') setMaxCal(maxCal === 500 ? undefined : 500);
-    else if (id === 'moderate') setMaxCal(maxCal === 550 ? undefined : 550);
   };
 
   const handleAdd = (id: string) => {
@@ -118,13 +121,17 @@ export default function SearchPage() {
         <h1 className="text-2xl font-black text-foreground">Advanced Search</h1>
       </div>
 
-      <GourmeatSearchBar value={q} onChange={setQ} placeholder="Search dishes, cooks…" testID="search-input" />
+      <GourmeatSearchBar
+        value={q}
+        onChange={setQ}
+        placeholder="Search dishes, cooks…"
+        testID="search-input"
+        onFilterPress={() => setFiltersOpen(true)}
+        filterCount={activeFilterCount}
+      />
 
       <MindSectionTitle testID="search-occasion-title">Occasion</MindSectionTitle>
       <FilterChipRow chips={occasionChips} onChipClick={handleOccasion} testID="search-occasion-chips" />
-
-      <MindSectionTitle testID="search-filters-title">Filters</MindSectionTitle>
-      <FilterChipRow chips={filterChips} onChipClick={handleFilter} testID="search-filter-chips" />
 
       <p className="text-sm font-bold text-muted-foreground my-3">
         {isLoading ? 'Searching catalogue…' : `${results.length} results`}
@@ -163,6 +170,27 @@ export default function SearchPage() {
       <SHCButton variant="outline" className="w-full mt-6" onClick={() => router.back()}>
         Back
       </SHCButton>
+
+      <DiscoverFilterSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealType={mealType}
+        onMealTypeChange={(id) => setMealType(id as MealTypeId)}
+        cuisines={cuisineOptions}
+        cuisine={cuisine}
+        onCuisineChange={setCuisine}
+        halalOnly={halalOnly}
+        vegetarianOnly={vegetarianOnly}
+        lightOnly={maxCal != null}
+        onToggleHalal={toggleHalalOnly}
+        onToggleVegetarian={toggleVegetarianOnly}
+        onToggleLight={toggleLight}
+        onClear={clearFilters}
+        resultCount={results.length}
+        activeCount={activeFilterCount}
+        testID="search-filter-sheet"
+      />
     </div>
   );
 }

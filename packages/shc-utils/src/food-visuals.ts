@@ -170,7 +170,7 @@ export function getCookKitchenHeroUrl(cookId?: string): string {
   return heroes[n % heroes.length];
 }
 
-/** Stable collection slot label for list cards (Zomato delivery-time analogue). */
+/** @deprecated Do not use for browse cards — only show collection_slot when API sends it. */
 export function getCollectionSlotLabel(id?: string): string {
   if (!id) return COLLECTION_SLOT_LABELS[0];
   const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);

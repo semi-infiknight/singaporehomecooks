@@ -649,6 +649,7 @@ export function SHCDiscoverFilterSheet({
   onApply,
   resultCount,
   activeCount = 0,
+  hideCuisine = false,
   testID = 'discover-filter-sheet',
 }: {
   mealTypeChips: Array<{ id: string; label: string }>;
@@ -667,6 +668,7 @@ export function SHCDiscoverFilterSheet({
   onApply: () => void;
   resultCount: number;
   activeCount?: number;
+  hideCuisine?: boolean;
   testID?: string;
 }) {
   const group = (label: string, children: React.ReactNode) => (
@@ -718,12 +720,14 @@ export function SHCDiscoverFilterSheet({
             pill(chip.id, chip.label, chip.id === mealType, () => onMealTypeChange(chip.id), `meal-${chip.id}`)
           )
         )}
-        {group(
-          'Cuisine',
-          cuisines.map((c) =>
-            pill(c.id || 'all', c.label, c.id === cuisine, () => onCuisineChange(c.id), `cuisine-${c.id || 'all'}`)
-          )
-        )}
+        {hideCuisine
+          ? null
+          : group(
+              'Cuisine',
+              cuisines.map((c) =>
+                pill(c.id || 'all', c.label, c.id === cuisine, () => onCuisineChange(c.id), `cuisine-${c.id || 'all'}`)
+              )
+            )}
         {group(
           'Dietary',
           <>

@@ -19,7 +19,6 @@ import {
 import {
   filterDiscoverProducts,
   getDishImageUrl,
-  getCollectionSlotLabel,
   occasionBrowseCategories,
   occasionBrowseHeading,
   isPopularDish,
@@ -40,7 +39,7 @@ function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
     cuisine: product.cuisine ? String(product.cuisine) : undefined,
     rating: coerceRating(product.rating),
     halal: Boolean(product.halal),
-    collection_slot: getCollectionSlotLabel(id),
+    ...(product.collection_slot ? { collection_slot: String(product.collection_slot) } : {}),
     image_url: getDishImageUrl({
       id,
       cuisine: product.cuisine ? String(product.cuisine) : undefined,

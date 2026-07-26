@@ -2,7 +2,7 @@
 
 **Related:** [brand.md](../../brand.md) · [12-shared-components](../12-shared-components/12-shared-components.md) · `packages/shc-ui`
 
-**Last updated:** 2026-07-27 — Discover promo carousel + personalized greeting
+**Last updated:** 2026-07-26 — Discover IA (mode switch, occasions route, filter sheet, honest ratings)
 
 Screen-by-screen layout specs for Neo-Brutalist Food UI. All colours, borders, and motion rules are defined in [brand.md](../../brand.md).
 
@@ -21,24 +21,33 @@ Screen-by-screen layout specs for Neo-Brutalist Food UI. All colours, borders, a
 
 ## 1. Customer Discover
 
-**Route:** `/(customer)/index` (Discover tab)  
-**Components:** `GourmeatHomeHeader`, `SHCHomePromoCarousel`, `SHCTiffinFilterChips`, `SHCZomatoDishRowRail`, `GourmeatCategoryRow`, `SHCDishCard`, `SHCBottomTabBar`  
-**Web mirror:** same zone order in `apps/web/app/page.tsx` + `AppMobileTabBar`
+**Route:** `/(customer)/index` (Discover tab) · `/occasions` (occasions browse)  
+**Components:** `GourmeatHomeHeader`, `SHCHomePromoCarousel`, `GourmeatModeSwitch`, `SHCDiscoverFilterSheet`, `GourmeatDishCard`, `SHCTiffinKitchenCard`, `SHCBottomTabBar`  
+**Web mirror:** `apps/web/app/page.tsx` + `apps/web/occasions/page.tsx` + `AppMobileTabBar`
 
 ### Zones (top → bottom)
 
 | Zone | Component | Spec |
 |---|---|---|
 | Header | `GourmeatHomeHeader` | `discoverHomeHeadline(name, email)` — Hi + subtitle when signed in; guest fallback |
-| Search | `GourmeatSearchBar` | Full-width search + filter |
-| Promo carousel | `SHCHomePromoCarousel` | **16:9** paging image promos (`discoverHomePromoCarousel()`); dots below |
-| Browse menu | `SHCTiffinFilterChips` | Meal-type chips (All / Breakfast / Lunch / Snacks) |
-| Top rated | `SHCZomatoDishRowRail` | Top dishes rail |
-| Categories | `GourmeatCategoryRow` | Cuisine circles |
-| Popular / events | Order-mode chips + rails | Popular, one-off, occasion filters |
-| Cooking soon | Drop cards rail | 7-day window |
-| Dish grid | `SHCDishCard` | 2-column FlashList |
+| Search | `GourmeatSearchBar` | Full-width search + filter badge (`discoverActiveFilterCount`) → filter sheet |
+| Promo carousel | `SHCHomePromoCarousel` | **16:9** paging image promos (`discoverHomePromoCarousel()`); Hari Raya → `/occasions` |
+| Cooking soon | Drop cards rail | 7-day window (`filterCustomerCookingSoonDrops`) |
+| For you | Single merged rail | Reorder → saved → top rated (`discoverForYouRail`) |
+| Browse switch | `GourmeatModeSwitch` | **Dishes \| Kitchens** + Occasions nav link (not inline mode) |
+| Mode: dishes | `GourmeatCategoryRow` + dish grid | Cuisine rail + 2-col grid |
+| Mode: kitchens | `SHCTiffinKitchenCard` list | Real rating when API sends; open status via `kitchenCardOpenProps` on tiffin only |
+| Footer CTA | `RequestDishHomeCTA` | Request a dish |
 | Bottom nav | `SHCBottomTabBar` | Discover · Orders · Cart · Profile |
+
+### Filter sheet (discover, category, search)
+
+| Group | Options |
+|---|---|
+| Meal | All · Breakfast · Lunch · Snacks · Dinner (`MEAL_TYPE_CHIPS`) |
+| Cuisine | Full `MIND_CUISINE_CATEGORIES` (hidden on category pages) |
+| Dietary | Halal · Vegetarian · Under 500 cal |
+| Footer | Clear + Show N dishes |
 
 ### testIDs (Maestro)
 

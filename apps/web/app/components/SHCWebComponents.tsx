@@ -43,7 +43,6 @@ import {
   getOrderTimelineIndex,
   getOrderStatusLabel,
   MIND_CUISINE_CATEGORIES,
-  getCollectionSlotLabel,
   VIRTUAL_DISH_LIST_ROW_HEIGHT,
   recipeHasStory,
   recipeHeritageLead,
@@ -608,7 +607,7 @@ export function DishRowCard({
   const imageUrl =
     (product as { image_url?: string }).image_url ||
     getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
-  const slot = getCollectionSlotLabel(product.id);
+  const slot = (product as { collection_slot?: string }).collection_slot;
   const rowRating =
     product.rating != null && Number.isFinite(Number(product.rating)) ? Number(product.rating) : undefined;
   const className =
@@ -638,9 +637,13 @@ export function DishRowCard({
             )}
           </div>
           <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-muted-foreground">
-            <Clock className="w-3 h-3" aria-hidden />
-            {slot}
-            <span>·</span>
+            {slot ? (
+              <>
+                <Clock className="w-3 h-3" aria-hidden />
+                {slot}
+                <span>·</span>
+              </>
+            ) : null}
             <MapPin className="w-3 h-3" aria-hidden />
             HDB collect
           </div>
@@ -2932,6 +2935,7 @@ export function DiscoverFilterSheet({
   onClear,
   resultCount,
   activeCount = 0,
+  hideCuisine = false,
   testID = 'discover-filter-sheet',
 }: {
   open: boolean;
@@ -2951,6 +2955,7 @@ export function DiscoverFilterSheet({
   onClear: () => void;
   resultCount: number;
   activeCount?: number;
+  hideCuisine?: boolean;
   testID?: string;
 }) {
   if (!open) return null;
@@ -3002,10 +3007,12 @@ export function DiscoverFilterSheet({
           </button>
         </div>
         {group('Meal', mealTypeChips.map((c) => pill(`meal-${c.id}`, c.label, c.id === mealType, () => onMealTypeChange(c.id))))}
-        {group(
-          'Cuisine',
-          cuisines.map((c) => pill(`cuisine-${c.id || 'all'}`, c.label, c.id === cuisine, () => onCuisineChange(c.id)))
-        )}
+        {hideCuisine
+          ? null
+          : group(
+              'Cuisine',
+              cuisines.map((c) => pill(`cuisine-${c.id || 'all'}`, c.label, c.id === cuisine, () => onCuisineChange(c.id)))
+            )}
         {group(
           'Dietary',
           <>

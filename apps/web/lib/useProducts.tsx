@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   searchProducts,
   getCookBySlug,
+  getCookReviews,
   getProduct,
   getSlots,
   addToCart,
@@ -24,6 +25,14 @@ export function useProducts(query = '', filters?: { occasion?: string; halal?: b
 }
 export function useCook(slug: string) {
   return useQuery({ queryKey: ['cook', slug], queryFn: () => getCookBySlug(slug) });
+}
+export function useCookReviews(slug: string, opts?: { limit?: number; offset?: number }) {
+  return useQuery({
+    queryKey: ['cook-reviews', slug, opts?.limit, opts?.offset],
+    queryFn: () => getCookReviews(slug, opts),
+    enabled: Boolean(slug),
+    staleTime: 60_000,
+  });
 }
 export function useProduct(id: string) {
   return useQuery({ queryKey: ['product', id], queryFn: () => getProduct(id) });

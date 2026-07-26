@@ -19,7 +19,7 @@ import { SHCIcon, SHCBentoIconBadge, type SHCIconKey } from './icons';
 import { SHCStaggerIn } from './motion';
 import { SHCOnboardingDots } from './onboarding-ux';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
-import { getDishImageUrl, getCollectionSlotLabel } from '@shc/utils';
+import { getDishImageUrl } from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 
 export { SHCZomatoRatingPill, SHCZomatoAddButton } from './visuals';
@@ -451,7 +451,7 @@ export function SHCZomatoDishRow({
 }) {
   const cardTestID = testID ?? `dish-row-${dish.id}`;
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
-  const slot = dish.collection_slot || getCollectionSlotLabel(dish.id);
+  const slot = dish.collection_slot;
   const rating = dish.rating != null && Number.isFinite(Number(dish.rating)) ? Number(dish.rating) : undefined;
   return (
     <SharedDishNavSurface
@@ -513,17 +513,24 @@ export function SHCZomatoDishRow({
               S${dish.price}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
-            <SHCIcon name="clock" size={12} color={shcColors.textLight} />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: shcColors.textLight }}>{slot}</Text>
-            {dish.area && (
-              <>
-                <Text style={{ fontSize: 10, color: shcColors.textLight }}>·</Text>
-                <SHCIcon name="location" size={11} color={shcColors.textLight} />
-                <Text style={{ fontSize: 10, fontWeight: '700', color: shcColors.textLight }}>{dish.area}</Text>
-              </>
-            )}
-          </View>
+          {slot ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+              <SHCIcon name="clock" size={12} color={shcColors.textLight} />
+              <Text style={{ fontSize: 10, fontWeight: '700', color: shcColors.textLight }}>{slot}</Text>
+              {dish.area ? (
+                <>
+                  <Text style={{ fontSize: 10, color: shcColors.textLight }}>·</Text>
+                  <SHCIcon name="location" size={11} color={shcColors.textLight} />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: shcColors.textLight }}>{dish.area}</Text>
+                </>
+              ) : null}
+            </View>
+          ) : dish.area ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 }}>
+              <SHCIcon name="location" size={11} color={shcColors.textLight} />
+              <Text style={{ fontSize: 10, fontWeight: '700', color: shcColors.textLight }}>{dish.area}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
       {(offerText || offerLabel) && (
