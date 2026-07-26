@@ -7,6 +7,7 @@ import ShcCartModuleService from "../../../../modules/shc-cart/service";
 import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
 import ShcDropModuleService from "../../../../modules/shc-drop/service";
 import { shapeProduct } from "../../../../lib/shc-product-shape";
+import { loadBusinessRulesConfigFromScope } from "../../../../lib/shc-business-rules-config";
 
 /** GET /store/shc/cart */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -55,6 +56,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
+  const rules = await loadBusinessRulesConfigFromScope(req.scope);
 
   // ── Cooking soon batch → cart ──────────────────────────────────────────
   if (parse.data.drop_id) {
@@ -86,7 +88,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         drop_id: drop.id,
         collection_date: drop.cook_date,
         collection_slot: drop.collection_slot,
-      });
+      }, { oneCookEnforced: rules.cart.one_cook_enforced });
       return res.json({
         cart,
         drop: {
@@ -118,7 +120,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       qty: parse.data.qty,
       price: shaped.price,
       cook_id: meta.cook_id,
-    });
+    }, { oneCookEnforced: rules.cart.one_cook_enforced });
     res.json({ cart });
   } catch (e: any) {
     return res.status(400).json({ error: createSHCError("SHC-CART-002", e.message) });

@@ -4,6 +4,7 @@ import { createSHCError } from "@shc/types";
 import { getCookId, unauthorized } from "../../../../lib/shc-actors";
 import ShcDropModuleService from "../../../../modules/shc-drop/service";
 import ShcCookModuleService from "../../../../modules/shc-cook/service";
+import { loadBusinessRulesConfigFromScope } from "../../../../lib/shc-business-rules-config";
 
 const CreateSchema = z
   .object({
@@ -30,6 +31,8 @@ const CreateSchema = z
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const dropService: ShcDropModuleService = req.scope.resolve("shcDrop") as any;
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
+  const rules = await loadBusinessRulesConfigFromScope(req.scope);
+  const windowDays = rules.drop.customer_window_days;
   const q = req.query as Record<string, string | undefined>;
 
   try {
@@ -40,7 +43,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       } catch {
         return unauthorized(res, "Cook login required");
       }
-      const drops = await dropService.listForCook(cookId, { limit: 50 });
+      const drops = await dropService.listForCook(cookId, { limit: 50, customerWindowDays: windowDays });
       return res.json({ drops, count: drops.length });
     }
 
@@ -48,11 +51,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       const drops = await dropService.listForCook(String(q.cook_id), {
         activeOnly: true,
         limit: 30,
+        customerWindowDays: windowDays,
       });
       return res.json({ drops, count: drops.length });
     }
 
-    const drops = await dropService.listMarketplace(40);
+    const drops = await dropService.listMarketplace(40, new Date(), windowDays);
     // Enrich cook display names
     const cookIds = Array.from(new Set(drops.map((d: any) => d.cook_id).filter(Boolean)));
     const cooks: Record<string, any> = {};

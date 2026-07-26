@@ -4,6 +4,7 @@ import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import ShcReviewModuleService from "../../../../../../modules/shc-review/service";
 import { getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
+import { loadBusinessRulesConfigFromScope } from "../../../../../../lib/shc-business-rules-config";
 
 const PostSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -35,6 +36,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
   const reviewService: ShcReviewModuleService = req.scope.resolve("shcReview") as any;
+  const rules = await loadBusinessRulesConfigFromScope(req.scope);
   const data = await metaService.getOrderMetaWithMessages(id);
   const meta = data.meta as any;
   if (!meta) {
@@ -52,6 +54,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       rating: parse.data.rating,
       body: parse.data.body,
       order_status: meta.shc_status,
+      eligible_statuses: rules.review.eligible_statuses,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.(`[SHC-AUDIT] ${JSON.stringify({ action: "review.create", order_id: id, customer_id: customerId, rating: parse.data.rating })}`);

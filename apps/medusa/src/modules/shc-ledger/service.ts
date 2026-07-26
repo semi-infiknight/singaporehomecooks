@@ -4,6 +4,8 @@ import { LedgerEntry } from "./models/ledger-entry";
 import { SHCLedgerEntry, shcLedgerEntrySchema, createSHCError } from "@shc/types";
 // @ts-ignore - workspace dep resolution for tsc (same as other shc modules pre-existing)
 import { calculateCookEarnings, calculatePlatformFee, DEFAULT_COMMISSION_RATE } from "@shc/business-rules";
+import { businessRulesCommissionRate } from "@shc/utils";
+import { loadBusinessRulesConfigFromScope } from "../../lib/shc-business-rules-config";
 
 /**
  * shc-ledger module service.
@@ -39,6 +41,15 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
       }
     } catch {
       /* commission rules are optional; default is launch-safe */
+    }
+    try {
+      const rulesConfig = await loadBusinessRulesConfigFromScope(container);
+      return {
+        rate: businessRulesCommissionRate(rulesConfig),
+        source: "business_rules_config",
+      };
+    } catch {
+      /* platform stat optional */
     }
     return { rate: DEFAULT_COMMISSION_RATE, source: "default" };
   }

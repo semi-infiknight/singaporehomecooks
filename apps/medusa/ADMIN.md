@@ -59,7 +59,7 @@ Sidebar: **SHC Ops** (and nested pages). Paths:
 | `/app/shc-ops/orders` | Live marketplace order board (customer + cook) |
 | `/app/shc-ops/catalog` | Browse category presets (not cook-owned) |
 | `/app/shc-ops/compliance` | **Compliance funnel chart**, SFA/WSQ review queue |
-| `/app/shc-ops/controls` | Feature flags, disputes, **payout chart**, commission/search snapshot |
+| `/app/shc-ops/controls` | Feature flags, disputes, **payout chart**, **business rules**, commission schedule, search synonyms |
 
 Charts: `apps/medusa/src/admin/components/shc-charts.tsx` (Recharts). Each chart includes an ops caption explaining what the data means.
 

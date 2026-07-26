@@ -42,8 +42,10 @@ class ShcReviewModuleService extends MedusaService({ Review }) {
     rating: number;
     body?: string;
     order_status: SHCOrderStatus;
+    eligible_statuses?: string[];
   }) {
-    if (!canSubmitReview(input.order_status)) {
+    const eligible = input.eligible_statuses;
+    if (!canSubmitReview(input.order_status, eligible)) {
       throw createSHCError("SHC-REVIEW-001", "Reviews allowed only after collection (collected or completed)");
     }
 
