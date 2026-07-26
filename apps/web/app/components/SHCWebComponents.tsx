@@ -2204,13 +2204,13 @@ export function TiffinKitchenCard({
   area,
   tagline,
   coverUri,
-  rating = 4.8,
+  rating,
   reviewCount,
   subscriberCount,
   priceFrom,
   priceTo,
-  isOpen = true,
-  closesAt = 'HDB collection',
+  isOpen,
+  closesAt,
   onPress,
   testID,
 }: {
@@ -2236,6 +2236,8 @@ export function TiffinKitchenCard({
       : priceFrom != null
         ? `from S$${priceFrom}/meal`
         : null;
+  const showRating = rating != null && Number.isFinite(Number(rating));
+  const showOpenRow = isOpen !== undefined || Boolean(closesAt);
   return (
     <button
       type="button"
@@ -2249,21 +2251,29 @@ export function TiffinKitchenCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <p className="font-extrabold text-[17px] text-foreground truncate flex-1">{cookName}</p>
-          <span className="text-xs font-bold shrink-0 flex items-center gap-0.5">
-            <span className="shc-text-rating">★</span>
-            {rating.toFixed(1)}
-            {reviewCount != null ? ` (${reviewCount})` : ''}
-          </span>
+          {showRating ? (
+            <span className="text-xs font-bold shrink-0 flex items-center gap-0.5">
+              <span className="shc-text-rating">★</span>
+              {Number(rating).toFixed(1)}
+              {reviewCount != null ? ` (${reviewCount})` : ''}
+            </span>
+          ) : null}
         </div>
         {(tagline || area) && (
           <p className="text-[13px] text-muted-foreground font-semibold line-clamp-1 mt-1">
             {[tagline, area].filter(Boolean).join(' · ')}
           </p>
         )}
-        <p className="text-[13px] font-extrabold mt-1.5">
-          <span className={isOpen ? 'text-[var(--shc-gourmeat-success)]' : 'text-destructive'}>{isOpen ? 'Open' : 'Closed'}</span>
-          {closesAt ? <span className="text-muted-foreground font-semibold"> · {closesAt}</span> : null}
-        </p>
+        {showOpenRow ? (
+          <p className="text-[13px] font-extrabold mt-1.5">
+            {isOpen !== undefined ? (
+              <span className={isOpen ? 'text-[var(--shc-gourmeat-success)]' : 'text-destructive'}>
+                {isOpen ? 'Open' : 'Closed'}
+              </span>
+            ) : null}
+            {closesAt ? <span className="text-muted-foreground font-semibold"> · {closesAt}</span> : null}
+          </p>
+        ) : null}
         <div className="flex justify-between items-center mt-2.5 gap-3">
           {priceLabel ? <p className="text-[13px] font-extrabold text-foreground">{priceLabel}</p> : null}
           {subscriberCount != null ? (
@@ -2795,12 +2805,15 @@ export function GourmeatSearchBar({
   onChange,
   placeholder = 'Search dishes, cooks, occasions…',
   onFilterPress,
+  filterCount = 0,
   testID = 'search-input',
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   onFilterPress?: () => void;
+  /** Number of active filters — shown as a badge so the state is visible without scrolling. */
+  filterCount?: number;
   testID?: string;
 }) {
   return (
@@ -2820,13 +2833,192 @@ export function GourmeatSearchBar({
         <button
           type="button"
           onClick={onFilterPress}
-          className="w-11 h-11 shrink-0 rounded-xl bg-card shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
+          className={`relative w-11 h-11 shrink-0 rounded-xl shadow-[var(--shc-shadow-soft)] flex items-center justify-center ${
+            filterCount > 0 ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground'
+          }`}
           data-testid="gourmeat-filter-btn"
-          aria-label="Advanced search"
+          aria-label={filterCount > 0 ? `Filters, ${filterCount} active` : 'Filters'}
         >
-          <Settings2 className="w-5 h-5 text-foreground" />
+          <Settings2 className="w-5 h-5" />
+          {filterCount > 0 ? (
+            <span
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-foreground text-background text-[10px] font-black flex items-center justify-center"
+              data-testid="gourmeat-filter-count"
+            >
+              {filterCount}
+            </span>
+          ) : null}
         </button>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Browse spine — Dishes · Kitchens · Occasions.
+ * Makes the discover IA switchable instead of stacking every zone on one scroll.
+ */
+export function GourmeatModeSwitch({
+  modes,
+  activeId,
+  onSelect,
+  testID = 'discover-mode-switch',
+}: {
+  modes: Array<{ id: string; label: string; testID?: string }>;
+  activeId: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <div role="tablist" data-testid={testID} className="flex gap-1 p-1 rounded-full bg-muted">
+      {modes.map((mode) => {
+        const active = mode.id === activeId;
+        return (
+          <button
+            key={mode.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onSelect(mode.id)}
+            data-testid={mode.testID ?? `discover-mode-${mode.id}`}
+            className={`flex-1 py-2.5 rounded-full text-sm transition-colors ${
+              active
+                ? 'bg-card text-foreground font-extrabold shadow-[var(--shc-shadow-soft)]'
+                : 'text-muted-foreground font-semibold hover:text-foreground'
+            }`}
+          >
+            {mode.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Every discover filter in one panel, so the controls sit next to a single
+ * Apply action instead of being spread across three chip rows on the scroll.
+ */
+export function DiscoverFilterSheet({
+  open,
+  onClose,
+  mealTypeChips,
+  mealType,
+  onMealTypeChange,
+  cuisines,
+  cuisine,
+  onCuisineChange,
+  halalOnly,
+  vegetarianOnly,
+  lightOnly,
+  onToggleHalal,
+  onToggleVegetarian,
+  onToggleLight,
+  onClear,
+  resultCount,
+  activeCount = 0,
+  testID = 'discover-filter-sheet',
+}: {
+  open: boolean;
+  onClose: () => void;
+  mealTypeChips: Array<{ id: string; label: string }>;
+  mealType: string;
+  onMealTypeChange: (id: string) => void;
+  cuisines: Array<{ id: string; label: string }>;
+  cuisine: string;
+  onCuisineChange: (id: string) => void;
+  halalOnly: boolean;
+  vegetarianOnly: boolean;
+  lightOnly: boolean;
+  onToggleHalal: () => void;
+  onToggleVegetarian: () => void;
+  onToggleLight: () => void;
+  onClear: () => void;
+  resultCount: number;
+  activeCount?: number;
+  testID?: string;
+}) {
+  if (!open) return null;
+
+  const pill = (id: string, label: string, active: boolean, onClick: () => void) => (
+    <button
+      key={id}
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      data-testid={`${testID}-${id}`}
+      className={`px-4 py-2 rounded-full text-[13px] font-bold border transition-colors ${
+        active
+          ? 'bg-primary text-primary-foreground border-primary'
+          : 'bg-card text-foreground border-[var(--shc-border)] hover:border-primary'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const group = (label: string, children: React.ReactNode) => (
+    <div className="mb-5">
+      <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground mb-2">{label}</p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center" data-testid={testID}>
+      <button
+        type="button"
+        aria-label="Close filters"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/45"
+        data-testid={`${testID}-backdrop`}
+      />
+      <div className="relative w-full md:max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl md:rounded-3xl bg-card p-5 shadow-[var(--shc-shadow-card)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-extrabold text-foreground">Filters</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-muted-foreground font-bold"
+            data-testid={`${testID}-close`}
+          >
+            ✕
+          </button>
+        </div>
+        {group('Meal', mealTypeChips.map((c) => pill(`meal-${c.id}`, c.label, c.id === mealType, () => onMealTypeChange(c.id))))}
+        {group(
+          'Cuisine',
+          cuisines.map((c) => pill(`cuisine-${c.id || 'all'}`, c.label, c.id === cuisine, () => onCuisineChange(c.id)))
+        )}
+        {group(
+          'Dietary',
+          <>
+            {pill('halal', 'Halal', halalOnly, onToggleHalal)}
+            {pill('veg', 'Vegetarian', vegetarianOnly, onToggleVegetarian)}
+            {pill('light', 'Under 500 cal', lightOnly, onToggleLight)}
+          </>
+        )}
+        <div className="flex items-center gap-2 pt-3 border-t border-[var(--shc-border)]">
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={activeCount === 0}
+            data-testid={`${testID}-clear`}
+            className="px-4 py-3 text-sm font-bold text-muted-foreground disabled:opacity-40"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            data-testid={`${testID}-apply`}
+            className="flex-1 py-3.5 rounded-full bg-primary text-primary-foreground text-[15px] font-extrabold"
+          >
+            {resultCount === 1 ? 'Show 1 dish' : `Show ${resultCount} dishes`}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

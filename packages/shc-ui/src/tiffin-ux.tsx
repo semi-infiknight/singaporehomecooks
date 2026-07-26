@@ -155,13 +155,13 @@ export function SHCTiffinKitchenCard({
   dishCount,
   cookId,
   coverUri,
-  rating = 4.8,
+  rating,
   reviewCount,
   subscriberCount,
   priceFrom,
   priceTo,
-  isOpen = true,
-  closesAt = 'Collection evening',
+  isOpen,
+  closesAt,
   onPress,
   onFavorite,
   favorited,
@@ -192,7 +192,11 @@ export function SHCTiffinKitchenCard({
       ? `S$${priceFrom}–${priceTo}/meal`
       : priceFrom != null
         ? `from S$${priceFrom}/meal`
-        : `${(mealsOptions || [2, 3, 4]).join(' · ')} meals/wk`;
+        : mealsOptions?.length
+          ? `${mealsOptions.join(' · ')} meals/wk`
+          : null;
+  const showRating = rating != null && Number.isFinite(Number(rating));
+  const showOpenRow = isOpen !== undefined || Boolean(closesAt);
   return (
     <Pressable onPress={onPress} testID={testID || `tiffin-kitchen-${cookId}`} accessibilityRole="button">
       {({ pressed }) => (
@@ -218,27 +222,33 @@ export function SHCTiffinKitchenCard({
               <Text style={styles.kitchenName} numberOfLines={1}>
                 {cookName}
               </Text>
-              <View style={styles.ratingPill}>
-                <Text style={styles.ratingStar}>★</Text>
-                <Text style={styles.ratingText}>
-                  {rating.toFixed(1)}
-                  {reviewCount != null ? ` (${reviewCount})` : ''}
-                </Text>
-              </View>
+              {showRating ? (
+                <View style={styles.ratingPill}>
+                  <Text style={styles.ratingStar}>★</Text>
+                  <Text style={styles.ratingText}>
+                    {Number(rating).toFixed(1)}
+                    {reviewCount != null ? ` (${reviewCount})` : ''}
+                  </Text>
+                </View>
+              ) : null}
             </View>
             {tagline || area ? (
               <Text style={styles.kitchenTagline} numberOfLines={1}>
                 {[tagline, area].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
-            <View style={styles.openRow}>
-              <Text style={[styles.openDot, { color: isOpen ? gourmeatColors.success : gourmeatColors.error }]}>
-                {isOpen ? 'Open' : 'Closed'}
-              </Text>
-              {closesAt ? <Text style={styles.closesAt}> · {closesAt}</Text> : null}
-            </View>
+            {showOpenRow ? (
+              <View style={styles.openRow}>
+                {isOpen !== undefined ? (
+                  <Text style={[styles.openDot, { color: isOpen ? gourmeatColors.success : gourmeatColors.error }]}>
+                    {isOpen ? 'Open' : 'Closed'}
+                  </Text>
+                ) : null}
+                {closesAt ? <Text style={styles.closesAt}> · {closesAt}</Text> : null}
+              </View>
+            ) : null}
             <View style={styles.kitchenMetaRow}>
-              <Text style={styles.kitchenMetaPrice}>{priceLabel}</Text>
+              {priceLabel ? <Text style={styles.kitchenMetaPrice}>{priceLabel}</Text> : null}
               {subscriberCount != null ? (
                 <Text style={styles.kitchenMetaSubs}>👤 {subscriberCount} subscribers</Text>
               ) : dishCount != null ? (

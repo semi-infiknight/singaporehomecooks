@@ -13,6 +13,7 @@ export * from './sg-areas';
 export * from './location';
 export * from './discover';
 export * from './discover-home';
+export * from './discover-layout';
 export * from './cook-portal';
 export * from './meal-type';
 export * from './category';

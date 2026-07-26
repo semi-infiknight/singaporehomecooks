@@ -20,7 +20,6 @@ import {
   sortByCookProximity,
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
-  OFFLINE_DISCOVER_PRODUCT,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
@@ -31,8 +30,15 @@ import {
   discoverHomePromoCarousel,
   MEAL_TYPE_CHIPS,
   topRatedCategoryDishes,
-  discoverZoneById,
   isPopularDish,
+  DISCOVER_MODES,
+  discoverSections,
+  discoverForYouRail,
+  discoverActiveFilterCount,
+  discoverGridHeading,
+  discoverKitchensHeading,
+  discoverEmptyCopy,
+  type DiscoverModeId,
   type MealTypeId,
 } from '@shc/utils';
 import { useFavorites } from '../lib/useFavorites';
@@ -50,15 +56,13 @@ import {
   GourmeatHomeHeader,
   GourmeatSearchBar,
   GourmeatCategoryRow,
-  GourmeatDishCard,
+  GourmeatModeSwitch,
   GourmeatSectionTitle,
-  FilterChipRow,
+  DiscoverFilterSheet,
   SearchResultsPanel,
   RequestDishHomeCTA,
   HomePromoCarousel,
-  TiffinFilterChips,
   TiffinKitchenCard,
-  SectionEyebrow,
   type DishCardProduct,
 } from './components/SHCWebComponents';
 import { VirtualDishGrid } from './components/VirtualLists';
@@ -70,13 +74,6 @@ const occasions = [
     label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
     imageUrl: getOccasionImageUrl(o),
   })),
-];
-
-/** Order-mode tabs — one meal vs event (HomelyEats meal-type strip, adapted for SHC). */
-const ORDER_MODES = [
-  { id: 'popular', label: 'Popular' },
-  { id: 'one-off', label: 'One meal' },
-  { id: 'occasion', label: 'Events' },
 ];
 
 function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
@@ -93,10 +90,11 @@ export default function DiscoverHome() {
   const { user } = useAuth();
   const { requireAuth } = useGuestAuthGate();
   const { query, setQuery } = useDiscoverSearch();
+  const [mode, setMode] = useState<DiscoverModeId>('dishes');
   const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
-  const [orderMode, setOrderMode] = useState('popular');
   const [mealType, setMealType] = useState<MealTypeId>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const { data: products, isLoading, refetch: refetchProducts } = useProducts('');
@@ -160,10 +158,23 @@ export default function DiscoverHome() {
     [productListRaw, evidenceMode]
   );
 
+  const filters = useMemo(
+    () => ({
+      mealType,
+      cuisine: cuisineFilter,
+      occasion: mode === 'occasions' ? occasionFilter : '',
+      halalOnly,
+      vegetarianOnly,
+      maxCal,
+    }),
+    [mealType, cuisineFilter, occasionFilter, mode, halalOnly, vegetarianOnly, maxCal]
+  );
+  const activeFilterCount = discoverActiveFilterCount(filters);
+
   const filteredProducts = useMemo(() => {
     const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
       query,
-      occasion: occasionFilter || undefined,
+      occasion: filters.occasion || undefined,
       cuisine: cuisineFilter || undefined,
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
@@ -174,61 +185,51 @@ export default function DiscoverHome() {
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
       collectionLocation
     ) as DishCardProduct[];
-  }, [productList, query, cuisineFilter, occasionFilter, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, filters.occasion, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
 
-  const topRatedDishes = useMemo(() => {
-    if (query.trim()) return [];
-    return topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map((p) =>
-      toDishCard(p as DishCardProduct)
-    );
-  }, [productList, query]);
+  const isSearching = query.trim().length > 0;
+  const gridProducts = useMemo(() => (isSearching ? [] : filteredProducts), [filteredProducts, isSearching]);
+  const searchDishes = useMemo(
+    () => (isSearching ? filteredProducts.map((p) => toDishCard(p)) : []),
+    [filteredProducts, isSearching]
+  );
 
-  const gridProducts = useMemo(() => (query.trim() ? [] : filteredProducts), [filteredProducts, query]);
+  const forYou = useMemo(() => {
+    if (isSearching) return null;
+    const asCards = (items: Array<{ id: string; name: string; cook_name?: string; price: number; cuisine?: string }>) =>
+      items.map((d) =>
+        toDishCard({ id: d.id, name: d.name, cook_name: d.cook_name || '', price: d.price, cuisine: d.cuisine })
+      ) as DishCardProduct[];
+    return discoverForYouRail<DishCardProduct>({
+      reorder: asCards(extractReorderDishes(orders as Record<string, unknown>[])),
+      saved: asCards(favoritesToReorderDishes(favorites)),
+      topRated: topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map((p) =>
+        toDishCard(p as DishCardProduct)
+      ) as DishCardProduct[],
+    });
+  }, [isSearching, orders, favorites, productList]);
 
-  const searchDishes = useMemo(() => {
-    if (!query.trim()) return [];
-    return filteredProducts.map((p) => toDishCard(p));
-  }, [filteredProducts, query]);
-
-  const savedDishes = useMemo(() => {
-    if (query.trim()) return [];
-    return favoritesToReorderDishes(favorites).map((d) =>
-      toDishCard({
-        id: d.id,
-        name: d.name,
-        cook_name: d.cook_name || '',
-        price: d.price,
-        cuisine: d.cuisine,
-      })
-    ) as DishCardProduct[];
-  }, [favorites, query]);
-
-  const reorderDishes = useMemo(() => {
-    if (query.trim()) return [];
-    const items = extractReorderDishes(orders as Record<string, unknown>[]);
-    return items.map((d) =>
-      toDishCard({
-        id: d.id,
-        name: d.name,
-        cook_name: d.cook_name || '',
-        price: d.price,
-        cuisine: d.cuisine,
-      })
-    ) as DishCardProduct[];
-  }, [orders, query]);
-
-  const cuisineItems = MIND_CUISINE_CATEGORIES.map((c) => ({
-    id: c.id,
-    label: c.label,
-    imageUrl: c.imageUrl,
-  }));
-
+  const cuisineItems = MIND_CUISINE_CATEGORIES.map((c) => ({ id: c.id, label: c.label, imageUrl: c.imageUrl }));
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email);
-  const browseZone = discoverZoneById('browse');
   const homePromos = useMemo(() => discoverHomePromoCarousel(), []);
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
+  const gridHeading = discoverGridHeading(mode, filters);
+  const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
+  const emptyCopy = discoverEmptyCopy(mode, filters);
+
+  const sections = useMemo(
+    () =>
+      discoverSections({
+        isSearching,
+        isGuest,
+        mode,
+        hasPromos: homePromos.length > 0,
+        hasForYou: Boolean(forYou),
+      }),
+    [isSearching, isGuest, mode, homePromos.length, forYou]
+  );
 
   const checkPopular = useCallback(
     (product: DishCardProduct) => isPopularDish(product as Record<string, unknown>, productList as Record<string, unknown>[]),
@@ -258,19 +259,228 @@ export default function DiscoverHome() {
     [toggle]
   );
 
+  const clearFilters = useCallback(() => {
+    setMealType('all');
+    setCuisineFilter('');
+    setOccasionFilter('');
+    if (halalOnly) toggleHalalOnly();
+    if (vegetarianOnly) toggleVegetarianOnly();
+    if (maxCal != null) toggleLight();
+  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+
   const handleHomePromoPress = useCallback(
     (id: string) => {
       const promo = homePromos.find((item) => item.id === id);
       if (!promo) return;
       if (promo.occasionFilter) {
+        setMode('occasions');
         setOccasionFilter(promo.occasionFilter);
-        setOrderMode('occasion');
         return;
       }
       router.push(promo.webRoute);
     },
     [homePromos, router]
   );
+
+  const renderSection = (id: string) => {
+    switch (id) {
+      case 'search-results':
+        return (
+          <SearchResultsPanel
+            query={query}
+            dishes={searchDishes}
+            onDishPress={goToProduct}
+            onAddPress={(pid) => handleAddToCart(pid, 1)}
+            onClose={() => setQuery('')}
+          />
+        );
+
+      case 'guest':
+        return <GuestBrowseBar onSignInClick={() => router.push('/login')} />;
+
+      case 'promos':
+        return <HomePromoCarousel promos={homePromos} onPromoPress={handleHomePromoPress} />;
+
+      case 'cooking-soon':
+        return (
+          <div data-testid="home-cooking-soon-rail">
+            <GourmeatSectionTitle title="Cooking this week" />
+            {dropsLoading && drops.length === 0 ? (
+              <SHCSkeletonCookingSoonRail />
+            ) : drops.length > 0 ? (
+              <div className="mt-3 flex gap-3 overflow-x-auto pb-1 snap-x">
+                {(drops as any[]).slice(0, 8).map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    data-testid={`home-drop-${d.id}`}
+                    onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
+                    className="snap-start shrink-0 w-[240px] rounded-2xl border border-[var(--shc-border)] bg-card overflow-hidden text-left shadow-[var(--shc-shadow-soft)] hover:opacity-95"
+                  >
+                    <div className="relative h-24 w-full bg-muted">
+                      <Image
+                        src={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="240px"
+                      />
+                    </div>
+                    <div className="p-3.5">
+                      <p className="text-[11px] font-black uppercase tracking-wide text-primary">Cooking soon</p>
+                      <p className="mt-1 font-black text-base text-foreground line-clamp-1">{d.title}</p>
+                      <p className="text-xs font-semibold text-muted-foreground line-clamp-1">
+                        {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
+                      </p>
+                      <p className="mt-2 text-sm font-extrabold text-primary">{formatDropPrice(d.price_cents, d.price)}</p>
+                      <p className="text-[11px] font-semibold text-muted-foreground">
+                        {d.remaining_qty ?? d.max_qty - (d.ordered_qty || 0)} left · by {formatDropOrderBy(d.order_by)}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-[var(--shc-border)] bg-card p-4" data-testid="home-cooking-soon-empty">
+                <p className="font-extrabold text-foreground">No open batches in the next 7 days</p>
+                <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                  Only batches cooking within a week appear here. Refresh after a cook posts.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'for-you':
+        return forYou ? (
+          <div data-testid="home-for-you-rail">
+            <GourmeatSectionTitle title={forYou.title} />
+            <ZomatoDishRowRail
+              title=""
+              products={forYou.dishes}
+              onDishPress={goToProduct}
+              testID={`for-you-rail-${forYou.source}`}
+            />
+          </div>
+        ) : null;
+
+      case 'browse-switch':
+        return (
+          <div className="shc-section-stack">
+            <GourmeatModeSwitch modes={DISCOVER_MODES} activeId={mode} onSelect={(id) => setMode(id as DiscoverModeId)} />
+          </div>
+        );
+
+      case 'cuisine-rail':
+        return (
+          <GourmeatCategoryRow
+            items={[{ id: '', label: 'All' }, ...cuisineItems]}
+            active={cuisineFilter}
+            onSelect={(id) => setCuisineFilter(id === cuisineFilter ? '' : id)}
+            testID="cuisine-gourmeat-row"
+          />
+        );
+
+      case 'occasion-rail':
+        return (
+          <GourmeatCategoryRow
+            items={occasions}
+            active={occasionFilter}
+            onSelect={setOccasionFilter}
+            testID="occasion-gourmeat-row"
+          />
+        );
+
+      case 'kitchen-list':
+        return (
+          <div data-testid="home-kitchens-section">
+            <GourmeatSectionTitle
+              title={cooksLoading && cookList.length === 0 ? 'Home kitchens' : kitchensHeading.title}
+              actionLabel="Tiffin plans"
+              actionHref="/tiffin"
+            />
+            {kitchensHeading.hint && !cooksLoading ? (
+              <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">
+                <Link href="/location" className="text-primary hover:underline">
+                  {kitchensHeading.hint}
+                </Link>
+              </p>
+            ) : null}
+            {cooksLoading && cookList.length === 0 ? (
+              <SHCSkeletonKitchenList count={3} />
+            ) : cookList.length === 0 ? (
+              <SHCEmptyState title={emptyCopy.title} description={emptyCopy.description} />
+            ) : (
+              <ul>
+                {cookList.map((c) => {
+                  const cid = String(c.id || c.slug || '');
+                  const slug = String(c.slug || c.id || '');
+                  return (
+                    <li key={cid || slug}>
+                      <TiffinKitchenCard
+                        cookId={cid || slug}
+                        cookName={String(c.display_name || c.name || 'Home kitchen')}
+                        area={c.area ? String(c.area) : undefined}
+                        tagline={c.story ? String(c.story).slice(0, 80) : undefined}
+                        coverUri={getCookKitchenHeroUrl(cid || slug)}
+                        rating={c.rating != null ? Number(c.rating) : undefined}
+                        reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
+                        subscriberCount={c.subscriber_count != null ? Number(c.subscriber_count) : undefined}
+                        onPress={() => {
+                          if (cid) router.push(`/tiffin/kitchen/${encodeURIComponent(cid)}`);
+                        }}
+                        testID={`home-kitchen-${cid}`}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+
+      case 'dish-grid':
+        return (
+          <div>
+            <GourmeatSectionTitle title={gridHeading.title} testID="all-dishes-header" />
+            <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">{gridHeading.hint}</p>
+            {isLoading && <SHCSkeletonGrid />}
+            {!isLoading && gridProducts.length === 0 && (
+              <SHCEmptyState
+                title={emptyCopy.title}
+                description={emptyCopy.description}
+                action={
+                  activeFilterCount > 0 ? (
+                    <SHCButton variant="outline" onClick={clearFilters}>
+                      Clear filters
+                    </SHCButton>
+                  ) : (
+                    <SHCButton variant="outline" onClick={() => router.push('/request')}>
+                      Request a dish
+                    </SHCButton>
+                  )
+                }
+              />
+            )}
+            {!isLoading && gridProducts.length > 0 && (
+              <VirtualDishGrid
+                products={gridProducts}
+                isFavorite={isFavorite}
+                isPopular={checkPopular}
+                onFavoritePress={handleFavorite}
+                onAddPress={(pid) => handleAddToCart(pid, 1)}
+              />
+            )}
+          </div>
+        );
+
+      case 'request':
+        return <RequestDishHomeCTA />;
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <section
@@ -283,6 +493,7 @@ export default function DiscoverHome() {
           Refreshing…
         </p>
       ) : null}
+
       {/* Mobile chrome — desktop uses AppHeader */}
       <div className="md:hidden">
         <GourmeatHomeHeader
@@ -292,12 +503,6 @@ export default function DiscoverHome() {
           locationHint="Collect from"
           avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
           locationHref="/location"
-        />
-        <GourmeatSearchBar
-          value={query}
-          onChange={setQuery}
-          placeholder="Search kitchen, dish or cuisine"
-          onFilterPress={() => router.push('/search')}
         />
       </div>
       <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-1">
@@ -309,259 +514,53 @@ export default function DiscoverHome() {
         <div className="hidden md:block mb-4" />
       )}
 
-      {query.trim().length > 0 && (
-        <SearchResultsPanel
-          query={query}
-          dishes={searchDishes}
-          onDishPress={goToProduct}
-          onAddPress={(id) => handleAddToCart(id, 1)}
-          onClose={() => setQuery('')}
+      {/* Single control surface — search + every filter, pinned so it is reachable at any scroll depth */}
+      <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-background/95 backdrop-blur md:hidden">
+        <GourmeatSearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Search kitchen, dish or cuisine"
+          onFilterPress={() => setFiltersOpen(true)}
+          filterCount={activeFilterCount}
         />
-      )}
+      </div>
+      <div className="hidden md:flex justify-end mb-3">
+        <SHCButton variant="outline" onClick={() => setFiltersOpen(true)} data-testid="discover-filters-desktop">
+          {activeFilterCount > 0 ? `Filters · ${activeFilterCount}` : 'Filters'}
+        </SHCButton>
+      </div>
 
-      {isGuest && (
-        <GuestBrowseBar onSignInClick={() => router.push('/login')} />
-      )}
-
-      {!query.trim() && (
-        <HomePromoCarousel promos={homePromos} onPromoPress={handleHomePromoPress} />
-      )}
-
-      {!query.trim() && browseZone && (
-        <div data-testid="home-meal-type-chips">
-          <SectionEyebrow testID={`${browseZone.testID}-eyebrow`}>{browseZone.eyebrow}</SectionEyebrow>
-          <TiffinFilterChips chips={MEAL_TYPE_CHIPS} activeId={mealType} onSelect={(id) => setMealType(id as MealTypeId)} />
+      {sections.map((section) => (
+        <div key={section.id} data-testid={section.testID} className="shc-section-stack">
+          {renderSection(section.id)}
         </div>
-      )}
-
-      {/* Top rated rail */}
-      {!query.trim() && topRatedDishes.length > 0 && (
-        <div data-testid="home-top-rated-rail">
-          <GourmeatSectionTitle title="Top rated near you" />
-          <ZomatoDishRowRail title="" products={topRatedDishes} onDishPress={goToProduct} testID="top-rated-rail" />
-        </div>
-      )}
-
-      {/* ② Explore by categories — cuisine */}
-      {!query.trim() && (
-        <GourmeatCategoryRow
-          title="Explore by categories"
-          items={cuisineItems}
-          active={cuisineFilter}
-          onSelect={(id) => {
-            setCuisineFilter(id);
-            if (id) {
-              router.push(`/category/${encodeURIComponent(id)}`);
-            }
-          }}
-          testID="cuisine-gourmeat-row"
-        />
-      )}
-
-      {/* ③ Most popular — one meal / event order modes */}
-      {!query.trim() && (
-        <div>
-          <GourmeatSectionTitle title="Most popular choices" testID="most-popular-header" />
-          <div className="mb-2" data-testid="home-order-mode-chips">
-            <TiffinFilterChips
-              chips={ORDER_MODES}
-              activeId={orderMode}
-              onSelect={(id) => {
-                setOrderMode(id);
-                if (id === 'one-off') setOccasionFilter('');
-              }}
-            />
-          </div>
-          {(orderMode === 'popular' || orderMode === 'one-off') && reorderDishes.length > 0 && (
-            <ZomatoDishRowRail title="" products={reorderDishes} onDishPress={goToProduct} testID="order-again-rail" />
-          )}
-          {orderMode === 'occasion' && (
-            <GourmeatCategoryRow items={occasions} active={occasionFilter} onSelect={setOccasionFilter} />
-          )}
-        </div>
-      )}
-
-      {/* Cooking soon — skeleton while fetching; empty only when settled */}
-      {!query.trim() && (
-        <div data-testid="home-cooking-soon-rail">
-          <GourmeatSectionTitle title="Cooking soon near you" />
-          {dropsLoading && !(Array.isArray(drops) && drops.length > 0) ? (
-            <SHCSkeletonCookingSoonRail />
-          ) : Array.isArray(drops) && drops.length > 0 ? (
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1 snap-x">
-              {(drops as any[]).slice(0, 8).map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  data-testid={`home-drop-${d.id}`}
-                  onClick={() => router.push(`/drops/${encodeURIComponent(d.id)}`)}
-                  className="snap-start shrink-0 w-[240px] rounded-2xl border-2 border-[var(--shc-border)] bg-card overflow-hidden text-left shadow-[var(--shc-shadow-soft)] hover:opacity-95"
-                >
-                  <div className="relative h-24 w-full bg-muted">
-                    <Image
-                      src={getDropImageUrl({ title: d.title, image_url: d.image_url, cook_id: d.cook_id })}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="240px"
-                    />
-                  </div>
-                  <div className="p-3.5">
-                    <p className="text-[11px] font-black uppercase tracking-wide text-primary">Cooking soon</p>
-                    <p className="mt-1 font-black text-base text-foreground line-clamp-1">{d.title}</p>
-                    <p className="text-xs font-semibold text-muted-foreground line-clamp-1">
-                      {d.cook_name || 'Kitchen'} · {formatDropCookDate(d.cook_date)} · {d.collection_slot}
-                    </p>
-                    <p className="mt-2 text-sm font-extrabold text-primary">{formatDropPrice(d.price_cents, d.price)}</p>
-                    <p className="text-[11px] font-semibold text-muted-foreground">
-                      {d.remaining_qty ?? d.max_qty - (d.ordered_qty || 0)} left · by {formatDropOrderBy(d.order_by)}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div
-              className="mt-3 rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4"
-              data-testid="home-cooking-soon-empty"
-            >
-              <p className="font-extrabold text-foreground">No open batches in the next 7 days</p>
-              <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                Only batches cooking within a week appear here. Refresh after a cook posts.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ④ Kitchens near you — browse cooks (one-off or subscribe) */}
-      {!query.trim() && (cooksLoading || cookList.length > 0) && (
-        <div data-testid="home-kitchens-section">
-          <GourmeatSectionTitle
-            title={cooksLoading && cookList.length === 0 ? 'Kitchens near you' : `${cookList.length} kitchens near you`}
-            actionLabel="Tiffin"
-            actionHref="/tiffin"
-          />
-          {cooksLoading && cookList.length === 0 ? (
-            <SHCSkeletonKitchenList count={3} />
-          ) : (
-            <>
-          <FilterChipRow
-            chips={[
-              { id: 'halal', label: 'Halal', active: halalOnly },
-              { id: 'veg', label: 'Vegetarian', active: vegetarianOnly },
-              { id: 'light', label: 'Light', active: maxCal === 500 },
-              { id: 'nearest', label: 'Nearest', active: Boolean(collectionLocation) },
-            ]}
-            onChipClick={(id) => {
-              if (id === 'halal') toggleHalalOnly();
-              if (id === 'veg') toggleVegetarianOnly();
-              if (id === 'light') toggleLight();
-              if (id === 'nearest') router.push('/location');
-            }}
-            testID="discover-filter-chips"
-          />
-          <ul className="mt-3">
-            {cookList.slice(0, 4).map((c) => {
-              const id = String(c.id || c.slug || '');
-              const name = String(c.display_name || c.name || 'Home kitchen');
-              const slug = String(c.slug || c.id || '');
-              return (
-                <li key={id || slug}>
-                  <TiffinKitchenCard
-                    cookId={id || slug}
-                    cookName={name}
-                    area={c.area ? String(c.area) : undefined}
-                    tagline={c.story ? String(c.story).slice(0, 80) : 'Heritage home cooking'}
-                    coverUri={getCookKitchenHeroUrl(id || slug)}
-                    rating={c.rating != null ? Number(c.rating) : 4.8}
-                    reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
-                    subscriberCount={c.subscriber_count != null ? Number(c.subscriber_count) : undefined}
-                    isOpen
-                    closesAt="HDB collection"
-                    onPress={() => {
-                      if (id) router.push(`/tiffin/kitchen/${encodeURIComponent(id)}`);
-                    }}
-                    testID={`home-kitchen-${id}`}
-                  />
-                </li>
-              );
-            })}
-          </ul>
-            </>
-          )}
-        </div>
-      )}
-
-      {!query.trim() && savedDishes.length > 0 && (
-        <div className="shc-section-stack mb-4">
-          <GourmeatSectionTitle title="Saved for later" />
-          <ZomatoDishRowRail title="" products={savedDishes} onDishPress={goToProduct} testID="saved-dishes-rail" />
-        </div>
-      )}
-
-      {evidenceMode && productList.length > 0 && (
-        <div className="shc-card-gap" data-testid="evidence-dish-card">
-          <GourmeatSectionTitle title="Featured dish (evidence)" />
-          <GourmeatDishCard
-            product={productList.find((p) => p.id === OFFLINE_DISCOVER_PRODUCT.id) ?? productList[0]}
-            isFavorite={isFavorite(OFFLINE_DISCOVER_PRODUCT.id)}
-            onFavoritePress={() => handleFavorite(productList[0])}
-            onAddPress={() => handleAddToCart(OFFLINE_DISCOVER_PRODUCT.id, 1)}
-          />
-        </div>
-      )}
-
-      {/* Main grid: one-off dishes for single meal / cart */}
-      <GourmeatSectionTitle
-        title={
-          occasionFilter
-            ? `${occasionFilter.split(' ')[0]} dishes — order for your event`
-            : 'Order a single dish'
-        }
-        testID="all-dishes-header"
-      />
-      <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">
-        Add to cart for one meal · switch to tiffin above for weekly plans
-      </p>
-
-      {isLoading && <SHCSkeletonGrid />}
-      {!isLoading && gridProducts.length === 0 && !query.trim() && (
-        <SHCEmptyState
-          title="No dishes match your search"
-          description="Try a different category or clear your filters."
-          action={
-            <SHCButton
-              variant="outline"
-              onClick={() => {
-                setQuery('');
-                setOccasionFilter('');
-                setCuisineFilter('');
-              }}
-            >
-              Clear filters
-            </SHCButton>
-          }
-        />
-      )}
-
-      {!isLoading && gridProducts.length > 0 && (
-        <VirtualDishGrid
-          products={gridProducts}
-          isFavorite={isFavorite}
-          isPopular={checkPopular}
-          onFavoritePress={handleFavorite}
-          onAddPress={(id) => handleAddToCart(id, 1)}
-        />
-      )}
-
-      {!query.trim() && <RequestDishHomeCTA />}
+      ))}
 
       <div className="shc-section-stack text-center">
         <Link href="/content/trust" className="text-xs text-primary font-semibold hover:underline" data-testid="discover-trust-link">
           Trust &amp; Safety →
         </Link>
       </div>
+
+      <DiscoverFilterSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealType={mealType}
+        onMealTypeChange={(id) => setMealType(id as MealTypeId)}
+        cuisines={[{ id: '', label: 'All' }, ...cuisineItems]}
+        cuisine={cuisineFilter}
+        onCuisineChange={setCuisineFilter}
+        halalOnly={halalOnly}
+        vegetarianOnly={vegetarianOnly}
+        lightOnly={maxCal != null}
+        onToggleHalal={toggleHalalOnly}
+        onToggleVegetarian={toggleVegetarianOnly}
+        onToggleLight={toggleLight}
+        onClear={clearFilters}
+        resultCount={filteredProducts.length}
+        activeCount={activeFilterCount}
+      />
     </section>
   );
 }

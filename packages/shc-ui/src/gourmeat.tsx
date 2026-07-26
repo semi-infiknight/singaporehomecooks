@@ -153,6 +153,7 @@ export function GourmeatSearchBar({
   onChangeText,
   placeholder = 'Search dishes, cooks…',
   onFilterPress,
+  filterCount = 0,
   marginBottom = shcSpacing.md,
   edgeInset = true,
   testID = 'search-input',
@@ -161,6 +162,8 @@ export function GourmeatSearchBar({
   onChangeText: (t: string) => void;
   placeholder?: string;
   onFilterPress?: () => void;
+  /** Number of active filters — shown as a badge so the state is visible without scrolling. */
+  filterCount?: number;
   marginBottom?: number;
   /** When false, parent already applies horizontal padding (e.g. FlashList content). */
   edgeInset?: boolean;
@@ -202,18 +205,42 @@ export function GourmeatSearchBar({
       {onFilterPress && (
         <Pressable
           onPress={onFilterPress}
+          accessibilityLabel={filterCount > 0 ? `Filters, ${filterCount} active` : 'Filters'}
           style={{
             width: 44,
             height: 44,
             borderRadius: gourmeatRadii.md,
-            backgroundColor: gourmeatColors.surface,
+            backgroundColor: filterCount > 0 ? gourmeatColors.primary : gourmeatColors.surface,
             alignItems: 'center',
             justifyContent: 'center',
             ...gourmeatShadows.soft,
           }}
           testID="gourmeat-filter-btn"
         >
-          <SHCIcon name="filters" size={shcIconSizes.lg} color={gourmeatColors.text} />
+          <SHCIcon
+            name="filters"
+            size={shcIconSizes.lg}
+            color={filterCount > 0 ? '#FFFFFF' : gourmeatColors.text}
+          />
+          {filterCount > 0 ? (
+            <View
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                minWidth: 18,
+                height: 18,
+                paddingHorizontal: 4,
+                borderRadius: 9,
+                backgroundColor: gourmeatColors.text,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              testID="gourmeat-filter-count"
+            >
+              <Text style={{ fontSize: 10, fontWeight: '900', color: '#FFFFFF' }}>{filterCount}</Text>
+            </View>
+          ) : null}
         </Pressable>
       )}
     </View>
@@ -510,6 +537,211 @@ export function GourmeatSectionTitle({
           <Text style={{ fontSize: 13, fontWeight: '600', color: gourmeatColors.primary }}>{actionLabel}</Text>
         </Pressable>
       )}
+    </View>
+  );
+}
+
+/**
+ * Browse spine — Dishes · Kitchens · Occasions.
+ * Makes the discover IA switchable instead of stacking every zone on one scroll.
+ */
+export function GourmeatModeSwitch({
+  modes,
+  activeId,
+  onSelect,
+  testID = 'discover-mode-switch',
+}: {
+  modes: Array<{ id: string; label: string; testID?: string }>;
+  activeId: string;
+  onSelect: (id: string) => void;
+  testID?: string;
+}) {
+  return (
+    <View
+      testID={testID}
+      accessibilityRole="tablist"
+      style={{
+        flexDirection: 'row',
+        marginHorizontal: shcSpacing.md,
+        padding: 4,
+        borderRadius: gourmeatRadii.pill,
+        backgroundColor: gourmeatColors.surfaceAlt,
+        gap: 4,
+      }}
+    >
+      {modes.map((mode) => {
+        const active = mode.id === activeId;
+        return (
+          <Pressable
+            key={mode.id}
+            onPress={() => onSelect(mode.id)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            testID={mode.testID ?? `discover-mode-${mode.id}`}
+            style={{
+              flex: 1,
+              paddingVertical: 10,
+              borderRadius: gourmeatRadii.pill,
+              alignItems: 'center',
+              backgroundColor: active ? gourmeatColors.surface : 'transparent',
+              ...(active ? gourmeatShadows.soft : null),
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: active ? '800' : '600',
+                color: active ? gourmeatColors.text : gourmeatColors.textLight,
+              }}
+            >
+              {mode.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * Every discover filter in one tray, so the controls sit next to a single
+ * Apply action instead of being spread across three chip rows on the scroll.
+ */
+export function SHCDiscoverFilterSheet({
+  mealTypeChips,
+  mealType,
+  onMealTypeChange,
+  cuisines,
+  cuisine,
+  onCuisineChange,
+  halalOnly,
+  vegetarianOnly,
+  lightOnly,
+  onToggleHalal,
+  onToggleVegetarian,
+  onToggleLight,
+  onClear,
+  onApply,
+  resultCount,
+  activeCount = 0,
+  testID = 'discover-filter-sheet',
+}: {
+  mealTypeChips: Array<{ id: string; label: string }>;
+  mealType: string;
+  onMealTypeChange: (id: string) => void;
+  cuisines: Array<{ id: string; label: string }>;
+  cuisine: string;
+  onCuisineChange: (id: string) => void;
+  halalOnly: boolean;
+  vegetarianOnly: boolean;
+  lightOnly: boolean;
+  onToggleHalal: () => void;
+  onToggleVegetarian: () => void;
+  onToggleLight: () => void;
+  onClear: () => void;
+  onApply: () => void;
+  resultCount: number;
+  activeCount?: number;
+  testID?: string;
+}) {
+  const group = (label: string, children: React.ReactNode) => (
+    <View style={{ marginBottom: shcSpacing.lg }}>
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: '800',
+          letterSpacing: 0.6,
+          textTransform: 'uppercase',
+          color: gourmeatColors.textLight,
+          marginBottom: shcSpacing.sm,
+        }}
+      >
+        {label}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm }}>{children}</View>
+    </View>
+  );
+
+  const pill = (key: string, label: string, active: boolean, onPress: () => void, id: string) => (
+    <Pressable
+      key={key}
+      onPress={onPress}
+      testID={`${testID}-${id}`}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: active }}
+      style={{
+        paddingHorizontal: shcSpacing.md,
+        paddingVertical: 8,
+        borderRadius: gourmeatRadii.pill,
+        borderWidth: 1,
+        borderColor: active ? gourmeatColors.primary : gourmeatColors.border,
+        backgroundColor: active ? gourmeatColors.primary : gourmeatColors.surface,
+      }}
+    >
+      <Text style={{ fontSize: 13, fontWeight: '700', color: active ? '#FFFFFF' : gourmeatColors.text }}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+
+  return (
+    <View style={{ flex: 1 }} testID={testID}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {group(
+          'Meal',
+          mealTypeChips.map((chip) =>
+            pill(chip.id, chip.label, chip.id === mealType, () => onMealTypeChange(chip.id), `meal-${chip.id}`)
+          )
+        )}
+        {group(
+          'Cuisine',
+          cuisines.map((c) =>
+            pill(c.id || 'all', c.label, c.id === cuisine, () => onCuisineChange(c.id), `cuisine-${c.id || 'all'}`)
+          )
+        )}
+        {group(
+          'Dietary',
+          <>
+            {pill('halal', 'Halal', halalOnly, onToggleHalal, 'halal')}
+            {pill('veg', 'Vegetarian', vegetarianOnly, onToggleVegetarian, 'veg')}
+            {pill('light', 'Under 500 cal', lightOnly, onToggleLight, 'light')}
+          </>
+        )}
+      </ScrollView>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: shcSpacing.sm,
+          paddingTop: shcSpacing.md,
+          borderTopWidth: 1,
+          borderTopColor: gourmeatColors.border,
+        }}
+      >
+        <Pressable
+          onPress={onClear}
+          disabled={activeCount === 0}
+          testID={`${testID}-clear`}
+          style={{ paddingHorizontal: shcSpacing.md, paddingVertical: 12, opacity: activeCount === 0 ? 0.4 : 1 }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.textMuted }}>Clear</Text>
+        </Pressable>
+        <Pressable
+          onPress={onApply}
+          testID={`${testID}-apply`}
+          style={{
+            flex: 1,
+            paddingVertical: 14,
+            borderRadius: gourmeatRadii.pill,
+            backgroundColor: gourmeatColors.primary,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 15, fontWeight: '800', color: '#FFFFFF' }}>
+            {resultCount === 1 ? 'Show 1 dish' : `Show ${resultCount} dishes`}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
