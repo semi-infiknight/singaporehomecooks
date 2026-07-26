@@ -549,11 +549,14 @@ export function GourmeatModeSwitch({
   modes,
   activeId,
   onSelect,
+  navAction,
   testID = 'discover-mode-switch',
 }: {
   modes: Array<{ id: string; label: string; testID?: string }>;
   activeId: string;
   onSelect: (id: string) => void;
+  /** Navigates to a dedicated screen (e.g. /occasions) instead of switching inline mode. */
+  navAction?: { label: string; onPress: () => void; testID?: string };
   testID?: string;
 }) {
   return (
@@ -599,6 +602,24 @@ export function GourmeatModeSwitch({
           </Pressable>
         );
       })}
+      {navAction ? (
+        <Pressable
+          onPress={navAction.onPress}
+          accessibilityRole="link"
+          testID={navAction.testID ?? 'discover-nav-action'}
+          style={{
+            flex: 1,
+            paddingVertical: 10,
+            borderRadius: gourmeatRadii.pill,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: gourmeatColors.border,
+            backgroundColor: gourmeatColors.surface,
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: gourmeatColors.primary }}>{navAction.label}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

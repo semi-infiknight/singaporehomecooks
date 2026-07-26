@@ -5,6 +5,7 @@ export function formatCurrency(cents: number) {
 export * from './food-visuals';
 export * from './reorder';
 export * from './occasion';
+export * from './occasion-browse';
 export * from './cart';
 export * from './order-tracking';
 export * from './auth-session';

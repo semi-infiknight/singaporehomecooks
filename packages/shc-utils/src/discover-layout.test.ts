@@ -34,11 +34,7 @@ describe('discoverSections', () => {
     expect(kitchens).toContain('kitchen-list');
     expect(kitchens).not.toContain('dish-grid');
     expect(kitchens).not.toContain('cuisine-rail');
-
-    const occasions = discoverSectionIds({ ...browsing, mode: 'occasions' });
-    expect(occasions).toContain('occasion-rail');
-    expect(occasions).toContain('dish-grid');
-    expect(occasions).not.toContain('cuisine-rail');
+    expect(kitchens).not.toContain('occasion-rail');
   });
 
   it('keeps the browse spine and request CTA in every mode', () => {
@@ -113,7 +109,6 @@ describe('headings', () => {
   it('labels the grid by mode and filter', () => {
     expect(discoverGridHeading('dishes', {}).title).toBe('All dishes');
     expect(discoverGridHeading('dishes', { cuisine: 'Nyonya' }).title).toBe('Nyonya dishes');
-    expect(discoverGridHeading('occasions', { occasion: 'Hari Raya' }).title).toBe('Hari Raya spread');
   });
 
   it('only claims proximity when a collection point is set', () => {

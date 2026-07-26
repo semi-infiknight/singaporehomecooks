@@ -22,7 +22,7 @@ import {
   tiffinPricePerServing,
   contentPadSafe,
 } from '@shc/ui';
-import { getDishImageUrl, getCookKitchenHeroUrl, kitchenDishPriceDollars, kitchenOpenStatus } from '@shc/utils';
+import { getDishImageUrl, getCookKitchenHeroUrl, kitchenDishPriceDollars, kitchenCardOpenProps } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 import { VirtualRowFlashList } from '../../../components/VirtualLists';
@@ -162,10 +162,11 @@ export default function TiffinBrowseScreen() {
         .filter((n: number | null): n is number => n != null && n > 0);
       const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
       const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
-      const open = kitchenOpenStatus({
+      const openProps = kitchenCardOpenProps({
         display_name: k.cook?.display_name,
         area: k.cook?.area,
         status: k.enabled === false ? 'paused' : 'active',
+        collection_instructions: k.cook?.collection_instructions,
       });
       return (
         <SHCTiffinKitchenCard
@@ -178,9 +179,8 @@ export default function TiffinBrowseScreen() {
           subscriberCount={k.subscriber_count ?? 0}
           priceFrom={Math.round(from)}
           priceTo={Math.round(to)}
-          rating={4.8}
-          isOpen={open.isOpen}
-          closesAt={open.detail}
+          rating={k.cook?.rating != null ? Number(k.cook.rating) : undefined}
+          {...openProps}
           coverUri={
             getDishImageUrl({
               id: k.dishes?.[0]?.id,

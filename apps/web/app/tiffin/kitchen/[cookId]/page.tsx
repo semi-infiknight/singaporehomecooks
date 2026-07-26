@@ -100,6 +100,7 @@ export default function TiffinKitchenPage() {
     review_count: (kitchen as any)?.review_count,
     subscriber_count: (kitchen as any)?.subscriber_count,
     status: (kitchen as any)?.enabled === false ? 'paused' : 'active',
+    collection_instructions: (kitchen as any)?.cook?.collection_instructions,
   };
   const open = kitchenOpenStatus(cookMeta);
   const tags = kitchenTagList(cookMeta);

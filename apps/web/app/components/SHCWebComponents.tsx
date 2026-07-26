@@ -2862,11 +2862,13 @@ export function GourmeatModeSwitch({
   modes,
   activeId,
   onSelect,
+  navAction,
   testID = 'discover-mode-switch',
 }: {
   modes: Array<{ id: string; label: string; testID?: string }>;
   activeId: string;
   onSelect: (id: string) => void;
+  navAction?: { label: string; href: string; testID?: string };
   testID?: string;
 }) {
   return (
@@ -2891,6 +2893,16 @@ export function GourmeatModeSwitch({
           </button>
         );
       })}
+      {navAction ? (
+        <Link
+          href={navAction.href}
+          role="link"
+          data-testid={navAction.testID ?? 'discover-nav-action'}
+          className="flex-1 py-2.5 rounded-full text-sm font-bold text-center text-primary bg-card border border-[var(--shc-border)] hover:opacity-95"
+        >
+          {navAction.label}
+        </Link>
+      ) : null}
     </div>
   );
 }

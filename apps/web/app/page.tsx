@@ -13,7 +13,6 @@ import { useDiscoverSearch } from './providers';
 import {
   extractReorderDishes,
   favoritesToReorderDishes,
-  getOccasionImageUrl,
   getCookAvatarUrl,
   getDishImageUrl,
   MIND_CUISINE_CATEGORIES,
@@ -32,12 +31,14 @@ import {
   topRatedCategoryDishes,
   isPopularDish,
   DISCOVER_MODES,
+  DISCOVER_OCCASIONS_NAV,
   discoverSections,
   discoverForYouRail,
   discoverActiveFilterCount,
   discoverGridHeading,
   discoverKitchensHeading,
   discoverEmptyCopy,
+  occasionBrowseRoute,
   type DiscoverModeId,
   type MealTypeId,
 } from '@shc/utils';
@@ -67,15 +68,6 @@ import {
 } from './components/SHCWebComponents';
 import { VirtualDishGrid } from './components/VirtualLists';
 
-const occasions = [
-  { id: '', label: 'All' },
-  ...['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday', 'Wedding', 'Christmas'].map((o) => ({
-    id: o,
-    label: o === 'Chinese New Year' ? 'CNY' : o === 'Family Gathering' ? 'Family' : o.split(' ')[0],
-    imageUrl: getOccasionImageUrl(o),
-  })),
-];
-
 function toDishCard(product: DishCardProduct): DishCardProduct & { rating?: number; image_url?: string } {
   return {
     ...product,
@@ -91,7 +83,6 @@ export default function DiscoverHome() {
   const { requireAuth } = useGuestAuthGate();
   const { query, setQuery } = useDiscoverSearch();
   const [mode, setMode] = useState<DiscoverModeId>('dishes');
-  const [occasionFilter, setOccasionFilter] = useState('');
   const [cuisineFilter, setCuisineFilter] = useState('');
   const [mealType, setMealType] = useState<MealTypeId>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -162,19 +153,17 @@ export default function DiscoverHome() {
     () => ({
       mealType,
       cuisine: cuisineFilter,
-      occasion: mode === 'occasions' ? occasionFilter : '',
       halalOnly,
       vegetarianOnly,
       maxCal,
     }),
-    [mealType, cuisineFilter, occasionFilter, mode, halalOnly, vegetarianOnly, maxCal]
+    [mealType, cuisineFilter, halalOnly, vegetarianOnly, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
   const filteredProducts = useMemo(() => {
     const list = filterDiscoverProducts(productList as Record<string, unknown>[], {
       query,
-      occasion: filters.occasion || undefined,
       cuisine: cuisineFilter || undefined,
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
@@ -185,7 +174,7 @@ export default function DiscoverHome() {
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
       collectionLocation
     ) as DishCardProduct[];
-  }, [productList, query, cuisineFilter, filters.occasion, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
+  }, [productList, query, cuisineFilter, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
 
   const isSearching = query.trim().length > 0;
   const gridProducts = useMemo(() => (isSearching ? [] : filteredProducts), [filteredProducts, isSearching]);
@@ -262,7 +251,6 @@ export default function DiscoverHome() {
   const clearFilters = useCallback(() => {
     setMealType('all');
     setCuisineFilter('');
-    setOccasionFilter('');
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
     if (maxCal != null) toggleLight();
@@ -273,8 +261,7 @@ export default function DiscoverHome() {
       const promo = homePromos.find((item) => item.id === id);
       if (!promo) return;
       if (promo.occasionFilter) {
-        setMode('occasions');
-        setOccasionFilter(promo.occasionFilter);
+        router.push(occasionBrowseRoute(promo.occasionFilter).web);
         return;
       }
       router.push(promo.webRoute);
@@ -367,7 +354,16 @@ export default function DiscoverHome() {
       case 'browse-switch':
         return (
           <div className="shc-section-stack">
-            <GourmeatModeSwitch modes={DISCOVER_MODES} activeId={mode} onSelect={(id) => setMode(id as DiscoverModeId)} />
+            <GourmeatModeSwitch
+              modes={DISCOVER_MODES}
+              activeId={mode}
+              onSelect={(id) => setMode(id as DiscoverModeId)}
+              navAction={{
+                label: DISCOVER_OCCASIONS_NAV.label,
+                href: occasionBrowseRoute().web,
+                testID: DISCOVER_OCCASIONS_NAV.testID,
+              }}
+            />
           </div>
         );
 
@@ -378,16 +374,6 @@ export default function DiscoverHome() {
             active={cuisineFilter}
             onSelect={(id) => setCuisineFilter(id === cuisineFilter ? '' : id)}
             testID="cuisine-gourmeat-row"
-          />
-        );
-
-      case 'occasion-rail':
-        return (
-          <GourmeatCategoryRow
-            items={occasions}
-            active={occasionFilter}
-            onSelect={setOccasionFilter}
-            testID="occasion-gourmeat-row"
           />
         );
 

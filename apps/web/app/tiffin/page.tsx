@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   getCookKitchenHeroUrl,
   kitchenDishPriceDollars,
-  kitchenOpenStatus,
+  kitchenCardOpenProps,
 } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { useTiffinKitchens, useTiffinSubscription, tiffinPricePerServing } from '../../lib/useTiffin';
@@ -194,10 +194,11 @@ export default function TiffinBrowsePage() {
               .filter((n: number | null): n is number => n != null && n > 0);
             const from = prices.length ? Math.min(...prices) : tiffinPricePerServing(3);
             const to = prices.length ? Math.max(...prices) : tiffinPricePerServing(2);
-            const open = kitchenOpenStatus({
+            const openProps = kitchenCardOpenProps({
               display_name: name,
               area: k.cook?.area,
               status: k.enabled === false ? 'paused' : 'active',
+              collection_instructions: k.cook?.collection_instructions,
             });
             return (
               <TiffinKitchenCard
@@ -206,12 +207,11 @@ export default function TiffinBrowsePage() {
                 area={k.cook?.area}
                 tagline={k.tagline || 'Weekly home-cooked meals'}
                 coverUri={getCookKitchenHeroUrl(k.cook_id)}
-                rating={4.8}
+                rating={k.cook?.rating != null ? Number(k.cook.rating) : undefined}
                 subscriberCount={k.subscriber_count}
                 priceFrom={Math.round(from)}
                 priceTo={Math.round(to)}
-                isOpen={open.isOpen}
-                closesAt={open.detail}
+                {...openProps}
                 onPress={() => router.push(`/tiffin/kitchen/${k.cook_id}`)}
                 testID={`tiffin-kitchen-${k.cook_id}`}
               />

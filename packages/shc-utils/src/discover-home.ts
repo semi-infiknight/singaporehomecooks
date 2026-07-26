@@ -3,6 +3,7 @@
  */
 
 import { DEFAULT_PROMOS, PROMO_BANNER_IMAGES, type PromoBannerKey } from './food-visuals';
+import { occasionBrowseRoute } from './occasion-browse';
 
 export type DiscoverHomePromo = {
   id: string;
@@ -25,7 +26,10 @@ const PROMO_ICON: Partial<Record<string, DiscoverHomePromo['iconKey']>> = {
 
 const PROMO_ROUTES: Record<string, Pick<DiscoverHomePromo, 'mobileRoute' | 'webRoute' | 'occasionFilter'>> = {
   'promo-tiffin': { mobileRoute: '/(customer)/tiffin', webRoute: '/tiffin' },
-  'promo-raya': { mobileRoute: '/(customer)/', webRoute: '/', occasionFilter: 'Hari Raya' },
+  'promo-raya': {
+    mobileRoute: occasionBrowseRoute('Hari Raya').mobile,
+    webRoute: occasionBrowseRoute('Hari Raya').web,
+  },
   'promo-request': { mobileRoute: '/(customer)/request', webRoute: '/request' },
   'promo-family': { mobileRoute: '/(customer)/tiffin', webRoute: '/tiffin' },
   'promo-paynow': { mobileRoute: '/(customer)/cart', webRoute: '/cart' },

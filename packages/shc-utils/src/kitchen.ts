@@ -90,6 +90,16 @@ export function kitchenOpenStatus(cook?: KitchenIdentity | null): {
   };
 }
 
+/** Props for kitchen list cards on tiffin browse screens only — not discover home. */
+export function kitchenCardOpenProps(cook?: KitchenIdentity | null): {
+  isOpen?: boolean;
+  closesAt?: string;
+} {
+  if (!cook) return {};
+  const open = kitchenOpenStatus(cook);
+  return { isOpen: open.isOpen, closesAt: open.detail };
+}
+
 /** Short tags under the hero (cuisine, area, trust). */
 export function kitchenTagList(cook?: KitchenIdentity | null): string[] {
   if (!cook) return [];

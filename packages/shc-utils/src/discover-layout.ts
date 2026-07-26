@@ -6,22 +6,27 @@
  * both render `discoverSections()` and switch on the section id, so ordering,
  * visibility and copy cannot drift between the two surfaces.
  *
- * IA follows `discoverJourneyZones()`: browse (dishes) · subscribe (kitchens) ·
- * occasions. One mode is active at a time instead of stacking every zone.
+ * IA follows `discoverJourneyZones()`: browse (dishes) · subscribe (kitchens).
+ * Occasions live on `/occasions` — linked from the browse spine, not an inline mode.
  */
 
 import type { MealTypeId } from './meal-type';
 
-export type DiscoverModeId = 'dishes' | 'kitchens' | 'occasions';
+export type DiscoverModeId = 'dishes' | 'kitchens';
 
 export const DISCOVER_MODES: Array<{ id: DiscoverModeId; label: string; testID: string }> = [
   { id: 'dishes', label: 'Dishes', testID: 'discover-mode-dishes' },
   { id: 'kitchens', label: 'Kitchens', testID: 'discover-mode-kitchens' },
-  { id: 'occasions', label: 'Occasions', testID: 'discover-mode-occasions' },
 ];
 
+/** Third browse-spine action — navigates to dedicated occasions screen. */
+export const DISCOVER_OCCASIONS_NAV = {
+  label: 'Occasions',
+  testID: 'discover-nav-occasions',
+} as const;
+
 export function isDiscoverMode(value: unknown): value is DiscoverModeId {
-  return value === 'dishes' || value === 'kitchens' || value === 'occasions';
+  return value === 'dishes' || value === 'kitchens';
 }
 
 /* -------------------------------------------------------------------------- */
@@ -175,11 +180,8 @@ export function discoverSections(state: DiscoverLayoutState): DiscoverSection[] 
   if (state.mode === 'dishes') {
     push('cuisine-rail');
     push('dish-grid');
-  } else if (state.mode === 'kitchens') {
-    push('kitchen-list');
   } else {
-    push('occasion-rail');
-    push('dish-grid');
+    push('kitchen-list');
   }
 
   push('request');
@@ -199,15 +201,6 @@ export function discoverGridHeading(
   mode: DiscoverModeId,
   filters: DiscoverFilters
 ): { title: string; hint: string } {
-  if (mode === 'occasions' && filters.occasion) {
-    return {
-      title: `${filters.occasion} spread`,
-      hint: 'Add dishes for your event · cooks confirm your collection slot',
-    };
-  }
-  if (mode === 'occasions') {
-    return { title: 'Dishes for gatherings', hint: 'Pick an occasion above to narrow the spread' };
-  }
   if (filters.cuisine) {
     return { title: `${filters.cuisine} dishes`, hint: 'Add to cart for a single meal' };
   }

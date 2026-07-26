@@ -3,6 +3,7 @@ import {
   scopeProductsByKitchen,
   kitchenRatingLabel,
   kitchenOpenStatus,
+  kitchenCardOpenProps,
   kitchenTagList,
   kitchenTiffinPlanRows,
   kitchenDishPriceDollars,
@@ -118,6 +119,19 @@ describe('kitchenOpenStatus', () => {
     const s = kitchenOpenStatus({ ...ROSE, status: 'paused' });
     expect(s.isOpen).toBe(false);
     expect(s.label).toBe('Closed');
+  });
+});
+
+describe('kitchenCardOpenProps', () => {
+  it('maps kitchenOpenStatus to card props', () => {
+    expect(kitchenCardOpenProps({ status: 'active', collection_instructions: 'Sat 6–8pm HDB void deck' })).toEqual({
+      isOpen: true,
+      closesAt: 'Sat 6–8pm HDB void deck',
+    });
+  });
+
+  it('returns empty when cook missing', () => {
+    expect(kitchenCardOpenProps(null)).toEqual({});
   });
 });
 
