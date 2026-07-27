@@ -149,9 +149,10 @@ export default function KitchenPage() {
   const hours = useMemo(
     () =>
       kitchenCollectionHours({
+        products: cookProducts,
         collection_instructions: cook?.collection_instructions,
       }),
-    [cook?.collection_instructions]
+    [cookProducts, cook?.collection_instructions]
   );
   const aboutPoints = useMemo(() => kitchenAboutPoints(cook as any), [cook]);
   const trustCerts = useMemo(() => kitchenTrustCerts(cook as any), [cook]);

@@ -197,8 +197,12 @@ export default function KitchenPage() {
     [reviewsPayload?.reviews, reviewSort]
   );
   const hours = useMemo(
-    () => kitchenCollectionHours({ collection_instructions: cook?.collection_instructions }),
-    [cook?.collection_instructions]
+    () =>
+      kitchenCollectionHours({
+        products: listings,
+        collection_instructions: cook?.collection_instructions,
+      }),
+    [listings, cook?.collection_instructions]
   );
   const aboutPoints = useMemo(() => kitchenAboutPoints(cook as any), [cook]);
   const trustCerts = useMemo(() => kitchenTrustCerts(cook as any), [cook]);

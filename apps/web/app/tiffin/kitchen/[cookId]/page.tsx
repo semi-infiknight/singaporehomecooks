@@ -118,7 +118,9 @@ export default function TiffinKitchenPage() {
   );
   const ratingSum = kitchenRatingSummary(cookMeta);
   const hours = kitchenCollectionHours({
+    products: dishes,
     collection_days: (kitchen as any)?.collection_days,
+    default_collection_slot: (kitchen as any)?.default_collection_slot,
     collection_instructions: (kitchen as any)?.cook?.collection_instructions,
   });
   const aboutPoints = kitchenAboutPoints(cookMeta);

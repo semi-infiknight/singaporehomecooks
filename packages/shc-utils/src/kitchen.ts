@@ -358,34 +358,125 @@ export function sortKitchenReviews(
   return list;
 }
 
-/** SHC collection windows (HDB) — HomelyEats “delivery hours” analogue. */
-export function kitchenCollectionHours(opts?: {
+/** SHC collection windows (HDB) — derived from listing availability + tiffin config. */
+export type KitchenCollectionHoursInput = {
+  /** Kitchen dishes/listings — reads `shc_availability.collection_days` + `time_slots`. */
+  products?: Record<string, unknown>[];
+  /** Tiffin kitchen collection days (0=Sun … 6=Sat). */
   collection_days?: number[];
+  /** Tiffin default slot, e.g. `18:00-19:00`. */
+  default_collection_slot?: string | null;
   collection_instructions?: string | null;
-}): KitchenHourSlot[] {
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const days = opts?.collection_days?.length
-    ? opts.collection_days.map((d) => dayNames[d] || `Day ${d}`).join(', ')
-    : 'Fri, Sat, Sun';
-  return [
-    {
-      id: 'evening',
-      label: 'Evening collection',
-      window: `${days} · 5:00 pm – 8:00 pm`,
-    },
-    {
-      id: 'lunch',
-      label: 'Weekend lunch',
-      window: 'Sat, Sun · 11:30 am – 1:30 pm',
-    },
-    {
-      id: 'note',
-      label: 'How it works',
-      window: opts?.collection_instructions
-        ? String(opts.collection_instructions).slice(0, 120)
-        : 'Collect from HDB lobby after cook accepts — exact slot on your order.',
-    },
-  ];
+};
+
+const COLLECTION_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+function formatTime12h(hhmm: string): string {
+  const [hRaw, mRaw] = hhmm.split(':');
+  const h = Number(hRaw);
+  const m = Number(mRaw ?? 0);
+  if (!Number.isFinite(h)) return hhmm;
+  const hour12 = h % 12 || 12;
+  const ampm = h < 12 ? 'am' : 'pm';
+  if (m > 0) return `${hour12}:${String(m).padStart(2, '0')} ${ampm}`;
+  return `${hour12} ${ampm}`;
+}
+
+/** Format `18:00-19:00` → `6:00 pm – 7:00 pm`. */
+export function formatCollectionTimeSlot(slot: string): string {
+  const parts = String(slot).split('-').map((s) => s.trim());
+  if (parts.length >= 2) return `${formatTime12h(parts[0])} – ${formatTime12h(parts[1])}`;
+  return String(slot).trim();
+}
+
+function slotStartHour(slot: string): number {
+  const m = String(slot).match(/^(\d{1,2})/);
+  return m ? Number(m[1]) : 18;
+}
+
+function collectionSlotLabel(startHour: number): string {
+  if (startHour < 11) return 'Morning collection';
+  if (startHour < 14) return 'Lunch collection';
+  if (startHour < 17) return 'Afternoon collection';
+  return 'Evening collection';
+}
+
+function formatCollectionDays(days: number[]): string {
+  const sorted = [...new Set(days)].filter((d) => d >= 0 && d <= 6).sort((a, b) => a - b);
+  if (!sorted.length) return '';
+  return sorted.map((d) => COLLECTION_DAY_NAMES[d] || `Day ${d}`).join(', ');
+}
+
+/** Union collection days + time slots from listings and tiffin config. */
+export function aggregateKitchenCollectionSchedule(
+  input?: KitchenCollectionHoursInput
+): { collection_days: number[]; time_slots: string[] } {
+  const daySet = new Set<number>();
+  const slotSet = new Set<string>();
+
+  const addDays = (days?: number[]) => {
+    (days || []).forEach((d) => {
+      if (Number.isInteger(d) && d >= 0 && d <= 6) daySet.add(d);
+    });
+  };
+  const addSlot = (slot?: string | null) => {
+    const s = String(slot || '').trim();
+    if (s) slotSet.add(s);
+  };
+
+  for (const product of input?.products || []) {
+    const avail =
+      (product.shc_availability as Record<string, unknown> | undefined) ||
+      (product.availability as Record<string, unknown> | undefined);
+    if (avail?.paused === true) continue;
+    addDays(avail?.collection_days as number[] | undefined);
+    addDays(product.collection_days as number[] | undefined);
+    const slots =
+      (avail?.time_slots as string[] | undefined) || (product.time_slots as string[] | undefined);
+    slots?.forEach((slot) => addSlot(slot));
+  }
+
+  addDays(input?.collection_days);
+  addSlot(input?.default_collection_slot);
+
+  return {
+    collection_days: [...daySet].sort((a, b) => a - b),
+    time_slots: [...slotSet].sort((a, b) => slotStartHour(a) - slotStartHour(b) || a.localeCompare(b)),
+  };
+}
+
+export function kitchenCollectionHours(input?: KitchenCollectionHoursInput): KitchenHourSlot[] {
+  const { collection_days, time_slots } = aggregateKitchenCollectionSchedule(input);
+  const daysLabel = formatCollectionDays(collection_days);
+  const rows: KitchenHourSlot[] = [];
+
+  if (time_slots.length) {
+    time_slots.forEach((slot, i) => {
+      const label = collectionSlotLabel(slotStartHour(slot));
+      const window = daysLabel
+        ? `${daysLabel} · ${formatCollectionTimeSlot(slot)}`
+        : formatCollectionTimeSlot(slot);
+      rows.push({ id: `slot-${i}`, label, window });
+    });
+  } else if (daysLabel) {
+    rows.push({
+      id: 'days',
+      label: 'Collection days',
+      window: daysLabel,
+    });
+  }
+
+  rows.push({
+    id: 'note',
+    label: 'How it works',
+    window: input?.collection_instructions
+      ? String(input.collection_instructions).slice(0, 120)
+      : collection_days.length || time_slots.length
+        ? 'Collect from HDB lobby after cook accepts — exact slot on your order.'
+        : 'Collection windows follow each dish listing — order for your slot.',
+  });
+
+  return rows;
 }
 
 /** Trust bullets for About kitchen (hygiene / care — HomelyEats about page). */

@@ -14,6 +14,8 @@ import {
   kitchenReviewFromApi,
   sortKitchenReviews,
   kitchenCollectionHours,
+  aggregateKitchenCollectionSchedule,
+  formatCollectionTimeSlot,
   kitchenAboutPoints,
   kitchenMenuSections,
 } from './kitchen';
@@ -254,10 +256,44 @@ describe('kitchenRatingSummary + buckets', () => {
 // });
 
 describe('kitchenCollectionHours + about + menu sections', () => {
-  it('returns collection hour slots', () => {
-    const hours = kitchenCollectionHours({ collection_days: [5, 6] });
-    expect(hours.length).toBeGreaterThanOrEqual(2);
-    expect(hours[0]?.window).toMatch(/pm|am|Collect/i);
+  it('derives hours from listing availability', () => {
+    const hours = kitchenCollectionHours({
+      products: [
+        {
+          shc_availability: {
+            collection_days: [5, 6],
+            time_slots: ['18:00-19:00'],
+          },
+        },
+      ],
+      collection_instructions: 'Lift lobby B',
+    });
+    expect(hours.some((h) => h.window.includes('Fri'))).toBe(true);
+    expect(hours.some((h) => h.window.includes('6 pm'))).toBe(true);
+    expect(hours.find((h) => h.id === 'note')?.window).toContain('Lift lobby B');
+  });
+
+  it('merges tiffin collection days and default slot', () => {
+    const hours = kitchenCollectionHours({
+      collection_days: [1, 3, 5],
+      default_collection_slot: '17:00-18:00',
+    });
+    expect(hours[0]?.window).toMatch(/Mon/);
+    expect(hours[0]?.window).toMatch(/5 pm/);
+  });
+
+  it('skips paused listings when aggregating', () => {
+    const { time_slots } = aggregateKitchenCollectionSchedule({
+      products: [
+        { shc_availability: { paused: true, time_slots: ['18:00-19:00'] } },
+        { shc_availability: { time_slots: ['19:00-20:00'] } },
+      ],
+    });
+    expect(time_slots).toEqual(['19:00-20:00']);
+  });
+
+  it('formats collection time slots', () => {
+    expect(formatCollectionTimeSlot('18:00-19:00')).toBe('6 pm – 7 pm');
   });
 
   it('includes trust about points', () => {
