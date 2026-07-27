@@ -3,21 +3,25 @@
 /**
  * Cook: Post / manage Cooking soon batches.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  COLLECTION_TIME_SLOT_PRESETS,
   defaultCookDateTomorrow,
   defaultOrderByTonight,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
+  resolveDefaultBatchCollectionSlot,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCreateDrop, useMyDrops, usePatchDrop } from '../../../lib/useCookPortal';
+import { useTiffinCookConfig } from '../../../lib/useTiffin';
 import { GourmeatCookHeader, SHCBadge, SHCButton, SHCCard, SHCSkeletonList } from '../../components/SHCWebComponents';
 
 export default function CookBatchesPage() {
   const { user } = useCookAuth();
   const { data: drops, isLoading } = useMyDrops();
+  const { data: tiffinConfigData } = useTiffinCookConfig();
   const dropList = (drops as any[]) ?? [];
   const createMut = useCreateDrop();
   const patchMut = usePatchDrop();
@@ -28,10 +32,22 @@ export default function CookBatchesPage() {
     min_qty: '10',
     max_qty: '40',
     cook_date: defaultCookDateTomorrow(),
-    collection_slot: '18:00-19:00',
+    collection_slot: resolveDefaultBatchCollectionSlot(),
     order_by: defaultOrderByTonight(10),
   });
   const [error, setError] = useState('');
+  const [slotTouched, setSlotTouched] = useState(false);
+
+  useEffect(() => {
+    if (slotTouched) return;
+    const tiffinDefault = (tiffinConfigData as { config?: { default_collection_slot?: string } } | undefined)
+      ?.config?.default_collection_slot;
+    if (!tiffinDefault) return;
+    setForm((f) => ({
+      ...f,
+      collection_slot: resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: tiffinDefault }),
+    }));
+  }, [tiffinConfigData, slotTouched]);
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -127,15 +143,32 @@ export default function CookBatchesPage() {
               data-testid="batch-date"
             />
           </label>
-          <label className="text-xs font-bold">
-            Collection window
-            <input
-              className="mt-1 w-full rounded-lg border-2 border-[var(--shc-border-brutal)] px-3 py-2 text-sm font-semibold"
-              value={form.collection_slot}
-              onChange={(e) => setForm((f) => ({ ...f, collection_slot: e.target.value }))}
-              data-testid="batch-slot"
-            />
-          </label>
+          <div className="sm:col-span-2">
+            <p className="text-xs font-bold">Collection window</p>
+            <div className="mt-2 flex flex-wrap gap-2" data-testid="batch-slot">
+              {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+                const sel = form.collection_slot === slot;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => {
+                      setSlotTouched(true);
+                      setForm((f) => ({ ...f, collection_slot: slot }));
+                    }}
+                    className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold ${
+                      sel
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-[var(--shc-border-brutal)]'
+                    }`}
+                    data-testid={`batch-slot-${slot}`}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <label className="text-xs font-bold sm:col-span-2">
             Order by (local)
             <input

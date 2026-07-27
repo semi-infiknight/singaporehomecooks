@@ -1,22 +1,25 @@
 /**
  * Cook: post & manage Cooking soon batches.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GourmeatCookHeader, GourmeatPrimaryButton, SHCFoodImage, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
 import {
+  COLLECTION_TIME_SLOT_PRESETS,
   defaultCookDateTomorrow,
   defaultOrderByTonight,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
   getDropImageUrl,
+  resolveDefaultBatchCollectionSlot,
 } from '@shc/utils';
 import { listMyDrops, createDrop, patchDrop } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { useTiffinCookConfig } from '../../hooks/useTiffin';
 
 export default function CookBatchesScreen() {
   const insets = useSafeAreaInsets();
@@ -38,12 +41,23 @@ export default function CookBatchesScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-drops'] }),
   });
 
+  const { data: tiffinConfigData } = useTiffinCookConfig();
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [price, setPrice] = useState('1.20');
   const [maxQty, setMaxQty] = useState('40');
   const [minQty, setMinQty] = useState('10');
+  const [collectionSlot, setCollectionSlot] = useState(resolveDefaultBatchCollectionSlot());
   const [error, setError] = useState('');
+  const [slotTouched, setSlotTouched] = useState(false);
+
+  useEffect(() => {
+    if (slotTouched) return;
+    const tiffinDefault = (tiffinConfigData as { config?: { default_collection_slot?: string } } | undefined)
+      ?.config?.default_collection_slot;
+    if (!tiffinDefault) return;
+    setCollectionSlot(resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: tiffinDefault }));
+  }, [tiffinConfigData, slotTouched]);
 
   async function onCreate() {
     setError('');
@@ -59,7 +73,7 @@ export default function CookBatchesScreen() {
         max_qty: Number(maxQty) || 1,
         min_qty: Number(minQty) || 0,
         cook_date: defaultCookDateTomorrow(),
-        collection_slot: '18:00-19:00',
+        collection_slot: collectionSlot,
         order_by: defaultOrderByTonight(10),
         visibility: 'marketplace',
       });
@@ -128,6 +142,25 @@ export default function CookBatchesScreen() {
           onChangeText={setMinQty}
           testID="batch-min"
         />
+        <Text style={styles.slotLabel}>Collection window</Text>
+        <View style={styles.slotRow} testID="batch-slot">
+          {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+            const sel = collectionSlot === slot;
+            return (
+              <Pressable
+                key={slot}
+                onPress={() => {
+                  setSlotTouched(true);
+                  setCollectionSlot(slot);
+                }}
+                style={[styles.slotChip, sel && styles.slotChipSel]}
+                testID={`batch-slot-${slot}`}
+              >
+                <Text style={[styles.slotChipText, sel && styles.slotChipTextSel]}>{slot}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
         {!!error && <Text style={styles.err}>{error}</Text>}
         <GourmeatPrimaryButton
           label={createMut.isPending ? 'Posting…' : 'Post to marketplace'}
@@ -203,6 +236,19 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', gap: 8, marginTop: 4 },
   half: { flex: 1 },
+  slotLabel: { marginTop: 10, fontSize: 12, fontWeight: '800', color: gourmeatColors.text },
+  slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  slotChip: {
+    borderWidth: 2,
+    borderColor: gourmeatColors.border,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  slotChipSel: { borderColor: gourmeatColors.primary, backgroundColor: gourmeatColors.primary },
+  slotChipText: { fontSize: 11, fontWeight: '700', color: gourmeatColors.text },
+  slotChipTextSel: { color: gourmeatColors.onPrimary },
   err: { color: '#b91c1c', fontWeight: '700', marginTop: 8 },
   section: { fontSize: 18, fontWeight: '900', marginTop: 8, marginBottom: 8 },
   muted: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 4 },
