@@ -139,9 +139,9 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
   }
 
   /**
-   * Marketplace home feed: open + orderable + cook_date within next 7 days.
+   * Marketplace home feed: open + orderable + cook_date within customer window.
    */
-  async listMarketplace(limit = 40, now = new Date()) {
+  async listMarketplace(limit = 40, now = new Date(), customerWindowDays = DROP_CUSTOMER_WINDOW_DAYS) {
     const [rows] = await this.listAndCountDrops(
       { status: "open" as any, visibility: "marketplace" } as any,
       { take: Math.max(limit * 3, 60), order: { cook_date: "ASC" } as any }
@@ -150,15 +150,19 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
     for (const r of rows as DropRow[]) {
       const refreshed = await this.refreshStatus(r);
       if (!this.isOrderable(refreshed, now)) continue;
-      if (!dropCookDateWithinDays(String(refreshed.cook_date), DROP_CUSTOMER_WINDOW_DAYS, now)) continue;
+      if (!dropCookDateWithinDays(String(refreshed.cook_date), customerWindowDays, now)) continue;
       out.push(this.shape(refreshed));
       if (out.length >= limit) break;
     }
     return out;
   }
 
-  async listForCook(cookId: string, opts: { activeOnly?: boolean; limit?: number; now?: Date } = {}) {
+  async listForCook(
+    cookId: string,
+    opts: { activeOnly?: boolean; limit?: number; now?: Date; customerWindowDays?: number } = {}
+  ) {
     const now = opts.now || new Date();
+    const customerWindowDays = opts.customerWindowDays ?? DROP_CUSTOMER_WINDOW_DAYS;
     const [rows] = await this.listAndCountDrops({ cook_id: cookId } as any, {
       take: opts.limit || 50,
       order: { created_at: "DESC" } as any,
@@ -169,7 +173,7 @@ class ShcDropModuleService extends MedusaService({ Drop }) {
       if (opts.activeOnly) {
         if (!this.isOrderable(refreshed, now)) continue;
         // Kitchen page uses activeOnly — same 7-day customer window
-        if (!dropCookDateWithinDays(String(refreshed.cook_date), DROP_CUSTOMER_WINDOW_DAYS, now)) continue;
+        if (!dropCookDateWithinDays(String(refreshed.cook_date), customerWindowDays, now)) continue;
       }
       out.push(this.shape(refreshed));
     }

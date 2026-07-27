@@ -1,6 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Badge, Button, Container, Heading, Text, toast } from "@medusajs/ui"
+import { Badge, Button, Container, Heading, Input, Label, Switch, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useEffect, useState, type ReactNode } from "react"
 import { PayoutBatchChart, DataBarChart, DataDonutChart, RevenueSplitChart } from "../../../components/shc-charts"
 import { shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { formatSgd } from "../../../lib/shc-format"
@@ -10,8 +11,15 @@ import { shcOpsLiveQuery } from "../../../lib/shc-ops-polling"
 type Flag = { id?: string; key: string; enabled: boolean; cohort_filter?: Record<string, unknown> }
 type Dispute = { id: string; order_id: string; type?: string; raised_by?: string; status?: string }
 type Payout = { id: string; week_start?: string; status?: string; total_cents?: number }
-type Rule = { id?: string; version?: string | number; rate_pct?: number }
-type Synonym = { id?: string; term?: string }
+type Rule = { id?: string; version?: string | number; rate_pct?: number; effective_from?: string }
+type Synonym = { id?: string; term?: string; expansions?: string[] }
+type BusinessRulesConfig = {
+  commission: { default_rate_pct: number }
+  drop: { customer_window_days: number }
+  tiffin: { customize_cutoff_hours: number }
+  cart: { one_cook_enforced: boolean }
+  review: { eligible_statuses: string[] }
+}
 
 const ShcOpsControlsPage = () => {
   const qc = useQueryClient()
@@ -19,7 +27,7 @@ const ShcOpsControlsPage = () => {
   const coreQ = useQuery({
     queryKey: ["shc-ops", "controls"],
     queryFn: async () => {
-      const [ledger, payouts, flags, disputes, commission, expenses, synonyms, stats] =
+      const [ledger, payouts, flags, disputes, commission, expenses, synonyms, stats, businessRules] =
         await Promise.all([
           shcGet<any>("/admin/shc/ledger").catch(() => ({ entries: [] })),
           shcGet<any>("/admin/shc/payouts").catch(() => ({ batches: [] })),
@@ -29,6 +37,7 @@ const ShcOpsControlsPage = () => {
           shcGet<any>("/admin/shc/cook-expenses").catch(() => ({ expenses: [] })),
           shcGet<any>("/admin/shc/search-synonyms").catch(() => ({ synonyms: [] })),
           shcGet<any>("/admin/shc/platform-stats").catch(() => ({ stats: [] })),
+          shcGet<any>("/admin/shc/business-rules").catch(() => ({ config: null })),
         ])
       return {
         ledger: (ledger.entries || ledger.ledger || []) as unknown[],
@@ -39,6 +48,7 @@ const ShcOpsControlsPage = () => {
         expenses: (expenses.expenses || []) as unknown[],
         synonyms: (synonyms.synonyms || []) as Synonym[],
         stats: (stats.stats || []) as unknown[],
+        businessRules: (businessRules.config || null) as BusinessRulesConfig | null,
       }
     },
     ...shcOpsLiveQuery,
@@ -86,6 +96,35 @@ const ShcOpsControlsPage = () => {
       }),
     onSuccess: () => {
       toast.success("Payout approved")
+      void invalidateShcOpsDashboard(qc)
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  })
+
+  const saveBusinessRules = useMutation({
+    mutationFn: (payload: Partial<BusinessRulesConfig>) => shcPost("/admin/shc/business-rules", payload),
+    onSuccess: () => {
+      toast.success("Business rules saved")
+      void invalidateShcOpsDashboard(qc)
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  })
+
+  const createCommissionRule = useMutation({
+    mutationFn: (payload: { version: number; rate_pct: number; effective_from: string }) =>
+      shcPost("/admin/shc/commission-rules", { ...payload, created_by: "medusa-admin-shc-ops" }),
+    onSuccess: () => {
+      toast.success("Commission rule created")
+      void invalidateShcOpsDashboard(qc)
+    },
+    onError: (e) => toast.error(errMessage(e)),
+  })
+
+  const upsertSynonym = useMutation({
+    mutationFn: (payload: { term: string; expansions: string[] }) =>
+      shcPost("/admin/shc/search-synonyms", payload),
+    onSuccess: () => {
+      toast.success("Search synonym saved")
       void invalidateShcOpsDashboard(qc)
     },
     onError: (e) => toast.error(errMessage(e)),
@@ -294,54 +333,37 @@ const ShcOpsControlsPage = () => {
         </Container>
       </div>
 
+      <BusinessRulesPanel
+        config={data?.businessRules}
+        isLoading={coreQ.isLoading}
+        isSaving={saveBusinessRules.isPending}
+        onSave={(payload) => saveBusinessRules.mutate(payload)}
+      />
+
+      <div className="grid grid-cols-1 gap-4 large:grid-cols-2">
+        <CommissionRulesPanel
+          rules={data?.commission || []}
+          isCreating={createCommissionRule.isPending}
+          onCreate={(payload) => createCommissionRule.mutate(payload)}
+        />
+        <SearchSynonymsPanel
+          synonyms={data?.synonyms || []}
+          isSaving={upsertSynonym.isPending}
+          onSave={(payload) => upsertSynonym.mutate(payload)}
+        />
+      </div>
+
       <Container className="divide-y p-0">
         <div className="px-6 py-4">
-          <Heading level="h2">Commission · Search · Stats</Heading>
+          <Heading level="h2">Platform stats</Heading>
+          <Text size="small" className="text-ui-fg-subtle">
+            KV keys stored for browse chrome, promos, and business rules
+          </Text>
         </div>
-        <div className="grid grid-cols-1 gap-3 px-6 py-4 small:grid-cols-3">
-          <div className="rounded-md border border-ui-border-base p-3">
-            <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
-              Commission
-            </Text>
-            {(data?.commission || []).length === 0 ? (
-              <Text size="small" className="mt-1">
-                No rules
-              </Text>
-            ) : (
-              (data?.commission || []).slice(0, 3).map((rule) => (
-                <Text key={String(rule.id || rule.version)} size="small" className="mt-1">
-                  v{rule.version}: {rule.rate_pct}%
-                </Text>
-              ))
-            )}
-          </div>
-          <div className="rounded-md border border-ui-border-base p-3">
-            <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
-              Synonyms
-            </Text>
-            {(data?.synonyms || []).length === 0 ? (
-              <Text size="small" className="mt-1">
-                None
-              </Text>
-            ) : (
-              (data?.synonyms || []).slice(0, 3).map((s) => (
-                <Text key={String(s.id || s.term)} size="small" className="mt-1">
-                  {s.term}
-                </Text>
-              ))
-            )}
-          </div>
-          <div className="rounded-md border border-ui-border-base p-3">
-            <Text size="xsmall" weight="plus" className="uppercase text-ui-fg-subtle">
-              Platform stats
-            </Text>
-            <Text size="small" className="mt-1">
-              {data?.stats.length ?? 0} keys
-            </Text>
-            <Text size="xsmall" className="text-ui-fg-subtle">
-              {data?.expenses.length ?? 0} cook expenses
-            </Text>
-          </div>
+        <div className="px-6 py-4">
+          <Text size="small">
+            {data?.stats.length ?? 0} keys · {data?.expenses.length ?? 0} cook expenses logged
+          </Text>
         </div>
       </Container>
     </div>
@@ -357,6 +379,251 @@ const Stat = ({ label, value }: { label: string; value: string | number }) => (
       {value}
     </Heading>
   </Container>
+)
+
+const BusinessRulesPanel = ({
+  config,
+  isLoading,
+  isSaving,
+  onSave,
+}: {
+  config: BusinessRulesConfig | null | undefined
+  isLoading: boolean
+  isSaving: boolean
+  onSave: (payload: Partial<BusinessRulesConfig>) => void
+}) => {
+  const [defaultRate, setDefaultRate] = useState("15")
+  const [dropWindow, setDropWindow] = useState("7")
+  const [tiffinCutoff, setTiffinCutoff] = useState("8")
+  const [oneCook, setOneCook] = useState(true)
+  const [reviewStatuses, setReviewStatuses] = useState("collected, completed")
+
+  useEffect(() => {
+    if (!config) return
+    setDefaultRate(String(config.commission.default_rate_pct))
+    setDropWindow(String(config.drop.customer_window_days))
+    setTiffinCutoff(String(config.tiffin.customize_cutoff_hours))
+    setOneCook(config.cart.one_cook_enforced)
+    setReviewStatuses(config.review.eligible_statuses.join(", "))
+  }, [config])
+
+  return (
+    <Container className="divide-y p-0">
+      <div className="px-6 py-4">
+        <Heading level="h2">Business rules</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          Marketplace tunables — commission fallback, drops window, tiffin cutoffs, cart policy, reviews
+        </Text>
+      </div>
+      <div className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2 large:grid-cols-3">
+        <Field label="Default commission %" hint="Fallback when no versioned rule is effective">
+          <Input value={defaultRate} onChange={(e) => setDefaultRate(e.target.value)} disabled={isLoading} />
+        </Field>
+        <Field label="Drop customer window (days)" hint="Cooking soon feed horizon">
+          <Input value={dropWindow} onChange={(e) => setDropWindow(e.target.value)} disabled={isLoading} />
+        </Field>
+        <Field label="Tiffin customize cutoff (hours)" hint="Skip/customize blocked inside this window">
+          <Input value={tiffinCutoff} onChange={(e) => setTiffinCutoff(e.target.value)} disabled={isLoading} />
+        </Field>
+        <Field label="Review-eligible statuses" hint="Comma-separated order statuses">
+          <Input value={reviewStatuses} onChange={(e) => setReviewStatuses(e.target.value)} disabled={isLoading} />
+        </Field>
+        <div className="flex items-center justify-between rounded-md border border-ui-border-base p-4">
+          <div>
+            <Text size="small" weight="plus">
+              One cook per cart
+            </Text>
+            <Text size="xsmall" className="text-ui-fg-subtle">
+              Enforce single-kitchen carts for evergreen dishes
+            </Text>
+          </div>
+          <Switch checked={oneCook} onCheckedChange={setOneCook} disabled={isLoading} />
+        </div>
+      </div>
+      <div className="flex justify-end px-6 py-4">
+        <Button
+          size="small"
+          isLoading={isSaving}
+          disabled={isLoading}
+          onClick={() =>
+            onSave({
+              commission: { default_rate_pct: Number(defaultRate) },
+              drop: { customer_window_days: Number(dropWindow) },
+              tiffin: { customize_cutoff_hours: Number(tiffinCutoff) },
+              cart: { one_cook_enforced: oneCook },
+              review: {
+                eligible_statuses: reviewStatuses
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              },
+            })
+          }
+        >
+          Save business rules
+        </Button>
+      </div>
+    </Container>
+  )
+}
+
+const CommissionRulesPanel = ({
+  rules,
+  isCreating,
+  onCreate,
+}: {
+  rules: Rule[]
+  isCreating: boolean
+  onCreate: (payload: { version: number; rate_pct: number; effective_from: string }) => void
+}) => {
+  const nextVersion = Math.max(0, ...rules.map((r) => Number(r.version || 0))) + 1
+  const [version, setVersion] = useState(String(nextVersion))
+  const [ratePct, setRatePct] = useState("15")
+  const [effectiveFrom, setEffectiveFrom] = useState(new Date().toISOString().slice(0, 10))
+
+  useEffect(() => {
+    setVersion(String(nextVersion))
+  }, [nextVersion])
+
+  return (
+    <Container className="divide-y p-0">
+      <div className="px-6 py-4">
+        <Heading level="h2">Commission schedule</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          Versioned rules override the default commission % above
+        </Text>
+      </div>
+      <div className="flex flex-col gap-2 px-6 py-4">
+        {rules.length === 0 ? (
+          <Text size="small" className="text-ui-fg-subtle">
+            No versioned rules — using business-rules default.
+          </Text>
+        ) : (
+          rules.slice(0, 6).map((rule) => (
+            <Text key={String(rule.id || rule.version)} size="small">
+              v{rule.version}: {rule.rate_pct}% · effective {rule.effective_from || "—"}
+            </Text>
+          ))
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-3 px-6 py-4 small:grid-cols-3">
+        <Field label="Version">
+          <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+        </Field>
+        <Field label="Rate %">
+          <Input value={ratePct} onChange={(e) => setRatePct(e.target.value)} />
+        </Field>
+        <Field label="Effective from">
+          <Input type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} />
+        </Field>
+      </div>
+      <div className="flex justify-end px-6 py-4">
+        <Button
+          size="small"
+          variant="secondary"
+          isLoading={isCreating}
+          onClick={() =>
+            onCreate({
+              version: Number(version),
+              rate_pct: Number(ratePct),
+              effective_from: effectiveFrom,
+            })
+          }
+        >
+          Add commission rule
+        </Button>
+      </div>
+    </Container>
+  )
+}
+
+const SearchSynonymsPanel = ({
+  synonyms,
+  isSaving,
+  onSave,
+}: {
+  synonyms: Synonym[]
+  isSaving: boolean
+  onSave: (payload: { term: string; expansions: string[] }) => void
+}) => {
+  const [term, setTerm] = useState("")
+  const [expansions, setExpansions] = useState("")
+
+  return (
+    <Container className="divide-y p-0">
+      <div className="px-6 py-4">
+        <Heading level="h2">Search synonyms</Heading>
+        <Text size="small" className="text-ui-fg-subtle">
+          Local food term expansions for discover search
+        </Text>
+      </div>
+      <div className="flex flex-col gap-2 px-6 py-4">
+        {synonyms.length === 0 ? (
+          <Text size="small" className="text-ui-fg-subtle">
+            No synonyms configured.
+          </Text>
+        ) : (
+          synonyms.slice(0, 8).map((s) => (
+            <Text key={String(s.id || s.term)} size="small">
+              <span className="font-mono">{s.term}</span>
+              {s.expansions?.length ? ` → ${s.expansions.join(", ")}` : ""}
+            </Text>
+          ))
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-3 px-6 py-4">
+        <Field label="Term">
+          <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="nasi lemak" />
+        </Field>
+        <Field label="Expansions" hint="Comma-separated">
+          <Input
+            value={expansions}
+            onChange={(e) => setExpansions(e.target.value)}
+            placeholder="coconut rice, malay breakfast"
+          />
+        </Field>
+      </div>
+      <div className="flex justify-end px-6 py-4">
+        <Button
+          size="small"
+          variant="secondary"
+          isLoading={isSaving}
+          disabled={!term.trim()}
+          onClick={() =>
+            onSave({
+              term: term.trim(),
+              expansions: expansions
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+            })
+          }
+        >
+          Save synonym
+        </Button>
+      </div>
+    </Container>
+  )
+}
+
+const Field = ({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: ReactNode
+}) => (
+  <div className="flex flex-col gap-1.5">
+    <Label>{label}</Label>
+    {children}
+    {hint ? (
+      <Text size="xsmall" className="text-ui-fg-subtle">
+        {hint}
+      </Text>
+    ) : null}
+  </div>
 )
 
 export const config = defineRouteConfig({

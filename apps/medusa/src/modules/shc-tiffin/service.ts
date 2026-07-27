@@ -486,7 +486,7 @@ class ShcTiffinModuleService extends MedusaService({
     };
   }
 
-  async skipMeal(customerId: string, collectionDate: string, collectionSlot?: string) {
+  async skipMeal(customerId: string, collectionDate: string, collectionSlot?: string, cutoffHours?: number) {
     const active = await this.getActiveSubscription(customerId);
     if (!active) throw createSHCError("SHC-GENERIC-001", "No active tiffin subscription.");
     const meta = await pgEnsureSubMeta(active.id, active.meals_per_week);
@@ -496,6 +496,7 @@ class ShcTiffinModuleService extends MedusaService({
       collectionDate,
       collectionSlot,
       alreadySkipped: skips.includes(collectionDate),
+      cutoffHours,
     });
     if (!gate.ok) throw createSHCError("SHC-GENERIC-001", gate.message);
     await pgAddSkip(active.id, collectionDate);
@@ -583,6 +584,7 @@ class ShcTiffinModuleService extends MedusaService({
       amount_cents?: number;
       paynow_ref?: string | null;
       collection_slot?: string;
+      cutoff_hours?: number;
     }
   ) {
     const active = await this.getActiveSubscription(customerId);
@@ -599,6 +601,7 @@ class ShcTiffinModuleService extends MedusaService({
     const gate = canCustomizeTiffinMeal({
       collectionDate,
       collectionSlot: input.collection_slot,
+      cutoffHours: input.cutoff_hours,
     });
     if (!gate.ok) {
       throw Object.assign(new Error(gate.message), createSHCError("SHC-GENERIC-001", gate.message));

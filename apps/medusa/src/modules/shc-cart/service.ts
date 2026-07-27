@@ -87,7 +87,12 @@ class ShcCartModuleService extends MedusaService({ Cart }) {
     return enrichCart(cart.items, cart.cookId);
   }
 
-  async addToCart(customerId: string, item: ShcCartItem): Promise<ShcCart> {
+  async addToCart(
+    customerId: string,
+    item: ShcCartItem,
+    opts: { oneCookEnforced?: boolean } = {}
+  ): Promise<ShcCart> {
+    const oneCookEnforced = opts.oneCookEnforced !== false;
     const row = await this.getRow(customerId);
     let cart = row ? enrichCart(parseItems(row.items_json), row.cook_id || null) : emptyCart();
 
@@ -126,7 +131,7 @@ class ShcCartModuleService extends MedusaService({ Cart }) {
       );
     }
 
-    const conflict = enforceOneCookOnAdd(cart.cookId, item.cook_id);
+    const conflict = oneCookEnforced ? enforceOneCookOnAdd(cart.cookId, item.cook_id) : { valid: true };
     if (!conflict.valid) {
       throw createSHCError("SHC-CART-002", conflict.error || "One cook per cart");
     }

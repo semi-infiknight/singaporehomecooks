@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { getCustomerId, tiffinCustomerError } from "../../../../../../lib/shc-actors";
 import ShcTiffinModuleService from "../../../../../../modules/shc-tiffin/service";
+import { loadBusinessRulesConfigFromScope } from "../../../../../../lib/shc-business-rules-config";
 
 const Body = z
   .object({
@@ -23,11 +24,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   try {
     const customerId = getCustomerId(req);
     const tiffin: ShcTiffinModuleService = req.scope.resolve("shcTiffin") as any;
+    const rules = await loadBusinessRulesConfigFromScope(req.scope);
     const result = await tiffin.customizeMeal(customerId, parse.data.collection_date, {
       extra_lines: parse.data.extra_lines,
       amount_cents: parse.data.amount_cents,
       paynow_ref: parse.data.paynow_ref,
       collection_slot: parse.data.collection_slot,
+      cutoff_hours: rules.tiffin.customize_cutoff_hours,
     });
     res.json(result);
   } catch (e: any) {

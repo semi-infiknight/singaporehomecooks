@@ -85,6 +85,7 @@ export function canSkipTiffinMeal(input: {
   now?: Date;
   alreadySkipped?: boolean;
   status?: TiffinMealInstanceStatus;
+  cutoffHours?: number;
 }): { ok: true } | { ok: false; message: string } {
   if (input.alreadySkipped || input.status === "skipped") {
     return { ok: false, message: "This meal is already skipped." };
@@ -95,11 +96,12 @@ export function canSkipTiffinMeal(input: {
   if (input.flexRemaining <= 0) {
     return { ok: false, message: "No flex days left this period. Recharge or wait for the next period." };
   }
+  const cutoffHours = input.cutoffHours ?? TIFFIN_CUSTOMIZE_CUTOFF_HOURS;
   const start = slotStartUtc(input.collectionDate, input.collectionSlot);
-  if (!canMutateTiffinOrder(start, input.now ?? new Date())) {
+  if (!canMutateTiffinOrder(start, input.now ?? new Date(), cutoffHours)) {
     return {
       ok: false,
-      message: `Skips need at least ${TIFFIN_CUSTOMIZE_CUTOFF_HOURS} hours before collection.`,
+      message: `Skips need at least ${cutoffHours} hours before collection.`,
     };
   }
   return { ok: true };
@@ -110,15 +112,17 @@ export function canCustomizeTiffinMeal(input: {
   collectionSlot?: string;
   now?: Date;
   status?: TiffinMealInstanceStatus;
+  cutoffHours?: number;
 }): { ok: true } | { ok: false; message: string } {
   if (input.status === "delivered" || input.status === "skipped" || input.status === "canceled_by_kitchen") {
     return { ok: false, message: "This meal can no longer be customized." };
   }
+  const cutoffHours = input.cutoffHours ?? TIFFIN_CUSTOMIZE_CUTOFF_HOURS;
   const start = slotStartUtc(input.collectionDate, input.collectionSlot);
-  if (!canMutateTiffinOrder(start, input.now ?? new Date())) {
+  if (!canMutateTiffinOrder(start, input.now ?? new Date(), cutoffHours)) {
     return {
       ok: false,
-      message: `Customizations need at least ${TIFFIN_CUSTOMIZE_CUTOFF_HOURS} hours before collection.`,
+      message: `Customizations need at least ${cutoffHours} hours before collection.`,
     };
   }
   return { ok: true };
