@@ -38,3 +38,4 @@ export * from './domain';
 export * from './order-chat';
 export * from './forms';
 export * from './listing-form';
+export * from './product-meta-form';

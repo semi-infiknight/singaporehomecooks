@@ -83,12 +83,13 @@ export default function ProductDetail() {
     cook_name: product.cook_name,
     min_qty: product.min_qty,
     ingredients: product.ingredients,
+    recipe_steps: product.recipe_steps,
   });
   const showRecipe = recipeHasStory({
     id: product.id,
     description: product.description,
     ingredients: product.ingredients,
-    recipe_steps: recipeSteps,
+    recipe_steps: product.recipe_steps,
   });
 
   const handleAdd = async () => {

@@ -57,4 +57,34 @@ describe("shapeProduct listing discovery", () => {
     expect(shaped.name).not.toBe("");
     expect(shaped.price).toBe(24);
   });
+
+  it("passes cook-editable meal meta and recipe steps", async () => {
+    const scope = {
+      resolve(name: string) {
+        if (name === "shcCook") {
+          return { listAndCountCooks: async () => [[{ display_name: "Cook" }]] };
+        }
+        if (name === "shcAvailability") {
+          return { getAvailability: async () => null };
+        }
+        throw new Error(`Unknown ${name}`);
+      },
+    };
+
+    const shaped = await shapeProduct(
+      {
+        product_id: "dish_custom_001",
+        cook_id: "cook_1",
+        min_qty: 2,
+        meal_extras: [{ id: "rice", label: "Coconut rice", price_delta: 2 }],
+        meal_addons: [{ id: "sambal", label: "Extra sambal", price_delta: 1.5 }],
+        recipe_steps: [{ order: 1, instruction: "Steam rice with pandan." }],
+      },
+      scope
+    );
+
+    expect(shaped.meal_extras).toHaveLength(1);
+    expect(shaped.meal_addons).toHaveLength(1);
+    expect(shaped.recipe_steps[0].instruction).toMatch(/Steam rice/);
+  });
 });

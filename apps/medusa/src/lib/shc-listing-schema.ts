@@ -2,6 +2,19 @@ import { z } from "zod";
 
 const timeSlotSchema = z.string().regex(/^\d{2}:\d{2}-\d{2}:\d{2}$/);
 
+const mealOptionSchema = z.object({
+  id: z.string().min(1).max(48),
+  label: z.string().min(1).max(80),
+  price_delta: z.number().min(0).max(100).optional(),
+  priceDelta: z.number().min(0).max(100).optional(),
+});
+
+const recipeStepSchema = z.object({
+  order: z.number().int().positive(),
+  instruction: z.string().min(4).max(280),
+  tip: z.string().max(160).optional(),
+});
+
 export const ListingCreateSchema = z.object({
   name: z.string().min(3),
   description: z.string().optional(),
@@ -24,6 +37,9 @@ export const ListingCreateSchema = z.object({
   collection_days: z.array(z.number().int().min(0).max(6)).optional(),
   time_slots: z.array(timeSlotSchema).optional(),
   image_url: z.string().min(1).optional(),
+  meal_extras: z.array(mealOptionSchema).max(6).optional(),
+  meal_addons: z.array(mealOptionSchema).max(8).optional(),
+  recipe_steps: z.array(recipeStepSchema).max(8).optional(),
   paused: z.boolean().optional(),
 }).strict();
 

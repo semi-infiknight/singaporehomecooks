@@ -34,6 +34,7 @@ export * from './tiffin-status';
 export * from './tiffin-pricing';
 export * from './cook-listings';
 export * from './listing-form';
+export * from './product-meta-form';
 export * from './badge-ux';
 export * from './e2e-cart';
 export * from './e2e-order';

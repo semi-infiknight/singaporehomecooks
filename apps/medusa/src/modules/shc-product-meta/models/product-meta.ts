@@ -18,6 +18,9 @@ export const ProductMeta = model.define("shc_product_meta", {
   price_cents: model.number().nullable(),
   last_minute_premium_pct: model.number().nullable(),
   image_url: model.text().nullable(), // for dish photos / listings (small gap fix for media)
+  meal_extras: model.json().default([] as any),
+  meal_addons: model.json().default([] as any),
+  recipe_steps: model.json().default([] as any),
 });
 
 export type ProductMeta = any; // typeof ProductMeta.$inferType;

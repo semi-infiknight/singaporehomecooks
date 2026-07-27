@@ -41,6 +41,9 @@ describe("POST /store/shc/listings", () => {
         ingredients: [{ name: "Prawn", quantity: 6, unit: "pcs" }],
         allergen_tiers: { tier1: ["Shellfish"], tier2: [], tier3: [] },
         image_url: "https://picsum.photos/seed/laksa/400/300",
+        meal_extras: [{ id: "rice", label: "Coconut rice", price_delta: 2 }],
+        meal_addons: [{ id: "sambal", label: "Extra sambal", price_delta: 1.5 }],
+        recipe_steps: [{ order: 1, instruction: "Simmer rempah until fragrant." }],
       },
       scope: {
         resolve(name: string) {
@@ -73,6 +76,8 @@ describe("POST /store/shc/listings", () => {
     expect(savedMeta.name).toBe("Launch Laksa");
     expect(savedMeta.price_cents).toBe(1800);
     expect(savedMeta.description).toBe("Coconut gravy family recipe");
+    expect(savedMeta.meal_extras).toHaveLength(1);
+    expect(savedMeta.recipe_steps).toHaveLength(1);
     expect(res.body.product.name).toBe("Launch Laksa");
     expect(res.body.product.price).toBe(18);
   });

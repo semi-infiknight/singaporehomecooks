@@ -25,6 +25,23 @@ export const shcProductMetaSchema = z.object({
   price_cents: z.number().int().positive().optional(),
   last_minute_premium_pct: z.number().min(0).max(100).optional(),
   image_url: z.string().optional(),
+  meal_extras: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    price_delta: z.number().min(0).optional(),
+    priceDelta: z.number().min(0).optional(),
+  })).optional(),
+  meal_addons: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    price_delta: z.number().min(0).optional(),
+    priceDelta: z.number().min(0).optional(),
+  })).optional(),
+  recipe_steps: z.array(z.object({
+    order: z.number().int().positive(),
+    instruction: z.string(),
+    tip: z.string().optional(),
+  })).optional(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),
 }).strict();

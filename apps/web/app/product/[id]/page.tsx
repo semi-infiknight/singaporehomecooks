@@ -133,12 +133,13 @@ function ProductDetailContent() {
     cook_name: product.cook_name,
     min_qty: product.min_qty,
     ingredients: product.ingredients,
+    recipe_steps: (product as { recipe_steps?: unknown }).recipe_steps as import('@shc/utils').RecipeStep[] | undefined,
   });
   const showRecipe = recipeHasStory({
     id: product.id,
     description: product.description,
     ingredients: product.ingredients,
-    recipe_steps: recipeSteps,
+    recipe_steps: (product as { recipe_steps?: unknown }).recipe_steps as import('@shc/utils').RecipeStep[] | undefined,
   });
 
   return (

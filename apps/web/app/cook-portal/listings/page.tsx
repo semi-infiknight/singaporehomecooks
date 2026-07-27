@@ -20,6 +20,10 @@ import {
   availabilityFromListing,
   shcPortionMinBadgeLabel,
   shcUploadTypeBadgeLabel,
+  defaultMealExtrasDraft,
+  defaultMealAddonsDraft,
+  mealOptionsFromListing,
+  recipeStepsFromListing,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -55,6 +59,9 @@ import {
   ListingAvailabilityEditorWeb,
   ListingDescriptionInputWeb,
   LastMinutePremiumInputWeb,
+  MealExtrasEditorWeb,
+  MealAddonsEditorWeb,
+  RecipeStepsEditorWeb,
 } from '../../components/SHCWebComponents';
 import { VirtualRowList } from '../../components/VirtualLists';
 
@@ -79,6 +86,9 @@ type ListingRow = Record<string, unknown> & {
   };
   calories?: number;
   calories_confidence?: string;
+  meal_extras?: unknown;
+  meal_addons?: unknown;
+  recipe_steps?: unknown;
 };
 
 const OCCASION_OPTIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday'];
@@ -134,6 +144,9 @@ export default function CookListingsPage() {
   const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+  const [mealExtras, setMealExtras] = useState(() => defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
+  const [mealAddons, setMealAddons] = useState(() => defaultMealAddonsDraft(false));
+  const [recipeSteps, setRecipeSteps] = useState<import('@shc/utils').RecipeStepDraft[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
   const [aiCal, setAiCal] = useState<{ calories: number; confidence: string; source?: string } | null>(null);
@@ -313,6 +326,9 @@ export default function CookListingsPage() {
     setLastMinutePremiumPct(null);
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+    setMealExtras(defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
+    setMealAddons(defaultMealAddonsDraft(false));
+    setRecipeSteps([]);
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -338,6 +354,10 @@ export default function CookListingsPage() {
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
+    const mealMeta = mealOptionsFromListing(listing);
+    setMealExtras(mealMeta.extras);
+    setMealAddons(mealMeta.addons);
+    setRecipeSteps(recipeStepsFromListing(listing));
     setPublished(null);
     setAiCal(
       listing.calories
@@ -381,6 +401,9 @@ export default function CookListingsPage() {
       collection_days: collectionDays,
       time_slots: timeSlots,
       last_minute_premium_pct: lastMinutePremiumPct,
+      meal_extras: mealExtras,
+      meal_addons: mealAddons,
+      recipe_steps: recipeSteps,
       image_url:
         listingImageUrl ||
         `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
@@ -790,6 +813,9 @@ export default function CookListingsPage() {
                 </div>
                 <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
               </button>
+              <MealExtrasEditorWeb value={mealExtras} onChange={setMealExtras} />
+              <MealAddonsEditorWeb value={mealAddons} onChange={setMealAddons} />
+              <RecipeStepsEditorWeb value={recipeSteps} onChange={setRecipeSteps} />
             </div>
           )}
 
