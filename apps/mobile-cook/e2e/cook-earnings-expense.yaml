@@ -1,0 +1,38 @@
+# Cook earnings — log expense
+# Run: maestro test apps/mobile-cook/e2e/cook-earnings-expense.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "SHC Cook Portal"
+    timeout: 120000
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/earnings
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-earnings-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "expense-amount-input"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "expense-amount-input"
+- inputText: "18.50"
+- tapOn:
+    id: "expense-category-input"
+- inputText: "ingredients"
+- tapOn:
+    id: "expense-submit-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-earnings-screen"
+    timeout: 30000

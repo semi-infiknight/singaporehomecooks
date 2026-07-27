@@ -1,0 +1,35 @@
+# Cook settings — profile edit + save
+# Run: maestro test apps/mobile-cook/e2e/cook-settings-smoke.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "SHC Cook Portal"
+    timeout: 120000
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/settings
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-settings-screen"
+    timeout: 60000
+- tapOn:
+    id: "cook-settings-display-name"
+- inputText: "Rose Maestro"
+- scrollUntilVisible:
+    element:
+      id: "cook-settings-save-btn"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "cook-settings-save-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-settings-screen"
+    timeout: 30000

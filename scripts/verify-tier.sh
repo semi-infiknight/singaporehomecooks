@@ -39,7 +39,7 @@ should_run_mobile_bundles() {
 
 should_run_maestro_yaml() {
   [[ "$FLAVOUR" == "polish" ]] && return 1
-  [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|expo|auth|checkout|listings|orders|money|payouts|credits|onboarding|pdpa|web)$ ]] && return 0
+  [[ "$SCOPE" =~ ^(ui|tray|family-values|mobile|expo|auth|checkout|listings|orders|money|payouts|credits|onboarding|pdpa|web|settings|batches|fulfil|earnings|decline)$ ]] && return 0
   return 1
 }
 
@@ -74,7 +74,7 @@ typecheck_scope() {
       pnpm --filter medusa typecheck
       pnpm --filter @shc/business-rules build
       ;;
-    mobile|expo|auth|onboarding|listings|orders)
+    mobile|expo|auth|onboarding|listings|orders|settings|batches|fulfil|earnings|decline)
       pnpm --filter mobile-customer typecheck
       pnpm --filter mobile-cook typecheck
       ;;
@@ -115,12 +115,16 @@ scope_unit_tests() {
     web|pwa)
       log "web PWA guard"
       bash scripts/verify-web-pwa.sh
+      if [[ "$FLAVOUR" != "polish" ]]; then
+        log "cook-portal Playwright smoke"
+        pnpm --filter web test:e2e 2>/dev/null || echo "WARN: cook-portal Playwright smoke skipped (install browsers: pnpm --filter web exec playwright install chromium)"
+      fi
       ;;
     api|medusa|backend)
       log "medusa route tests"
       pnpm --filter medusa test 2>/dev/null || echo "WARN: medusa tests skipped"
       ;;
-    mobile|expo|auth|checkout|listings|orders|onboarding)
+    mobile|expo|auth|checkout|listings|orders|onboarding|settings|batches|fulfil|earnings)
       if [[ "$SCOPE" == "onboarding" && "${TOUCHES_API:-}" == "1" ]]; then
         log "medusa typecheck + tests (onboarding TOUCHES_API, no coverage — keeps local dev server stable)"
         pnpm --filter medusa typecheck
@@ -204,14 +208,31 @@ scope_maestro_device() {
       ;;
     orders)
       maestro test apps/mobile-customer/e2e/order-tray.yaml
+      maestro test apps/mobile-cook/e2e/cook-dispute-tray.yaml
+      ;;
+    settings)
+      maestro test apps/mobile-cook/e2e/cook-settings-smoke.yaml
+      ;;
+    batches)
+      maestro test apps/mobile-cook/e2e/cook-batches-smoke.yaml
+      ;;
+    fulfil)
+      maestro test apps/mobile-customer/e2e/full-order-fulfil.yaml
+      maestro test apps/mobile-cook/e2e/full-order-fulfil.yaml
+      maestro test apps/mobile-customer/e2e/customer-order-lifecycle.yaml
+      ;;
+    earnings)
+      maestro test apps/mobile-cook/e2e/cook-earnings-expense.yaml
+      ;;
+    decline)
+      maestro test apps/mobile-cook/e2e/cook-decline-tray.yaml
       ;;
     mobile|expo|auth)
       maestro test apps/mobile-customer/e2e/customer-auth.yaml
       maestro test apps/mobile-cook/e2e/cook-auth.yaml
       ;;
     money|payouts|credits)
-      maestro test apps/mobile-customer/e2e/credits-earnings-payout.yaml
-      maestro test apps/mobile-cook/e2e/credits-earnings-payout.yaml
+      maestro test apps/mobile-cook/e2e/cook-earnings-expense.yaml
       ;;
     onboarding)
       maestro test apps/mobile-customer/e2e/onboarding.yaml

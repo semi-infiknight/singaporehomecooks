@@ -1,0 +1,53 @@
+# Cook batches — create Cooking soon drop
+# Run: maestro test apps/mobile-cook/e2e/cook-batches-smoke.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "SHC Cook Portal"
+    timeout: 120000
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/batches
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-batches-screen"
+    timeout: 60000
+- tapOn:
+    id: "batch-title"
+- inputText: "Maestro batch laksa"
+- tapOn:
+    id: "batch-price"
+- inputText: "8.50"
+- scrollUntilVisible:
+    element:
+      id: "batch-slot-18:00-19:00"
+    direction: DOWN
+    timeout: 20000
+    optional: true
+- tapOn:
+    id: "batch-slot-18:00-19:00"
+    optional: true
+- tapOn:
+    id: "batch-slot-12:00-13:00"
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "batch-submit"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "batch-submit"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-batches-screen"
+    timeout: 30000

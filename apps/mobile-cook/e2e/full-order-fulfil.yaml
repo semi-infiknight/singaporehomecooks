@@ -87,5 +87,27 @@ appId: com.singaporehomecooks.cook
 - tapOn:
     id: "cook-order-.*-action-preparing"
     optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-.*-action-ready_for_collection"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-ready_for_collection"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-order-.*-action-ready_for_collection"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-.*-action-collected"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-collected"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-order-.*-action-collected"
 - assertVisible:
     id: "cook-orders-screen"

@@ -1,0 +1,58 @@
+# Cook order lifecycle — preparing → ready → collected
+# Prereq: cook full-order-fulfil.yaml has accepted (and ideally tapped preparing).
+# Run: maestro test apps/mobile-cook/e2e/cook-order-lifecycle.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    stopApp: true
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-orders-screen"
+    timeout: 90000
+- extendedWaitUntil:
+    visible: "Nasi Lemak Sambal Prawn"
+    timeout: 120000
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-preparing"
+    direction: DOWN
+    timeout: 120000
+    optional: true
+- tapOn:
+    id: "cook-order-.*-action-preparing"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-.*-action-ready_for_collection"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-ready_for_collection"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-order-.*-action-ready_for_collection"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-.*-action-collected"
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-action-collected"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-order-.*-action-collected"
+- extendedWaitUntil:
+    notVisible:
+      id: "cook-order-.*-action-collected"
+    timeout: 60000
+    optional: true
+- assertVisible:
+    id: "cook-orders-screen"
