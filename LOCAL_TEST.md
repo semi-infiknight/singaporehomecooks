@@ -88,7 +88,7 @@ Use DEV switcher freely. Start as Customer.
    - Link back to track.
 
 7. **Cook side** (switch with DEV top bar — auto goes to dashboard):
-   - Dashboard: earnings snapshot, quick links to listings/orders/earnings/compliance + demo chat.
+   - Dashboard: earnings snapshot, quick links to listings/orders/earnings/compliance; chat CTA when an active order exists.
    - Orders list (/(cook)/orders): live list from useOrders('cook'). Action buttons: Accept (paid→accepted: address release sim), Prepare, Ready for Collection, Collected.
      - Every button → useTransitionOrder mutation → mock canTransition (09-order-state) + error banner on invalid (SHC-ORDER-001).
    - Listings + wizard (/(cook)/listings): existing + 4-step wizard (basics, tags, ingredients JSON editor from shc-ui/forms, review + PriceEarningsCalc + publish).
