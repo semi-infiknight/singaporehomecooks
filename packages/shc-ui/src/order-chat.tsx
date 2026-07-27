@@ -80,10 +80,17 @@ export function SHCOrderChatHeader({
         </Text>
       ) : null}
 
-      {context.collectionInstructions ? (
+      {context.collectionAddress || context.collectionInstructions ? (
         <View style={styles.instructionsBox}>
           <Text style={styles.instructionsTitle}>Collection details</Text>
-          <Text style={styles.instructionsBody}>{context.collectionInstructions}</Text>
+          {context.collectionAddress ? (
+            <Text style={styles.instructionsBody}>{context.collectionAddress}</Text>
+          ) : null}
+          {context.collectionInstructions ? (
+            <Text style={[styles.instructionsBody, context.collectionAddress ? styles.instructionsSub : null]}>
+              {context.collectionInstructions}
+            </Text>
+          ) : null}
         </View>
       ) : null}
 
@@ -380,6 +387,7 @@ const styles = StyleSheet.create({
   },
   instructionsTitle: { fontSize: 11, fontWeight: '800', color: gourmeatColors.text },
   instructionsBody: { fontSize: 12, fontWeight: '600', color: gourmeatColors.text, marginTop: 4, lineHeight: 17 },
+  instructionsSub: { marginTop: 6, opacity: 0.9 },
   privacyHint: {
     marginTop: shcSpacing.sm,
     fontSize: 11,

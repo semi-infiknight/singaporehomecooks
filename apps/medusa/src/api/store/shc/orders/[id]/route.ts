@@ -1,6 +1,17 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
+import ShcCookModuleService from "../../../../../modules/shc-cook/service";
+import { requireCookId, requireCustomerId } from "../../../../../lib/shc-actors";
+import { loadCooksById, shapeStoreOrder } from "../../../../../lib/shc-order-shape";
+
+function resolveViewerRole(req: MedusaRequest): "customer" | "cook" | undefined {
+  const cookId = requireCookId(req);
+  if (cookId) return "cook";
+  const customerId = requireCustomerId(req);
+  if (customerId) return "customer";
+  return undefined;
+}
 
 /** GET /store/shc/orders/:id — single order with messages */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -11,25 +22,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${id}`) });
   }
   const m = data.meta as any;
+  const viewerRole = resolveViewerRole(req);
+  let cook: { display_name?: string; collection_address?: string; collection_instructions?: string } | null = null;
+  if (m.cook_id) {
+    const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
+    const cooks = await loadCooksById(cookService, [String(m.cook_id)]);
+    cook = cooks.get(String(m.cook_id)) || null;
+  }
+
   res.json({
-    order: {
-      id: m.order_id,
-      order_id: m.order_id,
-      cook_id: m.cook_id,
-      shc_status: m.shc_status,
-      collection_date: m.collection_date,
-      collection_slot: m.collection_slot,
-      paynow_reference: m.paynow_reference,
-      allergen_acked_at: m.allergen_acked_at,
-      pdpa_consent_at: m.pdpa_consent_at,
-      address_released_at: m.address_released_at,
-      customer_id: m.customer_id || "cust_demo",
-      is_corporate: !!m.is_corporate,
-      cooking_notes: m.cooking_notes || null,
-      collection_notes: m.collection_notes || null,
-      items: m.items && m.items.length ? m.items : [{ name: 'Order item', qty: 1, product_id: '' }],
-      total: m.total_cents ? Math.round(m.total_cents / 100) : 0,
-    },
+    order: shapeStoreOrder(m, cook, { viewerRole }),
     messages: data.messages || [],
   });
 }

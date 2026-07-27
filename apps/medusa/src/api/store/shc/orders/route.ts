@@ -3,7 +3,9 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/service";
 import ShcLedgerModuleService from "../../../../modules/shc-ledger/service";
+import ShcCookModuleService from "../../../../modules/shc-cook/service";
 import { requireCookId, requireCustomerId } from "../../../../lib/shc-actors";
+import { loadCooksById, shapeStoreOrder } from "../../../../lib/shc-order-shape";
 
 /**
  * GET /store/shc/orders
@@ -69,26 +71,17 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       }
     }
 
+    const viewerRole = role === "cook" ? "cook" : role === "customer" ? "customer" : undefined;
+    const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
+    const cookMap = await loadCooksById(
+      cookService,
+      (metas || []).map((m: any) => String(m.cook_id || ""))
+    );
+
     // Basic shape + growth metadata (earnings/requests) for Phase 8-9 parity with mock. Additive only.
-    const orders = (metas || []).map((m: any) => ({
-      id: m.order_id,
-      order_id: m.order_id,
-      cook_id: m.cook_id,
-      customer_id: m.customer_id,
-      shc_status: m.shc_status,
-      collection_date: m.collection_date,
-      collection_slot: m.collection_slot,
-      paynow_reference: m.paynow_reference,
-      origin_request_id: m.origin_request_id || null,
-      is_corporate: !!m.is_corporate,
-      corporate_note: m.corporate_note || null,
-      cooking_notes: m.cooking_notes || null,
-      collection_notes: m.collection_notes || null,
-      items: m.items && m.items.length ? m.items : [{ name: 'Order item', qty: 1, product_id: '' }],
-      total: m.total_cents ? Math.round(m.total_cents / 100) : (m.total || 0),
-      address_released_at: m.address_released_at,
-      // request/earnings joined via prior
-    }));
+    const orders = (metas || []).map((m: any) =>
+      shapeStoreOrder(m, cookMap.get(String(m.cook_id || "")) || null, { viewerRole })
+    );
 
     const logger = (req.scope as any).resolve?.("logger") || console;
     (logger as any).info?.({ event: "store.orders.query", cook_id, count });

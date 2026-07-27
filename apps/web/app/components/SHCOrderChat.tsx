@@ -76,10 +76,17 @@ export function SHCOrderChatPanel({
             </span>
           ) : null}
         </div>
-        {context.collectionInstructions ? (
+        {context.collectionAddress || context.collectionInstructions ? (
           <div className="mt-3 p-3 rounded-xl border border-[var(--shc-border-brutal)] bg-[var(--shc-bento-yellow)]">
             <p className="text-[11px] font-extrabold">Collection details</p>
-            <p className="text-xs font-semibold mt-1">{context.collectionInstructions}</p>
+            {context.collectionAddress ? (
+              <p className="text-xs font-semibold mt-1">{context.collectionAddress}</p>
+            ) : null}
+            {context.collectionInstructions ? (
+              <p className={`text-xs font-semibold ${context.collectionAddress ? 'mt-2 opacity-90' : 'mt-1'}`}>
+                {context.collectionInstructions}
+              </p>
+            ) : null}
           </div>
         ) : null}
         {context.privacyHint ? (

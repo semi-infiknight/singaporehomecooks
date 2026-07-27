@@ -17,6 +17,7 @@ export type OrderChatContextInput = {
   dishSummary?: string;
   collectionDate?: string;
   collectionSlot?: string;
+  collectionAddress?: string;
   collectionInstructions?: string;
   addressReleased?: boolean;
 };
@@ -112,6 +113,7 @@ export type OrderChatContext = {
   collectionDate?: string;
   collectionSlot?: string;
   privacyHint?: string;
+  collectionAddress?: string;
   collectionInstructions?: string;
 };
 
@@ -130,6 +132,7 @@ export function buildOrderChatContext(order: OrderChatContextInput & { items?: A
     dishSummary,
     collectionDate: order.collectionDate,
     collectionSlot: order.collectionSlot,
+    collectionAddress: order.collectionAddress,
     collectionInstructions: order.collectionInstructions,
   };
 }
