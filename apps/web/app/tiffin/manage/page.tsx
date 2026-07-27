@@ -74,7 +74,9 @@ export default function TiffinManagePage() {
       <SHCCard className="mb-4" data-testid="tiffin-plan-metrics-card">
         <div className="flex flex-wrap gap-2 mb-3">
           <SHCMetaBadge kind="meal_plan">{shcMealPlanBadgeLabel(sub.meals_per_week)}</SHCMetaBadge>
-          <SHCMetaBadge kind="price">S${tiffinWeeklySubtotal(sub.meals_per_week).toFixed(2)}/wk</SHCMetaBadge>
+          <SHCMetaBadge kind="price">
+            S${tiffinWeeklySubtotal(sub.meals_per_week, 1, kitchen?.pricing_by_meals_per_week).toFixed(2)}/wk
+          </SHCMetaBadge>
           <SHCBadge variant={shcSubscriptionStatusBadgeVariant(isPaused)}>{sub.status}</SHCBadge>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center" data-testid="tiffin-plan-metrics">

@@ -37,7 +37,9 @@ export default function MySubscriptionsPage() {
   const [tab, setTab] = useState<Tab>('active');
 
   const sub = (subData as { subscription?: Record<string, unknown> } | undefined)?.subscription;
-  const kitchen = (subData as { kitchen?: { cook?: { display_name?: string } } } | undefined)?.kitchen;
+  const kitchen = (subData as {
+    kitchen?: { cook?: { display_name?: string }; pricing_by_meals_per_week?: Record<string, number> };
+  } | undefined)?.kitchen;
   const pastList =
     ((subData as { past_subscriptions?: Array<Record<string, unknown>> } | undefined)
       ?.past_subscriptions || []) as Array<Record<string, unknown>>;
@@ -153,7 +155,9 @@ export default function MySubscriptionsPage() {
             </div>
             <div className="flex flex-wrap gap-2 mb-3">
               <SHCMetaBadge kind="meal_plan">{shcMealPlanBadgeLabel(Number(sub.meals_per_week) || 0)}</SHCMetaBadge>
-              <SHCMetaBadge kind="price">S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3).toFixed(2)}/wk</SHCMetaBadge>
+              <SHCMetaBadge kind="price">
+                S${tiffinWeeklySubtotal(Number(sub.meals_per_week) || 3, 1, kitchen?.pricing_by_meals_per_week).toFixed(2)}/wk
+              </SHCMetaBadge>
             </div>
             <p className="text-xs font-semibold text-muted-foreground mb-3">
               Deliveries {String(sub.deliveries_left ?? '—')} · Flex {String(sub.flex_remaining ?? '—')}/

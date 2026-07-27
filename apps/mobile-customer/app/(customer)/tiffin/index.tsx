@@ -19,10 +19,15 @@ import {
   gourmeatColors,
   shcSpacing,
   GourmeatPrimaryButton,
-  tiffinPricePerServing,
   contentPadSafe,
 } from '@shc/ui';
-import { getDishImageUrl, getCookKitchenHeroUrl, kitchenDishPriceDollars, kitchenCardOpenProps } from '@shc/utils';
+import {
+  getDishImageUrl,
+  getCookKitchenHeroUrl,
+  kitchenDishPriceDollars,
+  kitchenCardOpenProps,
+  tiffinKitchenPriceRange,
+} from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 import { VirtualRowFlashList } from '../../../components/VirtualLists';
@@ -160,8 +165,9 @@ export default function TiffinBrowseScreen() {
       const prices = (k.dishes || [])
         .map((d: any) => kitchenDishPriceDollars(d))
         .filter((n: number | null): n is number => n != null && n > 0);
-      const from = prices.length > 0 ? Math.min(...prices) : tiffinPricePerServing(3);
-      const to = prices.length > 0 ? Math.max(...prices) : tiffinPricePerServing(2);
+      const tierRange = tiffinKitchenPriceRange(k.pricing_by_meals_per_week, k.meals_per_week_options);
+      const from = prices.length > 0 ? Math.min(...prices) : tierRange.from;
+      const to = prices.length > 0 ? Math.max(...prices) : tierRange.to;
       const openProps = kitchenCardOpenProps({
         display_name: k.cook?.display_name,
         area: k.cook?.area,

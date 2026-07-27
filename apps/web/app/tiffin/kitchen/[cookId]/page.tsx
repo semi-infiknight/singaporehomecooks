@@ -32,6 +32,8 @@ import {
   tiffinPlanBestValueMeals,
   tiffinPlanStrikethroughPrice,
   tiffinPlanSavingsLabel,
+  tiffinPriceResolver,
+  tiffinWeeklySubtotal as utilsTiffinWeeklySubtotal,
   type TiffinPlanDurationId,
 } from '@shc/utils';
 import { useAuth } from '../../../../lib/useAuth';
@@ -39,8 +41,6 @@ import { useGuestAuthTray } from '../../../../lib/useGuestAuthTray';
 import {
   useTiffinKitchen,
   useSubscribeTiffin,
-  tiffinPricePerServing,
-  tiffinWeeklySubtotal,
   TIFFIN_DAY_LABELS,
 } from '../../../../lib/useTiffin';
 import { useCookReviews } from '../../../../lib/useProducts';
@@ -71,6 +71,10 @@ export default function TiffinKitchenPage() {
   const { data: reviewsPayload } = useCookReviews(cookSlug, { limit: 50 });
   const subscribeMut = useSubscribeTiffin();
   const mealsOptions: number[] = (kitchen as any)?.meals_per_week_options || [2, 3, 4];
+  const priceFn = useMemo(
+    () => tiffinPriceResolver((kitchen as any)?.pricing_by_meals_per_week),
+    [(kitchen as any)?.pricing_by_meals_per_week]
+  );
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(3);
   const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
   const [tab, setTab] = useState<'plan' | 'about' | 'hours' | 'reviews'>('plan');
@@ -109,8 +113,8 @@ export default function TiffinKitchenPage() {
   const open = kitchenOpenStatus(cookMeta);
   const tags = kitchenTagList(cookMeta);
   const planRows = useMemo(
-    () => kitchenTiffinPlanRows(mealsOptions, tiffinPricePerServing),
-    [mealsOptions]
+    () => kitchenTiffinPlanRows(mealsOptions, priceFn),
+    [mealsOptions, priceFn]
   );
   const ratingSum = kitchenRatingSummary(cookMeta);
   const hours = kitchenCollectionHours({
@@ -127,7 +131,7 @@ export default function TiffinKitchenPage() {
   const selectedDuration = durationOpts.find((d) => d.id === planDuration) || durationOpts[0];
   const durationTotal = tiffinPlanDurationTotal(
     mealsPerWeek,
-    tiffinPricePerServing(mealsPerWeek),
+    priceFn(mealsPerWeek),
     selectedDuration.weeks
   );
   const reviews = useMemo(
@@ -297,9 +301,9 @@ export default function TiffinKitchenPage() {
           <div className="flex gap-2 mb-3" data-testid="tiffin-meals-picker">
             {mealsOptions.map((n) => {
               const active = n === mealsPerWeek;
-              const price = tiffinPricePerServing(n);
-              const strike = tiffinPlanStrikethroughPrice(n, tiffinPricePerServing);
-              const savings = tiffinPlanSavingsLabel(n, tiffinPricePerServing);
+              const price = priceFn(n);
+              const strike = tiffinPlanStrikethroughPrice(n, priceFn);
+              const savings = tiffinPlanSavingsLabel(n, priceFn);
               const isBest = n === bestValueAt;
               return (
                 <button
@@ -374,7 +378,7 @@ export default function TiffinKitchenPage() {
             <div className="flex justify-between items-center">
               <span className="font-bold text-sm">Weekly total</span>
               <span className="font-black text-lg tabular-nums">
-                S${tiffinWeeklySubtotal(mealsPerWeek).toFixed(2)}
+                S${utilsTiffinWeeklySubtotal(mealsPerWeek, 1, (kitchen as any)?.pricing_by_meals_per_week).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between items-center mt-2">

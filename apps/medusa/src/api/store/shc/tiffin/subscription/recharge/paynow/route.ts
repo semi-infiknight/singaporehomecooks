@@ -41,7 +41,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       });
     }
 
-    const amountCents = tiffinRechargeAmountCents(active.meals_per_week, weeks);
+    const amountCents = tiffinRechargeAmountCents(
+      active.meals_per_week,
+      weeks,
+      (await tiffin.getKitchenConfig(active.cook_id))?.pricing_by_meals_per_week
+    );
     const amountDollars = amountCents / 100;
     if (amountDollars <= 0) {
       return res.status(400).json({

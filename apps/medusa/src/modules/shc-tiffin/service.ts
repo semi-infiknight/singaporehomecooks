@@ -17,6 +17,8 @@ import {
   effectiveSubscriptionStatus,
   isPauseWindowActive,
   tiffinRechargeAmountCents,
+  normalizeTiffinKitchenPricing,
+  type TiffinPricingByMeals,
   addDaysIso,
   customizeWalletAdjustCents,
   type TiffinPlanSlot,
@@ -54,6 +56,7 @@ export type TiffinKitchenConfigDTO = {
   tagline?: string | null;
   eligible_product_ids: string[];
   meals_per_week_options: number[];
+  pricing_by_meals_per_week: TiffinPricingByMeals;
   collection_days: number[];
   default_collection_slot: string;
 };
@@ -87,6 +90,9 @@ class ShcTiffinModuleService extends MedusaService({
         tagline: data.tagline ?? existing?.tagline ?? null,
         eligible_product_ids: data.eligible_product_ids ?? existing?.eligible_product_ids ?? [],
         meals_per_week_options: data.meals_per_week_options ?? existing?.meals_per_week_options ?? [2, 3, 4],
+        pricing_by_meals_per_week: normalizeTiffinKitchenPricing(
+          data.pricing_by_meals_per_week ?? existing?.pricing_by_meals_per_week
+        ),
         collection_days: data.collection_days ?? existing?.collection_days ?? [1, 2, 3, 4, 5],
         default_collection_slot: data.default_collection_slot ?? existing?.default_collection_slot ?? "18:00-19:00",
         updated_at: new Date(),
@@ -214,7 +220,11 @@ class ShcTiffinModuleService extends MedusaService({
 
     try {
       await pgEnsureSubMeta(created.id, mealsPerWeek);
-      const openCents = tiffinRechargeAmountCents(mealsPerWeek, periodWeeks);
+      const openCents = tiffinRechargeAmountCents(
+        mealsPerWeek,
+        periodWeeks,
+        config.pricing_by_meals_per_week
+      );
       const openDeliveries = mealsPerWeek * periodWeeks;
       const today = new Date().toISOString().slice(0, 10);
       // only set opening balance when new or zero
@@ -421,7 +431,12 @@ class ShcTiffinModuleService extends MedusaService({
       deliveriesLeft: os.deliveries_left ?? 0,
       expiresOn: meta.expires_on,
     });
-    const amountCents = tiffinRechargeAmountCents(active.meals_per_week, weeks);
+    const config = await this.getKitchenConfig(active.cook_id);
+    const amountCents = tiffinRechargeAmountCents(
+      active.meals_per_week,
+      weeks,
+      config?.pricing_by_meals_per_week
+    );
     const paynowRef = opts?.paynowRef || `TIFFIN-${active.id.slice(-8)}-${Date.now().toString(36).toUpperCase()}`;
     const nextBalance = Math.max(0, (meta.balance_cents || 0) + amountCents);
     await pgUpdateSubMeta(active.id, {
@@ -728,6 +743,7 @@ class ShcTiffinModuleService extends MedusaService({
       tagline: row.tagline,
       eligible_product_ids: row.eligible_product_ids || [],
       meals_per_week_options: row.meals_per_week_options || [2, 3, 4],
+      pricing_by_meals_per_week: normalizeTiffinKitchenPricing(row.pricing_by_meals_per_week),
       collection_days: row.collection_days || [1, 2, 3, 4, 5],
       default_collection_slot: row.default_collection_slot || "18:00-19:00",
     };

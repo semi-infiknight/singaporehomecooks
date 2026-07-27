@@ -29,6 +29,7 @@ import {
   cookMenuPublishSuccessCopy,
   cookDayCancelSuccessCopy,
   cookTiffinEmptyDishesCopy,
+  DEFAULT_TIFFIN_PRICING_BY_MEALS,
 } from '@shc/utils';
 import {
   useTiffinCookConfig,
@@ -52,6 +53,11 @@ export default function CookTiffinConfigScreen() {
   const [tagline, setTagline] = useState('');
   const [eligible, setEligible] = useState<string[]>([]);
   const [collectionDays, setCollectionDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [pricing, setPricing] = useState<Record<string, string>>({
+    '2': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['2']),
+    '3': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
+    '4': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
+  });
   const [selectedDate, setSelectedDate] = useState('');
   const [opsMsg, setOpsMsg] = useState('');
   const [opsError, setOpsError] = useState('');
@@ -62,6 +68,12 @@ export default function CookTiffinConfigScreen() {
       setTagline(config.tagline || '');
       setEligible(config.eligible_product_ids || []);
       setCollectionDays(config.collection_days || [1, 2, 3, 4, 5]);
+      const p = config.pricing_by_meals_per_week || DEFAULT_TIFFIN_PRICING_BY_MEALS;
+      setPricing({
+        '2': String(p['2'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['2']),
+        '3': String(p['3'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
+        '4': String(p['4'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
+      });
     }
   }, [config]);
 
@@ -109,6 +121,11 @@ export default function CookTiffinConfigScreen() {
       eligible_product_ids: eligible,
       collection_days: collectionDays,
       meals_per_week_options: [2, 3, 4],
+      pricing_by_meals_per_week: {
+        '2': Number(pricing['2']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['2'],
+        '3': Number(pricing['3']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['3'],
+        '4': Number(pricing['4']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['4'],
+      },
     });
     router.back();
   };
@@ -212,6 +229,23 @@ export default function CookTiffinConfigScreen() {
           placeholderTextColor={gourmeatColors.textMuted}
           testID="cook-tiffin-tagline-input"
         />
+
+        <Text style={styles.sectionTitle}>Plan pricing (S$ per meal)</Text>
+        <Text style={styles.hint}>Customers see these rates when subscribing to your tiffin plan.</Text>
+        <View style={styles.pricingRow}>
+          {(['2', '3', '4'] as const).map((tier) => (
+            <View key={tier} style={styles.pricingCell}>
+              <Text style={styles.pricingLabel}>{tier} meals/wk</Text>
+              <TextInput
+                style={styles.pricingInput}
+                value={pricing[tier]}
+                onChangeText={(v) => setPricing((prev) => ({ ...prev, [tier]: v }))}
+                keyboardType="decimal-pad"
+                testID={`cook-tiffin-price-${tier}`}
+              />
+            </View>
+          ))}
+        </View>
 
         <Text style={styles.sectionTitle}>Collection days</Text>
         <View style={styles.dayRow}>
@@ -355,6 +389,19 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: '800', color: gourmeatColors.text, marginTop: shcSpacing.md },
   hint: { fontSize: 12, color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
+  pricingRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.sm },
+  pricingCell: { flex: 1 },
+  pricingLabel: { fontSize: 11, fontWeight: '700', color: gourmeatColors.textLight, marginBottom: 4 },
+  pricingInput: {
+    borderWidth: 1,
+    borderColor: gourmeatColors.border,
+    borderRadius: 10,
+    padding: shcSpacing.sm,
+    fontSize: 16,
+    fontWeight: '800',
+    color: gourmeatColors.text,
+    backgroundColor: gourmeatColors.surface,
+  },
   dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginVertical: shcSpacing.sm },
   opsScroll: { marginVertical: shcSpacing.sm, maxHeight: 72 },
   opsChip: {

@@ -403,6 +403,7 @@ async function seed() {
         "tagline" text,
         "eligible_product_ids" jsonb NOT NULL DEFAULT '[]',
         "meals_per_week_options" jsonb NOT NULL DEFAULT '[2,3,4]',
+        "pricing_by_meals_per_week" jsonb NOT NULL DEFAULT '{"2":12,"3":11,"4":10}',
         "collection_days" jsonb NOT NULL DEFAULT '[1,2,3,4,5]',
         "default_collection_slot" text NOT NULL DEFAULT '18:00-19:00',
         "created_at" timestamptz NOT NULL DEFAULT now(),
@@ -411,17 +412,18 @@ async function seed() {
     `);
     await pgTiffin.query(
       `INSERT INTO shc_tiffin_kitchen_config (
-        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, collection_days, default_collection_slot, created_at, updated_at
+        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, pricing_by_meals_per_week, collection_days, default_collection_slot, created_at, updated_at
       ) VALUES (
         'tiffin_cfg_rose', 'cook_rose_tampines_001', true,
         'Peranakan comfort — weekly tiffin from our Tampines HDB kitchen',
         '["dish_nasi_lemak_prawn_001","dish_ayam_buah_keluak_002"]'::jsonb,
-        '[2,3,4]'::jsonb, '[1,2,3,4,5]'::jsonb, '18:00-19:00', now(), now()
+        '[2,3,4]'::jsonb, '{"2":12,"3":11,"4":10}'::jsonb, '[1,2,3,4,5]'::jsonb, '18:00-19:00', now(), now()
       ) ON CONFLICT (cook_id) DO UPDATE SET
         enabled = EXCLUDED.enabled,
         tagline = EXCLUDED.tagline,
         eligible_product_ids = EXCLUDED.eligible_product_ids,
         meals_per_week_options = EXCLUDED.meals_per_week_options,
+        pricing_by_meals_per_week = EXCLUDED.pricing_by_meals_per_week,
         collection_days = EXCLUDED.collection_days,
         default_collection_slot = EXCLUDED.default_collection_slot,
         updated_at = now()`

@@ -7,9 +7,10 @@ import {
   getCookKitchenHeroUrl,
   kitchenDishPriceDollars,
   kitchenCardOpenProps,
+  tiffinKitchenPriceRange,
 } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
-import { useTiffinKitchens, useTiffinSubscription, tiffinPricePerServing } from '../../lib/useTiffin';
+import { useTiffinKitchens, useTiffinSubscription } from '../../lib/useTiffin';
 import {
   SHCButton,
   SHCCard,
@@ -192,8 +193,9 @@ export default function TiffinBrowsePage() {
             const prices = (k.dishes || [])
               .map((d: any) => kitchenDishPriceDollars(d))
               .filter((n: number | null): n is number => n != null && n > 0);
-            const from = prices.length ? Math.min(...prices) : tiffinPricePerServing(3);
-            const to = prices.length ? Math.max(...prices) : tiffinPricePerServing(2);
+            const tierRange = tiffinKitchenPriceRange(k.pricing_by_meals_per_week, k.meals_per_week_options);
+            const from = prices.length ? Math.min(...prices) : tierRange.from;
+            const to = prices.length ? Math.max(...prices) : tierRange.to;
             const openProps = kitchenCardOpenProps({
               display_name: name,
               area: k.cook?.area,

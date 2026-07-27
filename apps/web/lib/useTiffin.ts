@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { defaultTiffinPricePerMeal, tiffinWeeklySubtotal as utilsTiffinWeeklySubtotal } from '@shc/utils';
 import { client, hydrateSession, isAuthenticated } from './api-client';
 import { cookClient } from './cook-api-client';
 import { useAuth } from './useAuth';
@@ -13,13 +14,15 @@ export type TiffinPlanSlot = {
 };
 
 export function tiffinPricePerServing(mealsPerWeek: number): number {
-  if (mealsPerWeek >= 4) return 10;
-  if (mealsPerWeek >= 3) return 11;
-  return 12;
+  return defaultTiffinPricePerMeal(mealsPerWeek);
 }
 
-export function tiffinWeeklySubtotal(mealsPerWeek: number, servings = 1): number {
-  return mealsPerWeek * servings * tiffinPricePerServing(mealsPerWeek);
+export function tiffinWeeklySubtotal(
+  mealsPerWeek: number,
+  servings = 1,
+  pricing?: Record<string, number> | null
+): number {
+  return utilsTiffinWeeklySubtotal(mealsPerWeek, servings, pricing);
 }
 
 export const TIFFIN_DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
@@ -161,6 +164,7 @@ export function useUpdateTiffinCookConfig() {
       tagline?: string;
       eligible_product_ids?: string[];
       meals_per_week_options?: (2 | 3 | 4)[];
+      pricing_by_meals_per_week?: Record<string, number>;
       collection_days?: number[];
       default_collection_slot?: string;
     }) => cookClient.updateTiffinCookConfig(input),

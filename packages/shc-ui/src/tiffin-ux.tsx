@@ -30,11 +30,11 @@ export type TiffinPlanSlotDraft = {
   collection_slot?: string;
 };
 
-/** Volume pricing — more meals/week → lower per-serving (Mobbin ref). */
+import { defaultTiffinPricePerMeal } from '@shc/utils';
+
+/** Volume pricing — platform default; use resolveTiffinPricePerMeal + kitchen map for per-cook rates. */
 export function tiffinPricePerServing(mealsPerWeek: number): number {
-  if (mealsPerWeek >= 4) return 10;
-  if (mealsPerWeek >= 3) return 11;
-  return 12;
+  return defaultTiffinPricePerMeal(mealsPerWeek);
 }
 
 export function tiffinWeeklySubtotal(mealsPerWeek: number, servings = 1): number {

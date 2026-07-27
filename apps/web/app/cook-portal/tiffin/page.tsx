@@ -19,6 +19,7 @@ import {
   cookMenuPublishSuccessCopy,
   cookDayCancelSuccessCopy,
   cookTiffinEmptyDishesCopy,
+  DEFAULT_TIFFIN_PRICING_BY_MEALS,
 } from '@shc/utils';
 import {
   GourmeatCookHeader,
@@ -43,6 +44,11 @@ export default function CookTiffinConfigPage() {
   const [tagline, setTagline] = useState('');
   const [eligible, setEligible] = useState<string[]>([]);
   const [collectionDays, setCollectionDays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [pricing, setPricing] = useState<Record<string, string>>({
+    '2': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['2']),
+    '3': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
+    '4': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
+  });
   const [savedMsg, setSavedMsg] = useState('');
   const [opsMsg, setOpsMsg] = useState('');
   const [opsError, setOpsError] = useState('');
@@ -54,6 +60,12 @@ export default function CookTiffinConfigPage() {
       setTagline(config.tagline || '');
       setEligible(config.eligible_product_ids || []);
       setCollectionDays(config.collection_days || [1, 2, 3, 4, 5]);
+      const p = config.pricing_by_meals_per_week || DEFAULT_TIFFIN_PRICING_BY_MEALS;
+      setPricing({
+        '2': String(p['2'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['2']),
+        '3': String(p['3'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
+        '4': String(p['4'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
+      });
     }
   }, [config]);
 
@@ -105,6 +117,11 @@ export default function CookTiffinConfigPage() {
       eligible_product_ids: eligible,
       collection_days: collectionDays,
       meals_per_week_options: [2, 3, 4],
+      pricing_by_meals_per_week: {
+        '2': Number(pricing['2']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['2'],
+        '3': Number(pricing['3']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['3'],
+        '4': Number(pricing['4']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['4'],
+      },
     });
     setSavedMsg('Tiffin settings saved — customers can subscribe now.');
   };
@@ -218,6 +235,27 @@ export default function CookTiffinConfigPage() {
         placeholder="e.g. Peranakan comfort — 3 nights a week"
         data-testid="cook-tiffin-tagline-input"
       />
+
+      <p className="font-extrabold text-sm mb-1">Plan pricing (S$ per meal)</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        Customers see these rates when subscribing to your tiffin plan.
+      </p>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {(['2', '3', '4'] as const).map((tier) => (
+          <div key={tier}>
+            <p className="text-[10px] font-bold text-muted-foreground mb-1">{tier} meals/wk</p>
+            <input
+              type="number"
+              step="0.5"
+              min="1"
+              className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] px-3 py-2.5 text-sm bg-card font-bold"
+              value={pricing[tier]}
+              onChange={(e) => setPricing((prev) => ({ ...prev, [tier]: e.target.value }))}
+              data-testid={`cook-tiffin-price-${tier}`}
+            />
+          </div>
+        ))}
+      </div>
 
       <p className="font-extrabold text-sm mb-2">Collection days</p>
       <div className="flex flex-wrap gap-1.5 mb-4">

@@ -713,6 +713,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       tagline?: string;
       eligible_product_ids?: string[];
       meals_per_week_options?: (2 | 3 | 4)[];
+      pricing_by_meals_per_week?: Record<string, number>;
       collection_days?: number[];
       default_collection_slot?: string;
     }) {

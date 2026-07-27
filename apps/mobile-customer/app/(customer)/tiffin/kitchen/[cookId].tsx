@@ -43,9 +43,9 @@ import {
   tiffinPlanBestValueMeals,
   tiffinPlanStrikethroughPrice,
   tiffinPlanSavingsLabel,
+  tiffinPriceResolver,
   type TiffinPlanDurationId,
 } from '@shc/utils';
-import { tiffinPricePerServing as uiTiffinPrice } from '@shc/ui';
 import { useTiffinKitchen, useSubscribeTiffin } from '../../../../hooks/useTiffin';
 import { useCookReviews } from '../../../../hooks/useProducts';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -78,13 +78,17 @@ export default function TiffinKitchenScreen() {
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
 
   const mealsOptions: number[] = kitchen?.meals_per_week_options || [2, 3, 4];
+  const priceFn = useMemo(
+    () => tiffinPriceResolver(kitchen?.pricing_by_meals_per_week),
+    [kitchen?.pricing_by_meals_per_week]
+  );
   const [mealsPerWeek, setMealsPerWeek] = useState<number>(mealsOptions[1] || 3);
   const [planDuration, setPlanDuration] = useState<TiffinPlanDurationId>('7d');
   const durationOpts = tiffinPlanDurationOptions();
   const selectedDuration = durationOpts.find((d) => d.id === planDuration) || durationOpts[0];
   const durationTotal = tiffinPlanDurationTotal(
     mealsPerWeek,
-    uiTiffinPrice(mealsPerWeek),
+    priceFn(mealsPerWeek),
     selectedDuration.weeks
   );
 
@@ -125,8 +129,8 @@ export default function TiffinKitchenScreen() {
   const open = kitchenOpenStatus(cookMeta);
   const tags = kitchenTagList(cookMeta);
   const planRows = useMemo(
-    () => kitchenTiffinPlanRows(mealsOptions, (n) => uiTiffinPrice(n)),
-    [mealsOptions]
+    () => kitchenTiffinPlanRows(mealsOptions, priceFn),
+    [mealsOptions, priceFn]
   );
   const ratingSum = kitchenRatingSummary(cookMeta);
   const hours = kitchenCollectionHours({
@@ -152,7 +156,6 @@ export default function TiffinKitchenScreen() {
     () => tiffinPlanFeaturesForTier(mealsPerWeek),
     [mealsPerWeek]
   );
-  const priceFn = useCallback((n: number) => uiTiffinPrice(n), []);
 
   const handleSubscribe = async () => {
     setSubscribeError('');

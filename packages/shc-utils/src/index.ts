@@ -31,6 +31,7 @@ export * from './recipe-ux';
 export * from './cook-tiffin-os';
 export * from './subscribe-funnel';
 export * from './tiffin-status';
+export * from './tiffin-pricing';
 export * from './cook-listings';
 export * from './listing-form';
 export * from './badge-ux';

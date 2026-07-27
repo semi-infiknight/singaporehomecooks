@@ -8,6 +8,7 @@ import type { TiffinKitchenConfigDTO } from "../modules/shc-tiffin/service";
 import {
   defaultFlexQuota,
   addDaysIso,
+  normalizeTiffinKitchenPricing,
   type TiffinPlanSlot,
 } from "@shc/business-rules";
 
@@ -119,6 +120,7 @@ function shapeRow(row: any): TiffinKitchenConfigDTO {
     tagline: row.tagline ?? null,
     eligible_product_ids: row.eligible_product_ids || [],
     meals_per_week_options: row.meals_per_week_options || [2, 3, 4],
+    pricing_by_meals_per_week: normalizeTiffinKitchenPricing(row.pricing_by_meals_per_week),
     collection_days: row.collection_days || [1, 2, 3, 4, 5],
     default_collection_slot: row.default_collection_slot || "18:00-19:00",
   };
@@ -155,6 +157,9 @@ export async function pgUpsertKitchenConfig(
       tagline: data.tagline !== undefined ? data.tagline : prev?.tagline ?? null,
       eligible_product_ids: data.eligible_product_ids ?? prev?.eligible_product_ids ?? [],
       meals_per_week_options: data.meals_per_week_options ?? prev?.meals_per_week_options ?? [2, 3, 4],
+      pricing_by_meals_per_week: normalizeTiffinKitchenPricing(
+        data.pricing_by_meals_per_week ?? prev?.pricing_by_meals_per_week
+      ),
       collection_days: data.collection_days ?? prev?.collection_days ?? [1, 2, 3, 4, 5],
       default_collection_slot:
         data.default_collection_slot ?? prev?.default_collection_slot ?? "18:00-19:00",
@@ -162,14 +167,15 @@ export async function pgUpsertKitchenConfig(
 
     await pg.query(
       `INSERT INTO shc_tiffin_kitchen_config (
-        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, collection_days, default_collection_slot, created_at, updated_at
+        id, cook_id, enabled, tagline, eligible_product_ids, meals_per_week_options, pricing_by_meals_per_week, collection_days, default_collection_slot, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, now(), now()
+        $1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb, $9, now(), now()
       ) ON CONFLICT (cook_id) DO UPDATE SET
         enabled = EXCLUDED.enabled,
         tagline = EXCLUDED.tagline,
         eligible_product_ids = EXCLUDED.eligible_product_ids,
         meals_per_week_options = EXCLUDED.meals_per_week_options,
+        pricing_by_meals_per_week = EXCLUDED.pricing_by_meals_per_week,
         collection_days = EXCLUDED.collection_days,
         default_collection_slot = EXCLUDED.default_collection_slot,
         updated_at = now()`,
@@ -180,6 +186,7 @@ export async function pgUpsertKitchenConfig(
         payload.tagline,
         JSON.stringify(payload.eligible_product_ids),
         JSON.stringify(payload.meals_per_week_options),
+        JSON.stringify(payload.pricing_by_meals_per_week),
         JSON.stringify(payload.collection_days),
         payload.default_collection_slot,
       ]

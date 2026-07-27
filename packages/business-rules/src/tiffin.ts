@@ -329,18 +329,64 @@ export function rechargeWeekOptions(): number[] {
   return [1, 2, 4];
 }
 
-/** Volume pricing (SGD dollars) — align with tiffinPricePerServing on clients. */
-export function tiffinPricePerMealDollars(mealsPerWeek: number): number {
+/** Platform default SGD per serving by meals/week tier. */
+export const DEFAULT_TIFFIN_PRICING_BY_MEALS: Record<string, number> = {
+  "2": 12,
+  "3": 11,
+  "4": 10,
+};
+
+export type TiffinPricingByMeals = Record<string, number>;
+
+export function defaultTiffinPricePerMeal(mealsPerWeek: number): number {
   if (mealsPerWeek >= 4) return 10;
   if (mealsPerWeek >= 3) return 11;
   return 12;
 }
 
+export function normalizeTiffinKitchenPricing(raw: unknown): TiffinPricingByMeals {
+  const base = { ...DEFAULT_TIFFIN_PRICING_BY_MEALS };
+  if (!raw || typeof raw !== "object") return base;
+  for (const key of ["2", "3", "4"]) {
+    const value = (raw as Record<string, unknown>)[key];
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0 && n <= 200) {
+      base[key] = Math.round(n * 100) / 100;
+    }
+  }
+  return base;
+}
+
+/** Resolve per-meal SGD price — kitchen override or platform default. */
+export function resolveTiffinPricePerMeal(
+  mealsPerWeek: number,
+  pricing?: TiffinPricingByMeals | null
+): number {
+  const key = String(Math.max(2, Math.min(4, Math.floor(mealsPerWeek || 2))));
+  const custom = pricing?.[key];
+  if (custom != null && Number.isFinite(Number(custom)) && Number(custom) > 0) {
+    return Number(custom);
+  }
+  return defaultTiffinPricePerMeal(mealsPerWeek);
+}
+
+/** Volume pricing (SGD dollars) — optional per-kitchen tier map. */
+export function tiffinPricePerMealDollars(
+  mealsPerWeek: number,
+  pricing?: TiffinPricingByMeals | null
+): number {
+  return resolveTiffinPricePerMeal(mealsPerWeek, pricing);
+}
+
 /** PayNow recharge amount in cents for weeks × meals/wk. */
-export function tiffinRechargeAmountCents(mealsPerWeek: number, weeks: number): number {
+export function tiffinRechargeAmountCents(
+  mealsPerWeek: number,
+  weeks: number,
+  pricing?: TiffinPricingByMeals | null
+): number {
   const m = Math.max(2, Math.floor(mealsPerWeek || 3));
   const w = Math.max(1, Math.floor(weeks || 1));
-  return Math.round(m * tiffinPricePerMealDollars(m) * w * 100);
+  return Math.round(m * resolveTiffinPricePerMeal(m, pricing) * w * 100);
 }
 
 export type TiffinLedgerKind = "recharge" | "meal" | "flex" | "pause" | "adjust" | "opening";
