@@ -3,7 +3,7 @@ import { createSHCError } from "@shc/types";
 import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
 import ShcCookModuleService from "../../../../../modules/shc-cook/service";
 import { requireCookId, requireCustomerId } from "../../../../../lib/shc-actors";
-import { loadCooksById, shapeStoreOrder } from "../../../../../lib/shc-order-shape";
+import { loadCooksById, shapeStoreOrder, type CookCollectionRow } from "../../../../../lib/shc-order-shape";
 
 function resolveViewerRole(req: MedusaRequest): "customer" | "cook" | undefined {
   const cookId = requireCookId(req);
@@ -23,7 +23,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const m = data.meta as any;
   const viewerRole = resolveViewerRole(req);
-  let cook: { display_name?: string; collection_address?: string; collection_instructions?: string } | null = null;
+  let cook: CookCollectionRow | null = null;
   if (m.cook_id) {
     const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
     const cooks = await loadCooksById(cookService, [String(m.cook_id)]);

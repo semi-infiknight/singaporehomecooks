@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { getCookId } from "../../../../../../lib/shc-actors";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
-import { assertCookOwnsMediaKey, shapeCookForStore } from "../../../../../../lib/shc-cook-shape";
+import { assertCookOwnsMediaKey, shapeCookForStore, type CookMediaRow } from "../../../../../../lib/shc-cook-shape";
 
 const BodySchema = z
   .object({
@@ -19,19 +19,19 @@ const BodySchema = z
   })
   .strict();
 
-export function shapeCookProfile(cook: Record<string, unknown>) {
+export function shapeCookProfile(cook: Record<string, unknown>): CookMediaRow {
   return {
-    id: cook.id,
-    display_name: cook.display_name,
-    area: cook.area,
-    story: cook.story,
-    collection_address: cook.collection_address,
-    collection_instructions: cook.collection_instructions,
-    avatar_url: cook.avatar_url,
-    hero_image_url: cook.hero_image_url,
-    status: cook.status,
+    id: cook.id as string | undefined,
+    display_name: cook.display_name as string | undefined,
+    area: cook.area as string | undefined,
+    story: cook.story as string | null | undefined,
+    collection_address: cook.collection_address as string | null | undefined,
+    collection_instructions: cook.collection_instructions as string | null | undefined,
+    avatar_url: cook.avatar_url as string | null | undefined,
+    hero_image_url: cook.hero_image_url as string | null | undefined,
+    status: cook.status as string | undefined,
     availability_paused: Boolean(cook.availability_paused),
-    slug: cook.slug,
+    slug: cook.slug as string | undefined,
   };
 }
 

@@ -131,12 +131,6 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
     },
 
-    async getCookProfile() {
-      return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
-        method: "GET",
-      });
-    },
-
     async getMe() {
       const data = await request<{ user: ShcUser }>("/store/shc/auth/me", { method: "GET" });
       cachedUser = data.user;

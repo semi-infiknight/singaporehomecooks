@@ -1,3 +1,4 @@
+import type { MedusaContainer } from "@medusajs/framework/types";
 import { resolveCookMediaUrl } from "./shc-cook-shape";
 import ShcCookModuleService from "../modules/shc-cook/service";
 import ShcProductMetaModuleService from "../modules/shc-product-meta/service";
