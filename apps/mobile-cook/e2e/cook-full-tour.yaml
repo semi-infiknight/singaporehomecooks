@@ -45,7 +45,7 @@ appId: com.singaporehomecooks.cook
       id: "cook-dashboard"
     timeout: 120000
 
-# Listings wizard — all steps + AI/photo stubs (deep link — heritage alert blocks dashboard taps)
+# Listings wizard — all steps + AI/photo stubs (deep link avoids flaky dashboard taps)
 - openLink: shc-cook:///(cook)/listings
 - tapOn:
     text: "Open"
@@ -75,7 +75,7 @@ appId: com.singaporehomecooks.cook
     text: "Open"
     optional: true
 - extendedWaitUntil:
-    visible: "Ingredients & Heritage"
+    visible: "Ingredients & photo"
     timeout: 15000
 - tapOn:
     id: "ai-cal-est-btn"
@@ -104,23 +104,6 @@ appId: com.singaporehomecooks.cook
     id: "listing-wizard-publish"
 - scroll
 - back
-
-# Heritage stub (dismiss alert before continuing)
-- openLink: shc-cook:///(cook)/dashboard
-- tapOn:
-    text: "Open"
-    optional: true
-- scrollUntilVisible:
-    element:
-      id: "add-heritage-btn"
-    direction: DOWN
-    timeout: 30000
-- tapOn:
-    id: "add-heritage-btn"
-- tapOn:
-    text: "OK"
-    optional: true
-- scroll
 
 # Orders management
 - openLink: shc-cook:///(cook)/orders
@@ -177,7 +160,7 @@ appId: com.singaporehomecooks.cook
 - scroll
 - back
 
-# Demo chat — reset stack after compliance (Android can land on wrong screen)
+# Order chat (optional — demo chat on main, latest-order CTA after demo removal)
 - openLink: shc-cook:///(cook)/dashboard
 - tapOn:
     text: "Open"
@@ -187,31 +170,61 @@ appId: com.singaporehomecooks.cook
       id: "cook-dashboard"
     timeout: 60000
     optional: true
-- openLink: shc-cook:///(shared)/chat/SHC-2026-00001
-- tapOn:
-    text: "Open"
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: "chat-order-title"
-    timeout: 60000
-    optional: true
 - runFlow:
     when:
       visible:
-        id: "chat-order-title"
+        id: "cook-latest-order-chat-btn"
     commands:
-      - scrollUntilVisible:
-          element:
-            id: "chat-message-input"
-          direction: DOWN
-          timeout: 15000
       - tapOn:
-          id: "chat-message-input"
-      - inputText: "Your dish is ready for collection at 6pm."
-      - tapOn:
-          text: "Send"
+          id: "cook-latest-order-chat-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "chat-order-title"
+          timeout: 60000
           optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "chat-message-input"
+          commands:
+            - scrollUntilVisible:
+                element:
+                  id: "chat-message-input"
+                direction: DOWN
+                timeout: 15000
+            - tapOn:
+                id: "chat-message-input"
+            - inputText: "Your dish is ready for collection at 6pm."
+            - tapOn:
+                text: "Send"
+                optional: true
+      - back
+- runFlow:
+    when:
+      visible: "Demo Chat"
+    commands:
+      - tapOn: "Demo Chat"
+      - extendedWaitUntil:
+          visible:
+            id: "chat-order-title"
+          timeout: 60000
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              id: "chat-message-input"
+          commands:
+            - scrollUntilVisible:
+                element:
+                  id: "chat-message-input"
+                direction: DOWN
+                timeout: 15000
+            - tapOn:
+                id: "chat-message-input"
+            - inputText: "Your dish is ready for collection at 6pm."
+            - tapOn:
+                text: "Send"
+                optional: true
       - back
 - tapOn:
     text: "Dismiss"
