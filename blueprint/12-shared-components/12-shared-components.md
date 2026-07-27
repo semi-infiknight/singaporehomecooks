@@ -43,8 +43,9 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
 | `product-meta-form.tsx` | Cook listing step 3: meal extras, add-ons, recipe steps — shared web + mobile |
+| `cook-earnings.tsx` | Cook earnings: IRAS note, create-listings CTA, expense tracker (history + log form) — shared mobile-cook + web cook-portal |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`cook-earnings.ts`** (earnings copy + expense formatters), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 
