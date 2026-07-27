@@ -108,12 +108,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return data;
     },
 
+    async getCookProfile() {
+      return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
+        method: "GET",
+      });
+    },
+
     async updateCookProfile(input: {
       display_name?: string;
       area?: string;
       story?: string;
       collection_address?: string;
       collection_instructions?: string;
+      availability_paused?: boolean;
       pdpa_consent?: boolean;
     }) {
       return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {

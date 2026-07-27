@@ -136,16 +136,26 @@ export default function CookDashboard() {
       ) : null}
 
       <Pressable
+        onPress={() => router.push('/(cook)/settings' as any)}
+        style={styles.tourBanner}
+        testID="cook-kitchen-settings-link"
+        accessibilityRole="button"
+      >
+        <Text style={styles.tourBannerTitle}>Kitchen settings</Text>
+        <Text style={styles.tourBannerSub}>Profile · collection · pause orders</Text>
+      </Pressable>
+
+      <Pressable
         onPress={async () => {
           await clearCookOnboardingSeen();
           router.push('/(shared)/onboarding' as any);
         }}
-        style={styles.tourBanner}
+        style={[styles.tourBanner, styles.tourBannerSecondary]}
         testID="cook-kitchen-tour-link"
         accessibilityRole="button"
       >
-        <Text style={styles.tourBannerTitle}>Kitchen setup tour</Text>
-        <Text style={styles.tourBannerSub}>Story · collection · PDPA — replay anytime</Text>
+        <Text style={styles.tourBannerTitle}>Setup tour</Text>
+        <Text style={styles.tourBannerSub}>Replay onboarding walkthrough</Text>
       </Pressable>
 
       <Pressable
@@ -349,6 +359,9 @@ const styles = StyleSheet.create({
   },
   tiffinBanner: {
     backgroundColor: shcColors.bentoYellow || '#FFF3C4',
+  },
+  tourBannerSecondary: {
+    backgroundColor: shcColors.surface,
   },
   batchesBanner: {
     backgroundColor: shcColors.bentoMint || '#D8F3E8',

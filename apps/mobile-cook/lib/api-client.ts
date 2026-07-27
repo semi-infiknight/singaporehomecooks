@@ -84,8 +84,10 @@ export const updateCookProfile = (input: {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  availability_paused?: boolean;
   pdpa_consent?: boolean;
 }) => client.updateCookProfile(input);
+export const getCookProfile = () => client.getCookProfile();
 export const getMe = () => client.getMe();
 export const getCurrentUser = () => client.getCurrentUser();
 export const logout = () => clearSession();

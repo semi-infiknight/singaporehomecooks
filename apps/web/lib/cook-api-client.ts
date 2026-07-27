@@ -75,8 +75,10 @@ export const updateCookProfile = (input: {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  availability_paused?: boolean;
   pdpa_consent?: boolean;
 }) => cookClient.updateCookProfile(input);
+export const getCookProfile = () => cookClient.getCookProfile();
 export const isCookAuthenticated = () => Boolean(readCookToken());
 export const getCookUser = () => cookClient.getCurrentUser();
 export const getCookOrders = () => cookClient.getMyOrders('cook');

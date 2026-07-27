@@ -101,14 +101,25 @@ export default function CookDashboardPage() {
       ) : null}
 
       <Link
+        href="/cook-portal/settings"
+        data-testid="cook-kitchen-settings-link"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
+      >
+        <p className="font-black text-foreground">Kitchen settings</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+          Profile · collection · pause orders
+        </p>
+      </Link>
+
+      <Link
         href="/cook-portal/onboarding"
         onClick={() => clearCookOnboardingSeen()}
         data-testid="cook-kitchen-tour-link"
-        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
+        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
       >
-        <p className="font-black text-foreground">Kitchen setup tour</p>
+        <p className="font-black text-foreground">Setup tour</p>
         <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-          Story · collection · PDPA — replay anytime
+          Replay onboarding walkthrough
         </p>
       </Link>
 

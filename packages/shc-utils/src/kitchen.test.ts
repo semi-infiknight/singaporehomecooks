@@ -121,6 +121,12 @@ describe('kitchenOpenStatus', () => {
     expect(s.isOpen).toBe(false);
     expect(s.label).toBe('Closed');
   });
+
+  it('marks availability_paused as Paused', () => {
+    const s = kitchenOpenStatus({ ...ROSE, availability_paused: true });
+    expect(s.isOpen).toBe(false);
+    expect(s.label).toBe('Paused');
+  });
 });
 
 describe('kitchenCardOpenProps', () => {

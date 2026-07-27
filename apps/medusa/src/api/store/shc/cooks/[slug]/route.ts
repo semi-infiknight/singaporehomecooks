@@ -22,6 +22,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       story: cook.story,
       area: cook.area,
       status: cook.status,
+      availability_paused: Boolean(cook.availability_paused),
       collection_address: cook.collection_address,
       collection_instructions: cook.collection_instructions,
       rating: ratingSummary.rating,

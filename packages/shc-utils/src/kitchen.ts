@@ -17,6 +17,7 @@ export type KitchenIdentity = {
   orders?: number | null;
   subscriber_count?: number | null;
   status?: string | null;
+  availability_paused?: boolean | null;
   sfa_reg_number?: string | null;
   collection_instructions?: string | null;
   collection_address?: string | null;
@@ -80,10 +81,12 @@ export function kitchenOpenStatus(cook?: KitchenIdentity | null): {
   detail: string;
 } {
   const status = String(cook?.status || 'active').toLowerCase();
-  const closed = status === 'paused' || status === 'inactive' || status === 'suspended';
+  const paused = Boolean(cook?.availability_paused);
+  const closed =
+    paused || status === 'paused' || status === 'inactive' || status === 'suspended';
   return {
     isOpen: !closed,
-    label: closed ? 'Closed' : 'Open',
+    label: closed ? (paused ? 'Paused' : 'Closed') : 'Open',
     detail: cook?.collection_instructions
       ? String(cook.collection_instructions).slice(0, 60)
       : 'HDB collection evenings',
