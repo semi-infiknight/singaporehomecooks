@@ -4,7 +4,7 @@ import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import type { SHCSavedAddress } from '@shc/types';
 import type { AddressSearchResult } from '@shc/utils';
-import { formatLocationLabel, formatLocationShort } from '@shc/utils';
+import { formatLocationLabel, formatLocationShort, SG_QUICK_PICK_AREAS } from '@shc/utils';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, gourmeatColors } from './theme';
 import { SHCButton, SHCButtonText, SHCCard } from './primitives';
 import { SHCIcon } from './icons';
@@ -46,6 +46,8 @@ export function LocationPickerExperience({
   busy,
   onNudgePin,
   onPinDrag,
+  onQuickPickArea,
+  searchNotice,
   testID = 'location-picker',
 }: {
   step: 1 | 2;
@@ -69,6 +71,8 @@ export function LocationPickerExperience({
   busy?: boolean;
   onNudgePin?: (dir: PinNudgeDirection) => void;
   onPinDrag?: (coords: { lat: number; lng: number }) => void;
+  onQuickPickArea?: (areaName: string) => void;
+  searchNotice?: string | null;
   testID?: string;
 }) {
   const goBack = () => {
@@ -89,9 +93,12 @@ export function LocationPickerExperience({
       </Text>
       <Text style={{ fontSize: 13, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>
         {step === 1
-          ? 'HDB collection only — we use this to show cooks near you. Cook unit address releases 2h before your slot.'
+          ? 'Singapore only — HDB collection. We sort kitchens and dishes by distance to your pin.'
           : 'Nudge the pin if needed, then save your collection point.'}
       </Text>
+      <View style={sgBanner}>
+        <Text style={sgBannerText}>🇸🇬 Singapore addresses only — not available outside SG yet.</Text>
+      </View>
       <View style={{ marginTop: shcSpacing.md }}>
         <SHCCheckoutStepper steps={STEPS} currentStep={step} testID="location-stepper" />
       </View>
@@ -115,6 +122,30 @@ export function LocationPickerExperience({
                 <SHCButton variant="outline" onPress={onUseCurrentLocation} disabled={locating} testID="location-use-gps" style={{ marginBottom: shcSpacing.md }}>
                   <SHCButtonText variant="outline">{locating ? 'Getting GPS…' : '📍 Use my current location'}</SHCButtonText>
                 </SHCButton>
+
+                {onQuickPickArea ? (
+                  <>
+                    <Text style={sectionLabel}>Quick pick — your area</Text>
+                    <Text style={hint}>One tap to browse kitchens near you. Add your block later at checkout.</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 8, paddingBottom: shcSpacing.sm }}
+                      testID="location-quick-areas"
+                    >
+                      {SG_QUICK_PICK_AREAS.map((entry) => (
+                        <Pressable
+                          key={entry.name}
+                          onPress={() => onQuickPickArea(entry.name)}
+                          style={quickAreaChip}
+                          testID={`location-quick-area-${entry.name.replace(/\s+/g, '-')}`}
+                        >
+                          <Text style={quickAreaChipText}>{entry.name.split(' / ')[0]}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </>
+                ) : null}
 
                 {saved.length > 0 && (
                   <>
@@ -160,6 +191,12 @@ export function LocationPickerExperience({
                 </View>
 
                 {searching && <ActivityIndicator color={shcColors.primary} style={{ marginVertical: shcSpacing.sm }} />}
+
+                {!searching && searchNotice ? (
+                  <SHCCard variant="bento-peach" style={{ marginBottom: shcSpacing.sm }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', lineHeight: 18, color: shcColors.text }}>{searchNotice}</Text>
+                  </SHCCard>
+                ) : null}
 
                 {results.map((r) => (
                   <Pressable key={r.id} onPress={() => onSelectResult(r)} testID={`location-result-${r.id}`} style={{ marginBottom: shcSpacing.sm }}>
@@ -284,6 +321,64 @@ export function LocationPickerExperience({
     </View>
   );
 }
+
+/** Discover / cart nudge when customer has not set a collection point yet. */
+export function SHCLocationNudgeBanner({
+  onPress,
+  testID = 'location-nudge-banner',
+}: {
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable onPress={onPress} testID={testID} style={nudgeBanner}>
+      <View style={{ flex: 1 }}>
+        <Text style={nudgeTitle}>Set your collection area</Text>
+        <Text style={nudgeBody}>
+          See kitchens and dishes sorted by distance. Singapore HDB pickup only.
+        </Text>
+      </View>
+      <Text style={nudgeCta}>Set →</Text>
+    </Pressable>
+  );
+}
+
+const sgBanner = {
+  marginTop: shcSpacing.sm,
+  padding: shcSpacing.sm,
+  borderRadius: shcRadii.md,
+  backgroundColor: shcColors.bentoMint,
+  borderWidth: shcBorders.brutal,
+  borderColor: shcColors.border,
+};
+const sgBannerText = { fontSize: 11, fontWeight: '700', color: shcColors.text, lineHeight: 16 };
+
+const quickAreaChip = {
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  borderRadius: shcRadii.pill,
+  borderWidth: shcBorders.brutal,
+  borderColor: shcColors.border,
+  backgroundColor: shcColors.surface,
+};
+const quickAreaChipText = { fontSize: 13, fontWeight: '800', color: shcColors.text };
+
+const nudgeBanner = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: shcSpacing.sm,
+  marginHorizontal: shcSpacing.md,
+  marginBottom: shcSpacing.md,
+  padding: shcSpacing.md,
+  borderRadius: shcRadii.lg,
+  borderWidth: shcBorders.brutal,
+  borderColor: shcColors.border,
+  backgroundColor: shcColors.bentoPeach,
+  ...shcShadows.brutalSm,
+};
+const nudgeTitle = { fontSize: 14, fontWeight: '900', color: shcColors.text };
+const nudgeBody = { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 17 };
+const nudgeCta = { fontSize: 14, fontWeight: '900', color: shcColors.primary };
 
 const geocodeBanner = {
   flexDirection: 'row',

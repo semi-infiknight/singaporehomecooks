@@ -19,6 +19,22 @@ export const SG_BOUNDS = {
   maxLng: 104.1,
 } as const;
 
+export const SG_ONLY_LOCATION_MESSAGE =
+  'Singapore Home Cooks is only available in Singapore right now. Pick an address or area within Singapore to see nearby kitchens.';
+
+export class LocationOutsideSingaporeError extends Error {
+  constructor(message = SG_ONLY_LOCATION_MESSAGE) {
+    super(message);
+    this.name = 'LocationOutsideSingaporeError';
+  }
+}
+
+export function requireWithinSingapore(lat: number, lng: number): void {
+  if (!isWithinSingapore(lat, lng)) {
+    throw new LocationOutsideSingaporeError();
+  }
+}
+
 export function isWithinSingapore(lat: number, lng: number): boolean {
   return lat >= SG_BOUNDS.minLat && lat <= SG_BOUNDS.maxLat && lng >= SG_BOUNDS.minLng && lng <= SG_BOUNDS.maxLng;
 }
@@ -106,9 +122,7 @@ export async function searchSingaporeAddresses(query: string, limit = 8): Promis
 
 /** Reverse geocode via OneMap; falls back to nearest SG area name. */
 export async function reverseGeocodeSingapore(lat: number, lng: number): Promise<AddressSearchResult> {
-  if (!isWithinSingapore(lat, lng)) {
-    throw new Error('Pin must be within Singapore');
-  }
+  requireWithinSingapore(lat, lng);
 
   try {
     const url = `https://www.onemap.gov.sg/api/public/revgeocode?location=${lat},${lng}&buffer=40&addressType=All`;
@@ -335,3 +349,20 @@ export function createSavedAddress(
     created_at: new Date().toISOString(),
   };
 }
+
+/** One-tap collection point from an SG area centroid (browse/sort without full HDB address). */
+export function savedAddressFromSgArea(
+  entry: SgAreaEntry,
+  label: SHCSavedAddress['label'] = 'home'
+): Omit<SHCSavedAddress, 'id' | 'created_at'> {
+  return {
+    label,
+    line1: `${entry.name}, Singapore`,
+    postal_code: entry.postal_prefix ? `${entry.postal_prefix}0000`.slice(0, 6) : undefined,
+    lat: entry.lat,
+    lng: entry.lng,
+    source: 'manual',
+  };
+}
+
+export const SG_QUICK_PICK_AREAS = SG_AREA_CENTROIDS;

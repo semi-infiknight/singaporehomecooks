@@ -2216,6 +2216,31 @@ export function TiffinFilterChips({
 }
 
 /** HomelyEats kitchen list card — matches SHCTiffinKitchenCard */
+export function LocationNudgeBanner({
+  onPress,
+  testID = 'location-nudge-banner',
+}: {
+  onPress: () => void;
+  testID?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      data-testid={testID}
+      className="w-full text-left rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-4 shadow-[var(--shc-shadow-soft)] hover:opacity-95 flex items-center gap-3"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="font-black text-sm text-foreground">Set your collection area</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-1 leading-snug">
+          See kitchens and dishes sorted by distance. Singapore HDB pickup only.
+        </p>
+      </div>
+      <span className="text-sm font-black text-primary shrink-0">Set →</span>
+    </button>
+  );
+}
+
 export function TiffinKitchenCard({
   cookId,
   cookName,

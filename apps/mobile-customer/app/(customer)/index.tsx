@@ -31,6 +31,7 @@ import {
   contentPadForTabBar,
   useSHCTray,
 } from '@shc/ui';
+import { SHCLocationNudgeBanner } from '@shc/ui/location-ux';
 import {
   BENTO_ACTION_IMAGES,
   getDishImageUrl,
@@ -144,7 +145,7 @@ export default function CustomerDiscover() {
     }, [refetchDrops])
   );
 
-  const { active: collectionLocation, locationLabel } = useCustomerLocation();
+  const { active: collectionLocation, locationLabel, ready: locationReady } = useCustomerLocation();
 
   const sortedCookList = useMemo(
     () =>
@@ -420,7 +421,11 @@ export default function CustomerDiscover() {
 
       case 'browse-switch':
         return (
-          <GourmeatModeSwitch
+          <View>
+            {locationReady && !collectionLocation ? (
+              <SHCLocationNudgeBanner onPress={() => router.push('/(customer)/location' as any)} />
+            ) : null}
+            <GourmeatModeSwitch
             modes={browseConfig.discover_modes}
             activeId={mode}
             onSelect={(id) => setMode(id as DiscoverModeId)}
@@ -430,6 +435,7 @@ export default function CustomerDiscover() {
               testID: browseConfig.occasions_nav.testID,
             }}
           />
+          </View>
         );
 
       case 'cuisine-rail':

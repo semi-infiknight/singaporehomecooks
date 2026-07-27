@@ -63,6 +63,7 @@ import {
   SearchResultsPanel,
   RequestDishHomeCTA,
   HomePromoCarousel,
+  LocationNudgeBanner,
   TiffinKitchenCard,
   type DishCardProduct,
 } from './components/SHCWebComponents';
@@ -98,7 +99,7 @@ export default function DiscoverHome() {
   );
   const { data: cooks, isLoading: cooksLoading, refetch: refetchCooks } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
-  const { active: collectionLocation, locationLabel } = useCustomerLocation();
+  const { active: collectionLocation, locationLabel, ready: locationReady } = useCustomerLocation();
   const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
@@ -359,6 +360,9 @@ export default function DiscoverHome() {
       case 'browse-switch':
         return (
           <div className="shc-section-stack">
+            {locationReady && !collectionLocation ? (
+              <LocationNudgeBanner onPress={() => router.push('/location')} />
+            ) : null}
             <GourmeatModeSwitch
               modes={browseConfig.discover_modes}
               activeId={mode}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { View, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,10 @@ import {
   nudgeCoordinates,
   reverseGeocodeSingapore,
   searchSingaporeAddresses,
+  savedAddressFromSgArea,
+  SG_ONLY_LOCATION_MESSAGE,
+  SG_QUICK_PICK_AREAS,
+  isWithinSingapore,
   type AddressSearchResult,
 } from '@shc/utils';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -27,6 +31,12 @@ export default function LocationScreen() {
   const [draft, setDraft] = useState<Partial<SHCSavedAddress> | null>(null);
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const searchNotice = useMemo(() => {
+    if (searching || query.trim().length < 2) return null;
+    if (results.length > 0) return null;
+    return 'No Singapore matches — try a 6-digit postal code (e.g. 520456) or tap your area above.';
+  }, [searching, query, results.length]);
+
   const runSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
     setSearching(true);
@@ -38,9 +48,10 @@ export default function LocationScreen() {
   }, [query]);
 
   useEffect(() => {
+    const q = query.trim();
     const t = setTimeout(() => {
-      if (query.trim().length >= 3) void runSearch();
-    }, 400);
+      if (/^\d{6}$/.test(q) || q.length >= 3) void runSearch();
+    }, /^\d{6}$/.test(q) ? 100 : 400);
     return () => clearTimeout(t);
   }, [query, runSearch]);
 
@@ -106,6 +117,11 @@ export default function LocationScreen() {
         } else {
           Alert.alert('Could not get location', 'Try search instead, or set a custom location in the emulator extended controls.');
         }
+        return;
+      }
+
+      if (!isWithinSingapore(result.coords.lat, result.coords.lng)) {
+        Alert.alert('Outside Singapore', SG_ONLY_LOCATION_MESSAGE);
         return;
       }
 
@@ -193,6 +209,20 @@ export default function LocationScreen() {
     }
   };
 
+  const onQuickPickArea = async (areaName: string) => {
+    const entry = SG_QUICK_PICK_AREAS.find((a) => a.name === areaName);
+    if (!entry) return;
+    setBusy(true);
+    try {
+      await saveNew(savedAddressFromSgArea(entry));
+      router.back();
+    } catch (e: unknown) {
+      Alert.alert('Could not save', (e as Error)?.message ?? 'Try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: gourmeatColors.background }} testID="location-screen">
       <LocationPickerExperience
@@ -220,6 +250,8 @@ export default function LocationScreen() {
         busy={busy}
         onNudgePin={onPinMove}
         onPinDrag={onPinDrag}
+        onQuickPickArea={onQuickPickArea}
+        searchNotice={searchNotice}
       />
     </View>
   );

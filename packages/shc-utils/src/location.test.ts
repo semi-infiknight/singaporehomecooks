@@ -7,6 +7,8 @@ import {
   distanceToCookAreaKm,
   formatDistanceKm,
   sortByCookProximity,
+  requireWithinSingapore,
+  savedAddressFromSgArea,
   nudgeCoordinates,
   dragOffsetToCoordinates,
   buildOsmStaticMapUrl,
@@ -24,6 +26,10 @@ describe('location utils', () => {
   it('validates Singapore bounds', () => {
     expect(isWithinSingapore(1.3, 103.8)).toBe(true);
     expect(isWithinSingapore(2, 103.8)).toBe(false);
+  });
+
+  it('rejects coordinates outside Singapore', () => {
+    expect(() => requireWithinSingapore(3.1, 101.7)).toThrow(/Singapore/);
   });
 
   it('formats short label', () => {
@@ -57,6 +63,12 @@ describe('location utils', () => {
   it('normalizes cook area aliases', () => {
     expect(normalizeCookAreaInput('katong')).toBe('Katong / Joo Chiat');
     expect(normalizeCookAreaInput('Tampines')).toBe('Tampines');
+  });
+
+  it('builds saved address from SG area centroid', () => {
+    const addr = savedAddressFromSgArea({ name: 'Tampines', lat: 1.35, lng: 103.94, postal_prefix: '52' });
+    expect(addr.line1).toContain('Tampines');
+    expect(addr.lat).toBe(1.35);
   });
 
   it('nudges coordinates by direction', () => {

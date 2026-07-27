@@ -7,6 +7,10 @@ import {
   buildOsmMapPickerHtml,
   reverseGeocodeSingapore,
   searchSingaporeAddresses,
+  savedAddressFromSgArea,
+  SG_ONLY_LOCATION_MESSAGE,
+  SG_QUICK_PICK_AREAS,
+  isWithinSingapore,
   type AddressSearchResult,
 } from '@shc/utils';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
@@ -36,6 +40,12 @@ export default function LocationPage() {
     );
   }, []);
 
+  const searchNotice = useMemo(() => {
+    if (searching || query.trim().length < 2) return null;
+    if (results.length > 0) return null;
+    return 'No Singapore matches — try a 6-digit postal code (e.g. 520456) or pick your area below.';
+  }, [searching, query, results.length]);
+
   const runSearch = useCallback(async () => {
     if (query.trim().length < 2) return;
     setSearching(true);
@@ -47,9 +57,10 @@ export default function LocationPage() {
   }, [query]);
 
   useEffect(() => {
+    const q = query.trim();
     const t = setTimeout(() => {
-      if (query.trim().length >= 3) void runSearch();
-    }, 400);
+      if (/^\d{6}$/.test(q) || q.length >= 3) void runSearch();
+    }, /^\d{6}$/.test(q) ? 100 : 400);
     return () => clearTimeout(t);
   }, [query, runSearch]);
 
@@ -107,6 +118,10 @@ export default function LocationPage() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          if (!isWithinSingapore(pos.coords.latitude, pos.coords.longitude)) {
+            setGpsError(SG_ONLY_LOCATION_MESSAGE);
+            return;
+          }
           const rev = await reverseGeocodeSingapore(pos.coords.latitude, pos.coords.longitude);
           beginDraft({
             line1: rev.line1,
@@ -159,15 +174,32 @@ export default function LocationPage() {
     }
   };
 
+  const onQuickPickArea = (areaName: string) => {
+    const entry = SG_QUICK_PICK_AREAS.find((a) => a.name === areaName);
+    if (!entry) return;
+    setBusy(true);
+    try {
+      saveNew(savedAddressFromSgArea(entry));
+      router.back();
+    } catch (e: unknown) {
+      alert((e as Error)?.message ?? 'Could not save');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // Web-native layout mirroring LocationPickerExperience (RN component not used on web)
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-16" data-testid="location-screen">
       <button type="button" onClick={() => (step === 2 ? setStep(1) : router.back())} className="mb-4 font-bold" data-testid="location-back-btn">
         ← Back
       </button>
-      <h1 className="text-2xl font-black">Collection address</h1>
+      <h1 className="text-2xl font-black">Where will you collect?</h1>
       <p className="text-sm text-muted-foreground font-medium mt-1">
-        Wireframe Delivery tab → HDB collection point. Cooks near your pin first · address shared 2h before slot.
+        Singapore HDB pickup only — we sort kitchens and dishes by distance to your pin.
+      </p>
+      <p className="text-xs font-bold text-foreground mt-2 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2">
+        🇸🇬 Singapore addresses only — not available outside SG yet.
       </p>
 
       {step === 1 && (
@@ -180,6 +212,27 @@ export default function LocationPage() {
               {gpsError}
             </p>
           ) : null}
+
+          <div>
+            <p className="text-sm font-bold mb-1">Quick pick — your area</p>
+            <p className="text-xs text-muted-foreground font-semibold mb-2">
+              One tap to browse nearby kitchens. Add your block at checkout.
+            </p>
+            <div className="flex flex-wrap gap-2" data-testid="location-quick-areas">
+              {SG_QUICK_PICK_AREAS.map((entry) => (
+                <button
+                  key={entry.name}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onQuickPickArea(entry.name)}
+                  className="rounded-full border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2 text-xs font-extrabold hover:bg-muted"
+                  data-testid={`location-quick-area-${entry.name.replace(/\s+/g, '-')}`}
+                >
+                  {entry.name.split(' / ')[0]}
+                </button>
+              ))}
+            </div>
+          </div>
           {saved.length > 0 && (
             <div>
               <p className="text-sm font-bold mb-2">Saved</p>
@@ -222,7 +275,12 @@ export default function LocationPage() {
               Go
             </button>
           </div>
-          {searching && <p className="text-sm text-muted-foreground">Searching…</p>}
+          {searching && <p className="text-sm text-muted-foreground">Searching Singapore…</p>}
+          {searchNotice ? (
+            <p className="text-sm font-semibold text-muted-foreground rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] px-3 py-2">
+              {searchNotice}
+            </p>
+          ) : null}
           {results.map((r) => (
             <button
               key={r.id}
