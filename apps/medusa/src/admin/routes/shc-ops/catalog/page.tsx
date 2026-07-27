@@ -1,7 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { Badge, Button, Container, Heading, Input, Label, Table, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState, type FormEvent } from "react"
+import { useState, useEffect, type FormEvent } from "react"
 import { DataBarChart, DataDonutChart } from "../../../components/shc-charts"
 import { shcDelete, shcGet, shcPost, errMessage } from "../../../lib/shc-api"
 import { withShcQuery, invalidateShcOpsDashboard } from "../../../lib/shc-query"
@@ -67,10 +67,25 @@ const ShcOpsCatalogPage = () => {
     signed_in_subtitle: "",
     category_offer_title: "",
     category_offer_subtitle: "",
+    empty_dishes_title: "",
+    empty_dishes_description: "",
+    empty_kitchens_title: "",
+    empty_kitchens_description: "",
+    empty_filtered_title: "",
+    empty_filtered_description: "",
+    occasions_heading_title: "",
+    occasions_heading_hint: "",
+    occasions_spread_title: "",
+    occasions_spread_hint: "",
+    for_you_reorder: "",
+    for_you_saved: "",
+    for_you_top_rated: "",
     min_rating: "4.7",
+    top_percent: "20",
     location_label: "",
     kitchen_open_fallback: "",
   })
+  const [mealChipForm, setMealChipForm] = useState<Array<{ id: string; label: string }>>([])
 
   const catsQ = useQuery({
     queryKey: ["shc-ops", "categories"],
@@ -195,6 +210,39 @@ const ShcOpsCatalogPage = () => {
   const browseConfig = customerCfgQ.data?.config
   const occasions = browseConfig?.occasions || []
 
+  useEffect(() => {
+    if (!browseConfig) return
+    setCopyForm({
+      guest_headline: browseConfig.copy?.guest_headline || "",
+      signed_in_subtitle: browseConfig.copy?.signed_in_subtitle || "",
+      category_offer_title: browseConfig.copy?.category_offer_title || "",
+      category_offer_subtitle: browseConfig.copy?.category_offer_subtitle || "",
+      empty_dishes_title: browseConfig.copy?.empty_dishes_title || "",
+      empty_dishes_description: browseConfig.copy?.empty_dishes_description || "",
+      empty_kitchens_title: browseConfig.copy?.empty_kitchens_title || "",
+      empty_kitchens_description: browseConfig.copy?.empty_kitchens_description || "",
+      empty_filtered_title: browseConfig.copy?.empty_filtered_title || "",
+      empty_filtered_description: browseConfig.copy?.empty_filtered_description || "",
+      occasions_heading_title: browseConfig.copy?.occasions_heading_title || "",
+      occasions_heading_hint: browseConfig.copy?.occasions_heading_hint || "",
+      occasions_spread_title: browseConfig.copy?.occasions_spread_title || "",
+      occasions_spread_hint: browseConfig.copy?.occasions_spread_hint || "",
+      for_you_reorder: browseConfig.copy?.for_you_reorder || "",
+      for_you_saved: browseConfig.copy?.for_you_saved || "",
+      for_you_top_rated: browseConfig.copy?.for_you_top_rated || "",
+      min_rating: String(browseConfig.popular?.min_rating ?? 4.7),
+      top_percent: String(browseConfig.popular?.top_percent ?? 20),
+      location_label: browseConfig.defaults?.location_label || "",
+      kitchen_open_fallback: browseConfig.defaults?.kitchen_open_fallback || "",
+    })
+    setMealChipForm(
+      (browseConfig.meal_type_chips || []).map((c: { id: string; label: string }) => ({
+        id: c.id,
+        label: c.label,
+      }))
+    )
+  }, [browseConfig])
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!form.id.trim() || !form.label.trim()) return
@@ -252,12 +300,38 @@ const ShcOpsCatalogPage = () => {
         signed_in_subtitle: copyForm.signed_in_subtitle,
         category_offer_title: copyForm.category_offer_title,
         category_offer_subtitle: copyForm.category_offer_subtitle,
+        empty_dishes_title: copyForm.empty_dishes_title,
+        empty_dishes_description: copyForm.empty_dishes_description,
+        empty_kitchens_title: copyForm.empty_kitchens_title,
+        empty_kitchens_description: copyForm.empty_kitchens_description,
+        empty_filtered_title: copyForm.empty_filtered_title,
+        empty_filtered_description: copyForm.empty_filtered_description,
+        occasions_heading_title: copyForm.occasions_heading_title,
+        occasions_heading_hint: copyForm.occasions_heading_hint,
+        occasions_spread_title: copyForm.occasions_spread_title,
+        occasions_spread_hint: copyForm.occasions_spread_hint,
+        for_you_reorder: copyForm.for_you_reorder,
+        for_you_saved: copyForm.for_you_saved,
+        for_you_top_rated: copyForm.for_you_top_rated,
       },
-      popular: { min_rating: Number(copyForm.min_rating) || 4.7 },
+      popular: {
+        min_rating: Number(copyForm.min_rating) || 4.7,
+        top_percent: Number(copyForm.top_percent) || 20,
+      },
       defaults: {
         location_label: copyForm.location_label,
         kitchen_open_fallback: copyForm.kitchen_open_fallback,
       },
+    })
+  }
+
+  const onMealChipsSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    saveBrowseMut.mutate({
+      meal_type_chips: mealChipForm.map((c) => ({
+        id: c.id,
+        label: c.label.trim() || c.id,
+      })),
     })
   }
 
@@ -711,12 +785,44 @@ const ShcOpsCatalogPage = () => {
 
       <Container className="divide-y p-0">
         <div className="px-6 py-4">
+          <Heading level="h2">Meal-type chips</Heading>
+          <Text size="small" className="text-ui-fg-subtle">
+            Filter chips on home, search, and category pages. Ids are fixed; edit labels only.
+          </Text>
+        </div>
+        <form onSubmit={onMealChipsSubmit} className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2">
+          {mealChipForm.map((chip, i) => (
+            <div key={chip.id} className="flex flex-col gap-y-1">
+              <Label>{chip.id}</Label>
+              <Input
+                value={chip.label}
+                onChange={(e) =>
+                  setMealChipForm((rows) =>
+                    rows.map((row, idx) => (idx === i ? { ...row, label: e.target.value } : row))
+                  )
+                }
+              />
+            </div>
+          ))}
+          <div className="flex items-end small:col-span-2">
+            <Button type="submit" isLoading={saveBrowseMut.isPending}>
+              Save meal chips
+            </Button>
+          </div>
+        </form>
+      </Container>
+
+      <Container className="divide-y p-0">
+        <div className="px-6 py-4">
           <Heading level="h2">Copy &amp; thresholds</Heading>
           <Text size="small" className="text-ui-fg-subtle">
-            Headlines, category banners, popular badge threshold, default location label.
+            Headlines, empty states, category banners, occasions copy, for-you rails, popular badge threshold.
           </Text>
         </div>
         <form onSubmit={onCopySubmit} className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2">
+          <div className="small:col-span-2">
+            <Heading level="h3">Home</Heading>
+          </div>
           <div className="flex flex-col gap-y-1">
             <Label>Guest headline</Label>
             <Input
@@ -733,6 +839,9 @@ const ShcOpsCatalogPage = () => {
               onChange={(e) => setCopyForm((f) => ({ ...f, signed_in_subtitle: e.target.value }))}
             />
           </div>
+          <div className="small:col-span-2">
+            <Heading level="h3">Category banners</Heading>
+          </div>
           <div className="flex flex-col gap-y-1">
             <Label>Category offer title (use {"{{label}}"})</Label>
             <Input
@@ -740,6 +849,117 @@ const ShcOpsCatalogPage = () => {
               value={copyForm.category_offer_title}
               onChange={(e) => setCopyForm((f) => ({ ...f, category_offer_title: e.target.value }))}
             />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Category offer subtitle</Label>
+            <Input
+              placeholder={browseConfig?.copy?.category_offer_subtitle}
+              value={copyForm.category_offer_subtitle}
+              onChange={(e) => setCopyForm((f) => ({ ...f, category_offer_subtitle: e.target.value }))}
+            />
+          </div>
+          <div className="small:col-span-2">
+            <Heading level="h3">Empty states</Heading>
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty dishes title</Label>
+            <Input
+              value={copyForm.empty_dishes_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_dishes_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty dishes description</Label>
+            <Input
+              value={copyForm.empty_dishes_description}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_dishes_description: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty kitchens title</Label>
+            <Input
+              value={copyForm.empty_kitchens_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_kitchens_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty kitchens description</Label>
+            <Input
+              value={copyForm.empty_kitchens_description}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_kitchens_description: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty filtered title</Label>
+            <Input
+              value={copyForm.empty_filtered_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_filtered_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Empty filtered description</Label>
+            <Input
+              value={copyForm.empty_filtered_description}
+              onChange={(e) => setCopyForm((f) => ({ ...f, empty_filtered_description: e.target.value }))}
+            />
+          </div>
+          <div className="small:col-span-2">
+            <Heading level="h3">Occasions</Heading>
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Occasions heading title</Label>
+            <Input
+              value={copyForm.occasions_heading_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, occasions_heading_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Occasions heading hint</Label>
+            <Input
+              value={copyForm.occasions_heading_hint}
+              onChange={(e) => setCopyForm((f) => ({ ...f, occasions_heading_hint: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Occasion spread title (use {"{{occasion}}"})</Label>
+            <Input
+              value={copyForm.occasions_spread_title}
+              onChange={(e) => setCopyForm((f) => ({ ...f, occasions_spread_title: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Occasion spread hint</Label>
+            <Input
+              value={copyForm.occasions_spread_hint}
+              onChange={(e) => setCopyForm((f) => ({ ...f, occasions_spread_hint: e.target.value }))}
+            />
+          </div>
+          <div className="small:col-span-2">
+            <Heading level="h3">For-you rails</Heading>
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Reorder rail title</Label>
+            <Input
+              value={copyForm.for_you_reorder}
+              onChange={(e) => setCopyForm((f) => ({ ...f, for_you_reorder: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Saved rail title</Label>
+            <Input
+              value={copyForm.for_you_saved}
+              onChange={(e) => setCopyForm((f) => ({ ...f, for_you_saved: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Top rated rail title</Label>
+            <Input
+              value={copyForm.for_you_top_rated}
+              onChange={(e) => setCopyForm((f) => ({ ...f, for_you_top_rated: e.target.value }))}
+            />
+          </div>
+          <div className="small:col-span-2">
+            <Heading level="h3">Thresholds &amp; defaults</Heading>
           </div>
           <div className="flex flex-col gap-y-1">
             <Label>Popular min rating</Label>
@@ -751,12 +971,32 @@ const ShcOpsCatalogPage = () => {
               onChange={(e) => setCopyForm((f) => ({ ...f, min_rating: e.target.value }))}
             />
           </div>
-          <div className="flex flex-col gap-y-1 small:col-span-2">
+          <div className="flex flex-col gap-y-1">
+            <Label>Popular top percent</Label>
+            <Input
+              type="number"
+              step="1"
+              min="1"
+              max="100"
+              placeholder={String(browseConfig?.popular?.top_percent ?? 20)}
+              value={copyForm.top_percent}
+              onChange={(e) => setCopyForm((f) => ({ ...f, top_percent: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
             <Label>Default location label</Label>
             <Input
               placeholder={browseConfig?.defaults?.location_label}
               value={copyForm.location_label}
               onChange={(e) => setCopyForm((f) => ({ ...f, location_label: e.target.value }))}
+            />
+          </div>
+          <div className="flex flex-col gap-y-1">
+            <Label>Kitchen open fallback</Label>
+            <Input
+              placeholder={browseConfig?.defaults?.kitchen_open_fallback}
+              value={copyForm.kitchen_open_fallback}
+              onChange={(e) => setCopyForm((f) => ({ ...f, kitchen_open_fallback: e.target.value }))}
             />
           </div>
           <div className="flex items-end small:col-span-2">

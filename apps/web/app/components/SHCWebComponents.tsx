@@ -971,15 +971,18 @@ export function CategoryRail({
 export function CuisineMindRail({
   active,
   onSelect,
+  categories,
 }: {
   active: string;
   onSelect: (val: string) => void;
+  categories?: Array<{ id: string; label: string; imageUrl?: string }>;
 }) {
+  const items = categories?.length ? categories : MIND_CUISINE_CATEGORIES;
   return (
     <div data-testid="cuisine-mind-rail">
       <p className="text-base font-black text-foreground mb-2">Explore cuisines</p>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-        {MIND_CUISINE_CATEGORIES.map((cat) => (
+        {items.map((cat) => (
           <CategoryRailItem
             key={cat.id || 'all'}
             occasion={cat.id}
