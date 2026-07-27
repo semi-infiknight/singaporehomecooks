@@ -5,6 +5,8 @@ import {
   toggleAllergenTier1,
   toggleCollectionDay,
   availabilityFromListing,
+  normalizeCollectionSlot,
+  resolveDefaultBatchCollectionSlot,
 } from './listing-form';
 
 describe('listing-form', () => {
@@ -44,5 +46,12 @@ describe('listing-form', () => {
     const avail = availabilityFromListing(null);
     expect(avail.portions_per_day).toBe(18);
     expect(avail.collection_days).toHaveLength(7);
+  });
+
+  it('normalizes collection slots and batch defaults', () => {
+    expect(normalizeCollectionSlot('17:00-18:00')).toBe('17:00-18:00');
+    expect(normalizeCollectionSlot('bad')).toBe('18:00-19:00');
+    expect(resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: '17:00-19:00' })).toBe('17:00-19:00');
+    expect(resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: '' })).toBe('18:00-19:00');
   });
 });

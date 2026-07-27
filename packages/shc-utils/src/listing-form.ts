@@ -39,6 +39,31 @@ export const COLLECTION_TIME_SLOT_PRESETS = [
   '19:00-21:00',
 ] as const;
 
+export const DEFAULT_COLLECTION_SLOT = '18:00-19:00' as const;
+
+export function isCollectionTimeSlotPreset(slot: string): boolean {
+  return (COLLECTION_TIME_SLOT_PRESETS as readonly string[]).includes(slot);
+}
+
+/** Normalize a collection slot for drops, listings, and tiffin. */
+export function normalizeCollectionSlot(
+  slot?: string | null,
+  fallback: string = DEFAULT_COLLECTION_SLOT
+): string {
+  const trimmed = String(slot || '').trim();
+  if (!trimmed) return fallback;
+  if (isCollectionTimeSlotPreset(trimmed)) return trimmed;
+  if (/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  return fallback;
+}
+
+/** Default slot when posting a Cooking soon batch (prefers tiffin kitchen default). */
+export function resolveDefaultBatchCollectionSlot(
+  prefs?: { tiffinDefaultSlot?: string | null } | null
+): string {
+  return normalizeCollectionSlot(prefs?.tiffinDefaultSlot, DEFAULT_COLLECTION_SLOT);
+}
+
 export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 
 export const DEFAULT_LISTING_AVAILABILITY: ListingAvailabilityDraft = {
