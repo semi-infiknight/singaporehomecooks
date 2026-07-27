@@ -124,3 +124,45 @@ export function cookTiffinEmptyDishesCopy(): {
     ctaLabel: 'Create listing',
   };
 }
+
+export const TIFFIN_MEALS_PER_WEEK_CHOICES = [2, 3, 4] as const;
+export type TiffinMealsPerWeek = (typeof TIFFIN_MEALS_PER_WEEK_CHOICES)[number];
+
+export function normalizeTiffinMealsPerWeekOptions(input?: number[]): TiffinMealsPerWeek[] {
+  const allowed = new Set<number>(TIFFIN_MEALS_PER_WEEK_CHOICES);
+  const picked = (input || []).filter((n): n is TiffinMealsPerWeek =>
+    allowed.has(n as TiffinMealsPerWeek)
+  );
+  const unique = [...new Set(picked)].sort((a, b) => a - b);
+  return unique.length ? unique : [...TIFFIN_MEALS_PER_WEEK_CHOICES];
+}
+
+export function toggleTiffinMealsPerWeekOption(
+  current: number[],
+  option: TiffinMealsPerWeek
+): TiffinMealsPerWeek[] {
+  const normalized = normalizeTiffinMealsPerWeekOptions(current);
+  if (normalized.includes(option)) {
+    const next = normalized.filter((n) => n !== option);
+    return next.length ? next : [option];
+  }
+  return normalizeTiffinMealsPerWeekOptions([...normalized, option]);
+}
+
+export const COOK_TIFFIN_COLLECTION_SLOTS = [
+  { id: '11:30-13:30', label: '11:30 am – 1:30 pm' },
+  { id: '17:00-18:00', label: '5:00 pm – 6:00 pm' },
+  { id: '18:00-19:00', label: '6:00 pm – 7:00 pm' },
+  { id: '19:00-20:00', label: '7:00 pm – 8:00 pm' },
+] as const;
+
+export function normalizeTiffinDefaultCollectionSlot(slot?: string | null): string {
+  const value = String(slot || '').trim();
+  const found = COOK_TIFFIN_COLLECTION_SLOTS.find((s) => s.id === value);
+  return found?.id || '18:00-19:00';
+}
+
+export function formatTiffinCollectionSlotLabel(slotId?: string | null): string {
+  const value = normalizeTiffinDefaultCollectionSlot(slotId);
+  return COOK_TIFFIN_COLLECTION_SLOTS.find((s) => s.id === value)?.label || value.replace('-', ' – ');
+}
