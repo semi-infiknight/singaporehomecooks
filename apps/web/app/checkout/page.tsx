@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -30,7 +30,7 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
-import { formatLocationLabel } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes } from '@shc/utils';
 import { createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 
@@ -53,6 +53,23 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { active: collectionLocation } = useCustomerLocation();
+  const collectionPrefill = useMemo(
+    () => checkoutCollectionPrefill(collectionLocation ?? undefined),
+    [collectionLocation]
+  );
+  const [collectionUnit, setCollectionUnit] = useState('');
+  const [collectionInstructions, setCollectionInstructions] = useState('');
+
+  useEffect(() => {
+    if (!collectionPrefill) {
+      setCollectionUnit('');
+      setCollectionInstructions('');
+      return;
+    }
+    setCollectionUnit(collectionPrefill.line2);
+    setCollectionInstructions(collectionPrefill.instructions);
+  }, [collectionPrefill?.line1, collectionPrefill?.line2, collectionPrefill?.instructions]);
+
   const { data: cart, isLoading: cartLoading } = useCart();
 
   useEffect(() => {
@@ -91,8 +108,10 @@ export default function CheckoutPage() {
   }, [dropCart, dropCollection?.date, dropCollection?.slot]);
 
   const effectiveSlot = selected ?? (dropCart && dropCollection ? dropCollection : null);
-  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent);
-  const checkoutHint = !effectiveSlot
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill);
+  const checkoutHint = !collectionPrefill
+    ? 'Set your collection point to continue'
+    : !effectiveSlot
     ? 'Select a collection date and time to continue'
     : !allergenAck
       ? 'Acknowledge allergens to continue'
@@ -217,17 +236,31 @@ export default function CheckoutPage() {
       showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
       return;
     }
+    if (!collectionPrefill) {
+      showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Set your HDB collection point before checkout.' });
+      router.push('/location');
+      return;
+    }
     if (!effectiveSlot) {
       showCheckoutError({ code: 'SHC-AVAIL-001', message: 'Please select a collection slot.' });
       return;
     }
     try {
       const cartNotes = readCartCheckoutNotes();
+      const collection_notes = buildCheckoutCollectionNotes({
+        location: collectionLocation ?? undefined,
+        unit: collectionUnit,
+        instructions: collectionInstructions,
+        cartCollectionNotes: cartNotes.collectionNotes,
+      });
       const res = await checkoutMut.mutateAsync({
         allergenAck,
         collection: effectiveSlot,
         pdpaConsent,
-        notes: toOrderNotesPayload(cartNotes),
+        notes: {
+          ...toOrderNotesPayload(cartNotes),
+          collection_notes,
+        },
       });
       clearCartCheckoutNotes();
       const oid = extractOrderId(res);
@@ -372,18 +405,38 @@ export default function CheckoutPage() {
 
       <SHCCard className="mb-6 shc-bento-mint">
         <SHCSectionTitle>Your collection point</SHCSectionTitle>
-        <p className="text-sm font-semibold text-muted-foreground mb-3">
-          {collectionLocation
-            ? formatLocationLabel(collectionLocation)
-            : 'No location set — cooks sorted by default.'}
-        </p>
+        {collectionPrefill ? (
+          <>
+            <p className="text-sm font-semibold text-foreground mb-3">{collectionPrefill.fullLabel}</p>
+            <label className="block text-xs font-extrabold text-muted-foreground mb-1">Unit / floor</label>
+            <input
+              value={collectionUnit}
+              onChange={(e) => setCollectionUnit(e.target.value)}
+              placeholder="#05-123"
+              className="shc-input w-full mb-3"
+              data-testid="checkout-collection-unit"
+            />
+            <label className="block text-xs font-extrabold text-muted-foreground mb-1">Pickup instructions</label>
+            <textarea
+              value={collectionInstructions}
+              onChange={(e) => setCollectionInstructions(e.target.value)}
+              placeholder="Void deck, call when you arrive…"
+              className="shc-input w-full min-h-[72px] mb-3"
+              data-testid="checkout-collection-instructions"
+            />
+          </>
+        ) : (
+          <p className="text-sm font-semibold text-muted-foreground mb-3">
+            Set where you will collect — we attach it to your order.
+          </p>
+        )}
         <SHCButton
           variant="outline"
           size="sm"
           onClick={() => router.push('/location')}
           testID="checkout-change-location"
         >
-          Change location
+          {collectionPrefill ? 'Change location' : 'Set collection point'}
         </SHCButton>
       </SHCCard>
 

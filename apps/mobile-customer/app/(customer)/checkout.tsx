@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
@@ -35,7 +35,7 @@ import { authRouteWithReturn } from '../../lib/auth-return';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
-import { formatLocationLabel } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes } from '@shc/utils';
 
 function AllergenGateTrayContent({
   tier1,
@@ -68,6 +68,22 @@ export default function Checkout() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { active: collectionLocation } = useCustomerLocation();
+  const collectionPrefill = useMemo(
+    () => checkoutCollectionPrefill(collectionLocation ?? undefined),
+    [collectionLocation]
+  );
+  const [collectionUnit, setCollectionUnit] = useState('');
+  const [collectionInstructions, setCollectionInstructions] = useState('');
+
+  useEffect(() => {
+    if (!collectionPrefill) {
+      setCollectionUnit('');
+      setCollectionInstructions('');
+      return;
+    }
+    setCollectionUnit(collectionPrefill.line2);
+    setCollectionInstructions(collectionPrefill.instructions);
+  }, [collectionPrefill?.line1, collectionPrefill?.line2, collectionPrefill?.instructions]);
   const { openTray, dismiss } = useSHCTray();
   const milestoneStorage = useMemo(
     () => ({
@@ -129,8 +145,10 @@ export default function Checkout() {
 
   const effectiveSlot =
     selectedSlot ?? (dropCart && dropCollection ? dropCollection : null);
-  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent);
-  const checkoutHint = !effectiveSlot
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill);
+  const checkoutHint = !collectionPrefill
+    ? 'Set your collection point to continue'
+    : !effectiveSlot
     ? 'Select a collection date and time to continue'
     : !allergenAck
       ? 'Acknowledge allergens to continue'
@@ -164,6 +182,11 @@ export default function Checkout() {
       setError({ code: 'SHC-GENERIC-001', message: 'PDPA consent checkbox is required for Singapore compliance (personal data processing)' });
       return;
     }
+    if (!collectionPrefill) {
+      setError({ code: 'SHC-GENERIC-001', message: 'Set your HDB collection point before checkout.' });
+      router.push('/(customer)/location' as any);
+      return;
+    }
     if (!effectiveSlot) {
       setError({ code: 'SHC-AVAIL-001', message: 'Please select a collection date + slot from available (enforced)' });
       return;
@@ -171,7 +194,16 @@ export default function Checkout() {
     setIsSubmitting(true);
     try {
       const cartNotes = await readCartCheckoutNotes();
-      const res = await checkout(allergenAck, effectiveSlot, pdpaConsent, toOrderNotesPayload(cartNotes));
+      const collection_notes = buildCheckoutCollectionNotes({
+        location: collectionLocation ?? undefined,
+        unit: collectionUnit,
+        instructions: collectionInstructions,
+        cartCollectionNotes: cartNotes.collectionNotes,
+      });
+      const res = await checkout(allergenAck, effectiveSlot, pdpaConsent, {
+        ...toOrderNotesPayload(cartNotes),
+        collection_notes,
+      });
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);
       await clearCartCheckoutNotes();
@@ -324,13 +356,34 @@ export default function Checkout() {
 
         <SHCCard variant="bento-mint" style={styles.sectionCard}>
           <SHCSectionTitle style={styles.sectionTitle}>Your collection point</SHCSectionTitle>
-          {collectionLocation ? (
-            <Text style={styles.locationBody}>{formatLocationLabel(collectionLocation)}</Text>
+          {collectionPrefill ? (
+            <>
+              <Text style={styles.locationBody}>{collectionPrefill.fullLabel}</Text>
+              <Text style={styles.fieldLabel}>Unit / floor</Text>
+              <TextInput
+                value={collectionUnit}
+                onChangeText={setCollectionUnit}
+                placeholder="#05-123"
+                placeholderTextColor={gourmeatColors.textLight}
+                style={styles.input}
+                testID="checkout-collection-unit"
+              />
+              <Text style={styles.fieldLabel}>Pickup instructions</Text>
+              <TextInput
+                value={collectionInstructions}
+                onChangeText={setCollectionInstructions}
+                placeholder="Void deck, call when you arrive…"
+                placeholderTextColor={gourmeatColors.textLight}
+                multiline
+                style={[styles.input, styles.textArea]}
+                testID="checkout-collection-instructions"
+              />
+            </>
           ) : (
-            <Text style={styles.locationBody}>No location set — cooks sorted by default.</Text>
+            <Text style={styles.locationBody}>Set where you will collect — we attach it to your order.</Text>
           )}
           <SHCButton variant="outline" size="sm" onPress={() => router.push('/(customer)/location' as any)} testID="checkout-change-location">
-            <SHCButtonText variant="outline">Change location</SHCButtonText>
+            <SHCButtonText variant="outline">{collectionPrefill ? 'Change location' : 'Set collection point'}</SHCButtonText>
           </SHCButton>
         </SHCCard>
 
@@ -430,6 +483,20 @@ const styles = StyleSheet.create({
   sectionCard: { marginBottom: shcSpacing.md },
   sectionTitle: { marginTop: 0 },
   locationBody: { fontSize: 13, color: gourmeatColors.text, marginBottom: shcSpacing.sm, lineHeight: 18 },
+  fieldLabel: { fontSize: 12, fontWeight: '800', color: gourmeatColors.textLight, marginBottom: 6, marginTop: shcSpacing.sm },
+  input: {
+    borderWidth: shcBorders.brutal,
+    borderColor: gourmeatColors.border,
+    borderRadius: shcRadii.md,
+    paddingHorizontal: shcSpacing.sm,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: gourmeatColors.text,
+    backgroundColor: gourmeatColors.surface,
+    marginBottom: shcSpacing.sm,
+  },
+  textArea: { minHeight: 72, textAlignVertical: 'top' },
   pdpaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

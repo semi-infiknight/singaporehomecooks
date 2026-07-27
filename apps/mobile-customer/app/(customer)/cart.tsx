@@ -1,7 +1,7 @@
 /**
  * One-time order cart — kitchen banner, items, notes, summary, proceed.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ import {
   CART_WIREFRAME_LABELS,
   checkoutTrustLine,
   collectionEtaHint,
+  checkoutCollectionPrefill,
 } from '@shc/utils';
 import { useCart, useClearCart } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
@@ -121,6 +122,12 @@ export default function Cart() {
   const [collectionNotes, setCollectionNotes] = useState('');
   const [showCooking, setShowCooking] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+
+  useEffect(() => {
+    const prefill = checkoutCollectionPrefill(collectionLocation ?? undefined);
+    if (!prefill?.instructions) return;
+    setCollectionNotes((prev) => (prev.trim() ? prev : prefill.instructions));
+  }, [collectionLocation?.id, collectionLocation?.instructions]);
 
   const items = (cartData.items || []) as Array<Record<string, unknown>>;
   const summary = computeOneTimeOrderSummary(items as any);

@@ -4,7 +4,7 @@
  * One-time order cart (HomelyEats cart IA).
  * Kitchen · collection location · items · instructions · summary · Proceed to pay.
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Trash2, MapPin } from 'lucide-react';
@@ -16,6 +16,7 @@ import {
   CART_WIREFRAME_LABELS,
   checkoutTrustLine,
   collectionEtaHint,
+  checkoutCollectionPrefill,
 } from '@shc/utils';
 import { useCart, useClearCart } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
@@ -147,6 +148,12 @@ export default function CartPage() {
   const [collectionNotes, setCollectionNotes] = useState('');
   const [showCooking, setShowCooking] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+
+  useEffect(() => {
+    const prefill = checkoutCollectionPrefill(collectionLocation ?? undefined);
+    if (!prefill?.instructions) return;
+    setCollectionNotes((prev) => (prev.trim() ? prev : prefill.instructions));
+  }, [collectionLocation?.id, collectionLocation?.instructions]);
 
   const items = ((cartData as { items?: CartItem[] }).items || []) as CartItem[];
   const summary = computeOneTimeOrderSummary(items);

@@ -12,6 +12,7 @@ export * from './auth-session';
 export * from './favorites';
 export * from './sg-areas';
 export * from './location';
+export * from './checkout-collection';
 export * from './discover';
 export * from './discover-home';
 export * from './discover-promos';

@@ -340,7 +340,7 @@ export function SHCLocationNudgeBanner({
   );
 }
 
-const nudgeBanner = {
+const quickAreaChip = {
   paddingHorizontal: 14,
   paddingVertical: 10,
   borderRadius: shcRadii.pill,
