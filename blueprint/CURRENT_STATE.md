@@ -1,12 +1,24 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-26 — Discover IA systemized; honest ratings; filter sheet parity on category/search.
+**Last Updated:** 2026-07-27 — Cook + admin configurability waves stitched to `main`; redundant `cursor/*-67bb` branches pruned.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-26)
+## 0. New-session handoff (2026-07-27)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Cook configurability** | Stitched items 1–8 on `main`: settings (pause, collection address/instructions), avatar/hero upload, per-kitchen tiffin pricing, tiffin slot options, order collection release, batches slot picker, product meta (`meal_extras`, `meal_addons`, `recipe_steps`). Cook-owned via profile + listing wizard + batches/tiffin screens. |
+| **Admin configurability** | Stitched items 9–12 on `main`: discover promo carousel, marketplace business rules, cook portal chrome (dashboard tiles, greetings, allergen/slot presets, chat quick replies), unified browse config (categories/occasions/copy). Stored in `shc_platform_stat`; SHC Ops → Catalog / Controls. |
+| **Client hooks** | `useCustomerConfig` (web + mobile-customer), `useCookConfig` (web cook-portal + mobile-cook). Fallback to `@shc/utils` code defaults until admin saves. |
+| **Migrations (Railway)** | Deploy Medusa after pull: tiffin kitchen pricing, cook media columns, product meta meal fields. Platform config keys need no migration. |
+| **Branches** | All `cursor/*-67bb` stitch branches merged + deleted — work on `main` only. |
+
+## 0a. Prior handoff (2026-07-26)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -18,7 +30,7 @@
 | **Filter parity** | Category + advanced search use same filter sheet as discover (meal type, cuisine on search, dietary). Category hides cuisine group (`hideCuisine`) — locked by route. |
 | **Collection slots** | Dish cards show `collection_slot` only when API sends it — no `getCollectionSlotLabel()` hash fallback on browse. |
 
-## 0a. Prior handoff (2026-07-27)
+## 0b. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -28,7 +40,7 @@
 | **Home greeting** | `discoverHomeHeadline(name, email)` → signed-in: `Hi, {first}` + subtitle; guest: `Hungry? Order & Eat.` Uses **email local-part** when `user.name` empty (fixes Profile “You” vs Home guest mismatch). `/store/shc/auth/me` fallback now sets `name` from email prefix. |
 | **Metro dev** | Root `devDependencies.metro-runtime` + `.npmrc` hoist — fixes Expo CLI `Cannot find module metro-runtime` after `METRO_CLEAR=1`. |
 
-## 0a. Prior handoff (2026-07-24)
+## 0c. Prior handoff (2026-07-24)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -47,7 +59,7 @@
 | **HitPay env** | `HITPAY_API_KEY`, `HITPAY_WEBHOOK_SALT`, `HITPAY_ENV=sandbox`. Webhook: `/hooks/shc/hitpay`. |
 | **Not done** | Live HitPay KYC; rotate secrets if exposed in chat. |
 
-## 0b. Prior handoff (2026-07-14)
+## 0d. Prior handoff (2026-07-14)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -153,7 +165,7 @@ Bootstrap creates auth identity **and** Medusa store customer profile (required 
 | `POST /store/shc/auth/customer/register` | Register + auto-create store customer |
 | `POST /store/shc/auth/cook/register` | New cook sign-up → `shc_cook` + SHC JWT |
 | `POST /store/shc/auth/cook/login` | SHC JWT; verifies cook exists in `shc_cook` |
-| `PATCH /store/shc/auth/cook/profile` | Cook JWT; onboarding story, **collection_address**, collection instructions, PDPA |
+| `PATCH /store/shc/auth/cook/profile` | Cook JWT; story, **collection_address**, collection_instructions, **availability_paused**, **avatar_url**, **hero_image_url**, PDPA |
 | `GET /store/shc/auth/me` | Current user from Bearer token |
 
 Protected routes use `getCustomerId` / `getCookId` from JWT — **not** `x-shc-*` headers.

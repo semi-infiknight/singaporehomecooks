@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-24 — `SHCMetaBadge` + `badge-ux`; cook `listing-form`; admin charts (Medusa-only).
+**Last Updated:** 2026-07-27 — `product-meta-form`; cook/admin platform config utils; admin-managed browse chrome.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -42,8 +42,9 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton`, `GourmeatSearchBar`, layout re-exports |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
+| `product-meta-form.tsx` | Cook listing step 3: meal extras, add-ons, recipe steps — shared web + mobile |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 

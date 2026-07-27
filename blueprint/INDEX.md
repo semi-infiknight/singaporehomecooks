@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-27 — Discover promo carousel (16:9) + greeting email fallback. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-27 — Cook + admin configurability stitched to `main`; `cursor/*-67bb` branches pruned. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,17 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-27 — Cook + admin configurability stitch)
+
+| Wave | Delivered |
+|------|-----------|
+| **Cook (items 1–8)** | Settings pause + collection fields; avatar/hero upload; per-kitchen tiffin pricing; tiffin slot options; order collection release; batches slot picker; product meta (`meal_extras`, `meal_addons`, `recipe_steps`) |
+| **Admin (items 9–12)** | Discover promo carousel; marketplace business rules; cook portal chrome; unified browse config (categories/occasions/copy) |
+| **Storage** | `shc_platform_stat` keys: `customer_browse_config`, `discover_promos`, `business_rules_config`, `cook_portal_config` — SHC Ops Catalog + Controls |
+| **Client hooks** | `useCustomerConfig`, `useCookConfig` — tri-platform; code defaults until admin saves |
+
+**Verify:** `FLAVOUR=tri-platform SCOPE=tray TOUCHES_API=1 pnpm verify:goal`
 
 ## Progress Update (2026-07-24 — Cook portal + admin ops parity)
 

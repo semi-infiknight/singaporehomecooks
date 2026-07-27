@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-24 — Cook listing form fields; admin charts API; near-realtime ops polling; `shc-heritage` removed.
+**Last Updated:** 2026-07-27 — Cook + admin configurability routes; product meta listing fields; platform config store routes.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -96,9 +96,9 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 **Listings routes (2026-07-24):**
 - `GET /store/shc/listings` — cook JWT; returns cook's listings
 - `POST /store/shc/listings` — cook JWT; create listing (name, price, description, cuisine, allergens, availability, halal, min_qty)
-- `PATCH /store/shc/listings/:id` — cook JWT; update owned listing (`ListingUpdateSchema` from `shc-listing-schema.ts`)
+- `PATCH /store/shc/listings/:id` — cook JWT; update owned listing (`ListingUpdateSchema` from `shc-listing-schema.ts`); supports `meal_extras`, `meal_addons`, `recipe_steps`
 - `DELETE /store/shc/listings/:id` — cook JWT; soft-delete owned listing
-- Cook profile: `PATCH /store/shc/auth/cook/profile` accepts `collection_address` + `collection_instructions`
+- Cook profile: `GET/PATCH /store/shc/auth/cook/profile` accepts `collection_address`, `collection_instructions`, `availability_paused`, `avatar_url`, `hero_image_url`, PDPA
 
 Client methods: `getCookListings`, `createCookListing`, `updateCookListing`, `deleteCookListing`.
 
@@ -112,7 +112,7 @@ Client methods: `getCookListings`, `createCookListing`, `updateCookListing`, `de
 |-------|--------|------|---------|
 | `/store/shc/auth/cook/register` | POST | Public | New cook sign-up → `shc_cook` + JWT |
 | `/store/shc/auth/cook/login` | POST | Public | Existing cook login |
-| `/store/shc/auth/cook/profile` | PATCH | Cook JWT | Onboarding/profile (story, **collection_address**, collection_instructions, pdpa_consent) |
+| `/store/shc/auth/cook/profile` | PATCH | Cook JWT | Onboarding/profile (story, **collection_address**, collection_instructions, **availability_paused**, **avatar_url**, **hero_image_url**, pdpa_consent) |
 
 Cook login uses SHC JWT (issueCookToken) verifying against `shc_cook.login_email` + `password_hash` (scrypt). Dev plaintext fallback behind `SHC_COOK_ALLOW_DEV_PLAINTEXT`. Customer uses Medusa auth + ensureStoreCustomer. See 07-auth.md + shc-auth.ts + seed.
 
