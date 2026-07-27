@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getOccasionImageUrl, defaultListingOccasionTagOptions } from '@shc/utils';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, shcSectionStack, gourmeatColors } from './theme';
 import { SHCFoodImage } from './visuals';
 import { SHCIcon } from './icons';
@@ -42,6 +42,8 @@ export function RequestDishExperience({
   busy = false,
   bottomInset = 32,
   testID = 'request-dish-experience',
+  occasionOptions = defaultListingOccasionTagOptions(),
+  defaultOccasion = defaultListingOccasionTagOptions()[0] || 'Hari Raya',
 }: {
   onSubmit: (data: RequestDishPayload) => void | Promise<void>;
   onBack?: () => void;
@@ -49,9 +51,12 @@ export function RequestDishExperience({
   /** Safe area + tab bar clearance for bottom CTAs */
   bottomInset?: number;
   testID?: string;
+  /** Admin-managed occasion labels from customer browse config */
+  occasionOptions?: string[];
+  defaultOccasion?: string;
 }) {
   const [step, setStep] = React.useState(1);
-  const [occasion, setOccasion] = React.useState('Hari Raya');
+  const [occasion, setOccasion] = React.useState(defaultOccasion);
   const [story, setStory] = React.useState(
     'Nasi lemak with sambal prawns for our Hari Raya open house — spicy, halal-friendly, enough for the whole family.',
   );
@@ -59,6 +64,10 @@ export function RequestDishExperience({
   const [partySize, setPartySize] = React.useState(8);
   const [budget, setBudget] = React.useState(120);
   const [date, setDate] = React.useState(defaultDate);
+
+  React.useEffect(() => {
+    if (!occasion && defaultOccasion) setOccasion(defaultOccasion);
+  }, [defaultOccasion, occasion]);
 
   const heroUri = occasion ? getOccasionImageUrl(occasion) : BENTO_ACTION_IMAGES.request;
   const stepMeta = STEPS[step - 1];
@@ -166,7 +175,7 @@ export function RequestDishExperience({
                 <OccasionTagPicker
                   selected={[occasion]}
                   onToggle={(tag) => setOccasion(tag)}
-                  options={['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding']}
+                  options={occasionOptions}
                 />
                 <Text style={[labelStyle, { marginTop: shcSpacing.md }]}>Describe the dish & vibe</Text>
                 <TextInput

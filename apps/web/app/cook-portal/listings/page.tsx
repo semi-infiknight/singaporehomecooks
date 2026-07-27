@@ -26,10 +26,13 @@ import {
   recipeStepsFromListing,
   cookAllergenTier1Presets,
   resolveCookCollectionTimeSlots,
+  defaultListingOccasionTag,
+  listingOccasionTagOptions,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import { useCookProfile } from '../../../lib/useCookPortal';
+import { useCustomerConfig } from '../../../lib/useCustomerConfig';
 import {
   useCookListings,
   useCreateCookListing,
@@ -95,8 +98,6 @@ type ListingRow = Record<string, unknown> & {
   recipe_steps?: unknown;
 };
 
-const OCCASION_OPTIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Family Gathering', 'Birthday'];
-/** Fallback cuisine chips until GET /ai/image status loads. */
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 const DEFAULT_FORM = {
   name: 'New Nyonya Dish',
@@ -119,6 +120,9 @@ export default function CookListingsPage() {
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
   const { config } = useCookConfig();
+  const { config: browseConfig } = useCustomerConfig();
+  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
+  const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
@@ -149,7 +153,7 @@ export default function CookListingsPage() {
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
   const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
-  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
+  const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [mealExtras, setMealExtras] = useState(() => defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
   const [mealAddons, setMealAddons] = useState(() => defaultMealAddonsDraft(false));
@@ -166,6 +170,12 @@ export default function CookListingsPage() {
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!editingId && occasionTags.length === 0 && defaultOccasionTag) {
+      setOccasionTags([defaultOccasionTag]);
+    }
+  }, [defaultOccasionTag, editingId, occasionTags.length]);
 
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
@@ -331,7 +341,7 @@ export default function CookListingsPage() {
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
     setLastMinutePremiumPct(null);
-    setOccasionTags(['Hari Raya']);
+    setOccasionTags([defaultOccasionTag]);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
     setMealExtras(defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
     setMealAddons(defaultMealAddonsDraft(false));
@@ -357,7 +367,7 @@ export default function CookListingsPage() {
     setLastMinutePremiumPct(
       typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null
     );
-    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
+    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag]);
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
@@ -373,7 +383,7 @@ export default function CookListingsPage() {
     );
     goToStep(1);
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+  }, [defaultOccasionTag]);
 
   const toggleTag = (tag: string) => {
     setOccasionTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -705,7 +715,7 @@ export default function CookListingsPage() {
               />
               <p className="text-xs font-extrabold text-muted-foreground pt-1">Occasion tags</p>
               <div className="flex flex-wrap gap-2">
-                {OCCASION_OPTIONS.map((tag) => (
+                {occasionOptions.map((tag) => (
                   <button
                     key={tag}
                     type="button"
