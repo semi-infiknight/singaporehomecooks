@@ -96,9 +96,6 @@ export function LocationPickerExperience({
           ? 'Singapore only — HDB collection. We sort kitchens and dishes by distance to your pin.'
           : 'Nudge the pin if needed, then save your collection point.'}
       </Text>
-      <View style={sgBanner}>
-        <Text style={sgBannerText}>🇸🇬 Singapore addresses only — not available outside SG yet.</Text>
-      </View>
       <View style={{ marginTop: shcSpacing.md }}>
         <SHCCheckoutStepper steps={STEPS} currentStep={step} testID="location-stepper" />
       </View>
@@ -343,17 +340,7 @@ export function SHCLocationNudgeBanner({
   );
 }
 
-const sgBanner = {
-  marginTop: shcSpacing.sm,
-  padding: shcSpacing.sm,
-  borderRadius: shcRadii.md,
-  backgroundColor: shcColors.bentoMint,
-  borderWidth: shcBorders.brutal,
-  borderColor: shcColors.border,
-};
-const sgBannerText = { fontSize: 11, fontWeight: '700', color: shcColors.text, lineHeight: 16 };
-
-const quickAreaChip = {
+const nudgeBanner = {
   paddingHorizontal: 14,
   paddingVertical: 10,
   borderRadius: shcRadii.pill,

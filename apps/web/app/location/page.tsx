@@ -198,9 +198,6 @@ export default function LocationPage() {
       <p className="text-sm text-muted-foreground font-medium mt-1">
         Singapore HDB pickup only — we sort kitchens and dishes by distance to your pin.
       </p>
-      <p className="text-xs font-bold text-foreground mt-2 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2">
-        🇸🇬 Singapore addresses only — not available outside SG yet.
-      </p>
 
       {step === 1 && (
         <div data-testid="location-step-find" className="mt-6 space-y-4">
