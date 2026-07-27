@@ -84,6 +84,7 @@ import {
   getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { useBusinessRules } from '../../hooks/useBusinessRules';
 import { useCookConfig } from '../../hooks/useCookConfig';
 import { useCookProfile } from '../../hooks/useCookProfile';
 import { VirtualRowFlashList } from '../../components/VirtualLists';
@@ -120,6 +121,7 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
+  const { commissionRatePct } = useBusinessRules();
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
@@ -820,7 +822,7 @@ export default function CookListings() {
               </View>
             }
           />
-          <PriceEarningsCalc price={price} qty={minQty} minQty={minQty} />
+          <PriceEarningsCalc price={price} qty={minQty} minQty={minQty} commissionRatePct={commissionRatePct} />
           <SHCListingAvailabilityEditor
             portionsPerDay={portionsPerDay}
             collectionDays={collectionDays}
