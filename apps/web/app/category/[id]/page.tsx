@@ -9,14 +9,13 @@ import {
   scopeProductsByCategory,
   scopeKitchensByCategory,
   topRatedCategoryDishes,
-  categoryOfferCopy,
+  customerCategoryOfferCopy,
   getDishImageUrl,
   getCookKitchenHeroUrl,
   coerceRating,
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
-  MEAL_TYPE_CHIPS,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../lib/useProducts';
@@ -24,6 +23,7 @@ import { useAuth } from '../../../lib/useAuth';
 import { useGuestAuthGate } from '../../../lib/useGuestAuthGate';
 import { useCustomerLocation } from '../../../lib/useCustomerLocation';
 import { useDiscoverPrefs } from '../../../lib/useDiscoverPrefs';
+import { useCustomerConfig } from '../../../lib/useCustomerConfig';
 import { getCooks } from '../../../lib/api-client';
 import {
   GourmeatDishCard,
@@ -76,8 +76,12 @@ export default function CategoryPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [chip, setChip] = useState('all');
 
+  const { config: browseConfig } = useCustomerConfig();
   const category = useMemo(() => getCuisineCategoryById(categoryId), [categoryId]);
-  const offer = useMemo(() => categoryOfferCopy(category), [category]);
+  const offer = useMemo(
+    () => customerCategoryOfferCopy(browseConfig, category?.label || category?.id || 'Heritage'),
+    [browseConfig, category]
+  );
   const title = category?.label || category?.id || 'Category';
 
   const filters = useMemo(
@@ -261,7 +265,7 @@ export default function CategoryPage() {
       <DiscoverFilterSheet
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        mealTypeChips={MEAL_TYPE_CHIPS}
+        mealTypeChips={browseConfig.meal_type_chips}
         mealType={mealType}
         onMealTypeChange={(id) => setMealType(id as MealTypeId)}
         cuisines={[]}

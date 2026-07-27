@@ -654,6 +654,15 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).categories || [];
     },
 
+    async getDiscoverPromos() {
+      const r = await request("/store/shc/discover-promos", { method: "GET" });
+      return (r as any).promos || [];
+    },
+
+    async getCustomerConfig() {
+      return request("/store/shc/customer-config", { method: "GET" });
+    },
+
     async getTiffinKitchens() {
       const r = await request("/store/shc/tiffin/kitchens", { method: "GET" });
       return (r as any).kitchens || [];

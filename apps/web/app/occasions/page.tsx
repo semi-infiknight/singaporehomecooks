@@ -6,14 +6,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   filterDiscoverProducts,
   getDishImageUrl,
-  occasionBrowseCategories,
-  occasionBrowseHeading,
-  isPopularDish,
+  customerOccasionCategories,
+  customerOccasionHeading,
+  customerIsPopularDish,
   coerceRating,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../lib/useProducts';
 import { useGuestAuthGate } from '../../lib/useGuestAuthGate';
 import { useFavorites } from '../../lib/useFavorites';
+import { useCustomerConfig } from '../../lib/useCustomerConfig';
 import {
   GourmeatCategoryRow,
   GourmeatDishCard,
@@ -63,8 +64,10 @@ function OccasionsPageContent() {
   const addMut = useAddToCart();
   const { favorites, toggle, isFavorite } = useFavorites();
 
-  const heading = occasionBrowseHeading(occasionFilter);
-  const categories = occasionBrowseCategories();
+  const { config: browseConfig } = useCustomerConfig();
+
+  const heading = customerOccasionHeading(browseConfig, occasionFilter);
+  const categories = customerOccasionCategories(browseConfig);
 
   const filteredProducts = useMemo(
     () =>
@@ -77,8 +80,9 @@ function OccasionsPageContent() {
   const gridProducts = useMemo(() => filteredProducts.map(toDishCard), [filteredProducts]);
 
   const checkPopular = useCallback(
-    (product: DishCardProduct) => isPopularDish(product as Record<string, unknown>, productList),
-    [productList]
+    (product: DishCardProduct) =>
+      customerIsPopularDish(product as Record<string, unknown>, productList, browseConfig.popular),
+    [productList, browseConfig.popular]
   );
 
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);

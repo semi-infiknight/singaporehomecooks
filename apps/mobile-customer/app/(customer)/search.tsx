@@ -23,11 +23,11 @@ import {
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
-  MEAL_TYPE_CHIPS,
-  MIND_CUISINE_CATEGORIES,
+  customerOccasionCategories,
   type MealTypeId,
   coerceRating,
 } from '@shc/utils';
+import { useCustomerConfig } from '../../hooks/useCustomerConfig';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
@@ -45,6 +45,7 @@ export default function SearchScreen() {
   const { data: rawResults = [] } = useProducts('');
   const addMut = useAddToCart();
   const { requireAuth } = useGuestAuthGate();
+  const { categories, config: browseConfig } = useCustomerConfig();
 
   const filters = useMemo(
     () => ({ mealType, cuisine, halalOnly, vegetarianOnly, maxCal }),
@@ -86,20 +87,22 @@ export default function SearchScreen() {
     []
   );
 
-  const occasionChips = useMemo(
-    () => [
+  const occasionChips = useMemo(() => {
+    const opts = browseConfig.occasions.filter((o) => o.enabled);
+    return [
       { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-      { id: 'raya', label: 'Hari Raya', imageUrl: getOccasionImageUrl('Hari Raya'), active: occ === 'Hari Raya' },
-      { id: 'cny', label: 'CNY', imageUrl: getOccasionImageUrl('Chinese New Year'), active: occ === 'Chinese New Year' },
-      { id: 'family', label: 'Family', imageUrl: getOccasionImageUrl('Family Gathering'), active: occ === 'Family Gathering' },
-      { id: 'xmas', label: 'Christmas', imageUrl: getOccasionImageUrl('Christmas'), active: occ === 'Christmas' },
-    ],
-    [occ]
-  );
+      ...opts.map((o) => ({
+        id: o.id,
+        label: o.short_label || o.label,
+        imageUrl: o.image_url || getOccasionImageUrl(o.id),
+        active: occ === o.id,
+      })),
+    ];
+  }, [browseConfig.occasions, occ]);
 
   const cuisineOptions = useMemo(
-    () => [{ id: '', label: 'All' }, ...MIND_CUISINE_CATEGORIES.filter((c) => c.id).map((c) => ({ id: c.id, label: c.label }))],
-    []
+    () => categories.map((c) => ({ id: c.id, label: c.label || 'All' })),
+    [categories]
   );
 
   const clearFilters = useCallback(() => {
@@ -116,7 +119,7 @@ export default function SearchScreen() {
       { id: 'search-filters', title: 'Filters', height: 'tall' },
       () => (
         <SHCDiscoverFilterSheet
-          mealTypeChips={MEAL_TYPE_CHIPS}
+          mealTypeChips={browseConfig.meal_type_chips}
           mealType={mealType}
           onMealTypeChange={(id) => setMealType(id as MealTypeId)}
           cuisines={cuisineOptions}
@@ -154,14 +157,7 @@ export default function SearchScreen() {
   ]);
 
   const handleOccasion = useCallback((id: string) => {
-    const map: Record<string, string> = {
-      any: '',
-      raya: 'Hari Raya',
-      cny: 'Chinese New Year',
-      family: 'Family Gathering',
-      xmas: 'Christmas',
-    };
-    setOcc(map[id] ?? '');
+    setOcc(id === 'any' ? '' : id);
   }, []);
 
   const handleAdd = useCallback(

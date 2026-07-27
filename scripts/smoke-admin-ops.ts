@@ -89,6 +89,27 @@ async function main() {
   if (pubCats.status !== 200) throw new Error(`store categories ${pubCats.status}`);
   console.log('✅ store categories', pubCats.body?.count, pubCats.body?.categories?.[1]?.label);
 
+  const promos = await get('/admin/shc/discover-promos');
+  if (promos.status !== 200) throw new Error(`discover-promos ${promos.status}`);
+  console.log('✅ admin discover-promos', promos.body?.count);
+
+  const pubPromos = await get('/store/shc/discover-promos');
+  if (pubPromos.status !== 200) throw new Error(`store discover-promos ${pubPromos.status}`);
+  console.log('✅ store discover-promos', pubPromos.body?.count, pubPromos.body?.promos?.[0]?.title);
+
+  const promoUp = await post('/admin/shc/discover-promos', {
+    id: 'promo-ops-test',
+    title: 'Ops Test Promo',
+    subtitle: 'Smoke test slide',
+    image_url: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=640',
+    mobile_route: '/(customer)/',
+    web_route: '/',
+    enabled: true,
+    sort_order: 99,
+  });
+  if (promoUp.status !== 200) throw new Error(`promo upsert ${promoUp.status} ${JSON.stringify(promoUp.body).slice(0, 160)}`);
+  console.log('✅ discover-promo upsert', promoUp.body?.action);
+
   // Upsert a test category then disable it (idempotent)
   const up = await post('/admin/shc/categories', {
     id: 'OpsTest',

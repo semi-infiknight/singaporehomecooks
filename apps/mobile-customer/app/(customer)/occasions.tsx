@@ -19,15 +19,16 @@ import {
 import {
   filterDiscoverProducts,
   getDishImageUrl,
-  occasionBrowseCategories,
-  occasionBrowseHeading,
-  isPopularDish,
+  customerOccasionCategories,
+  customerOccasionHeading,
+  customerIsPopularDish,
   BENTO_ACTION_IMAGES,
   coerceRating,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useFavorites } from '../../hooks/useFavorites';
+import { useCustomerConfig } from '../../hooks/useCustomerConfig';
 
 function toDishCardData(product: Record<string, unknown>): SHCDishCardData {
   const id = String(product.id);
@@ -61,8 +62,10 @@ export default function OccasionsScreen() {
   const addMut = useAddToCart();
   const { toggle, isFavorite } = useFavorites();
 
-  const heading = occasionBrowseHeading(occasionFilter);
-  const categories: GourmeatCategoryItem[] = occasionBrowseCategories().map((c) => ({
+  const { config: browseConfig } = useCustomerConfig();
+
+  const heading = customerOccasionHeading(browseConfig, occasionFilter);
+  const categories: GourmeatCategoryItem[] = customerOccasionCategories(browseConfig).map((c) => ({
     id: c.id,
     label: c.label,
     iconKey: 'people' as const,
@@ -81,8 +84,9 @@ export default function OccasionsScreen() {
   const colWidth = (Dimensions.get('window').width - shcSpacing.md * 2 - shcSpacing.sm) / 2;
 
   const checkPopular = useCallback(
-    (item: Record<string, unknown>) => isPopularDish(item, productList as Record<string, unknown>[]),
-    [productList]
+    (item: Record<string, unknown>) =>
+      customerIsPopularDish(item, productList as Record<string, unknown>[], browseConfig.popular),
+    [productList, browseConfig.popular]
   );
 
   const goToProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
