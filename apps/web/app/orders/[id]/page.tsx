@@ -28,6 +28,7 @@ import {
   orderTrackingBanner,
   orderDeliveredRateCopy,
   buildOrderChatContext,
+  ORDER_COLLECTION_PRIVACY_HINT,
 } from '@shc/utils';
 import { SHCOrderChatPanel } from '../../components/SHCOrderChat';
 import type { SHCOrderStatus } from '@shc/types';
@@ -40,6 +41,9 @@ type OrderDisplay = Record<string, unknown> & {
   cook_name?: string;
   paynow_reference?: string;
   is_corporate?: boolean;
+  collection_address?: string;
+  collection_instructions?: string;
+  collection_address_released?: boolean;
 };
 
 type OrderReview = { rating: number; body?: string };
@@ -80,10 +84,11 @@ export default function TrackOrder() {
     });
     return {
       ...base,
-      privacyHint:
-        (order as { address_released_at?: string }).address_released_at
-          ? undefined
-          : 'HDB collection address unlocks ~2 hours before your slot, after payment.',
+      collectionAddress: order.collection_address ? String(order.collection_address) : undefined,
+      collectionInstructions: order.collection_instructions
+        ? String(order.collection_instructions)
+        : undefined,
+      privacyHint: order.collection_address_released ? undefined : ORDER_COLLECTION_PRIVACY_HINT,
     };
   }, [id, order]);
 
@@ -224,7 +229,21 @@ export default function TrackOrder() {
           )}
         </div>
         <p className="text-xs text-[#5C5144] mt-4 pt-4 border-t border-[#E8D5B7]/60">
-          Your collection address will be shared about 2 hours before your slot, after payment is confirmed.
+          {order.collection_address_released ? (
+            <>
+              {order.collection_address ? (
+                <span className="block font-semibold text-foreground">{String(order.collection_address)}</span>
+              ) : null}
+              {order.collection_instructions ? (
+                <span className="block mt-1">{String(order.collection_instructions)}</span>
+              ) : null}
+              {!order.collection_address && !order.collection_instructions
+                ? 'Check order chat for collection details from your cook.'
+                : null}
+            </>
+          ) : (
+            ORDER_COLLECTION_PRIVACY_HINT
+          )}
         </p>
       </SHCCard>
 

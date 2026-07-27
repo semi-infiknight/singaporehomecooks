@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { SHCOrderChatPane } from '@shc/ui';
-import { buildOrderChatContext, getOrderStatusLabel } from '@shc/utils';
+import { buildOrderChatContext, getOrderStatusLabel, ORDER_COLLECTION_PRIVACY_HINT } from '@shc/utils';
 import { useOrder, useOrderChat } from '../../../../hooks/useOrder';
 import { useAuth } from '../../../../hooks/useAuth';
 
@@ -23,19 +23,15 @@ export default function OrderChatScreen() {
       counterpartyName: String(order?.cook_name || 'Your cook'),
       collectionDate: order?.collection_date ? String(order.collection_date) : undefined,
       collectionSlot: order?.collection_slot ? String(order.collection_slot) : undefined,
-      collectionInstructions:
-        order?.address_released_at || order?.shc_status !== 'paid'
-          ? order?.collection_instructions
-            ? String(order.collection_instructions)
-            : undefined
-          : undefined,
+      collectionAddress: order?.collection_address ? String(order.collection_address) : undefined,
+      collectionInstructions: order?.collection_instructions
+        ? String(order.collection_instructions)
+        : undefined,
       items: (order?.items as Array<{ name?: string }>) || [],
     });
     return {
       ...base,
-      privacyHint: order?.address_released_at
-        ? undefined
-        : 'HDB collection address unlocks ~2 hours before your slot, after payment.',
+      privacyHint: order?.collection_address_released ? undefined : ORDER_COLLECTION_PRIVACY_HINT,
     };
   }, [id, order]);
 

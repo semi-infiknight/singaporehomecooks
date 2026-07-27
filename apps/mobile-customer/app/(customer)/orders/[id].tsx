@@ -23,6 +23,7 @@ import {
   resolveOrderForDisplay,
   resolveReviewForDisplay,
   resolveDisputesForDisplay,
+  ORDER_COLLECTION_PRIVACY_HINT,
 } from '@shc/utils';
 import { useOrder } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
@@ -44,6 +45,8 @@ type OrderDisplay = Record<string, unknown> & {
   collection_date?: string;
   collection_slot?: string;
   collection_instructions?: string;
+  collection_address?: string;
+  collection_address_released?: boolean;
   address_released_at?: string;
   is_corporate?: boolean;
 };
@@ -117,7 +120,7 @@ export default function OrderTracking() {
     String(status)
   );
   const isCorporate = Boolean(order.is_corporate);
-  const addrReleased = !!order.address_released_at || order.shc_status !== 'paid';
+  const addrReleased = Boolean(order.collection_address_released);
   const firstItem = (order.items || [])[0];
   const heroUri = getDishImageUrl({
     id: firstItem?.product_id || firstItem?.productId,
@@ -163,11 +166,19 @@ export default function OrderTracking() {
           </Text>
         ))}
         {addrReleased && order.shc_status !== 'cart' ? (
-          <Text style={styles.addressLine}>
-            HDB address: {order.collection_instructions || 'Check chat for block & unit.'}
-          </Text>
+          <>
+            {order.collection_address ? (
+              <Text style={styles.addressLine}>HDB address: {order.collection_address}</Text>
+            ) : null}
+            {order.collection_instructions ? (
+              <Text style={styles.addressLine}>{order.collection_instructions}</Text>
+            ) : null}
+            {!order.collection_address && !order.collection_instructions ? (
+              <Text style={styles.addressLine}>Check chat for block & unit.</Text>
+            ) : null}
+          </>
         ) : (
-          <Text style={styles.hintLine}>Address released ~2h before your slot, after payment confirms.</Text>
+          <Text style={styles.hintLine}>{ORDER_COLLECTION_PRIVACY_HINT}</Text>
         )}
       </GourmeatCard>
 
