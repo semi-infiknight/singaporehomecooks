@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-27 — Cook + admin configurability stitched to `main`; `cursor/*-67bb` branches pruned. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-27 — Location wave merged to `main` (proximity discovery, checkout pre-fill, order-meta collection snapshot). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,17 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-27 — Location integration)
+
+| Area | Delivered |
+|------|-----------|
+| **Discovery** | Proximity sort on dish grid + kitchens; distance on kitchen cards; **Order again** rail prefers nearby cooks |
+| **Tiffin** | Nearest chip auto-selected when location set; proximity sort on kitchen list |
+| **Checkout** | Pre-fill collection point from saved location; `customer_collection_*` snapshotted on `shc_order_meta` |
+| **Utils** | `location.ts`, `checkout-collection.ts`, `reorder.ts` proximity helpers |
+
+**Deploy:** Railway Medusa — run migration `Migration20260727180000OrderMetaCustomerCollection`.
 
 ## Progress Update (2026-07-27 — Cook + admin configurability stitch)
 

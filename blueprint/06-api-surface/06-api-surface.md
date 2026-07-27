@@ -17,7 +17,7 @@
 | Area | Status | Notes |
 |------|--------|-------|
 | Store discovery (cooks, products, slots) | ✅ Implemented | `/store/shc/cooks`, `/products`, `/products/:id/slots`, search |
-| Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` + `checkout-credits` + complete route (PDPA, credits, corporate) |
+| Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` (PDPA, credits, corporate, **collection_notes** + **customer_collection_lat/lng/postal/line1**) + `checkout-credits` + complete route |
 | Orders + messages + transitions + review | ✅ Implemented | Full per-order list (enriched with id + items snapshot + total for UI) /detail/transition/messages/review. Items+total snapshotted at checkout. |
 | Growth (credits, requests, bids, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
 | Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); persist name/price/description; compliance DB-backed; notifications via shc-notification; push wired |
