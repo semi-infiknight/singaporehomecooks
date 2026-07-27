@@ -14,16 +14,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   GourmeatCookHeader,
+  GourmeatCard,
+  GourmeatPrimaryButton,
   SHCButton,
   SHCButtonText,
   SHCCard,
+  SHCFoodImage,
   contentPadForTabBar,
   gourmeatColors,
+  gourmeatRadii,
   shcColors,
   shcRadii,
   shcSpacing,
 } from '@shc/ui';
+import { getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
+import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
 
 type CookProfile = {
   display_name?: string;
@@ -32,11 +39,14 @@ type CookProfile = {
   collection_address?: string;
   collection_instructions?: string;
   availability_paused?: boolean;
+  avatar_url?: string;
+  hero_image_url?: string;
 };
 
 export default function CookSettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [displayName, setDisplayName] = useState('');
   const [area, setArea] = useState('');
@@ -44,6 +54,8 @@ export default function CookSettingsScreen() {
   const [collectionAddress, setCollectionAddress] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
   const [paused, setPaused] = useState(false);
+  const [profile, setProfile] = useState<CookProfile | null>(null);
+  const [busy, setBusy] = useState<'avatar' | 'hero' | null>(null);
 
   const profileQ = useQuery({
     queryKey: ['cook-profile'],
@@ -56,6 +68,7 @@ export default function CookSettingsScreen() {
   useEffect(() => {
     const cook = profileQ.data;
     if (!cook) return;
+    setProfile(cook);
     setDisplayName(String(cook.display_name || ''));
     setArea(String(cook.area || ''));
     setStory(String(cook.story || ''));
@@ -74,12 +87,36 @@ export default function CookSettingsScreen() {
         collection_instructions: collectionInstructions.trim() || undefined,
         availability_paused: paused,
       }),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      setProfile((res.cook || {}) as CookProfile);
       void qc.invalidateQueries({ queryKey: ['cook-profile'] });
       Alert.alert('Saved', 'Kitchen profile updated.');
     },
     onError: (e) => Alert.alert('Could not save', (e as Error).message),
   });
+
+  const handleUpload = async (kind: 'avatar' | 'hero') => {
+    const cookId = user?.id;
+    if (!cookId || busy) return;
+    const picked = await pickCookMediaImage();
+    if (!picked) return;
+    setBusy(kind);
+    try {
+      const uploaded = await uploadCookMediaImage(cookId, kind, picked);
+      const patch = kind === 'avatar' ? { avatar_url: uploaded.key } : { hero_image_url: uploaded.key };
+      const res = await updateCookProfile(patch);
+      setProfile((res.cook || {}) as CookProfile);
+      void qc.invalidateQueries({ queryKey: ['cook-profile'] });
+    } catch (e: any) {
+      Alert.alert('Upload failed', e?.message || 'Could not upload photo');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const name = profile?.display_name || user?.name || 'Chef';
+  const avatar = getCookAvatarUrl(user?.id, name, profile?.avatar_url);
+  const hero = getCookKitchenHeroUrl(user?.id, profile?.hero_image_url);
 
   return (
     <ScrollView
@@ -97,9 +134,38 @@ export default function CookSettingsScreen() {
 
       <GourmeatCookHeader
         title="Kitchen settings"
-        subtitle="Profile, collection details, pause orders"
+        subtitle="Photos, profile, collection details, pause orders"
         testID="cook-settings-hero"
       />
+
+      <GourmeatCard style={styles.card}>
+        <Text style={styles.sectionTitle}>Profile avatar</Text>
+        <View style={styles.mediaRow}>
+          <SHCFoodImage uri={avatar} height={80} width={80} rounded={40} />
+          <GourmeatPrimaryButton
+            label={busy === 'avatar' ? 'Uploading…' : 'Upload avatar'}
+            variant="outline"
+            onPress={() => void handleUpload('avatar')}
+            loading={busy === 'avatar'}
+            disabled={!!busy}
+            testID="cook-settings-avatar-btn"
+          />
+        </View>
+      </GourmeatCard>
+
+      <GourmeatCard style={styles.card}>
+        <Text style={styles.sectionTitle}>Kitchen hero</Text>
+        <SHCFoodImage uri={hero} height={160} rounded={gourmeatRadii.lg} />
+        <GourmeatPrimaryButton
+          label={busy === 'hero' ? 'Uploading…' : 'Upload kitchen photo'}
+          variant="outline"
+          onPress={() => void handleUpload('hero')}
+          loading={busy === 'hero'}
+          disabled={!!busy}
+          testID="cook-settings-hero-btn"
+          style={{ marginTop: shcSpacing.sm }}
+        />
+      </GourmeatCard>
 
       <SHCCard style={styles.card}>
         <Text style={styles.sectionTitle}>Pause orders</Text>
@@ -108,11 +174,7 @@ export default function CookSettingsScreen() {
         </Text>
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel}>{paused ? 'Orders paused' : 'Accepting orders'}</Text>
-          <Switch
-            value={paused}
-            onValueChange={setPaused}
-            testID="cook-settings-pause-toggle"
-          />
+          <Switch value={paused} onValueChange={setPaused} testID="cook-settings-pause-toggle" />
         </View>
       </SHCCard>
 
@@ -207,4 +269,5 @@ const styles = StyleSheet.create({
     marginTop: shcSpacing.sm,
   },
   switchLabel: { fontSize: 15, fontWeight: '700', color: shcColors.text, flex: 1, paddingRight: shcSpacing.md },
+  mediaRow: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.md },
 });

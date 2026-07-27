@@ -260,7 +260,7 @@ export default function KitchenPage() {
           area={cook.area}
           rating={ratingSum?.rating}
           orders={cook.orders}
-          avatarUri={getCookAvatarUrl(cook.id, cook.display_name)}
+          avatarUri={getCookAvatarUrl(cook.id, cook.display_name, cook.avatar_url)}
           isOpen={open.isOpen}
           openDetail={open.detail}
           tags={tags}
@@ -445,7 +445,7 @@ export default function KitchenPage() {
         {tab === 'about' && (
           <View testID="kitchen-tab-panel-about">
             <SHCFoodImage
-              uri={getCookKitchenHeroUrl(cook.id || cook.display_name)}
+              uri={getCookKitchenHeroUrl(cook.id, cook.hero_image_url)}
               height={160}
               rounded={shcRadii.lg}
             />

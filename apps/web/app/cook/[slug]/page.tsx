@@ -218,9 +218,9 @@ export default function KitchenPage() {
     ...(cook as any),
     cuisine: cook.cuisine || cookProducts[0]?.cuisine,
   });
-  const hero = getCookKitchenHeroUrl(cook.display_name);
-  const avatar = getCookAvatarUrl(cook.id, cook.display_name);
-  const kitchenPhoto = getCookKitchenHeroUrl(cook.id || cook.display_name);
+  const hero = getCookKitchenHeroUrl(cook.id, cook.hero_image_url);
+  const avatar = getCookAvatarUrl(cook.id, cook.display_name, cook.avatar_url);
+  const kitchenPhoto = getCookKitchenHeroUrl(cook.id, cook.hero_image_url);
 
   const openDrops = (kitchenDrops as any[]).filter((d) => d.status === 'open' || d.status === 'sold_out');
 

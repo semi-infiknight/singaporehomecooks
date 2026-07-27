@@ -245,7 +245,7 @@ export default function TiffinKitchenScreen() {
         cookId={String(cookId)}
         cookName={cookName}
         tagline={kitchen.tagline || `${kitchen.cook?.area || 'Singapore'} · home-cooked tiffin`}
-        imageUri={getCookKitchenHeroUrl(String(cookId))}
+        imageUri={getCookKitchenHeroUrl(String(cookId), kitchen.cook?.hero_image_url)}
         rating={Number(cookMeta.rating)}
         reviewCount={cookMeta.review_count != null ? Number(cookMeta.review_count) : undefined}
         isOpen={open.isOpen}

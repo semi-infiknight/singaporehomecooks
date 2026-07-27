@@ -208,7 +208,7 @@ export default function TiffinBrowsePage() {
                 cookName={name}
                 area={k.cook?.area}
                 tagline={k.tagline || 'Weekly home-cooked meals'}
-                coverUri={getCookKitchenHeroUrl(k.cook_id)}
+                coverUri={getCookKitchenHeroUrl(k.cook_id, k.cook?.hero_image_url)}
                 rating={k.cook?.rating != null ? Number(k.cook.rating) : undefined}
                 subscriberCount={k.subscriber_count}
                 priceFrom={Math.round(from)}

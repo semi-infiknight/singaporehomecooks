@@ -13,6 +13,8 @@ export const shcCookSchema = z.object({
   area: z.string(),
   collection_address: z.string().optional(),
   collection_instructions: z.string().optional(),
+  avatar_url: z.string().optional(),
+  hero_image_url: z.string().optional(),
   status: CookStatus,
   availability_paused: z.boolean().default(false),
   expo_push_token: z.string().optional(),

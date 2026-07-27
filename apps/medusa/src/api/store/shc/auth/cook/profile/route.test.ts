@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { issueCookToken } from "../../../../../../lib/shc-auth";
 import { GET, PATCH } from "./route";
+
+vi.mock("../../../../../../lib/shc-actors", () => ({
+  getCookId: vi.fn(() => "cook_rose_001"),
+}));
+
+vi.mock("../../../../../../lib/shc-cook-shape", () => ({
+  assertCookOwnsMediaKey: vi.fn(),
+  shapeCookForStore: vi.fn(async (cook: any) => ({
+    ...cook,
+    avatar_url: cook.avatar_url ? `https://signed.test/${cook.avatar_url}` : undefined,
+    hero_image_url: cook.hero_image_url ? `https://signed.test/${cook.hero_image_url}` : undefined,
+  })),
+}));
 
 function makeRes() {
   const res: any = {
@@ -26,6 +39,8 @@ const COOK_ROW = {
   story: "Peranakan heritage",
   collection_address: "Blk 123",
   collection_instructions: "Lift lobby B",
+  avatar_url: "cooks/cook_rose_001/avatar.jpg",
+  hero_image_url: "cooks/cook_rose_001/hero.jpg",
   status: "active",
   availability_paused: false,
 };
@@ -55,15 +70,20 @@ function makeReq(body?: Record<string, unknown>) {
 }
 
 describe("GET /store/shc/auth/cook/profile", () => {
-  it("returns cook profile", async () => {
+  it("returns cook profile with media URLs", async () => {
     const res = makeRes();
     await GET(makeReq() as any, res);
     expect(res.body.cook.display_name).toBe("Auntie Rose");
     expect(res.body.cook.availability_paused).toBe(false);
+    expect(res.body.cook.hero_image_url).toContain("hero.jpg");
   });
 });
 
 describe("PATCH /store/shc/auth/cook/profile", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("updates availability_paused", async () => {
     const req = makeReq({ availability_paused: true });
     const res = makeRes();
@@ -81,5 +101,17 @@ describe("PATCH /store/shc/auth/cook/profile", () => {
     await PATCH(req as any, res);
     expect((req as any)._getUpdated().collection_instructions).toBe("WhatsApp on arrival");
     expect((req as any)._getUpdated().story).toBe("New story");
+  });
+
+  it("saves avatar and hero keys", async () => {
+    const req = makeReq({
+      avatar_url: "cooks/cook_rose_001/avatar-new.jpg",
+      hero_image_url: "cooks/cook_rose_001/hero-new.jpg",
+    });
+    const res = makeRes();
+    await PATCH(req as any, res);
+    expect(res.statusCode).toBe(200);
+    expect((req as any)._getUpdated().avatar_url).toBe("cooks/cook_rose_001/avatar-new.jpg");
+    expect(res.body.cook.avatar_url).toContain("avatar-new.jpg");
   });
 });

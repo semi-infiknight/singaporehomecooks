@@ -85,6 +85,8 @@ export const updateCookProfile = (input: {
   collection_address?: string;
   collection_instructions?: string;
   availability_paused?: boolean;
+  avatar_url?: string;
+  hero_image_url?: string;
   pdpa_consent?: boolean;
 }) => client.updateCookProfile(input);
 export const getCookProfile = () => client.getCookProfile();

@@ -121,11 +121,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       collection_address?: string;
       collection_instructions?: string;
       availability_paused?: boolean;
+      avatar_url?: string;
+      hero_image_url?: string;
       pdpa_consent?: boolean;
     }) {
       return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
         method: "PATCH",
         body: JSON.stringify(input),
+      });
+    },
+
+    async getCookProfile() {
+      return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
+        method: "GET",
       });
     },
 

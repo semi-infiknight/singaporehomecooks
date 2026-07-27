@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
 import ShcCookModuleService from "../../../../../modules/shc-cook/service";
 import ShcReviewModuleService from "../../../../../modules/shc-review/service";
+import { shapeCookForStore } from "../../../../../lib/shc-cook-shape";
 
 /** GET /store/shc/cooks/:slug — single cook profile */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -15,7 +16,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const ratingSummary = await reviewService.getCookRatingSummary(cook.id).catch(() => ({ rating: null, review_count: 0 }));
   res.json({
-    cook: {
+    cook: await shapeCookForStore({
       id: cook.id,
       slug: cook.slug,
       display_name: cook.display_name,
@@ -25,8 +26,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       availability_paused: Boolean(cook.availability_paused),
       collection_address: cook.collection_address,
       collection_instructions: cook.collection_instructions,
+      avatar_url: cook.avatar_url,
+      hero_image_url: cook.hero_image_url,
       rating: ratingSummary.rating,
       review_count: ratingSummary.review_count,
-    },
+    }),
   });
 }

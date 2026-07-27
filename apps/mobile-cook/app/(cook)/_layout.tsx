@@ -49,6 +49,7 @@ export default function CookLayout() {
       <Tabs.Screen name="settings" options={{ href: null, title: 'Settings', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="batches" options={{ href: null, title: 'Cooking soon', headerShown: false, tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="tiffin/index" options={{ href: null, title: 'Tiffin', headerShown: false, tabBarStyle: { display: 'none' } }} />
+      <Tabs.Screen name="settings" options={{ href: null, title: 'Settings', headerShown: false, tabBarStyle: { display: 'none' } }} />
     </Tabs>
     </CookTabIndexSync>
     </TabDirectionProvider>

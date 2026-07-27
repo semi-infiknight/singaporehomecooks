@@ -146,7 +146,7 @@ export default function TiffinKitchenPage() {
     if (ratingSum) return kitchenRatingBuckets(ratingSum.rating);
     return [];
   }, [reviewsPayload?.reviews, ratingSum]);
-  const avatar = getCookAvatarUrl(cookId, cookName);
+  const avatar = getCookAvatarUrl(cookId, cookName, (kitchen as any)?.cook?.avatar_url);
   const trustChips = subscribeTrustChips({
     area: (kitchen as any)?.cook?.area,
     cookName,
