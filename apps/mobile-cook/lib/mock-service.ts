@@ -439,8 +439,16 @@ export const api = {
   getEarnings() {
     seed();
     const myOrders = orders.filter(o => o.cook_id === currentUser.id && o.shc_status === 'completed');
-    const total = myOrders.reduce((s, o) => s + (o.total || 0), 0);
-    return { thisWeek: Math.floor(total * 0.85), projectedPayout: Math.floor(total * 0.85), orders: myOrders.length };
+    const totalCents = myOrders.reduce((s, o) => s + Math.round((o.total || 0) * 100), 0);
+    const cookCents = calculateCookEarnings(totalCents);
+    return {
+      this_week_cents: cookCents,
+      projected_payout_cents: cookCents,
+      orders_count: myOrders.length,
+      thisWeek: cookCents / 100,
+      projectedPayout: cookCents / 100,
+      orders: myOrders.length,
+    };
   },
 
   uploadComplianceStub(type: 'sfa' | 'wsq', fileName: string) {

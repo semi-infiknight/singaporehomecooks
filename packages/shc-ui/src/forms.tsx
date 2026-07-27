@@ -28,13 +28,15 @@ export function IngredientTierEditor({ value, onChange, label = '3-Tier Ingredie
   );
 }
 
-export function PriceEarningsCalc({ price, qty, minQty }: { price: number; qty: number; minQty: number }) {
+export function PriceEarningsCalc({ price, qty, minQty, commissionRatePct = 15 }: { price: number; qty: number; minQty: number; commissionRatePct?: number }) {
   const subtotal = price * qty;
-  const earnings = Math.floor(subtotal * 0.85);
+  const rate = commissionRatePct / 100;
+  const earnings = Math.floor(subtotal * 100 * (1 - rate)) / 100;
+  const feePct = Math.round(commissionRatePct);
   return (
     <SHCCard>
       <Text>Total S${subtotal} (qty {qty} ≥ min {minQty})</Text>
-      <Text style={{ color: colors.success, fontWeight: '600' }}>Cook live earnings: S${earnings} (15% platform fee)</Text>
+      <Text style={{ color: colors.success, fontWeight: '600' }}>Cook live earnings: S${earnings} ({feePct}% platform fee)</Text>
     </SHCCard>
   );
 }

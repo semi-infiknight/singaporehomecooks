@@ -35,9 +35,12 @@ import {
   cookPortalGreeting,
   getDishImageUrl,
   isCookComplianceVerified,
+  formatCookEarningsDisplayCompact,
   orderIdFromNotificationType,
+  resolveCookEarningsSummary,
 } from '@shc/utils';
 import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
+import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useAuth } from '../../hooks/useAuth';
 import { useCookConfig } from '../../hooks/useCookConfig';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
@@ -71,10 +74,11 @@ export default function CookDashboard() {
 
   const { config } = useCookConfig();
   const quickActions = cookDashboardTiles(config);
-
-  const earnings = orderList
-    .filter((o: any) => o.shc_status === 'completed')
-    .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
+  const { data: earningsData } = useCookEarnings();
+  const earningsCents = resolveCookEarningsSummary(
+    earningsData as Record<string, unknown> | undefined
+  ).this_week_cents;
+  const earningsLabel = formatCookEarningsDisplayCompact(earningsCents);
 
   const greeting = cookPortalGreeting(new Date(), config.greeting);
 
@@ -196,7 +200,7 @@ export default function CookDashboard() {
                     {/* <SHCMetaBadge kind="label">85% payout</SHCMetaBadge> */}
                   </View>
                   <Text style={styles.earningsLabel}>This week</Text>
-                  <Text style={styles.earningsValue}>S${earnings}</Text>
+                  <Text style={styles.earningsValue}>{earningsLabel}</Text>
                 </View>
               }
             />

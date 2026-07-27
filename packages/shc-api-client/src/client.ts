@@ -668,6 +668,10 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/cook-config", { method: "GET" });
     },
 
+    async getBusinessRules() {
+      return request("/store/shc/business-rules", { method: "GET" });
+    },
+
     async getTiffinKitchens() {
       const r = await request("/store/shc/tiffin/kitchens", { method: "GET" });
       return (r as any).kitchens || [];
