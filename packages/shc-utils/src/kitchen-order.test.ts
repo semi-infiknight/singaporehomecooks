@@ -75,6 +75,18 @@ describe('kitchen meal customize flow', () => {
     expect(filterKitchenMenuDishes(list, 'halal')).toHaveLength(1);
   });
 
+  it('uses cook-provided meal extras when set', () => {
+    const dish = {
+      cuisine: 'Peranakan',
+      meal_extras: [{ id: 'keluak', label: 'Extra keluak paste', price_delta: 4 }],
+      meal_addons: [{ id: 'pickle', label: 'House pickle', price_delta: 2 }],
+    };
+    const extras = kitchenMealExtraOptions(dish);
+    const addons = kitchenMealAddonOptions(dish);
+    expect(extras[0].label).toBe('Extra keluak paste');
+    expect(addons[0].label).toBe('House pickle');
+  });
+
   it('toggles addons and clamps qty', () => {
     expect(toggleAddonId([], 'sambal')).toEqual(['sambal']);
     expect(toggleAddonId(['sambal'], 'sambal')).toEqual([]);

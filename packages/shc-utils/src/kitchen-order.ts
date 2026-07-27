@@ -41,6 +41,19 @@ export function kitchenMealMetaChips(dish: Record<string, unknown>): Array<{ id:
 }
 
 export function kitchenMealExtraOptions(dish: Record<string, unknown>): KitchenMealOption[] {
+  const custom = dish.meal_extras;
+  if (Array.isArray(custom) && custom.length > 0) {
+    return custom.map((raw, index) => {
+      const opt = raw as { id?: string; label?: string; priceDelta?: number; price_delta?: number };
+      const label = String(opt.label || '').trim();
+      if (!label) return null;
+      return {
+        id: String(opt.id || `extra-${index + 1}`),
+        label,
+        priceDelta: Number(opt.priceDelta ?? opt.price_delta ?? 0) || 0,
+      };
+    }).filter(Boolean) as KitchenMealOption[];
+  }
   const cuisine = String(dish.cuisine || '').toLowerCase();
   if (cuisine.includes('indian') || cuisine.includes('malay')) {
     return [
@@ -61,6 +74,19 @@ export function kitchenMealExtraOptions(dish: Record<string, unknown>): KitchenM
 }
 
 export function kitchenMealAddonOptions(dish: Record<string, unknown>): KitchenMealOption[] {
+  const custom = dish.meal_addons;
+  if (Array.isArray(custom) && custom.length > 0) {
+    return custom.map((raw, index) => {
+      const opt = raw as { id?: string; label?: string; priceDelta?: number; price_delta?: number };
+      const label = String(opt.label || '').trim();
+      if (!label) return null;
+      return {
+        id: String(opt.id || `addon-${index + 1}`),
+        label,
+        priceDelta: Number(opt.priceDelta ?? opt.price_delta ?? 0) || 0,
+      };
+    }).filter(Boolean) as KitchenMealOption[];
+  }
   const base: KitchenMealOption[] = [
     { id: 'sambal', label: 'Extra sambal', priceDelta: 1.5 },
     { id: 'acar', label: 'Acar / pickle', priceDelta: 2 },

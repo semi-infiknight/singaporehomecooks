@@ -40,6 +40,9 @@ export async function shapeProduct(
     shc_availability: avail,
     description: meta.description || "",
     image_url: meta.image_url || null,
+    meal_extras: meta.meal_extras || [],
+    meal_addons: meta.meal_addons || [],
+    recipe_steps: meta.recipe_steps || [],
     rating: ratingSummary.rating,
     review_count: ratingSummary.review_count,
   };

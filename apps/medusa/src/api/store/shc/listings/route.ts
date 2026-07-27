@@ -57,6 +57,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       price_cents: priceCents,
       image_url: parse.data.image_url,
       last_minute_premium_pct: parse.data.last_minute_premium_pct ?? null,
+      meal_extras: parse.data.meal_extras ?? [],
+      meal_addons: parse.data.meal_addons ?? [],
+      recipe_steps: parse.data.recipe_steps ?? [],
     } as any);
     await availService.upsertAvailability({
       product_id: productId,

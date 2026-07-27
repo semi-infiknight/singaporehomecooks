@@ -1,3 +1,6 @@
+import type { MealOptionDraft, RecipeStepDraft } from './product-meta-form';
+import { mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
+
 /** Shared cook listing wizard defaults + helpers (tri-platform). */
 
 export type AllergenTiers = {
@@ -107,6 +110,9 @@ export type CookListingFormDraft = {
   portions_per_day: number;
   collection_days: number[];
   time_slots: string[];
+  meal_extras?: MealOptionDraft[];
+  meal_addons?: MealOptionDraft[];
+  recipe_steps?: RecipeStepDraft[];
 };
 
 /** Build API payload for POST/PATCH /store/shc/listings. */
@@ -133,5 +139,8 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.last_minute_premium_pct != null && draft.last_minute_premium_pct > 0) {
     payload.last_minute_premium_pct = draft.last_minute_premium_pct;
   }
+  if (draft.meal_extras?.length) payload.meal_extras = mealOptionsToApiPayload(draft.meal_extras);
+  if (draft.meal_addons?.length) payload.meal_addons = mealOptionsToApiPayload(draft.meal_addons);
+  if (draft.recipe_steps?.length) payload.recipe_steps = recipeStepsToApiPayload(draft.recipe_steps);
   return payload;
 }

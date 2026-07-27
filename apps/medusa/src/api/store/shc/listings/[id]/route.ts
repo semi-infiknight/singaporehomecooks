@@ -58,6 +58,9 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     if (rest.min_qty !== undefined) patch.min_qty = rest.min_qty;
     if (rest.image_url !== undefined) patch.image_url = rest.image_url;
     if (rest.last_minute_premium_pct !== undefined) patch.last_minute_premium_pct = rest.last_minute_premium_pct;
+    if (rest.meal_extras !== undefined) patch.meal_extras = rest.meal_extras;
+    if (rest.meal_addons !== undefined) patch.meal_addons = rest.meal_addons;
+    if (rest.recipe_steps !== undefined) patch.recipe_steps = rest.recipe_steps;
     if (price !== undefined || price_cents !== undefined) {
       patch.price_cents = listingPriceCents({ price, price_cents });
     }

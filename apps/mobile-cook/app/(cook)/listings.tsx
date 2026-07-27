@@ -44,6 +44,9 @@ import {
   SHCListingAvailabilityEditor,
   SHCListingDescriptionInput,
   SHCLastMinutePremiumInput,
+  SHCMealExtrasEditor,
+  SHCMealAddonsEditor,
+  SHCRecipeStepsEditor,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -61,6 +64,11 @@ import {
   allergenTiersFromListing,
   availabilityFromListing,
   shcPortionMinBadgeLabel,
+  defaultMealExtrasDraft,
+  defaultMealAddonsDraft,
+  mealOptionsFromListing,
+  recipeStepsFromListing,
+  type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -150,6 +158,9 @@ export default function CookListings() {
   const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+  const [mealExtras, setMealExtras] = useState(() => defaultMealExtrasDraft('Peranakan'));
+  const [mealAddons, setMealAddons] = useState(() => defaultMealAddonsDraft(false));
+  const [recipeSteps, setRecipeSteps] = useState<RecipeStepDraft[]>([]);
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<any>(null);
   const aiEstMut = useAICalorieEstimate();
@@ -257,6 +268,9 @@ export default function CookListings() {
     setLastMinutePremiumPct(null);
     setOccasionTags(['Hari Raya']);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
+    setMealExtras(defaultMealExtrasDraft('Peranakan'));
+    setMealAddons(defaultMealAddonsDraft(false));
+    setRecipeSteps([]);
     setPublished(null);
     setAiCal(null);
     goToStep(1);
@@ -284,6 +298,10 @@ export default function CookListings() {
         ? listing.ingredients
         : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
+    const mealMeta = mealOptionsFromListing(listing);
+    setMealExtras(mealMeta.extras);
+    setMealAddons(mealMeta.addons);
+    setRecipeSteps(recipeStepsFromListing(listing));
     setPublished(null);
     setAiCal(
       listing.calories
@@ -500,6 +518,9 @@ export default function CookListings() {
       collection_days: collectionDays,
       time_slots: timeSlots,
       last_minute_premium_pct: lastMinutePremiumPct,
+      meal_extras: mealExtras,
+      meal_addons: mealAddons,
+      recipe_steps: recipeSteps,
       image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
       calories: aiCal?.calories,
       calories_confidence: aiCal?.confidence,
@@ -768,6 +789,9 @@ export default function CookListings() {
             <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
             <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
           </Pressable>
+          <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
+          <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
+          <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />
         </ListingWizardStep>
       )}
 

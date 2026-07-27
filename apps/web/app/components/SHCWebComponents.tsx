@@ -53,6 +53,14 @@ import {
   COLLECTION_TIME_SLOT_PRESETS,
   WEEKDAY_LABELS,
   type AllergenTiers,
+  addMealOptionRow,
+  addRecipeStepRow,
+  removeMealOptionRow,
+  removeRecipeStepRow,
+  updateMealOptionRow,
+  updateRecipeStepRow,
+  type MealOptionDraft,
+  type RecipeStepDraft,
   shcBadgeVariant,
   type ShcBadgeSemanticKind,
   shcOrderStatusBadgeVariant,
@@ -4589,6 +4597,162 @@ export function ListingDescriptionInputWeb({
         rows={4}
         className="w-full rounded-xl border border-border px-3 py-2 text-sm font-medium"
       />
+    </div>
+  );
+}
+
+function MealOptionsEditorWeb({
+  title,
+  hint,
+  value,
+  onChange,
+  testID,
+}: {
+  title: string;
+  hint: string;
+  value: MealOptionDraft[];
+  onChange: (next: MealOptionDraft[]) => void;
+  testID: string;
+}) {
+  return (
+    <div className="space-y-2" data-testid={testID}>
+      <p className="text-xs font-extrabold">{title}</p>
+      <p className="text-[11px] text-muted-foreground">{hint}</p>
+      {value.map((row, index) => (
+        <div key={`${row.id}-${index}`} className="rounded-xl border border-border p-3 space-y-2">
+          <input
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+            value={row.label}
+            onChange={(e) => onChange(updateMealOptionRow(value, index, { label: e.target.value }))}
+            placeholder="Option label"
+            data-testid={`${testID}-label-${index}`}
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              step="0.5"
+              min="0"
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              value={row.priceDelta}
+              onChange={(e) =>
+                onChange(updateMealOptionRow(value, index, { priceDelta: Number(e.target.value) || 0 }))
+              }
+              placeholder="Extra S$"
+              data-testid={`${testID}-price-${index}`}
+            />
+            <button
+              type="button"
+              className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+              onClick={() => onChange(removeMealOptionRow(value, index))}
+              data-testid={`${testID}-remove-${index}`}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+        onClick={() => onChange(addMealOptionRow(value))}
+        data-testid={`${testID}-add`}
+      >
+        + Add option
+      </button>
+    </div>
+  );
+}
+
+export function MealExtrasEditorWeb({
+  value,
+  onChange,
+  testID = 'listing-meal-extras',
+}: {
+  value: MealOptionDraft[];
+  onChange: (next: MealOptionDraft[]) => void;
+  testID?: string;
+}) {
+  return (
+    <MealOptionsEditorWeb
+      title="Portion / base options"
+      hint="Customers pick one (e.g. rice choice). Use S$0 for included options."
+      value={value}
+      onChange={onChange}
+      testID={testID}
+    />
+  );
+}
+
+export function MealAddonsEditorWeb({
+  value,
+  onChange,
+  testID = 'listing-meal-addons',
+}: {
+  value: MealOptionDraft[];
+  onChange: (next: MealOptionDraft[]) => void;
+  testID?: string;
+}) {
+  return (
+    <MealOptionsEditorWeb
+      title="Add-ons"
+      hint="Optional paid sides customers can tick (e.g. extra sambal)."
+      value={value}
+      onChange={onChange}
+      testID={testID}
+    />
+  );
+}
+
+export function RecipeStepsEditorWeb({
+  value,
+  onChange,
+  testID = 'listing-recipe-steps',
+}: {
+  value: RecipeStepDraft[];
+  onChange: (next: RecipeStepDraft[]) => void;
+  testID?: string;
+}) {
+  return (
+    <div className="space-y-2" data-testid={testID}>
+      <p className="text-xs font-extrabold">Recipe steps (optional)</p>
+      <p className="text-[11px] text-muted-foreground">
+        Share how you cook this dish — shown on the customer dish page.
+      </p>
+      {value.map((step, index) => (
+        <div key={`step-${index}`} className="rounded-xl border border-border p-3 space-y-2">
+          <p className="text-[11px] font-bold text-muted-foreground">Step {index + 1}</p>
+          <textarea
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium min-h-[72px]"
+            value={step.instruction}
+            onChange={(e) => onChange(updateRecipeStepRow(value, index, { instruction: e.target.value }))}
+            placeholder="What happens in this step?"
+            data-testid={`${testID}-instruction-${index}`}
+          />
+          <input
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-medium"
+            value={step.tip || ''}
+            onChange={(e) => onChange(updateRecipeStepRow(value, index, { tip: e.target.value }))}
+            placeholder="Tip (optional)"
+            data-testid={`${testID}-tip-${index}`}
+          />
+          <button
+            type="button"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+            onClick={() => onChange(removeRecipeStepRow(value, index))}
+            data-testid={`${testID}-remove-${index}`}
+          >
+            Remove step
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+        onClick={() => onChange(addRecipeStepRow(value))}
+        data-testid={`${testID}-add`}
+      >
+        + Add step
+      </button>
     </div>
   );
 }
