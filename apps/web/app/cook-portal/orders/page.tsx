@@ -135,6 +135,13 @@ export default function CookOrdersPage() {
               />
             ))}
             <GourmeatPrimaryButton
+              label="Chat"
+              size="sm"
+              variant="outline"
+              testID={`cook-order-${o.id}-chat`}
+              onClick={() => router.push(`/cook-portal/orders/${o.id}#cook-order-chat`)}
+            />
+            <GourmeatPrimaryButton
               label="Details"
               size="sm"
               variant="outline"

@@ -15,6 +15,7 @@
 | **Cook configurability** | Stitched items 1–8 on `main`: settings (pause, collection address/instructions), avatar/hero upload, per-kitchen tiffin pricing, tiffin slot options, order collection release, batches slot picker, product meta (`meal_extras`, `meal_addons`, `recipe_steps`). Cook-owned via profile + listing wizard + batches/tiffin screens. |
 | **Admin configurability** | Stitched items 9–12 on `main`: discover promo carousel, marketplace business rules, cook portal chrome (dashboard tiles, greetings, allergen/slot presets, chat quick replies), unified browse config (categories/occasions/copy). Stored in `shc_platform_stat`; SHC Ops → Catalog / Controls. |
 | **Client hooks** | `useCustomerConfig` (web + mobile-customer), `useCookConfig` (web cook-portal + mobile-cook). Fallback to `@shc/utils` code defaults until admin saves. |
+| **Cook portal orders (web)** | Parity with mobile cook: decline on `paid`, dispute reporting, cooking/collection notes, list-level Chat → `#cook-order-chat`, inline order chat + quick replies. |
 | **Migrations (Railway)** | Deploy Medusa after pull: tiffin kitchen pricing, cook media columns, product meta meal fields. Platform config keys need no migration. |
 | **Branches** | All `cursor/*-67bb` stitch branches merged + deleted — work on `main` only. |
 

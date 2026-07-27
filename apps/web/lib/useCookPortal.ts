@@ -23,6 +23,8 @@ import {
   patchDrop,
   submitComplianceDoc,
   transitionCookOrder,
+  getCookOrderDisputes,
+  submitCookOrderDispute,
 } from './cook-api-client';
 import { isActiveOrderStatus } from '@shc/utils';
 
@@ -57,6 +59,25 @@ export function useCookTransitionOrder() {
       qc.invalidateQueries({ queryKey: ['cook-orders'] });
     },
   });
+}
+
+export function useCookOrderDisputes(orderId: string) {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ['cook-order-disputes', orderId],
+    queryFn: () => getCookOrderDisputes(orderId),
+    enabled: Boolean(orderId) && isCookAuthenticated(),
+  });
+  const submit = useMutation({
+    mutationFn: (notes: string) => submitCookOrderDispute(orderId, { type: 'other', notes }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cook-order-disputes', orderId] }),
+  });
+  return {
+    disputes: (query.data as Array<Record<string, unknown>>) || [],
+    isLoading: query.isLoading,
+    submit: submit.mutateAsync,
+    isSubmitting: submit.isPending,
+  };
 }
 
 export function useCookChat(orderId: string) {
