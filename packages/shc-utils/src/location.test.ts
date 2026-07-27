@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { normalizeCookAreaInput } from './sg-areas';
 import {
   haversineDistanceKm,
   isWithinSingapore,
   formatLocationShort,
   distanceToCookAreaKm,
+  formatDistanceKm,
+  sortByCookProximity,
   nudgeCoordinates,
   dragOffsetToCoordinates,
   buildOsmStaticMapUrl,
@@ -31,6 +34,29 @@ describe('location utils', () => {
     const km = distanceToCookAreaKm({ lat: 1.3521, lng: 103.9448 }, 'Tampines');
     expect(km).not.toBeNull();
     expect(km!).toBeLessThan(5);
+  });
+
+  it('formats distance labels', () => {
+    expect(formatDistanceKm(0.4)).toBe('< 1 km');
+    expect(formatDistanceKm(2.34)).toBe('2.3 km');
+    expect(formatDistanceKm(12.8)).toBe('13 km');
+    expect(formatDistanceKm(null)).toBeNull();
+  });
+
+  it('sorts tiffin kitchens by nested cook.area', () => {
+    const sorted = sortByCookProximity(
+      [
+        { cook: { area: 'Jurong West' } },
+        { cook: { area: 'Tampines' } },
+      ],
+      { lat: 1.3521, lng: 103.9448 }
+    );
+    expect(sorted[0]?.cook?.area).toBe('Tampines');
+  });
+
+  it('normalizes cook area aliases', () => {
+    expect(normalizeCookAreaInput('katong')).toBe('Katong / Joo Chiat');
+    expect(normalizeCookAreaInput('Tampines')).toBe('Tampines');
   });
 
   it('nudges coordinates by direction', () => {

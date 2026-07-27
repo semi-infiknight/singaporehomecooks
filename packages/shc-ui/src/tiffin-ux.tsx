@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { gourmeatColors, gourmeatRadii, gourmeatShadows, shcColors, shcSpacing, shcSectionStack } from './theme';
 import { SHCFoodImage } from './visuals';
 import { GourmeatPrimaryButton } from './gourmeat';
-import { getDishImageUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { getDishImageUrl, getCookKitchenHeroUrl, formatDistanceKm } from '@shc/utils';
 import { tiffinMealStatusChip, type TiffinOrderCardStatus } from '@shc/utils';
 import { EmptyIllustration } from './empty-illustrations';
 
@@ -162,6 +162,7 @@ export function SHCTiffinKitchenCard({
   priceTo,
   isOpen,
   closesAt,
+  distanceKm,
   onPress,
   onFavorite,
   favorited,
@@ -181,12 +182,14 @@ export function SHCTiffinKitchenCard({
   priceTo?: number;
   isOpen?: boolean;
   closesAt?: string;
+  distanceKm?: number | null;
   onPress: () => void;
   onFavorite?: () => void;
   favorited?: boolean;
   testID?: string;
 }) {
   const cover = coverUri || getCookKitchenHeroUrl(cookId);
+  const distanceLabel = formatDistanceKm(distanceKm);
   const priceLabel =
     priceFrom != null && priceTo != null
       ? `S$${priceFrom}–${priceTo}/meal`
@@ -232,9 +235,9 @@ export function SHCTiffinKitchenCard({
                 </View>
               ) : null}
             </View>
-            {tagline || area ? (
+            {tagline || area || distanceLabel ? (
               <Text style={styles.kitchenTagline} numberOfLines={1}>
-                {[tagline, area].filter(Boolean).join(' · ')}
+                {[tagline, area, distanceLabel].filter(Boolean).join(' · ')}
               </Text>
             ) : null}
             {showOpenRow ? (

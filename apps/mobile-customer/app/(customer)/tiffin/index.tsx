@@ -27,6 +27,8 @@ import {
   kitchenDishPriceDollars,
   kitchenCardOpenProps,
   tiffinKitchenPriceRange,
+  sortByCookProximity,
+  distanceToCookItemKm,
 } from '@shc/utils';
 import { useTiffinKitchens, useTiffinSubscription } from '../../../hooks/useTiffin';
 import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
@@ -79,16 +81,11 @@ export default function TiffinBrowseScreen() {
     }
     if (filter === 'popular') {
       list.sort((a, b) => (b.subscriber_count || 0) - (a.subscriber_count || 0));
-    }
-    if (filter === 'nearest' && location) {
-      list.sort((a, b) => {
-        const aMatch = (a.cook?.area || '').includes(locationLabel || '') ? 0 : 1;
-        const bMatch = (b.cook?.area || '').includes(locationLabel || '') ? 0 : 1;
-        return aMatch - bMatch;
-      });
+    } else if (location?.lat != null && location?.lng != null) {
+      list = sortByCookProximity(list, { lat: location.lat, lng: location.lng });
     }
     return list;
-  }, [kitchens, query, filter, category, location, locationLabel]);
+  }, [kitchens, query, filter, category, location]);
 
   const openKitchen = useCallback(
     (cookId: string) => {
@@ -179,6 +176,11 @@ export default function TiffinBrowseScreen() {
           cookId={k.cook_id}
           cookName={k.cook?.display_name || 'Home kitchen'}
           area={k.cook?.area}
+          distanceKm={
+            location?.lat != null && location?.lng != null
+              ? distanceToCookItemKm({ lat: location.lat, lng: location.lng }, k)
+              : null
+          }
           tagline={k.tagline || 'Weekly home-cooked meals'}
           mealsOptions={k.meals_per_week_options}
           dishCount={(k.dishes || []).length}

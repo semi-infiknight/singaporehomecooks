@@ -28,6 +28,7 @@ export async function shapeProduct(
     cook_id: meta.cook_id,
     cook_slug: cook?.slug || null,
     cook_name: cook?.display_name || "Home Cook",
+    cook_area: cook?.area || null,
     cuisine: meta.cuisine,
     occasion_tags: meta.occasion_tags || [],
     allergen_tiers: meta.allergen_tiers || { tier1: [] },

@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { normalizeCookCollectionTimeSlots } from "@shc/utils";
+import { normalizeCookCollectionTimeSlots, normalizeCookAreaInput } from "@shc/utils";
 import { getCookId } from "../../../../../../lib/shc-actors";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 import { assertCookOwnsMediaKey, shapeCookForStore, type CookMediaRow } from "../../../../../../lib/shc-cook-shape";
@@ -90,7 +90,7 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
   const data: Record<string, unknown> = { updated_at: new Date() };
   if (parse.data.display_name !== undefined) data.display_name = parse.data.display_name.trim();
-  if (parse.data.area !== undefined) data.area = parse.data.area.trim();
+  if (parse.data.area !== undefined) data.area = normalizeCookAreaInput(parse.data.area);
   if (parse.data.story !== undefined) data.story = parse.data.story.trim();
   if (parse.data.collection_address !== undefined) {
     data.collection_address = parse.data.collection_address.trim();

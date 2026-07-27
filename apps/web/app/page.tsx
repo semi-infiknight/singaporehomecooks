@@ -16,6 +16,8 @@ import {
   getCookAvatarUrl,
   getDishImageUrl,
   sortByCookProximity,
+  distanceToCookItemKm,
+  formatDistanceKm,
   filterDiscoverProducts,
   resolveDiscoverProductsForDisplay,
   formatDropCookDate,
@@ -202,7 +204,11 @@ export default function DiscoverHome() {
   const isGuest = !user;
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email, browseConfig.copy);
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
-  const gridHeading = discoverGridHeading(mode, filters);
+  const sortedCookList = useMemo(
+    () => sortByCookProximity(cookList, collectionLocation),
+    [cookList, collectionLocation]
+  );
+  const gridHeading = discoverGridHeading(mode, filters, Boolean(collectionLocation));
   const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
   const emptyCopy = customerDiscoverEmptyCopy(browseConfig, mode, discoverActiveFilters(filters).length > 0);
 
@@ -391,21 +397,23 @@ export default function DiscoverHome() {
                 </Link>
               </p>
             ) : null}
-            {cooksLoading && cookList.length === 0 ? (
+            {cooksLoading && sortedCookList.length === 0 ? (
               <SHCSkeletonKitchenList count={3} />
-            ) : cookList.length === 0 ? (
+            ) : sortedCookList.length === 0 ? (
               <SHCEmptyState title={emptyCopy.title} description={emptyCopy.description} />
             ) : (
               <ul>
-                {cookList.map((c) => {
+                {sortedCookList.map((c) => {
                   const cid = String(c.id || c.slug || '');
                   const slug = String(c.slug || c.id || '');
+                  const distanceLabel = formatDistanceKm(distanceToCookItemKm(collectionLocation, c));
                   return (
                     <li key={cid || slug}>
                       <TiffinKitchenCard
                         cookId={cid || slug}
                         cookName={String(c.display_name || c.name || 'Home kitchen')}
                         area={c.area ? String(c.area) : undefined}
+                        distanceKm={distanceLabel ? distanceToCookItemKm(collectionLocation, c) : null}
                         tagline={c.story ? String(c.story).slice(0, 80) : undefined}
                         coverUri={getCookKitchenHeroUrl(cid || slug)}
                         rating={c.rating != null ? Number(c.rating) : undefined}

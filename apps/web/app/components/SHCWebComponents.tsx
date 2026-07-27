@@ -70,6 +70,7 @@ import {
   shcMealPlanBadgeLabel,
   shcPartySizeBadgeLabel,
   shcPortionMinBadgeLabel,
+  formatDistanceKm,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -2228,6 +2229,7 @@ export function TiffinKitchenCard({
   priceTo,
   isOpen,
   closesAt,
+  distanceKm,
   onPress,
   testID,
 }: {
@@ -2243,10 +2245,12 @@ export function TiffinKitchenCard({
   priceTo?: number;
   isOpen?: boolean;
   closesAt?: string;
+  distanceKm?: number | null;
   onPress: () => void;
   testID?: string;
 }) {
   const cover = coverUri || getCookKitchenHeroUrl(cookId);
+  const distanceLabel = formatDistanceKm(distanceKm);
   const priceLabel =
     priceFrom != null && priceTo != null
       ? `S$${priceFrom}–${priceTo}/meal`
@@ -2276,9 +2280,9 @@ export function TiffinKitchenCard({
             </span>
           ) : null}
         </div>
-        {(tagline || area) && (
+        {(tagline || area || distanceLabel) && (
           <p className="text-[13px] text-muted-foreground font-semibold line-clamp-1 mt-1">
-            {[tagline, area].filter(Boolean).join(' · ')}
+            {[tagline, area, distanceLabel].filter(Boolean).join(' · ')}
           </p>
         )}
         {showOpenRow ? (

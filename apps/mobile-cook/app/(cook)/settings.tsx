@@ -20,6 +20,7 @@ import {
   SHCButtonText,
   SHCCard,
   SHCFoodImage,
+  SHCFilterChipRow,
   contentPadForTabBar,
   gourmeatColors,
   gourmeatRadii,
@@ -27,7 +28,7 @@ import {
   shcRadii,
   shcSpacing,
 } from '@shc/ui';
-import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
+import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots, SG_AREA_CENTROIDS } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
@@ -199,6 +200,7 @@ export default function CookSettingsScreen() {
           testID="cook-settings-display-name"
         />
         <Text style={styles.fieldLabel}>Area</Text>
+        <Text style={styles.hint}>Customers see this on your kitchen card and sort by distance.</Text>
         <TextInput
           value={area}
           onChangeText={setArea}
@@ -206,6 +208,15 @@ export default function CookSettingsScreen() {
           placeholderTextColor={shcColors.textLight}
           style={styles.input}
           testID="cook-settings-area"
+        />
+        <SHCFilterChipRow
+          chips={SG_AREA_CENTROIDS.map((entry) => ({
+            id: entry.name,
+            label: entry.name.split(' / ')[0] ?? entry.name,
+            active: area === entry.name,
+          }))}
+          onChipPress={(id) => setArea(id)}
+          testID="cook-settings-area-chips"
         />
         <Text style={styles.fieldLabel}>Heritage story</Text>
         <TextInput

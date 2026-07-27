@@ -234,6 +234,9 @@ export default function CookSettingsPage() {
         </div>
         <div>
           <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-2">
+            Customers sort kitchens by distance to this area.
+          </p>
           <input
             value={area}
             onChange={(e) => setArea(e.target.value)}

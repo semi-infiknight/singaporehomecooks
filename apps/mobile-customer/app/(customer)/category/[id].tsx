@@ -39,6 +39,8 @@ import {
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
+  sortByCookProximity,
+  distanceToCookItemKm,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../hooks/useProducts';
@@ -164,16 +166,12 @@ export default function CategoryExploreScreen() {
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
   const kitchens = useMemo(() => {
-    let list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
-    if (chip === 'nearest' && collectionLocation) {
-      list = [...list].sort((a, b) => {
-        const aArea = String(a.area || '');
-        const bArea = String(b.area || '');
-        return (bArea ? 1 : 0) - (aArea ? 1 : 0);
-      });
+    const list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
+    if (collectionLocation?.lat != null && collectionLocation?.lng != null) {
+      return sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng });
     }
     return list;
-  }, [cookList, categoryProducts, categoryId, chip, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, collectionLocation]);
 
   const handleAdd = useCallback(
     (productId: string) => {
@@ -260,6 +258,11 @@ export default function CategoryExploreScreen() {
             cookId={cookId}
             cookName={cookName}
             area={c.area ? String(c.area) : undefined}
+            distanceKm={
+              collectionLocation?.lat != null && collectionLocation?.lng != null
+                ? distanceToCookItemKm({ lat: collectionLocation.lat, lng: collectionLocation.lng }, c)
+                : null
+            }
             tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
             rating={coerceRating(c.rating)}
             reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
@@ -273,7 +276,7 @@ export default function CategoryExploreScreen() {
         </View>
       );
     },
-    [router, title]
+    [router, title, collectionLocation]
   );
 
   return (

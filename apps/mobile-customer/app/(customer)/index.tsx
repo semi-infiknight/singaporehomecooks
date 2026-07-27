@@ -40,6 +40,8 @@ import {
   extractReorderDishes,
   favoritesToReorderDishes,
   sortByCookProximity,
+  distanceToCookItemKm,
+  formatDistanceKm,
   filterDiscoverProducts,
   formatDropCookDate,
   formatDropOrderBy,
@@ -144,6 +146,14 @@ export default function CustomerDiscover() {
 
   const { active: collectionLocation, locationLabel } = useCustomerLocation();
 
+  const sortedCookList = useMemo(
+    () =>
+      collectionLocation?.lat != null && collectionLocation?.lng != null
+        ? sortByCookProximity(cookList, { lat: collectionLocation.lat, lng: collectionLocation.lng })
+        : cookList,
+    [cookList, collectionLocation]
+  );
+
   const filters = useMemo(
     () => ({
       mealType,
@@ -199,7 +209,7 @@ export default function CustomerDiscover() {
 
   const headerLocationLabel = collectionLocation ? locationLabel : 'Set collection location';
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email, browseConfig.copy);
-  const gridHeading = discoverGridHeading(mode, filters);
+  const gridHeading = discoverGridHeading(mode, filters, Boolean(collectionLocation));
   const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
   const emptyCopy = customerDiscoverEmptyCopy(browseConfig, mode, discoverActiveFilters(filters).length > 0);
 
@@ -445,21 +455,29 @@ export default function CustomerDiscover() {
                 <Text style={styles.kitchenHint}>{kitchensHeading.hint}</Text>
               </Pressable>
             ) : null}
-            {cooksLoading && cookList.length === 0 ? (
+            {cooksLoading && sortedCookList.length === 0 ? (
               <SHCSkeletonKitchenList count={3} />
-            ) : cookList.length === 0 ? (
+            ) : sortedCookList.length === 0 ? (
               <View style={styles.empty}>
                 <SHCFoodImage uri={BENTO_ACTION_IMAGES.cart} height={80} rounded={16} />
                 <Text style={styles.emptyTitle}>{emptyCopy.title}</Text>
                 <Text style={styles.emptyText}>{emptyCopy.description}</Text>
               </View>
             ) : (
-              cookList.map((c: any) => (
+              sortedCookList.map((c: any) => (
                 <View key={c.id || c.slug} style={{ paddingHorizontal: shcSpacing.md }}>
                   <SHCTiffinKitchenCard
                     cookId={c.id || c.slug}
                     cookName={c.display_name || c.name || 'Home kitchen'}
                     area={c.area}
+                    distanceKm={
+                      collectionLocation?.lat != null && collectionLocation?.lng != null
+                        ? distanceToCookItemKm(
+                            { lat: collectionLocation.lat, lng: collectionLocation.lng },
+                            c
+                          )
+                        : null
+                    }
                     tagline={c.story ? String(c.story).slice(0, 80) : undefined}
                     rating={c.rating != null ? Number(c.rating) : undefined}
                     reviewCount={c.review_count}

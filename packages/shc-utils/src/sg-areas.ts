@@ -37,7 +37,34 @@ const COOK_AREA_ALIASES: Record<string, string> = {
 };
 
 export function resolveCookAreaKey(area: string): string {
-  return COOK_AREA_ALIASES[area] ?? area;
+  const trimmed = area.trim();
+  if (!trimmed) return trimmed;
+  if (COOK_AREA_ALIASES[trimmed]) return COOK_AREA_ALIASES[trimmed];
+  const lower = trimmed.toLowerCase();
+  for (const entry of SG_AREA_CENTROIDS) {
+    if (entry.name.toLowerCase() === lower) return entry.name;
+    if (entry.aliases?.some((al) => al.toLowerCase() === lower)) return entry.name;
+  }
+  return trimmed;
+}
+
+/** Map free-text cook area input to a canonical SG area name when possible. */
+export function normalizeCookAreaInput(area: string): string {
+  const trimmed = area.trim();
+  if (!trimmed) return trimmed;
+  const key = resolveCookAreaKey(trimmed);
+  const exact = SG_AREA_CENTROIDS.find((a) => a.name === key);
+  if (exact) return exact.name;
+  const lower = trimmed.toLowerCase();
+  for (const entry of SG_AREA_CENTROIDS) {
+    if (entry.name.toLowerCase().includes(lower) || lower.includes(entry.name.toLowerCase())) {
+      return entry.name;
+    }
+    if (entry.aliases?.some((al) => al.includes(lower) || lower.includes(al))) {
+      return entry.name;
+    }
+  }
+  return trimmed;
 }
 
 export function getAreaCentroid(areaName: string): SgAreaEntry | undefined {

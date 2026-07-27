@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCOnboardingFlowScreen, shcColors, shcSpacing, shcBorders, shcRadii } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES } from '@shc/utils';
+import { SHCOnboardingFlowScreen, shcColors, shcSpacing, shcBorders, shcRadii, SHCFilterChipRow } from '@shc/ui';
+import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, SG_AREA_CENTROIDS } from '@shc/utils';
 import { markCookOnboardingSeen } from '../../../lib/onboarding';
 import { updateCookProfile } from '../../../lib/api-client';
 
@@ -125,6 +125,15 @@ export default function CookOnboarding() {
             placeholderTextColor={shcColors.textLight}
             style={styles.inputShort}
             testID="cook-onboarding-area-input"
+          />
+          <SHCFilterChipRow
+            chips={SG_AREA_CENTROIDS.map((entry) => ({
+              id: entry.name,
+              label: entry.name.split(' / ')[0] ?? entry.name,
+              active: area === entry.name,
+            }))}
+            onChipPress={(id) => setArea(id)}
+            testID="cook-onboarding-area-chips"
           />
           <Text style={styles.fieldLabel}>Collection address</Text>
           <TextInput

@@ -109,6 +109,7 @@ describe('headings', () => {
   it('labels the grid by mode and filter', () => {
     expect(discoverGridHeading('dishes', {}).title).toBe('All dishes');
     expect(discoverGridHeading('dishes', { cuisine: 'Nyonya' }).title).toBe('Nyonya dishes');
+    expect(discoverGridHeading('dishes', {}, true).hint).toMatch(/nearest kitchen/i);
   });
 
   it('only claims proximity when a collection point is set', () => {

@@ -16,6 +16,8 @@ import {
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
+  sortByCookProximity,
+  distanceToCookItemKm,
   type MealTypeId,
 } from '@shc/utils';
 import { useProducts, useAddToCart } from '../../../lib/useProducts';
@@ -114,16 +116,12 @@ export default function CategoryPage() {
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
   const kitchens = useMemo(() => {
-    let list = scopeKitchensByCategory(
-      cookList,
-      categoryProducts,
-      categoryId
-    );
-    if (chip === 'nearest' && collectionLocation) {
-      list = [...list].sort((a, b) => (String(b.area || '') ? 1 : 0) - (String(a.area || '') ? 1 : 0));
+    const list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
+    if (collectionLocation) {
+      return sortByCookProximity(list, collectionLocation);
     }
     return list;
-  }, [cookList, categoryProducts, categoryId, chip, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, collectionLocation]);
 
   const handleAdd = useCallback(
     (productId: string) => {
@@ -252,6 +250,7 @@ export default function CategoryPage() {
               cookId={cookId}
               cookName={cookName}
               area={c.area ? String(c.area) : undefined}
+              distanceKm={collectionLocation ? distanceToCookItemKm(collectionLocation, c) : null}
               tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
               coverUri={getCookKitchenHeroUrl(cookId)}
               rating={coerceRating(c.rating)}

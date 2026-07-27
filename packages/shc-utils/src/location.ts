@@ -166,14 +166,41 @@ export function distanceToCookAreaKm(
   return haversineDistanceKm(customer, centroid);
 }
 
-export function sortByCookProximity<T extends { cook_area?: string; area?: string }>(
+export type CookAreaCarrier = {
+  cook_area?: string;
+  area?: string;
+  cook?: { area?: string };
+};
+
+export function cookAreaLabel(item: CookAreaCarrier): string {
+  return item.cook_area ?? item.area ?? item.cook?.area ?? '';
+}
+
+export function distanceToCookItemKm(
+  customer: { lat: number; lng: number } | null | undefined,
+  item: CookAreaCarrier
+): number | null {
+  if (!customer) return null;
+  const area = cookAreaLabel(item);
+  if (!area) return null;
+  return distanceToCookAreaKm(customer, area);
+}
+
+export function formatDistanceKm(km: number | null | undefined): string | null {
+  if (km == null || !Number.isFinite(km)) return null;
+  if (km < 1) return '< 1 km';
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
+export function sortByCookProximity<T extends CookAreaCarrier>(
   items: T[],
   customer: { lat: number; lng: number } | null | undefined
 ): T[] {
   if (!customer) return items;
   return [...items].sort((a, b) => {
-    const da = distanceToCookAreaKm(customer, a.cook_area ?? a.area ?? '') ?? 999;
-    const db = distanceToCookAreaKm(customer, b.cook_area ?? b.area ?? '') ?? 999;
+    const da = distanceToCookAreaKm(customer, cookAreaLabel(a)) ?? 999;
+    const db = distanceToCookAreaKm(customer, cookAreaLabel(b)) ?? 999;
     return da - db;
   });
 }
