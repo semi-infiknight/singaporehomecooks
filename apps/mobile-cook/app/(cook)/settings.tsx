@@ -27,10 +27,11 @@ import {
   shcRadii,
   shcSpacing,
 } from '@shc/ui';
-import { getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
+import { SHCCookCollectionSlotEditor } from '@shc/ui';
 
 type CookProfile = {
   display_name?: string;
@@ -38,6 +39,7 @@ type CookProfile = {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  collection_time_slots?: string[];
   availability_paused?: boolean;
   avatar_url?: string;
   hero_image_url?: string;
@@ -53,6 +55,7 @@ export default function CookSettingsScreen() {
   const [story, setStory] = useState('');
   const [collectionAddress, setCollectionAddress] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
+  const [collectionTimeSlots, setCollectionTimeSlots] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
   const [profile, setProfile] = useState<CookProfile | null>(null);
   const [busy, setBusy] = useState<'avatar' | 'hero' | null>(null);
@@ -74,6 +77,7 @@ export default function CookSettingsScreen() {
     setStory(String(cook.story || ''));
     setCollectionAddress(String(cook.collection_address || ''));
     setCollectionInstructions(String(cook.collection_instructions || ''));
+    setCollectionTimeSlots(normalizeCookCollectionTimeSlots(cook.collection_time_slots));
     setPaused(Boolean(cook.availability_paused));
   }, [profileQ.data]);
 
@@ -85,6 +89,7 @@ export default function CookSettingsScreen() {
         story: story.trim() || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
+        collection_time_slots: collectionTimeSlots,
         availability_paused: paused,
       }),
     onSuccess: (res) => {
@@ -177,6 +182,10 @@ export default function CookSettingsScreen() {
           <Switch value={paused} onValueChange={setPaused} testID="cook-settings-pause-toggle" />
         </View>
       </SHCCard>
+
+      <GourmeatCard style={styles.card}>
+        <SHCCookCollectionSlotEditor value={collectionTimeSlots} onChange={setCollectionTimeSlots} />
+      </GourmeatCard>
 
       <SHCCard style={styles.card}>
         <Text style={styles.sectionTitle}>Kitchen profile</Text>

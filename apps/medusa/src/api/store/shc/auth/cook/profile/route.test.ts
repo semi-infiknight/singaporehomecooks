@@ -103,6 +103,14 @@ describe("PATCH /store/shc/auth/cook/profile", () => {
     expect((req as any)._getUpdated().story).toBe("New story");
   });
 
+  it("saves collection time slots", async () => {
+    const req = makeReq({ collection_time_slots: ["17:00-18:00", "bad", "18:00-19:00"] });
+    const res = makeRes();
+    await PATCH(req as any, res);
+    expect((req as any)._getUpdated().collection_time_slots).toEqual(["17:00-18:00", "18:00-19:00"]);
+    expect(res.body.cook.collection_time_slots).toEqual(["17:00-18:00", "18:00-19:00"]);
+  });
+
   it("saves avatar and hero keys", async () => {
     const req = makeReq({
       avatar_url: "cooks/cook_rose_001/avatar-new.jpg",

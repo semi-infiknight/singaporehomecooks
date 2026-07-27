@@ -75,6 +75,7 @@ export const updateCookProfile = (input: {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  collection_time_slots?: string[];
   availability_paused?: boolean;
   avatar_url?: string;
   hero_image_url?: string;

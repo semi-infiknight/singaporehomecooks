@@ -8,18 +8,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GourmeatCookHeader, GourmeatPrimaryButton, SHCFoodImage, SHCSkeletonList, gourmeatColors, shcSpacing } from '@shc/ui';
 import {
-  COLLECTION_TIME_SLOT_PRESETS,
   defaultCookDateTomorrow,
   defaultOrderByTonight,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
   getDropImageUrl,
+  resolveCookCollectionTimeSlots,
   resolveDefaultBatchCollectionSlot,
 } from '@shc/utils';
 import { listMyDrops, createDrop, patchDrop } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
 import { useTiffinCookConfig } from '../../hooks/useTiffin';
+import { useCookProfile } from '../../hooks/useCookProfile';
 
 export default function CookBatchesScreen() {
   const insets = useSafeAreaInsets();
@@ -42,6 +43,8 @@ export default function CookBatchesScreen() {
   });
 
   const { data: tiffinConfigData } = useTiffinCookConfig();
+  const { data: cookProfile } = useCookProfile();
+  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [price, setPrice] = useState('1.20');
@@ -144,7 +147,7 @@ export default function CookBatchesScreen() {
         />
         <Text style={styles.slotLabel}>Collection window</Text>
         <View style={styles.slotRow} testID="batch-slot">
-          {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+          {collectionTimeSlots.map((slot) => {
             const sel = collectionSlot === slot;
             return (
               <Pressable

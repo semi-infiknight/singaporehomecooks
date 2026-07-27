@@ -25,10 +25,11 @@ import {
   mealOptionsFromListing,
   recipeStepsFromListing,
   cookAllergenTier1Presets,
-  cookCollectionTimeSlotPresets,
+  resolveCookCollectionTimeSlots,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
+import { useCookProfile } from '../../../lib/useCookPortal';
 import {
   useCookListings,
   useCreateCookListing,
@@ -118,6 +119,8 @@ export default function CookListingsPage() {
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
   const { config } = useCookConfig();
+  const { data: cookProfile } = useCookProfile();
+  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as ListingRow[]) ?? [];
   const createListing = useCreateCookListing();
@@ -846,7 +849,7 @@ export default function CookListingsPage() {
                 onPortionsChange={setPortionsPerDay}
                 onCollectionDaysChange={setCollectionDays}
                 onTimeSlotsChange={setTimeSlots}
-                timeSlotPresets={cookCollectionTimeSlotPresets(config)}
+                timeSlotPresets={collectionTimeSlots}
               />
               <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">

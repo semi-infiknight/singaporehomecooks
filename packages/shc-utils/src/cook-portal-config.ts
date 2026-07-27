@@ -7,7 +7,6 @@ import { BENTO_ACTION_IMAGES } from './food-visuals';
 import { COMPLIANCE_COURSE_LINKS, type ComplianceCourseLink } from './compliance-courses';
 import {
   ALLERGEN_TIER1_PRESETS,
-  COLLECTION_TIME_SLOT_PRESETS,
 } from './listing-form';
 import {
   COOK_CHAT_QUICK_REPLIES,
@@ -39,7 +38,6 @@ export type CookPortalConfig = {
   dashboard_tiles: CookDashboardTile[];
   compliance_course_links: ComplianceCourseLink[];
   allergen_tier1_presets: string[];
-  collection_time_slot_presets: string[];
   chat_quick_replies: {
     customer: string[];
     cook: string[];
@@ -121,7 +119,6 @@ export function defaultCookPortalConfig(): CookPortalConfig {
     dashboard_tiles: DEFAULT_DASHBOARD_TILES.map((t) => ({ ...t })),
     compliance_course_links: COMPLIANCE_COURSE_LINKS.map((l) => ({ ...l })),
     allergen_tier1_presets: [...ALLERGEN_TIER1_PRESETS],
-    collection_time_slot_presets: [...COLLECTION_TIME_SLOT_PRESETS],
     chat_quick_replies: {
       customer: [...CUSTOMER_CHAT_QUICK_REPLIES],
       cook: [...COOK_CHAT_QUICK_REPLIES],
@@ -209,10 +206,6 @@ export function normalizeCookPortalConfig(input?: Partial<CookPortalConfig> | nu
       ? compliance_course_links
       : base.compliance_course_links,
     allergen_tier1_presets: cleanStrings(input.allergen_tier1_presets, base.allergen_tier1_presets),
-    collection_time_slot_presets: cleanStrings(
-      input.collection_time_slot_presets,
-      base.collection_time_slot_presets
-    ),
     chat_quick_replies: {
       customer: cleanStrings(input.chat_quick_replies?.customer, base.chat_quick_replies.customer),
       cook: cleanStrings(input.chat_quick_replies?.cook, base.chat_quick_replies.cook),
@@ -240,10 +233,6 @@ export function cookComplianceLinks(
 
 export function cookAllergenTier1Presets(config: CookPortalConfig): readonly string[] {
   return config.allergen_tier1_presets;
-}
-
-export function cookCollectionTimeSlotPresets(config: CookPortalConfig): readonly string[] {
-  return config.collection_time_slot_presets;
 }
 
 export function cookChatQuickReplies(

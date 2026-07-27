@@ -9,6 +9,7 @@ export const Cook = model.define("shc_cook", {
   area: model.text(),
   collection_address: model.text().nullable(),
   collection_instructions: model.text().nullable(),
+  collection_time_slots: model.json().default([] as any),
   avatar_url: model.text().nullable(),
   hero_image_url: model.text().nullable(),
   status: model.enum(["pending", "active", "paused", "suspended"]).default("pending"),

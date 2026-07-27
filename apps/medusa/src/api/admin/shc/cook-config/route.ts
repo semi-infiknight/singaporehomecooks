@@ -17,7 +17,6 @@ const PatchSchema = z
     dashboard_tiles: z.array(z.record(z.unknown())).optional(),
     compliance_course_links: z.array(z.record(z.unknown())).optional(),
     allergen_tier1_presets: z.array(z.string()).optional(),
-    collection_time_slot_presets: z.array(z.string()).optional(),
     chat_quick_replies: z
       .object({
         customer: z.array(z.string()).optional(),
@@ -57,9 +56,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       ...(body.dashboard_tiles ? { dashboard_tiles: body.dashboard_tiles as any } : {}),
       ...(body.compliance_course_links ? { compliance_course_links: body.compliance_course_links as any } : {}),
       ...(body.allergen_tier1_presets ? { allergen_tier1_presets: body.allergen_tier1_presets } : {}),
-      ...(body.collection_time_slot_presets
-        ? { collection_time_slot_presets: body.collection_time_slot_presets }
-        : {}),
       ...(body.chat_quick_replies
         ? {
             chat_quick_replies: {

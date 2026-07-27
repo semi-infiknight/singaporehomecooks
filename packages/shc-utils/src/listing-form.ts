@@ -44,6 +44,41 @@ export const COLLECTION_TIME_SLOT_PRESETS = [
 
 export const DEFAULT_COLLECTION_SLOT = '18:00-19:00' as const;
 
+const COLLECTION_SLOT_PATTERN = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
+
+/** Validate HH:MM-HH:MM collection window format. */
+export function isValidCollectionSlotFormat(slot: string): boolean {
+  return COLLECTION_SLOT_PATTERN.test(String(slot || '').trim());
+}
+
+/** Cook-owned collection windows — falls back to platform presets when unset. */
+export function normalizeCookCollectionTimeSlots(raw: unknown): string[] {
+  const fallback = [...COLLECTION_TIME_SLOT_PRESETS];
+  if (!raw) return fallback;
+  const list = Array.isArray(raw) ? raw : [];
+  const cleaned = list
+    .map((s) => String(s || '').trim())
+    .filter((s) => isValidCollectionSlotFormat(s));
+  const unique = [...new Set(cleaned)];
+  return unique.length ? unique : fallback;
+}
+
+/** Slots a cook offers across listings, batches, and tiffin. */
+export function resolveCookCollectionTimeSlots(
+  cook?: { collection_time_slots?: unknown } | null
+): readonly string[] {
+  const raw = cook?.collection_time_slots;
+  if (raw == null) return COLLECTION_TIME_SLOT_PRESETS;
+  const normalized = normalizeCookCollectionTimeSlots(raw);
+  return normalized.length ? normalized : COLLECTION_TIME_SLOT_PRESETS;
+}
+
+export function toggleCookCollectionTimeSlot(slots: string[], slot: string): string[] {
+  const trimmed = String(slot || '').trim();
+  if (!isValidCollectionSlotFormat(trimmed)) return slots;
+  return slots.includes(trimmed) ? slots.filter((s) => s !== trimmed) : [...slots, trimmed];
+}
+
 export function isCollectionTimeSlotPreset(slot: string): boolean {
   return (COLLECTION_TIME_SLOT_PRESETS as readonly string[]).includes(slot);
 }
@@ -51,12 +86,14 @@ export function isCollectionTimeSlotPreset(slot: string): boolean {
 /** Normalize a collection slot for drops, listings, and tiffin. */
 export function normalizeCollectionSlot(
   slot?: string | null,
-  fallback: string = DEFAULT_COLLECTION_SLOT
+  fallback: string = DEFAULT_COLLECTION_SLOT,
+  allowedSlots?: readonly string[]
 ): string {
   const trimmed = String(slot || '').trim();
   if (!trimmed) return fallback;
-  if (isCollectionTimeSlotPreset(trimmed)) return trimmed;
-  if (/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  const allowed = allowedSlots?.length ? allowedSlots : COLLECTION_TIME_SLOT_PRESETS;
+  if ((allowed as readonly string[]).includes(trimmed)) return trimmed;
+  if (isValidCollectionSlotFormat(trimmed)) return trimmed;
   return fallback;
 }
 

@@ -11,7 +11,6 @@ type CookConfig = {
   dashboard_tiles: Array<Record<string, unknown>>
   compliance_course_links: Array<Record<string, unknown>>
   allergen_tier1_presets: string[]
-  collection_time_slot_presets: string[]
   chat_quick_replies: { customer: string[]; cook: string[] }
 }
 
@@ -25,7 +24,6 @@ const ShcOpsCookPortalPage = () => {
 
   const [greeting, setGreeting] = useState({ morning: "", afternoon: "", evening: "" })
   const [allergens, setAllergens] = useState("")
-  const [timeSlots, setTimeSlots] = useState("")
   const [customerReplies, setCustomerReplies] = useState("")
   const [cookReplies, setCookReplies] = useState("")
   const [linkForm, setLinkForm] = useState({
@@ -51,7 +49,6 @@ const ShcOpsCookPortalPage = () => {
     if (!cfg) return
     setGreeting(cfg.greeting)
     setAllergens(cfg.allergen_tier1_presets.join("\n"))
-    setTimeSlots(cfg.collection_time_slot_presets.join("\n"))
     setCustomerReplies(cfg.chat_quick_replies.customer.join("\n"))
     setCookReplies(cfg.chat_quick_replies.cook.join("\n"))
   }, [configQ.data])
@@ -112,7 +109,6 @@ const ShcOpsCookPortalPage = () => {
               save.mutate({
                 greeting,
                 allergen_tier1_presets: lines(allergens),
-                collection_time_slot_presets: lines(timeSlots),
                 chat_quick_replies: { customer: lines(customerReplies), cook: lines(cookReplies) },
               })
             }
@@ -131,9 +127,9 @@ const ShcOpsCookPortalPage = () => {
             <Field label="Allergen tier-1 (one per line)">
               <Textarea rows={8} value={allergens} onChange={(e) => setAllergens(e.target.value)} />
             </Field>
-            <Field label="Collection time slots (one per line)">
-              <Textarea rows={5} value={timeSlots} onChange={(e) => setTimeSlots(e.target.value)} />
-            </Field>
+            <Text size="small" className="text-ui-fg-subtle px-0">
+              Collection time slots are configured by each cook in Kitchen settings (not admin).
+            </Text>
           </div>
         </Container>
 

@@ -10,6 +10,7 @@ import {
   deleteCookListing,
   getComplianceDocs,
   getCookEarnings,
+  getCookProfile,
   getCookListings,
   getCookOrder,
   getCookOrders,
@@ -27,6 +28,17 @@ import {
   submitCookOrderDispute,
 } from './cook-api-client';
 import { isActiveOrderStatus } from '@shc/utils';
+
+export function useCookProfile() {
+  return useQuery({
+    queryKey: ['cook-profile'],
+    queryFn: async () => {
+      const res = await getCookProfile();
+      return res.cook as Record<string, unknown>;
+    },
+    enabled: isCookAuthenticated(),
+  });
+}
 
 export function useCookOrders() {
   return useQuery({

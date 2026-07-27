@@ -10,6 +10,7 @@ export type CookMediaRow = {
   availability_paused?: boolean;
   collection_address?: string | null;
   collection_instructions?: string | null;
+  collection_time_slots?: string[];
   avatar_url?: string | null;
   hero_image_url?: string | null;
   rating?: number | null;
@@ -77,6 +78,7 @@ export async function shapeCookForStore(cook: CookMediaRow) {
     availability_paused: !!cook.availability_paused,
     collection_address: cook.collection_address,
     collection_instructions: cook.collection_instructions,
+    collection_time_slots: Array.isArray(cook.collection_time_slots) ? cook.collection_time_slots : [],
     avatar_url,
     hero_image_url,
     rating: cook.rating ?? null,

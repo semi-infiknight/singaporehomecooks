@@ -4585,6 +4585,46 @@ export function ListingAvailabilityEditorWeb({
   );
 }
 
+export function CookCollectionSlotEditorWeb({
+  value,
+  onChange,
+  testID = 'cook-collection-slot-editor',
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+  testID?: string;
+}) {
+  const toggle = (slot: string) => {
+    onChange(value.includes(slot) ? value.filter((s) => s !== slot) : [...value, slot]);
+  };
+  return (
+    <div className="space-y-2" data-testid={testID}>
+      <p className="text-sm font-extrabold">Collection time slots</p>
+      <p className="text-xs text-muted-foreground">
+        Choose the windows customers can collect from your kitchen. Used in listings and Cooking soon batches.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+          const sel = value.includes(slot);
+          return (
+            <button
+              key={slot}
+              type="button"
+              onClick={() => toggle(slot)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+              data-testid={`cook-collection-slot-${slot}`}
+            >
+              {slot}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function ListingDescriptionInputWeb({
   value,
   onChange,

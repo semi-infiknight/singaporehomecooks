@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SG_AREA_CENTROIDS, getCookAvatarUrl, getCookKitchenHeroUrl } from '@shc/utils';
+import { SG_AREA_CENTROIDS, getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
 import { getCookProfile, updateCookProfile, getUploadUrl } from '../../../lib/cook-api-client';
 import { uploadCookMediaFile, readWebImageFile } from '../../../lib/cook-media-upload';
 import { useCookAuth } from '../../../lib/useCookAuth';
@@ -14,6 +14,7 @@ import {
   GourmeatPrimaryButton,
   SHCButton,
   SHCSkeletonList,
+  CookCollectionSlotEditorWeb,
 } from '../../components/SHCWebComponents';
 
 type CookProfile = {
@@ -22,6 +23,7 @@ type CookProfile = {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  collection_time_slots?: string[];
   availability_paused?: boolean;
   avatar_url?: string;
   hero_image_url?: string;
@@ -35,6 +37,7 @@ export default function CookSettingsPage() {
   const [story, setStory] = useState('');
   const [collectionAddress, setCollectionAddress] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
+  const [collectionTimeSlots, setCollectionTimeSlots] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
   const [profile, setProfile] = useState<CookProfile | null>(null);
   const [error, setError] = useState('');
@@ -60,6 +63,7 @@ export default function CookSettingsPage() {
     setStory(String(cook.story || ''));
     setCollectionAddress(String(cook.collection_address || ''));
     setCollectionInstructions(String(cook.collection_instructions || ''));
+    setCollectionTimeSlots(normalizeCookCollectionTimeSlots(cook.collection_time_slots));
     setPaused(Boolean(cook.availability_paused));
   }, [profileQ.data]);
 
@@ -71,6 +75,7 @@ export default function CookSettingsPage() {
         story: story.trim() || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
+        collection_time_slots: collectionTimeSlots,
         availability_paused: paused,
       }),
     onSuccess: (res) => {
@@ -210,6 +215,10 @@ export default function CookSettingsPage() {
             data-testid="cook-settings-pause-toggle"
           />
         </label>
+      </GourmeatCard>
+
+      <GourmeatCard className="mb-4">
+        <CookCollectionSlotEditorWeb value={collectionTimeSlots} onChange={setCollectionTimeSlots} />
       </GourmeatCard>
 
       <GourmeatCard className="mb-4 space-y-3">

@@ -56,7 +56,7 @@ import {
   uniqueListingCuisines,
   resolveCookListingsForDisplay,
   cookAllergenTier1Presets,
-  cookCollectionTimeSlotPresets,
+  resolveCookCollectionTimeSlots,
   cookListingE2eTestId,
   E2E_COOK_SEED_LISTING,
   type CookListingStatusFilter,
@@ -85,6 +85,7 @@ import {
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
 import { useCookConfig } from '../../hooks/useCookConfig';
+import { useCookProfile } from '../../hooks/useCookProfile';
 import { VirtualRowFlashList } from '../../components/VirtualLists';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
@@ -119,6 +120,8 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
+  const { data: cookProfile } = useCookProfile();
+  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as any[]) ?? [];
@@ -825,7 +828,7 @@ export default function CookListings() {
             onPortionsChange={setPortionsPerDay}
             onCollectionDaysChange={setCollectionDays}
             onTimeSlotsChange={setTimeSlots}
-            timeSlotPresets={cookCollectionTimeSlotPresets(config)}
+            timeSlotPresets={collectionTimeSlots}
           />
           <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
           <View style={styles.tagRow}>

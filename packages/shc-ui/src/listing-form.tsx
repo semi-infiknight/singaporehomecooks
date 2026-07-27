@@ -274,3 +274,48 @@ export function SHCLastMinutePremiumInput({
     </View>
   );
 }
+
+/** Cook kitchen settings — which collection windows this cook offers. */
+export function SHCCookCollectionSlotEditor({
+  value,
+  onChange,
+  testID = 'cook-collection-slot-editor',
+}: {
+  value: string[];
+  onChange: (next: string[]) => void;
+  testID?: string;
+}) {
+  const toggle = (slot: string) => {
+    onChange(
+      value.includes(slot) ? value.filter((s) => s !== slot) : [...value, slot]
+    );
+  };
+
+  return (
+    <View testID={testID}>
+      <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text, marginBottom: shcSpacing.xs }}>
+        Collection time slots
+      </Text>
+      <Text style={{ fontSize: 11, color: colors.textLight, marginBottom: shcSpacing.sm }}>
+        Choose the windows customers can collect from your kitchen. Used in listings and Cooking soon batches.
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+        {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+          const sel = value.includes(slot);
+          return (
+            <Pressable
+              key={slot}
+              onPress={() => toggle(slot)}
+              style={[chipBase, { backgroundColor: sel ? colors.primary : colors.surfaceAlt }]}
+              testID={`cook-collection-slot-${slot}`}
+            >
+              <Text style={{ color: sel ? colors.onPrimary : colors.text, fontSize: 11, fontWeight: '700' }}>
+                {slot}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}

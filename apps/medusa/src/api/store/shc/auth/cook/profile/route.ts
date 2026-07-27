@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
+import { normalizeCookCollectionTimeSlots } from "@shc/utils";
 import { getCookId } from "../../../../../../lib/shc-actors";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 import { assertCookOwnsMediaKey, shapeCookForStore, type CookMediaRow } from "../../../../../../lib/shc-cook-shape";
@@ -12,6 +13,7 @@ const BodySchema = z
     story: z.string().max(800).optional(),
     collection_address: z.string().max(200).optional(),
     collection_instructions: z.string().max(400).optional(),
+    collection_time_slots: z.array(z.string().min(1).max(40)).max(12).optional(),
     availability_paused: z.boolean().optional(),
     avatar_url: z.string().max(500).optional(),
     hero_image_url: z.string().max(500).optional(),
@@ -26,8 +28,9 @@ export function shapeCookProfile(cook: Record<string, unknown>): CookMediaRow {
     area: cook.area as string | undefined,
     story: cook.story as string | null | undefined,
     collection_address: cook.collection_address as string | null | undefined,
-    collection_instructions: cook.collection_instructions as string | null | undefined,
-    avatar_url: cook.avatar_url as string | null | undefined,
+  collection_instructions: cook.collection_instructions as string | null | undefined,
+  collection_time_slots: normalizeCookCollectionTimeSlots(cook.collection_time_slots),
+  avatar_url: cook.avatar_url as string | null | undefined,
     hero_image_url: cook.hero_image_url as string | null | undefined,
     status: cook.status as string | undefined,
     availability_paused: Boolean(cook.availability_paused),
@@ -94,6 +97,9 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   }
   if (parse.data.collection_instructions !== undefined) {
     data.collection_instructions = parse.data.collection_instructions.trim();
+  }
+  if (parse.data.collection_time_slots !== undefined) {
+    data.collection_time_slots = normalizeCookCollectionTimeSlots(parse.data.collection_time_slots);
   }
   if (parse.data.availability_paused !== undefined) {
     data.availability_paused = parse.data.availability_paused;

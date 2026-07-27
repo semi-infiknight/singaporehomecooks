@@ -5,16 +5,16 @@
  */
 import { useEffect, useState } from 'react';
 import {
-  COLLECTION_TIME_SLOT_PRESETS,
   defaultCookDateTomorrow,
   defaultOrderByTonight,
   formatDropCookDate,
   formatDropOrderBy,
   formatDropPrice,
+  resolveCookCollectionTimeSlots,
   resolveDefaultBatchCollectionSlot,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import { useCreateDrop, useMyDrops, usePatchDrop } from '../../../lib/useCookPortal';
+import { useCreateDrop, useMyDrops, usePatchDrop, useCookProfile } from '../../../lib/useCookPortal';
 import { useTiffinCookConfig } from '../../../lib/useTiffin';
 import { GourmeatCookHeader, SHCBadge, SHCButton, SHCCard, SHCSkeletonList } from '../../components/SHCWebComponents';
 
@@ -22,6 +22,8 @@ export default function CookBatchesPage() {
   const { user } = useCookAuth();
   const { data: drops, isLoading } = useMyDrops();
   const { data: tiffinConfigData } = useTiffinCookConfig();
+  const { data: cookProfile } = useCookProfile();
+  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const dropList = (drops as any[]) ?? [];
   const createMut = useCreateDrop();
   const patchMut = usePatchDrop();
@@ -146,7 +148,7 @@ export default function CookBatchesPage() {
           <div className="sm:col-span-2">
             <p className="text-xs font-bold">Collection window</p>
             <div className="mt-2 flex flex-wrap gap-2" data-testid="batch-slot">
-              {COLLECTION_TIME_SLOT_PRESETS.map((slot) => {
+              {collectionTimeSlots.map((slot) => {
                 const sel = form.collection_slot === slot;
                 return (
                   <button

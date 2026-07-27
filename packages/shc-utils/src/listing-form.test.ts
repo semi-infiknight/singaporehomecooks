@@ -7,6 +7,8 @@ import {
   availabilityFromListing,
   normalizeCollectionSlot,
   resolveDefaultBatchCollectionSlot,
+  resolveCookCollectionTimeSlots,
+  normalizeCookCollectionTimeSlots,
 } from './listing-form';
 
 describe('listing-form', () => {
@@ -53,5 +55,13 @@ describe('listing-form', () => {
     expect(normalizeCollectionSlot('bad')).toBe('18:00-19:00');
     expect(resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: '17:00-19:00' })).toBe('17:00-19:00');
     expect(resolveDefaultBatchCollectionSlot({ tiffinDefaultSlot: '' })).toBe('18:00-19:00');
+  });
+
+  it('resolves cook-owned collection time slots', () => {
+    expect(resolveCookCollectionTimeSlots({ collection_time_slots: ['17:00-18:00'] })).toEqual([
+      '17:00-18:00',
+    ]);
+    expect(resolveCookCollectionTimeSlots({ collection_time_slots: [] }).length).toBeGreaterThan(0);
+    expect(normalizeCookCollectionTimeSlots(['bad', '18:00-19:00'])).toEqual(['18:00-19:00']);
   });
 });

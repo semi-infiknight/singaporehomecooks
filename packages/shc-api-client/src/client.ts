@@ -118,9 +118,10 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       display_name?: string;
       area?: string;
       story?: string;
-      collection_address?: string;
-      collection_instructions?: string;
-      availability_paused?: boolean;
+    collection_address?: string;
+    collection_instructions?: string;
+    collection_time_slots?: string[];
+    availability_paused?: boolean;
       avatar_url?: string;
       hero_image_url?: string;
       pdpa_consent?: boolean;
