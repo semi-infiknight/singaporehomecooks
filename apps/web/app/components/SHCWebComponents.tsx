@@ -51,6 +51,7 @@ import {
   type TiffinOrderCardStatus,
   ALLERGEN_TIER1_PRESETS,
   COLLECTION_TIME_SLOT_PRESETS,
+  cookAreaSuggestions,
   WEEKDAY_LABELS,
   type AllergenTiers,
   addMealOptionRow,
@@ -4617,6 +4618,57 @@ export function CookCollectionSlotEditorWeb({
               data-testid={`cook-collection-slot-${slot}`}
             >
               {slot}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function CookAreaPickerWeb({
+  value,
+  onChange,
+  testID = 'cook-settings-area',
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  testID?: string;
+}) {
+  const suggestions = React.useMemo(() => cookAreaSuggestions(value), [value]);
+  return (
+    <div data-testid={testID}>
+      <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        list={`${testID}-suggestions`}
+        placeholder="e.g. Tampines"
+        className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+        data-testid={`${testID}-input`}
+      />
+      <datalist id={`${testID}-suggestions`}>
+        {suggestions.map((area) => (
+          <option key={area} value={area} />
+        ))}
+      </datalist>
+      <p className="text-[11px] text-muted-foreground mt-2 mb-2">
+        Pick a neighbourhood for collection proximity and release logic.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((area) => {
+          const sel = value.trim().toLowerCase() === area.toLowerCase();
+          return (
+            <button
+              key={area}
+              type="button"
+              onClick={() => onChange(area)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+              data-testid={`${testID}-chip-${area.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}
+            >
+              {area}
             </button>
           );
         })}

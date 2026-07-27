@@ -26,12 +26,13 @@ import {
   shcColors,
   shcRadii,
   shcSpacing,
+  SHCCookCollectionSlotEditor,
+  SHCCookAreaPicker,
 } from '@shc/ui';
-import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
+import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookAreaInput, normalizeCookCollectionTimeSlots } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
-import { SHCCookCollectionSlotEditor } from '@shc/ui';
 
 type CookProfile = {
   display_name?: string;
@@ -85,7 +86,7 @@ export default function CookSettingsScreen() {
     mutationFn: () =>
       updateCookProfile({
         display_name: displayName.trim() || undefined,
-        area: area.trim() || undefined,
+        area: normalizeCookAreaInput(area) || undefined,
         story: story.trim() || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
@@ -199,14 +200,7 @@ export default function CookSettingsScreen() {
           testID="cook-settings-display-name"
         />
         <Text style={styles.fieldLabel}>Area</Text>
-        <TextInput
-          value={area}
-          onChangeText={setArea}
-          placeholder="e.g. Tampines"
-          placeholderTextColor={shcColors.textLight}
-          style={styles.input}
-          testID="cook-settings-area"
-        />
+        <SHCCookAreaPicker value={area} onChange={setArea} testID="cook-settings-area" />
         <Text style={styles.fieldLabel}>Heritage story</Text>
         <TextInput
           value={story}

@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, SG_AREA_CENTROIDS } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, normalizeCookAreaInput } from '@shc/utils';
 import { markCookOnboardingSeen } from '../../../lib/onboarding';
 import { updateCookProfile } from '../../../lib/cook-api-client';
-import { SHCButton } from '../../components/SHCWebComponents';
+import { SHCButton, CookAreaPickerWeb } from '../../components/SHCWebComponents';
 
 const STEPS = ['welcome', 'story', 'kitchen', 'consent'] as const;
 type Step = (typeof STEPS)[number];
@@ -78,7 +78,7 @@ export default function CookPortalOnboardingPage() {
     try {
       await updateCookProfile({
         story: story.trim() || undefined,
-        area: area.trim() || undefined,
+        area: normalizeCookAreaInput(area) || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
         pdpa_consent: true,
@@ -148,22 +148,11 @@ export default function CookPortalOnboardingPage() {
 
         {step === 'kitchen' && (
           <div className="space-y-3 mb-4">
-            <div>
-              <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
-              <input
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                list="cook-area-suggestions"
-                placeholder="e.g. Tampines"
-                className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
-                data-testid="cook-onboarding-area-input"
-              />
-              <datalist id="cook-area-suggestions">
-                {SG_AREA_CENTROIDS.map((a) => (
-                  <option key={a.name} value={a.name} />
-                ))}
-              </datalist>
-            </div>
+            <CookAreaPickerWeb
+              value={area}
+              onChange={setArea}
+              testID="cook-onboarding-area-input"
+            />
             <div>
               <p className="text-xs font-extrabold text-muted-foreground mb-1">Collection address</p>
               <input
