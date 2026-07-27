@@ -1,4 +1,4 @@
-import ShcPlatformStatModuleService from "../../../../modules/shc-platform-stat/service";
+import ShcPlatformStatModuleService from "../modules/shc-platform-stat/service";
 import { CATALOG_CATEGORIES_KEY, normalizeCategories } from "./shc-catalog-categories";
 import {
   CUSTOMER_BROWSE_CONFIG_KEY,
