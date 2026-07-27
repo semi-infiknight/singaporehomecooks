@@ -14,6 +14,10 @@ export type OrderMetaRow = Record<string, unknown> & {
   is_corporate?: boolean;
   cooking_notes?: string | null;
   collection_notes?: string | null;
+  customer_collection_lat?: number | null;
+  customer_collection_lng?: number | null;
+  customer_collection_postal_code?: string | null;
+  customer_collection_line1?: string | null;
   items?: unknown[];
   total_cents?: number;
   total?: number;
@@ -87,6 +91,10 @@ export function shapeStoreOrder(
     corporate_note: m.corporate_note || null,
     cooking_notes: m.cooking_notes || null,
     collection_notes: m.collection_notes || null,
+    customer_collection_lat: m.customer_collection_lat ?? null,
+    customer_collection_lng: m.customer_collection_lng ?? null,
+    customer_collection_postal_code: m.customer_collection_postal_code || null,
+    customer_collection_line1: m.customer_collection_line1 || null,
     items: normalizeItems(m.items as unknown[] | undefined),
     total: resolveTotal(m),
   };

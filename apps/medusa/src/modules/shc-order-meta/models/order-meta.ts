@@ -32,6 +32,10 @@ export const OrderMeta = model.define("shc_order_meta", {
   corporate_note: model.text().nullable(),
   cooking_notes: model.text().nullable(),
   collection_notes: model.text().nullable(),
+  customer_collection_lat: model.number().nullable(),
+  customer_collection_lng: model.number().nullable(),
+  customer_collection_postal_code: model.text().nullable(),
+  customer_collection_line1: model.text().nullable(),
   // Snapshot for UI wiring (items + total so list/detail can render dish names, qty, totals without extra fetches)
   items: model.json().nullable(),
   total_cents: model.number().nullable(),

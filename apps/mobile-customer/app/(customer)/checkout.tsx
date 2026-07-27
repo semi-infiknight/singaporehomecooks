@@ -35,7 +35,7 @@ import { authRouteWithReturn } from '../../lib/auth-return';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
-import { checkoutCollectionPrefill, buildCheckoutCollectionNotes } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder } from '@shc/utils';
 
 function AllergenGateTrayContent({
   tier1,
@@ -200,9 +200,11 @@ export default function Checkout() {
         instructions: collectionInstructions,
         cartCollectionNotes: cartNotes.collectionNotes,
       });
+      const customerCollection = customerCollectionForOrder(collectionLocation ?? undefined, collectionUnit);
       const res = await checkout(allergenAck, effectiveSlot, pdpaConsent, {
         ...toOrderNotesPayload(cartNotes),
         collection_notes,
+        ...customerCollection,
       });
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
       setCompletedOrderId(orderId);

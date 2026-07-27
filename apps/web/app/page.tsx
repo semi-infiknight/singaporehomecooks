@@ -13,6 +13,8 @@ import { useDiscoverSearch } from './providers';
 import {
   extractReorderDishes,
   favoritesToReorderDishes,
+  buildCookAreaById,
+  sortReorderDishesByProximity,
   getCookAvatarUrl,
   getDishImageUrl,
   sortByCookProximity,
@@ -186,25 +188,33 @@ export default function DiscoverHome() {
 
   const { categories: cuisineItems, promos: homePromos, config: browseConfig } = useCustomerConfig();
 
+  const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
+  const cookAreaById = useMemo(() => buildCookAreaById(cookList, productList), [cookList, productList]);
+
   const forYou = useMemo(() => {
     if (isSearching) return null;
     const asCards = (items: Array<{ id: string; name: string; cook_name?: string; price: number; cuisine?: string }>) =>
       items.map((d) =>
         toDishCard({ id: d.id, name: d.name, cook_name: d.cook_name || '', price: d.price, cuisine: d.cuisine })
       ) as DishCardProduct[];
+    const reorder = sortReorderDishesByProximity(
+      extractReorderDishes(orders as Record<string, unknown>[], cookAreaById),
+      collectionLocation
+    );
+    const topRated = sortByCookProximity(
+      topRatedCategoryDishes(productList as Record<string, unknown>[], 8) as Array<{ cook_area?: string }>,
+      collectionLocation
+    );
     return customerForYouRail(browseConfig, {
-      reorder: asCards(extractReorderDishes(orders as Record<string, unknown>[])),
+      reorder: asCards(reorder),
       saved: asCards(favoritesToReorderDishes(favorites)),
-      topRated: topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map((p) =>
-        toDishCard(p as DishCardProduct)
-      ) as DishCardProduct[],
+      topRated: topRated.map((p) => toDishCard(p as DishCardProduct)) as DishCardProduct[],
     });
-  }, [isSearching, orders, favorites, productList, browseConfig]);
+  }, [isSearching, orders, favorites, productList, browseConfig, collectionLocation, cookAreaById]);
 
   const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
   const isGuest = !user;
   const homeGreeting = discoverHomeHeadline(user?.name, user?.email, browseConfig.copy);
-  const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
   const sortedCookList = useMemo(
     () => sortByCookProximity(cookList, collectionLocation),
     [cookList, collectionLocation]

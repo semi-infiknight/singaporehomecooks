@@ -16,6 +16,10 @@ const BodySchema = z.object({
   isCorporate: z.boolean().optional().default(false),
   cooking_notes: z.string().max(2000).nullable().optional(),
   collection_notes: z.string().max(2000).nullable().optional(),
+  customer_collection_lat: z.number().min(1.15).max(1.48).nullable().optional(),
+  customer_collection_lng: z.number().min(103.6).max(104.1).nullable().optional(),
+  customer_collection_postal_code: z.string().regex(/^\d{6}$/).nullable().optional(),
+  customer_collection_line1: z.string().max(200).nullable().optional(),
 }).strict();
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -38,6 +42,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       isCorporate,
       cooking_notes,
       collection_notes,
+      customer_collection_lat,
+      customer_collection_lng,
+      customer_collection_postal_code,
+      customer_collection_line1,
     } = parse.data;
     const result = await completeDemoCartCheckout(req, {
       collection_date,
@@ -47,6 +55,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       isCorporate,
       cooking_notes,
       collection_notes,
+      customer_collection_lat,
+      customer_collection_lng,
+      customer_collection_postal_code,
+      customer_collection_line1,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id}`);

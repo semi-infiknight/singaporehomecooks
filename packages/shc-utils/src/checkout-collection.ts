@@ -54,3 +54,27 @@ export function buildCheckoutCollectionNotes(input: {
   const joined = parts.join(' · ');
   return joined.length ? joined.slice(0, 2000) : null;
 }
+
+export type CustomerCollectionSnapshot = {
+  customer_collection_lat: number;
+  customer_collection_lng: number;
+  customer_collection_postal_code: string | null;
+  customer_collection_line1: string | null;
+};
+
+/** Structured collection point for order meta (ops / support). */
+export function customerCollectionForOrder(
+  address: Partial<SHCSavedAddress> | null | undefined,
+  unit?: string
+): CustomerCollectionSnapshot | null {
+  const prefill = checkoutCollectionPrefill(address);
+  if (!prefill || address?.lat == null || address?.lng == null) return null;
+  const unitPart = (unit ?? prefill.line2).trim();
+  const line1 = [prefill.line1, unitPart].filter(Boolean).join(', ');
+  return {
+    customer_collection_lat: Number(address.lat),
+    customer_collection_lng: Number(address.lng),
+    customer_collection_postal_code: prefill.postal_code || null,
+    customer_collection_line1: line1 || null,
+  };
+}

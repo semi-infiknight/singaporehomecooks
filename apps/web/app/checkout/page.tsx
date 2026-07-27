@@ -30,7 +30,7 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
-import { checkoutCollectionPrefill, buildCheckoutCollectionNotes } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder } from '@shc/utils';
 import { createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 
@@ -253,6 +253,7 @@ export default function CheckoutPage() {
         instructions: collectionInstructions,
         cartCollectionNotes: cartNotes.collectionNotes,
       });
+      const customerCollection = customerCollectionForOrder(collectionLocation ?? undefined, collectionUnit);
       const res = await checkoutMut.mutateAsync({
         allergenAck,
         collection: effectiveSlot,
@@ -260,6 +261,7 @@ export default function CheckoutPage() {
         notes: {
           ...toOrderNotesPayload(cartNotes),
           collection_notes,
+          ...customerCollection,
         },
       });
       clearCartCheckoutNotes();

@@ -232,7 +232,14 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       allergenAck: boolean,
       collection: { date: string; slot: string },
       pdpaConsent = true,
-      notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+      notes?: {
+        cooking_notes?: string | null;
+        collection_notes?: string | null;
+        customer_collection_lat?: number | null;
+        customer_collection_lng?: number | null;
+        customer_collection_postal_code?: string | null;
+        customer_collection_line1?: string | null;
+      }
     ) {
       return request("/store/shc/carts/demo-complete", {
         method: "POST",
@@ -243,6 +250,10 @@ export function createShcApiClient(config: ShcApiClientConfig) {
           pdpa_consent: pdpaConsent,
           cooking_notes: notes?.cooking_notes ?? null,
           collection_notes: notes?.collection_notes ?? null,
+          customer_collection_lat: notes?.customer_collection_lat ?? null,
+          customer_collection_lng: notes?.customer_collection_lng ?? null,
+          customer_collection_postal_code: notes?.customer_collection_postal_code ?? null,
+          customer_collection_line1: notes?.customer_collection_line1 ?? null,
         }),
       });
     },

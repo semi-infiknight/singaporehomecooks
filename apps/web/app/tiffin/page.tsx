@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -52,6 +52,15 @@ export default function TiffinBrowsePage() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState('all');
+  const hadLocation = useRef(false);
+
+  useEffect(() => {
+    const hasLocation = location?.lat != null && location?.lng != null;
+    if (hasLocation && !hadLocation.current && filter === 'all') {
+      setFilter('nearest');
+    }
+    hadLocation.current = hasLocation;
+  }, [location, filter]);
 
   const filtered = useMemo(() => {
     let list = [...(kitchens as any[])];

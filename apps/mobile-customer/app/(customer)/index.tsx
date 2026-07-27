@@ -40,6 +40,8 @@ import {
   getCookAvatarUrl,
   extractReorderDishes,
   favoritesToReorderDishes,
+  buildCookAreaById,
+  sortReorderDishesByProximity,
   sortByCookProximity,
   distanceToCookItemKm,
   formatDistanceKm,
@@ -188,18 +190,28 @@ export default function CustomerDiscover() {
 
   const { categories, promos: homePromos, config: browseConfig } = useCustomerConfig();
 
+  const cookAreaById = useMemo(() => buildCookAreaById(cookList, productList), [cookList, productList]);
+
   const forYou = useMemo(() => {
     if (isSearching) return null;
+    const reorder = sortReorderDishesByProximity(
+      extractReorderDishes(orders as Record<string, unknown>[], cookAreaById),
+      collectionLocation
+    );
+    const topRated = sortByCookProximity(
+      topRatedCategoryDishes(productList as Record<string, unknown>[], 8) as Array<{ cook_area?: string }>,
+      collectionLocation
+    );
     return customerForYouRail(browseConfig, {
-      reorder: extractReorderDishes(orders as Record<string, unknown>[]).map((d) =>
+      reorder: reorder.map((d) =>
         toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine })
       ),
       saved: favoritesToReorderDishes(favorites).map((d) =>
         toDishCardData({ id: d.id, name: d.name, cook_name: d.cook_name, price: d.price, cuisine: d.cuisine })
       ),
-      topRated: topRatedCategoryDishes(productList as Record<string, unknown>[], 8).map(toDishCardData),
+      topRated: topRated.map(toDishCardData),
     });
-  }, [isSearching, orders, favorites, productList, browseConfig]);
+  }, [isSearching, orders, favorites, productList, browseConfig, collectionLocation, cookAreaById]);
 
   const cuisineCategories: GourmeatCategoryItem[] = categories.map((c) => ({
     id: c.id,

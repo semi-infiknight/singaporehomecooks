@@ -14,6 +14,10 @@ export type DemoCheckoutInput = {
   isCorporate?: boolean;
   cooking_notes?: string | null;
   collection_notes?: string | null;
+  customer_collection_lat?: number | null;
+  customer_collection_lng?: number | null;
+  customer_collection_postal_code?: string | null;
+  customer_collection_line1?: string | null;
 };
 
 export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCheckoutInput) {
@@ -26,6 +30,10 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     isCorporate = false,
     cooking_notes = null,
     collection_notes = null,
+    customer_collection_lat = null,
+    customer_collection_lng = null,
+    customer_collection_postal_code = null,
+    customer_collection_line1 = null,
   } = input;
 
   const trimNote = (v: string | null | undefined) => {
@@ -96,6 +104,10 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
         : undefined,
     cooking_notes,
     collection_notes,
+    customer_collection_lat,
+    customer_collection_lng,
+    customer_collection_postal_code: customer_collection_postal_code?.trim() || null,
+    customer_collection_line1: customer_collection_line1?.trim() || null,
     origin_request_id: originDropId ? `drop:${originDropId}` : undefined,
     items: cart.items,
     total_cents: total,

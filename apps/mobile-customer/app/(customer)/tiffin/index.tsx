@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -61,6 +61,15 @@ export default function TiffinBrowseScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState('all');
+  const hadLocation = useRef(false);
+
+  useEffect(() => {
+    const hasLocation = location?.lat != null && location?.lng != null;
+    if (hasLocation && !hadLocation.current && filter === 'all') {
+      setFilter('nearest');
+    }
+    hadLocation.current = hasLocation;
+  }, [location, filter]);
 
   const filtered = useMemo(() => {
     let list = [...(kitchens as any[])];

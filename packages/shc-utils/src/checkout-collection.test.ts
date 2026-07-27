@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildCheckoutCollectionNotes, checkoutCollectionPrefill } from './checkout-collection';
+import {
+  buildCheckoutCollectionNotes,
+  checkoutCollectionPrefill,
+  customerCollectionForOrder,
+} from './checkout-collection';
 
 const ADDR = {
   id: 'a1',
@@ -45,5 +49,21 @@ describe('buildCheckoutCollectionNotes', () => {
       cartCollectionNotes: 'Ring doorbell',
     });
     expect(note).toContain('Ring doorbell');
+  });
+});
+
+describe('customerCollectionForOrder', () => {
+  it('returns structured snapshot for ops', () => {
+    const snap = customerCollectionForOrder(ADDR, '#05-123');
+    expect(snap).toMatchObject({
+      customer_collection_lat: 1.35,
+      customer_collection_lng: 103.94,
+      customer_collection_postal_code: '520456',
+      customer_collection_line1: 'Blk 456 Tampines St 42, #05-123',
+    });
+  });
+
+  it('returns null without coordinates', () => {
+    expect(customerCollectionForOrder({ line1: 'x', postal_code: '123456' })).toBeNull();
   });
 });
