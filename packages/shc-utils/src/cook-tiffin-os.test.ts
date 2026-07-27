@@ -5,6 +5,9 @@ import {
   cookMenuPublishSuccessCopy,
   cookDayCancelSuccessCopy,
   cookTiffinEmptyDishesCopy,
+  normalizeTiffinMealsPerWeekOptions,
+  toggleTiffinMealsPerWeekOption,
+  normalizeTiffinDefaultCollectionSlot,
 } from './cook-tiffin-os';
 
 describe('cook-tiffin-os (wave 3 cook mirrors)', () => {
@@ -38,5 +41,16 @@ describe('cook-tiffin-os (wave 3 cook mirrors)', () => {
     expect(cookMenuPublishSuccessCopy('2026-07-14', 3)).toMatch(/published/i);
     expect(cookDayCancelSuccessCopy('2026-07-14')).toMatch(/Canceled by kitchen/i);
     expect(cookTiffinEmptyDishesCopy().ctaLabel).toMatch(/listing/i);
+  });
+
+  it('normalizes meals-per-week options with at least one tier', () => {
+    expect(normalizeTiffinMealsPerWeekOptions([4, 2, 3])).toEqual([2, 3, 4]);
+    expect(toggleTiffinMealsPerWeekOption([2, 3, 4], 3)).toEqual([2, 4]);
+    expect(toggleTiffinMealsPerWeekOption([2], 2)).toEqual([2]);
+  });
+
+  it('normalizes default collection slot', () => {
+    expect(normalizeTiffinDefaultCollectionSlot('17:00-18:00')).toBe('17:00-18:00');
+    expect(normalizeTiffinDefaultCollectionSlot('invalid')).toBe('18:00-19:00');
   });
 });

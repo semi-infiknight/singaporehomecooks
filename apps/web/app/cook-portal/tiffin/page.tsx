@@ -20,6 +20,11 @@ import {
   cookDayCancelSuccessCopy,
   cookTiffinEmptyDishesCopy,
   DEFAULT_TIFFIN_PRICING_BY_MEALS,
+  COOK_TIFFIN_COLLECTION_SLOTS,
+  TIFFIN_MEALS_PER_WEEK_CHOICES,
+  normalizeTiffinMealsPerWeekOptions,
+  toggleTiffinMealsPerWeekOption,
+  normalizeTiffinDefaultCollectionSlot,
 } from '@shc/utils';
 import {
   GourmeatCookHeader,
@@ -49,6 +54,8 @@ export default function CookTiffinConfigPage() {
     '3': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
     '4': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
   });
+  const [mealsPerWeekOptions, setMealsPerWeekOptions] = useState<number[]>([2, 3, 4]);
+  const [defaultCollectionSlot, setDefaultCollectionSlot] = useState('18:00-19:00');
   const [savedMsg, setSavedMsg] = useState('');
   const [opsMsg, setOpsMsg] = useState('');
   const [opsError, setOpsError] = useState('');
@@ -66,6 +73,8 @@ export default function CookTiffinConfigPage() {
         '3': String(p['3'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
         '4': String(p['4'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
       });
+      setMealsPerWeekOptions(normalizeTiffinMealsPerWeekOptions(config.meals_per_week_options));
+      setDefaultCollectionSlot(normalizeTiffinDefaultCollectionSlot(config.default_collection_slot));
     }
   }, [config]);
 
@@ -116,7 +125,8 @@ export default function CookTiffinConfigPage() {
       tagline: tagline.trim() || undefined,
       eligible_product_ids: eligible,
       collection_days: collectionDays,
-      meals_per_week_options: [2, 3, 4],
+      meals_per_week_options: normalizeTiffinMealsPerWeekOptions(mealsPerWeekOptions) as (2 | 3 | 4)[],
+      default_collection_slot: normalizeTiffinDefaultCollectionSlot(defaultCollectionSlot),
       pricing_by_meals_per_week: {
         '2': Number(pricing['2']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['2'],
         '3': Number(pricing['3']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['3'],
@@ -274,6 +284,56 @@ export default function CookTiffinConfigPage() {
             {label}
           </button>
         ))}
+      </div>
+
+      <p className="font-extrabold text-sm mb-1">Meals per week tiers</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        Choose which plan sizes customers can subscribe to (at least one).
+      </p>
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {TIFFIN_MEALS_PER_WEEK_CHOICES.map((n) => {
+          const on = mealsPerWeekOptions.includes(n);
+          return (
+            <button
+              key={n}
+              type="button"
+              data-testid={`cook-tiffin-meals-${n}`}
+              onClick={() => setMealsPerWeekOptions((prev) => toggleTiffinMealsPerWeekOption(prev, n))}
+              className={`min-w-[52px] rounded-lg border-2 px-3 py-2 text-xs font-black ${
+                on
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-[var(--shc-border-brutal)] bg-card'
+              }`}
+            >
+              {n}/wk
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="font-extrabold text-sm mb-1">Default collection slot</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        Used for weekly meal cards when no day-specific slot is set.
+      </p>
+      <div className="flex flex-col gap-2 mb-4">
+        {COOK_TIFFIN_COLLECTION_SLOTS.map((slot) => {
+          const on = defaultCollectionSlot === slot.id;
+          return (
+            <button
+              key={slot.id}
+              type="button"
+              data-testid={`cook-tiffin-slot-${slot.id}`}
+              onClick={() => setDefaultCollectionSlot(slot.id)}
+              className={`w-full text-left rounded-xl border-2 px-3 py-2.5 text-sm font-bold ${
+                on
+                  ? 'border-primary bg-primary/10'
+                  : 'border-[var(--shc-border-brutal)] bg-card'
+              }`}
+            >
+              {slot.label}
+            </button>
+          );
+        })}
       </div>
 
       <p className="font-extrabold text-sm mb-1">Eligible dishes</p>

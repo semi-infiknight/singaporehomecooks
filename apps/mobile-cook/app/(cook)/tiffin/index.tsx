@@ -30,6 +30,11 @@ import {
   cookDayCancelSuccessCopy,
   cookTiffinEmptyDishesCopy,
   DEFAULT_TIFFIN_PRICING_BY_MEALS,
+  COOK_TIFFIN_COLLECTION_SLOTS,
+  TIFFIN_MEALS_PER_WEEK_CHOICES,
+  normalizeTiffinMealsPerWeekOptions,
+  toggleTiffinMealsPerWeekOption,
+  normalizeTiffinDefaultCollectionSlot,
 } from '@shc/utils';
 import {
   useTiffinCookConfig,
@@ -58,6 +63,8 @@ export default function CookTiffinConfigScreen() {
     '3': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
     '4': String(DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
   });
+  const [mealsPerWeekOptions, setMealsPerWeekOptions] = useState<number[]>([2, 3, 4]);
+  const [defaultCollectionSlot, setDefaultCollectionSlot] = useState('18:00-19:00');
   const [selectedDate, setSelectedDate] = useState('');
   const [opsMsg, setOpsMsg] = useState('');
   const [opsError, setOpsError] = useState('');
@@ -74,6 +81,8 @@ export default function CookTiffinConfigScreen() {
         '3': String(p['3'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['3']),
         '4': String(p['4'] ?? DEFAULT_TIFFIN_PRICING_BY_MEALS['4']),
       });
+      setMealsPerWeekOptions(normalizeTiffinMealsPerWeekOptions(config.meals_per_week_options));
+      setDefaultCollectionSlot(normalizeTiffinDefaultCollectionSlot(config.default_collection_slot));
     }
   }, [config]);
 
@@ -120,7 +129,8 @@ export default function CookTiffinConfigScreen() {
       tagline: tagline.trim() || undefined,
       eligible_product_ids: eligible,
       collection_days: collectionDays,
-      meals_per_week_options: [2, 3, 4],
+      meals_per_week_options: normalizeTiffinMealsPerWeekOptions(mealsPerWeekOptions) as (2 | 3 | 4)[],
+      default_collection_slot: normalizeTiffinDefaultCollectionSlot(defaultCollectionSlot),
       pricing_by_meals_per_week: {
         '2': Number(pricing['2']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['2'],
         '3': Number(pricing['3']) || DEFAULT_TIFFIN_PRICING_BY_MEALS['3'],
@@ -260,6 +270,36 @@ export default function CookTiffinConfigScreen() {
             />
           ))}
         </View>
+
+        <Text style={styles.sectionTitle}>Meals per week tiers</Text>
+        <Text style={styles.hint}>Choose which plan sizes customers can subscribe to (at least one).</Text>
+        <View style={styles.dayRow}>
+          {TIFFIN_MEALS_PER_WEEK_CHOICES.map((n) => (
+            <GourmeatPrimaryButton
+              key={n}
+              label={`${n}/wk`}
+              variant={mealsPerWeekOptions.includes(n) ? 'primary' : 'outline'}
+              onPress={() =>
+                setMealsPerWeekOptions((prev) => toggleTiffinMealsPerWeekOption(prev, n))
+              }
+              testID={`cook-tiffin-meals-${n}`}
+              style={{ flex: 1, minWidth: 56, paddingHorizontal: 4 }}
+            />
+          ))}
+        </View>
+
+        <Text style={styles.sectionTitle}>Default collection slot</Text>
+        <Text style={styles.hint}>Used for weekly meal cards when no day-specific slot is set.</Text>
+        {COOK_TIFFIN_COLLECTION_SLOTS.map((slot) => (
+          <GourmeatPrimaryButton
+            key={slot.id}
+            label={slot.label}
+            variant={defaultCollectionSlot === slot.id ? 'primary' : 'outline'}
+            onPress={() => setDefaultCollectionSlot(slot.id)}
+            testID={`cook-tiffin-slot-${slot.id}`}
+            style={{ marginBottom: shcSpacing.xs }}
+          />
+        ))}
 
         <Text style={styles.sectionTitle}>Eligible dishes</Text>
         <Text style={styles.hint}>Select listings customers can pick in their weekly plan.</Text>
