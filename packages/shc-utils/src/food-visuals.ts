@@ -153,12 +153,16 @@ export function getOccasionImageUrl(occasion: string): string {
   return OCCASION_IMAGE[occasion] ?? OCCASION_IMAGE[''];
 }
 
-export function getCookAvatarUrl(cookId?: string, name?: string): string {
+export function getCookAvatarUrl(cookId?: string, name?: string, avatarUrl?: string | null): string {
+  const resolved = resolveImageUrl(avatarUrl);
+  if (resolved) return resolved;
   const label = encodeURIComponent((name || cookId || 'Cook').slice(0, 16));
   return `https://ui-avatars.com/api/?name=${label}&background=D96C4A&color=fff&size=128&bold=true`;
 }
 
-export function getCookKitchenHeroUrl(cookId?: string): string {
+export function getCookKitchenHeroUrl(cookId?: string, heroImageUrl?: string | null): string {
+  const resolved = resolveImageUrl(heroImageUrl);
+  if (resolved) return resolved;
   if (!cookId) return COOK_KITCHEN_HERO;
   const n = cookId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   const heroes = [

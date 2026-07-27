@@ -1,4 +1,4 @@
-import type { MedusaContainer } from "@medusajs/framework/types";
+import { resolveCookMediaUrl } from "./shc-cook-shape";
 import ShcCookModuleService from "../modules/shc-cook/service";
 import ShcProductMetaModuleService from "../modules/shc-product-meta/service";
 import { shapeProduct } from "./shc-product-shape";
@@ -28,6 +28,10 @@ export async function shapeTiffinKitchen(
       return shapeProduct(meta, scope, { cookRating: ratingSummary });
     })
   );
+  const [avatar_url, hero_image_url] = await Promise.all([
+    resolveCookMediaUrl(cook?.avatar_url),
+    resolveCookMediaUrl(cook?.hero_image_url),
+  ]);
   return {
     ...config,
     subscriber_count,
@@ -40,6 +44,8 @@ export async function shapeTiffinKitchen(
           area: cook.area,
           slug: cook.slug,
           story: cook.story,
+          avatar_url,
+          hero_image_url,
           rating: ratingSummary.rating,
           review_count: ratingSummary.review_count,
         }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { getCookId } from "../../../../../../lib/shc-actors";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
+import { assertCookOwnsMediaKey, shapeCookForStore } from "../../../../../../lib/shc-cook-shape";
 
 const BodySchema = z
   .object({
@@ -11,9 +12,51 @@ const BodySchema = z
     story: z.string().max(800).optional(),
     collection_address: z.string().max(200).optional(),
     collection_instructions: z.string().max(400).optional(),
+    avatar_url: z.string().max(500).optional(),
+    hero_image_url: z.string().max(500).optional(),
     pdpa_consent: z.boolean().optional(),
   })
   .strict();
+
+function shapeCookProfile(cook: Record<string, unknown>) {
+  return {
+    id: cook.id,
+    display_name: cook.display_name,
+    area: cook.area,
+    story: cook.story,
+    collection_address: cook.collection_address,
+    collection_instructions: cook.collection_instructions,
+    avatar_url: cook.avatar_url,
+    hero_image_url: cook.hero_image_url,
+    status: cook.status,
+    availability_paused: cook.availability_paused,
+  };
+}
+
+/** GET /store/shc/auth/cook/profile — current cook profile */
+export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  let cookId: string;
+  try {
+    cookId = getCookId(req);
+  } catch {
+    return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
+  }
+
+  const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
+  const [rows] = await cookService.listAndCountCooks({ id: cookId } as any, { take: 1 }).catch(() => [[]]);
+  const cook = (rows as any[])?.[0];
+  if (!cook) {
+    return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", "Cook profile not found") });
+  }
+
+  return res.json({
+    cook: await shapeCookForStore({
+      ...shapeCookProfile(cook),
+      id: cook.id,
+      slug: cook.slug,
+    }),
+  });
+}
 
 /** PATCH /store/shc/auth/cook/profile — cook onboarding / profile updates */
 export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
@@ -29,6 +72,17 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
   }
 
+  try {
+    if (parse.data.avatar_url !== undefined) {
+      assertCookOwnsMediaKey(cookId, parse.data.avatar_url);
+    }
+    if (parse.data.hero_image_url !== undefined) {
+      assertCookOwnsMediaKey(cookId, parse.data.hero_image_url);
+    }
+  } catch (e: any) {
+    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", e.message || "Invalid media key") });
+  }
+
   const data: Record<string, unknown> = { updated_at: new Date() };
   if (parse.data.display_name !== undefined) data.display_name = parse.data.display_name.trim();
   if (parse.data.area !== undefined) data.area = parse.data.area.trim();
@@ -39,6 +93,8 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   if (parse.data.collection_instructions !== undefined) {
     data.collection_instructions = parse.data.collection_instructions.trim();
   }
+  if (parse.data.avatar_url !== undefined) data.avatar_url = parse.data.avatar_url.trim();
+  if (parse.data.hero_image_url !== undefined) data.hero_image_url = parse.data.hero_image_url.trim();
   if (parse.data.pdpa_consent === true) {
     data.pdpa_consent_at = new Date().toISOString();
     data.pdpa_consent_version = "2026-07";
@@ -51,15 +107,11 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
   return res.json({
     cook: cook
-      ? {
+      ? await shapeCookForStore({
+          ...shapeCookProfile(cook),
           id: cook.id,
-          display_name: cook.display_name,
-          area: cook.area,
-          story: cook.story,
-          collection_address: cook.collection_address,
-          collection_instructions: cook.collection_instructions,
-          status: cook.status,
-        }
+          slug: cook.slug,
+        })
       : { id: cookId },
   });
 }

@@ -75,8 +75,16 @@ export const updateCookProfile = (input: {
   story?: string;
   collection_address?: string;
   collection_instructions?: string;
+  avatar_url?: string;
+  hero_image_url?: string;
   pdpa_consent?: boolean;
 }) => cookClient.updateCookProfile(input);
+export const getCookProfile = () => cookClient.getCookProfile();
+export const getUploadUrl = (
+  objectName: string,
+  resourceOwner?: string,
+  options?: { mode?: 'presigned' | 'server'; fileData?: string; contentType?: string }
+) => cookClient.getUploadUrl(objectName, resourceOwner, options);
 export const isCookAuthenticated = () => Boolean(readCookToken());
 export const getCookUser = () => cookClient.getCurrentUser();
 export const getCookOrders = () => cookClient.getMyOrders('cook');

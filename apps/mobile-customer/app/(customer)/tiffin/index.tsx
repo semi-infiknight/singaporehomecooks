@@ -187,7 +187,7 @@ export default function TiffinBrowseScreen() {
               name: k.dishes?.[0]?.name,
               cuisine: k.dishes?.[0]?.cuisine,
               image_url: k.dishes?.[0]?.image_url,
-            }) || getCookKitchenHeroUrl(k.cook_id)
+            }) || getCookKitchenHeroUrl(k.cook_id, k.cook?.hero_image_url)
           }
           onPress={() => openKitchen(k.cook_id)}
         />

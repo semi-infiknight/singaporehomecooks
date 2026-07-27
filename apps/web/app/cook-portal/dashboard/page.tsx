@@ -28,6 +28,7 @@ const QUICK_ACTIONS = [
   { href: '/cook-portal/tiffin', label: 'Tiffin', image: BENTO_ACTION_IMAGES.checkout, variant: 'bento-yellow' as const },
   { href: '/cook-portal/earnings', label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
   { href: '/cook-portal/compliance', label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
+  { href: '/cook-portal/settings', label: 'Profile photos', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
 ];
 
 export default function CookDashboardPage() {
