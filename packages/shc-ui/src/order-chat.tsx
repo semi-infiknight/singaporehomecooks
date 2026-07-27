@@ -142,12 +142,14 @@ export function SHCChatQuickReplies({
   role,
   onPick,
   disabled,
+  quickReplies,
 }: {
   role: ChatViewerRole;
   onPick: (text: string) => void;
   disabled?: boolean;
+  quickReplies?: readonly string[];
 }) {
-  const replies = chatQuickReplies(role);
+  const replies = quickReplies ?? chatQuickReplies(role);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
       {replies.map((text) => (
@@ -222,6 +224,7 @@ export function SHCOrderChatPane({
   onSend,
   sending,
   isLoading,
+  quickReplies,
 }: {
   viewerRole: ChatViewerRole;
   context: OrderChatContext;
@@ -231,6 +234,7 @@ export function SHCOrderChatPane({
   onSend: (body: string) => void;
   sending?: boolean;
   isLoading?: boolean;
+  quickReplies?: readonly string[];
 }) {
   const scrollRef = useRef<ScrollView>(null);
   const threadItems = useMemo(() => buildChatThreadItems(messages), [messages]);
@@ -298,7 +302,7 @@ export function SHCOrderChatPane({
       </ScrollView>
 
       <View style={styles.footer}>
-        <SHCChatQuickReplies role={viewerRole} onPick={(t) => onSend(t)} disabled={sending} />
+        <SHCChatQuickReplies role={viewerRole} onPick={(t) => onSend(t)} disabled={sending} quickReplies={quickReplies} />
         <SHCChatComposer
           value={draft}
           onChangeText={onDraftChange}

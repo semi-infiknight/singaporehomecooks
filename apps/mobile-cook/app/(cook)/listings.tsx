@@ -55,6 +55,8 @@ import {
   getDishImageUrl,
   uniqueListingCuisines,
   resolveCookListingsForDisplay,
+  cookAllergenTier1Presets,
+  cookCollectionTimeSlotPresets,
   cookListingE2eTestId,
   E2E_COOK_SEED_LISTING,
   type CookListingStatusFilter,
@@ -82,6 +84,7 @@ import {
   getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { useCookConfig } from '../../hooks/useCookConfig';
 import { VirtualRowFlashList } from '../../components/VirtualLists';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
@@ -115,6 +118,7 @@ export default function CookListings() {
   const router = useRouter();
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
+  const { config } = useCookConfig();
   const qc = useQueryClient();
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as any[]) ?? [];
@@ -698,7 +702,11 @@ export default function CookListings() {
           />
           <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
           <SHCHalalToggle value={halal} onChange={setHalal} />
-          <SHCAllergenTierPicker value={allergenTiers} onChange={setAllergenTiers} />
+          <SHCAllergenTierPicker
+            value={allergenTiers}
+            onChange={setAllergenTiers}
+            tier1Presets={cookAllergenTier1Presets(config)}
+          />
         </ListingWizardStep>
       )}
 
@@ -817,6 +825,7 @@ export default function CookListings() {
             onPortionsChange={setPortionsPerDay}
             onCollectionDaysChange={setCollectionDays}
             onTimeSlotsChange={setTimeSlots}
+            timeSlotPresets={cookCollectionTimeSlotPresets(config)}
           />
           <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
           <View style={styles.tagRow}>

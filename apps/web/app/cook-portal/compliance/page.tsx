@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   BENTO_ACTION_IMAGES,
-  complianceLinksForType,
+  cookComplianceLinks,
   hasComplianceDocOfType,
   missingComplianceTypes,
   shcUploadTypeBadgeLabel,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
+import { useCookConfig } from '../../../lib/useCookConfig';
 import { useComplianceDocs, useSubmitComplianceDoc } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
@@ -41,9 +42,10 @@ export default function CookCompliancePage() {
     if (approved) void triggerComplianceApproved();
   }, [docs, triggerComplianceApproved]);
 
+  const { config } = useCookConfig();
   const missing = useMemo(() => missingComplianceTypes(docs as any[]), [docs]);
   const hasSelected = hasComplianceDocOfType(docs as any[], type);
-  const courseLinks = useMemo(() => complianceLinksForType(type), [type]);
+  const courseLinks = useMemo(() => cookComplianceLinks(config, type), [config, type]);
 
   const upload = async () => {
     if (!fileName.trim()) return;

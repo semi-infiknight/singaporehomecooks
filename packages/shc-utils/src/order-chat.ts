@@ -36,8 +36,14 @@ export const COOK_CHAT_QUICK_REPLIES = [
   'Please bring your own bag',
 ] as const;
 
-export function chatQuickReplies(role: ChatViewerRole): readonly string[] {
-  return role === 'cook' ? COOK_CHAT_QUICK_REPLIES : CUSTOMER_CHAT_QUICK_REPLIES;
+export function chatQuickReplies(
+  role: ChatViewerRole,
+  overrides?: { customer?: readonly string[]; cook?: readonly string[] }
+): readonly string[] {
+  if (role === 'cook') {
+    return overrides?.cook?.length ? overrides.cook : COOK_CHAT_QUICK_REPLIES;
+  }
+  return overrides?.customer?.length ? overrides.customer : CUSTOMER_CHAT_QUICK_REPLIES;
 }
 
 export function isSystemChatActor(senderActor?: string): boolean {

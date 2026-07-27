@@ -24,8 +24,11 @@ import {
   defaultMealAddonsDraft,
   mealOptionsFromListing,
   recipeStepsFromListing,
+  cookAllergenTier1Presets,
+  cookCollectionTimeSlotPresets,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
+import { useCookConfig } from '../../../lib/useCookConfig';
 import {
   useCookListings,
   useCreateCookListing,
@@ -114,6 +117,7 @@ export default function CookListingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
+  const { config } = useCookConfig();
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as ListingRow[]) ?? [];
   const createListing = useCreateCookListing();
@@ -712,7 +716,11 @@ export default function CookListingsPage() {
                 ))}
               </div>
               <HalalToggleWeb value={halal} onChange={setHalal} />
-              <AllergenTierPickerWeb value={allergenTiers} onChange={setAllergenTiers} />
+              <AllergenTierPickerWeb
+                value={allergenTiers}
+                onChange={setAllergenTiers}
+                tier1Presets={cookAllergenTier1Presets(config)}
+              />
             </div>
           )}
 
@@ -838,6 +846,7 @@ export default function CookListingsPage() {
                 onPortionsChange={setPortionsPerDay}
                 onCollectionDaysChange={setCollectionDays}
                 onTimeSlotsChange={setTimeSlots}
+                timeSlotPresets={cookCollectionTimeSlotPresets(config)}
               />
               <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">

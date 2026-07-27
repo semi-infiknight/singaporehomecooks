@@ -26,12 +26,13 @@ import {
 import * as SecureStore from 'expo-secure-store';
 import {
   BENTO_ACTION_IMAGES,
-  complianceLinksForType,
+  cookComplianceLinks,
   hasComplianceDocOfType,
   missingComplianceTypes,
   shcUploadTypeBadgeLabel,
 } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { useCookConfig } from '../../hooks/useCookConfig';
 import { getComplianceDocs, submitComplianceDoc } from '../../lib/api-client';
 import { pickComplianceCertificate, uploadComplianceCertificate, type PickedComplianceFile } from '../../lib/compliance-upload';
 
@@ -65,9 +66,10 @@ export default function ComplianceUpload() {
       .catch(() => setDocs([]));
   }, [triggerIfFirst]);
 
+  const { config } = useCookConfig();
   const missing = useMemo(() => missingComplianceTypes(docs), [docs]);
   const hasSelected = hasComplianceDocOfType(docs, type);
-  const courseLinks = useMemo(() => complianceLinksForType(type), [type]);
+  const courseLinks = useMemo(() => cookComplianceLinks(config, type), [config, type]);
 
   const upload = async () => {
     if (!pickedFile && !fileName) return;

@@ -149,6 +149,7 @@ export const kitchenCancelTiffinDay = (collectionDate: string, reason?: string) 
 export const publishTiffinDayMenu = (collectionDate: string, productIds: string[], note?: string) =>
   client.publishTiffinDayMenu(collectionDate, productIds, note);
 export const getTiffinDayMenu = (date: string) => client.getTiffinDayMenu(date);
+export const getCookConfig = () => client.getCookConfig();
 
 // Full server upload helper (sends base64 for server to upload to MinIO)
 export async function uploadImageToServer(imageBase64: string, objectName: string, cookId: string, contentType = 'image/jpeg') {

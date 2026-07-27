@@ -28,22 +28,21 @@ import {
   SHCSkeletonBone,
   contentPadForTabBar,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getDishImageUrl, isCookComplianceVerified, orderIdFromNotificationType, cookPortalGreeting } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  cookDashboardTileImage,
+  cookDashboardTiles,
+  cookPortalGreeting,
+  getDishImageUrl,
+  isCookComplianceVerified,
+  orderIdFromNotificationType,
+} from '@shc/utils';
 import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
 import { useAuth } from '../../hooks/useAuth';
+import { useCookConfig } from '../../hooks/useCookConfig';
 import { clearCookOnboardingSeen } from '../../lib/onboarding';
 import { useQuery } from '@tanstack/react-query';
 import { getComplianceDocs } from '../../lib/api-client';
-
-const QUICK_ACTIONS = [
-  { href: '/(cook)/batches', iconKey: 'orders' as const, label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/(cook)/listings', iconKey: 'listings' as const, label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
-  { href: '/(cook)/orders', iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/(cook)/tiffin', iconKey: 'home' as const, label: 'Tiffin OS', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-yellow' as const },
-  { href: '/(cook)/earnings', iconKey: 'earnings' as const, label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
-  { href: '/(cook)/compliance', iconKey: 'compliance' as const, label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
-  { href: '/(cook)/settings', iconKey: 'listings' as const, label: 'Profile photos', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
-];
 
 export default function CookDashboard() {
   const insets = useSafeAreaInsets();
@@ -70,11 +69,14 @@ export default function CookDashboard() {
     complianceDocs as { type?: string; status?: string; verified_at?: string | null }[]
   );
 
+  const { config } = useCookConfig();
+  const quickActions = cookDashboardTiles(config);
+
   const earnings = orderList
     .filter((o: any) => o.shc_status === 'completed')
     .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
 
-  const greeting = cookPortalGreeting();
+  const greeting = cookPortalGreeting(new Date(), config.greeting);
 
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
@@ -224,47 +226,48 @@ export default function CookDashboard() {
       {/* 2×2 visual quick actions */}
       <Text style={styles.sectionLabel}>Quick actions</Text>
       <View style={styles.bentoRow}>
-        <View style={styles.bentoCol}>
-          <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[0].image}
-            iconKey={QUICK_ACTIONS[0].iconKey}
-            label={QUICK_ACTIONS[0].label}
-            onPress={() => router.push(QUICK_ACTIONS[0].href as any)}
-            variant={QUICK_ACTIONS[0].variant}
-            testID="cook-quick-cooking-soon"
-          />
-        </View>
-        <View style={styles.bentoCol}>
-          <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[1].image}
-            iconKey={QUICK_ACTIONS[1].iconKey}
-            label={QUICK_ACTIONS[1].label}
-            badge={orderList.length || undefined}
-            onPress={() => router.push(QUICK_ACTIONS[1].href as any)}
-            variant={QUICK_ACTIONS[1].variant}
-          />
-        </View>
+        {quickActions.slice(0, 2).map((action, index) => (
+          <View key={action.id} style={styles.bentoCol}>
+            <SHCVisualBentoTile
+              imageUri={cookDashboardTileImage(action)}
+              iconKey={action.icon_key}
+              label={action.label}
+              badge={action.id === 'listings' && orderList.length ? orderList.length : undefined}
+              onPress={() => router.push(action.mobile_href as any)}
+              variant={action.variant}
+              testID={index === 0 ? 'cook-quick-cooking-soon' : undefined}
+            />
+          </View>
+        ))}
       </View>
       <View style={styles.bentoRow}>
-        <View style={styles.bentoCol}>
-          <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[2].image}
-            iconKey={QUICK_ACTIONS[2].iconKey}
-            label={QUICK_ACTIONS[2].label}
-            onPress={() => router.push(QUICK_ACTIONS[2].href as any)}
-            variant={QUICK_ACTIONS[2].variant}
-          />
-        </View>
-        <View style={styles.bentoCol}>
-          <SHCVisualBentoTile
-            imageUri={QUICK_ACTIONS[3].image}
-            iconKey={QUICK_ACTIONS[3].iconKey}
-            label={QUICK_ACTIONS[3].label}
-            onPress={() => router.push(QUICK_ACTIONS[3].href as any)}
-            variant={QUICK_ACTIONS[3].variant}
-          />
-        </View>
+        {quickActions.slice(2, 4).map((action) => (
+          <View key={action.id} style={styles.bentoCol}>
+            <SHCVisualBentoTile
+              imageUri={cookDashboardTileImage(action)}
+              iconKey={action.icon_key}
+              label={action.label}
+              onPress={() => router.push(action.mobile_href as any)}
+              variant={action.variant}
+            />
+          </View>
+        ))}
       </View>
+      {quickActions.length > 4 ? (
+        <View style={styles.bentoRow}>
+          {quickActions.slice(4, 6).map((action) => (
+            <View key={action.id} style={styles.bentoCol}>
+              <SHCVisualBentoTile
+                imageUri={cookDashboardTileImage(action)}
+                iconKey={action.icon_key}
+                label={action.label}
+                onPress={() => router.push(action.mobile_href as any)}
+                variant={action.variant}
+              />
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <Link href="/(shared)/chat/SHC-2026-00001" asChild>
         <SHCButton variant="outline" style={styles.chatBtn}>

@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  BENTO_ACTION_IMAGES,
+  cookDashboardTileImage,
+  cookDashboardTiles,
   cookPortalGreeting,
   getOrderStatusLabel,
   orderIdFromNotificationType,
@@ -12,6 +13,7 @@ import {
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { clearCookOnboardingSeen } from '../../../lib/onboarding';
 import { useCookOrders, useOpenRequests, useCookNotifications } from '../../../lib/useCookPortal';
+import { useCookConfig } from '../../../lib/useCookConfig';
 import {
   GourmeatCookHeader,
   GourmeatCard,
@@ -21,24 +23,16 @@ import {
   CookNotifBell,
 } from '../../components/SHCWebComponents';
 
-const QUICK_ACTIONS = [
-  { href: '/cook-portal/batches', label: 'Cooking soon', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/cook-portal/listings', label: 'Listings', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
-  { href: '/cook-portal/orders', label: 'Orders', image: BENTO_ACTION_IMAGES.orders, variant: 'bento-mint' as const },
-  { href: '/cook-portal/tiffin', label: 'Tiffin', image: BENTO_ACTION_IMAGES.checkout, variant: 'bento-yellow' as const },
-  { href: '/cook-portal/earnings', label: 'Earnings', image: BENTO_ACTION_IMAGES.earnings, variant: 'bento-yellow' as const },
-  { href: '/cook-portal/compliance', label: 'Compliance', image: BENTO_ACTION_IMAGES.compliance, variant: 'bento-peach' as const },
-  { href: '/cook-portal/settings', label: 'Profile photos', image: BENTO_ACTION_IMAGES.listings, variant: 'bento-peach' as const },
-];
-
 export default function CookDashboardPage() {
   const router = useRouter();
   const { user } = useCookAuth();
+  const { config } = useCookConfig();
+  const quickActions = cookDashboardTiles(config);
   const { data: orders = [] } = useCookOrders();
   const { data: openReqs = [] } = useOpenRequests();
   const { data: notifs = [], markRead } = useCookNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
-  const greeting = cookPortalGreeting();
+  const greeting = cookPortalGreeting(new Date(), config.greeting);
 
   const earnings = orders
     .filter((o: { shc_status?: string }) => o.shc_status === 'completed')
@@ -163,20 +157,26 @@ export default function CookDashboardPage() {
 
       <p className="text-sm font-extrabold text-foreground mb-2">Quick actions</p>
       <div className="grid grid-cols-2 gap-2 mb-2">
-        {QUICK_ACTIONS.slice(0, 2).map((a) => (
+        {quickActions.slice(0, 2).map((a) => (
           <VisualBentoTile
-            key={a.href}
-            imageUrl={a.image}
+            key={a.id}
+            imageUrl={cookDashboardTileImage(a)}
             label={a.label}
-            href={a.href}
+            href={a.web_href}
             variant={a.variant}
-            badge={a.label === 'Orders' && orders.length ? orders.length : undefined}
+            badge={a.id === 'orders' && orders.length ? orders.length : undefined}
           />
         ))}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
-        {QUICK_ACTIONS.slice(2).map((a) => (
-          <VisualBentoTile key={a.href} imageUrl={a.image} label={a.label} href={a.href} variant={a.variant} />
+        {quickActions.slice(2).map((a) => (
+          <VisualBentoTile
+            key={a.id}
+            imageUrl={cookDashboardTileImage(a)}
+            label={a.label}
+            href={a.web_href}
+            variant={a.variant}
+          />
         ))}
       </div>
 
