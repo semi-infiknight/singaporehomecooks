@@ -41,6 +41,8 @@ The order lifecycle is the heart of the platform. A strict finite state machine 
 ## Key Fields on `shc_order_meta`
 
 - `collection_date`, `collection_slot`
+- `collection_notes` (human-readable pickup summary from checkout)
+- `customer_collection_lat`, `customer_collection_lng`, `customer_collection_postal_code`, `customer_collection_line1` (structured snapshot at checkout for ops/support)
 - `paynow_reference`
 - `allergen_acked_at`
 - `address_released_at`

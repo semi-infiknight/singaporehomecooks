@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-27 — `product-meta-form`; cook/admin platform config utils; admin-managed browse chrome.
+**Last Updated:** 2026-07-27 — location nudge + quick areas; `checkout-collection.ts`; reorder proximity helpers.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -35,7 +35,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `family-values-ui.tsx` | `SHCMorphingLabel`, `SHCChevronNav`, `SHCDirectionalTabScene`, `SHCSharedDishImage`, `SHCCelebration`, `useMilestoneCelebration` |
 | `tab-direction.tsx` | `TabDirectionProvider`, `DirectionalTabScreen` |
 | `food-ux.tsx` | Toptal principles: `SHCCheckoutStepper`, `SHCSearchResultRow`, `SHCSearchResultsPanel`, `SHCHeritageStoryBanner` |
-| `location-ux.tsx` | `LocationPickerExperience` — 2-step collection point (search/GPS → map confirm) |
+| `location-ux.tsx` | `LocationPickerExperience` — 2-step collection point (search/GPS → map confirm); **SG quick-pick chips**; `SHCLocationNudgeBanner` for discover |
 | `location-map.tsx` / `location-map.native.tsx` | `SHCLocationDraggableMap` — web tile fallback; iOS `react-native-maps`; Android Carto OSM tiles + pan/nudge |
 | `request-ux.tsx` | Custom dish wizard + `SHCRequestDishHomeCTA` discover footer |
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
@@ -44,7 +44,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
 | `product-meta-form.tsx` | Cook listing step 3: meal extras, add-ons, recipe steps — shared web + mobile |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`, `sortReorderDishesByProximity`), **`location.ts`** (`sortByCookProximity`, `formatDistanceKm`, SG bounds), **`checkout-collection.ts`** (`checkoutCollectionPrefill`, `customerCollectionForOrder`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 

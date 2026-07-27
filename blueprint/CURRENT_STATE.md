@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-27 — Cook + admin configurability waves stitched to `main`; redundant `cursor/*-67bb` branches pruned.
+**Last Updated:** 2026-07-27 — Location wave merged to `main`: proximity discovery, checkout pre-fill, order-meta collection snapshot.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
@@ -12,14 +12,16 @@
 
 | Topic | State |
 |-------|--------|
+| **Location integration** | Merged on `main`: SG quick-pick area chips + discover nudge when no location; discover/tiffin sort by cook proximity when collection point set; tiffin auto-selects **Nearest** chip; **Order again** + top-rated for-you rails proximity-sorted; distance labels on kitchen cards. Checkout pre-fills collection point from saved location; place-order requires location. |
+| **Order collection snapshot** | `POST /store/shc/carts/demo-complete` persists `customer_collection_lat/lng/postal_code/line1` on `shc_order_meta` (+ human `collection_notes`). Migration: `Migration20260727180000OrderMetaCustomerCollection`. **Deploy Medusa to Railway** after pull. |
 | **Cook configurability** | Stitched items 1–8 on `main`: settings (pause, collection address/instructions, **collection time slots**), avatar/hero upload, per-kitchen tiffin pricing, tiffin slot options, order collection release, batches slot picker, product meta (`meal_extras`, `meal_addons`, `recipe_steps`). Cook-owned via profile + listing wizard + batches/tiffin screens. |
 | **Admin configurability** | Stitched items 9–12 on `main`: discover promo carousel, marketplace business rules, cook portal chrome (dashboard tiles, greetings, allergen presets, chat quick replies), unified browse config. Collection time slots are **cook-owned** (Kitchen settings), not admin. |
 | **Client hooks** | `useCustomerConfig` (web + mobile-customer), `useCookConfig` (web cook-portal + mobile-cook). Fallback to `@shc/utils` code defaults until admin saves. |
 | **Cook portal orders (web)** | Parity with mobile cook: decline on `paid`, dispute reporting, cooking/collection notes, list-level Chat → `#cook-order-chat`, inline order chat + quick replies. |
-| **Migrations (Railway)** | Deploy Medusa after pull: tiffin kitchen pricing, cook media columns, product meta meal fields. Platform config keys need no migration. |
-| **Branches** | All `cursor/*-67bb` stitch branches merged + deleted — work on `main` only. |
+| **Migrations (Railway)** | Deploy Medusa after pull: tiffin kitchen pricing, cook media columns, product meta meal fields, **order-meta customer collection columns**. Platform config keys need no migration. |
+| **Branches** | Work on `main` only; `cursor/location-ux-smooth-67bb` merged + pruned. |
 
-## 0a. Prior handoff (2026-07-26)
+## 0a. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 

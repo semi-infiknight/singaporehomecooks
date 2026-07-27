@@ -87,12 +87,13 @@ apps/mobile-cook/app/
 ## Core Screens & Contracts
 
 ### Customer Flow
-- **Collection location:** `/(customer)/location` — 2-step picker (`LocationPickerExperience`): GPS or OneMap search → confirm with draggable map (`SHCLocationDraggableMap`). iOS uses `react-native-maps` Marker; Android uses Carto OSM 3×3 tile grid + pan/nudge (no Google Maps API key). Saved addresses in SecureStore via `useCustomerLocation`.
-- **Discover:** Gourmeat layout — promo rail, photo bento, filter chips (halal/light/occasion), cuisine rail, featured grid, dish list with `SHCFoodImage`, request-dish CTA at list footer.
+- **Collection location:** `/(customer)/location` — 2-step picker (`LocationPickerExperience`): GPS or OneMap search → confirm with draggable map (`SHCLocationDraggableMap`). **SG quick-pick area chips** (one-tap save, skip map). **Discover nudge** (`SHCLocationNudgeBanner` / web `LocationNudgeBanner`) when no location. iOS uses `react-native-maps` Marker; Android uses Carto OSM 3×3 tile grid + pan/nudge (no Google Maps API key). Saved addresses in SecureStore via `useCustomerLocation`.
+- **Discover:** Gourmeat layout — promo rail, photo bento, filter chips (halal/light/occasion), cuisine rail, featured grid, dish list with `SHCFoodImage`, request-dish CTA at list footer. **Proximity sort** on dish grid + kitchen list when collection location set; **Order again** rail prefers nearby kitchens (`sortReorderDishesByProximity`); distance on `TiffinKitchenCard`.
+- **Tiffin browse:** Kitchen list proximity-sorted when location set; **Nearest** filter chip auto-selected on first location save.
 - **Search:** `SHCSearchResultsPanel` — thumbnail + price + ADD without PDP visit (Toptal).
 - **Cook Profile:** Heritage story, ratings, product grid.
 - **Product Detail:** Full-bleed hero image, allergens (ack required), calorie badge, sticky add-to-cart.
-- **Cart & Checkout:** One-cook enforcement, `SHCCheckoutStepper` (Collection → Safety → PayNow), PayNow QR + ref.
+- **Cart & Checkout:** One-cook enforcement, `SHCCheckoutStepper` (Collection → Safety → PayNow), PayNow QR + ref. Checkout **pre-fills collection point** from saved location (`checkoutCollectionPrefill`); place-order requires location; structured `customer_collection_*` fields sent to order meta.
 - **Order Tracking:** Status, chat, collection instructions (post-payment), post-collection review form.
 
 ### Cook Flow
