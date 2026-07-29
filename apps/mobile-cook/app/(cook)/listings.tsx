@@ -124,13 +124,10 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
-<<<<<<< HEAD
   const { config: browseConfig } = useCustomerConfig();
   const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
   const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
-=======
   const { commissionRatePct } = useBusinessRules();
->>>>>>> origin/cursor/earnings-truth-67bb
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();

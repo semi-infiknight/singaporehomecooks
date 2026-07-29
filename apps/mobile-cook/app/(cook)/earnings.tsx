@@ -1,22 +1,28 @@
 import React, { useState } from 'react';
-import { Alert, Text, TextInput, View, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Text, View, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
   gourmeatColors,
-  shcColors,
   GourmeatCookHeader,
   SHCCard,
-  SHCButton,
-  SHCButtonText,
   SHCVisualBentoTile,
-  SHCBadge,
   SHCMetaBadge,
   SHCFadeIn,
+  SHCCookEarningsCreateListingsCta,
+  SHCCookEarningsExpenseTracker,
+  SHCCookEarningsIrasNote,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, formatCookEarningsDisplay, resolveCookEarningsSummary } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  defaultExpenseCategory,
+  formatCookEarningsDisplay,
+  parseExpenseAmountToCents,
+  resolveCookEarningsSummary,
+  todayExpenseDateIso,
+} from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,19 +52,17 @@ export default function Earnings() {
     },
     onError: (e) => Alert.alert('Could not log expense', (e as Error).message || 'Please try again.'),
   });
-  const expenseTotal = Math.round((expenses.total_cents || 0) / 100);
-  const expenseRows = expenses.expenses || [];
 
   const submitExpense = () => {
-    const amount = Number(expenseAmount);
-    if (!amount || amount <= 0) {
+    const amountCents = parseExpenseAmountToCents(expenseAmount);
+    if (!amountCents) {
       Alert.alert('Enter an expense amount', 'Use Singapore dollars, e.g. 18.50');
       return;
     }
     expenseMut.mutate({
-      amount_cents: Math.round(amount * 100),
-      category: expenseCategory.trim() || 'ingredients',
-      date: new Date().toISOString().slice(0, 10),
+      amount_cents: amountCents,
+      category: defaultExpenseCategory(expenseCategory),
+      date: todayExpenseDateIso(),
     });
   };
 
@@ -116,65 +120,19 @@ export default function Earnings() {
         </View>
       </View>
 
-      <Link href="/(cook)/listings" asChild>
-        <SHCButton testID="create-listings-btn" style={{ marginTop: shcSpacing.md }}>
-          <SHCButtonText>Create more listings for earnings</SHCButtonText>
-        </SHCButton>
-      </Link>
+      <SHCCookEarningsCreateListingsCta onPress={() => router.push('/(cook)/listings' as any)} />
+      <SHCCookEarningsIrasNote />
 
-      <SHCCard variant="bento-peach" style={styles.noteCard}>
-        <Text style={styles.noteText}>
-          Platform fees and cook expenses are tracked for IRAS records. Annual exports remain an ops workflow.
-        </Text>
-      </SHCCard>
-
-      <Text style={styles.sectionLabel}>Expense tracker</Text>
-      <SHCCard variant="bento-mint" style={styles.expenseCard}>
-        <View style={styles.expenseHeader}>
-          <View>
-            <Text style={styles.statLabel}>Recorded this year</Text>
-            <Text style={styles.statValue}>S${expenseTotal}</Text>
-          </View>
-          <SHCMetaBadge kind="tax">IRAS</SHCMetaBadge>
-        </View>
-        <View style={styles.expenseForm}>
-          <TextInput
-            value={expenseAmount}
-            onChangeText={setExpenseAmount}
-            keyboardType="decimal-pad"
-            placeholder="Amount, e.g. 18.50"
-            placeholderTextColor={shcColors.textLight}
-            style={styles.input}
-            testID="expense-amount-input"
-          />
-          <TextInput
-            value={expenseCategory}
-            onChangeText={setExpenseCategory}
-            placeholder="Category"
-            placeholderTextColor={shcColors.textLight}
-            style={styles.input}
-            testID="expense-category-input"
-          />
-          <SHCButton onPress={submitExpense} disabled={expenseMut.isPending} testID="expense-submit-btn">
-            <SHCButtonText>{expenseMut.isPending ? 'Saving…' : 'Log expense'}</SHCButtonText>
-          </SHCButton>
-        </View>
-        {expenseRows.length === 0 ? (
-          <Text style={styles.emptyText}>No expenses yet. Log ingredient receipts as you buy for orders.</Text>
-        ) : (
-          <View style={styles.expenseList}>
-            {expenseRows.slice(0, 5).map((expense: any) => (
-              <View key={expense.id} style={styles.expenseRow}>
-                <View>
-                  <Text style={styles.expenseCategory}>{expense.category}</Text>
-                  <Text style={styles.expenseDate}>{expense.date}</Text>
-                </View>
-                <Text style={styles.expenseAmount}>S${((expense.amount_cents || 0) / 100).toFixed(2)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </SHCCard>
+      <SHCCookEarningsExpenseTracker
+        expenses={expenses.expenses || []}
+        totalCents={expenses.total_cents || 0}
+        expenseAmount={expenseAmount}
+        expenseCategory={expenseCategory}
+        onExpenseAmountChange={setExpenseAmount}
+        onExpenseCategoryChange={setExpenseCategory}
+        onSubmit={submitExpense}
+        isSubmitting={expenseMut.isPending}
+      />
     </ScrollView>
   );
 }
@@ -185,37 +143,9 @@ const styles = StyleSheet.create({
   heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   statsRow: { flexDirection: 'row', gap: shcSpacing.sm, marginTop: shcSpacing.md },
   statCard: { flex: 1, padding: shcSpacing.md },
-  statLabel: { fontSize: 11, fontWeight: '700', color: shcColors.textLight, textTransform: 'uppercase' },
-  statValue: { fontSize: 18, fontWeight: '900', color: shcColors.text, marginTop: 4 },
-  sectionLabel: { fontSize: 16, fontWeight: '900', color: shcColors.text, marginTop: shcSpacing.lg, marginBottom: shcSpacing.sm },
+  statLabel: { fontSize: 11, fontWeight: '700', color: gourmeatColors.textLight, textTransform: 'uppercase' },
+  statValue: { fontSize: 18, fontWeight: '900', color: gourmeatColors.text, marginTop: 4 },
+  sectionLabel: { fontSize: 16, fontWeight: '900', color: gourmeatColors.text, marginTop: shcSpacing.lg, marginBottom: shcSpacing.sm },
   bentoRow: { flexDirection: 'row', gap: shcSpacing.sm },
   bentoCol: { flex: 1 },
-  noteCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
-  noteText: { fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
-  expenseCard: { padding: shcSpacing.md },
-  expenseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  expenseForm: { gap: shcSpacing.sm, marginTop: shcSpacing.md },
-  input: {
-    minHeight: 44,
-    borderWidth: 2,
-    borderColor: shcColors.border,
-    borderRadius: 12,
-    backgroundColor: shcColors.surface,
-    color: shcColors.text,
-    paddingHorizontal: shcSpacing.md,
-    fontWeight: '700',
-  },
-  emptyText: { marginTop: shcSpacing.md, fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
-  expenseList: { marginTop: shcSpacing.md, gap: shcSpacing.sm },
-  expenseRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: shcSpacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: shcColors.borderLight,
-    paddingTop: shcSpacing.sm,
-  },
-  expenseCategory: { fontSize: 13, fontWeight: '800', color: shcColors.text },
-  expenseDate: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },
-  expenseAmount: { fontSize: 13, fontWeight: '900', color: shcColors.text },
 });

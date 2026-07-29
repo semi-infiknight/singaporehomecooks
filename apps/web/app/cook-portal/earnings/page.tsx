@@ -2,13 +2,22 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { BENTO_ACTION_IMAGES, formatCookEarningsDisplay, resolveCookEarningsSummary } from '@shc/utils';
+import {
+  BENTO_ACTION_IMAGES,
+  defaultExpenseCategory,
+  formatCookEarningsDisplay,
+  parseExpenseAmountToCents,
+  resolveCookEarningsSummary,
+  todayExpenseDateIso,
+} from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookEarnings, useCookExpenses, useCreateCookExpense } from '../../../lib/useCookPortal';
 import {
+  CookEarningsCreateListingsCtaWeb,
+  CookEarningsExpenseTrackerWeb,
+  CookEarningsIrasNoteWeb,
   GourmeatCookHeader,
   GourmeatCard,
-  GourmeatPrimaryButton,
   SHCMetaBadge,
   VisualBentoTile,
 } from '../../components/SHCWebComponents';
@@ -26,15 +35,15 @@ export default function CookEarningsPage() {
   const [expenseCategory, setExpenseCategory] = useState('ingredients');
 
   const submitExpense = () => {
-    const amount = Number(expenseAmount);
-    if (!amount || amount <= 0) {
+    const amountCents = parseExpenseAmountToCents(expenseAmount);
+    if (!amountCents) {
       alert('Enter an expense amount, e.g. 18.50');
       return;
     }
     expenseMut.mutate({
-      amount_cents: Math.round(amount * 100),
-      category: expenseCategory.trim() || 'ingredients',
-      date: new Date().toISOString().slice(0, 10),
+      amount_cents: amountCents,
+      category: defaultExpenseCategory(expenseCategory),
+      date: todayExpenseDateIso(),
     });
     setExpenseAmount('');
   };
@@ -52,51 +61,48 @@ export default function CookEarningsPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      <div className="grid grid-cols-2 gap-2 mb-6 mt-4">
         <GourmeatCard className="bg-[var(--shc-bento-mint)]">
-          <p className="text-xs font-bold text-muted-foreground">Projected</p>
+          <p className="text-xs font-bold text-muted-foreground uppercase">Projected</p>
           <p className="text-xl font-black">{projectedLabel}</p>
         </GourmeatCard>
         <GourmeatCard className="bg-[var(--shc-bento-yellow)]">
-          <p className="text-xs font-bold text-muted-foreground">Completed</p>
+          <p className="text-xs font-bold text-muted-foreground uppercase">Completed</p>
           <p className="text-xl font-black">{orderCount} orders</p>
         </GourmeatCard>
       </div>
 
       <p className="text-sm font-extrabold mb-2">Quick actions</p>
-      <div className="grid grid-cols-2 gap-2 mb-6">
-        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.listings} label="Listings" href="/cook-portal/listings" variant="bento-peach" />
-        <VisualBentoTile imageUrl={BENTO_ACTION_IMAGES.orders} label="Orders" href="/cook-portal/orders" variant="bento-mint" />
+      <div className="grid grid-cols-2 gap-2">
+        <VisualBentoTile
+          imageUrl={BENTO_ACTION_IMAGES.listings}
+          label="Listings"
+          href="/cook-portal/listings"
+          variant="bento-peach"
+          testID="earnings-listings-tile"
+        />
+        <VisualBentoTile
+          imageUrl={BENTO_ACTION_IMAGES.orders}
+          label="Orders"
+          href="/cook-portal/orders"
+          variant="bento-mint"
+          testID="earnings-orders-tile"
+        />
       </div>
 
-      <GourmeatCard>
-        <p className="font-extrabold text-sm mb-2">Log expense</p>
-        <input
-          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-2"
-          placeholder="Amount S$"
-          value={expenseAmount}
-          onChange={(e) => setExpenseAmount(e.target.value)}
-          data-testid="expense-amount-input"
-        />
-        <input
-          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-3"
-          placeholder="Category"
-          value={expenseCategory}
-          onChange={(e) => setExpenseCategory(e.target.value)}
-          data-testid="expense-category-input"
-        />
-        <GourmeatPrimaryButton
-          label="Add expense"
-          onClick={submitExpense}
-          disabled={expenseMut.isPending}
-          testID="expense-submit-btn"
-        />
-        {(expenses.expenses || []).length > 0 && (
-          <p className="text-xs text-muted-foreground mt-3">
-            Total logged: S${Math.round((expenses.total_cents || 0) / 100)}
-          </p>
-        )}
-      </GourmeatCard>
+      <CookEarningsCreateListingsCtaWeb href="/cook-portal/listings" />
+      <CookEarningsIrasNoteWeb />
+
+      <CookEarningsExpenseTrackerWeb
+        expenses={expenses.expenses || []}
+        totalCents={expenses.total_cents || 0}
+        expenseAmount={expenseAmount}
+        expenseCategory={expenseCategory}
+        onExpenseAmountChange={setExpenseAmount}
+        onExpenseCategoryChange={setExpenseCategory}
+        onSubmit={submitExpense}
+        isSubmitting={expenseMut.isPending}
+      />
 
       <Link href="/cook-portal/dashboard" className="block text-center text-sm font-semibold text-primary mt-8">
         ← Dashboard

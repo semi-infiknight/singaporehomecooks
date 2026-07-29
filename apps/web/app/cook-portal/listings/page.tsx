@@ -26,12 +26,9 @@ import {
   recipeStepsFromListing,
   cookAllergenTier1Presets,
   resolveCookCollectionTimeSlots,
-<<<<<<< HEAD
   defaultListingOccasionTag,
   listingOccasionTagOptions,
-=======
   cookEarningsPreviewFromDollars,
->>>>>>> origin/cursor/earnings-truth-67bb
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
@@ -125,13 +122,10 @@ export default function CookListingsPage() {
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
   const { config } = useCookConfig();
-<<<<<<< HEAD
   const { config: browseConfig } = useCustomerConfig();
   const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
   const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
-=======
   const { commissionRate } = useBusinessRules();
->>>>>>> origin/cursor/earnings-truth-67bb
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
