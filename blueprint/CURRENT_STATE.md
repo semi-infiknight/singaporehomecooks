@@ -19,7 +19,7 @@
 | **Client hooks** | `useCustomerConfig` (web + mobile-customer), `useCookConfig` (web cook-portal + mobile-cook). Fallback to `@shc/utils` code defaults until admin saves. |
 | **Cook portal orders (web)** | Parity with mobile cook: decline on `paid`, dispute reporting, cooking/collection notes, list-level Chat → `#cook-order-chat`, inline order chat + quick replies. |
 | **Migrations (Railway)** | Medusa deployed 2026-07-29 (`7c55c90`): tiffin kitchen pricing, cook media, product meta meal fields, **order-meta customer collection columns** live. Platform config keys need no migration. |
-| **Branches** | Work on `main` only; `cursor/location-ux-smooth-67bb` merged + pruned. |
+| **Branches** | Work on `main` only; all `cursor/*-67bb` stitch branches merged + pruned (2026-07-29). |
 
 ## 0a. Prior handoff (2026-07-27)
 
