@@ -20,7 +20,7 @@
 | **Checkout** | Pre-fill collection point from saved location; `customer_collection_*` snapshotted on `shc_order_meta` |
 | **Utils** | `location.ts`, `checkout-collection.ts`, `reorder.ts` proximity helpers |
 
-**Deploy:** Railway Medusa — run migration `Migration20260727180000OrderMetaCustomerCollection`.
+**Deploy:** Railway medusa + web redeployed from `main` @ `7c55c90` (2026-07-29). Migration `Migration20260727180000OrderMetaCustomerCollection` applied on boot.
 
 ## Progress Update (2026-07-27 — Cook + admin configurability stitch)
 
