@@ -41,10 +41,11 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
 | `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton`, `GourmeatSearchBar`, layout re-exports |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
+| `cook-area-picker.tsx` | Cook settings/onboarding SG area input with centroid-backed chip suggestions |
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |
 | `product-meta-form.tsx` | Cook listing step 3: meal extras, add-ons, recipe steps — shared web + mobile |
 
-**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`, `sortReorderDishesByProximity`), **`location.ts`** (`sortByCookProximity`, `formatDistanceKm`, SG bounds), **`checkout-collection.ts`** (`checkoutCollectionPrefill`, `customerCollectionForOrder`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome + `listingOccasionTagOptions` for cook listing/request pickers), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
+**Utils companion:** `packages/shc-utils/src/food-visuals.ts` (bento action photo URLs), `reorder.ts` (`extractReorderDishes`, `sortReorderDishesByProximity`), **`location.ts`** (`sortByCookProximity`, `formatDistanceKm`, SG bounds), **`checkout-collection.ts`** (`checkoutCollectionPrefill`, `customerCollectionForOrder`), **`sg-areas.ts`** (`cookAreaSuggestions`, `normalizeCookAreaInput`), **`discover-home.ts`** (`discoverHomeHeadline`, `discoverHomePromoCarousel`), **`discover-promos.ts`** + **`customer-browse-config.ts`** (admin-managed browse chrome + `listingOccasionTagOptions` for cook listing/request pickers), **`cook-portal-config.ts`** + **`business-rules-config.ts`** (admin-managed cook/rules), **`product-meta-form.ts`** + **`order-collection.ts`** (cook-owned listing/order fields), **`badge-ux.ts`** (semantic badge kinds → variants), **`listing-form.ts`** (allergen/availability form helpers + Zod).
 
 ## Component Categories
 

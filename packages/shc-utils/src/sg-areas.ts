@@ -81,3 +81,28 @@ export function searchLocalSgAreas(query: string, limit = 8): SgAreaEntry[] {
     return a.aliases?.some((al) => al.includes(q));
   }).slice(0, limit);
 }
+
+export function cookAreaPresetNames(): string[] {
+  return SG_AREA_CENTROIDS.map((a) => a.name);
+}
+
+/** Normalize free-text area to a known SG centroid label when possible. */
+export function normalizeCookAreaInput(area: string): string {
+  const trimmed = area.trim();
+  if (!trimmed) return '';
+  const exact = SG_AREA_CENTROIDS.find((a) => a.name.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact.name;
+  const byAlias = SG_AREA_CENTROIDS.find((a) =>
+    a.aliases?.some((al) => al.toLowerCase() === trimmed.toLowerCase())
+  );
+  if (byAlias) return byAlias.name;
+  const resolved = resolveCookAreaKey(trimmed);
+  return getAreaCentroid(resolved)?.name ?? trimmed;
+}
+
+export function cookAreaSuggestions(query = '', limit = 8): string[] {
+  const q = query.trim();
+  if (!q) return cookAreaPresetNames();
+  const matches = searchLocalSgAreas(q, limit).map((a) => a.name);
+  return matches.length ? matches : cookAreaPresetNames();
+}
