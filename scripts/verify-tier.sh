@@ -210,8 +210,7 @@ scope_maestro_device() {
       maestro test apps/mobile-cook/e2e/cook-auth.yaml
       ;;
     money|payouts|credits)
-      maestro test apps/mobile-customer/e2e/credits-earnings-payout.yaml
-      maestro test apps/mobile-cook/e2e/credits-earnings-payout.yaml
+      log "skip Maestro money flows (credits-earnings-payout.yaml removed — use full-order-fulfil / cook-full-tour earnings segment)"
       ;;
     onboarding)
       maestro test apps/mobile-customer/e2e/onboarding.yaml
