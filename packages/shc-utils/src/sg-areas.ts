@@ -81,3 +81,14 @@ export function searchLocalSgAreas(query: string, limit = 8): SgAreaEntry[] {
     return a.aliases?.some((al) => al.includes(q));
   }).slice(0, limit);
 }
+
+export function cookAreaPresetNames(): string[] {
+  return SG_AREA_CENTROIDS.map((a) => a.name);
+}
+
+export function cookAreaSuggestions(query = '', limit = 8): string[] {
+  const q = query.trim();
+  if (!q) return cookAreaPresetNames();
+  const matches = searchLocalSgAreas(q, limit).map((a) => a.name);
+  return matches.length ? matches : cookAreaPresetNames();
+}

@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Users, Wallet, Calendar } from 'lucide-react';
-import { BENTO_ACTION_IMAGES, getOccasionImageUrl } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getOccasionImageUrl, defaultListingOccasionTag, listingOccasionTagOptions } from '@shc/utils';
 import { useCreateRequest } from '../../lib/useProducts';
 import { useAuth } from '../../lib/useAuth';
+import { useCustomerConfig } from '../../lib/useCustomerConfig';
 import { SHCButton, SHCCard, SHCSectionTitle, SHCSkeletonList } from '../components/SHCWebComponents';
 
-const OCCASIONS = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'];
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
 const BUDGET_PRESETS = [80, 120, 150, 200];
 const STEPS = ['Your story', 'Inspiration', 'Gathering', 'Review'];
@@ -24,11 +24,14 @@ function defaultDate() {
 export default function RequestDishPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { config: browseConfig } = useCustomerConfig();
+  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
+  const defaultOccasion = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const createReq = useCreateRequest();
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
   const [requestId, setRequestId] = useState<string | undefined>();
-  const [occasion, setOccasion] = useState('Hari Raya');
+  const [occasion, setOccasion] = useState('');
   const [story, setStory] = useState(
     'Nasi lemak with sambal prawns for our Hari Raya open house — spicy, halal-friendly, enough for the whole family.',
   );
@@ -38,6 +41,10 @@ export default function RequestDishPage() {
   const [date, setDate] = useState(defaultDate);
   const [featureLoading, setFeatureLoading] = useState(true);
   const [requestDishEnabled, setRequestDishEnabled] = useState(true);
+
+  useEffect(() => {
+    if (!occasion && defaultOccasion) setOccasion(defaultOccasion);
+  }, [defaultOccasion, occasion]);
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login?next=/request');
@@ -189,7 +196,7 @@ export default function RequestDishPage() {
           <div data-testid="request-step-occasion">
             <SHCSectionTitle>What&apos;s the occasion?</SHCSectionTitle>
             <div className="flex flex-wrap gap-2 mb-4">
-              {OCCASIONS.map((o) => (
+              {occasionOptions.map((o) => (
                 <button
                   key={o}
                   type="button"

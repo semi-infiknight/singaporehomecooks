@@ -1,23 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   cookDashboardTileImage,
   cookDashboardTiles,
   cookPortalGreeting,
+  formatCookEarningsDisplayCompact,
   getOrderStatusLabel,
+  latestActiveCookOrder,
   orderIdFromNotificationType,
+  resolveCookEarningsSummary,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { clearCookOnboardingSeen } from '../../../lib/onboarding';
-import { useCookOrders, useOpenRequests, useCookNotifications } from '../../../lib/useCookPortal';
+import { useCookOrders, useOpenRequests, useCookNotifications, useCookEarnings } from '../../../lib/useCookPortal';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatOrderRow,
+  GourmeatPrimaryButton,
   SHCBadge,
   VisualBentoTile,
   CookNotifBell,
@@ -29,16 +33,21 @@ export default function CookDashboardPage() {
   const { config } = useCookConfig();
   const quickActions = cookDashboardTiles(config);
   const { data: orders = [] } = useCookOrders();
+  const { data: earningsRaw } = useCookEarnings();
+  const earningsSummary = resolveCookEarningsSummary(earningsRaw as Record<string, unknown> | undefined);
+  const earningsLabel = formatCookEarningsDisplayCompact(earningsSummary.this_week_cents);
   const { data: openReqs = [] } = useOpenRequests();
   const { data: notifs = [], markRead } = useCookNotifications();
   const [showNotifs, setShowNotifs] = useState(false);
   const greeting = cookPortalGreeting(new Date(), config.greeting);
 
-  const earnings = orders
-    .filter((o: { shc_status?: string }) => o.shc_status === 'completed')
-    .reduce((s: number, o: { total?: number }) => s + Math.floor((o.total || 0) * 0.85), 0);
+  const earnings = earningsLabel;
 
   const reqCount = Array.isArray(openReqs) ? openReqs.length : 0;
+  const latestActiveOrder = useMemo(
+    () => latestActiveCookOrder(orders as Array<{ id?: string; shc_status?: string; updated_at?: string; created_at?: string }>),
+    [orders]
+  );
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-dashboard">
@@ -143,7 +152,7 @@ export default function CookDashboardPage() {
       <div className="grid grid-cols-3 gap-2 mb-6">
         <GourmeatCard className="bg-[var(--shc-bento-mint)] text-center col-span-1">
           <p className="text-xs font-bold text-muted-foreground">This week</p>
-          <p className="text-2xl font-black text-primary">S${earnings}</p>
+          <p className="text-2xl font-black text-primary">{earnings}</p>
         </GourmeatCard>
         <GourmeatCard className="bg-[var(--shc-bento-yellow)] text-center">
           <p className="text-xs font-bold text-muted-foreground">Active</p>
@@ -179,6 +188,16 @@ export default function CookDashboardPage() {
           />
         ))}
       </div>
+
+      {latestActiveOrder?.id ? (
+        <Link
+          href={`/cook-portal/orders/${latestActiveOrder.id}#cook-order-chat`}
+          className="block mb-6"
+          data-testid="cook-latest-order-chat-btn"
+        >
+          <GourmeatPrimaryButton label="Chat on latest active order" variant="outline" />
+        </Link>
+      ) : null}
 
       <Link
         href="/cook-portal/orders"

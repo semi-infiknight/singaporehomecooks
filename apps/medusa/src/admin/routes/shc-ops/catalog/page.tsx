@@ -340,8 +340,8 @@ const ShcOpsCatalogPage = () => {
       <div>
         <Heading level="h1">Customer browse</Heading>
         <Text size="small" className="text-ui-fg-subtle">
-          Admin-managed discover chrome (categories, promos, occasions, copy). Cook listings &amp; collection
-          windows stay in the cook app. Public API:{" "}
+          Admin-managed discover chrome (categories, promos, occasions, copy). Occasions also power listing
+          tags and request-dish pickers. Cook listings &amp; collection windows stay in the cook app. Public API:{" "}
           <code className="text-ui-fg-base">GET /store/shc/customer-config</code>
           {catsQ.data?.source ? ` · categories: ${catsQ.data.source}` : ""}
           {promosQ.data?.source ? ` · promos: ${promosQ.data.source}` : ""}
@@ -748,7 +748,7 @@ const ShcOpsCatalogPage = () => {
         <div className="px-6 py-4">
           <Heading level="h2">Occasions</Heading>
           <Text size="small" className="text-ui-fg-subtle">
-            Occasion browse rail + search filters on web and mobile.
+            Occasion browse rail, search filters, cook listing tags, and request-dish pickers on web and mobile.
           </Text>
         </div>
         <form onSubmit={onOccasionSubmit} className="grid grid-cols-1 gap-4 px-6 py-4 small:grid-cols-2 large:grid-cols-5">

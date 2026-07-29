@@ -69,6 +69,7 @@ export function useCookTransitionOrder() {
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: ['cook-order', v.orderId] });
       qc.invalidateQueries({ queryKey: ['cook-orders'] });
+      qc.invalidateQueries({ queryKey: ['cook-earnings'] });
     },
   });
 }

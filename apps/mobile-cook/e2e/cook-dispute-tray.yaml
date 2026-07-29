@@ -1,0 +1,53 @@
+# Cook dispute — report issue tray on order detail
+# Prereq: active order exists (run after cook-order-lifecycle or full-order-fulfil accept path).
+# Run: maestro test apps/mobile-cook/e2e/cook-dispute-tray.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    stopApp: true
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-orders-screen"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-details"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: "cook-order-.*-details"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-detail-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "cook-open-dispute-tray-btn"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-open-dispute-tray-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-dispute-tray"
+    timeout: 10000
+- tapOn:
+    id: "cook-dispute-notes-input"
+- inputText: "Customer no-show at collection window — Maestro E2E"
+- tapOn:
+    id: "cook-submit-dispute-btn"
+- extendedWaitUntil:
+    visible:
+      id: "cook-issue-reported-tray"
+    timeout: 20000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-dispute-submitted"
+    timeout: 30000
+    optional: true

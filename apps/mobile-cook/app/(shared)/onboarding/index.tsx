@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCOnboardingFlowScreen, shcColors, shcSpacing, shcBorders, shcRadii, SHCFilterChipRow } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, SG_AREA_CENTROIDS } from '@shc/utils';
+import { SHCOnboardingFlowScreen, SHCCookAreaPicker, shcColors, shcSpacing, shcBorders, shcRadii } from '@shc/ui';
+import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES, normalizeCookAreaInput } from '@shc/utils';
 import { markCookOnboardingSeen } from '../../../lib/onboarding';
 import { updateCookProfile } from '../../../lib/api-client';
 
@@ -69,7 +69,7 @@ export default function CookOnboarding() {
     try {
       await updateCookProfile({
         story: story.trim() || undefined,
-        area: area.trim() || undefined,
+        area: normalizeCookAreaInput(area) || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
         pdpa_consent: true,
@@ -118,23 +118,7 @@ export default function CookOnboarding() {
       {step === 'kitchen' && (
         <>
           <Text style={styles.fieldLabel}>Area</Text>
-          <TextInput
-            value={area}
-            onChangeText={setArea}
-            placeholder="e.g. Tampines"
-            placeholderTextColor={shcColors.textLight}
-            style={styles.inputShort}
-            testID="cook-onboarding-area-input"
-          />
-          <SHCFilterChipRow
-            chips={SG_AREA_CENTROIDS.map((entry) => ({
-              id: entry.name,
-              label: entry.name.split(' / ')[0] ?? entry.name,
-              active: area === entry.name,
-            }))}
-            onChipPress={(id) => setArea(id)}
-            testID="cook-onboarding-area-chips"
-          />
+          <SHCCookAreaPicker value={area} onChange={setArea} testID="cook-onboarding-area-input" />
           <Text style={styles.fieldLabel}>Collection address</Text>
           <TextInput
             value={collectionAddress}

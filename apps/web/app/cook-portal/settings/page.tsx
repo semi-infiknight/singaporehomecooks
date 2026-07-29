@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SG_AREA_CENTROIDS, getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
+import { normalizeCookAreaInput, getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookCollectionTimeSlots } from '@shc/utils';
 import { getCookProfile, updateCookProfile, getUploadUrl } from '../../../lib/cook-api-client';
 import { uploadCookMediaFile, readWebImageFile } from '../../../lib/cook-media-upload';
 import { useCookAuth } from '../../../lib/useCookAuth';
@@ -15,6 +15,7 @@ import {
   SHCButton,
   SHCSkeletonList,
   CookCollectionSlotEditorWeb,
+  CookAreaPickerWeb,
 } from '../../components/SHCWebComponents';
 
 type CookProfile = {
@@ -71,7 +72,7 @@ export default function CookSettingsPage() {
     mutationFn: () =>
       updateCookProfile({
         display_name: displayName.trim() || undefined,
-        area: area.trim() || undefined,
+        area: normalizeCookAreaInput(area) || undefined,
         story: story.trim() || undefined,
         collection_address: collectionAddress.trim() || undefined,
         collection_instructions: collectionInstructions.trim() || undefined,
@@ -233,22 +234,7 @@ export default function CookSettingsPage() {
           />
         </div>
         <div>
-          <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
-          <p className="text-xs font-semibold text-muted-foreground mb-2">
-            Customers sort kitchens by distance to this area.
-          </p>
-          <input
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            list="cook-settings-area-suggestions"
-            className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
-            data-testid="cook-settings-area"
-          />
-          <datalist id="cook-settings-area-suggestions">
-            {SG_AREA_CENTROIDS.map((a) => (
-              <option key={a.name} value={a.name} />
-            ))}
-          </datalist>
+          <CookAreaPickerWeb value={area} onChange={setArea} testID="cook-settings-area" />
         </div>
         <div>
           <p className="text-xs font-extrabold text-muted-foreground mb-1">Heritage story</p>

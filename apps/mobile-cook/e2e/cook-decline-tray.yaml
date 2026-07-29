@@ -1,0 +1,54 @@
+# Cook decline — paid order → decline confirm tray
+# Prereq: run customer full-order-fulfil.yaml first (paid order, cook has NOT accepted yet).
+# Run: maestro test apps/mobile-cook/e2e/cook-decline-tray.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "SHC Cook Portal"
+    timeout: 120000
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-orders-screen"
+    timeout: 90000
+- extendedWaitUntil:
+    visible: "Nasi Lemak Sambal Prawn"
+    timeout: 120000
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "cook-order-.*-details"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: "cook-order-.*-details"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-detail-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "cook-order-transition-cancelled"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "cook-order-transition-cancelled"
+- extendedWaitUntil:
+    visible:
+      id: "order-status-confirm-tray"
+    timeout: 10000
+- tapOn: "Decline"
+- extendedWaitUntil:
+    visible:
+      id: "cook-order-detail-screen"
+    timeout: 60000

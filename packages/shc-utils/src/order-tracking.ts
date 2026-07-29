@@ -86,6 +86,21 @@ export function getActiveOrders<T extends { shc_status?: string; status?: string
   return orders.filter((o) => isActiveOrderStatus(String(o.shc_status || o.status || '')));
 }
 
+/** Cook dashboard chat CTA — newest active order (paid/accepted/preparing/ready). */
+export function latestActiveCookOrder<
+  T extends { id?: string; shc_status?: string; status?: string; updated_at?: string; created_at?: string }
+>(orders: T[]): T | null {
+  const active = getActiveOrders(orders);
+  if (!active.length) return null;
+  const needsAction = active.filter(isCookNeedsActionOrder);
+  const pool = needsAction.length ? needsAction : active;
+  return [...pool].sort((a, b) => {
+    const ta = Date.parse(String(a.updated_at || a.created_at || '')) || 0;
+    const tb = Date.parse(String(b.updated_at || b.created_at || '')) || 0;
+    return tb - ta;
+  })[0] ?? null;
+}
+
 /** Cook actively at the stove — only `preparing` (not paid/accepted/ready). */
 export const COOKING_ORDER_STATUSES = ['preparing'] as const;
 

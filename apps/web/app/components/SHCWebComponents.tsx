@@ -51,6 +51,7 @@ import {
   type TiffinOrderCardStatus,
   ALLERGEN_TIER1_PRESETS,
   COLLECTION_TIME_SLOT_PRESETS,
+  cookAreaSuggestions,
   WEEKDAY_LABELS,
   type AllergenTiers,
   addMealOptionRow,
@@ -71,6 +72,13 @@ import {
   shcPartySizeBadgeLabel,
   shcPortionMinBadgeLabel,
   formatDistanceKm,
+  COOK_EARNINGS_CREATE_LISTINGS_CTA,
+  COOK_EARNINGS_EXPENSE_EMPTY,
+  COOK_EARNINGS_IRAS_NOTE,
+  formatCookExpenseRowAmount,
+  formatCookExpenseTotalDollars,
+  recentCookExpenses,
+  type CookExpenseRow,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -1802,14 +1810,16 @@ export function AllergenAckCheckbox({
   );
 }
 
-export function PriceEarningsCalc({ total, compact }: { total: number; compact?: boolean }) {
-  const earnings = Math.floor(total * 0.85);
+export function PriceEarningsCalc({ total, compact, commissionRatePct = 15 }: { total: number; compact?: boolean; commissionRatePct?: number }) {
+  const rate = commissionRatePct / 100;
+  const earnings = Math.floor(total * 100 * (1 - rate)) / 100;
+  const cookSharePct = Math.round(100 - commissionRatePct);
   if (compact) {
     return <span className="text-xs text-muted-foreground font-medium">Cook receives ~S${earnings}</span>;
   }
   return (
     <p className="text-sm text-[var(--shc-success)] font-semibold">
-      Your cook receives S${earnings} after platform fee (85% of order total)
+      Your cook receives S${earnings} after platform fee ({cookSharePct}% of order total)
     </p>
   );
 }
@@ -4656,6 +4666,156 @@ export function CookCollectionSlotEditorWeb({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function CookAreaPickerWeb({
+  value,
+  onChange,
+  testID = 'cook-settings-area',
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  testID?: string;
+}) {
+  const suggestions = React.useMemo(() => cookAreaSuggestions(value), [value]);
+  return (
+    <div data-testid={testID}>
+      <p className="text-xs font-extrabold text-muted-foreground mb-1">Area</p>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        list={`${testID}-suggestions`}
+        placeholder="e.g. Tampines"
+        className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+        data-testid={`${testID}-input`}
+      />
+      <datalist id={`${testID}-suggestions`}>
+        {suggestions.map((area) => (
+          <option key={area} value={area} />
+        ))}
+      </datalist>
+      <p className="text-[11px] text-muted-foreground mt-2 mb-2">
+        Pick a neighbourhood for collection proximity and release logic.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((area) => {
+          const sel = value.trim().toLowerCase() === area.toLowerCase();
+          return (
+            <button
+              key={area}
+              type="button"
+              onClick={() => onChange(area)}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
+                sel ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+              }`}
+              data-testid={`${testID}-chip-${area.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`}
+            >
+              {area}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function CookEarningsIrasNoteWeb({ testID = 'cook-earnings-iras-note' }: { testID?: string }) {
+  return (
+    <GourmeatCard className="bg-[var(--shc-bento-peach)] mt-4" data-testid={testID}>
+      <p className="text-xs text-muted-foreground leading-relaxed">{COOK_EARNINGS_IRAS_NOTE}</p>
+    </GourmeatCard>
+  );
+}
+
+export function CookEarningsCreateListingsCtaWeb({
+  href,
+  testID = 'create-listings-btn',
+}: {
+  href: string;
+  testID?: string;
+}) {
+  return (
+    <Link href={href} className="block mt-4" data-testid={testID}>
+      <GourmeatPrimaryButton label={COOK_EARNINGS_CREATE_LISTINGS_CTA} />
+    </Link>
+  );
+}
+
+export function CookEarningsExpenseTrackerWeb({
+  expenses,
+  totalCents,
+  expenseAmount,
+  expenseCategory,
+  onExpenseAmountChange,
+  onExpenseCategoryChange,
+  onSubmit,
+  isSubmitting,
+  testID = 'cook-earnings-expense-tracker',
+}: {
+  expenses: CookExpenseRow[];
+  totalCents: number;
+  expenseAmount: string;
+  expenseCategory: string;
+  onExpenseAmountChange: (value: string) => void;
+  onExpenseCategoryChange: (value: string) => void;
+  onSubmit: () => void;
+  isSubmitting?: boolean;
+  testID?: string;
+}) {
+  const expenseRows = recentCookExpenses(expenses);
+
+  return (
+    <div className="mt-6" data-testid={testID}>
+      <p className="text-sm font-extrabold mb-2">Expense tracker</p>
+      <GourmeatCard className="bg-[var(--shc-bento-mint)]">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <p className="text-[11px] font-bold uppercase text-muted-foreground">Recorded this year</p>
+            <p className="text-xl font-black">{formatCookExpenseTotalDollars(totalCents)}</p>
+          </div>
+          <SHCMetaBadge kind="tax">IRAS</SHCMetaBadge>
+        </div>
+        <input
+          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-2 font-bold"
+          placeholder="Amount, e.g. 18.50"
+          value={expenseAmount}
+          onChange={(e) => onExpenseAmountChange(e.target.value)}
+          data-testid="expense-amount-input"
+        />
+        <input
+          className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-3 font-bold"
+          placeholder="Category"
+          value={expenseCategory}
+          onChange={(e) => onExpenseCategoryChange(e.target.value)}
+          data-testid="expense-category-input"
+        />
+        <GourmeatPrimaryButton
+          label={isSubmitting ? 'Saving…' : 'Log expense'}
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          testID="expense-submit-btn"
+        />
+        {expenseRows.length === 0 ? (
+          <p className="text-xs text-muted-foreground mt-4 leading-relaxed">{COOK_EARNINGS_EXPENSE_EMPTY}</p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {expenseRows.map((expense) => (
+              <div
+                key={expense.id}
+                className="flex items-start justify-between gap-3 border-t border-border pt-2"
+              >
+                <div>
+                  <p className="text-sm font-extrabold">{expense.category}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground">{expense.date}</p>
+                </div>
+                <p className="text-sm font-black">{formatCookExpenseRowAmount(expense.amount_cents || 0)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </GourmeatCard>
     </div>
   );
 }
