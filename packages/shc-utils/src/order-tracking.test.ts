@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getActiveOrders,
+  latestActiveCookOrder,
   getOrderTimelineIndex,
   isActiveOrderStatus,
   getOrderStatusLabel,
@@ -65,5 +66,21 @@ describe('order-tracking', () => {
   it('isCookNeedsActionOrder is true only for paid', () => {
     expect(isCookNeedsActionOrder({ shc_status: 'paid' })).toBe(true);
     expect(isCookNeedsActionOrder({ shc_status: 'accepted' })).toBe(false);
+  });
+
+  it('picks latest active cook order for chat CTA', () => {
+    const latest = latestActiveCookOrder([
+      { id: 'old', shc_status: 'preparing', updated_at: '2026-07-01T10:00:00Z' },
+      { id: 'new', shc_status: 'accepted', updated_at: '2026-07-02T10:00:00Z' },
+      { id: 'done', shc_status: 'completed' },
+    ]);
+    expect(latest?.id).toBe('new');
+
+    const paidFirst = latestActiveCookOrder([
+      { id: 'paid', shc_status: 'paid', updated_at: '2026-07-01T10:00:00Z' },
+      { id: 'prep', shc_status: 'preparing', updated_at: '2026-07-03T10:00:00Z' },
+    ]);
+    expect(paidFirst?.id).toBe('paid');
+    expect(latestActiveCookOrder([{ id: 'done', shc_status: 'completed' }])).toBeNull();
   });
 });

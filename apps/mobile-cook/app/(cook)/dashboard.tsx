@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +35,7 @@ import {
   cookPortalGreeting,
   getDishImageUrl,
   isCookComplianceVerified,
+  latestActiveCookOrder,
   orderIdFromNotificationType,
 } from '@shc/utils';
 import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
@@ -77,6 +78,7 @@ export default function CookDashboard() {
     .reduce((s: number, o: any) => s + Math.floor((o.total || 0) * 0.85), 0);
 
   const greeting = cookPortalGreeting(new Date(), config.greeting);
+  const latestActiveOrder = useMemo(() => latestActiveCookOrder(orderList), [orderList]);
 
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
@@ -269,11 +271,13 @@ export default function CookDashboard() {
         </View>
       ) : null}
 
-      <Link href="/(shared)/chat/SHC-2026-00001" asChild>
-        <SHCButton variant="outline" style={styles.chatBtn}>
-          <SHCButtonText>Demo Chat</SHCButtonText>
-        </SHCButton>
-      </Link>
+      {latestActiveOrder?.id ? (
+        <Link href={`/(shared)/chat/${latestActiveOrder.id}` as any} asChild>
+          <SHCButton variant="outline" style={styles.chatBtn} testID="cook-latest-order-chat-btn">
+            <SHCButtonText>Chat on latest active order</SHCButtonText>
+          </SHCButton>
+        </Link>
+      ) : null}
 
       {/* Collaboration lives under Orders tab */}
       <Pressable
