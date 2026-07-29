@@ -79,14 +79,21 @@ export default function CookEarningsPage() {
           placeholder="Amount S$"
           value={expenseAmount}
           onChange={(e) => setExpenseAmount(e.target.value)}
+          data-testid="expense-amount-input"
         />
         <input
           className="w-full rounded-xl border border-border px-3 py-2 text-sm mb-3"
           placeholder="Category"
           value={expenseCategory}
           onChange={(e) => setExpenseCategory(e.target.value)}
+          data-testid="expense-category-input"
         />
-        <GourmeatPrimaryButton label="Add expense" onClick={submitExpense} disabled={expenseMut.isPending} />
+        <GourmeatPrimaryButton
+          label="Add expense"
+          onClick={submitExpense}
+          disabled={expenseMut.isPending}
+          testID="expense-submit-btn"
+        />
         {(expenses.expenses || []).length > 0 && (
           <p className="text-xs text-muted-foreground mt-3">
             Total logged: S${Math.round((expenses.total_cents || 0) / 100)}

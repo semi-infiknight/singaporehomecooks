@@ -1,0 +1,24 @@
+# Shared subflow — rose@ cook signed in on dashboard (run from parent flow).
+appId: com.singaporehomecooks.cook
+---
+- runFlow:
+    when:
+      visible: "Sign in as cook"
+    commands:
+      - tapOn:
+          id: "auth-email-input"
+      - inputText: "rose@shc.local"
+      - tapOn:
+          id: "auth-password-input"
+      - inputText: "cooksecret"
+      - tapOn: "SHC Cook Portal"
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- runFlow: cook-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 120000
