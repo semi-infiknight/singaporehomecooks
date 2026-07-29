@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, ActivityIndicator, Alert, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,13 +9,18 @@ import {
   shcSpacing,
   type RequestDishPayload,
 } from '@shc/ui';
+import { defaultListingOccasionTag, listingOccasionTagOptions } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
 import { useCreateRequest } from '../../hooks/useOrder';
+import { useCustomerConfig } from '../../hooks/useCustomerConfig';
 
 export default function RequestDishScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
+  const { config: browseConfig } = useCustomerConfig();
+  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
+  const defaultOccasion = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const createReq = useCreateRequest();
   const [done, setDone] = useState(false);
   const [postedId, setPostedId] = useState<string | undefined>();
@@ -106,6 +111,8 @@ export default function RequestDishScreen() {
         bottomInset={insets.bottom + shcSpacing.lg}
         onBack={() => router.back()}
         onSubmit={handleSubmit}
+        occasionOptions={occasionOptions}
+        defaultOccasion={defaultOccasion}
       />
     </View>
   );

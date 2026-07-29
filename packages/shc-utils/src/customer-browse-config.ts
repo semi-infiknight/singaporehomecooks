@@ -211,6 +211,22 @@ export function customerOccasionCategories(config: CustomerBrowseConfig): Array<
   ];
 }
 
+/** Enabled occasion labels for listing tags + request-dish flows (admin-managed). */
+export function listingOccasionTagOptions(config: CustomerBrowseConfig): string[] {
+  return config.occasions
+    .filter((o) => o.enabled !== false)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((o) => o.label || o.id);
+}
+
+export function defaultListingOccasionTag(config: CustomerBrowseConfig): string {
+  return listingOccasionTagOptions(config)[0] || defaultCustomerOccasions()[0]?.label || 'Hari Raya';
+}
+
+export function defaultListingOccasionTagOptions(): string[] {
+  return listingOccasionTagOptions(defaultCustomerBrowseConfig());
+}
+
 export function applyTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? '');
 }

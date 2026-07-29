@@ -5,6 +5,8 @@ import {
   customerIsPopularDish,
   customerMindCategories,
   defaultCustomerBrowseConfig,
+  defaultListingOccasionTag,
+  listingOccasionTagOptions,
   normalizeCustomerBrowseConfig,
 } from './customer-browse-config';
 
@@ -46,5 +48,17 @@ describe('customer-browse-config', () => {
     });
     expect(cfg.copy.guest_headline).toBe('Welcome back');
     expect(cfg.popular.min_rating).toBe(4.5);
+  });
+
+  it('derives listing occasion tag options from admin occasions', () => {
+    const cfg = normalizeCustomerBrowseConfig({
+      occasions: [
+        { id: 'CNY', label: 'Chinese New Year', enabled: true, sort_order: 20, image_url: '' },
+        { id: 'Hari Raya', label: 'Hari Raya', enabled: true, sort_order: 10, image_url: '' },
+        { id: 'Wedding', label: 'Wedding', enabled: false, sort_order: 30, image_url: '' },
+      ],
+    });
+    expect(listingOccasionTagOptions(cfg)).toEqual(['Hari Raya', 'Chinese New Year']);
+    expect(defaultListingOccasionTag(cfg)).toBe('Hari Raya');
   });
 });

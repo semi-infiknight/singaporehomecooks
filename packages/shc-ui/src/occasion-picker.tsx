@@ -1,12 +1,13 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { defaultListingOccasionTagOptions } from '@shc/utils';
 import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
 
 export function OccasionTagPicker({
   selected,
   onToggle,
-  options = ['Hari Raya', 'Deepavali', 'Chinese New Year', 'Birthday', 'Family Gathering', 'Wedding'],
+  options = defaultListingOccasionTagOptions(),
 }: {
   selected: string[];
   onToggle: (t: string) => void;

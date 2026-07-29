@@ -70,6 +70,8 @@ import {
   defaultMealAddonsDraft,
   mealOptionsFromListing,
   recipeStepsFromListing,
+  defaultListingOccasionTag,
+  listingOccasionTagOptions,
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -86,6 +88,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useCookConfig } from '../../hooks/useCookConfig';
 import { useCookProfile } from '../../hooks/useCookProfile';
+import { useCustomerConfig } from '../../hooks/useCustomerConfig';
 import { VirtualRowFlashList } from '../../components/VirtualLists';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
@@ -120,6 +123,9 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
+  const { config: browseConfig } = useCustomerConfig();
+  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
+  const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
@@ -163,7 +169,7 @@ export default function CookListings() {
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
   const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
-  const [occasionTags, setOccasionTags] = useState<string[]>(['Hari Raya']);
+  const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
   const [mealExtras, setMealExtras] = useState(() => defaultMealExtrasDraft('Peranakan'));
   const [mealAddons, setMealAddons] = useState(() => defaultMealAddonsDraft(false));
@@ -256,6 +262,12 @@ export default function CookListings() {
     }
   };
 
+  useEffect(() => {
+    if (!editingId && occasionTags.length === 0 && defaultOccasionTag) {
+      setOccasionTags([defaultOccasionTag]);
+    }
+  }, [defaultOccasionTag, editingId, occasionTags.length]);
+
   const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
 
   const resetWizard = () => {
@@ -273,7 +285,7 @@ export default function CookListings() {
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
     setLastMinutePremiumPct(null);
-    setOccasionTags(['Hari Raya']);
+    setOccasionTags([defaultOccasionTag]);
     setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
     setMealExtras(defaultMealExtrasDraft('Peranakan'));
     setMealAddons(defaultMealAddonsDraft(false));
@@ -299,7 +311,7 @@ export default function CookListings() {
     setLastMinutePremiumPct(
       typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null
     );
-    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : ['Hari Raya']);
+    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag]);
     setIngredients(
       listing.ingredients?.length
         ? listing.ingredients
@@ -703,7 +715,7 @@ export default function CookListings() {
             placeholder="Or type a cuisine"
             testID="listing-cuisine-input"
           />
-          <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} />
+          <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} options={occasionOptions} />
           <SHCHalalToggle value={halal} onChange={setHalal} />
           <SHCAllergenTierPicker
             value={allergenTiers}
