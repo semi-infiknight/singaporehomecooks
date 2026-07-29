@@ -52,6 +52,124 @@ async function post(pathname: string, body: unknown) {
   return { status: res.status, body: json };
 }
 
+async function del(pathname: string) {
+  const res = await fetch(`${BASE}${pathname}`, {
+    method: 'DELETE',
+    headers: {
+      'x-publishable-api-key': pub(),
+      'Content-Type': 'application/json',
+      ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}),
+    },
+  });
+  const json = await res.json().catch(() => ({}));
+  return { status: res.status, body: json };
+}
+
+function assertEq(label: string, actual: unknown, expected: unknown) {
+  if (actual !== expected) {
+    throw new Error(`${label}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+
+/** Tier 4 — admin patch → store read round-trip (useCustomerConfig / useCookConfig parity). */
+async function verifyConfigRoundTrip(marker: string) {
+  console.log('\n--- Tier 4: admin config → store round-trip ---');
+
+  const adminCustBefore = await get('/admin/shc/customer-config');
+  if (adminCustBefore.status !== 200) throw new Error(`admin customer-config ${adminCustBefore.status}`);
+  const guestHeadlineBefore = adminCustBefore.body?.config?.copy?.guest_headline as string | undefined;
+  const occasionsNavBefore = adminCustBefore.body?.config?.occasions_nav?.label as string | undefined;
+  console.log('✅ admin customer-config', adminCustBefore.body?.source);
+
+  const testHeadline = `Ops smoke ${marker}`;
+  const testOccasionsNav = `Occasions ${marker.slice(-6)}`;
+  const custPatch = await post('/admin/shc/customer-config', {
+    copy: { guest_headline: testHeadline },
+    occasions_nav: { label: testOccasionsNav },
+  });
+  if (custPatch.status !== 200) {
+    throw new Error(`customer-config patch ${custPatch.status} ${JSON.stringify(custPatch.body).slice(0, 200)}`);
+  }
+  console.log('✅ admin customer-config patch', custPatch.body?.action);
+
+  const storeCust = await get('/store/shc/customer-config');
+  if (storeCust.status !== 200) throw new Error(`store customer-config ${storeCust.status}`);
+  assertEq('store customer-config guest_headline', storeCust.body?.config?.copy?.guest_headline, testHeadline);
+  assertEq('store customer-config occasions_nav.label', storeCust.body?.config?.occasions_nav?.label, testOccasionsNav);
+  console.log('✅ store customer-config reflects admin (useCustomerConfig path)');
+
+  const adminRulesBefore = await get('/admin/shc/business-rules');
+  if (adminRulesBefore.status !== 200) throw new Error(`admin business-rules ${adminRulesBefore.status}`);
+  const windowBefore = Number(adminRulesBefore.body?.config?.drop?.customer_window_days ?? 7);
+  const testWindow = windowBefore === 7 ? 6 : 7;
+  console.log('✅ admin business-rules', adminRulesBefore.body?.source);
+
+  const rulesPatch = await post('/admin/shc/business-rules', {
+    drop: { customer_window_days: testWindow },
+  });
+  if (rulesPatch.status !== 200) {
+    throw new Error(`business-rules patch ${rulesPatch.status} ${JSON.stringify(rulesPatch.body).slice(0, 200)}`);
+  }
+  console.log('✅ admin business-rules patch', rulesPatch.body?.action);
+
+  const storeRules = await get('/store/shc/business-rules');
+  if (storeRules.status !== 200) throw new Error(`store business-rules ${storeRules.status}`);
+  assertEq('store business-rules drop.customer_window_days', storeRules.body?.config?.drop?.customer_window_days, testWindow);
+  console.log('✅ store business-rules reflects admin');
+
+  const adminCookBefore = await get('/admin/shc/cook-config');
+  if (adminCookBefore.status !== 200) throw new Error(`admin cook-config ${adminCookBefore.status}`);
+  const morningBefore = adminCookBefore.body?.config?.greeting?.morning as string | undefined;
+  console.log('✅ admin cook-config', adminCookBefore.body?.source);
+
+  const testMorning = `Good morning — ${marker}`;
+  const cookPatch = await post('/admin/shc/cook-config', {
+    greeting: { morning: testMorning },
+  });
+  if (cookPatch.status !== 200) {
+    throw new Error(`cook-config patch ${cookPatch.status} ${JSON.stringify(cookPatch.body).slice(0, 200)}`);
+  }
+  console.log('✅ admin cook-config patch', cookPatch.body?.action);
+
+  const storeCook = await get('/store/shc/cook-config');
+  if (storeCook.status !== 200) throw new Error(`store cook-config ${storeCook.status}`);
+  assertEq('store cook-config greeting.morning', storeCook.body?.config?.greeting?.morning, testMorning);
+  console.log('✅ store cook-config reflects admin (useCookConfig path)');
+
+  // Restore prod config (non-destructive smoke)
+  if (guestHeadlineBefore != null || occasionsNavBefore != null) {
+    const restoreCust = await post('/admin/shc/customer-config', {
+      ...(guestHeadlineBefore != null ? { copy: { guest_headline: guestHeadlineBefore } } : {}),
+      ...(occasionsNavBefore != null ? { occasions_nav: { label: occasionsNavBefore } } : {}),
+    });
+    if (restoreCust.status !== 200) {
+      console.warn('⚠️ customer-config restore failed — manual check in SHC Ops Catalog');
+    } else {
+      console.log('✅ customer-config restored');
+    }
+  }
+
+  const restoreRules = await post('/admin/shc/business-rules', {
+    drop: { customer_window_days: windowBefore },
+  });
+  if (restoreRules.status !== 200) {
+    console.warn('⚠️ business-rules restore failed — manual check in SHC Ops Controls');
+  } else {
+    console.log('✅ business-rules restored');
+  }
+
+  if (morningBefore != null) {
+    const restoreCook = await post('/admin/shc/cook-config', {
+      greeting: { morning: morningBefore },
+    });
+    if (restoreCook.status !== 200) {
+      console.warn('⚠️ cook-config restore failed — manual check in SHC Ops Cook Portal');
+    } else {
+      console.log('✅ cook-config restored');
+    }
+  }
+}
+
 async function main() {
   console.log(`=== smoke-admin-ops → ${BASE} ===`);
 
@@ -110,6 +228,17 @@ async function main() {
   if (promoUp.status !== 200) throw new Error(`promo upsert ${promoUp.status} ${JSON.stringify(promoUp.body).slice(0, 160)}`);
   console.log('✅ discover-promo upsert', promoUp.body?.action);
 
+  const storePromoAfter = await get('/store/shc/discover-promos');
+  if (storePromoAfter.status !== 200) throw new Error(`store discover-promos after upsert ${storePromoAfter.status}`);
+  const opsPromo = (storePromoAfter.body?.promos || []).find((p: { id?: string }) => p?.id === 'promo-ops-test');
+  if (!opsPromo || opsPromo.title !== 'Ops Test Promo') {
+    throw new Error('store discover-promos missing promo-ops-test after admin upsert');
+  }
+  console.log('✅ store discover-promos reflects admin upsert', opsPromo.title);
+
+  const marker = `smoke-${Date.now()}`;
+  await verifyConfigRoundTrip(marker);
+
   // Upsert a test category then disable it (idempotent)
   const up = await post('/admin/shc/categories', {
     id: 'OpsTest',
@@ -134,6 +263,7 @@ async function main() {
     path.join(adminRoot, 'orders/page.tsx'),
     path.join(adminRoot, 'catalog/page.tsx'),
     path.join(adminRoot, 'controls/page.tsx'),
+    path.join(adminRoot, 'cook-portal/page.tsx'),
   ];
   for (const f of adminPages) {
     if (!fs.existsSync(f)) throw new Error(`missing admin UI ${path.relative(process.cwd(), f)}`);

@@ -269,11 +269,11 @@ export function GourmeatCategoryRow({
       testID={testID}
       contentContainerStyle={{ paddingHorizontal: shcSpacing.md, gap: shcSpacing.md }}
     >
-      {categories.map((cat) => {
+      {categories.map((cat, index) => {
         const active = cat.id === selectedId;
         return (
           <Pressable
-            key={cat.id || 'all'}
+            key={`${cat.id || 'all'}-${index}`}
             onPress={() => onSelect(cat.id)}
             testID={`gourmeat-cat-${cat.id || 'all'}`}
             style={{ alignItems: 'center', width: 72 }}
@@ -570,6 +570,7 @@ export function GourmeatModeSwitch({
       style={{
         flexDirection: 'row',
         marginHorizontal: shcSpacing.md,
+        marginBottom: shcSpacing.section,
         padding: 4,
         borderRadius: gourmeatRadii.pill,
         backgroundColor: gourmeatColors.surfaceAlt,
@@ -716,16 +717,16 @@ export function SHCDiscoverFilterSheet({
       <ScrollView showsVerticalScrollIndicator={false}>
         {group(
           'Meal',
-          mealTypeChips.map((chip) =>
-            pill(chip.id, chip.label, chip.id === mealType, () => onMealTypeChange(chip.id), `meal-${chip.id}`)
+          mealTypeChips.map((chip, index) =>
+            pill(`meal-${chip.id}-${index}`, chip.label, chip.id === mealType, () => onMealTypeChange(chip.id), `meal-${chip.id}`)
           )
         )}
         {hideCuisine
           ? null
           : group(
               'Cuisine',
-              cuisines.map((c) =>
-                pill(c.id || 'all', c.label, c.id === cuisine, () => onCuisineChange(c.id), `cuisine-${c.id || 'all'}`)
+              cuisines.map((c, index) =>
+                pill(`cuisine-${c.id || 'all'}-${index}`, c.label, c.id === cuisine, () => onCuisineChange(c.id), `cuisine-${c.id || 'all'}`)
               )
             )}
         {group(

@@ -389,7 +389,7 @@ export default function DiscoverHome() {
       case 'cuisine-rail':
         return (
           <GourmeatCategoryRow
-            items={[{ id: '', label: 'All' }, ...cuisineItems]}
+            items={cuisineItems}
             active={cuisineFilter}
             onSelect={(id) => setCuisineFilter(id === cuisineFilter ? '' : id)}
             testID="cuisine-gourmeat-row"
@@ -555,7 +555,7 @@ export default function DiscoverHome() {
         mealTypeChips={browseConfig.meal_type_chips}
         mealType={mealType}
         onMealTypeChange={(id) => setMealType(id as MealTypeId)}
-        cuisines={[{ id: '', label: 'All' }, ...cuisineItems]}
+        cuisines={cuisineItems}
         cuisine={cuisineFilter}
         onCuisineChange={setCuisineFilter}
         halalOnly={halalOnly}

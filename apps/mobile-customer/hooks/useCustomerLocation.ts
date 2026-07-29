@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import type { SHCCustomerLocationPrefs, SHCSavedAddress } from '@shc/types';
 import { shcCustomerLocationPrefsSchema, shcSavedAddressSchema } from '@shc/types';
@@ -23,7 +23,23 @@ async function savePrefs(prefs: SHCCustomerLocationPrefs) {
   await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(prefs));
 }
 
-export function useCustomerLocation() {
+type CustomerLocationContextValue = {
+  ready: boolean;
+  active: SHCSavedAddress | null;
+  saved: SHCSavedAddress[];
+  activeId: string | undefined;
+  locationLabel: string;
+  setActive: (addr: SHCSavedAddress) => Promise<void>;
+  saveNew: (
+    partial: Omit<SHCSavedAddress, 'id' | 'created_at'> & { id?: string }
+  ) => Promise<SHCSavedAddress>;
+  removeSaved: (id: string) => Promise<void>;
+};
+
+const CustomerLocationContext = createContext<CustomerLocationContextValue | null>(null);
+
+/** Shared location state — one provider for all customer screens (discover + location picker). */
+export function CustomerLocationProvider({ children }: { children: React.ReactNode }) {
   const [prefs, setPrefs] = useState<SHCCustomerLocationPrefs>(DEFAULT);
   const [ready, setReady] = useState(false);
 
@@ -88,14 +104,27 @@ export function useCustomerLocation() {
 
   const locationLabel = active ? formatLocationShort(active) : 'Set collection location';
 
-  return {
-    ready,
-    active,
-    saved: prefs.saved,
-    activeId: prefs.active_id,
-    locationLabel,
-    setActive,
-    saveNew,
-    removeSaved,
-  };
+  const value = useMemo(
+    () => ({
+      ready,
+      active,
+      saved: prefs.saved,
+      activeId: prefs.active_id,
+      locationLabel,
+      setActive,
+      saveNew,
+      removeSaved,
+    }),
+    [ready, active, prefs.saved, prefs.active_id, locationLabel, setActive, saveNew, removeSaved]
+  );
+
+  return React.createElement(CustomerLocationContext.Provider, { value }, children);
+}
+
+export function useCustomerLocation(): CustomerLocationContextValue {
+  const ctx = useContext(CustomerLocationContext);
+  if (!ctx) {
+    throw new Error('useCustomerLocation must be used within CustomerLocationProvider');
+  }
+  return ctx;
 }

@@ -1,0 +1,129 @@
+# Customer — Jul 27 wave: discover spine, location nudge, filter sheet, occasions route
+# Changed since ecfdc8c: discoverSections, mode switch, location UX, honest browse
+# Prereq: pnpm ios:dev (Metro :8081) + Railway API
+# Run: maestro test --device <sim> apps/mobile-customer/e2e/discover-location-wave.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: customer-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+
+# Promo carousel + cooking soon (discoverSections spine)
+- scrollUntilVisible:
+    element:
+      id: "home-promo-carousel"
+    direction: DOWN
+    timeout: 30000
+    optional: true
+- assertVisible:
+    id: "home-cooking-soon-rail"
+    optional: true
+- assertVisible:
+    id: "home-cooking-soon-empty"
+    optional: true
+
+# Browse spine — dishes mode (default)
+- scrollUntilVisible:
+    element:
+      id: "location-nudge-banner"
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    id: "discover-mode-switch"
+- assertVisible:
+    id: "discover-mode-dishes"
+- assertVisible:
+    id: "cuisine-gourmeat-row"
+
+# Unified filter sheet (scroll back to search bar at top)
+- scrollUntilVisible:
+    element:
+      id: "search-input"
+    direction: UP
+    timeout: 30000
+- tapOn:
+    id: "gourmeat-filter-btn"
+- extendedWaitUntil:
+    visible:
+      id: "discover-filter-sheet"
+    timeout: 15000
+- tapOn:
+    id: "discover-filter-sheet-halal"
+- tapOn:
+    id: "discover-filter-sheet-apply"
+- extendedWaitUntil:
+    notVisible:
+      id: "discover-filter-sheet"
+    timeout: 30000
+
+# Kitchens mode — scroll back to browse spine (filter flow leaves us at search bar)
+- scrollUntilVisible:
+    element:
+      id: "discover-mode-kitchens"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "discover-mode-kitchens"
+- extendedWaitUntil:
+    notVisible:
+      id: "cuisine-gourmeat-row"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      text: "Tiffin plans"
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    text: "Tiffin plans"
+
+# Occasions dedicated route
+- openLink: shc-customer:///(customer)/occasions
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "occasions-browse-screen"
+    timeout: 30000
+- assertVisible:
+    id: "occasion-gourmeat-row"
+- tapOn:
+    id: "occasions-back-btn"
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 30000
+
+# Location picker — quick area (SG wave)
+- openLink: shc-customer:///(customer)/location
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "location-screen"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "location-quick-area-Tampines"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "location-quick-area-Tampines"
+# Quick-pick saves immediately and pops back (no confirm step)
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 60000
+
+# After location set: nudge should disappear
+- extendedWaitUntil:
+    notVisible:
+      id: "location-nudge-banner"
+    timeout: 10000
+    optional: true

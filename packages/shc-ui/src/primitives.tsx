@@ -521,12 +521,12 @@ export function SHCCategoryRail({
         paddingRight: shcSpacing.md,
       }}
     >
-      {categories.map((cat) => {
+      {categories.map((cat, index) => {
         const selected = cat.id === selectedId;
         const chipId = (cat.id || 'all').toLowerCase().replace(/\s+/g, '-');
         return (
           <Pressable
-            key={cat.id || 'all'}
+            key={`${cat.id || 'all'}-${index}`}
             testID={`category-chip-${chipId}`}
             onPress={() => onSelect(cat.id)}
             style={{ alignItems: 'center', width: 72 }}

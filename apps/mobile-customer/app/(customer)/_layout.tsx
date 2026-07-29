@@ -4,6 +4,7 @@ import { gourmeatColors } from '@shc/ui/theme';
 import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CustomerTabBar } from '../../components/CustomerTabBar';
 import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
+import { CustomerLocationProvider } from '../../hooks/useCustomerLocation';
 
 const CUSTOMER_TAB_ORDER = ['index', 'orders/index', 'cart', 'profile/index'];
 
@@ -20,6 +21,7 @@ function CustomerTabIndexSync({ children }: { children: React.ReactNode }) {
 
 export default function CustomerLayout() {
   return (
+    <CustomerLocationProvider>
     <TabDirectionProvider routeOrder={CUSTOMER_TAB_ORDER}>
     <CustomerTabIndexSync>
     <Tabs
@@ -69,5 +71,6 @@ export default function CustomerLayout() {
     </Tabs>
     </CustomerTabIndexSync>
     </TabDirectionProvider>
+    </CustomerLocationProvider>
   );
 }

@@ -16,6 +16,7 @@ import {
   type GourmeatCategoryItem,
   type SHCDishCardData,
   shcSpacing,
+  shcSectionStack,
   SHCFoodImage,
   SHCSearchResultsPanel,
   SHCGuestBrowseBar,
@@ -285,7 +286,7 @@ export default function CustomerDiscover() {
           mealTypeChips={browseConfig.meal_type_chips}
           mealType={mealType}
           onMealTypeChange={(id) => setMealType(id as MealTypeId)}
-          cuisines={[{ id: '', label: 'All' }, ...cuisineCategories.map((c) => ({ id: c.id, label: c.label }))]}
+          cuisines={cuisineCategories.map((c) => ({ id: c.id, label: c.label }))}
           cuisine={cuisineFilter}
           onCuisineChange={setCuisineFilter}
           halalOnly={halalOnly}
@@ -433,27 +434,27 @@ export default function CustomerDiscover() {
 
       case 'browse-switch':
         return (
-          <View>
+          <View style={shcSectionStack}>
             {locationReady && !collectionLocation ? (
               <SHCLocationNudgeBanner onPress={() => router.push('/(customer)/location' as any)} />
             ) : null}
             <GourmeatModeSwitch
-            modes={browseConfig.discover_modes}
-            activeId={mode}
-            onSelect={(id) => setMode(id as DiscoverModeId)}
-            navAction={{
-              label: browseConfig.occasions_nav.label,
-              onPress: () => router.push(occasionBrowseRoute().mobile as any),
-              testID: browseConfig.occasions_nav.testID,
-            }}
-          />
+              modes={browseConfig.discover_modes}
+              activeId={mode}
+              onSelect={(id) => setMode(id as DiscoverModeId)}
+              navAction={{
+                label: browseConfig.occasions_nav.label,
+                onPress: () => router.push(occasionBrowseRoute().mobile as any),
+                testID: browseConfig.occasions_nav.testID,
+              }}
+            />
           </View>
         );
 
       case 'cuisine-rail':
         return (
           <GourmeatCategoryRow
-            categories={[{ id: '', label: 'All', iconKey: 'restaurant' }, ...cuisineCategories]}
+            categories={cuisineCategories}
             selectedId={cuisineFilter}
             onSelect={(id) => setCuisineFilter(id === cuisineFilter ? '' : id)}
             testID="cuisine-gourmeat-row"
@@ -572,7 +573,7 @@ export default function CustomerDiscover() {
       {sections
         .filter((section) => section.id !== 'request')
         .map((section) => (
-          <View key={section.id} testID={section.testID}>
+          <View key={section.id} testID={section.testID} style={shcSectionStack}>
             {renderSection(section.id)}
           </View>
         ))}
@@ -580,7 +581,9 @@ export default function CustomerDiscover() {
   );
 
   const ListFooter = !isSearching ? (
-    <View testID="discover-section-request">{renderSection('request')}</View>
+    <View testID="discover-section-request" style={shcSectionStack}>
+      {renderSection('request')}
+    </View>
   ) : null;
 
   return (
@@ -589,6 +592,7 @@ export default function CustomerDiscover() {
         <View style={styles.list}>
           <FlashList
             data={gridProducts}
+            extraData={mode}
             renderItem={renderItem}
             keyExtractor={(item) => String(item.id)}
             numColumns={2}

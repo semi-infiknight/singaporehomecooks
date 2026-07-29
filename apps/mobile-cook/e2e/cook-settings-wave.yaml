@@ -1,0 +1,77 @@
+# Cook — Jul 27 wave: settings screen, batches slot picker, tiffin config
+# Changed since ecfdc8c: cook settings, media, batches slots, tiffin options
+# Prereq: pnpm ios:dev (Metro :8082) + Railway API
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible: "Sign in as cook"
+    timeout: 90000
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- runFlow: cook-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 120000
+
+# Kitchen settings (new screen — stitch item 1 + media item 5)
+- openLink: shc-cook:///(cook)/settings
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-settings-screen"
+    timeout: 60000
+- assertVisible:
+    id: "cook-settings-avatar-btn"
+- assertVisible:
+    id: "cook-settings-pause-toggle"
+- scrollUntilVisible:
+    element:
+      id: "cook-settings-address"
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    id: "cook-settings-address"
+- scrollUntilVisible:
+    element:
+      id: "cook-settings-save-btn"
+    direction: DOWN
+    timeout: 20000
+- assertVisible:
+    id: "cook-settings-save-btn"
+
+# Batches — collection slot picker (stitch item 7)
+- openLink: shc-cook:///(cook)/batches
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-batches-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "batch-slot"
+    direction: DOWN
+    timeout: 30000
+    optional: true
+
+# Tiffin slot options (stitch item 6) — reuse existing config smoke
+- openLink: shc-cook:///(cook)/tiffin
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-tiffin-config-screen"
+    timeout: 60000
+- assertVisible:
+    id: "cook-tiffin-enabled-switch"

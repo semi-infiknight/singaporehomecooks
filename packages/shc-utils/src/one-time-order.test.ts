@@ -19,7 +19,7 @@ describe('one-time order flow helpers', () => {
     expect(s.serviceFee).toBe(ONE_TIME_SERVICE_FEE);
     expect(s.collectionFee).toBe(0);
     expect(s.total).toBe(32 + ONE_TIME_SERVICE_FEE);
-    expect(s.proceedLabel).toMatch(/Proceed to pay/);
+    expect(s.proceedLabel).toBe('Proceed to pay');
     expect(s.cancelNote.toLowerCase()).toContain('cannot be cancelled');
   });
 

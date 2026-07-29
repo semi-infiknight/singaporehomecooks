@@ -983,9 +983,9 @@ export function CuisineMindRail({
     <div data-testid="cuisine-mind-rail">
       <p className="text-base font-black text-foreground mb-2">Explore cuisines</p>
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-        {items.map((cat) => (
+        {items.map((cat, index) => (
           <CategoryRailItem
-            key={cat.id || 'all'}
+            key={`${cat.id || 'all'}-${index}`}
             occasion={cat.id}
             label={cat.label}
             imageUrl={cat.imageUrl}
@@ -2919,7 +2919,11 @@ export function GourmeatModeSwitch({
   testID?: string;
 }) {
   return (
-    <div role="tablist" data-testid={testID} className="flex gap-1 p-1 rounded-full bg-muted">
+    <div
+      role="tablist"
+      data-testid={testID}
+      className="flex gap-1 p-1 rounded-full bg-muted mb-[var(--shc-section-gap)]"
+    >
       {modes.map((mode) => {
         const active = mode.id === activeId;
         return (
@@ -3047,12 +3051,14 @@ export function DiscoverFilterSheet({
             ✕
           </button>
         </div>
-        {group('Meal', mealTypeChips.map((c) => pill(`meal-${c.id}`, c.label, c.id === mealType, () => onMealTypeChange(c.id))))}
+        {group('Meal', mealTypeChips.map((c, index) => pill(`meal-${c.id}-${index}`, c.label, c.id === mealType, () => onMealTypeChange(c.id))))}
         {hideCuisine
           ? null
           : group(
               'Cuisine',
-              cuisines.map((c) => pill(`cuisine-${c.id || 'all'}`, c.label, c.id === cuisine, () => onCuisineChange(c.id)))
+              cuisines.map((c, index) =>
+                pill(`cuisine-${c.id || 'all'}-${index}`, c.label, c.id === cuisine, () => onCuisineChange(c.id))
+              )
             )}
         {group(
           'Dietary',
@@ -3552,11 +3558,11 @@ export function GourmeatCategoryRow({
   const gap = 'var(--shc-category-stack-gap)';
   const row = (
     <div className="flex gap-4 overflow-x-auto -mx-1 px-1 scrollbar-hide" data-testid={testID}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const selected = item.id === active;
         return (
           <button
-            key={item.id || 'all'}
+            key={`${item.id || 'all'}-${index}`}
             type="button"
             onClick={() => onSelect(item.id)}
             data-testid={`gourmeat-cat-${item.id || 'all'}`}

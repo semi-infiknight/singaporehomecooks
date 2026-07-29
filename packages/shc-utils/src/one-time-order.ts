@@ -41,7 +41,7 @@ export function computeOneTimeOrderSummary(items: CartLineInput[] = []): OneTime
     totalLabel: formatSGD(total),
     itemCount: s.itemCount,
     countLabel: s.countLabel,
-    proceedLabel: `Proceed to pay ${formatSGD(total)}`,
+    proceedLabel: 'Proceed to pay',
     cancelNote: 'One-time orders cannot be cancelled once placed — change slot via Manage before collection.',
   };
 }

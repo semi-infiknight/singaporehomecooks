@@ -1,0 +1,73 @@
+# Customer — checkout collection pre-fill from saved location (Jul 27 wave)
+# Prereq: pnpm ios:dev + signed-in customer
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: customer-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+
+# Sign in
+- openLink: shc-customer:///(shared)/auth
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "auth-submit-btn"
+    timeout: 30000
+- tapOn:
+    id: "auth-email-input"
+- eraseText
+- inputText: customer@shc.local
+- tapOn:
+    id: "auth-password-input"
+- eraseText
+- inputText: customersecret
+- tapOn:
+    id: "auth-submit-btn"
+- tapOn:
+    text: "OK"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+
+# Set collection location via quick area
+- tapOn:
+    id: "gourmeat-location-chip"
+- extendedWaitUntil:
+    visible:
+      id: "location-screen"
+    timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "location-quick-area-Tampines"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "location-quick-area-Tampines"
+# Quick-pick saves immediately and pops back (no confirm step)
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 60000
+
+# Checkout screen should show collection fields (pre-fill path)
+- openLink: shc-customer:///(customer)/checkout
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "checkout-screen"
+    timeout: 120000
+- assertVisible:
+    id: "checkout-collection-unit"
+- assertVisible:
+    id: "checkout-change-location"
