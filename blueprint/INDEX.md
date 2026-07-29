@@ -1,344 +1,95 @@
-# Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
+# Blueprint Index — Navigation Only
 
-**Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-29 — Post-merge sync: location provider, earnings ledger, Maestro ecfdc8 wave, admin smoke, mock removal. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
-**Location:** `blueprint/` (monorepo root)  
-**Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
+**Last updated:** 2026-07-29  
+**Live state:** [CURRENT_STATE.md](./CURRENT_STATE.md) — the only integration snapshot. This file is a map, not a changelog.
 
-## Current State (read this first if picking up the repo cold)
+**Cold start:** [README.md](./README.md) → **INDEX.md** → [CURRENT_STATE.md](./CURRENT_STATE.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) → section below for your task.
 
-**[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
-
-**Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
-
-## Progress Update (2026-07-29 — Post-merge sync)
-
-| Area | Delivered |
-|------|-----------|
-| **Customer location** | `CustomerLocationProvider` — shared state across discover/location/cart/checkout; fixes stale header after area pick |
-| **Discover UX** | `shcSectionStack` spacing; dedupe All cuisine row; index-suffixed list keys (no `.$all` crash) |
-| **Cart CTA** | `proceedLabel` text-only; price via `GourmeatPayButton.amount` |
-| **Cook earnings** | Ledger-backed `GET /store/shc/earnings`; `@shc/ui/cook-earnings` + `@shc/utils/cook-earnings`; business-rules commission on listing preview |
-| **Cook area picker** | `SHCCookAreaPicker` + `sg-areas.ts` — tri-platform SG centroid chips |
-| **Admin occasion tags** | `listingOccasionTagOptions` wired to listing + request pickers |
-| **E2E** | `pnpm e2e:ecfdc8-wave`; Maestro coverage gaps (lifecycle, decline/dispute, batches, earnings); Playwright `cook-portal-smoke.spec.ts` |
-| **Smoke** | `pnpm smoke:admin-ops` — admin↔store config round-trip |
-| **Mocks** | `mobile-*/lib/mock-service.ts` removed — Medusa-only runtime |
-
-**Verify:** `pnpm e2e:ecfdc8-wave` (sim + Metro) · `pnpm smoke:admin-ops` · `FLAVOUR=polish SCOPE=web pnpm verify:goal`
-
-## Progress Update (2026-07-27 — Location integration)
-
-| Area | Delivered |
-|------|-----------|
-| **Discovery** | Proximity sort on dish grid + kitchens; distance on kitchen cards; **Order again** rail prefers nearby cooks |
-| **Tiffin** | Nearest chip auto-selected when location set; proximity sort on kitchen list |
-| **Checkout** | Pre-fill collection point from saved location; `customer_collection_*` snapshotted on `shc_order_meta` |
-| **Utils** | `location.ts`, `checkout-collection.ts`, `reorder.ts` proximity helpers |
-
-**Deploy:** Railway medusa + web redeployed from `main` @ `7c55c90` (2026-07-29). Migration `Migration20260727180000OrderMetaCustomerCollection` applied on boot.
-
-## Progress Update (2026-07-27 — Cook + admin configurability stitch)
-
-| Wave | Delivered |
-|------|-----------|
-| **Cook (items 1–8)** | Settings pause + collection fields; avatar/hero upload; per-kitchen tiffin pricing; tiffin slot options; order collection release; batches slot picker; product meta (`meal_extras`, `meal_addons`, `recipe_steps`) |
-| **Admin (items 9–12)** | Discover promo carousel; marketplace business rules; cook portal chrome; unified browse config (categories/occasions/copy) |
-| **Storage** | `shc_platform_stat` keys: `customer_browse_config`, `discover_promos`, `business_rules_config`, `cook_portal_config` — SHC Ops Catalog + Controls |
-| **Client hooks** | `useCustomerConfig`, `useCookConfig` — tri-platform; code defaults until admin saves |
-
-**Verify:** `FLAVOUR=tri-platform SCOPE=tray TOUCHES_API=1 pnpm verify:goal`
-
-## Progress Update (2026-07-24 — Cook portal + admin ops parity)
-
-| Area | Delivered |
-|------|-----------|
-| **Cook listings** | Shared `@shc/ui/listing-form` + `@shc/utils/listing-form` — allergens, availability, description, collection address (web + mobile-cook) |
-| **Badges** | `SHCMetaBadge` + `badge-ux.ts` — semantic `kind` → `warm`/`success`/etc.; tri-platform migration from manual variants |
-| **Heritage cleanup** | `heritage_note` column dropped; unwired `shc_heritage` module removed; dish story = `description` |
-| **Admin charts** | Recharts on all SHC Ops pages; `GET /admin/shc/charts`; `/app/shc-ops/charts` visual explorer |
-| **Admin realtime** | Unified 30s/45s React Query polling + tab-focus refetch + `invalidateShcOpsDashboard` after mutations |
-
-## Progress Update (2026-07-18 — Marketplace polish + layout)
-
-Tri-platform UX hardening (no new API surface):
-
-| Area | Delivered |
-|------|-----------|
-| **Images** | `SHCFoodImage` + `resolveImageUrl` fallbacks; working Unsplash IDs; cuisine categories from `MIND_CUISINE_CATEGORIES`; kitchen heroes not avatars |
-| **Category spacing** | `categoryStackGap` 8px rhythm; `GourmeatCategoryRow title=`; web CSS `--shc-category-stack-gap` |
-| **PayNow** | Single QR fetch per session; stable `PayNowPanel` (no flicker); tiffin recharge + checkout poll unchanged |
-| **Checkout CTA** | Disabled until slot + allergen + PDPA; label “Select collection time” when blocked |
-| **Bottom insets** | Removed Expo Tabs `sceneStyle.paddingBottom`; `contentPad*` helpers; web `hideMobileTabBar` + conditional chrome padding |
-| **Railway** | Medusa invoice type fix + redeploy (prior commit `097facd`) |
-| **Dev** | `pnpm customer:reload`, `scripts/reload-customer-emulator.sh` |
-
-**Verify:** `FLAVOUR=polish SCOPE=web pnpm verify:goal` · `FLAVOUR=wiring SCOPE=checkout TOUCHES_API=1 pnpm verify:goal`
-
-## Progress Update (2026-07-09 — HomelyEats Waves 1–7 ship)
-
-Paper-wireframe / HomelyEats programme delivered tri-platform + production closeout:
-
-| Wave | Delivered |
-|------|-----------|
-| 1 | Account menu, kitchen trust certs, cart coupon/bill/PayNow, plan duration |
-| 2 | Pause/recharge screens, subscription card states, manage hierarchy |
-| 3 | Cook tiffin OS (metrics, date publish/cancel), standalone ratings |
-| 4 | Social proof, subscribe trust funnel, confirm steps, ledger shell |
-| 5 | `shc_tiffin_ledger`, balance_cents, PayNow recharge confirm, real transactions |
-| 6 | `pnpm smoke:tiffin`, Maestro flex OS, error-masking fix, verify-tier hooks |
-| 7 | Postgres-first subscribe create/list; `pnpm ship:tiffin`; 06-api-surface ledger/recharge docs |
-| 8 | Customize extras API; day-menu join; past history; duration weeks; order-once CTA; notes persist |
-
-**Commands:** `pnpm smoke:tiffin` · `pnpm e2e:tiffin` · `pnpm ship:tiffin` · `FLAVOUR=wiring SCOPE=tiffin TOUCHES_API=1 pnpm verify:goal`  
-**Ship:** `git push origin main` → `railway redeploy -s medusa --from-source -y` → `REQUIRE_TIFFIN_SMOKE=1 pnpm smoke:tiffin`
-
-## Progress Update (2026-07-09 — Tiffin weekly subscription)
-
-End-to-end **tiffin subscription** (single kitchen, 2/3/4 meals/week, recurring template + next-week override):
-
-- **Backend:** `shc-tiffin` module + migration; routes under `/store/shc/tiffin/*`; `materializeTiffinWeeklyOrders()`; worker cron Mon 08:00 UTC (`apps/worker/src/index.ts`).
-- **Packages:** `@shc/business-rules/tiffin`, `@shc/api-client` tiffin methods, `@shc/ui/tiffin-ux.tsx`.
-- **Mobile customer:** `apps/mobile-customer/app/(customer)/tiffin/` — browse, kitchen subscribe, confirm, planner, menu, manage. Entry: discover **16:9 promo carousel** + profile tile.
-- **Mobile cook:** `apps/mobile-cook/app/(cook)/tiffin/` — kitchen config (enable, tagline, days, eligible dishes). Dashboard quick action.
-- **Maestro:** `tiffin-config.yaml`, `tiffin-subscribe.yaml`, `tiffin-flex-os.yaml`, `scripts/run-tiffin-e2e.sh`.
-- **Fixes:** SecureStore-safe milestone keys; cook app crash on listings/compliance; `product.name` (not `title`) in weekly order SQL; CI lockfile + worker ESM `.js` imports.
-- **Railway ship lesson:** goals with `TOUCHES_API=1` must **`git push origin main`** + verify live route — local-only commits do not deploy (`railway redeploy` ≠ new code).
-
-## Progress Update (2026-07-08 — Cook sign-up + onboarding wiring)
-
-Cook mobile app: sign-up (`POST /store/shc/auth/cook/register`), 4-step onboarding (`PATCH /store/shc/auth/cook/profile`), order detail accept/decline. Shared Medusa data — listings via `POST /store/shc/listings` appear on customer `GET /store/shc/products`; customer checkout orders surface on cook `GET /store/shc/orders?role=cook`. Verification: `pnpm verify:cook-wiring` (+ in-process fallback until Railway deploy).
-
-## Progress Update (2026-07-08 — Agent brain)
-
-[README.md](./README.md): `blueprint/` is canonical agent brain (agents-only repo). [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) + [agent/](./agent/) protocols: [build-protocol.md](./agent/build-protocol.md), [design-taste.md](./agent/design-taste.md), [verify-protocol.md](./agent/verify-protocol.md). Root `AGENTS.md` points here; code comments reference blueprint.
-
-## Progress Update (2026-07-08 — Testing flavours + experience ledger)
-
-[production/testing-flavours.md](./production/testing-flavours.md) records **what we miss vs skip** from prior runs (unwired CTAs, CORS, Metro crash, tri-platform drift). `FLAVOUR=polish|wiring|feature|tri-platform|native` right-sizes `verify:goal`; `TOUCHES_NATIVE=1` / `TOUCHES_API=1` flags for bundle/API guards. Wiring checklist prevents emulator breakage without per-commit E2E.
-
-## Progress Update (2026-07-08 — Blueprint Full Sync, zero drift)
-
-Reconciled blueprint to `main` @ `02a1f53` after 57 commits since 2026-06-29 launch-readiness. Key code reality now documented:
-
-- **Family Values v4** (`de91419` + follow-ups): `@shc/ui` tray stack, morphing labels, directional tabs, order-tray tracking; web `SHCTrayWeb` mirrors; Maestro tray flows (`checkout-allergen-tray.yaml`, `listing-tray.yaml`).
-- **Web TestFlight parity** (`151d00e`, `c740dfb`, `1c0ee76`): discover halal/light chips, Zomato dish rails, PWA install banner; full `/cook-portal` (dashboard, orders, listings, compliance, earnings, `CookMobileTabBar`, separate cook auth).
-- **Cook listings CRUD** (`9e3ca15`, `0419de9`): `PATCH`/`DELETE /store/shc/listings/:id`; mobile long-press edit/delete; listings screen search + filters.
-- **Railway PWA pipeline** (`4c50c15`–`55352ac`): `pnpm railway:ship`, `pnpm railway:verify-pwa`; PWA assets via route handlers; runtime `X-SHC-Railway-Build-Id` from `.railway-build-id`.
-- **Web auth hardening** (`02a1f53`, `5deaffe`): checkout/PDP auth guards; `ShcRequestError` + `SHCErrorCode` in api-client; explicit CORS via `pnpm railway:wire`.
-- **Infra on Railway**: worker + minio deployed (see `03-railway.md`, `RAILWAY_DEPLOY.md`).
-
-Files patched: `CURRENT_STATE.md`, `INDEX.md`, `03-railway.md`, `04-monorepo.md`, `06-api-surface.md`, `07-auth.md`, `10-mobile.md`, `12-shared-components.md`, `13-implementation-phases/phase-10.md`.
-
-## Navigation for AI Agents (Efficient Web)
-
-Start here → follow links. Each file contains:
-- Frontmatter with "Related Files" and "Depends On"
-- Full original content from the locked blueprint
-- Production additions and multi-agent guidance where relevant
-- Cross-references using relative Markdown links
-
-**Core Sections (read in order for context):**
-- [00-locked-decisions.md](./00-locked-decisions/00-locked-decisions.md) — Fixed decisions, prerequisites, Medusa bootstrap checklist
-- [01-product-scope.md](./01-product-scope/01-product-scope.md)
-- [02-stack.md](./02-stack/02-stack.md)
-- [03-railway.md](./03-railway/03-railway.md) — Deployment topology + env vars
-- [04-monorepo.md](./04-monorepo/04-monorepo.md)
-- [05-data-model.md](./05-data-model/05-data-model.md) — All tables + module links (includes Phase 6/8/9 fields)
-- [06-api-surface.md](./06-api-surface/06-api-surface.md) — Store, Cook, Admin, Internal routes (full OpenAPI-style)
-- [07-auth.md](./07-auth/07-auth.md)
-- [08-marketplace-rules.md](./08-marketplace-rules/08-marketplace-rules.md)
-- [09-order-state.md](./09-order-state/09-order-state.md)
-- [10-mobile.md](./10-mobile/10-mobile.md) — Route map + critical screen contracts
-- [11-medusa-modules.md](./11-medusa-modules/11-medusa-modules.md)
-- [12-shared-components.md](./12-shared-components/12-shared-components.md)
-- [13-implementation-phases/](./13-implementation-phases/README.md) — Per-phase breakdown (see subfolder)
-- [14-founder-inputs.md](./14-founder-inputs/14-founder-inputs.md)
-- [15-calendar.md](./15-calendar/15-calendar.md)
-- [16-references.md](./16-references/16-references.md)
-
-**Decision Trees & Edge Cases (Critical for Production Logic):**
-- CURRENT_STATE.md §8 "What's NOT Done" + code audits (no separate GAP_ANALYSIS.md; live gaps are in CURRENT_STATE) — historical source gap audit was folded in.
-- [DECISION_TREES/cook-cancellation-after-payment.md](./DECISION_TREES/cook-cancellation-after-payment.md)
-- [ERROR_CODES.md](./ERROR_CODES.md) — Centralized error catalog with ops actions
-- [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md)
-- [DATA_RETENTION_MATRIX.md](./DATA_RETENTION_MATRIX.md)
-- [GST_TAX_RULES.md](./GST_TAX_RULES.md)
-- [FEATURE_FLAGS.md](./FEATURE_FLAGS.md)
-- [CRON_JOBS.md](./CRON_JOBS.md)
-- [INSURANCE_LIABILITY.md](./INSURANCE_LIABILITY.md)
-
-**Agent Playbook (read after CURRENT_STATE):**
-- [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) — hub: build, taste, test
-- [agent/build-protocol.md](./agent/build-protocol.md) — monorepo, Railway-only, wiring
-- [agent/design-taste.md](./agent/design-taste.md) — Gourmeat, Family Values, tri-platform
-- [agent/verify-protocol.md](./agent/verify-protocol.md) — FLAVOUR + SCOPE strategic verify
-
-**Multi-Agent Execution Layer (read before starting parallel work):**
-- [multi-agent/README.md](./multi-agent/README.md) — Tracks, branch strategy, delegation rules
-- [multi-agent/tracks.md](./multi-agent/tracks.md) — 5 parallel tracks + ownership
-- [multi-agent/stitching-protocol.md](./multi-agent/stitching-protocol.md) — Deterministic integration process
-- [multi-agent/production-hardening.md](./multi-agent/production-hardening.md) — Security, observability, PDPA, testing from Day 1
-- [multi-agent/self-updating-rules.md](./multi-agent/self-updating-rules.md) — How agents patch this web without conflicts
-
-**Production & Quality Layer:**
-- [production/README.md](./production/README.md)
-- [production/testing-flavours.md](./production/testing-flavours.md) — **strategic verify** (experience ledger + FLAVOUR recipes)
-- [production/goal-workflow.md](./production/goal-workflow.md) — batch build / batch verify (mandatory for all agents)
-- [production/testing-strategy.md](./production/testing-strategy.md)
-- [production/observability.md](./production/observability.md)
-- [production/compliance-pdpa.md](./production/compliance-pdpa.md)
-
-**How to Navigate Efficiently (for Agents):**
-1. Read `INDEX.md` + `multi-agent/README.md`
-2. Jump to the section matching your assigned track/task ID (e.g., "Task 5.3 PayNow" → `06-api-surface.md` + `13-implementation-phases/phase-5.md`)
-3. Follow "Related Files" and "See also" links at the top of each file
-4. When context is missing, follow links to `05-data-model.md` or `06-api-surface.md`
-5. After completing work, follow the self-updating rules in `multi-agent/self-updating-rules.md`
-
-**Self-Updating Guarantee:**
-This web is the **only** source of truth. The old single-file `Singapore_Home_Cooks_Builder_Blueprint.md` and the `.hermes/plans/` version are now deprecated. All future changes must be made inside `blueprint/`.
+Do not use root `STATUS.md` (stale). Do not duplicate facts from `CURRENT_STATE.md` here.
 
 ---
 
-## Full Content Map (No Information Lost)
+## Agent protocols
 
-Every table, decision, route, task, acceptance criterion, and production requirement from the original 789-line blueprint has been preserved and distributed across these files. The multi-agent production layer has been integrated without duplication or loss.
-
-**Deprecated Files (do not edit):**
-- `Singapore_Home_Cooks_Builder_Blueprint.md` (root) — content moved here
-- `.hermes/plans/2026-06-13_SingaporeHomeCooks_MultiAgent_Production_Plan.md` — content merged here
-
-**Next Step for Agents:** Read `./multi-agent/README.md` then the section matching your current task.
-
-## Progress Update (2026-06-20 — Blueprint Full Sync + Cook Auth + Cart/Review Reality)
-
-**Mandatory sync rule activated:** Any future code change touching architecture, contracts, routes, modules, or UI must also patch the blueprint web in the same commit (see self-updating-rules.md + CURRENT_STATE §10). This pass reconciled all major drift.
-
-- Updated @shc/types shcCookSchema (login_email + password_hash internal)
-- 05-data-model: added shc_cart row + cook auth fields + date
-- 06-api-surface: status table now accurate (auth ✅, reviews ✅, search ✅, cart full ✅)
-- CURRENT_STATE + INDEX + 11-medusa + 07-auth + others: dates + facts aligned to actual modules (shc-cart, shc-review registered), routes (full list in medusa/src/api/store/shc + admin), web review impl, real api-client usage
-- Strengthened "update with each change" rule
-- Verified against live code (modules/index, cart route using module, review routes + client methods, seed hashes, shc-auth with scrypt + fallback, web orders/[id] review form, all mobile + web api-clients)
-
-
-**Design system wave (this agent):**
-- `@shc/ui` v3: new modules `zomato.tsx`, `visuals.tsx`, `icons.tsx`, `motion.tsx`, `food-ux.tsx`; expanded `domain.tsx` (Zomato order rows, cart/cook heroes, checkout stepper data).
-- `@shc/utils`: `food-visuals.ts` (bento action images), `reorder.ts` (`extractReorderDishes` for “Order again” rails).
-- `brand.md`: Toptal food-app UX principles (white space, search+ADD, short checkout journey, personalize, heritage story).
-- Tri-platform sync skill: `.agents/skills/tri-platform-ui-sync/SKILL.md`.
-
-**Mobile customer:** Zomato discover (promo rail, filter chips, photo bento tiles with `SHCIcon`, cuisine rail); `SHCSearchResultsPanel` with ADD; `SHCHeritageStoryBanner`; “Order again” rail; `SHCCheckoutStepper` on checkout; vector tab icons via `SHCTabIcon`.
-
-**Mobile cook:** Dashboard, orders, earnings, compliance, listings polished — photo bento + vector icons (no emoji placeholders).
-
-**Web:** Discover reordered; `AppMobileTabBar`; `SearchResultsDropdown` in `AppHeader`; `HeritageStoryBanner`; Lucide icons on bento; `CheckoutStepper`; `--shc-section-gap` in `globals.css`.
-
-**iOS + E2E:**
-- Fixed `RNGestureHandlerModule` crash via `pod install` + `expo run:ios`; script `scripts/rebuild-ios-apps.sh`.
-- Metro isolation: `scripts/start-mobile-dev.sh` (:8081 customer, :8082 cook).
-- Android Maestro full tours PASS (`customer-full-tour.yaml`, `cook-full-tour.yaml`); iOS Maestro re-verify pending.
-
-**Still open:** web review UI on `/orders/[id]`, cook auth hardening, credits redeem E2E, iOS Maestro tours, real PayNow.
+| Doc | Use when |
+|-----|----------|
+| [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) | Build / taste / verify loop |
+| [agent/build-protocol.md](./agent/build-protocol.md) | Wiring, Railway-only, blast radius |
+| [agent/design-taste.md](./agent/design-taste.md) | UI, tri-platform, `brand.md` |
+| [agent/verify-protocol.md](./agent/verify-protocol.md) | `FLAVOUR` + `SCOPE` at goal close |
+| [production/testing-flavours.md](./production/testing-flavours.md) | What to skip vs never skip |
+| [multi-agent/self-updating-rules.md](./multi-agent/self-updating-rules.md) | Blueprint patch checklist |
 
 ---
 
-## Progress Update (2026-06-15 by Integration Agent — MEDUSA FULL WIRING + CURRENT STATE DOC)
+## Core sections (numbered)
 
-**Integration wiring wave (this agent):**
-- New `packages/shc-api-client` — shared real-first Medusa client with mock fallback; used by `apps/web` and `apps/mobile`.
-- New Medusa store routes: cart, cook/product detail, order detail/transition/messages, earnings, listings, notifications; server libs in `apps/medusa/src/lib/`.
-- Real mode default after `pnpm bootstrap:medusa` (writes `.env.local` for web + mobile).
-- Admin UI fixes: `medusa:dev:admin`, `backendUrl: "/"`, CORS for localhost/127.0.0.1; docs in `apps/medusa/ADMIN.md`.
-- Web: Peach Comfort brand (`brand.md`), `AppHeader`/`AppFooter`, DevRoleSwitcher Medusa toggle.
-- **Current state doc:** [CURRENT_STATE.md](./CURRENT_STATE.md) — authoritative snapshot for agent cold-start.
-- Cross-links: `INDEX.md`, `AGENTS.md`, `04-monorepo.md`, `06-api-surface.md`, `multi-agent/README.md`, `STATUS.md` disclaimer.
-- **Still open:** real JWT auth, persistent cart, product ID alignment (`dish_*` vs `prod_*`), commit uncommitted wiring wave.
+| # | File | Contains |
+|---|------|----------|
+| 00 | [00-locked-decisions/](./00-locked-decisions/00-locked-decisions.md) | Fixed decisions, bootstrap checklist |
+| 01 | [01-product-scope/](./01-product-scope/01-product-scope.md) | Product boundaries |
+| 02 | [02-stack/](./02-stack/02-stack.md) | Tech stack |
+| 03 | [03-railway/](./03-railway/03-railway.md) | Deploy topology, env, services |
+| 04 | [04-monorepo/](./04-monorepo/04-monorepo.md) | Workspace layout, turbo |
+| 05 | [05-data-model/](./05-data-model/05-data-model.md) | Tables, modules, columns |
+| 06 | [06-api-surface/](./06-api-surface/06-api-surface.md) | Full route catalog + admin ops |
+| 07 | [07-auth/](./07-auth/07-auth.md) | Auth flows, JWT, cook vs customer |
+| 08 | [08-marketplace-rules/](./08-marketplace-rules/08-marketplace-rules.md) | Commission, cart, reviews |
+| 09 | [09-order-state/](./09-order-state/09-order-state.md) | Order state machine |
+| 10 | [10-mobile/](./10-mobile/10-mobile.md) | Expo routes, Maestro flows, mobile contracts |
+| 11 | [11-medusa-modules/](./11-medusa-modules/11-medusa-modules.md) | Medusa module internals |
+| 12 | [12-shared-components/](./12-shared-components/12-shared-components.md) | `@shc/ui` file map + web mirrors |
+| 13 | [13-implementation-phases/](./13-implementation-phases/README.md) | **Historical** phase plans — not live state |
+| 14–16 | founder-inputs, calendar, references | Supporting material |
 
 ---
 
-## Progress Update (2026-06-14 by Integration + Local Host + Polish Subagent (cross-track, stitching protocol) — INTEGRATION WAVE COMPLETE)
-**Integration wave summary (this subagent):** 
-- Typecheck fixes in mobile: duplicate cook_id (mock-service seed + createListing), Button/Input/children style (compliance switched to shc-ui + RN TextInput), useAuth typing (proper CurrentUser no more casts), import paths cleaned, compliance enhanced.
+## Production & ops
 
-**2026-06-14 Backend-Money-Agent Phase 6 wave summary (Backend track ownership):** 
-- Money engine "fully working" locally: double-entry ledger + weekly batches + manual PayNow now with ledger posts + auto on completed + sim batch script + APIs + seed data validated vs contracts. All per strict rules (read first, no schema change, prod hardening day1, ownership in apps/medusa/src + scripts + targeted blueprint). pnpm turbo build --filter=medusa + typechecks + package tests executed. End state: "Money Wave ready for stitch".
-- pnpm turbo typecheck --filter=mobile will be run at end (target clean or minor non-block).
-- TanStack hooks improved/added in hooks/: useProducts (primary + discovery + calorie filters), useOrders/useMyOrders, useCart, useChat (aliases + main), mutations now use SHCErrorCode handling + createSHCError.
-- All listed routes in 10-mobile.md exist + wired: (customer)/index, search, cook/[slug] + index, product, cart, checkout, orders/*, profile; (cook)/dashboard, listings (full wizard), orders/*, earnings (live), compliance (enhanced); shared chat/onboarding/auth. Root redirects clean.
+| File | Contains |
+|------|----------|
+| [ERROR_CODES.md](./ERROR_CODES.md) | `SHC-*` codes + ops actions |
+| [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md) | Manual ops |
+| [CRON_JOBS.md](./CRON_JOBS.md) | Worker schedules |
+| [FEATURE_FLAGS.md](./FEATURE_FLAGS.md) | Feature toggles |
+| [DECISION_TREES/](./DECISION_TREES/) | Edge-case policies |
+| [production/](./production/README.md) | Testing strategy, observability, PDPA |
 
-**Next Wave (launched 2026-06-14 by Orchestrator + 3 parallel subagents):**
-- Backend-Money (Phase 6) **COMPLETE** (this agent): shc-ledger + shc-payout-batch modules (double-entry, postCommission on 'completed', 15% via business-rules), weekly-payout.ts sim (idempotent batch/ledger + invariant verify), expanded /admin/shc/payouts + /[id]/approve + /ledger + payment-confirm + /store/shc/orders earnings_summary. Extended seed + bootstrap with demo data. Local sim commands + audits/hardening. Self-updates to phase-6.md, 11-medusa-modules.md, INDEX, CRON, commission decision tree. Gaps noted (real bank transfer, Xero, full worker cron).
-- Mobile-Growth (Phases 7-9) + Hardening+Integration agents still active (deep: Home Credits/wallet/redeem, recipe requests + bidding/collaboration board, AI calorie/photo/search stubs, PDPA consents + audit logs, real Medusa wiring toggle + Maestro stubs, error boundaries, refined instructions + local verification). Stitching + final docs on completion.
-- All following tracks.md, self-updating, production-hardening. Focus: money engine + growth fully working locally + hardened state.
-- Polish: more discovery filters (calorie traffic light badges green/amber/red + maxCal + occasion), PayNow ref capture in checkout that calls transitionOrder, collection address note revealed post-"paid" in order track, earnings preview *everywhere* (product PriceEarningsCalc, cart, checkout, order, cook earnings live getEarnings), calorie badge in product/search/discover.
-- DevRoleSwitcher (root layout): polished with auto-nav on role switch for seamless customer/cook journey testing without leaving app.
-- Mock-service: now cleanly loads from seed/index.ts (rich Content+Seed: full 2 cooks + 3 dishes heritage, no broken inline empty seeds). All rules + schemas enforced (business-rules + @shc/types).
-- Local host: LOCAL_TEST.md created with exact pnpm/expo cmds, Dev switcher usage, step-by-step E2E flow (discover → profile → product(ack+qty+earnings) → cart(one-cook) → checkout(slots+PayNow ref+transition) → track+chat → cook accept/prepare/ready/collected → review). Root README updated to point to it. Note: mock gives fully working per blueprint until real Medusa routes.
-- Backend: added example /store/shc/orders/route.ts (placeholder consuming contracts + SHCErrorCode, note on swap for mobile), medusa/README.md created with integration note (modules/links/workflows already consume contracts correctly).
-- Blueprint self-updates: 10-mobile.md (added polling/integration details + route notes), phase files, INDEX.md Progress with full "Integration wave: contracts verified + mock backend fully rule-enforcing + mobile polished + local test ready". Self-updating style followed.
-- No core contracts changed (frozen). Safe work with current lib/mock + api-client + shc-ui.
+---
 
-**2026-06-14 Backend + Completion Subagent (Backend track, final wave) self-update:** "Backend-Completion done". Full real routes + modules + wiring for all Phase 8-9 growth (requests create/list/get; bids create/list/accept->order; credits get/redeem/history+ledger; heritage get/add; ai est+photo-tips w/ Claude/rate/cost notes). Enhanced cart complete/workflows/orders/payment-confirm/transitions/sub for credits/request/corp + audits/ledger. New shc-request etc modules, seed samples, hardening. Matches mock for mobile toggle. Ran build/typecheck/seed (baseline pre-exist issues). Outputs in apps/medusa/src + scripts + updated 06/11/phase-8/9/INDEX only. Gaps: real Claude impl, full prod cron/payouts. Demo cmds in summary. "Backend-Completion Wave ready for stitch".
+## Multi-agent
 
-**Local testing ready status (see LOCAL_TEST.md for details):** Full E2E with real rule/schema enforcement works in Expo. Switch roles, place order with all gates, fulfil on cook side, chat live, see earnings + address release. 
+| File | Contains |
+|------|----------|
+| [multi-agent/README.md](./multi-agent/README.md) | Tracks overview |
+| [multi-agent/tracks.md](./multi-agent/tracks.md) | Ownership by track |
+| [multi-agent/stitching-protocol.md](./multi-agent/stitching-protocol.md) | Integration merges |
 
-**Final Polish + Stitch Wave (2026-06-14 Launch/Infra Subagent - cross-track orchestrator + final wave):** All remaining launch/polish items closed per task. 1. EAS + distribution: eas.json + app/mobile package scripts + instructions for internal TestFlight + Play (see eas:mobile:* + 03-railway + LOCAL). 2. Real push: Expo token reg (already/enhanced in shc_cook), /store/shc/push-token added, subscriber sends on key events (paid/ready_for_collection etc), api-client/mobile support + docs (real Expo Push needed prod). 3. Full Maestro in CI: e2e yamls enhanced, .github/workflows/ci.yml (turbo gates + Maestro job/notes), testing-strategy updated. 4. Prod deploys: 03-railway enhanced (Railway Medusa + EAS mobile, PayU prep stub+KYC deferred), edge polish real cart/checkout for growth matches mock (pdpa/credits/corporate via wiring toggle + new demo-complete/checkout-credits routes). 5. Final stitch: ran verifs (seed green, mobile tsc clean, 97 business tests, 26 types, verify:local, turbo intent), updated LOCAL_TESTING.md final checklist + tunnel share w/ everything (push, EAS, growth, money), updated INDEX + phase-10 + phase-7 closure, STATUS.md "Fully Built", root package fixed. All "not 100% done" (Phase 10 delivered, real growth routes, AI notes, launch items) now closed. "Ready for user to host on tunnel and share." Final Polish + Stitch Wave complete - all items from previous summary now addressed.
+---
 
-Previous progress preserved below (orchestrator + prior waves).
+## Task routing (quick)
 
-**Backend+Infra Track Wave 1 (this agent):** 
-- apps/medusa fully initialized as runnable Medusa v2 inside monorepo (package.json, medusa-config.ts w/ SHC modules, 4 custom modules w/ entities/links/migrations, workflows using @shc/* contracts+rules, subscribers, critical store/admin routes w/ Zod+error codes+health, bootstrap script for locked checklist, seed validated vs contracts from mobile mocks).
-- Production hardening basics: Medusa logger, health endpoints, error codes, Zod.
-- Local runnable: docker-compose postgres, turbo/medusa dev on 9000, `pnpm turbo build --filter=medusa` executed (tasks successful).
-- Blueprint self-updates performed (11-medusa-modules.md details + phase files + this INDEX).
-- Medusa Admin at localhost:9000 usable for ops (payment confirm + order list via native + custom routes).
-- Commands to run + remaining for full Phase 5 documented in agent final response. No new fields requiring 05-data-model edit beyond existing.
+| Task type | Read first |
+|-----------|------------|
+| New store/admin route | `06-api-surface.md`, `05-data-model.md`, `CURRENT_STATE.md` §5 |
+| Mobile screen / wiring | `10-mobile.md`, `12-shared-components.md`, `CURRENT_STATE.md` §4 |
+| UI / brand change | `brand.md`, `12-shared-components.md`, tri-platform skill |
+| Railway / deploy | `03-railway.md`, `RAILWAY_DEPLOY.md`, `CURRENT_STATE.md` §7–8 |
+| Verify tier pick | `production/testing-flavours.md`, `AGENT_PLAYBOOK.md` |
+| Parallel agents | `multi-agent/tracks.md`, `stitching-protocol.md` |
 
-Previous progress preserved below.
+---
 
-**Multi-agent orchestration loop running:** 4 parallel specialized subagents (Contracts, Mobile+UI, Backend+Infra, Content+Seed) executing per tracks.md + stitching-protocol + self-updating-rules.
+## Mirrors (non-canonical)
 
-Current wave focus: Complete Phase 0 contracts freeze + content/seeds + monorepo unblocks + Phase 1 Medusa foundation + full mobile implementation (all screens, shc-ui extraction, contracts wiring, rule enforcement, cook/customer flows) + basic local runnable Medusa.
+- `.cursor/rules/*.mdc` — must match blueprint
+- `.agents/skills/*` — procedural; blueprint wins on conflict
+- Root `AGENTS.md` — pointer into this folder
 
-Orchestrator performed unblocks and prep (see updated README.md and todo list). Agents are deeply editing code + tests + blueprint files.
+**Deprecated:** root `Singapore_Home_Cooks_Builder_Blueprint.md`, `.hermes/plans/*` — content lives under `blueprint/`.
 
-Next after this wave: Stitching gates (turbo build/test/typecheck + internal verification), INDEX + phase file updates, spawn follow-on waves for remaining Phase 2-10 features (onboarding polish, listings wizard deep, money engine/ledger/PayNow full, growth/AI stubs, web parity, production hardening, Maestro E2E, full local Medusa<->mobile integration).
+---
 
-All details before PayU/KYC as specified. Local host + test instructions will be delivered when agents report internal verification complete.
-- Subagents created and ran (Infra track completed Phase 0 bootstrap: monorepo, packages, some CI/skeleton, blueprint patches).
-- Phase 0 foundation done: monorepo, contracts start (shc-types with Zod for cook, product-meta, order, availability, errors per blueprint).
-- Mobile app fully built with Expo Router, gluestack, custom Singapore heritage taste (warm cream #F5F0E6, tropical green #1D9E75, Peranakan terracotta #B85C38, specific dishes like Nasi Lemak Sambal Prawn, Ayam Buah Keluak, heritage stories from 1972 Katong HDB, occasions Hari Raya/Deepavali/Chinese New Year, live counters, earnings calculator, allergen disclosure mandatory, one-cook cart, PayNow mock QR + ref confirm, address release note, real-time chat mock, cook dashboard with order actions, status machine).
-- All key screens per 10-mobile.md working: customer home/discover, cook profile, product detail, cart, checkout, order tracking+chat; cook dashboard.
-- Features: calorie badges, ingredient disclosure, min qty, real-time earnings, PayNow flow (mock, no KYC), chat.
-- Updated self-updating blueprint with progress.
-- Local host ready (no API keys needed yet; mocks for PayNow).
-- **Mobile-Agent wave (2026-06-14):** apps/mobile fully runnable (pnpm --filter mobile typecheck; cd apps/mobile && pnpm start via turbo). Extracted 10+ real shc-ui components (SHCButton/SHCCard/PayNowPanel/CollectionSlotPicker/OrderCard/ListingWizardStep/AllergenAckCheckbox etc + tokens). Wired @shc/types + @shc/business-rules everywhere. Full customer E2E (search/fuzzy/occasion/calorie + cook profile + 3-tier product + cart live earnings + checkout slot+ack gate + PayNow + orders+chat polling). Full cook (listings wizard publish + orders Accept/Prepare/Ready/Collected with state machine validate + earnings/compliance stubs). Auth dev switcher + SecureStore. Local mock service with rule enforcement + schema validation. Updated 10-mobile, 12-shared, phases 2-5, INDEX. Typechecks + verification cmds run (minor gluestack prop + nodeNext import notes remain for next).
-- Next loop: real Medusa API integration (post Backend), push, AI calorie, Maestro E2E, production hardening.
-- Cosmetic: researched Singapore heritage (Peranakan, Eurasian, HDB, family stories) - implemented non-generic taste.
+## Self-update rule
 
-All details before PayU/KYC as requested. Subagents looped via initial + continued orchestration.
-
-**2026-06-14 Content + Seed Track Progress (parallel with other agents):**
-- Created `content/paynow-flow.md` (exact 7-step ops manual for manual PayNow confirm).
-- Created `content/how-it-works.md` (customer/cook flows, SG HDB/festive realities) and `content/trust-and-safety.md` (5-layer architecture with full details on allergens, collection 2h release, cancellation windows, tiered guarantees; rendered in mobile).
-- Populated `seed/assets/` with JSON: 2 cooks (Auntie Rose full 1972 Katong 3rd-gen Tampines HDB story + instructions; Auntie Doris Eurasian Katong/Joo Chiat story), 3 dishes (Nasi Lemak Sambal Prawn, Ayam Buah Keluak, Eurasian Devil's Curry) with descriptions, meta (allergen_tiers, occasion_tags, ingredients, calories, halal), image placeholders.
-- `scripts/seed.ts`: loads assets, validates vs @shc/types (cook/product-meta/availability), exports typed data + helpers (getSeed*, getFeaturedForHome, trustSnippets). CLI for --validate/--export-json. `seed/index.ts`: runtime typed mirror for exact shared consumption (mobile lib/mock-service.ts now sources from it; future Medusa seed).
-- Mobile updates (coordinate render): app/index.tsx (Discover), product/[id].tsx, cook/[slug].tsx, cart.tsx, checkout.tsx now embed trust/ how-it-works/ paynow snippets + seed-driven heritage (occasions, HDB notes, 5 layers). Mock service integrated with canonical seed.
-- Realistic SG throughout: HDB blocks (#05-123 Tampines, Joo Chiat), common local allergens (shellfish/prawn/belacan/ikan bilis, peanuts/candlenut/buah keluak, eggs, mustard, pork in traditional Peranakan/Eurasian), festive (Hari Raya 2w pre, CNY 3w, Christmas, Full Moon), collection instructions (shoes off, call on arrival, lift landing).
-- Blueprint updates: phase-0.md (all content tasks marked complete with outputs + links), INDEX.md (last updated + summary), cross-refs. Per self-updating-rules: touched track files + phase + INDEX. No stale TODOs introduced.
-- Commands: `npx tsx scripts/seed.ts --validate` (or --export-json); `pnpm turbo typecheck`; `pnpm verify:phase0`.
-- Founder inputs (14-founder-inputs.md): Reinforced Trust & Safety First, PayNow manual, SG regulatory. No major new inputs; content aligns.
-- Seeds rich enough for current mobile + Medusa: same objects (SHCCook + SHCProductMeta aligned + display heritage).
-
-Next for Content: calendar updates in 15, more founder notes if received, render polish with Mobile.
-
-**2026-06-14 Production Hardening + Integration + Maestro Subagent (this wave — cross-track + final prep for local host):**
-HARDENING + INTEGRATION WAVE COMPLETE + verified.
-- Full details in progress note above + phase-6/7-10 updates + LOCAL_TESTING.md.
-- Production self-updates: added Maestro e2e/ location, verify:local, mixed local host, explicit PDPA consent impl requirements reinforced, audit/obs/rate/error boundary notes to testing-strategy.md + compliance + hardening refs.
-- INDEX updated. All ownership (production/ , scripts/ , root configs, LOCAL_TESTING/README , blueprint production/INDEX/phases , some mobile/medusa wiring) respected. Safe (no core contract changes).
-- "Production-ready local experience achieved for core + foundation for all phases".
-- Ready for full stitch or next money/growth agents.
-
+Patch `CURRENT_STATE.md` + the touched section file + this file's **Last updated** line when integration reality changes. Do not append changelog blocks here — put facts in `CURRENT_STATE.md` only.

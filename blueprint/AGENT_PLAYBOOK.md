@@ -8,20 +8,16 @@
 - [CURRENT_STATE.md](./CURRENT_STATE.md)
 - [AGENTS.md](./AGENTS.md)
 
-**Last Updated:** 2026-07-18
-**Audience:** AI agents and subagents only
-
-**Session start:** Read [CURRENT_STATE.md §0 New-session handoff](./CURRENT_STATE.md) (HitPay QR stability, checkout CTA gate, `contentPad*` bottom insets, category spacing).
+**Session start:** Read [CURRENT_STATE.md §0](./CURRENT_STATE.md) only — single handoff; no historical stacks.
 
 ---
 
 ## Read after CURRENT_STATE
 
-1. [INDEX.md](./INDEX.md)
-2. [CURRENT_STATE.md](./CURRENT_STATE.md)
-3. **This playbook**
-4. [multi-agent/tracks.md](./multi-agent/tracks.md) if parallel work
-5. Task section (10-mobile, 06-api-surface, phase file, …)
+1. [INDEX.md](./INDEX.md) — knowledge map (navigation only)
+2. **This playbook**
+3. [multi-agent/tracks.md](./multi-agent/tracks.md) if parallel work
+4. Task section (`10-mobile`, `06-api-surface`, …) — **not** phase files for live state
 
 `.cursor/rules/` and `.agents/skills/` mirror blueprint — **blueprint wins**.
 

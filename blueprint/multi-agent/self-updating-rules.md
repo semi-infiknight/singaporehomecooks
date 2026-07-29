@@ -19,7 +19,7 @@ Examples of changes that **require** blueprint update(s):
 - New/changed screen, component, or tri-platform behavior (10, 12, brand.md)
 - Auth flow, state machine, money, or rule change (07, 08, 09)
 - Deployment / infra / env / script change (03-railway, scripts, CI)
-- New gap or "done" item (CURRENT_STATE §8 + INDEX)
+- New gap or "done" item (CURRENT_STATE §9 open gaps + §4 inventory)
 
 Never commit code-only when blueprint is impacted.
 
@@ -27,25 +27,24 @@ Never commit code-only when blueprint is impacted.
 
 After **any** change (code or docs):
 
-1. **Identify Affected Blueprint Sections**
-   - Always at minimum: the primary doc (e.g. 06 for route) + CURRENT_STATE.md (exec/gaps/routes if integration) + INDEX.md (Last Updated + summary line).
-   - Use "Related Files" headers.
+1. **Identify affected sections**
+   - Primary doc (e.g. `06-api-surface.md` for routes) + **CURRENT_STATE.md** (integration reality, gotchas, verify commands).
+   - Use "Related Files" headers in section docs.
 
-2. **Make the Edits**
-   - Precise. Preserve history.
-   - Update tables, add examples, mark complete, extend schemas.
-   - If you changed a Zod schema or DB column → edit 05-data-model.md + types if needed + 06 if route exposed.
+2. **Make the edits**
+   - Precise facts only — no changelog stacks or duplicate tables.
+   - Schema/DB change → `05-data-model.md` + `@shc/types` + `06-api-surface.md` if exposed.
 
-3. **Bump Metadata Everywhere You Touched**
-   - File header: `**Last Updated:** 2026-06-20 ... (short reason)`
-   - INDEX.md: update top Last Updated + add 1-2 line summary under "Progress Update".
-   - CURRENT_STATE if state changed (routes, auth, modules, gaps, commands, gotchas).
+3. **Bump metadata on touched files**
+   - Section file header: `**Last Updated:** YYYY-MM-DD — short reason`
+   - **CURRENT_STATE.md** — update `Last updated` + relevant §4–§9 rows when behavior changes
+   - **INDEX.md** — update top `Last updated` line only (navigation file; no fact duplication)
 
-4. **Cross-Link + Consistency**
-   - New field → 05 + 06 + caller docs.
-   - New feature → relevant phase + 10/12 if mobile/web.
+4. **Cross-link + consistency**
+   - New field → 05 + 06 + caller docs (10-mobile / 12-shared-components if UI).
+   - Do **not** append "Progress Update" blocks to INDEX or phase files.
 
-5. **Pre-Commit Verification ([testing-flavours.md](../production/testing-flavours.md), [goal-workflow.md](../production/goal-workflow.md))**
+5. **Pre-commit verification** ([testing-flavours.md](../production/testing-flavours.md))**
    - **Mid-goal:** wiring checklist; optional `FILTER=<pkg> pnpm verify:wip` or `RISK=native pnpm verify:wip`
    - **Goal finished:** `FLAVOUR=<polish|wiring|feature|…> SCOPE=<area> pnpm verify:goal` once — see flavour recipes (polish skips Maestro/seed/API; wiring runs one flow)
    - **Milestone / stitch / ship:** `pnpm verify:full`
@@ -59,16 +58,17 @@ After **any** change (code or docs):
 
 ## Self-Updating Examples
 
-**Example 1: Mobile Agent completes OrderChat polling**
-- Edits: `10-mobile.md` (add polling details to OrderChat contract)
-- Edits: `13-implementation-phases/phase-5.md` (mark Task 5.8 done + link)
-- Updates `INDEX.md` Last Updated
+**Example 1: Mobile agent adds OrderChat polling**
+- Edit: `10-mobile.md` (polling contract)
+- Edit: `CURRENT_STATE.md` (§4 if user-visible)
+- Bump `INDEX.md` last-updated line if touching blueprint meta
 
-**Example 2: Backend Agent adds new ledger entry type**
+**Example 2: Backend agent adds ledger entry type**
 - Edits: `05-data-model.md` (add to shc_ledger_entry table)
 - Edits: `06-api-surface.md` (add internal route if needed)
-- Edits: `11-medusa-modules.md` (shc-ledger section)
-- Updates phase file + INDEX.md
+- Edit: `11-medusa-modules.md` (shc-ledger section)
+- Edit: `CURRENT_STATE.md` (§4/§5 if exposed to clients)
+- Bump `INDEX.md` last-updated line
 
 ## Anti-Drift Safeguards + Commit Rule
 - **Same-commit rule:** Blueprint patches go in the same commit as the code that changed behavior. "I'll update docs later" is not allowed.

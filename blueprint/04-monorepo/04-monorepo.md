@@ -10,7 +10,7 @@
 - [../production/testing-strategy.md](../production/testing-strategy.md)
 - [../multi-agent/production-hardening.md](../multi-agent/production-hardening.md)
 
-**Last Updated:** 2026-07-20 — split apps (mobile-customer/cook); legacy unified `apps/mobile` removed.
+**Last Updated:** 2026-07-29 — Railway-only clients; mock-service removed from mobile apps.
 **Owner:** Infra Track
 
 ## Overview
@@ -42,7 +42,7 @@ SingaporeHomeCooks/
 │   ├── shc-types/              # Canonical Zod schemas, error codes, TypeScript interfaces
 │   │   └── src/                 # cook.schema.ts, order.schema.ts, api-contracts.ts, etc.
 │   ├── business-rules/         # Marketplace rules (one-cook cart, min qty, order transitions)
-│   ├── shc-api-client/         # Shared Medusa client (real-first, mock fallback) — NEW 2026-06-14
+│   ├── shc-api-client/         # Shared Medusa HTTP client → Railway `/store/shc/*` only (no runtime mock)
 │   │   └── src/                 # createShcApiClient(), actor headers, env toggles
 │   ├── shc-ui/                 # Design system + reusable components (gluestack-ui based)
 │   │   └── src/                 # Button, Card, FormField, OrderStatusBadge, etc.

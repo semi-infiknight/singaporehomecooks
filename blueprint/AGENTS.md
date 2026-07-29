@@ -4,7 +4,7 @@
 
 **Start:** [README.md](./README.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)
 
-**Latest (2026-07-18):** Tiffin + marketplace polish shipped; HomelyEats reference assets removed (implemented in product). See `CURRENT_STATE.md` §0.
+**Latest:** See [CURRENT_STATE.md](./CURRENT_STATE.md) (updated 2026-07-29).
 
 ## Cold-start order
 
@@ -30,13 +30,13 @@ Do **not** use root `STATUS.md` — use `CURRENT_STATE.md`.
 
 1. `CURRENT_STATE.md` + `AGENT_PLAYBOOK.md` + `INDEX.md`
 2. Track: [multi-agent/tracks.md](./multi-agent/tracks.md)
-3. Phase file under `13-implementation-phases/`
-4. Schema/routes: `05-data-model.md`, `06-api-surface.md`
-5. Production: `production/`, `multi-agent/production-hardening.md`
+3. Schema/routes: `05-data-model.md`, `06-api-surface.md`
+4. Production: `production/`, `multi-agent/production-hardening.md`
+5. Phase files (`13-implementation-phases/`) — **historical only**; see README banner
 
 ## Self-update (every code change)
 
-[multi-agent/self-updating-rules.md](./multi-agent/self-updating-rules.md) — patch blueprint + `CURRENT_STATE.md` + `INDEX.md` in the **same commit** as code.
+[multi-agent/self-updating-rules.md](./multi-agent/self-updating-rules.md) — patch `CURRENT_STATE.md` + touched section file + `INDEX.md` last-updated line in the **same commit** as code.
 
 ## Goal workflow (every task)
 
