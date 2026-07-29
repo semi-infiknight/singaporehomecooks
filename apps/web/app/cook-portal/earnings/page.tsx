@@ -2,31 +2,28 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, formatCookEarningsDisplay, resolveCookEarningsSummary } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookEarnings, useCookExpenses, useCreateCookExpense } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatPrimaryButton,
-  SHCBadge,
   SHCMetaBadge,
   VisualBentoTile,
 } from '../../components/SHCWebComponents';
 
 export default function CookEarningsPage() {
   const { user } = useCookAuth();
-  const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useCookEarnings();
+  const { data: earningsRaw } = useCookEarnings();
+  const earnings = resolveCookEarningsSummary(earningsRaw as Record<string, unknown> | undefined);
+  const weekTotalLabel = formatCookEarningsDisplay(earnings.this_week_cents);
+  const projectedLabel = formatCookEarningsDisplay(earnings.projected_payout_cents);
+  const orderCount = earnings.orders_count;
   const { data: expenses = { expenses: [], total_cents: 0 } } = useCookExpenses();
   const expenseMut = useCreateCookExpense();
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('ingredients');
-
-  const weekTotal = (earnings as { thisWeek?: number }).thisWeek ?? 0;
-  const orderCount =
-    (earnings as { orders_count?: number }).orders_count ??
-    (earnings as { orders?: number }).orders ??
-    0;
 
   const submitExpense = () => {
     const amount = Number(expenseAmount);
@@ -50,7 +47,7 @@ export default function CookEarningsPage() {
         badges={
           <>
             <SHCMetaBadge kind="period">This week</SHCMetaBadge>
-            <SHCMetaBadge kind="earnings">S${weekTotal}</SHCMetaBadge>
+            <SHCMetaBadge kind="earnings">{weekTotalLabel}</SHCMetaBadge>
           </>
         }
       />
@@ -58,7 +55,7 @@ export default function CookEarningsPage() {
       <div className="grid grid-cols-2 gap-2 mb-6">
         <GourmeatCard className="bg-[var(--shc-bento-mint)]">
           <p className="text-xs font-bold text-muted-foreground">Projected</p>
-          <p className="text-xl font-black">S${(earnings as { projectedPayout?: number }).projectedPayout || weekTotal}</p>
+          <p className="text-xl font-black">{projectedLabel}</p>
         </GourmeatCard>
         <GourmeatCard className="bg-[var(--shc-bento-yellow)]">
           <p className="text-xs font-bold text-muted-foreground">Completed</p>

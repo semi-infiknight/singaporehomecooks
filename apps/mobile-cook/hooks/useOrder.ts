@@ -16,6 +16,7 @@ export function useTransitionOrder() {
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ['order', vars.orderId] });
       qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['cook-earnings'] });
     },
     onError: (err: { code?: string; message?: string }) => {
       if (err?.code) throw createSHCError(err.code as SHCErrorCode, err.message || 'Transition blocked');

@@ -1,4 +1,5 @@
 import type { MedusaRequest } from "@medusajs/framework/http";
+import { calculateCookEarnings } from "@shc/business-rules";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcCartModuleService from "../modules/shc-cart/service";
@@ -150,5 +151,5 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     origin_drop_id: originDropId,
   };
   const shc_meta = await metaService.getOrderMetaWithMessages(orderId);
-  return { order, shc_meta, earningsPreview: Math.round(total * 0.85) };
+  return { order, shc_meta, earningsPreview: calculateCookEarnings(Math.round(total * 100)) / 100 };
 }

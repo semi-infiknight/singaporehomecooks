@@ -26,11 +26,16 @@ import {
   recipeStepsFromListing,
   cookAllergenTier1Presets,
   resolveCookCollectionTimeSlots,
+<<<<<<< HEAD
   defaultListingOccasionTag,
   listingOccasionTagOptions,
+=======
+  cookEarningsPreviewFromDollars,
+>>>>>>> origin/cursor/earnings-truth-67bb
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
+import { useBusinessRules } from '../../../lib/useBusinessRules';
 import { useCookProfile } from '../../../lib/useCookPortal';
 import { useCustomerConfig } from '../../../lib/useCustomerConfig';
 import {
@@ -120,9 +125,13 @@ export default function CookListingsPage() {
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
   const { config } = useCookConfig();
+<<<<<<< HEAD
   const { config: browseConfig } = useCustomerConfig();
   const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
   const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
+=======
+  const { commissionRate } = useBusinessRules();
+>>>>>>> origin/cursor/earnings-truth-67bb
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
@@ -850,7 +859,7 @@ export default function CookListingsPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Earnings preview: S${Math.floor(price * minQty * 0.85)} per minimum order
+                Earnings preview: S${cookEarningsPreviewFromDollars(price * minQty, commissionRate)} per minimum order
               </p>
               <ListingAvailabilityEditorWeb
                 portionsPerDay={portionsPerDay}

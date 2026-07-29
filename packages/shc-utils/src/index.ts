@@ -18,6 +18,7 @@ export * from './discover-home';
 export * from './discover-promos';
 export * from './customer-browse-config';
 export * from './business-rules-config';
+export * from './cook-earnings';
 export * from './discover-layout';
 export * from './cook-portal';
 export * from './cook-portal-config';

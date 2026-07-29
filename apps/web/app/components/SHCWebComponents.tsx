@@ -1803,14 +1803,16 @@ export function AllergenAckCheckbox({
   );
 }
 
-export function PriceEarningsCalc({ total, compact }: { total: number; compact?: boolean }) {
-  const earnings = Math.floor(total * 0.85);
+export function PriceEarningsCalc({ total, compact, commissionRatePct = 15 }: { total: number; compact?: boolean; commissionRatePct?: number }) {
+  const rate = commissionRatePct / 100;
+  const earnings = Math.floor(total * 100 * (1 - rate)) / 100;
+  const cookSharePct = Math.round(100 - commissionRatePct);
   if (compact) {
     return <span className="text-xs text-muted-foreground font-medium">Cook receives ~S${earnings}</span>;
   }
   return (
     <p className="text-sm text-[var(--shc-success)] font-semibold">
-      Your cook receives S${earnings} after platform fee (85% of order total)
+      Your cook receives S${earnings} after platform fee ({cookSharePct}% of order total)
     </p>
   );
 }

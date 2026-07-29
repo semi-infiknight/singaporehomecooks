@@ -86,6 +86,7 @@ import {
   getAiImageStatus,
 } from '../../lib/api-client';
 import { useAuth } from '../../hooks/useAuth';
+import { useBusinessRules } from '../../hooks/useBusinessRules';
 import { useCookConfig } from '../../hooks/useCookConfig';
 import { useCookProfile } from '../../hooks/useCookProfile';
 import { useCustomerConfig } from '../../hooks/useCustomerConfig';
@@ -123,9 +124,13 @@ export default function CookListings() {
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
+<<<<<<< HEAD
   const { config: browseConfig } = useCustomerConfig();
   const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
   const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
+=======
+  const { commissionRatePct } = useBusinessRules();
+>>>>>>> origin/cursor/earnings-truth-67bb
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
@@ -832,7 +837,7 @@ export default function CookListings() {
               </View>
             }
           />
-          <PriceEarningsCalc price={price} qty={minQty} minQty={minQty} />
+          <PriceEarningsCalc price={price} qty={minQty} minQty={minQty} commissionRatePct={commissionRatePct} />
           <SHCListingAvailabilityEditor
             portionsPerDay={portionsPerDay}
             collectionDays={collectionDays}

@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
+import { calculateCookEarnings } from "@shc/business-rules";
 import { createSHCError, SHCOrderStatus } from "@shc/types";
 import { getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
 import ShcDropModuleService from "../../../../../../modules/shc-drop/service";
@@ -117,7 +118,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       },
       drop,
       shc_meta,
-      earningsPreview: Math.round(totalCents * 0.85),
+      earningsPreview: calculateCookEarnings(totalCents) / 100,
     });
   } catch (e: any) {
     if (e?.code) return res.status(400).json({ error: e });

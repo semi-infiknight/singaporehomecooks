@@ -16,22 +16,22 @@ import {
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, formatCookEarningsDisplay, resolveCookEarningsSummary } from '@shc/utils';
 import { useAuth } from '../../hooks/useAuth';
+import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCookExpense, getEarnings, listCookExpenses } from '../../lib/api-client';
+import { createCookExpense, listCookExpenses } from '../../lib/api-client';
 
 export default function Earnings() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const qc = useQueryClient();
   const { user } = useAuth();
-  const { data: earnings = { thisWeek: 0, projectedPayout: 0, orders_count: 0 } } = useQuery({
-    queryKey: ['earnings'],
-    queryFn: getEarnings,
-  }) as {
-    data: { thisWeek: number; projectedPayout: number; orders_count?: number; orders?: number };
-  };
+  const { data: earningsRaw } = useCookEarnings();
+  const earnings = resolveCookEarningsSummary(earningsRaw as Record<string, unknown> | undefined);
+  const weekTotalLabel = formatCookEarningsDisplay(earnings.this_week_cents);
+  const projectedLabel = formatCookEarningsDisplay(earnings.projected_payout_cents);
+  const orderCount = earnings.orders_count;
   const { data: expenses = { expenses: [], total_cents: 0 } } = useQuery({
     queryKey: ['cook-expenses'],
     queryFn: listCookExpenses,
@@ -46,11 +46,6 @@ export default function Earnings() {
     },
     onError: (e) => Alert.alert('Could not log expense', (e as Error).message || 'Please try again.'),
   });
-
-  const weekTotal = earnings.thisWeek ?? 0;
-  const orderCount = (earnings as { orders_count?: number; orders?: number }).orders_count
-    ?? (earnings as { orders?: number }).orders
-    ?? 0;
   const expenseTotal = Math.round((expenses.total_cents || 0) / 100);
   const expenseRows = expenses.expenses || [];
 
@@ -79,7 +74,7 @@ export default function Earnings() {
         badges={
           <View style={styles.heroBadges}>
             <SHCMetaBadge kind="period">This week</SHCMetaBadge>
-            <SHCMetaBadge kind="earnings">S${weekTotal}</SHCMetaBadge>
+            <SHCMetaBadge kind="earnings">{weekTotalLabel}</SHCMetaBadge>
           </View>
         }
       />
@@ -88,7 +83,7 @@ export default function Earnings() {
         <View style={styles.statsRow}>
           <SHCCard variant="bento-mint" style={styles.statCard}>
             <Text style={styles.statLabel}>Projected</Text>
-            <Text style={styles.statValue}>S${earnings.projectedPayout || weekTotal}</Text>
+            <Text style={styles.statValue}>{projectedLabel}</Text>
           </SHCCard>
           <SHCCard variant="bento-yellow" style={styles.statCard}>
             <Text style={styles.statLabel}>Completed</Text>
