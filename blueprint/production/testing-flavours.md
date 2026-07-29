@@ -9,7 +9,7 @@
 - `scripts/verify-tier.sh`
 - `.cursor/rules/testing-tiers.mdc`
 
-**Last Updated:** 2026-07-08 — Learned from prior agent runs + git fix history.
+**Last Updated:** 2026-07-29 — ecfdc8-wave Maestro; `smoke:admin-ops`; ledger earnings verify notes.
 **Audience:** Every feature/polish goal on customer app, cook app, web PWA.
 
 This repo is in **polish-and-ship mode**: more features, page refinements, tri-platform parity — not greenfield architecture. Tests should be **strategic**, not exhaustive.
@@ -27,8 +27,11 @@ This repo is in **polish-and-ship mode**: more features, page refinements, tri-p
 | **`native`** | RN dep, pod, Metro, Babel, `.easignore` | gesture-handler, reanimated, metro entry | `FLAVOUR=native TOUCHES_NATIVE=1 SCOPE=infra pnpm verify:goal` |
 | **`api`** | Medusa module, route, workflow | listings PATCH, CORS fix | `SCOPE=api pnpm verify:goal` |
 | **`deploy`** | Railway ship, PWA fingerprint | `railway:ship`, CORS wire | `SCOPE=railway pnpm verify:goal` |
+| **`admin-smoke`** | SHC Ops config admin↔store round-trip | Post admin/catalog edits | `pnpm smoke:admin-ops` (Railway; manual or milestone) |
 
 **Default if unsure:** `feature`.
+
+**Scoped Maestro (location/discover wave):** `pnpm e2e:ecfdc8-wave` — after discover, location, filter sheet, cook settings, listing tray changes (4 flows; faster than full tour).
 
 ---
 
@@ -47,7 +50,9 @@ Learned from fix commits (`b0a6b10` wiring, `02a1f53` auth guard, `5deaffe` CORS
 | **Metro / bundle crash** | White screen, instant TestFlight crash, ~125KB bundle | `verify-mobile-bundles` | `TOUCHES_NATIVE=1` or `FLAVOUR=native` |
 | **Native module via barrel** | `RNMapsAirModule` / `RNGestureHandler` crash at import | Code review + subpath imports rule | Touching `@shc/ui` exports |
 | **Medusa route TS drift** | Railway deploy fails build | `pnpm --filter medusa typecheck` | Any `apps/medusa` edit |
-| **testID drift** | Maestro can't find element after layout refactor | Maestro YAML validate + one device flow | Layout changes on instrumented screens |
+| **Location stale after pick** | Discover header still "Set collection location" after saving area | `CustomerLocationProvider` must wrap customer tabs; grep `useCustomerLocation` not duplicated per screen | Location/discover wiring goals |
+| **Duplicate React keys (`.$all`)** | LogBox on filter sheet or cuisine rail | Do not prepend `{ id: '', label: 'All' }` when API already includes All; use index-suffixed keys in lists | Discover/filter/category UI |
+| **Double price on cart CTA** | "Proceed to pay S$X S$X" | `proceedLabel` text-only; price in `GourmeatPayButton.amount` | Cart/checkout polish |
 
 ### Rare / stable areas (SKIP at goal close — save time)
 

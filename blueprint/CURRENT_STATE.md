@@ -1,12 +1,30 @@
 # Current State — Singapore Home Cooks
 
-**Last Updated:** 2026-07-27 — Location wave merged to `main`: proximity discovery, checkout pre-fill, order-meta collection snapshot.
+**Last Updated:** 2026-07-29 — Post-merge sync: location provider, earnings ledger, Maestro ecfdc8 wave, admin smoke, mock removal.
 **Audience:** AI agents and subagents (canonical brain: [README.md](./README.md))  
 **Read order:** `INDEX.md` → **this file** → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → `AGENTS.md` → track file from `multi-agent/tracks.md`
 
 ---
 
-## 0. New-session handoff (2026-07-27)
+## 0. New-session handoff (2026-07-29)
+
+**Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
+
+| Topic | State |
+|-------|--------|
+| **Location sync (client)** | `CustomerLocationProvider` wraps `(customer)/_layout` — discover, location picker, cart, checkout share one React state. SecureStore still source of truth; saving an area updates discover header + nudge immediately (fixes stale per-hook instances). |
+| **Discover polish** | `shcSectionStack` on discover sections; **no duplicate All** cuisine row (API `customerMindCategories` already includes All); index-suffixed React keys in `GourmeatCategoryRow` + `SHCDiscoverFilterSheet` (prevents `.$all` LogBox crash). |
+| **Cart pay CTA** | `computeOneTimeOrderSummary().proceedLabel` = `"Proceed to pay"` only; `GourmeatPayButton` renders `totalLabel` in `amount` prop — no double price on sticky footer. |
+| **Cook tab crash** | Duplicate `settings` `Tabs.Screen` removed from `apps/mobile-cook/app/(cook)/_layout.tsx`. |
+| **Cook earnings (ledger truth)** | `GET /store/shc/earnings` reads completed orders + `shc_ledger` summary; commission from admin business rules. Tri-platform `@shc/ui/cook-earnings.tsx` + `@shc/utils/cook-earnings.ts` (IRAS note, expense tracker, create-listings CTA). Listing wizard shows earnings preview from rules. |
+| **Cook kitchen area** | `SHCCookAreaPicker` + `@shc/utils/sg-areas.ts` — SG centroid chip suggestions on cook settings + onboarding (tri-platform). |
+| **Admin occasion tags** | `listingOccasionTagOptions()` from customer browse config → cook listing + request pickers. |
+| **E2E (scoped + coverage)** | `pnpm e2e:ecfdc8-wave` — location/discover wave Maestro flows. Also on `main`: order lifecycle, decline/dispute trays, batches smoke, earnings expense, cook-settings-smoke. Web: `apps/web/e2e/cook-portal-smoke.spec.ts` (Playwright). |
+| **Admin smoke** | `pnpm smoke:admin-ops` — admin login + round-trip GET/POST for customer-config, business-rules, cook-config, discover-promos (restores prod values after test). |
+| **Mocks removed** | `apps/mobile-*/lib/mock-service.ts` **deleted** — all runtime clients Medusa-only via `@shc/api-client`. |
+| **Branches** | Work on `main` only; `main` @ `e57ecbd` (2026-07-29) includes location wave + cursor branch merges + session fixes. |
+
+## 0a. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -21,7 +39,7 @@
 | **Migrations (Railway)** | Medusa deployed 2026-07-29 (`7c55c90`): tiffin kitchen pricing, cook media, product meta meal fields, **order-meta customer collection columns** live. Platform config keys need no migration. |
 | **Branches** | Work on `main` only; all `cursor/*-67bb` stitch branches merged + pruned (2026-07-29). |
 
-## 0a. Prior handoff (2026-07-27)
+## 0b. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -33,7 +51,7 @@
 | **Filter parity** | Category + advanced search use same filter sheet as discover (meal type, cuisine on search, dietary). Category hides cuisine group (`hideCuisine`) — locked by route. |
 | **Collection slots** | Dish cards show `collection_slot` only when API sends it — no `getCollectionSlotLabel()` hash fallback on browse. |
 
-## 0b. Prior handoff (2026-07-27)
+## 0c. Prior handoff (2026-07-27)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -43,7 +61,7 @@
 | **Home greeting** | `discoverHomeHeadline(name, email)` → signed-in: `Hi, {first}` + subtitle; guest: `Hungry? Order & Eat.` Uses **email local-part** when `user.name` empty (fixes Profile “You” vs Home guest mismatch). `/store/shc/auth/me` fallback now sets `name` from email prefix. |
 | **Metro dev** | Root `devDependencies.metro-runtime` + `.npmrc` hoist — fixes Expo CLI `Cannot find module metro-runtime` after `METRO_CLEAR=1`. |
 
-## 0c. Prior handoff (2026-07-24)
+## 0d. Prior handoff (2026-07-24)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -62,7 +80,7 @@
 | **HitPay env** | `HITPAY_API_KEY`, `HITPAY_WEBHOOK_SALT`, `HITPAY_ENV=sandbox`. Webhook: `/hooks/shc/hitpay`. |
 | **Not done** | Live HitPay KYC; rotate secrets if exposed in chat. |
 
-## 0d. Prior handoff (2026-07-14)
+## 0e. Prior handoff (2026-07-14)
 
 **Do first:** `git pull` · `pnpm env:sync` · `bash scripts/start-mobile-dev.sh` · clients always hit **Railway Medusa** (`medusa-production-d2ba.up.railway.app`).
 
@@ -248,7 +266,7 @@ CI job `medusa-real-e2e` in `.github/workflows/ci.yml` runs the same flow on pus
 | `/store/shc/orders/:id/transition` | POST | cook JWT |
 | `/store/shc/orders/:id/messages` | GET, POST | customer/cook JWT |
 | `/store/shc/orders/:id/review` | GET, POST | POST: customer JWT (post-collection) |
-| `/store/shc/earnings` | GET | cook JWT |
+| `/store/shc/earnings` | GET | cook JWT — **ledger-backed** summary for **completed** orders; commission rate from admin business rules |
 | `/store/shc/notifications` | GET | customer or cook JWT |
 | `/store/shc/listings` | GET, POST | cook JWT; POST/PATCH persist allergens, availability, description, price, cuisine, halal, min_qty |
 | `/store/shc/listings/:id` | PATCH, DELETE | cook JWT (owner only); PATCH accepts full listing form payload |
@@ -306,7 +324,9 @@ bash scripts/start-mobile-dev.sh  # Both Metro servers (:8081 + :8082) with adb 
 bash scripts/rebuild-ios-apps.sh  # After native dep changes (gesture-handler, reanimated, etc.)
 bash scripts/rebuild-android-apps.sh  # Customer + cook debug APKs → running emulator
 bash scripts/run-maestro-full-tour.sh  # Android + iOS Maestro full tours (Metro must be running)
-bash scripts/run-tiffin-e2e.sh         # Cook tiffin-config + customer subscribe (customer skipped if API 404)
+bash scripts/run-maestro-ecfdc8-wave.sh   # Scoped Maestro: discover/location wave + cook settings + listing tray
+pnpm e2e:ecfdc8-wave                     # alias for above
+pnpm smoke:admin-ops                     # Tier 4: admin↔store config round-trip on Railway
 
 pnpm verify:wip                   # Mid-goal: optional FILTER=<pkg> or RISK=native spot check
 FLAVOUR=polish SCOPE=web pnpm verify:goal   # Polish goal — typecheck + guards only
@@ -410,4 +430,4 @@ Update this file + INDEX.md on integration state changes. Never only touch STATU
 
 ---
 
-*Mocks remain in `apps/mobile-*/lib/mock-service.ts` for unit tests only — runtime clients use `@shc/api-client` → Medusa.*
+*Runtime clients use `@shc/api-client` → Medusa only. Legacy `apps/mobile-*/lib/mock-service.ts` removed (2026-07-29).*

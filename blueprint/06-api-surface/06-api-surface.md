@@ -6,7 +6,7 @@
 - [../11-medusa-modules/11-medusa-modules.md](../11-medusa-modules/11-medusa-modules.md)
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 
-**Last Updated:** 2026-07-27 — Cook + admin configurability routes; product meta listing fields; platform config store routes.
+**Last Updated:** 2026-07-29 — Ledger-backed earnings; mock-service removed; `pnpm smoke:admin-ops`.
 
 **Contracts Track owns this file after Phase 0.** (Wave 1: Zod schemas ready for all payloads/routes; contract tests added; see 05 for data; ERROR_CODES for errors. Backend to implement using imports from @shc/types)
 
@@ -20,7 +20,7 @@
 | Cart + checkout | ✅ Implemented | `shc-cart` Postgres module + `demo-complete` (PDPA, credits, corporate, **collection_notes** + **customer_collection_lat/lng/postal/line1**) + `checkout-credits` + complete route |
 | Orders + messages + transitions + review | ✅ Implemented | Full per-order list (enriched with id + items snapshot + total for UI) /detail/transition/messages/review. Items+total snapshotted at checkout. |
 | Growth (credits, requests, bids, ai) | ✅ Implemented | Full Phase 8–9 routes + ledger ties |
-| Earnings, listings, compliance, notifications, push-token | ✅ Implemented | Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); persist name/price/description; compliance DB-backed; notifications via shc-notification; push wired |
+| Earnings, listings, compliance, notifications, push-token | ✅ Implemented | **`GET /store/shc/earnings`** — ledger-backed (completed orders + `shc_ledger`); commission from business rules. Listings: GET/POST `/store/shc/listings`, PATCH/DELETE `/store/shc/listings/:id` (cook owner); compliance DB-backed; notifications via shc-notification; push wired |
 | Search | ✅ Implemented | `/store/shc/search` delegates to product list + suggestions |
 | Auth (login/register JWT) | ✅ Implemented | Customer (Medusa + profile), Cook register/login/profile (SHC JWT + scrypt hash on shc_cook) + /me |
 | Admin (payment-confirm, payouts, ledger, verification) | ✅ Implemented | See `apps/medusa/src/api/admin/shc/` |
@@ -91,7 +91,9 @@ Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
 **Admin refresh policy:** SHC Ops UI uses React Query polling (30s hot paths, 45s default) + refetch on tab focus — not WebSocket push. See `apps/medusa/ADMIN.md` + `src/admin/lib/shc-ops-polling.ts`.
 
-**Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Mocks only for unit tests in `mock-service.ts`. Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
+**Client integration:** All runtimes (`apps/web`, `apps/mobile-customer`, `apps/mobile-cook`) use `@shc/api-client` (no runtime mock) → Medusa `/store/shc/*`. Legacy `apps/mobile-*/lib/mock-service.ts` **removed** (2026-07-29). Failed responses throw `ShcRequestError` with optional `SHCErrorCode` from `{ error: { code, message } }`. Cook portal web uses `cook-api-client.ts` (separate token). See CURRENT_STATE §3 and packages/shc-api-client. Bootstrap writes .env.local for real base + publishable key.
+
+**Admin smoke (Tier 4):** `pnpm smoke:admin-ops` — `scripts/smoke-admin-ops.ts` logs into Railway Medusa admin, round-trips GET/POST for `customer-config`, `business-rules`, `cook-config`, `discover-promos`, restores prod values.
 
 **Listings routes (2026-07-24):**
 - `GET /store/shc/listings` — cook JWT; returns cook's listings

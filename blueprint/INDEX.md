@@ -1,7 +1,7 @@
 # Singapore Home Cooks — Canonical Blueprint (Single Source of Truth)
 
 **Status:** Production-grade, multi-agent ready  
-**Last Updated:** 2026-07-27 — Location wave merged to `main` (proximity discovery, checkout pre-fill, order-meta collection snapshot). Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
+**Last Updated:** 2026-07-29 — Post-merge sync: location provider, earnings ledger, Maestro ecfdc8 wave, admin smoke, mock removal. Live snapshot: [CURRENT_STATE.md](./CURRENT_STATE.md).
 **Location:** `blueprint/` (monorepo root)  
 **Purpose:** **Canonical agent brain** for this repo (AI agents only — no human editors). Self-updating source of truth: decisions, data models, APIs, build/taste/verify protocols, phases, production rules. Start at [README.md](./README.md).
 
@@ -10,6 +10,22 @@
 **[CURRENT_STATE.md](./CURRENT_STATE.md)** — Live project snapshot: split apps, real auth, E2E verifier, route map, commands, gotchas, gaps. **Supersedes stale "fully built" claims** in `STATUS.md` where they conflict with integration reality.
 
 **Cold-start read order:** [README.md](./README.md) → `INDEX.md` → `CURRENT_STATE.md` → **[AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)** → track / phase / section for your task.
+
+## Progress Update (2026-07-29 — Post-merge sync)
+
+| Area | Delivered |
+|------|-----------|
+| **Customer location** | `CustomerLocationProvider` — shared state across discover/location/cart/checkout; fixes stale header after area pick |
+| **Discover UX** | `shcSectionStack` spacing; dedupe All cuisine row; index-suffixed list keys (no `.$all` crash) |
+| **Cart CTA** | `proceedLabel` text-only; price via `GourmeatPayButton.amount` |
+| **Cook earnings** | Ledger-backed `GET /store/shc/earnings`; `@shc/ui/cook-earnings` + `@shc/utils/cook-earnings`; business-rules commission on listing preview |
+| **Cook area picker** | `SHCCookAreaPicker` + `sg-areas.ts` — tri-platform SG centroid chips |
+| **Admin occasion tags** | `listingOccasionTagOptions` wired to listing + request pickers |
+| **E2E** | `pnpm e2e:ecfdc8-wave`; Maestro coverage gaps (lifecycle, decline/dispute, batches, earnings); Playwright `cook-portal-smoke.spec.ts` |
+| **Smoke** | `pnpm smoke:admin-ops` — admin↔store config round-trip |
+| **Mocks** | `mobile-*/lib/mock-service.ts` removed — Medusa-only runtime |
+
+**Verify:** `pnpm e2e:ecfdc8-wave` (sim + Metro) · `pnpm smoke:admin-ops` · `FLAVOUR=polish SCOPE=web pnpm verify:goal`
 
 ## Progress Update (2026-07-27 — Location integration)
 

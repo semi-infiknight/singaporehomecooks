@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-27 — location nudge + quick areas; `checkout-collection.ts`; reorder proximity helpers.
+**Last Updated:** 2026-07-29 — `CustomerLocationProvider`; discover dedupe All + index keys; cart `proceedLabel` split; `cook-earnings` tri-platform.
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -39,7 +39,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `location-map.tsx` / `location-map.native.tsx` | `SHCLocationDraggableMap` — web tile fallback; iOS `react-native-maps`; Android Carto OSM tiles + pan/nudge |
 | `request-ux.tsx` | Custom dish wizard + `SHCRequestDishHomeCTA` discover footer |
 | `domain.tsx` | Dish cards, order rows, cart/cook page heroes, PayNow, collection slots, wizard progress |
-| `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton`, `GourmeatSearchBar`, layout re-exports |
+| `gourmeat.tsx` | Gourmeat/HITPay checkout: `GourmeatCategoryRow`, `GourmeatPayButton` (`label` + optional `amount` — do not embed price in both), `GourmeatSearchBar`, `SHCDiscoverFilterSheet`, layout re-exports |
 | `forms.tsx` | Ingredient editor, occasion picker, earnings calc |
 | `cook-area-picker.tsx` | Cook settings/onboarding SG area input with centroid-backed chip suggestions |
 | `listing-form.tsx` | Cook listing wizard: allergen tier picker, availability (portions/days/slots), shared across mobile-cook + web cook-portal |

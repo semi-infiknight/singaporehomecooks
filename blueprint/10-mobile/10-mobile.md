@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-18 — bottom inset helpers (`contentPadForTabBar` / `contentPadForStickyFooter` / `contentPadSafe`); no `sceneStyle.paddingBottom` on Tabs; `pnpm customer:reload`.
+**Last Updated:** 2026-07-29 — `CustomerLocationProvider`; ecfdc8-wave Maestro; cook earnings ledger; mock-service removed.
 **Owner:** Mobile Track
 
 ## Overview
@@ -87,7 +87,7 @@ apps/mobile-cook/app/
 ## Core Screens & Contracts
 
 ### Customer Flow
-- **Collection location:** `/(customer)/location` — 2-step picker (`LocationPickerExperience`): GPS or OneMap search → confirm with draggable map (`SHCLocationDraggableMap`). **SG quick-pick area chips** (one-tap save, skip map). **Discover nudge** (`SHCLocationNudgeBanner` / web `LocationNudgeBanner`) when no location. iOS uses `react-native-maps` Marker; Android uses Carto OSM 3×3 tile grid + pan/nudge (no Google Maps API key). Saved addresses in SecureStore via `useCustomerLocation`.
+- **Collection location:** `/(customer)/location` — 2-step picker (`LocationPickerExperience`): GPS or OneMap search → confirm with draggable map (`SHCLocationDraggableMap`). **SG quick-pick area chips** (one-tap save, skip map). **Discover nudge** (`SHCLocationNudgeBanner` / web `LocationNudgeBanner`) when no location. iOS uses `react-native-maps` Marker; Android uses Carto OSM 3×3 tile grid + pan/nudge (no Google Maps API key). Saved addresses in SecureStore; **`CustomerLocationProvider`** in `(customer)/_layout.tsx` shares state across discover, location picker, cart, checkout (via `useCustomerLocation`).
 - **Discover:** Gourmeat layout — promo rail, photo bento, filter chips (halal/light/occasion), cuisine rail, featured grid, dish list with `SHCFoodImage`, request-dish CTA at list footer. **Proximity sort** on dish grid + kitchen list when collection location set; **Order again** rail prefers nearby kitchens (`sortReorderDishesByProximity`); distance on `TiffinKitchenCard`.
 - **Tiffin browse:** Kitchen list proximity-sorted when location set; **Nearest** filter chip auto-selected on first location save.
 - **Search:** `SHCSearchResultsPanel` — thumbnail + price + ADD without PDP visit (Toptal).
@@ -100,7 +100,7 @@ apps/mobile-cook/app/
 - **Auth:** Login or **Create account** (email, password, kitchen name, HDB area) → `registerCook` API.
 - **Onboarding (new cooks):** Welcome → heritage story → collection instructions → PDPA consent → dashboard.
 - **Dashboard:** Earnings hero, photo bento quick actions (vector icons), collaboration board.
-- **Orders / Earnings:** `SHCCookPageHero` + order cards; order detail **Accept** (`paid`→`accepted`) and **Decline** (`paid`→`cancelled`).
+- **Orders / Earnings:** `SHCCookPageHero` + order cards; order detail **Accept** (`paid`→`accepted`) and **Decline** (`paid`→`cancelled`). **Earnings** screen uses ledger-backed `GET /store/shc/earnings` + `@shc/ui/cook-earnings` (IRAS note, expense tracker). **Settings** uses `SHCCookAreaPicker` for SG kitchen area.
 - **Listings:** Multi-step wizard with photo tips, AI calorie stub; search + filter hero; long-press edit/delete (PATCH/DELETE `/store/shc/listings/:id`); Family Values trays for confirm flows.
 - **Compliance:** Document upload cards persist SFA/WSQ references through Medusa `shc_compliance_doc` for admin review.
 
@@ -162,10 +162,21 @@ Prereqs: Node 22+, pnpm 11, Xcode, CocoaPods, EAS account (`pnpm dlx eas-cli log
 |---|---|---|
 | Customer auth | `e2e/customer-auth.yaml` | ✅ |
 | Cook auth | `e2e/cook-auth.yaml` | ✅ |
+| **Location + discover wave** | `discover-location-wave.yaml`, `location-checkout-prefill.yaml` | ✅ (scoped; `pnpm e2e:ecfdc8-wave`) |
+| **Cook settings wave** | `cook-settings-wave.yaml` | ✅ (ecfdc8-wave) |
+| Cook order lifecycle | `cook-order-lifecycle.yaml`, `customer-order-lifecycle.yaml` | ✅ |
+| Cook decline / dispute trays | `cook-decline-tray.yaml`, `cook-dispute-tray.yaml` | ✅ |
+| Cook batches smoke | `cook-batches-smoke.yaml` | ✅ |
+| Cook earnings expense | `cook-earnings-expense.yaml` | ✅ |
+| Listing tray | `listing-tray.yaml` | ✅ |
 | Customer full tour | `e2e/customer-full-tour.yaml` | ✅ Android PASS (2026-06-19) |
 | Location map (Android) | `e2e/location-map-android.yaml` | ✅ Android PASS (2026-06-22) |
 | Cook full tour | `e2e/cook-full-tour.yaml` | ✅ Android PASS (2026-06-19) |
 | Full order fulfil | `e2e/full-order-fulfil.yaml` | ✅ |
+
+**Scoped wave runner:** `pnpm e2e:ecfdc8-wave` → `scripts/run-maestro-ecfdc8-wave.sh` (discover/location + cook settings + listing tray).
+
+**Web cook portal:** `apps/web/e2e/cook-portal-smoke.spec.ts` (Playwright) — `pnpm --filter web test:e2e` when configured.
 
 **Prereqs:** Metro `:8081` + `:8082` running; Android `adb reverse`; iOS simulator booted. Use `clearKeychain: true` on iOS auth flows.
 
