@@ -1,6 +1,6 @@
 # Blueprint Index — Navigation Only
 
-**Last updated:** 2026-07-29  
+**Last updated:** 2026-07-31  
 **Live state:** [CURRENT_STATE.md](./CURRENT_STATE.md) — the only integration snapshot. This file is a map, not a changelog.
 
 **Cold start:** [README.md](./README.md) → **INDEX.md** → [CURRENT_STATE.md](./CURRENT_STATE.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) → section below for your task.

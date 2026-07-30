@@ -101,11 +101,11 @@ type ListingRow = Record<string, unknown> & {
 };
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
-const DEFAULT_FORM = {
-  name: 'New Nyonya Dish',
-  price: 14,
-  minQty: 4,
-  cuisine: 'Peranakan',
+const EMPTY_NEW_LISTING = {
+  name: '',
+  price: '' as number | '',
+  minQty: '' as number | '',
+  cuisine: '',
 };
 
 type AiImageStatus = {
@@ -145,11 +145,11 @@ export default function CookListingsPage() {
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const [name, setName] = useState(DEFAULT_FORM.name);
+  const [name, setName] = useState(EMPTY_NEW_LISTING.name);
   const [description, setDescription] = useState('');
-  const [price, setPrice] = useState(DEFAULT_FORM.price);
-  const [minQty, setMinQty] = useState(DEFAULT_FORM.minQty);
-  const [cuisine, setCuisine] = useState(DEFAULT_FORM.cuisine);
+  const [price, setPrice] = useState<number | ''>(EMPTY_NEW_LISTING.price);
+  const [minQty, setMinQty] = useState<number | ''>(EMPTY_NEW_LISTING.minQty);
+  const [cuisine, setCuisine] = useState(EMPTY_NEW_LISTING.cuisine);
   const [halal, setHalal] = useState(false);
   const [allergenTiers, setAllergenTiers] = useState(emptyAllergenTiers);
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
@@ -157,9 +157,9 @@ export default function CookListingsPage() {
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
   const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
-  const [ingredients, setIngredients] = useState([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-  const [mealExtras, setMealExtras] = useState(() => defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
-  const [mealAddons, setMealAddons] = useState(() => defaultMealAddonsDraft(false));
+  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
+  const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
+  const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [recipeSteps, setRecipeSteps] = useState<import('@shc/utils').RecipeStepDraft[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
@@ -173,12 +173,6 @@ export default function CookListingsPage() {
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!editingId && occasionTags.length === 0 && defaultOccasionTag) {
-      setOccasionTags([defaultOccasionTag]);
-    }
-  }, [defaultOccasionTag, editingId, occasionTags.length]);
 
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
@@ -333,21 +327,21 @@ export default function CookListingsPage() {
     setEditingId(null);
     setListingImageUrl(null);
     setAiPhotoNote(null);
-    setName(DEFAULT_FORM.name);
+    setName(EMPTY_NEW_LISTING.name);
     setDescription('');
-    setPrice(DEFAULT_FORM.price);
-    setMinQty(DEFAULT_FORM.minQty);
-    setCuisine(DEFAULT_FORM.cuisine);
+    setPrice(EMPTY_NEW_LISTING.price);
+    setMinQty(EMPTY_NEW_LISTING.minQty);
+    setCuisine(EMPTY_NEW_LISTING.cuisine);
     setHalal(false);
     setAllergenTiers(emptyAllergenTiers());
     setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
     setLastMinutePremiumPct(null);
-    setOccasionTags([defaultOccasionTag]);
-    setIngredients([{ name: 'Chicken', quantity: 300, unit: 'g' }]);
-    setMealExtras(defaultMealExtrasDraft(DEFAULT_FORM.cuisine));
-    setMealAddons(defaultMealAddonsDraft(false));
+    setOccasionTags([]);
+    setIngredients([]);
+    setMealExtras([]);
+    setMealAddons([]);
     setRecipeSteps([]);
     setPublished(null);
     setAiCal(null);
@@ -410,8 +404,8 @@ export default function CookListingsPage() {
     const input = buildCookListingPayload({
       name,
       description,
-      price,
-      min_qty: minQty,
+      price: typeof price === 'number' ? price : 0,
+      min_qty: typeof minQty === 'number' ? minQty : 0,
       cuisine,
       occasion_tags: occasionTags,
       ingredients,
@@ -500,7 +494,7 @@ export default function CookListingsPage() {
     (listing: ListingRow) => {
       const isPaused = !!listing.shc_availability?.paused;
       openTray(
-        { id: 'listing-actions', title: String(listing.name), height: 'compact' },
+        { id: 'listing-actions', title: String(listing.name), height: 'medium' },
         <div className="flex flex-col gap-2" data-testid="listing-actions-tray">
           <button
             type="button"
@@ -667,14 +661,14 @@ export default function CookListingsPage() {
                   type="number"
                   className="rounded-xl border border-border px-3 py-2 text-sm"
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
                   placeholder="Price"
                 />
                 <input
                   type="number"
                   className="rounded-xl border border-border px-3 py-2 text-sm"
                   value={minQty}
-                  onChange={(e) => setMinQty(Number(e.target.value))}
+                  onChange={(e) => setMinQty(e.target.value === '' ? '' : Number(e.target.value))}
                   placeholder="Min qty"
                 />
               </div>
@@ -849,11 +843,16 @@ export default function CookListingsPage() {
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
                 <div className="absolute inset-0 bg-black/35 flex items-end p-3 gap-2">
                   <p className="text-white font-extrabold flex-1">{name}</p>
-                  <SHCMetaBadge kind="price">S${price}</SHCMetaBadge>
+                  <SHCMetaBadge kind="price">{typeof price === 'number' ? `S$${price}` : 'Price TBD'}</SHCMetaBadge>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Earnings preview: S${cookEarningsPreviewFromDollars(price * minQty, commissionRate)} per minimum order
+                Earnings preview: S$
+                {cookEarningsPreviewFromDollars(
+                  (typeof price === 'number' ? price : 0) * (typeof minQty === 'number' ? minQty : 0),
+                  commissionRate
+                )}{' '}
+                per minimum order
               </p>
               <ListingAvailabilityEditorWeb
                 portionsPerDay={portionsPerDay}

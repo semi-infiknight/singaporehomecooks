@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-07-29  
+**Last updated:** 2026-07-31  
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 
@@ -117,9 +117,14 @@ Web: customer checkout/PDP gated (`/login?returnTo=…`); cook portal uses separ
 ### Cook app
 
 - Tabs: dashboard, orders, listings, compliance (+ hidden settings, batches, tiffin, earnings, order detail).
+- **Dashboard:** bento quick actions + Collaboration Board link → Orders tab; **no** inline “chat on latest order” CTA (chat from order detail only).
+- **Listings tab** — nested stack (`listings/_layout.tsx`):
+  - `listings/index` — dish list, search/filters, **+** (upper-right, `create-listings-btn`) → new wizard; long-press → `SHCTray` actions (`height: medium`).
+  - `listings/new` — 4-step wizard (`components/CookListingWizardScreen.tsx`); **empty form** (no demo prefills); deep link `?wizardStep=1–4`.
+  - `listings/[id]` — edit wizard (prefilled from API).
 - Settings: pause, collection address/instructions/**time slots**, avatar/hero upload; `SHCCookAreaPicker` + `@shc/utils/sg-areas.ts`.
-- Listings: `@shc/ui/listing-form` + product meta (`meal_extras`, `meal_addons`, `recipe_steps`); PATCH/DELETE `/store/shc/listings/:id`.
-- Earnings: `GET /store/shc/earnings` ledger-backed (completed orders + `shc_ledger`); UI `@shc/ui/cook-earnings.tsx`.
+- Listings API: `@shc/ui/listing-form` + product meta; PATCH/DELETE `/store/shc/listings/:id`.
+- Earnings: `GET /store/shc/earnings` ledger-backed; UI `@shc/ui/cook-earnings.tsx`; create-listing CTA → `listings/new`.
 - Orders: accept/decline on `paid`; compliance gate for accept; decline/dispute trays Maestro-covered.
 - **Layout:** single `settings` tab screen in `(cook)/_layout.tsx` (duplicate entry removed 2026-07-29).
 
@@ -219,6 +224,9 @@ pnpm railway:ship                     # PWA deploy + fingerprint
 12. **Product IDs** — seed uses `dish_*`; re-seed after schema migrations.
 13. **Cook duplicate settings tab** — only one `Tabs.Screen name="settings"` in cook layout.
 14. **SecureStore keys** — no colons; use `milestoneStorageKey()` from family-values-core.
+15. **Listings wizard** — do not inline on index; route is `/(cook)/listings/new` (not flat `listings.tsx`).
+16. **Listing-actions tray** — use `height: 'medium'`; `@shc/ui/tray` sheet is a `View` (backdrop is separate `Pressable`) — never wrap sheet body in `Pressable` (blocks taps).
+17. **Stale Metro after hook import removal** — `METRO_CLEAR=1 pnpm ios:dev` if redbox `useMemo doesn't exist` after hot reload.
 
 ---
 

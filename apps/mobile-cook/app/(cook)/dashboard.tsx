@@ -1,11 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SHCCard,
-  SHCButton,
-  SHCButtonText,
   OrderStatusBadge,
   SHCSectionTitle,
   SHCBentoGrid,
@@ -35,7 +33,6 @@ import {
   cookPortalGreeting,
   getDishImageUrl,
   isCookComplianceVerified,
-  latestActiveCookOrder,
   formatCookEarningsDisplayCompact,
   orderIdFromNotificationType,
   resolveCookEarningsSummary,
@@ -82,7 +79,6 @@ export default function CookDashboard() {
   const earningsLabel = formatCookEarningsDisplayCompact(earningsCents);
 
   const greeting = cookPortalGreeting(new Date(), config.greeting);
-  const latestActiveOrder = useMemo(() => latestActiveCookOrder(orderList), [orderList]);
 
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
@@ -275,14 +271,6 @@ export default function CookDashboard() {
         </View>
       ) : null}
 
-      {latestActiveOrder?.id ? (
-        <Link href={`/(shared)/chat/${latestActiveOrder.id}` as any} asChild>
-          <SHCButton variant="outline" style={styles.chatBtn} testID="cook-latest-order-chat-btn">
-            <SHCButtonText>Chat on latest active order</SHCButtonText>
-          </SHCButton>
-        </Link>
-      ) : null}
-
       {/* Collaboration lives under Orders tab */}
       <Pressable
         onPress={() => router.push('/(cook)/orders' as any)}
@@ -397,7 +385,6 @@ const styles = StyleSheet.create({
   sectionLabel: { fontSize: 13, fontWeight: '800', color: shcColors.text, marginBottom: shcSpacing.sm, marginTop: shcSpacing.sm },
   bentoRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.sm },
   bentoCol: { flex: 1 },
-  chatBtn: { marginTop: shcSpacing.md },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: shcSpacing.lg },
   collabLink: {
     marginBottom: shcSpacing.md,

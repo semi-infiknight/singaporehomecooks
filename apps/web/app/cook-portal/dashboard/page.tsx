@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   cookDashboardTileImage,
@@ -9,7 +9,6 @@ import {
   cookPortalGreeting,
   formatCookEarningsDisplayCompact,
   getOrderStatusLabel,
-  latestActiveCookOrder,
   orderIdFromNotificationType,
   resolveCookEarningsSummary,
 } from '@shc/utils';
@@ -21,7 +20,6 @@ import {
   GourmeatCookHeader,
   GourmeatCard,
   GourmeatOrderRow,
-  GourmeatPrimaryButton,
   SHCBadge,
   VisualBentoTile,
   CookNotifBell,
@@ -44,10 +42,6 @@ export default function CookDashboardPage() {
   const earnings = earningsLabel;
 
   const reqCount = Array.isArray(openReqs) ? openReqs.length : 0;
-  const latestActiveOrder = useMemo(
-    () => latestActiveCookOrder(orders as Array<{ id?: string; shc_status?: string; updated_at?: string; created_at?: string }>),
-    [orders]
-  );
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-dashboard">
@@ -188,16 +182,6 @@ export default function CookDashboardPage() {
           />
         ))}
       </div>
-
-      {latestActiveOrder?.id ? (
-        <Link
-          href={`/cook-portal/orders/${latestActiveOrder.id}#cook-order-chat`}
-          className="block mb-6"
-          data-testid="cook-latest-order-chat-btn"
-        >
-          <GourmeatPrimaryButton label="Chat on latest active order" variant="outline" />
-        </Link>
-      ) : null}
 
       <Link
         href="/cook-portal/orders"

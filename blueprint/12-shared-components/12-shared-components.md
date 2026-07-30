@@ -10,7 +10,7 @@
 - [../agent/design-taste.md](../agent/design-taste.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-29 — `CustomerLocationProvider`; discover dedupe All + index keys; cart `proceedLabel` split; `cook-earnings` tri-platform.
+**Last Updated:** 2026-07-31 — `tray.tsx` safe-area bottom pad + scroll body; backdrop/sheet touch split (sheet is `View`, not `Pressable`).
 **Owner:** Mobile Track (+ Web mirrors via `SHCWebComponents.tsx`)
 
 ## Overview
@@ -31,7 +31,7 @@ Design tokens and wireframes: [brand.md](../../brand.md) · [WIREFRAMES.md](../1
 | `icons.tsx` | `SHCIcon`, `SHCTabIcon`, `SHCBentoIconBadge` (Ionicons on mobile; web uses Lucide mirrors) |
 | `motion.tsx` | `SHCFadeIn`, `SHCStaggerIn`, `SHCWizardPane` (Moti + Animated fallback) |
 | `family-values-core.ts` | Tray stack reducer, morphing label segments, milestone keys, tab slide direction (unit-tested) |
-| `tray.tsx` | `SHCTrayProvider`, `useSHCTray`, `SHCTrayAction` — bottom-sheet overlays |
+| `tray.tsx` | `SHCTrayProvider`, `useSHCTray`, `SHCTrayAction` — bottom-sheet overlays; backdrop dismiss via absolute-fill `Pressable`; sheet `View` + safe-area `paddingBottom`; multi-action trays use `height: 'medium'` |
 | `family-values-ui.tsx` | `SHCMorphingLabel`, `SHCChevronNav`, `SHCDirectionalTabScene`, `SHCSharedDishImage`, `SHCCelebration`, `useMilestoneCelebration` |
 | `tab-direction.tsx` | `TabDirectionProvider`, `DirectionalTabScreen` |
 | `food-ux.tsx` | Toptal principles: `SHCCheckoutStepper`, `SHCSearchResultRow`, `SHCSearchResultsPanel`, `SHCHeritageStoryBanner` |

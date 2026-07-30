@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-29 — `CustomerLocationProvider`; ecfdc8-wave Maestro; cook earnings ledger; mock-service removed.
+**Last Updated:** 2026-07-31 — Cook listings stack (`index` / `new` / `[id]`); tray safe-area + touch fix; dashboard chat CTA removed.
 **Owner:** Mobile Track
 
 ## Overview
@@ -63,23 +63,30 @@ apps/mobile-customer/app/
 
 | Tab | Route | Screen |
 |---|---|---|
-| Dashboard | `dashboard` | `SHCCookPageHero`, photo bento quick actions, collaboration board |
-| Orders | `orders.tsx` | State-machine order cards |
-| Listings | `listings.tsx` | Listing wizard + cards; search/filters hero; long-press edit/delete |
-| Compliance | `compliance.tsx` | SFA/WSQ upload cards |
+| Dashboard | `dashboard` | Bento quick actions, Collaboration Board link (no dashboard chat CTA) |
+| Orders | `orders/index` | State-machine order cards + Collaboration Board |
+| Listings | `listings/` | **Stack:** `index` (list + **+** upper-right) · `new` (wizard) · `[id]` (edit) |
+| Compliance | `compliance` | SFA/WSQ upload cards |
 
-**Hidden from tab bar**: `orders/[id]`, `earnings` (`SHCCookPageHero`).
+**Hidden from tab bar**: `orders/[id]`, `listings/new`, `listings/[id]`, `settings`, `earnings`, `tiffin/*`, `batches/*`.
 
 ```
 apps/mobile-cook/app/
 ├── (cook)/
 │   ├── _layout.tsx
 │   ├── dashboard.tsx
-│   ├── orders.tsx
-│   ├── orders/[id].tsx
-│   ├── listings.tsx
+│   ├── orders/
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx
+│   │   └── [id].tsx
+│   ├── listings/
+│   │   ├── _layout.tsx       # Stack
+│   │   ├── index.tsx         # List + create-listings-btn (+)
+│   │   ├── new.tsx           # CookListingWizardScreen (empty defaults)
+│   │   └── [id].tsx          # Edit wizard
 │   ├── compliance.tsx
 │   └── earnings.tsx
+├── components/CookListingWizardScreen.tsx
 ├── (shared)/auth, onboarding, chat
 └── _layout.tsx
 ```
@@ -99,9 +106,9 @@ apps/mobile-cook/app/
 ### Cook Flow
 - **Auth:** Login or **Create account** (email, password, kitchen name, HDB area) → `registerCook` API.
 - **Onboarding (new cooks):** Welcome → heritage story → collection instructions → PDPA consent → dashboard.
-- **Dashboard:** Earnings hero, photo bento quick actions (vector icons), collaboration board.
+- **Dashboard:** Earnings hero, photo bento quick actions, Collaboration Board link → Orders (chat only from order detail / shared chat route).
 - **Orders / Earnings:** `SHCCookPageHero` + order cards; order detail **Accept** (`paid`→`accepted`) and **Decline** (`paid`→`cancelled`). **Earnings** screen uses ledger-backed `GET /store/shc/earnings` + `@shc/ui/cook-earnings` (IRAS note, expense tracker). **Settings** uses `SHCCookAreaPicker` for SG kitchen area.
-- **Listings:** Multi-step wizard with photo tips, AI calorie stub; search + filter hero; long-press edit/delete (PATCH/DELETE `/store/shc/listings/:id`); Family Values trays for confirm flows.
+- **Listings:** Tab index = list only; **+** opens `listings/new` wizard (`CookListingWizardScreen`, no demo prefills). Edit via long-press tray → `listings/[id]`. Maestro deep link: `shc-cook:///(cook)/listings/new?wizardStep=N`. Tray id `listing-actions` uses **`height: medium`**.
 - **Compliance:** Document upload cards persist SFA/WSQ references through Medusa `shc_compliance_doc` for admin review.
 
 ### Shared Experiences

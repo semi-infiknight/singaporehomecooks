@@ -12,7 +12,9 @@ import {
   AccessibilityInfo,
   Platform,
   Alert,
+  ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   type TrayFrame,
   type TrayHeight,
@@ -137,12 +139,14 @@ function SHCTrayOverlay({
   const { stack, popTray: pop, dismiss, contentMap } = useSHCTray();
   const frame = currentTray(stack);
   const { height: winH } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const visible = !!frame;
   const noMotion = reduceMotion || shouldReduceMotion();
 
   if (!visible || !frame) return null;
 
   const trayH = trayHeightPx(frame.height, winH);
+  const bottomPad = Math.max(shcSpacing.lg, insets.bottom + shcSpacing.sm);
   const depth = stack.length;
   const renderContent = contentMap[frame.id];
   const content = renderContent?.();
@@ -155,12 +159,9 @@ function SHCTrayOverlay({
 
   return (
     <Modal visible transparent animationType={noMotion ? 'none' : 'fade'} onRequestClose={depth > 1 ? pop : dismiss}>
-      <Pressable style={styles.backdrop} onPress={dismiss} accessibilityLabel="Dismiss tray" testID="shc-tray-backdrop">
-        <Pressable
-          style={[styles.sheet, { height: trayH, paddingBottom: shcSpacing.lg }]}
-          onPress={(e) => e.stopPropagation?.()}
-          testID={`shc-tray-${frame.id}`}
-        >
+      <View style={styles.backdrop} testID="shc-tray-backdrop">
+        <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} accessibilityLabel="Dismiss tray" />
+        <View style={[styles.sheet, { height: trayH, paddingBottom: bottomPad }]} testID={`shc-tray-${frame.id}`}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Pressable
@@ -176,9 +177,16 @@ function SHCTrayOverlay({
             </Text>
             <View style={{ width: 22 }} />
           </View>
-          <View style={styles.body}>{trayBody}</View>
-        </Pressable>
-      </Pressable>
+          <ScrollView
+            style={styles.bodyScroll}
+            contentContainerStyle={styles.bodyContent}
+            keyboardShouldPersistTaps="handled"
+            bounces={false}
+          >
+            {trayBody}
+          </ScrollView>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -259,10 +267,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: gourmeatColors.text,
   },
-  body: {
-    flex: 1,
+  bodyScroll: { flex: 1 },
+  bodyContent: {
     paddingHorizontal: shcSpacing.md,
     paddingTop: shcSpacing.md,
+    paddingBottom: shcSpacing.xs,
   },
   actionWrap: { gap: shcSpacing.md },
   actionMessage: { fontSize: 15, fontWeight: '500', color: gourmeatColors.text, lineHeight: 22 },

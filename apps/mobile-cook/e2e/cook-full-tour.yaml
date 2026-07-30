@@ -45,8 +45,8 @@ appId: com.singaporehomecooks.cook
       id: "cook-dashboard"
     timeout: 120000
 
-# Listings wizard — all steps + AI/photo stubs (deep link avoids flaky dashboard taps)
-- openLink: shc-cook:///(cook)/listings
+# Listings wizard — subpage at /listings/new (deep link avoids flaky + tap)
+- openLink: shc-cook:///(cook)/listings/new
 - tapOn:
     text: "Open"
     optional: true
@@ -61,7 +61,7 @@ appId: com.singaporehomecooks.cook
     visible: "Dish Basics"
     timeout: 30000
 # Deep-link wizard steps — Next taps unreliable on Android emulator
-- openLink: shc-cook:///(cook)/listings?wizardStep=2
+- openLink: shc-cook:///(cook)/listings/new?wizardStep=2
 - tapOn:
     text: "Open"
     optional: true
@@ -70,7 +70,7 @@ appId: com.singaporehomecooks.cook
       id: "listing-wizard-step-2"
     timeout: 30000
 - tapOn: "Hari Raya"
-- openLink: shc-cook:///(cook)/listings?wizardStep=3
+- openLink: shc-cook:///(cook)/listings/new?wizardStep=3
 - tapOn:
     text: "Open"
     optional: true
@@ -88,7 +88,7 @@ appId: com.singaporehomecooks.cook
       id: "listing-wizard-next-step3"
     direction: DOWN
     timeout: 20000
-- openLink: shc-cook:///(cook)/listings?wizardStep=4
+- openLink: shc-cook:///(cook)/listings/new?wizardStep=4
 - tapOn:
     text: "Open"
     optional: true
@@ -170,35 +170,6 @@ appId: com.singaporehomecooks.cook
       id: "cook-dashboard"
     timeout: 60000
     optional: true
-- runFlow:
-    when:
-      visible:
-        id: "cook-latest-order-chat-btn"
-    commands:
-      - tapOn:
-          id: "cook-latest-order-chat-btn"
-      - extendedWaitUntil:
-          visible:
-            id: "chat-order-title"
-          timeout: 60000
-          optional: true
-      - runFlow:
-          when:
-            visible:
-              id: "chat-message-input"
-          commands:
-            - scrollUntilVisible:
-                element:
-                  id: "chat-message-input"
-                direction: DOWN
-                timeout: 15000
-            - tapOn:
-                id: "chat-message-input"
-            - inputText: "Your dish is ready for collection at 6pm."
-            - tapOn:
-                text: "Send"
-                optional: true
-      - back
 - runFlow:
     when:
       visible: "Demo Chat"

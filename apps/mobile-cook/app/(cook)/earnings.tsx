@@ -105,7 +105,7 @@ export default function Earnings() {
             label="Listings"
             variant="bento-peach"
             testID="earnings-listings-tile"
-            onPress={() => router.push('/(cook)/listings' as any)}
+            onPress={() => router.push('/(cook)/listings/new' as any)}
           />
         </View>
         <View style={styles.bentoCol}>
@@ -120,7 +120,7 @@ export default function Earnings() {
         </View>
       </View>
 
-      <SHCCookEarningsCreateListingsCta onPress={() => router.push('/(cook)/listings' as any)} />
+      <SHCCookEarningsCreateListingsCta onPress={() => router.push('/(cook)/listings/new' as any)} />
       <SHCCookEarningsIrasNote />
 
       <SHCCookEarningsExpenseTracker
