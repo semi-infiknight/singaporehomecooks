@@ -26,8 +26,6 @@ import {
   recipeStepsFromListing,
   cookAllergenTier1Presets,
   resolveCookCollectionTimeSlots,
-  defaultListingOccasionTag,
-  listingOccasionTagOptions,
   cookEarningsPreviewFromDollars,
   validateCookListingDraft,
   validateCookListingForPublish,
@@ -37,7 +35,6 @@ import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import { useBusinessRules } from '../../../lib/useBusinessRules';
 import { useCookProfile } from '../../../lib/useCookPortal';
-import { useCustomerConfig } from '../../../lib/useCustomerConfig';
 import {
   useCookListings,
   useCreateCookListing,
@@ -123,9 +120,6 @@ export default function CookListingsPage() {
   const searchParams = useSearchParams();
   const { user } = useCookAuth();
   const { config } = useCookConfig();
-  const { config: browseConfig } = useCustomerConfig();
-  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
-  const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const { commissionRate } = useBusinessRules();
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
@@ -157,7 +151,6 @@ export default function CookListingsPage() {
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -338,7 +331,6 @@ export default function CookListingsPage() {
     setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-    setOccasionTags([]);
     setIngredients([]);
     setMealExtras([]);
     setMealAddons([]);
@@ -361,7 +353,6 @@ export default function CookListingsPage() {
     setPortionsPerDay(avail.portions_per_day);
     setCollectionDays(avail.collection_days);
     setTimeSlots(avail.time_slots);
-    setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag]);
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
     );
@@ -377,11 +368,7 @@ export default function CookListingsPage() {
     );
     goToStep(1);
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [defaultOccasionTag]);
-
-  const toggleTag = (tag: string) => {
-    setOccasionTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  };
+  }, []);
 
   const openPhotoTipsTray = async () => {
     const tipsRes = await getPhotoTips();
@@ -403,7 +390,7 @@ export default function CookListingsPage() {
       price: typeof price === 'number' ? price : 0,
       min_qty: typeof minQty === 'number' ? minQty : 0,
       cuisine,
-      occasion_tags: occasionTags,
+      occasion_tags: [] as string[],
       ingredients,
       allergen_tiers: allergenTiers,
       allergen_none_confirmed: allergenNoneConfirmed,
@@ -424,7 +411,6 @@ export default function CookListingsPage() {
       price,
       minQty,
       cuisine,
-      occasionTags,
       ingredients,
       allergenTiers,
       allergenNoneConfirmed,
@@ -768,21 +754,6 @@ export default function CookListingsPage() {
                 placeholder="Or type a cuisine"
                 data-testid="listing-cuisine-input"
               />
-              <p className="text-xs font-extrabold text-muted-foreground pt-1">Occasion tags</p>
-              <div className="flex flex-wrap gap-2">
-                {occasionOptions.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={`text-xs px-3 py-1.5 rounded-lg border font-bold ${
-                      occasionTags.includes(tag) ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
               <HalalToggleWeb value={halal} onChange={setHalal} />
               <AllergenTierPickerWeb
                 value={allergenTiers}
@@ -959,13 +930,6 @@ export default function CookListingsPage() {
                 onTimeSlotsChange={setTimeSlots}
                 timeSlotPresets={collectionTimeSlots}
               />
-              <div className="flex flex-wrap gap-1">
-                {occasionTags.map((t) => (
-                  <SHCMetaBadge key={t} kind="occasion">
-                    {t}
-                  </SHCMetaBadge>
-                ))}
-              </div>
               {editingId ? (
                 <GourmeatPrimaryButton label="Cancel edit" onClick={resetWizard} />
               ) : null}

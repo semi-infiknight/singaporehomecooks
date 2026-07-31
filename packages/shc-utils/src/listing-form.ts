@@ -268,9 +268,6 @@ export function validateCookListingForPublish(draft: CookListingFormDraft): Cook
   if (cuisine.length < 2) {
     errors.push('Select or enter a cuisine.');
   }
-  if (!(draft.occasion_tags || []).length) {
-    errors.push('Pick at least one occasion tag.');
-  }
   if (!hasValidIngredients(draft.ingredients)) {
     errors.push('Add at least one ingredient with a name.');
   }
@@ -302,7 +299,6 @@ export function validateCookListingWizardStep(
   if (step === 2) {
     const cuisine = String(draft.cuisine || '').trim();
     if (cuisine.length < 2) return { ok: false, message: 'Select a cuisine.' };
-    if (!(draft.occasion_tags || []).length) return { ok: false, message: 'Pick at least one occasion tag.' };
     return { ok: true };
   }
   if (step === 3) {

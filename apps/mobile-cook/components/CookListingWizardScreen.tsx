@@ -9,7 +9,6 @@ import {
   SHCButtonText,
   ListingWizardStep,
   IngredientTierEditor,
-  OccasionTagPicker,
   PriceEarningsCalc,
   SHCSectionTitle,
   SHCFoodImage,
@@ -53,8 +52,6 @@ import {
   availabilityFromListing,
   mealOptionsFromListing,
   recipeStepsFromListing,
-  defaultListingOccasionTag,
-  listingOccasionTagOptions,
   validateCookListingDraft,
   validateCookListingForPublish,
   validateCookListingWizardStep,
@@ -73,7 +70,6 @@ import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
 import { useCookProfile } from '../hooks/useCookProfile';
-import { useCustomerConfig } from '../hooks/useCustomerConfig';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
@@ -100,7 +96,7 @@ const milestoneStorage = {
   set: (k: string, v: string) => SecureStore.setItemAsync(k, v),
 };
 
-function listingToForm(listing: any, defaultOccasionTag: string) {
+function listingToForm(listing: any) {
   const avail = availabilityFromListing(listing.shc_availability);
   const mealMeta = mealOptionsFromListing(listing);
   return {
@@ -114,7 +110,6 @@ function listingToForm(listing: any, defaultOccasionTag: string) {
     portionsPerDay: avail.portions_per_day,
     collectionDays: avail.collection_days,
     timeSlots: avail.time_slots,
-    occasionTags: listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag],
     ingredients: listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }],
     mealExtras: mealMeta.extras,
     mealAddons: mealMeta.addons,
@@ -140,9 +135,6 @@ export function CookListingWizardScreen({
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
-  const { config: browseConfig } = useCustomerConfig();
-  const occasionOptions = useMemo(() => listingOccasionTagOptions(browseConfig), [browseConfig]);
-  const defaultOccasionTag = useMemo(() => defaultListingOccasionTag(browseConfig), [browseConfig]);
   const { commissionRatePct } = useBusinessRules();
   const { data: cookProfile } = useCookProfile();
   const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
@@ -172,7 +164,6 @@ export function CookListingWizardScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -195,7 +186,7 @@ export function CookListingWizardScreen({
 
   useEffect(() => {
     if (!initialListing) return;
-    const form = listingToForm(initialListing, defaultOccasionTag);
+    const form = listingToForm(initialListing);
     setName(form.name);
     setDescription(form.description);
     setPrice(form.price);
@@ -206,7 +197,6 @@ export function CookListingWizardScreen({
     setPortionsPerDay(form.portionsPerDay);
     setCollectionDays(form.collectionDays);
     setTimeSlots(form.timeSlots);
-    setOccasionTags(form.occasionTags);
     setIngredients(form.ingredients);
     setMealExtras(form.mealExtras);
     setMealAddons(form.mealAddons);
@@ -214,7 +204,7 @@ export function CookListingWizardScreen({
     setListingImageUrl(form.listingImageUrl);
     setAiCal(form.aiCal);
     setHydrated(true);
-  }, [initialListing, defaultOccasionTag]);
+  }, [initialListing]);
 
   useEffect(() => {
     let cancelled = false;
@@ -350,9 +340,6 @@ export function CookListingWizardScreen({
     }
   };
 
-  const toggleTag = (t: string) =>
-    setOccasionTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
-
   const listingDraft = useMemo(
     () => ({
       name,
@@ -360,7 +347,7 @@ export function CookListingWizardScreen({
       price: price ?? 0,
       min_qty: minQty ?? 0,
       cuisine,
-      occasion_tags: occasionTags,
+      occasion_tags: [] as string[],
       ingredients,
       allergen_tiers: allergenTiers,
       allergen_none_confirmed: allergenNoneConfirmed,
@@ -381,7 +368,6 @@ export function CookListingWizardScreen({
       price,
       minQty,
       cuisine,
-      occasionTags,
       ingredients,
       allergenTiers,
       allergenNoneConfirmed,
@@ -536,7 +522,7 @@ export function CookListingWizardScreen({
         )}
 
         {step === 2 && (
-          <ListingWizardStep step={2} title="Tags & Cuisine">
+          <ListingWizardStep step={2} title="Cuisine & allergens">
             <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
             <Text style={styles.photoPanelHint}>Cuisine (helps AI plate + discovery)</Text>
             <View style={styles.cuisinePresets} testID="listing-cuisine-presets">
@@ -558,7 +544,6 @@ export function CookListingWizardScreen({
               placeholder="Or type a cuisine"
               testID="listing-cuisine-input"
             />
-            <OccasionTagPicker selected={occasionTags} onToggle={toggleTag} options={occasionOptions} />
             <SHCHalalToggle value={halal} onChange={setHalal} />
             <SHCAllergenTierPicker
               value={allergenTiers}
@@ -699,11 +684,6 @@ export function CookListingWizardScreen({
                 onTimeSlotsChange={setTimeSlots}
                 timeSlotPresets={collectionTimeSlots}
               />
-              <View style={styles.tagRow}>
-                {occasionTags.map((t) => (
-                  <SHCMetaBadge key={t} kind="occasion">{t}</SHCMetaBadge>
-                ))}
-              </View>
               {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
               {published && (
                 <SHCCard variant="bento-mint" style={styles.publishedCard}>

@@ -39,10 +39,6 @@ function listingPublishRefines<T extends z.ZodTypeAny>(schema: T) {
       message: "At least one ingredient required",
       path: ["ingredients"],
     })
-    .refine((data: any) => (data.occasion_tags?.length ?? 0) >= 1, {
-      message: "At least one occasion tag required",
-      path: ["occasion_tags"],
-    })
     .refine(
       (data: any) =>
         (data.allergen_tiers?.tier1?.length ?? 0) >= 1 || data.allergen_none_confirmed === true,
@@ -76,7 +72,7 @@ export const ListingCreateSchema = listingPublishRefines(
       calories: z.number().optional(),
       calories_confidence: z.enum(["full", "category"]).optional(),
       ingredients: z.array(ingredientSchema).min(1),
-      occasion_tags: z.array(z.string().min(1)).min(1),
+      occasion_tags: z.array(z.string().min(1)).optional().default([]),
       allergen_tiers: allergenTiersSchema.optional(),
       allergen_none_confirmed: z.boolean().optional(),
       halal: z.boolean().optional(),
@@ -103,7 +99,7 @@ export const ListingUpdateSchema = z
     calories: z.number().optional(),
     calories_confidence: z.enum(["full", "category"]).optional(),
     ingredients: z.array(ingredientSchema).min(1).optional(),
-    occasion_tags: z.array(z.string().min(1)).min(1).optional(),
+    occasion_tags: z.array(z.string().min(1)).optional(),
     allergen_tiers: allergenTiersSchema.optional(),
     allergen_none_confirmed: z.boolean().optional(),
     halal: z.boolean().optional(),
