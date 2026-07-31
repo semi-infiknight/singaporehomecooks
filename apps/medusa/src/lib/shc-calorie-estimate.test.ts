@@ -9,8 +9,9 @@ describe("shc-calorie-estimate", () => {
   });
 
   it("sums USDA-backed ingredient calories", async () => {
-    const fetchImpl = vi.fn(async (url: string) => {
-      if (String(url).includes("nal.usda.gov")) {
+    const fetchImpl = vi.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes("nal.usda.gov")) {
         return {
           ok: true,
           json: async () => ({
@@ -31,7 +32,7 @@ describe("shc-calorie-estimate", () => {
         { name: "chicken breast", quantity: 300, unit: "g" },
         { name: "coconut milk", quantity: 200, unit: "ml" },
       ],
-      { fetchImpl, usdaApiKey: "test-key" }
+      { fetchImpl: fetchImpl as typeof fetch, usdaApiKey: "test-key" }
     );
 
     expect(result.calories).toBeGreaterThan(400);
@@ -40,11 +41,12 @@ describe("shc-calorie-estimate", () => {
   });
 
   it("falls back to Open Food Facts when USDA misses", async () => {
-    const fetchImpl = vi.fn(async (url: string) => {
-      if (String(url).includes("nal.usda.gov")) {
+    const fetchImpl = vi.fn(async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes("nal.usda.gov")) {
         return { ok: true, json: async () => ({ foods: [] }) } as Response;
       }
-      if (String(url).includes("openfoodfacts.org")) {
+      if (url.includes("openfoodfacts.org")) {
         return {
           ok: true,
           json: async () => ({
@@ -57,7 +59,7 @@ describe("shc-calorie-estimate", () => {
 
     const result = await estimateCaloriesFromIngredients(
       [{ name: "coconut milk", quantity: 100, unit: "g" }],
-      { fetchImpl }
+      { fetchImpl: fetchImpl as typeof fetch }
     );
 
     expect(result.calories).toBe(230);
