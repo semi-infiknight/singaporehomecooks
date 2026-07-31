@@ -10,6 +10,7 @@ export const shcBidSchema = z.object({
   cook_id: z.string(),
   price_cents: z.number().int().positive(),
   message: z.string().optional(),
+  line_items_json: z.string().optional(),
   status: BidStatus,
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),

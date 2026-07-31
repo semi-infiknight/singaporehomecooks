@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { BENTO_ACTION_IMAGES, getOccasionImageUrl, defaultListingOccasionTagOptions } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getOccasionImageUrl, defaultListingOccasionTagOptions, newRequestDishLine, buildRequestBodyFromItems } from '@shc/utils';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, shcSectionStack, gourmeatColors } from './theme';
 import { SHCFoodImage } from './visuals';
 import { SHCIcon } from './icons';
@@ -13,6 +13,7 @@ import { OccasionTagPicker } from './occasion-picker';
 
 export type RequestDishPayload = {
   body: string;
+  items: Array<{ id: string; name: string; servings: number; notes?: string; youtube_url?: string }>;
   youtube_url?: string;
   party_size?: number;
   guest_count?: number;
@@ -22,8 +23,8 @@ export type RequestDishPayload = {
 };
 
 const STEPS = [
-  { id: 'occasion', label: 'Your story' },
-  { id: 'inspiration', label: 'Inspiration' },
+  { id: 'occasion', label: 'Occasion' },
+  { id: 'dishes', label: 'Dishes' },
   { id: 'gathering', label: 'Gathering' },
   { id: 'review', label: 'Review' },
 ];
@@ -58,11 +59,11 @@ export function RequestDishExperience({
 }) {
   const [step, setStep] = React.useState(1);
   const [occasion, setOccasion] = React.useState(defaultOccasion);
-  const [story, setStory] = React.useState(
-    'Nasi lemak with sambal prawns for our Hari Raya open house — spicy, halal-friendly, enough for the whole family.',
-  );
+  const [context, setContext] = React.useState('Family gathering — mix of mains and sides.');
+  const [dishLines, setDishLines] = React.useState(() => [
+    newRequestDishLine({ name: 'Nasi lemak with sambal prawns', servings: 8 }),
+  ]);
   const [youtube, setYoutube] = React.useState('');
-  const [partySize, setPartySize] = React.useState(8);
   const [guestCount, setGuestCount] = React.useState(8);
   const [budget, setBudget] = React.useState(120);
   const [date, setDate] = React.useState(defaultDate);
@@ -74,15 +75,16 @@ export function RequestDishExperience({
   const heroUri = occasion ? getOccasionImageUrl(occasion) : BENTO_ACTION_IMAGES.request;
   const stepMeta = STEPS[step - 1];
 
-  const body = [occasion ? `${occasion}:` : '', story.trim()].filter(Boolean).join(' ').trim();
+  const body = buildRequestBodyFromItems(occasion, dishLines, context);
+  const totalServings = dishLines.reduce((s, l) => s + Math.max(1, l.servings), 0);
 
   const canNext =
     step === 1
-      ? story.trim().length >= 10
+      ? Boolean(occasion)
       : step === 2
-        ? true
+        ? dishLines.some((l) => l.name.trim().length >= 2)
         : step === 3
-          ? partySize >= 2 && budget >= 20 && /^\d{4}-\d{2}-\d{2}$/.test(date)
+          ? guestCount >= 2 && budget >= 20 && /^\d{4}-\d{2}-\d{2}$/.test(date)
           : body.length >= 10;
 
   const goNext = () => {
@@ -90,8 +92,17 @@ export function RequestDishExperience({
     else if (step === 4 && canNext && !busy) {
       onSubmit({
         body,
+        items: dishLines
+          .filter((l) => l.name.trim().length >= 2)
+          .map((l) => ({
+            id: l.id,
+            name: l.name.trim(),
+            servings: Math.max(1, l.servings),
+            notes: l.notes,
+            youtube_url: l.youtube_url,
+          })),
         youtube_url: youtube.trim() || undefined,
-        party_size: partySize,
+        party_size: dishLines[0]?.servings,
         guest_count: guestCount,
         budget_cents: Math.round(budget * 100),
         date,
@@ -157,10 +168,10 @@ export function RequestDishExperience({
                 Request a custom dish
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.9)', marginTop: 6 }}>
-                {step === 1 && 'Tell home cooks your occasion and what you crave'}
-                {step === 2 && 'Share a recipe video — cooks bring their HDB interpretation'}
-                {step === 3 && 'Servings, guest count, budget, and collection date'}
-                {step === 4 && 'Review before cooks send quotes on Custom requests'}
+                {step === 1 && 'Pick an occasion and optional context'}
+                {step === 2 && 'Add each dish with servings — cooks quote per line'}
+                {step === 3 && 'Guest count, budget, date, and optional YouTube'}
+                {step === 4 && 'Review before cooks send quotes'}
               </Text>
             </SHCFadeIn>
           </View>
@@ -180,72 +191,78 @@ export function RequestDishExperience({
                   onToggle={(tag) => setOccasion(tag)}
                   options={occasionOptions}
                 />
-                <Text style={[labelStyle, { marginTop: shcSpacing.md }]}>Describe the dish & vibe</Text>
+                <Text style={[labelStyle, { marginTop: shcSpacing.md }]}>Context (optional)</Text>
                 <TextInput
-                  value={story}
-                  onChangeText={setStory}
+                  value={context}
+                  onChangeText={setContext}
                   multiline
-                  placeholder="e.g. Ayam buah keluak for 6, Peranakan-style, medium spice…"
+                  placeholder="e.g. Hari Raya open house, halal-friendly, medium spice…"
                   placeholderTextColor={shcColors.textLight}
                   style={inputMultiline}
-                  testID="request-desc"
+                  testID="request-context"
                 />
-                <Text style={hintStyle}>Min 10 characters — cooks use this to craft their bid.</Text>
               </View>
             )}
 
             {step === 2 && (
-              <View testID="request-step-inspiration">
-                <SHCCard variant="bento-peach" style={{ marginBottom: shcSpacing.md }}>
-                  <View style={{ flexDirection: 'row', gap: shcSpacing.sm, alignItems: 'flex-start' }}>
-                    <SHCIcon name="discover" size={22} color={shcColors.heritage} active />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '800', color: shcColors.text, fontSize: 14 }}>Cook&apos;s interpretation</Text>
-                      <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>
-                        Paste a YouTube recipe — verified HDB cooks adapt it to their kitchen, not a carbon copy.
-                      </Text>
+              <View testID="request-step-dishes">
+                <Text style={labelStyle}>Dishes you want</Text>
+                <Text style={[hintStyle, { marginTop: 0, marginBottom: shcSpacing.sm }]}>
+                  Add each dish separately — cooks can quote per item.
+                </Text>
+                {dishLines.map((line, idx) => (
+                  <View key={line.id} style={{ marginBottom: shcSpacing.md }}>
+                    <TextInput
+                      value={line.name}
+                      onChangeText={(t) =>
+                        setDishLines((rows) => rows.map((r) => (r.id === line.id ? { ...r, name: t } : r)))
+                      }
+                      placeholder={`Dish ${idx + 1} name`}
+                      placeholderTextColor={shcColors.textLight}
+                      style={inputSingle}
+                      testID={`request-dish-name-${idx}`}
+                    />
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                      {PARTY_PRESETS.map((n) => (
+                        <Pressable
+                          key={`${line.id}-${n}`}
+                          onPress={() =>
+                            setDishLines((rows) => rows.map((r) => (r.id === line.id ? { ...r, servings: n } : r)))
+                          }
+                          style={chipStyle(line.servings === n)}
+                          testID={`request-dish-servings-${idx}-${n}`}
+                        >
+                          <Text style={chipText(line.servings === n)}>{n} servings</Text>
+                        </Pressable>
+                      ))}
                     </View>
+                    {dishLines.length > 1 ? (
+                      <Pressable
+                        onPress={() => setDishLines((rows) => rows.filter((r) => r.id !== line.id))}
+                        style={{ marginTop: 6 }}
+                      >
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.error }}>Remove dish</Text>
+                      </Pressable>
+                    ) : null}
                   </View>
-                </SHCCard>
-                <Text style={labelStyle}>YouTube URL (optional)</Text>
-                <TextInput
-                  value={youtube}
-                  onChangeText={setYoutube}
-                  autoCapitalize="none"
-                  keyboardType="url"
-                  placeholder="https://youtube.com/watch?v=…"
-                  placeholderTextColor={shcColors.textLight}
-                  style={inputSingle}
-                  testID="request-yt"
-                />
-                <Pressable onPress={() => setYoutube('')} style={{ marginTop: shcSpacing.sm }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.primary }}>Skip — no video needed</Text>
-                </Pressable>
+                ))}
+                {dishLines.length < 8 ? (
+                  <Pressable
+                    onPress={() => setDishLines((rows) => [...rows, newRequestDishLine()])}
+                    testID="request-add-dish"
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: shcColors.primary }}>+ Add another dish</Text>
+                  </Pressable>
+                ) : null}
               </View>
             )}
 
             {step === 3 && (
               <View testID="request-step-gathering">
-                <Text style={labelStyle}>Servings needed</Text>
+                <Text style={labelStyle}>Guest count</Text>
                 <Text style={[hintStyle, { marginTop: 0, marginBottom: shcSpacing.sm }]}>
-                  Portions to prepare (usually matches how many you are feeding).
+                  How many people are eating — not the same as per-dish servings.
                 </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
-                  {PARTY_PRESETS.map((n) => (
-                    <Pressable
-                      key={n}
-                      onPress={() => {
-                        setPartySize(n);
-                        setGuestCount(n);
-                      }}
-                      style={chipStyle(partySize === n)}
-                      testID={`request-servings-${n}`}
-                    >
-                      <Text style={chipText(partySize === n)}>{n} servings</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Text style={labelStyle}>Guest count (optional)</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
                   {PARTY_PRESETS.map((n) => (
                     <Pressable
@@ -258,6 +275,17 @@ export function RequestDishExperience({
                     </Pressable>
                   ))}
                 </View>
+                <Text style={labelStyle}>YouTube URL (optional)</Text>
+                <TextInput
+                  value={youtube}
+                  onChangeText={setYoutube}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                  placeholder="https://youtube.com/watch?v=…"
+                  placeholderTextColor={shcColors.textLight}
+                  style={inputSingle}
+                  testID="request-yt"
+                />
                 <Text style={labelStyle}>Budget (S$)</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
                   {BUDGET_PRESETS.map((b) => (
@@ -284,6 +312,11 @@ export function RequestDishExperience({
                 <SHCCard variant="bento-mint" style={{ marginBottom: shcSpacing.md }}>
                   <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, letterSpacing: 0.5 }}>YOUR REQUEST</Text>
                   <Text style={{ fontSize: 16, fontWeight: '800', color: shcColors.text, marginTop: 6, lineHeight: 22 }}>{body}</Text>
+                  {dishLines.map((line) => (
+                    <Text key={line.id} style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, marginTop: 6 }}>
+                      · {line.name} ({line.servings} servings)
+                    </Text>
+                  ))}
                   {youtube.trim() ? (
                     <Text style={{ fontSize: 12, color: shcColors.primary, marginTop: 8, fontWeight: '600' }} numberOfLines={1}>
                       📺 {youtube.trim()}
@@ -292,7 +325,7 @@ export function RequestDishExperience({
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.md }}>
                     <View style={reviewPill}>
                       <SHCIcon name="people" size={14} color={shcColors.text} />
-                      <Text style={reviewPillText}>{partySize} servings · {guestCount} guests</Text>
+                      <Text style={reviewPillText}>{dishLines.length} dishes · {totalServings} servings · {guestCount} guests</Text>
                     </View>
                     <View style={reviewPill}>
                       <SHCIcon name="credits" size={14} color={shcColors.text} />

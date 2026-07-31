@@ -46,6 +46,15 @@ export type CookQuoteDisplay = {
   message?: string;
   status: string;
   created_at?: string;
+  line_items?: CookQuoteLineItem[];
+};
+
+export type CookQuoteLineItem = {
+  request_line_id: string;
+  included: boolean;
+  servings?: number;
+  price_cents: number;
+  name?: string;
 };
 
 /** Parse API request row (legacy body + optional items_json). */
@@ -160,4 +169,101 @@ export function shcGuestCountBadgeLabel(guests: number | string): string {
   const n = Number(guests);
   if (!Number.isFinite(n) || n < 1) return '— guests';
   return n === 1 ? '1 guest' : `${n} guests`;
+}
+
+/** Parse bid/quote row with optional line_items_json. */
+export function parseCookQuoteDisplay(
+  raw: Record<string, unknown>,
+  requestLines?: CustomRequestLine[]
+): CookQuoteDisplay {
+  const lineMap = new Map((requestLines || []).map((l) => [l.id, l]));
+  let line_items: CookQuoteLineItem[] | undefined;
+  const itemsRaw = raw.line_items_json ?? raw.line_items;
+  if (typeof itemsRaw === 'string' && itemsRaw.trim()) {
+    try {
+      const parsed = JSON.parse(itemsRaw);
+      if (Array.isArray(parsed)) {
+        line_items = parsed.map((row: Record<string, unknown>) => {
+          const id = String(row.request_line_id || '');
+          const reqLine = lineMap.get(id);
+          return {
+            request_line_id: id,
+            included: Boolean(row.included),
+            servings: row.servings != null ? Number(row.servings) : reqLine?.servings,
+            price_cents: Math.max(0, Number(row.price_cents) || 0),
+            name: reqLine?.name,
+          };
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+  } else if (Array.isArray(itemsRaw)) {
+    line_items = (itemsRaw as Record<string, unknown>[]).map((row) => {
+      const id = String(row.request_line_id || '');
+      const reqLine = lineMap.get(id);
+      return {
+        request_line_id: id,
+        included: Boolean(row.included),
+        servings: row.servings != null ? Number(row.servings) : reqLine?.servings,
+        price_cents: Math.max(0, Number(row.price_cents) || 0),
+        name: reqLine?.name,
+      };
+    });
+  }
+
+  return {
+    id: String(raw.id || ''),
+    cook_id: String(raw.cook_id || ''),
+    cook_name: raw.cook_name ? String(raw.cook_name) : undefined,
+    price_cents: Math.max(0, Number(raw.price_cents) || 0),
+    message: raw.message ? String(raw.message) : undefined,
+    status: String(raw.status || 'pending'),
+    created_at: raw.created_at ? String(raw.created_at) : undefined,
+    line_items,
+  };
+}
+
+/** Default quote lines — all request dishes included, zero price until cook fills in. */
+export function buildDefaultQuoteLines(lines: CustomRequestLine[]): CookQuoteLineItem[] {
+  return lines.map((line) => ({
+    request_line_id: line.id,
+    included: true,
+    servings: line.servings,
+    price_cents: 0,
+    name: line.name,
+  }));
+}
+
+export function sumIncludedQuoteCents(lineItems: CookQuoteLineItem[]): number {
+  return lineItems.filter((l) => l.included).reduce((s, l) => s + Math.max(0, l.price_cents), 0);
+}
+
+export function validateClientQuoteLines(lineItems: CookQuoteLineItem[]): { ok: true } | { ok: false; message: string } {
+  const included = lineItems.filter((l) => l.included);
+  if (!included.length) return { ok: false, message: 'Include at least one dish in your quote.' };
+  for (const line of included) {
+    if (!line.price_cents || line.price_cents <= 0) {
+      return { ok: false, message: `Set a price for ${line.name || 'each included dish'}.` };
+    }
+  }
+  return { ok: true };
+}
+
+export function buildRequestBodyFromItems(occasion: string | undefined, items: CustomRequestLine[], context?: string): string {
+  const names = items.map((i) => i.name.trim()).filter(Boolean);
+  const summary = names.length ? names.join(' · ') : (context || '').trim();
+  if (occasion && summary) return `${occasion}: ${summary}`;
+  return summary || occasion || '';
+}
+
+export function newRequestDishLine(seed?: Partial<CustomRequestLine>): CustomRequestLine {
+  const id = seed?.id || `line_${Date.now().toString(36)}`;
+  return {
+    id,
+    name: seed?.name || '',
+    servings: Math.max(1, Number(seed?.servings) || 4),
+    notes: seed?.notes,
+    youtube_url: seed?.youtube_url,
+  };
 }

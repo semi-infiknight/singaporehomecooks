@@ -7,6 +7,7 @@ export const Bid = model.define("shc_bid", {
   cook_id: model.text(),
   price_cents: model.number(),
   message: model.text().nullable(),
+  line_items_json: model.text().nullable(),
   status: model.enum(["pending", "accepted", "rejected"]).default("pending"),
 });
 

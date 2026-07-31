@@ -81,8 +81,16 @@ export default function RequestDishPage() {
           : true;
 
   const handlePost = async () => {
+    const dishItems = [
+      {
+        id: 'line_0',
+        name: story.trim().slice(0, 120) || 'Custom dish',
+        servings: partySize,
+      },
+    ];
     const req = await createReq.mutateAsync({
       body,
+      items: dishItems,
       youtube_url: youtube.trim() || undefined,
       party_size: partySize,
       guest_count: guestCount,
@@ -124,8 +132,8 @@ export default function RequestDishPage() {
         <h1 className="text-3xl font-black text-foreground">Request posted!</h1>
         <p className="text-muted-foreground mt-3 font-medium leading-relaxed">
           {requestId
-            ? `Request ${requestId} is live. Home cooks will bid on the Collaboration Board.`
-            : 'Home cooks will bid soon — check notifications for offers.'}
+            ? `Request ${requestId} is live. Home cooks will send quotes on Custom requests.`
+            : 'Home cooks will quote soon — check Orders → Custom requests.'}
         </p>
         <div className="flex flex-col gap-3 mt-8 w-full max-w-xs">
           <SHCButton size="lg" onClick={() => router.push('/')}>

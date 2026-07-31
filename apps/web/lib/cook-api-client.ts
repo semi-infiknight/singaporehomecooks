@@ -116,8 +116,12 @@ export const createCookExpense = (input: {
   date: string;
 }) => cookClient.createCookExpense(input);
 export const listOpenRequests = () => cookClient.listOpenRequests();
-export const createBid = (requestId: string, priceCents: number, message?: string) =>
-  cookClient.createBid(requestId, priceCents, message);
+export const createBid = (
+  requestId: string,
+  priceCents: number,
+  message?: string,
+  lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>
+) => cookClient.createBid(requestId, priceCents, message, lineItems);
 export const listMyDrops = () => cookClient.listDrops({ mine: true });
 export const createDrop = (input: Record<string, unknown>) => cookClient.createDrop(input);
 export const patchDrop = (id: string, input: Record<string, unknown>) => cookClient.patchDrop(id, input);

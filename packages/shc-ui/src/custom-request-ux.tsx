@@ -1,16 +1,22 @@
 // Custom dish request cards — customer orders tab + detail (tri-platform mobile; web mirror in SHCWebComponents).
 // @ts-nocheck
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, TextInput, Switch } from 'react-native';
 import {
   CUSTOM_REQUEST_COPY,
   customRequestStatusLabel,
   formatQuoteTotal,
   parseCustomRequestDisplay,
+  parseCookQuoteDisplay,
   shcGuestCountBadgeLabel,
   shcServingsBadgeLabel,
+  buildDefaultQuoteLines,
+  validateClientQuoteLines,
+  sumIncludedQuoteCents,
   type CookQuoteDisplay,
+  type CookQuoteLineItem,
   type CustomRequestDisplay,
+  parseBidDollarsToCents,
 } from '@shc/utils';
 import { getDishImageUrl, getOccasionImageUrl } from '@shc/utils';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, gourmeatColors } from './theme';
@@ -76,26 +82,45 @@ export function SHCCookQuoteCard({
   cookName,
   onAccept,
   accepting,
+  requestLines,
   testID,
 }: {
-  quote: CookQuoteDisplay;
+  quote: CookQuoteDisplay | Record<string, unknown>;
   cookName?: string;
   onAccept?: () => void;
   accepting?: boolean;
+  requestLines?: CustomRequestDisplay['lines'];
   testID?: string;
 }) {
-  const pending = quote.status === 'pending';
+  const parsed =
+    quote && (quote as CookQuoteDisplay).line_items
+      ? (quote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(quote as Record<string, unknown>, requestLines);
+  const pending = parsed.status === 'pending';
+  const includedLines = (parsed.line_items || []).filter((l) => l.included);
   return (
     <SHCCard testID={testID} style={{ marginTop: shcSpacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: shcSpacing.sm }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontWeight: '900', fontSize: 15, color: shcColors.text }}>{cookName || 'Home cook'}</Text>
-          {quote.message ? (
-            <Text style={{ fontSize: 13, color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>{quote.message}</Text>
+          <Text style={{ fontWeight: '900', fontSize: 15, color: shcColors.text }}>{cookName || parsed.cook_name || 'Home cook'}</Text>
+          {parsed.message ? (
+            <Text style={{ fontSize: 13, color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>{parsed.message}</Text>
           ) : null}
         </View>
-        <Text style={{ fontWeight: '900', fontSize: 16, color: shcColors.primary }}>{formatQuoteTotal(quote.price_cents)}</Text>
+        <Text style={{ fontWeight: '900', fontSize: 16, color: shcColors.primary }}>{formatQuoteTotal(parsed.price_cents)}</Text>
       </View>
+      {includedLines.length > 0 ? (
+        <View style={{ marginTop: shcSpacing.sm, gap: 4 }}>
+          {includedLines.map((line) => (
+            <View key={line.request_line_id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, flex: 1 }} numberOfLines={1}>
+                {line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}
+              </Text>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.text }}>{formatQuoteTotal(line.price_cents)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {pending && onAccept ? (
         <SHCButton onPress={onAccept} disabled={accepting} style={{ marginTop: shcSpacing.sm }} testID={testID ? `${testID}-accept` : undefined}>
           <SHCButtonText>{accepting ? 'Accepting…' : CUSTOM_REQUEST_COPY.acceptQuote}</SHCButtonText>
@@ -106,6 +131,137 @@ export function SHCCookQuoteCard({
         </Text>
       ) : null}
     </SHCCard>
+  );
+}
+
+export function SHCCookQuoteBuilder({
+  request,
+  onSubmit,
+  busy = false,
+  testID,
+}: {
+  request: Record<string, unknown>;
+  onSubmit: (payload: {
+    line_items: CookQuoteLineItem[];
+    message?: string;
+    price_cents: number;
+  }) => void | Promise<void>;
+  busy?: boolean;
+  testID?: string;
+}) {
+  const parsed = parseCustomRequestDisplay(request);
+  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() => buildDefaultQuoteLines(parsed.lines));
+  const [message, setMessage] = React.useState('');
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    setLines(buildDefaultQuoteLines(parseCustomRequestDisplay(request).lines));
+  }, [request.id]);
+
+  const total = sumIncludedQuoteCents(lines);
+
+  const updateLine = (id: string, patch: Partial<CookQuoteLineItem>) => {
+    setLines((prev) => prev.map((l) => (l.request_line_id === id ? { ...l, ...patch } : l)));
+  };
+
+  const handlePriceInput = (id: string, raw: string) => {
+    const parsedPrice = parseBidDollarsToCents(raw);
+    updateLine(id, { price_cents: parsedPrice.ok ? parsedPrice.cents : 0 });
+  };
+
+  const handleSend = async () => {
+    setError('');
+    const check = validateClientQuoteLines(lines);
+    if (!check.ok) {
+      setError(check.message);
+      return;
+    }
+    await onSubmit({
+      line_items: lines,
+      message: message.trim() || undefined,
+      price_cents: total,
+    });
+  };
+
+  return (
+    <View testID={testID}>
+      {parsed.lines.map((reqLine) => {
+        const qLine = lines.find((l) => l.request_line_id === reqLine.id);
+        if (!qLine) return null;
+        return (
+          <View
+            key={reqLine.id}
+            style={{
+              borderWidth: shcBorders.brutal,
+              borderColor: shcColors.border,
+              borderRadius: shcRadii.md,
+              padding: shcSpacing.sm,
+              marginBottom: shcSpacing.sm,
+              backgroundColor: qLine.included ? shcColors.surface : shcColors.surfaceMuted,
+            }}
+            testID={`quote-line-${reqLine.id}`}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '800', fontSize: 14, color: shcColors.text }}>{reqLine.name}</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight }}>{shcServingsBadgeLabel(reqLine.servings)}</Text>
+              </View>
+              <Switch
+                value={qLine.included}
+                onValueChange={(v) => updateLine(reqLine.id, { included: v })}
+                testID={`quote-include-${reqLine.id}`}
+              />
+            </View>
+            {qLine.included ? (
+              <TextInput
+                placeholder="Price S$ (e.g. 45)"
+                placeholderTextColor={shcColors.textLight}
+                keyboardType="decimal-pad"
+                onChangeText={(t) => handlePriceInput(reqLine.id, t)}
+                style={{
+                  marginTop: shcSpacing.sm,
+                  borderWidth: 1,
+                  borderColor: shcColors.border,
+                  borderRadius: shcRadii.sm,
+                  padding: shcSpacing.sm,
+                  fontWeight: '700',
+                  color: shcColors.text,
+                }}
+                testID={`quote-price-${reqLine.id}`}
+              />
+            ) : (
+              <Text style={{ fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginTop: 6 }}>Not included in quote</Text>
+            )}
+          </View>
+        );
+      })}
+      <TextInput
+        placeholder="Message to customer (optional)"
+        placeholderTextColor={shcColors.textLight}
+        value={message}
+        onChangeText={setMessage}
+        multiline
+        style={{
+          borderWidth: shcBorders.brutal,
+          borderColor: shcColors.border,
+          borderRadius: shcRadii.md,
+          padding: shcSpacing.sm,
+          minHeight: 64,
+          textAlignVertical: 'top',
+          fontWeight: '600',
+          color: shcColors.text,
+          marginBottom: shcSpacing.sm,
+        }}
+        testID="quote-message"
+      />
+      <Text style={{ fontWeight: '900', fontSize: 15, color: shcColors.text, marginBottom: shcSpacing.sm }}>
+        Quote total: {formatQuoteTotal(total)}
+      </Text>
+      {error ? <Text style={{ color: shcColors.error, fontWeight: '700', marginBottom: shcSpacing.sm }}>{error}</Text> : null}
+      <SHCButton onPress={handleSend} disabled={busy} testID={testID ? `${testID}-send` : 'quote-send-btn'}>
+        <SHCButtonText>{busy ? 'Sending…' : CUSTOM_REQUEST_COPY.sendQuote}</SHCButtonText>
+      </SHCButton>
+    </View>
   );
 }
 

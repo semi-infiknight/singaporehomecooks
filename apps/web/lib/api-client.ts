@@ -129,8 +129,12 @@ export const generateListingImage = (input: {
 }) => client.generateListingImage(input);
 export const getAiImageStatus = () => client.getAiImageStatus();
 export const getBids = (requestId?: string) => client.getBids(requestId);
-export const createBid = (requestId: string, priceCents: number, message?: string) =>
-  client.createBid(requestId, priceCents, message);
+export const createBid = (
+  requestId: string,
+  priceCents: number,
+  message?: string,
+  lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>
+) => client.createBid(requestId, priceCents, message, lineItems);
 export const acceptBid = (bidId: string) => client.acceptBid(bidId);
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();

@@ -192,8 +192,17 @@ export function useOpenRequests() {
 export function useCreateBid() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ requestId, priceCents, message }: { requestId: string; priceCents: number; message?: string }) =>
-      createBid(requestId, priceCents, message),
+    mutationFn: ({
+      requestId,
+      priceCents,
+      message,
+      lineItems,
+    }: {
+      requestId: string;
+      priceCents: number;
+      message?: string;
+      lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
+    }) => createBid(requestId, priceCents, message, lineItems),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cook-open-requests'] });
       qc.invalidateQueries({ queryKey: ['cook-orders'] });

@@ -4,6 +4,9 @@ import {
   parseCustomRequestDisplay,
   shcServingsBadgeLabel,
   shcGuestCountBadgeLabel,
+  buildDefaultQuoteLines,
+  validateClientQuoteLines,
+  sumIncludedQuoteCents,
 } from './custom-request';
 
 describe('custom-request utils', () => {
@@ -41,5 +44,18 @@ describe('custom-request utils', () => {
     expect(CUSTOM_REQUEST_COPY.cookBoardTitle).toBe('Custom requests');
     expect(shcServingsBadgeLabel(4)).toBe('4 servings');
     expect(shcGuestCountBadgeLabel(1)).toBe('1 guest');
+  });
+
+  it('builds default quote lines and validates client quote', () => {
+    const lines = buildDefaultQuoteLines([
+      { id: 'a', name: 'Laksa', servings: 6 },
+      { id: 'b', name: 'Kueh', servings: 12 },
+    ]);
+    expect(lines).toHaveLength(2);
+    expect(validateClientQuoteLines(lines).ok).toBe(false);
+    lines[0].price_cents = 5000;
+    lines[1].included = false;
+    expect(validateClientQuoteLines(lines).ok).toBe(true);
+    expect(sumIncludedQuoteCents(lines)).toBe(5000);
   });
 });

@@ -163,9 +163,14 @@ export function useBids(reqId?: string) {
 export function useCreateBid() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (d: { requestId: string; priceCents: number; message?: string }) => {
+    mutationFn: async (d: {
+      requestId: string;
+      priceCents: number;
+      message?: string;
+      lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
+    }) => {
       const { createBid } = await import('./api-client');
-      return createBid(d.requestId, d.priceCents, d.message);
+      return createBid(d.requestId, d.priceCents, d.message, d.lineItems);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bids'] }),
   });

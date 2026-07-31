@@ -503,10 +503,26 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       });
     },
 
-    async createBid(requestId: string, priceCents: number, message?: string) {
+    async createBid(
+      requestId: string,
+      priceCents: number,
+      message?: string,
+      lineItems?: Array<{
+        request_line_id: string;
+        included: boolean;
+        servings?: number;
+        price_cents: number;
+      }>
+    ) {
+      const body: Record<string, unknown> = {
+        request_id: requestId,
+        price_cents: priceCents,
+        message,
+      };
+      if (lineItems?.length) body.line_items = lineItems;
       const r = await request("/store/shc/bids", {
         method: "POST",
-        body: JSON.stringify({ request_id: requestId, price_cents: priceCents, message }),
+        body: JSON.stringify(body),
       });
       return (r as any).bid;
     },

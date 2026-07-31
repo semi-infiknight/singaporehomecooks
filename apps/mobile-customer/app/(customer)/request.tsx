@@ -55,6 +55,7 @@ export default function RequestDishScreen() {
     try {
       const req = await createReq.mutateAsync({
         body: data.body,
+        items: data.items,
         youtube_url: data.youtube_url,
         party_size: data.party_size,
         guest_count: data.guest_count,

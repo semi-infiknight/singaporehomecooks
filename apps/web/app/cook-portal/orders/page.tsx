@@ -9,11 +9,10 @@ import { useRouter } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
 import {
   getOrderStatusLabel,
-  parseBidDollarsToCents,
   formatBidCentsAsDollars,
   isCookComplianceVerified,
   partitionCookOrders,
-  shcServingsBadgeLabel,
+  parseCustomRequestDisplay,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -33,6 +32,7 @@ import {
   SHCBadge,
   SHCMetaBadge,
   SHCSkeletonOrderList,
+  CookQuoteBuilderWeb,
 } from '../../components/SHCWebComponents';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
@@ -52,8 +52,6 @@ export default function CookOrdersPage() {
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const createBid = useCreateBid();
   const transMut = useCookTransitionOrder();
-  const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
-  const [bidMessages, setBidMessages] = useState<Record<string, string>>({});
   const [bidSuccess, setBidSuccess] = useState<Record<string, string>>({});
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
@@ -73,34 +71,34 @@ export default function CookOrdersPage() {
     }
   };
 
-  const handleBid = async (reqId: string) => {
+  const handleQuote = async (
+    reqId: string,
+    payload: {
+      line_items: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
+      message?: string;
+      price_cents: number;
+    }
+  ) => {
     setBidError('');
     setBidSuccess((s) => {
       const next = { ...s };
       delete next[reqId];
       return next;
     });
-    const parsed = parseBidDollarsToCents(bidPrices[reqId]);
-    if (!parsed.ok) {
-      setBidError(parsed.message);
-      return;
-    }
     setBiddingId(reqId);
     try {
       await createBid.mutateAsync({
         requestId: reqId,
-        priceCents: parsed.cents,
-        message:
-          bidMessages[reqId]?.trim() ||
-          'Heritage HDB recipe interpretation ready. Flexible for your party size.',
+        priceCents: payload.price_cents,
+        message: payload.message || 'Heritage HDB recipe interpretation ready.',
+        lineItems: payload.line_items,
       });
       setBidSuccess((s) => ({
         ...s,
-        [reqId]: `Bid sent · ${formatBidCentsAsDollars(parsed.cents)}`,
+        [reqId]: `Quote sent · ${formatBidCentsAsDollars(payload.price_cents)}`,
       }));
-      setBidPrices((p) => ({ ...p, [reqId]: '' }));
     } catch (e) {
-      setBidError((e as Error).message || 'Could not place bid. Check cook login and try again.');
+      setBidError((e as Error).message || 'Could not send quote. Check cook login and try again.');
     } finally {
       setBiddingId(null);
     }
@@ -234,58 +232,43 @@ export default function CookOrdersPage() {
             body="Custom dish requests from customers show here for quoting."
           />
         ) : (
-          reqList.map(
-            (r: {
-              id: string;
-              body?: string;
-              party_size?: number;
-              budget_cents?: number;
-              date?: string;
-            }) => (
+          reqList.map((r) => {
+            const parsed = parseCustomRequestDisplay(r as Record<string, unknown>);
+            return (
               <div
                 key={r.id}
                 className="bg-card rounded-xl p-3 mb-3 last:mb-0 shadow-[var(--shc-shadow-soft)]"
                 data-testid={`collab-req-${r.id}`}
               >
-                <p className="font-bold text-sm line-clamp-3">{r.body || 'Custom request'}</p>
+                <p className="font-bold text-sm line-clamp-2">{parsed.summary}</p>
+                {parsed.lines.map((line) => (
+                  <p key={line.id} className="text-xs text-muted-foreground font-semibold">
+                    · {line.name} ({line.servings} servings)
+                  </p>
+                ))}
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <SHCMetaBadge kind="portion_min">{shcServingsBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                  {parsed.guest_count ? <SHCMetaBadge kind="party_size">{parsed.guest_count} guests</SHCMetaBadge> : null}
                   <SHCMetaBadge kind="price">
                     Budget S$
                     {r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
                   </SHCMetaBadge>
                   {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
                 </div>
-                <input
-                  className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
-                  placeholder="Your quote in S$ (e.g. 84)"
-                  value={bidPrices[r.id] || ''}
-                  onChange={(e) => setBidPrices((p) => ({ ...p, [r.id]: e.target.value }))}
-                  data-testid={`bid-price-${r.id}`}
-                  inputMode="decimal"
-                />
-                <input
-                  className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm"
-                  placeholder="Message (optional)"
-                  value={bidMessages[r.id] || ''}
-                  onChange={(e) => setBidMessages((p) => ({ ...p, [r.id]: e.target.value }))}
-                  data-testid={`bid-msg-${r.id}`}
-                />
                 {bidSuccess[r.id] ? (
                   <p className="text-xs font-bold text-green-700 mt-2" data-testid={`bid-success-${r.id}`}>
                     {bidSuccess[r.id]}
                   </p>
-                ) : null}
-                <GourmeatPrimaryButton
-                  label={biddingId === r.id ? 'Sending…' : 'Send quote'}
-                  className="mt-2"
-                  onClick={() => handleBid(r.id)}
-                  disabled={biddingId === r.id}
-                  testID={`bid-btn-${r.id}`}
-                />
+                ) : (
+                  <CookQuoteBuilderWeb
+                    request={r as Record<string, unknown>}
+                    busy={biddingId === r.id}
+                    onSubmit={(payload) => handleQuote(r.id, payload)}
+                    testID={`quote-builder-${r.id}`}
+                  />
+                )}
               </div>
-            )
-          )
+            );
+          })
         )}
       </GourmeatCard>
     </div>

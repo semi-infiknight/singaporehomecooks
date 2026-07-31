@@ -130,8 +130,12 @@ export const getAiImageStatus = () => client.getAiImageStatus();
 export const registerPushToken = (cookId: string, token: string) =>
   client.registerPushToken(token, { cookId, role: 'cook' });
 export const listOpenRequests = () => client.listOpenRequests();
-export const createBid = (requestId: string, priceCents: number, message?: string) =>
-  client.createBid(requestId, priceCents, message);
+export const createBid = (
+  requestId: string,
+  priceCents: number,
+  message?: string,
+  lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>
+) => client.createBid(requestId, priceCents, message, lineItems);
 export const listMyDrops = () => client.listDrops({ mine: true });
 export const createDrop = (input: Record<string, unknown>) => client.createDrop(input);
 export const patchDrop = (id: string, input: Record<string, unknown>) => client.patchDrop(id, input);

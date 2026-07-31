@@ -1,6 +1,6 @@
 # Custom Requests v2 — Product & Data Model
 
-**Status:** Approved direction (2026-07-31) · Phase 1 UI + detail screens in progress  
+**Status:** Phase 2 shipped (2026-07-31) — multi-dish wizard (mobile), per-line cook quotes, `line_items_json` migration  
 **Replaces:** “Collaboration Board” + single-dish `body` + flat “bid” model
 
 ---
@@ -93,8 +93,8 @@
 | Phase | Scope |
 |-------|--------|
 | **1** | Naming, servings vs guests copy, Orders tab + request detail, quote cards with images |
-| **2** | DB migration `items_json`, `guest_count`, `line_items_json`; multi-dish wizard |
-| **3** | Partial quotes + partial accept; auto-decline sibling quotes on accept |
+| **2** | DB migration `items_json`, `guest_count`, `line_items_json`; multi-dish wizard + cook quote builder |
+| **3** | Partial accept; auto-decline sibling quotes on accept |
 | **4** | PayNow on quote accept; push on `shc.bid.created`; Maestro flows |
 
 ---

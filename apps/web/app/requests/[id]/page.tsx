@@ -7,6 +7,7 @@ import {
   CUSTOM_REQUEST_COPY,
   formatQuoteTotal,
   parseCustomRequestDisplay,
+  parseCookQuoteDisplay,
   shcGuestCountBadgeLabel,
   shcServingsBadgeLabel,
   getDishImageUrl,
@@ -86,7 +87,10 @@ export default function CustomRequestDetailPage() {
             </SHCCard>
           ) : (
             <ul className="space-y-3">
-              {pendingQuotes.map((quote: any) => (
+              {pendingQuotes.map((quote: any) => {
+                const parsedQuote = parseCookQuoteDisplay(quote, parsed.lines);
+                const includedLines = (parsedQuote.line_items || []).filter((l) => l.included);
+                return (
                 <li key={quote.id} className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-4 bg-card">
                   <div className="flex justify-between gap-3">
                     <div>
@@ -95,6 +99,16 @@ export default function CustomRequestDetailPage() {
                     </div>
                     <p className="font-black text-primary tabular-nums">{formatQuoteTotal(quote.price_cents)}</p>
                   </div>
+                  {includedLines.length > 0 ? (
+                    <ul className="mt-2 space-y-1">
+                      {includedLines.map((line) => (
+                        <li key={line.request_line_id} className="flex justify-between text-xs font-semibold text-muted-foreground">
+                          <span>{line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}</span>
+                          <span className="font-bold text-foreground">{formatQuoteTotal(line.price_cents)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   <SHCButton
                     className="mt-3 w-full"
                     onClick={() => acceptQuote.mutate(quote.id)}
@@ -104,7 +118,8 @@ export default function CustomRequestDetailPage() {
                     {acceptQuote.isPending ? 'Accepting…' : CUSTOM_REQUEST_COPY.acceptQuote}
                   </SHCButton>
                 </li>
-              ))}
+              );
+              })}
             </ul>
           )}
         </>

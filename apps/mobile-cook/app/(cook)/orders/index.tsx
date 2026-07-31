@@ -3,7 +3,7 @@
  * Bids live here (not dashboard) so cooks work requests next to order ops.
  */
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -19,11 +19,12 @@ import {
   SHCMetaBadge,
   SHCSectionTitle,
   SHCSkeletonOrderList,
+  SHCCookQuoteBuilder,
   gourmeatColors,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, shcServingsBadgeLabel } from '@shc/utils';
+import { getOrderStatusLabel, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, parseCustomRequestDisplay } from '@shc/utils';
 
 import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
@@ -48,8 +49,6 @@ export default function CookOrders() {
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
-  const [bidPrices, setBidPrices] = useState<Record<string, string>>({});
-  const [bidMessages, setBidMessages] = useState<Record<string, string>>({});
   const [bidSuccess, setBidSuccess] = useState<Record<string, string>>({});
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
@@ -70,34 +69,39 @@ export default function CookOrders() {
     }
   };
 
-  const handleBid = async (reqId: string) => {
+  const handleQuote = async (
+    reqId: string,
+    payload: {
+      line_items: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
+      message?: string;
+      price_cents: number;
+    }
+  ) => {
     setBidError('');
     setBidSuccess((s) => {
       const next = { ...s };
       delete next[reqId];
       return next;
     });
-    const parsed = parseBidDollarsToCents(bidPrices[reqId]);
-    if (!parsed.ok) {
-      setBidError(parsed.message);
-      return;
-    }
     setBiddingId(reqId);
     try {
       await createBidMut.mutateAsync({
         requestId: reqId,
-        priceCents: parsed.cents,
-        message:
-          bidMessages[reqId]?.trim() ||
-          'Heritage HDB recipe interpretation ready. Flexible for your party size.',
+        priceCents: payload.price_cents,
+        message: payload.message || 'Heritage HDB recipe interpretation ready.',
+        lineItems: payload.line_items.map((l) => ({
+          request_line_id: l.request_line_id,
+          included: l.included,
+          servings: l.servings,
+          price_cents: l.price_cents,
+        })),
       });
       setBidSuccess((s) => ({
         ...s,
-        [reqId]: `Bid sent · ${formatBidCentsAsDollars(parsed.cents)}`,
+        [reqId]: `Quote sent · ${formatBidCentsAsDollars(payload.price_cents)}`,
       }));
-      setBidPrices((p) => ({ ...p, [reqId]: '' }));
     } catch (e: any) {
-      setBidError(e?.message || 'Could not place bid. Check login and try again.');
+      setBidError(e?.message || 'Could not send quote. Check login and try again.');
     } finally {
       setBiddingId(null);
     }
@@ -277,49 +281,40 @@ export default function CookOrders() {
             body="When customers post custom dish requests, they appear here for quoting."
           />
         ) : (
-          reqList.map((r: any) => (
+          reqList.map((r: any) => {
+            const parsed = parseCustomRequestDisplay(r);
+            return (
             <View key={r.id} style={styles.collabItem} testID={`collab-req-${r.id}`}>
-              <Text style={styles.collabBody} numberOfLines={3}>
-                {r.body || r.title || 'Custom request'}
+              <Text style={styles.collabBody} numberOfLines={2}>
+                {parsed.summary}
               </Text>
+              {parsed.lines.map((line) => (
+                <Text key={line.id} style={styles.collabLine}>
+                  · {line.name} ({line.servings} servings)
+                </Text>
+              ))}
               <View style={styles.collabBadges}>
-                <SHCMetaBadge kind="portion_min">{shcServingsBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                {parsed.guest_count ? <SHCMetaBadge kind="party_size">{parsed.guest_count} guests</SHCMetaBadge> : null}
                 <SHCMetaBadge kind="price">
                   Budget S${r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
                 </SHCMetaBadge>
                 {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
               </View>
-              <TextInput
-                placeholder="Your quote in S$ (e.g. 84)"
-                placeholderTextColor={gourmeatColors.textLight}
-                value={bidPrices[r.id] || ''}
-                onChangeText={(t) => setBidPrices((p) => ({ ...p, [r.id]: t }))}
-                keyboardType="decimal-pad"
-                style={styles.collabInput}
-                testID={`bid-price-${r.id}`}
-              />
-              <TextInput
-                placeholder="Message (optional)"
-                placeholderTextColor={gourmeatColors.textLight}
-                value={bidMessages[r.id] || ''}
-                onChangeText={(t) => setBidMessages((p) => ({ ...p, [r.id]: t }))}
-                style={styles.collabInput}
-                testID={`bid-msg-${r.id}`}
-              />
               {bidSuccess[r.id] ? (
                 <Text style={styles.bidOk} testID={`bid-success-${r.id}`}>
                   {bidSuccess[r.id]}
                 </Text>
-              ) : null}
-              <GourmeatPrimaryButton
-                label={biddingId === r.id ? 'Sending…' : 'Send quote'}
-                onPress={() => handleBid(r.id)}
-                loading={biddingId === r.id}
-                testID={`bid-btn-${r.id}`}
-                style={{ marginTop: 4 }}
-              />
+              ) : (
+                <SHCCookQuoteBuilder
+                  request={r}
+                  busy={biddingId === r.id}
+                  onSubmit={(payload) => handleQuote(r.id, payload)}
+                  testID={`quote-builder-${r.id}`}
+                />
+              )}
             </View>
-          ))
+          );
+          })
         )}
       </GourmeatCard>
 
@@ -355,19 +350,8 @@ const styles = StyleSheet.create({
     borderBottomColor: gourmeatColors.border,
   },
   collabBody: { fontSize: 14, fontWeight: '700', color: gourmeatColors.text },
+  collabLine: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2 },
   collabBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginBottom: 8 },
-  collabInput: {
-    borderWidth: 1,
-    borderColor: gourmeatColors.border,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    fontWeight: '600',
-    color: gourmeatColors.text,
-    backgroundColor: gourmeatColors.surface,
-    marginBottom: 8,
-  },
   bidError: { fontSize: 13, fontWeight: '700', color: '#b91c1c', marginBottom: 8 },
   bidOk: { fontSize: 13, fontWeight: '700', color: '#15803d', marginBottom: 6 },
   listingsBtn: {

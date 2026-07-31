@@ -75,6 +75,7 @@ export default function CustomRequestDetail() {
                   key={quote.id}
                   quote={quote}
                   cookName={quote.cook_name}
+                  requestLines={parsed.lines}
                   accepting={acceptQuote.isPending && acceptQuote.variables === quote.id}
                   onAccept={() => acceptQuote.mutate(quote.id)}
                   testID={`quote-${quote.id}`}
