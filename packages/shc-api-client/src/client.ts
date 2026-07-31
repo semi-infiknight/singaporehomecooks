@@ -550,7 +550,14 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         price_cents: priceCents,
         message,
       };
-      if (lineItems?.length) body.line_items = lineItems;
+      if (lineItems?.length) {
+        body.line_items = lineItems.map((line) => ({
+          request_line_id: line.request_line_id,
+          included: line.included,
+          ...(line.servings != null ? { servings: line.servings } : {}),
+          price_cents: line.price_cents,
+        }));
+      }
       const r = await request("/store/shc/bids", {
         method: "POST",
         body: JSON.stringify(body),
