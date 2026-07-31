@@ -19,6 +19,9 @@ export const Cook = model.define("shc_cook", {
   wsq_cert_expiry: model.dateTime().nullable(),
   login_email: model.text().nullable(),
   password_hash: model.text().nullable(),
+  paynow_mobile: model.text().nullable(),
+  paynow_uen: model.text().nullable(),
+  payout_legal_name: model.text().nullable(),
 });
 
 // Do not define created_at/updated_at/deleted_at explicitly - Medusa DML adds them automatically.

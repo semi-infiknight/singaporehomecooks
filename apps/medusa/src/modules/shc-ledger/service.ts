@@ -208,6 +208,36 @@ class ShcLedgerModuleService extends MedusaService({ LedgerEntry }) {
     };
   }
 
+  async getCookEarningsSummaryForOrders(
+    orderIds: string[],
+    options: { unbatchedOnly?: boolean } = {}
+  ): Promise<{ totalCookEarnings: number; totalPlatformFees: number; entries: SHCLedgerEntry[] }> {
+    const summary = await this.getLedgerSummaryForOrders(orderIds);
+    if (!options.unbatchedOnly) return summary;
+    const entries = (summary.entries || []).filter(
+      (e: any) => e.debit_account === "Cook-Earnings-Payable" && !e.batch_id
+    );
+    const totalCookEarnings = entries.reduce((sum: number, e: any) => sum + (e.amount_cents || 0), 0);
+    return { ...summary, totalCookEarnings, entries };
+  }
+
+  async assignBatchToOrderEarnings(orderIds: string[], batchId: string): Promise<number> {
+    if (!orderIds.length || !batchId) return 0;
+    let updated = 0;
+    for (const orderId of orderIds) {
+      const entries = await this.listLedgerEntries({ order_id: orderId });
+      for (const entry of entries) {
+        if (entry.debit_account !== "Cook-Earnings-Payable" || entry.batch_id) continue;
+        await this.updateLedgerEntries({
+          selector: { id: entry.id },
+          data: { batch_id: batchId, updated_at: new Date() } as any,
+        });
+        updated += 1;
+      }
+    }
+    return updated;
+  }
+
   private async verifyDoubleEntryInvariantForGroup(orderId: string | null, batchId: string | null): Promise<void> {
     const filters: any = {};
     if (orderId) filters.order_id = orderId;

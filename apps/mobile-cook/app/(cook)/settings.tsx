@@ -44,6 +44,9 @@ type CookProfile = {
   availability_paused?: boolean;
   avatar_url?: string;
   hero_image_url?: string;
+  paynow_mobile?: string;
+  paynow_uen?: string;
+  payout_legal_name?: string;
 };
 
 export default function CookSettingsScreen() {
@@ -58,6 +61,9 @@ export default function CookSettingsScreen() {
   const [collectionInstructions, setCollectionInstructions] = useState('');
   const [collectionTimeSlots, setCollectionTimeSlots] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
+  const [paynowMobile, setPaynowMobile] = useState('');
+  const [paynowUen, setPaynowUen] = useState('');
+  const [payoutLegalName, setPayoutLegalName] = useState('');
   const [profile, setProfile] = useState<CookProfile | null>(null);
   const [busy, setBusy] = useState<'avatar' | 'hero' | null>(null);
 
@@ -80,6 +86,9 @@ export default function CookSettingsScreen() {
     setCollectionInstructions(String(cook.collection_instructions || ''));
     setCollectionTimeSlots(normalizeCookCollectionTimeSlots(cook.collection_time_slots));
     setPaused(Boolean(cook.availability_paused));
+    setPaynowMobile(String(cook.paynow_mobile || ''));
+    setPaynowUen(String(cook.paynow_uen || ''));
+    setPayoutLegalName(String(cook.payout_legal_name || ''));
   }, [profileQ.data]);
 
   const saveMut = useMutation({
@@ -92,6 +101,9 @@ export default function CookSettingsScreen() {
         collection_instructions: collectionInstructions.trim() || undefined,
         collection_time_slots: collectionTimeSlots,
         availability_paused: paused,
+        paynow_mobile: paynowMobile.trim() || undefined,
+        paynow_uen: paynowUen.trim() || undefined,
+        payout_legal_name: payoutLegalName.trim() || undefined,
       }),
     onSuccess: (res) => {
       setProfile((res.cook || {}) as CookProfile);
@@ -235,6 +247,42 @@ export default function CookSettingsScreen() {
           multiline
           style={[styles.input, styles.textArea]}
           testID="cook-settings-instructions"
+        />
+      </SHCCard>
+
+      <SHCCard style={styles.card}>
+        <Text style={styles.sectionTitle}>PayNow payouts</Text>
+        <Text style={styles.hint}>
+          Optional. Add your PayNow mobile or UEN + legal name to receive weekly payouts. We assume you own this PayNow.
+        </Text>
+        <Text style={styles.fieldLabel}>PayNow mobile</Text>
+        <TextInput
+          value={paynowMobile}
+          onChangeText={setPaynowMobile}
+          placeholder="9123 4567"
+          placeholderTextColor={shcColors.textLight}
+          keyboardType="phone-pad"
+          style={styles.input}
+          testID="cook-settings-paynow-mobile"
+        />
+        <Text style={styles.fieldLabel}>UEN (business)</Text>
+        <TextInput
+          value={paynowUen}
+          onChangeText={setPaynowUen}
+          placeholder="201234567A"
+          placeholderTextColor={shcColors.textLight}
+          autoCapitalize="characters"
+          style={styles.input}
+          testID="cook-settings-paynow-uen"
+        />
+        <Text style={styles.fieldLabel}>Legal name (for UEN)</Text>
+        <TextInput
+          value={payoutLegalName}
+          onChangeText={setPayoutLegalName}
+          placeholder="As per bank / ACRA"
+          placeholderTextColor={shcColors.textLight}
+          style={styles.input}
+          testID="cook-settings-payout-legal-name"
         />
       </SHCCard>
 

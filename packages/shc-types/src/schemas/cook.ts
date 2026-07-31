@@ -24,6 +24,9 @@ export const shcCookSchema = z.object({
   password_hash: z.string().optional(), // internal; never returned to clients
   pdpa_consent_at: z.string().datetime().optional(),
   pdpa_consent_version: z.string().optional(),
+  paynow_mobile: z.string().optional(),
+  paynow_uen: z.string().optional(),
+  payout_legal_name: z.string().optional(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),
 }).strict();

@@ -78,7 +78,10 @@ import {
   formatCookExpenseRowAmount,
   formatCookExpenseTotalDollars,
   formatCookPayoutHistoryRow,
+  formatCookLastPayoutLine,
+  formatCookNextPayoutLine,
   recentCookExpenses,
+  type CookEarningsSummary,
   type CookExpenseRow,
   type CookPayoutHistoryRow,
   parseCustomRequestDisplay,
@@ -4821,6 +4824,33 @@ export function CookEarningsPayoutHistoryWeb({
           </p>
         ))
       )}
+    </GourmeatCard>
+  );
+}
+
+export function CookEarningsPayoutStatusWeb({
+  earnings,
+  onSetupPaynow,
+  testID = 'cook-earnings-payout-status',
+}: {
+  earnings: CookEarningsSummary;
+  onSetupPaynow?: () => void;
+  testID?: string;
+}) {
+  return (
+    <GourmeatCard className="bg-[var(--shc-bento-mint)] mt-4" data-testid={testID}>
+      <p className="text-sm font-bold leading-relaxed">{formatCookLastPayoutLine(earnings.last_payout)}</p>
+      <p className="text-sm font-bold leading-relaxed mt-1">{formatCookNextPayoutLine(earnings.next_payout)}</p>
+      {!earnings.paynow_configured && onSetupPaynow ? (
+        <button
+          type="button"
+          className="mt-3 w-full rounded-xl border-2 border-[var(--shc-border)] bg-[var(--shc-surface)] px-4 py-2 text-sm font-extrabold"
+          onClick={onSetupPaynow}
+          data-testid="cook-earnings-setup-paynow"
+        >
+          Add PayNow for payouts
+        </button>
+      ) : null}
     </GourmeatCard>
   );
 }

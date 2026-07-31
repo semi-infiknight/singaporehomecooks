@@ -59,4 +59,5 @@ export * from './virtual-grid';
 export * from './password-policy';
 export * from './payment-poll';
 export * from './cook-payout-history';
+export * from './cook-payout';
 export * from './crash-report';

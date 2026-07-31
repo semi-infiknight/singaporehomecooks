@@ -4,6 +4,7 @@ import {
   defaultBusinessRulesConfig,
   type BusinessRulesConfig,
 } from './business-rules-config';
+import type { CookNextPayoutSnapshot, CookPayoutSnapshot } from './cook-payout';
 
 /** Cook earnings screen — shared copy, formatters, and expense helpers (tri-platform). */
 
@@ -21,11 +22,18 @@ export type CookEarningsSummary = {
   cook_id?: string;
   this_week_cents: number;
   projected_payout_cents: number;
+  pending_payout_cents?: number;
   gross_cents: number;
   platform_fee_cents: number;
   orders_count: number;
   commission_rate_pct?: number;
+  paynow_configured?: boolean;
+  week_start?: string;
+  last_payout?: CookPayoutSnapshot | null;
+  next_payout?: CookNextPayoutSnapshot | null;
 };
+
+export type { CookNextPayoutSnapshot, CookPayoutSnapshot };
 
 /** @deprecated Legacy API shape — prefer CookEarningsSummary via resolveCookEarningsSummary */
 export type CookEarningsView = {
@@ -56,15 +64,21 @@ export function resolveCookEarningsSummary(raw: Record<string, unknown> | null |
 
   if (raw.this_week_cents != null) {
     const thisWeekCents = Math.max(0, Number(raw.this_week_cents) || 0);
+    const pendingCents = Math.max(0, Number(raw.pending_payout_cents ?? raw.projected_payout_cents ?? thisWeekCents) || 0);
     return {
       cook_id: typeof raw.cook_id === 'string' ? raw.cook_id : undefined,
       this_week_cents: thisWeekCents,
-      projected_payout_cents: Math.max(0, Number(raw.projected_payout_cents ?? thisWeekCents) || 0),
+      projected_payout_cents: pendingCents,
+      pending_payout_cents: pendingCents,
       gross_cents: Math.max(0, Number(raw.gross_cents ?? 0) || 0),
       platform_fee_cents: Math.max(0, Number(raw.platform_fee_cents ?? 0) || 0),
       orders_count: Math.max(0, Number(raw.orders_count ?? raw.orders ?? 0) || 0),
       commission_rate_pct:
         raw.commission_rate_pct != null ? Number(raw.commission_rate_pct) : undefined,
+      paynow_configured: raw.paynow_configured === true,
+      week_start: typeof raw.week_start === 'string' ? raw.week_start : undefined,
+      last_payout: (raw.last_payout as CookPayoutSnapshot | null | undefined) ?? null,
+      next_payout: (raw.next_payout as CookNextPayoutSnapshot | null | undefined) ?? null,
     };
   }
 

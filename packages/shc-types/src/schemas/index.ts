@@ -9,6 +9,7 @@ export * from './dispute';
 export * from './commission-rule';
 export * from './ledger-entry';
 export * from './payout-batch';
+export * from './payout-batch-line';
 export * from './cook-expense';
 export * from './feature-flag';
 export * from './search-synonym';

@@ -36,6 +36,8 @@ describe("ShcPayoutBatchModuleService", () => {
         listArgs = filters;
         return [{ id: "batch_1", week_start: "2026-07-06", status: "pending" }];
       },
+      listPayoutBatchLines: async () => [{ id: "line_1", cook_id: "cook_1", batch_id: "batch_1" }],
+      updatePayoutBatchLines: async () => [{}],
       updatePayoutBatches: async (payload: any) => {
         updatePayload = payload;
         return [{ id: payload.selector.id, ...payload.data }];
