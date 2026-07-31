@@ -23,7 +23,7 @@ import {
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, shcPartySizeBadgeLabel } from '@shc/utils';
+import { getOrderStatusLabel, parseBidDollarsToCents, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, shcServingsBadgeLabel } from '@shc/utils';
 
 import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
@@ -259,11 +259,11 @@ export default function CookOrders() {
 
       {/* Collaboration Board — below collection orders */}
       <View style={[styles.collabHeader, { marginTop: shcSpacing.lg }]} testID="cook-collab-board">
-        <SHCSectionTitle style={styles.collabTitle}>Collaboration Board</SHCSectionTitle>
+        <SHCSectionTitle style={styles.collabTitle}>Custom requests</SHCSectionTitle>
         {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
       </View>
       <Text style={styles.collabHint}>
-        Customer recipe requests. Bid in S$ — winning bid creates an order you fulfil like any other.
+        Customer dish requests. Send a quote in S$ — accepted quotes become orders you fulfil like any other.
       </Text>
       {bidError ? (
         <Text style={styles.bidError} testID="collab-bid-error">
@@ -274,7 +274,7 @@ export default function CookOrders() {
         {reqList.length === 0 ? (
           <GourmeatEmptyState
             title="No open requests"
-            body="When customers post custom dish requests, they appear here for bidding."
+            body="When customers post custom dish requests, they appear here for quoting."
           />
         ) : (
           reqList.map((r: any) => (
@@ -283,14 +283,14 @@ export default function CookOrders() {
                 {r.body || r.title || 'Custom request'}
               </Text>
               <View style={styles.collabBadges}>
-                <SHCMetaBadge kind="party_size">{shcPartySizeBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                <SHCMetaBadge kind="portion_min">{shcServingsBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
                 <SHCMetaBadge kind="price">
                   Budget S${r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
                 </SHCMetaBadge>
                 {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
               </View>
               <TextInput
-                placeholder="Your bid in S$ (e.g. 14)"
+                placeholder="Your quote in S$ (e.g. 84)"
                 placeholderTextColor={gourmeatColors.textLight}
                 value={bidPrices[r.id] || ''}
                 onChangeText={(t) => setBidPrices((p) => ({ ...p, [r.id]: t }))}
@@ -312,7 +312,7 @@ export default function CookOrders() {
                 </Text>
               ) : null}
               <GourmeatPrimaryButton
-                label={biddingId === r.id ? 'Sending…' : 'Place bid'}
+                label={biddingId === r.id ? 'Sending…' : 'Send quote'}
                 onPress={() => handleBid(r.id)}
                 loading={biddingId === r.id}
                 testID={`bid-btn-${r.id}`}

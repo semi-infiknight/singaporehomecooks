@@ -15,6 +15,7 @@ export type RequestDishPayload = {
   body: string;
   youtube_url?: string;
   party_size?: number;
+  guest_count?: number;
   budget_cents?: number;
   date?: string;
   occasion?: string;
@@ -62,6 +63,7 @@ export function RequestDishExperience({
   );
   const [youtube, setYoutube] = React.useState('');
   const [partySize, setPartySize] = React.useState(8);
+  const [guestCount, setGuestCount] = React.useState(8);
   const [budget, setBudget] = React.useState(120);
   const [date, setDate] = React.useState(defaultDate);
 
@@ -90,6 +92,7 @@ export function RequestDishExperience({
         body,
         youtube_url: youtube.trim() || undefined,
         party_size: partySize,
+        guest_count: guestCount,
         budget_cents: Math.round(budget * 100),
         date,
         occasion,
@@ -156,8 +159,8 @@ export function RequestDishExperience({
               <Text style={{ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.9)', marginTop: 6 }}>
                 {step === 1 && 'Tell home cooks your occasion and what you crave'}
                 {step === 2 && 'Share a recipe video — cooks bring their HDB interpretation'}
-                {step === 3 && 'How many guests, budget, and when you need it'}
-                {step === 4 && 'Review before cooks bid on the Collaboration Board'}
+                {step === 3 && 'Servings, guest count, budget, and collection date'}
+                {step === 4 && 'Review before cooks send quotes on Custom requests'}
               </Text>
             </SHCFadeIn>
           </View>
@@ -223,16 +226,35 @@ export function RequestDishExperience({
 
             {step === 3 && (
               <View testID="request-step-gathering">
-                <Text style={labelStyle}>Party size</Text>
+                <Text style={labelStyle}>Servings needed</Text>
+                <Text style={[hintStyle, { marginTop: 0, marginBottom: shcSpacing.sm }]}>
+                  Portions to prepare (usually matches how many you are feeding).
+                </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
                   {PARTY_PRESETS.map((n) => (
                     <Pressable
                       key={n}
-                      onPress={() => setPartySize(n)}
+                      onPress={() => {
+                        setPartySize(n);
+                        setGuestCount(n);
+                      }}
                       style={chipStyle(partySize === n)}
-                      testID={`request-party-${n}`}
+                      testID={`request-servings-${n}`}
                     >
-                      <Text style={chipText(partySize === n)}>{n} guests</Text>
+                      <Text style={chipText(partySize === n)}>{n} servings</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={labelStyle}>Guest count (optional)</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
+                  {PARTY_PRESETS.map((n) => (
+                    <Pressable
+                      key={`g-${n}`}
+                      onPress={() => setGuestCount(n)}
+                      style={chipStyle(guestCount === n)}
+                      testID={`request-guests-${n}`}
+                    >
+                      <Text style={chipText(guestCount === n)}>{n} guests</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -270,7 +292,7 @@ export function RequestDishExperience({
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.md }}>
                     <View style={reviewPill}>
                       <SHCIcon name="people" size={14} color={shcColors.text} />
-                      <Text style={reviewPillText}>{partySize} guests</Text>
+                      <Text style={reviewPillText}>{partySize} servings · {guestCount} guests</Text>
                     </View>
                     <View style={reviewPill}>
                       <SHCIcon name="credits" size={14} color={shcColors.text} />
@@ -284,7 +306,7 @@ export function RequestDishExperience({
                 </SHCCard>
                 <SHCCard>
                   <Text style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 }}>
-                    Cooks on the Collaboration Board will bid with price and a personal note. Accept a bid to create your order — same trust layers as regular checkout.
+                    Cooks will send quotes with price and a personal note. Accept a quote to create your order — same trust layers as regular checkout.
                   </Text>
                 </SHCCard>
               </View>
@@ -294,7 +316,7 @@ export function RequestDishExperience({
 
         <View style={{ paddingHorizontal: shcSpacing.md, marginTop: shcSpacing.lg, gap: shcSpacing.sm, alignSelf: 'stretch' }}>
           <SHCButton onPress={goNext} disabled={!canNext || busy} size="lg" testID="submit-request-btn" style={{ alignSelf: 'stretch', width: '100%' }}>
-            <SHCButtonText>{busy ? 'Posting…' : step === 4 ? 'Post request — cooks will bid' : 'Continue'}</SHCButtonText>
+            <SHCButtonText>{busy ? 'Posting…' : step === 4 ? 'Post request — cooks will quote' : 'Continue'}</SHCButtonText>
           </SHCButton>
           {step > 1 && (
             <SHCButton variant="outline" onPress={goBack} disabled={busy}>
@@ -452,8 +474,8 @@ export function RequestDishSuccess({
         <Text style={{ fontSize: 26, fontWeight: '900', color: shcColors.text, textAlign: 'center' }}>Request posted!</Text>
         <Text style={{ fontSize: 14, color: shcColors.textLight, textAlign: 'center', marginTop: shcSpacing.sm, lineHeight: 20, maxWidth: 300 }}>
           {requestId
-            ? `Request ${requestId} is live. Home cooks will bid on the Collaboration Board — we'll notify you when offers arrive.`
-            : 'Home cooks will bid soon. Check notifications for offers.'}
+            ? `Request ${requestId} is live. Home cooks will send quotes — check Orders → Custom requests for updates.`
+            : 'Home cooks will quote soon. Check Orders → Custom requests for offers.'}
         </Text>
         <View style={{ marginTop: shcSpacing.xl, gap: shcSpacing.sm, width: '100%', maxWidth: 320 }}>
           {onDiscover && (

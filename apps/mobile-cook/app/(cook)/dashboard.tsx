@@ -264,8 +264,8 @@ export default function CookDashboard() {
         testID="collab-board-link"
         accessibilityRole="button"
       >
-        <Text style={styles.collabLinkTitle}>Collaboration Board</Text>
-        <Text style={styles.collabLinkBody}>Recipe requests & bids → open under Orders</Text>
+        <Text style={styles.collabLinkTitle}>Custom requests</Text>
+        <Text style={styles.collabLinkBody}>Dish requests & quotes → open under Orders</Text>
       </Pressable>
 
       <Text style={styles.recentLabel}>Recent Orders</Text>

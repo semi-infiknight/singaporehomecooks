@@ -7,6 +7,8 @@ export const Request = model.define("shc_request", {
   body: model.text(),
   youtube_url: model.text().nullable(),
   party_size: model.number().nullable(),
+  guest_count: model.number().nullable(),
+  items_json: model.text().nullable(),
   budget_cents: model.number().nullable(),
   date: model.text().nullable(), // YYYY-MM-DD
   status: model.enum(["open", "bidding", "matched", "closed"]).default("open"),

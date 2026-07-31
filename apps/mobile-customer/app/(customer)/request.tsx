@@ -57,6 +57,7 @@ export default function RequestDishScreen() {
         body: data.body,
         youtube_url: data.youtube_url,
         party_size: data.party_size,
+        guest_count: data.guest_count,
         budget_cents: data.budget_cents,
         date: data.date,
       });

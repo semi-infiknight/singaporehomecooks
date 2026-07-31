@@ -33,6 +33,7 @@ export * from './skeleton';
 export * from './auth-session-gate';
 export * from './gourmeat';
 export * from './request-ux';
+export * from './custom-request-ux';
 // Location map UX is exported via @shc/ui/location-ux (pulls react-native-maps; keep off barrel).
 export * from './domain';
 export * from './order-chat';

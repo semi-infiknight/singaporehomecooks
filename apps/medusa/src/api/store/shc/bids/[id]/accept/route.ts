@@ -71,14 +71,39 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const collSlot = parsedBody.collection_slot || "18:00-19:00";
     const partySize = request.party_size || 1;
     const totalCents = bid.price_cents || request.budget_cents || 0;
-    const items = [
-      {
-        product_id: `req_${bid.request_id}`,
-        name: (request.body || "Custom dish request").slice(0, 120),
-        qty: partySize,
-        price: totalCents > 0 ? Math.round(totalCents / partySize) / 100 : 0,
-      },
-    ];
+
+    let orderLines: Array<{ product_id: string; name: string; qty: number; price: number }> = [];
+    const itemsRaw = (request as any).items_json;
+    if (typeof itemsRaw === "string" && itemsRaw.trim()) {
+      try {
+        const parsed = JSON.parse(itemsRaw);
+        if (Array.isArray(parsed) && parsed.length) {
+          orderLines = parsed.map((line: any, i: number) => {
+            const servings = Math.max(1, Number(line.servings) || 1);
+            const share = parsed.length === 1 ? totalCents : Math.round(totalCents / parsed.length);
+            return {
+              product_id: `req_${bid.request_id}_line_${line.id || i}`,
+              name: String(line.name || "Custom dish").slice(0, 120),
+              qty: servings,
+              price: share > 0 ? Math.round(share / servings) / 100 : 0,
+            };
+          });
+        }
+      } catch {
+        /* fallback below */
+      }
+    }
+    if (!orderLines.length) {
+      orderLines = [
+        {
+          product_id: `req_${bid.request_id}`,
+          name: (request.body || "Custom dish request").slice(0, 120),
+          qty: partySize,
+          price: totalCents > 0 ? Math.round(totalCents / partySize) / 100 : 0,
+        },
+      ];
+    }
+    const items = orderLines;
 
     await metaService.createOrUpdateMeta({
       order_id: orderId,

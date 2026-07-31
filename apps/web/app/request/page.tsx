@@ -37,6 +37,7 @@ export default function RequestDishPage() {
   );
   const [youtube, setYoutube] = useState('');
   const [partySize, setPartySize] = useState(8);
+  const [guestCount, setGuestCount] = useState(8);
   const [budget, setBudget] = useState(120);
   const [date, setDate] = useState(defaultDate);
   const [featureLoading, setFeatureLoading] = useState(true);
@@ -84,6 +85,7 @@ export default function RequestDishPage() {
       body,
       youtube_url: youtube.trim() || undefined,
       party_size: partySize,
+      guest_count: guestCount,
       budget_cents: Math.round(budget * 100),
       date,
     });

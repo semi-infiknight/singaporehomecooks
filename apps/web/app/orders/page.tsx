@@ -20,9 +20,10 @@ import {
   buildManageOrderQuery,
   emptyOrdersDayCopy,
   type DayOrderCard,
+  CUSTOM_REQUEST_COPY,
 } from '@shc/utils';
 import { addDaysIso, weekStartMonday } from '@shc/business-rules';
-import { useOrders } from '../../lib/useOrder';
+import { useOrders, useMyRequests } from '../../lib/useOrder';
 import { useAuth } from '../../lib/useAuth';
 import { downloadCorporateInvoicesZip } from '../../lib/api-client';
 import { downloadBlobInBrowser } from '../../lib/download-pdf';
@@ -50,6 +51,8 @@ export default function OrdersList() {
   const to = addDaysIso(weekStartMonday(), 21);
 
   const { data: orders, isLoading, isFetching } = useOrders();
+  const { data: myRequests = [] } = useMyRequests();
+  const activeRequests = (myRequests as any[]).filter((r) => r.status === 'open' || r.status === 'bidding');
   const orderList = (orders as Record<string, unknown>[]) ?? [];
   const [corpZipBusy, setCorpZipBusy] = useState(false);
   const hasCorporatePaid = useMemo(
@@ -122,6 +125,27 @@ export default function OrdersList() {
         title="My orders"
         subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading ? ' · updating…' : ''}`}
       />
+
+      {user && activeRequests.length > 0 ? (
+        <section className="mb-6" data-testid="custom-requests-section">
+          <p className="text-sm font-extrabold">{CUSTOM_REQUEST_COPY.customerSectionTitle}</p>
+          <p className="text-xs text-muted-foreground font-semibold mb-3">{CUSTOM_REQUEST_COPY.customerSectionHint}</p>
+          <ul className="space-y-2">
+            {(activeRequests as any[]).map((req) => (
+              <li key={req.id}>
+                <Link
+                  href={`/requests/${req.id}`}
+                  className="block rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 bg-card hover:bg-secondary/40"
+                  data-testid={`custom-request-card-${req.id}`}
+                >
+                  <p className="font-bold text-sm line-clamp-2">{req.body || 'Custom request'}</p>
+                  <p className="text-xs text-primary font-bold mt-2">View quotes →</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {user && hasCorporatePaid ? (
         <SHCCard className="mb-4 p-4">

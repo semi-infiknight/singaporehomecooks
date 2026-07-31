@@ -452,6 +452,11 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).requests || [];
     },
 
+    async getRequest(id: string) {
+      const r = await request(`/store/shc/requests/${encodeURIComponent(id)}`, { method: "GET" });
+      return (r as any).request;
+    },
+
     /** Cooking soon — marketplace open batches */
     async listDrops(opts?: { cook_id?: string; mine?: boolean }) {
       const qs = new URLSearchParams();

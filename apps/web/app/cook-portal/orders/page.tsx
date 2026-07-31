@@ -13,7 +13,7 @@ import {
   formatBidCentsAsDollars,
   isCookComplianceVerified,
   partitionCookOrders,
-  shcPartySizeBadgeLabel,
+  shcServingsBadgeLabel,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -215,23 +215,23 @@ export default function CookOrdersPage() {
         </>
       )}
 
-      <div className="flex items-center justify-between mt-8 mb-1" data-testid="cook-collab-board">
-        <p className="text-sm font-extrabold text-foreground">Collaboration Board</p>
+      <div className="flex items-center justify-between mt-8 mb-1" data-testid="cook-custom-requests-board">
+        <p className="text-sm font-extrabold text-foreground">Custom requests</p>
         {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
       </div>
       <p className="text-xs font-semibold text-muted-foreground mb-2">
-        Customer recipe requests. Enter bid in S$ (e.g. 14). Accepted bids become collection orders.
+        Customer dish requests. Send a quote in S$ — accepted quotes become collection orders.
       </p>
       {bidError ? (
-        <p className="text-sm font-bold text-red-600 mb-2" data-testid="collab-bid-error">
+        <p className="text-sm font-bold text-red-600 mb-2" data-testid="custom-request-quote-error">
           {bidError}
         </p>
       ) : null}
-      <GourmeatCard className="mb-6 bg-[var(--shc-bento-peach)]" data-testid="cook-collab-card">
+      <GourmeatCard className="mb-6 bg-[var(--shc-bento-peach)]" data-testid="cook-custom-requests-card">
         {reqList.length === 0 ? (
           <GourmeatEmptyState
             title="No open requests"
-            body="Custom dish requests from customers show here for bidding."
+            body="Custom dish requests from customers show here for quoting."
           />
         ) : (
           reqList.map(
@@ -249,7 +249,7 @@ export default function CookOrdersPage() {
               >
                 <p className="font-bold text-sm line-clamp-3">{r.body || 'Custom request'}</p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <SHCMetaBadge kind="party_size">{shcPartySizeBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
+                  <SHCMetaBadge kind="portion_min">{shcServingsBadgeLabel(r.party_size || '?')}</SHCMetaBadge>
                   <SHCMetaBadge kind="price">
                     Budget S$
                     {r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
@@ -258,7 +258,7 @@ export default function CookOrdersPage() {
                 </div>
                 <input
                   className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
-                  placeholder="Your bid in S$ (e.g. 14)"
+                  placeholder="Your quote in S$ (e.g. 84)"
                   value={bidPrices[r.id] || ''}
                   onChange={(e) => setBidPrices((p) => ({ ...p, [r.id]: e.target.value }))}
                   data-testid={`bid-price-${r.id}`}
@@ -277,7 +277,7 @@ export default function CookOrdersPage() {
                   </p>
                 ) : null}
                 <GourmeatPrimaryButton
-                  label={biddingId === r.id ? 'Sending…' : 'Place bid'}
+                  label={biddingId === r.id ? 'Sending…' : 'Send quote'}
                   className="mt-2"
                   onClick={() => handleBid(r.id)}
                   disabled={biddingId === r.id}

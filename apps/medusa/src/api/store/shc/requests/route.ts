@@ -17,6 +17,22 @@ const CreateSchema = z.object({
   body: z.string().min(10),
   youtube_url: z.string().url().optional(),
   party_size: z.number().int().positive().optional(),
+  guest_count: z.number().int().positive().optional(),
+  items: z
+    .array(
+      z
+        .object({
+          id: z.string().optional(),
+          name: z.string().min(2),
+          servings: z.number().int().positive(),
+          notes: z.string().optional(),
+          youtube_url: z.string().url().optional(),
+        })
+        .strict()
+    )
+    .min(1)
+    .max(8)
+    .optional(),
   budget_cents: z.number().int().nonnegative().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   corporate: z.boolean().optional(), // tie corporate flag
@@ -71,11 +87,27 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   try {
     const before = {};
-    const created = await reqService.createRequest({
+    const payload: Record<string, unknown> = {
       ...parse.data,
       customer_id: actor,
       status: "open",
-    } as any);
+    };
+    if (parse.data.items?.length) {
+      payload.items_json = JSON.stringify(
+        parse.data.items.map((line, i) => ({
+          id: line.id || `line_${i}`,
+          name: line.name,
+          servings: line.servings,
+          notes: line.notes,
+          youtube_url: line.youtube_url,
+        }))
+      );
+      if (!payload.party_size) {
+        payload.party_size = parse.data.items[0]?.servings;
+      }
+    }
+    delete payload.items;
+    const created = await reqService.createRequest(payload as any);
     // Audit (production-hardening)
     const logger = (req.scope as any).resolve?.("logger") || console;
     const audit = {

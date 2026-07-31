@@ -338,7 +338,7 @@ export default function CartPage() {
         </>
       )}
 
-      <MyRequestsPanel enabled={!!user} />
+      <MyRequestsPanel enabled={false} />
 
       {items.length > 0 && (
           <div className="fixed bottom-0 left-0 right-0 md:static p-4 md:p-0 bg-card/95 md:bg-transparent border-t-2 md:border-0 border-[var(--shc-border-brutal)] pb-[max(env(safe-area-inset-bottom),72px)] md:pb-0 z-30">

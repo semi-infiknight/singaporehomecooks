@@ -10,6 +10,8 @@ export const shcRequestSchema = z.object({
   body: z.string().min(10),
   youtube_url: z.string().url().optional(),
   party_size: z.number().int().positive().optional(),
+  guest_count: z.number().int().positive().optional(),
+  items_json: z.string().optional(),
   budget_cents: z.number().int().nonnegative().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   status: RequestStatus,

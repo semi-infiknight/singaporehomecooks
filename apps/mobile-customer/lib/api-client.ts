@@ -97,6 +97,7 @@ export const sendMessage = (orderId: string, body: string, from: 'customer' | 'c
 export const createRequest = (input: Record<string, unknown>) => client.createRequest(input);
 export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
+export const getRequest = (id: string) => client.getRequest(id);
 export const getNotifications = () => client.getNotifications();
 export const isFeatureEnabled = (key: string) => client.isFeatureEnabled(key);
 export const markNotificationsRead = (ids?: string[], all = false, role?: 'cook' | 'customer') =>

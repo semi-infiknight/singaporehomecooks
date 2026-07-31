@@ -129,6 +129,17 @@ export function useAddDropToCart() {
   });
 }
 
+export function useCustomRequest(id: string) {
+  return useQuery({
+    queryKey: ['custom-request', id],
+    queryFn: async () => {
+      const { getRequest } = await import('./api-client');
+      return getRequest(id);
+    },
+    enabled: Boolean(id) && isAuthenticated(),
+  });
+}
+
 export function useMyRequests() {
   return useQuery({
     queryKey: ['my-requests'],

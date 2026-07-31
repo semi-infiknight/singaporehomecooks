@@ -21,6 +21,7 @@ import {
   shcSpacing,
   DirectionalTabScreen,
   contentPadForTabBar,
+  SHCCustomRequestCard,
 } from '@shc/ui';
 import {
   toIsoDate,
@@ -35,8 +36,9 @@ import {
   emptyOrdersDayCopy,
   primaryActionLabel,
   type DayOrderCard,
+  CUSTOM_REQUEST_COPY,
 } from '@shc/utils';
-import { useMyOrders } from '../../../hooks/useOrder';
+import { useMyOrders, useMyRequests } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { getCorporateInvoicesDownloadUrl } from '../../../lib/api-client';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../../hooks/useTiffin';
@@ -52,6 +54,8 @@ export default function MyOrdersList() {
   const to = addDaysIso(weekStartMonday(), 21);
 
   const { data: orders, isLoading: ordersLoading, isFetching } = useMyOrders('customer');
+  const { data: myRequests = [] } = useMyRequests({ enabled: !!user });
+  const activeRequests = (myRequests as any[]).filter((r) => r.status === 'open' || r.status === 'bidding');
   const orderList = (orders as Record<string, unknown>[]) ?? [];
   const [corpZipBusy, setCorpZipBusy] = useState(false);
   const hasCorporatePaid = useMemo(
@@ -170,6 +174,21 @@ export default function MyOrdersList() {
           }
         >
           <>
+            {activeRequests.length > 0 ? (
+              <View style={styles.requestsSection} testID="custom-requests-section">
+                <Text style={styles.requestsTitle}>{CUSTOM_REQUEST_COPY.customerSectionTitle}</Text>
+                <Text style={styles.requestsHint}>{CUSTOM_REQUEST_COPY.customerSectionHint}</Text>
+                {activeRequests.map((req: any) => (
+                  <SHCCustomRequestCard
+                    key={req.id}
+                    request={req}
+                    onPress={() => router.push(`/(customer)/requests/${req.id}` as any)}
+                    testID={`custom-request-card-${req.id}`}
+                  />
+                ))}
+              </View>
+            ) : null}
+
             {hasCorporatePaid ? (
               <GourmeatCard style={styles.corpCard}>
                 <Text style={styles.corpTitle}>Corporate invoices</Text>
@@ -284,4 +303,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: shcSpacing.md,
   },
+  requestsSection: { marginBottom: shcSpacing.md },
+  requestsTitle: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text },
+  requestsHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, marginTop: 4 },
 });

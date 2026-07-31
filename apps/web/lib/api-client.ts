@@ -110,6 +110,7 @@ export const sendMessage = (oid: string, body: string, from: 'customer' | 'cook'
 export const createRequest = (i: Record<string, unknown>) => client.createRequest(i);
 export const listOpenRequests = () => client.listOpenRequests();
 export const listMyRequests = () => client.listMyRequests();
+export const getRequest = (id: string) => client.getRequest(id);
 export const listDrops = (opts?: { cook_id?: string; mine?: boolean }) => client.listDrops(opts);
 export const getDrop = (id: string) => client.getDrop(id);
 export const orderDrop = (id: string, qty: number, opts?: { allergen_acked?: boolean; pdpa_consent?: boolean }) =>

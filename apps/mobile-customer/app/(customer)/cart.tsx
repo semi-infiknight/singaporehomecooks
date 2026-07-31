@@ -290,7 +290,7 @@ export default function Cart() {
             </SHCFadeIn>
           )}
 
-          <MyRequestsPanel enabled={!!user} />
+          <MyRequestsPanel enabled={false} />
         </ScrollView>
 
         {hasItems && (
