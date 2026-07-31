@@ -88,6 +88,8 @@ export const addToCart = (pid: string, qty: number) => client.addToCart(pid, qty
 export const addDropToCart = (dropId: string, qty: number) => client.addDropToCart(dropId, qty);
 export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
+export const updateCartItem = (productId: string, qty: number) => client.updateCartItem(productId, qty);
+export const removeCartItem = (productId: string) => client.removeCartItem(productId);
 export const checkout = (
   ack: boolean,
   coll: { date: string; slot: string },

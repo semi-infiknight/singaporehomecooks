@@ -18,7 +18,7 @@ import {
   collectionEtaHint,
   checkoutCollectionPrefill,
 } from '@shc/utils';
-import { useCart, useClearCart } from '../../lib/useProducts';
+import { useCart, useClearCart, useUpdateCartItem, useRemoveCartItem } from '../../lib/useProducts';
 import { isAuthenticated } from '../../lib/api-client';
 import { useAuth } from '../../lib/useAuth';
 import { useGuestAuthTray } from '../../lib/useGuestAuthTray';
@@ -131,6 +131,7 @@ type CartItem = {
   name: string;
   qty: number;
   price: number;
+  min_qty?: number;
   product_id?: string;
   productId?: string;
   cook_name?: string;
@@ -143,6 +144,14 @@ export default function CartPage() {
   const { data: cart, isLoading } = useCart();
   const cartData = cart ?? { items: [] };
   const clear = useClearCart();
+  const updateItem = useUpdateCartItem();
+  const removeItem = useRemoveCartItem();
+  const pendingProductId =
+    updateItem.isPending && updateItem.variables
+      ? updateItem.variables.productId
+      : removeItem.isPending
+        ? removeItem.variables
+        : undefined;
   const { locationLabel, active: collectionLocation } = useCustomerLocation();
   const [cookingNotes, setCookingNotes] = useState('');
   const [collectionNotes, setCollectionNotes] = useState('');
@@ -226,15 +235,21 @@ export default function CartPage() {
           <div className="rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card overflow-hidden mb-3">
             <ul className="divide-y divide-border" data-testid="cart-items-list">
               {items.map((it, idx) => {
-                const pid = it.product_id || it.productId;
+                const pid = String(it.product_id || it.productId || idx);
+                const minQty = Math.max(1, Number(it.min_qty) || 1);
                 const imgUrl = getDishImageUrl({ id: pid, name: it.name });
                 return (
                   <GourmeatCartLineItem
-                    key={idx}
+                    key={pid}
                     name={it.name}
                     qty={it.qty}
                     price={Number(it.price)}
+                    minQty={minQty}
                     imageUri={imgUrl}
+                    updating={pendingProductId === pid}
+                    onDecrement={() => updateItem.mutate({ productId: pid, qty: Math.max(minQty, it.qty - 1) })}
+                    onIncrement={() => updateItem.mutate({ productId: pid, qty: it.qty + 1 })}
+                    onRemove={() => removeItem.mutate(pid)}
                     testID={`cart-line-${idx}`}
                   />
                 );

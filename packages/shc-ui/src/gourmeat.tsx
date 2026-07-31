@@ -1405,17 +1405,29 @@ export function GourmeatCartLineItem({
   qty,
   price,
   imageUri,
+  minQty = 1,
+  onDecrement,
+  onIncrement,
+  onRemove,
+  updating,
   testID,
 }: {
   name: string;
   qty: number;
   price: number;
   imageUri?: string;
+  minQty?: number;
+  onDecrement?: () => void;
+  onIncrement?: () => void;
+  onRemove?: () => void;
+  updating?: boolean;
   testID?: string;
 }) {
   const uri = imageUri || getDishImageUrl({ name });
+  const interactive = Boolean(onDecrement || onIncrement || onRemove);
+  const canDecrement = qty > minQty;
   return (
-    <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, paddingVertical: shcSpacing.sm }}>
+    <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, paddingVertical: shcSpacing.sm, opacity: updating ? 0.6 : 1 }}>
       <View style={{ width: 56, height: 56, borderRadius: gourmeatRadii.md, overflow: 'hidden' }}>
         <SHCFoodImage uri={uri} width={56} height={56} rounded={gourmeatRadii.md} />
       </View>
@@ -1424,8 +1436,47 @@ export function GourmeatCartLineItem({
           {name}
         </Text>
         <Text style={{ fontSize: 12, color: gourmeatColors.textLight, marginTop: 2 }}>
-          {qty} × S${price.toFixed(2)}
+          S${price.toFixed(2)} each{interactive ? '' : ` · ${qty} ×`}
         </Text>
+        {interactive ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginTop: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: gourmeatColors.surfaceAlt, borderRadius: gourmeatRadii.pill }}>
+              <Pressable
+                onPress={onDecrement}
+                disabled={!canDecrement || updating}
+                testID={testID ? `${testID}-decrement` : undefined}
+                style={{ paddingHorizontal: 10, paddingVertical: 6, opacity: canDecrement && !updating ? 1 : 0.35 }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '700', color: gourmeatColors.text }}>−</Text>
+              </Pressable>
+              <Text
+                style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.text, minWidth: 20, textAlign: 'center' }}
+                testID={testID ? `${testID}-qty` : undefined}
+              >
+                {qty}
+              </Text>
+              <Pressable
+                onPress={onIncrement}
+                disabled={updating}
+                testID={testID ? `${testID}-increment` : undefined}
+                style={{ paddingHorizontal: 10, paddingVertical: 6, opacity: updating ? 0.35 : 1 }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '700', color: gourmeatColors.text }}>+</Text>
+              </Pressable>
+            </View>
+            {onRemove ? (
+              <Pressable
+                onPress={onRemove}
+                disabled={updating}
+                testID={testID ? `${testID}-remove` : undefined}
+                hitSlop={8}
+                style={{ paddingHorizontal: 4, paddingVertical: 2, opacity: updating ? 0.35 : 1 }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '700', color: gourmeatColors.textLight }}>Remove</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
       <Text style={{ fontSize: 14, fontWeight: '800', color: gourmeatColors.primary }}>S${(qty * price).toFixed(2)}</Text>
     </View>

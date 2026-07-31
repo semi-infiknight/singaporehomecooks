@@ -35,7 +35,7 @@ import {
   collectionEtaHint,
   checkoutCollectionPrefill,
 } from '@shc/utils';
-import { useCart, useClearCart } from '../../hooks/useProducts';
+import { useCart, useClearCart, useUpdateCartItem, useRemoveCartItem } from '../../hooks/useProducts';
 import { useAuth } from '../../hooks/useAuth';
 import { useGuestAuthTray } from '../../hooks/useGuestAuthTray';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
@@ -114,6 +114,14 @@ export default function Cart() {
   const { data: cart, isLoading } = useCart();
   const cartData = cart ?? { items: [], cookId: null };
   const clearMut = useClearCart();
+  const updateItem = useUpdateCartItem();
+  const removeItem = useRemoveCartItem();
+  const pendingProductId =
+    updateItem.isPending && updateItem.variables
+      ? updateItem.variables.productId
+      : removeItem.isPending
+        ? removeItem.variables
+        : undefined;
   const router = useRouter();
   const { user } = useAuth();
   const { showGuestAuthTray } = useGuestAuthTray();
@@ -199,20 +207,30 @@ export default function Cart() {
 
               <Text style={styles.sectionTitle}>{CART_WIREFRAME_LABELS.items}</Text>
               <GourmeatCard style={{ padding: shcSpacing.sm }}>
-                {items.map((item: any, i: number) => (
-                  <View key={i} style={i > 0 ? styles.itemBorder : undefined}>
+                {items.map((item: any, i: number) => {
+                  const pid = String(item.product_id || item.productId || i);
+                  const minQty = Math.max(1, Number(item.min_qty) || 1);
+                  return (
+                  <View key={pid} style={i > 0 ? styles.itemBorder : undefined}>
                     <GourmeatCartLineItem
                       name={item.name}
                       qty={item.qty}
                       price={item.price}
+                      minQty={minQty}
                       imageUri={getDishImageUrl({
-                        id: item.product_id || item.productId,
+                        id: pid,
                         name: item.name,
                         image_url: item.image_url,
                       })}
+                      updating={pendingProductId === pid}
+                      onDecrement={() => updateItem.mutate({ productId: pid, qty: Math.max(minQty, item.qty - 1) })}
+                      onIncrement={() => updateItem.mutate({ productId: pid, qty: item.qty + 1 })}
+                      onRemove={() => removeItem.mutate(pid)}
+                      testID={`cart-line-${i}`}
                     />
                   </View>
-                ))}
+                  );
+                })}
               </GourmeatCard>
 
               <Pressable

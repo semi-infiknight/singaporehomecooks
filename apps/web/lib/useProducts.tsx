@@ -11,6 +11,8 @@ import {
   addToCart,
   getCart,
   clearCart,
+  updateCartItem,
+  removeCartItem,
   createSHCError,
   estimateCaloriesAI,
   getPhotoTips,
@@ -104,6 +106,52 @@ export function useCart() {
 export function useClearCart() {
   const qc = useQueryClient();
   return useMutation({ mutationFn: clearCart, onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }) });
+}
+
+export function useUpdateCartItem() {
+  const qc = useQueryClient();
+  const { openTray, dismiss } = useSHCTrayWeb();
+  return useMutation({
+    mutationFn: async ({ productId, qty }: { productId: string; qty: number }) => {
+      await hydrateSession();
+      return updateCartItem(productId, qty);
+    },
+    onSuccess: (cart) => {
+      qc.setQueryData(['cart'], cart);
+      qc.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (err: { message?: string; code?: string }) => {
+      const message = err?.message || 'Could not update cart.';
+      openTray(
+        { id: 'cart-update-error', title: 'Could not update', height: 'compact' },
+        <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="cart-update-error-tray" />
+      );
+      if (err?.code) throw createSHCError(err.code as SHCErrorCode, message);
+    },
+  });
+}
+
+export function useRemoveCartItem() {
+  const qc = useQueryClient();
+  const { openTray, dismiss } = useSHCTrayWeb();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      await hydrateSession();
+      return removeCartItem(productId);
+    },
+    onSuccess: (cart) => {
+      qc.setQueryData(['cart'], cart);
+      qc.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (err: { message?: string; code?: string }) => {
+      const message = err?.message || 'Could not remove item.';
+      openTray(
+        { id: 'cart-remove-error', title: 'Could not remove', height: 'compact' },
+        <SHCTrayActionWeb message={message} primaryLabel="OK" onPrimary={dismiss} testID="cart-remove-error-tray" />
+      );
+      if (err?.code) throw createSHCError(err.code as SHCErrorCode, message);
+    },
+  });
 }
 
 export function useAICalorieEstimate() {

@@ -3469,19 +3469,31 @@ export function GourmeatCartLineItem({
   qty,
   price,
   imageUri,
+  minQty = 1,
+  onDecrement,
+  onIncrement,
+  onRemove,
+  updating,
   testID,
 }: {
   name: string;
   qty: number;
   price: number;
   imageUri?: string;
+  minQty?: number;
+  onDecrement?: () => void;
+  onIncrement?: () => void;
+  onRemove?: () => void;
+  updating?: boolean;
   testID?: string;
 }) {
   const uri = imageUri || getDishImageUrl({ name });
+  const interactive = Boolean(onDecrement || onIncrement || onRemove);
+  const canDecrement = qty > minQty;
   return (
     <li
       data-testid={testID}
-      className="py-3 px-4 flex items-center gap-3 border-b border-[var(--shc-border)] last:border-b-0"
+      className={`py-3 px-4 flex items-center gap-3 border-b border-[var(--shc-border)] last:border-b-0 ${updating ? 'opacity-60' : ''}`}
     >
       <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden">
         <Image src={uri} alt={name} fill className="object-cover" sizes="56px" />
@@ -3489,8 +3501,51 @@ export function GourmeatCartLineItem({
       <div className="flex-1 min-w-0">
         <p className="font-bold truncate text-sm">{name}</p>
         <p className="text-xs text-muted-foreground font-medium tabular-nums">
-          {qty} × S${price.toFixed(2)}
+          {interactive ? `S$${price.toFixed(2)} each` : `${qty} × S$${price.toFixed(2)}`}
         </p>
+        {interactive ? (
+          <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex items-center rounded-full bg-[var(--shc-surface-alt)]">
+              <button
+                type="button"
+                onClick={onDecrement}
+                disabled={!canDecrement || updating}
+                data-testid={testID ? `${testID}-decrement` : undefined}
+                className="px-2.5 py-1.5 text-base font-bold disabled:opacity-35"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <span
+                className="text-sm font-extrabold min-w-5 text-center tabular-nums"
+                data-testid={testID ? `${testID}-qty` : undefined}
+              >
+                {qty}
+              </span>
+              <button
+                type="button"
+                onClick={onIncrement}
+                disabled={updating}
+                data-testid={testID ? `${testID}-increment` : undefined}
+                className="px-2.5 py-1.5 text-base font-bold disabled:opacity-35"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+            {onRemove ? (
+              <button
+                type="button"
+                onClick={onRemove}
+                disabled={updating}
+                data-testid={testID ? `${testID}-remove` : undefined}
+                className="text-xs font-bold text-muted-foreground hover:text-foreground disabled:opacity-35"
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <p className="font-extrabold text-primary tabular-nums shrink-0 text-sm">S${(qty * price).toFixed(2)}</p>
     </li>

@@ -77,6 +77,8 @@ export const getSlots = (productId: string) => client.getSlots(productId);
 export const addToCart = (productId: string, qty: number) => client.addToCart(productId, qty);
 export const getCart = () => client.getCart();
 export const clearCart = () => client.clearCart();
+export const updateCartItem = (productId: string, qty: number) => client.updateCartItem(productId, qty);
+export const removeCartItem = (productId: string) => client.removeCartItem(productId);
 export const checkout = (
   allergenAck: boolean,
   collection: { date: string; slot: string },
