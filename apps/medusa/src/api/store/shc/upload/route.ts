@@ -1,6 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
-import sharp from "sharp";
 import { createSHCError } from "@shc/types";
 import { getCookId, getCustomerId } from "../../../../lib/shc-actors";
 import { 
@@ -10,6 +9,7 @@ import {
   SHC_BUCKET,
   uploadBufferToMinIO 
 } from "../../../../lib/minio-client";
+import { generateListingDerivatives } from "../../../../lib/shc-image-derivatives";
 
 /** POST /store/shc/upload 
  * Supports two modes for full flexibility:
@@ -64,25 +64,24 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       const buffer = Buffer.from(base64Data, 'base64');
       const ct = content_type || 'image/jpeg';
       const result = await uploadBufferToMinIO(object_name, buffer, ct);
-      let derivative: { key: string; bucket: string; url?: string } | null = null;
+      let derivatives: Awaited<ReturnType<typeof generateListingDerivatives>> | null = null;
       if (ct.startsWith("image/")) {
-        const webpKey = object_name.replace(/\.[^.]+$/, "") + "-400.webp";
-        const webp = await sharp(buffer)
-          .rotate()
-          .resize({ width: 400, withoutEnlargement: true })
-          .webp({ quality: 82 })
-          .toBuffer();
-        derivative = await uploadBufferToMinIO(webpKey, webp, "image/webp");
+        derivatives = await generateListingDerivatives(buffer, object_name);
       }
       return res.json({
         success: true,
         mode: 'server',
         key: result.key,
         bucket: result.bucket,
-        url: result.url, // signed get URL
-        webp_key: derivative?.key,
-        webp_url: derivative?.url,
-        // In production, you might store the key and generate signed on demand
+        url: result.url,
+        base_key: derivatives?.baseKey,
+        hero_key: derivatives?.heroKey,
+        thumb_key: derivatives?.thumbKey,
+        webp_key: derivatives?.thumbKey,
+        webp_url: derivatives?.thumb.url,
+        image_url: derivatives?.thumb.url || result.url,
+        image_thumb_url: derivatives?.thumb.url,
+        image_hero_url: derivatives?.hero.url,
       });
     } catch (e: any) {
       return res.status(500).json({ error: createSHCError("SHC-GENERIC-001", `Server upload failed: ${e.message}`) });
@@ -97,6 +96,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     object_name,
     bucket: SHC_BUCKET,
     mode: 'presigned',
-    // client should PUT the file to this url with correct content-type
+    finalize_path: "/store/shc/upload/finalize",
   });
 }

@@ -4,12 +4,12 @@ import { createSHCError } from "@shc/types";
 import { getCookId, unauthorized } from "../../../../../lib/shc-actors";
 import { uploadBufferToMinIO } from "../../../../../lib/minio-client";
 import {
-  compressListingImage,
   createListingFoodImage,
   getAiImagePublicStatus,
   isCloudflareImageConfigured,
 } from "../../../../../lib/shc-cf-image";
-import { checkRateLimit, getRateLimitKey } from "../../../../../lib/shc-rate-limit";
+import { generateListingDerivatives } from "../../../../../lib/shc-image-derivatives";
+import { checkRateLimit, getRateLimitKey, sendRateLimitResponse, setRateLimitHeaders } from "../../../../../lib/shc-rate-limit";
 
 /**
  * POST /store/shc/ai/image
@@ -47,17 +47,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return unauthorized(res, "Cook login required");
   }
 
-  const rate = checkRateLimit(getRateLimitKey(req, `ai.image.${cookId}`), {
+  const rate = await checkRateLimit(getRateLimitKey(req, `ai.image.${cookId}`), {
     max: Number(process.env.SHC_AI_IMAGE_PER_COOK_HOUR || 30),
     windowMs: 60 * 60 * 1000,
   });
+  setRateLimitHeaders(res, rate);
   if (!rate.allowed) {
-    return res.status(429).json({
-      error: createSHCError(
-        "SHC-GENERIC-001",
-        "AI image limit reached for this hour — try again later or upload a photo."
-      ),
-    });
+    return sendRateLimitResponse(req, res, rate);
   }
 
   const parse = BodySchema.safeParse(req.body || {});
@@ -86,31 +82,21 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       enhance_style: parse.data.enhance_style,
     });
 
-    const { webp, width, height } = await compressListingImage(made.buffer);
     const stamp = Date.now();
     const baseKey = `listings/${cookId}/ai-${parse.data.mode}-${stamp}`;
-    const webpKey = `${baseKey}.webp`;
     const jpegKey = `${baseKey}.jpg`;
 
-    // Store both small WebP (listing card) and JPEG original-ish
-    const jpegBuf = await (async () => {
-      if (made.contentType.includes("jpeg") || made.contentType.includes("jpg")) {
-        // re-encode to max size for consistency
+    const [derivatives, jpegBuf] = await Promise.all([
+      generateListingDerivatives(made.buffer, baseKey),
+      (async () => {
         const sharp = (await import("sharp")).default;
-        return sharp(made.buffer)
-          .rotate()
-          .resize({ width: width, height: height, fit: "inside" })
-          .jpeg({ quality: 85 })
-          .toBuffer();
-      }
-      const sharp = (await import("sharp")).default;
-      return sharp(made.buffer).jpeg({ quality: 85 }).toBuffer();
-    })();
-
-    const [webpUp, jpegUp] = await Promise.all([
-      uploadBufferToMinIO(webpKey, webp, "image/webp"),
-      uploadBufferToMinIO(jpegKey, jpegBuf, "image/jpeg"),
+        return sharp(made.buffer).rotate().jpeg({ quality: 85 }).toBuffer();
+      })(),
     ]);
+
+    const jpegUp = await uploadBufferToMinIO(jpegKey, jpegBuf, "image/jpeg");
+    const width = derivatives.heroKey ? 640 : 640;
+    const height = width;
 
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.({
@@ -119,19 +105,23 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       mode: parse.data.mode,
       source: made.source,
       enhance_style: made.enhance_style,
-      bytes: webp.length,
+      bytes: derivatives.thumb.url ? 1 : 0,
     });
 
     const isAi = made.source.includes("flux");
     res.status(201).json({
-      image_url: webpUp.url || jpegUp.url,
+      image_url: derivatives.thumb.url || jpegUp.url,
       jpeg_url: jpegUp.url,
-      webp_url: webpUp.url,
-      key: webpUp.key,
+      webp_url: derivatives.thumb.url,
+      key: derivatives.thumbKey,
+      hero_key: derivatives.heroKey,
+      thumb_key: derivatives.thumbKey,
+      image_thumb_url: derivatives.thumb.url,
+      image_hero_url: derivatives.hero.url,
       jpeg_key: jpegUp.key,
       width,
       height,
-      bytes: webp.length,
+      bytes: jpegBuf.length,
       source: made.source,
       enhance_style: made.enhance_style,
       prompt: made.prompt,

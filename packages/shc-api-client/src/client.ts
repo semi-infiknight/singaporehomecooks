@@ -36,8 +36,13 @@ export function createShcApiClient(config: ShcApiClientConfig) {
 
   async function request<T>(path: string, init?: RequestInit, schema?: z.ZodType<T>): Promise<T> {
     const token = config.getAccessToken();
+    const requestId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "x-request-id": requestId,
       ...(config.publishableKey ? { "x-publishable-api-key": config.publishableKey } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers as Record<string, string>),

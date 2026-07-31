@@ -91,3 +91,12 @@ export async function uploadBufferToMinIO(
   const url = await getPublicPresignClient().presignedGetObject(bucketName, objectName, 3600 * 24 * 7); // 7 days
   return { key: objectName, bucket: bucketName, url };
 }
+
+export async function getObjectBuffer(objectName: string, bucketName: string = SHC_BUCKET): Promise<Buffer> {
+  const stream = await minioClient.getObject(bucketName, objectName);
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}

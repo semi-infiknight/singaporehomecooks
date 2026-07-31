@@ -41,8 +41,11 @@ All alerts must include runbook links and actionable remediation steps.
 
 - `apps/medusa/src/lib/shc-observability.ts` owns pino logging, trace IDs, and PagerDuty Events API delivery.
 - `apps/medusa/src/lib/shc-compliance-ops-notify.ts` alerts ops when cooks upload SFA/WSQ docs (PagerDuty `info` + `shc-notification` for ops actor).
-- `apps/medusa/src/api/middlewares.ts` attaches `x-request-id` + `x-trace-id`, records duration/status/method/path, logs structured `http.request` / `http.admin_request` events, and triggers PagerDuty alerts on 5xx.
-- Launch env requirement: set `PAGERDUTY_ROUTING_KEY` to enable alert delivery; without it, alerts are logged as skipped. Optional `SHC_OPS_ACTOR_ID` for in-app ops notifications (default `shc_ops`).
+- `apps/medusa/src/api/middlewares.ts` attaches `x-request-id` + `x-trace-id`, Redis-backed rate limits on `/store/shc/*` (auth login 5/15min, register 10/hour, general 120/min per IP), records duration/status/method/path, logs structured `http.request` / `http.admin_request` events, and triggers PagerDuty alerts on 5xx.
+- `apps/medusa/src/api/store/shc/ops/client-crash/route.ts` accepts client crash reports from web/mobile ErrorBoundaries (optional `SHC_CLIENT_CRASH_ALERTS=1` for PagerDuty).
+- `apps/worker/src/observability.ts` emits structured JSON logs and PagerDuty alerts on job failures.
+- `@shc/api-client` sends `x-request-id` on every request; `@shc/utils` `reportShcCrash` wires ErrorBoundaries.
+- Launch env requirement: set `PAGERDUTY_ROUTING_KEY` to enable alert delivery; without it, alerts are logged as skipped. Optional `SHC_OPS_ACTOR_ID` for in-app ops notifications (default `shc_ops`). Set `REDIS_URL` for distributed rate limiting across Medusa replicas.
 
 ## Multi-Agent Notes
 
