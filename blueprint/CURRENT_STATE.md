@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-07-31  
+**Last updated:** 2026-07-31 (batch merge: platform gaps, P2 hardening, weekly payouts, custom-request E2E, settlement invoice gate)  
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 
@@ -124,8 +124,8 @@ Web: customer checkout/PDP gated (`/login?returnTo=…`); cook portal uses separ
   - `listings/[id]` — edit wizard (prefilled from API).
 - Settings: pause, collection address/instructions/**time slots**, avatar/hero upload; `SHCCookAreaPicker` + `@shc/utils/sg-areas.ts`.
 - Listings API: `@shc/ui/listing-form` + product meta; PATCH/DELETE `/store/shc/listings/:id`.
-- Earnings: `GET /store/shc/earnings` ledger-backed; UI `@shc/ui/cook-earnings.tsx`; create-listing CTA → `listings/new`.
-- Orders: accept/decline on `paid`; compliance gate for accept; decline/dispute trays Maestro-covered.
+- Earnings: `GET /store/shc/earnings` ledger-backed; **payout status** (last/next PayNow, setup CTA) + **payout history** (`GET /store/shc/payouts/history`); UI `@shc/ui/cook-earnings.tsx` + web mirrors; weekly batch script `apps/medusa/scripts/weekly-payout.ts`.
+- Orders: accept/decline on `paid`; compliance gate for accept; **cook settlement PDF** only after `accepted` (provisional until `collected`); decline/dispute trays Maestro-covered.
 - **Layout:** single `settings` tab screen in `(cook)/_layout.tsx` (duplicate entry removed 2026-07-29).
 
 ### Admin / SHC Ops (`/app/shc-ops`)
@@ -148,9 +148,21 @@ SHC Ops: Recharts all pages; `GET /admin/shc/charts`; poll 30–45s + tab-focus 
 - Cook: `apps/mobile-cook/app/(cook)/tiffin/` + web `/cook-portal/tiffin`.
 - Recharge: HitPay `POST …/subscription/recharge/paynow` + webhook.
 
+### Custom requests (v2 — Phases 1–4 shipped)
+
+- Multi-dish wizard (`items[]`), per-line cook quotes (`line_items[]`), partial accept, sibling decline, PayNow on accept.
+- Mobile Maestro: `pnpm e2e:custom-request` · API smoke: `pnpm verify:real-e2e` (v2 path) · Web Playwright: `pnpm e2e:custom-request-web`.
+- Spec: [07-custom-requests/custom-requests-v2.md](./07-custom-requests/custom-requests-v2.md).
+
 ### Payments
 
-HitPay sandbox only (`HITPAY_ENV=sandbox`). Webhook: `/hooks/shc/hitpay`. QR fetch once per order/recharge session. Live KYC / real bank: **not done**.
+HitPay sandbox only (`HITPAY_ENV=sandbox`). Webhook: `/hooks/shc/hitpay`. QR fetch once per order/recharge session. **Weekly cook payouts MVP:** `weekly-payout.ts` aggregates ledger → `shc_payout_batch` + lines; cook earnings UI shows last/next payout + history. Live KYC / real bank: **not done**.
+
+### Platform hardening (P2)
+
+- Redis-backed rate limiting on `/store/shc/*` + auth/login/register buckets.
+- Structured worker logs + PagerDuty on job failures; client crash reporting (`POST /store/shc/ops/client-crash`).
+- Image derivatives: 1200 hero + 400 thumb on upload finalize; `shapeProduct` resolution.
 
 ---
 
@@ -180,7 +192,9 @@ Admin smoke: `pnpm smoke:admin-ops` round-trips config keys above.
 | Wired flow | `FLAVOUR=wiring SCOPE=<flow> pnpm verify:goal` |
 | Tri-platform UI | `FLAVOUR=tri-platform SCOPE=tray pnpm verify:goal` |
 | Pre-push CI mirror | `pnpm verify:ci` |
-| API smoke (slow) | `pnpm verify:real-e2e` |
+| API smoke (slow) | `pnpm verify:real-e2e` (includes custom requests v2) |
+| Custom request web E2E | `pnpm e2e:custom-request-web` |
+| Order invoice smoke | `pnpm exec tsx scripts/smoke-order-invoice.ts` |
 | Cook register→order | `REQUIRE_RAILWAY=1 pnpm verify:cook-wiring` |
 | Discover/location wave (sim) | `pnpm e2e:ecfdc8-wave` |
 | Tiffin | `pnpm e2e:tiffin` · `pnpm smoke:tiffin` |
@@ -236,8 +250,8 @@ pnpm railway:ship                     # PWA deploy + fingerprint
 |-----|--------|
 | HitPay live / KYC | Sandbox QR only; real bank payouts not wired |
 | Cook full Medusa auth actor | Hybrid SHC JWT today; full Medusa cook actor pending |
-| Production hardening | Custom domains, prod push creds, automated payout worker |
-| Sharp upload derivatives | Core MinIO upload done; full derivative pipeline partial |
+| Production hardening | Custom domains, prod push creds; rate limits + crash reporting shipped |
+| Automated payout worker | `weekly-payout.ts` manual/cron; not yet Railway worker schedule |
 
 ---
 

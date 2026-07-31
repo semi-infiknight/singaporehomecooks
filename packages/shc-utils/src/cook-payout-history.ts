@@ -1,9 +1,4 @@
-export type CookPayoutSnapshot = {
-  amount_cents: number;
-  transfer_ref?: string | null;
-  paid_at?: string | null;
-  week_start?: string | null;
-};
+import type { CookPayoutSnapshot } from './cook-payout';
 
 export type CookPayoutHistoryRow = CookPayoutSnapshot & {
   batch_id?: string;
