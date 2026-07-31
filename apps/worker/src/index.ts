@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import cron from "node-cron";
 
 import { MEDUSA_DIR, resolveMedusaScriptPath } from "./medusa-script-path.js";
+import { logWorker, logWorkerError, triggerWorkerAlert } from "./observability.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,8 +17,8 @@ const WORKER_API_KEY = process.env.WORKER_API_KEY;
 type JobResult = { ok: boolean; detail: string };
 type StoredJobResult = JobResult & { finished_at: string };
 
-function log(job: string, msg: string) {
-  console.log(`[shc-worker] ${new Date().toISOString()} ${job}: ${msg}`);
+function log(job: string, msg: string, extra?: Record<string, unknown>) {
+  logWorker({ event: "worker.job", job, message: msg, ...extra });
 }
 
 function runMedusaScript(scriptRel: string, args: string[] = []): Promise<JobResult> {
@@ -124,6 +125,20 @@ async function runJob(name: string): Promise<JobResult> {
   try {
     const result = await fn();
     lastResults[name] = { ...result, finished_at: new Date().toISOString() };
+    if (!result.ok && result.detail !== "skipped" && !result.detail.includes("skipped")) {
+      logWorkerError({
+        event: "worker.job.failed",
+        job: name,
+        detail: result.detail,
+      });
+      void triggerWorkerAlert({
+        severity: name === "weekly-payout" ? "critical" : "error",
+        summary: `SHC worker job failed: ${name}`,
+        job: name,
+        dedupeKey: `worker-fail-${name}`,
+        details: { detail: result.detail },
+      });
+    }
     return result;
   } finally {
     running = false;

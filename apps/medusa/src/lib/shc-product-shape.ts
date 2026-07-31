@@ -2,6 +2,7 @@ import ShcAvailabilityModuleService from "../modules/shc-availability/service";
 import ShcCookModuleService from "../modules/shc-cook/service";
 import { productTitleFromId } from "./shc-product-titles";
 import { getCookRatingSummary, type CookRatingSummary } from "./shc-cook-ratings";
+import { resolveListingImageUrls } from "./shc-image-derivatives";
 
 /** Shape product meta + availability into client-friendly object (mock parity). */
 export async function shapeProduct(
@@ -19,6 +20,7 @@ export async function shapeProduct(
   const ratingSummary =
     opts?.cookRating ??
     (meta.cook_id ? await getCookRatingSummary(scope, meta.cook_id) : { rating: null, review_count: 0 });
+  const images = await resolveListingImageUrls(meta.image_url);
   return {
     id: meta.product_id,
     name: title,
@@ -39,7 +41,9 @@ export async function shapeProduct(
     min_qty: meta.min_qty || 1,
     shc_availability: avail,
     description: meta.description || "",
-    image_url: meta.image_url || null,
+    image_url: images?.image_url || meta.image_url || null,
+    image_thumb_url: images?.image_thumb_url || images?.image_url || meta.image_url || null,
+    image_hero_url: images?.image_hero_url || images?.image_url || meta.image_url || null,
     meal_extras: meta.meal_extras || [],
     meal_addons: meta.meal_addons || [],
     recipe_steps: meta.recipe_steps || [],

@@ -1,13 +1,27 @@
 import { defineMiddlewares } from "@medusajs/framework/http";
 import { randomUUID } from "crypto";
 import { getTraceId, logInfo, triggerOpsAlert } from "../lib/shc-observability";
+import { resolveStoreShcRateLimit, sendRateLimitResponse, setRateLimitHeaders } from "../lib/shc-rate-limit";
 
 export default defineMiddlewares({
   routes: [
     {
       matcher: "/store/shc/*",
       middlewares: [
-        (req, res, next) => {
+        async (req, res, next) => {
+          try {
+            const rate = await resolveStoreShcRateLimit(req);
+            setRateLimitHeaders(res, rate);
+            if (!rate.allowed) {
+              return sendRateLimitResponse(req, res, rate);
+            }
+          } catch (err) {
+            logInfo({
+              event: "rate_limit.error",
+              message: err instanceof Error ? err.message : String(err),
+            });
+          }
+
           const requestId = String(req.headers["x-request-id"] || randomUUID());
           const traceId = String(req.headers["traceparent"] || getTraceId(requestId));
           const start = Date.now();

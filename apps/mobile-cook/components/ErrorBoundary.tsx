@@ -7,6 +7,7 @@ import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { shcColors, SHCButton, SHCButtonText } from '@shc/ui';
 import { SHCErrorCode } from '@shc/types';
+import { reportShcCrash } from '@shc/utils';
 
 interface Props {
   children: ReactNode;
@@ -35,8 +36,13 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    // Observability stub: console + perf for later pino/railway + tracing
-    console.error('[SHC-ERROR-BOUNDARY]', error, errorInfo);
+    reportShcCrash({
+      surface: 'mobile-cook',
+      message: error.message,
+      stack: error.stack,
+      componentStack: String(errorInfo?.componentStack || ''),
+      errorCode: this.state.errorCode as string,
+    });
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('shc_error_boundary_catch');
     }

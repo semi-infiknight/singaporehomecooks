@@ -4,7 +4,6 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { issueCookToken } from "../../../../../../lib/shc-auth";
 import { hashCookPassword } from "../../../../../../lib/shc-password";
-import { checkRateLimit, getRateLimitKey } from "../../../../../../lib/shc-rate-limit";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const BodySchema = z.object({
@@ -35,11 +34,6 @@ function cookIdFromEmail(email: string): string {
 
 /** POST /store/shc/auth/cook/register — new cook account (Railway Medusa) */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
-  const rate = checkRateLimit(getRateLimitKey(req, "auth.cook.register"), { max: 10, windowMs: 60 * 60 * 1000 });
-  if (!rate.allowed) {
-    return res.status(429).json({ error: createSHCError("SHC-GENERIC-001", "Too many sign-up attempts. Try again later.") });
-  }
-
   const parse = BodySchema.safeParse(req.body || {});
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid registration payload") });

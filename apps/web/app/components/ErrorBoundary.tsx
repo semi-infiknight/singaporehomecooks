@@ -2,6 +2,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { SHCErrorCode } from '@shc/types';
+import { reportShcCrash } from '@shc/utils';
 
 interface Props { children: ReactNode; fallbackTitle?: string; }
 interface State { hasError: boolean; error: Error | null; errorCode?: SHCErrorCode | string; }
@@ -19,7 +20,14 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, errorCode: code };
   }
   componentDidCatch(error: Error, errorInfo: any) {
-    console.error('[SHC-WEB-ERROR-BOUNDARY]', error, errorInfo);
+    reportShcCrash({
+      surface: 'web',
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo?.componentStack,
+      errorCode: this.state.errorCode as string,
+      route: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    });
     if (typeof performance !== 'undefined' && performance.mark) performance.mark('shc_web_error_boundary');
   }
   handleRetry = () => this.setState({ hasError: false, error: null, errorCode: undefined });
