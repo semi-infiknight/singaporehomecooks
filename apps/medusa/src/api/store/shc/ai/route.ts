@@ -11,8 +11,18 @@ import { estimateCaloriesFromIngredients } from "../../../../lib/shc-calorie-est
  */
 const EstimateSchema = z
   .object({
-    ingredients: z.array(z.object({ name: z.string(), quantity: z.number(), unit: z.string() })).min(1),
-    photo_url: z.string().optional(),
+    ingredients: z
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1),
+            quantity: z.number().nonnegative(),
+            unit: z.string(),
+          })
+          .strict()
+      )
+      .min(1),
+    photo_url: z.string().url().optional(),
   })
   .strict();
 

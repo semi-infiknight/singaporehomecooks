@@ -139,7 +139,7 @@ export async function estimateCaloriesFromIngredients(
     let via: "usda" | "openfoodfacts" | "heuristic" | null = null;
 
     try {
-      const usda = await fetchUsdaKcalPer100g(ing.name, fetchImpl, apiKey);
+      const usda = await fetchUsdaKcalPer100g(ing.name.trim(), fetchImpl, apiKey);
       if (usda) {
         kcalPer100g = usda.kcalPer100g;
         via = "usda";
@@ -151,7 +151,7 @@ export async function estimateCaloriesFromIngredients(
 
     if (kcalPer100g == null) {
       try {
-        const off = await fetchOpenFoodFactsKcalPer100g(ing.name, fetchImpl);
+        const off = await fetchOpenFoodFactsKcalPer100g(ing.name.trim(), fetchImpl);
         if (off) {
           kcalPer100g = off.kcalPer100g;
           via = "openfoodfacts";
@@ -163,7 +163,7 @@ export async function estimateCaloriesFromIngredients(
     }
 
     if (kcalPer100g == null) {
-      kcalPer100g = heuristicKcalPer100g(ing.name);
+      kcalPer100g = heuristicKcalPer100g(ing.name.trim());
       via = "heuristic";
       heuristicMatches += 1;
     } else {
