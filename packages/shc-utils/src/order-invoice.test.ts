@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildOrderInvoice,
+  canDownloadCookSettlementInvoice,
   formatInvoiceMoney,
   invoiceToHtml,
   invoiceToPdfBase64,
+  isCookSettlementInvoiceProvisional,
 } from './order-invoice';
 
 const sampleOrder = {
@@ -42,6 +44,25 @@ describe('order-invoice', () => {
     expect(inv.platform_fee_cents).toBe(1740); // 15% of 11600
     expect(inv.cook_earnings_cents).toBe(9860);
     expect(inv.bill_to.role_label).toMatch(/Cook/i);
+    expect(inv.provisional).toBe(true);
+    expect(inv.title).toMatch(/Provisional/i);
+  });
+
+  it('marks cook settlement final after collection', () => {
+    const inv = buildOrderInvoice({
+      order: { ...sampleOrder, shc_status: 'collected' },
+      audience: 'cook',
+    });
+    expect(inv.provisional).toBeUndefined();
+    expect(inv.title).toBe('Order settlement note');
+  });
+
+  it('gates cook settlement download by order status', () => {
+    expect(canDownloadCookSettlementInvoice('paid')).toBe(false);
+    expect(canDownloadCookSettlementInvoice('accepted')).toBe(true);
+    expect(canDownloadCookSettlementInvoice('completed')).toBe(true);
+    expect(isCookSettlementInvoiceProvisional('preparing')).toBe(true);
+    expect(isCookSettlementInvoiceProvisional('completed')).toBe(false);
   });
 
   it('formats money and HTML/PDF for download', () => {

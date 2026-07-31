@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
-import { buildOrderInvoice, invoiceToHtml, invoiceToPdfBase64 } from "@shc/utils";
+import { buildOrderInvoice, canDownloadCookSettlementInvoice, invoiceToHtml, invoiceToPdfBase64 } from "@shc/utils";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import {
   getAuthContext,
@@ -55,6 +55,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     }
   } catch {
     return unauthorized(res, "Login required");
+  }
+
+  if (audience === "cook" && !canDownloadCookSettlementInvoice(m.shc_status)) {
+    return res.status(403).json({
+      error: createSHCError(
+        "SHC-ORDER-001",
+        "Settlement invoice is available after you accept the order."
+      ),
+    });
   }
 
   // Normalize money: meta may store total_cents OR dollars in total

@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
-import { buildOrderInvoice, invoiceToPdfBase64 } from "@shc/utils";
+import { buildOrderInvoice, canDownloadCookSettlementInvoice, invoiceToPdfBase64 } from "@shc/utils";
 import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/service";
 import { verifyInvoiceDownload } from "../../../../lib/shc-invoice-sign";
 
@@ -35,6 +35,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${orderId}`) });
   }
   const m = data.meta as any;
+
+  if (verified.audience === "cook" && !canDownloadCookSettlementInvoice(m.shc_status)) {
+    return res.status(403).json({
+      error: createSHCError(
+        "SHC-ORDER-001",
+        "Settlement invoice is available after you accept the order."
+      ),
+    });
+  }
 
   const resolvedTotalCents =
     m.total_cents != null && Number(m.total_cents) > 0
