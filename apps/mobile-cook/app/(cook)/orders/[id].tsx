@@ -17,7 +17,7 @@ import {
   SHCSkeletonList,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, getDishImageUrl, isCookComplianceVerified } from '@shc/utils';
+import { getOrderStatusLabel, getDishImageUrl, isCookComplianceVerified, canDownloadCookSettlementInvoice, COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT, COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE, isCookSettlementInvoiceProvisional } from '@shc/utils';
 import { useOrder, useTransitionOrder, useComplianceDocs } from '../../../hooks/useOrder';
 import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
@@ -197,6 +197,8 @@ export default function CookManageOrder() {
 
   const actions = NEXT_ACTIONS[order.shc_status] || [];
   const dishName = order.items?.[0]?.name;
+  const settlementAvailable = canDownloadCookSettlementInvoice(String(order.shc_status || ''));
+  const settlementProvisional = isCookSettlementInvoiceProvisional(String(order.shc_status || ''));
 
   return (
     <ScrollView
@@ -279,13 +281,26 @@ export default function CookManageOrder() {
         </View>
       )}
 
-      <GourmeatPrimaryButton
-        label={invoiceBusy ? 'Opening PDF…' : 'Open settlement invoice (PDF)'}
-        variant="outline"
-        onPress={downloadInvoice}
-        loading={invoiceBusy}
-        testID="cook-order-download-invoice-btn"
-      />
+      {settlementAvailable ? (
+        <View style={styles.invoiceBlock}>
+          {settlementProvisional ? (
+            <Text style={styles.hint} testID="cook-settlement-invoice-provisional-hint">
+              {COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT}
+            </Text>
+          ) : null}
+          <GourmeatPrimaryButton
+            label={invoiceBusy ? 'Opening PDF…' : 'Open settlement invoice (PDF)'}
+            variant="outline"
+            onPress={downloadInvoice}
+            loading={invoiceBusy}
+            testID="cook-order-download-invoice-btn"
+          />
+        </View>
+      ) : (
+        <Text style={styles.hint} testID="cook-settlement-invoice-unavailable">
+          {COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE}
+        </Text>
+      )}
 
       <GourmeatPrimaryButton
         label="Chat with customer"
@@ -324,6 +339,7 @@ const styles = StyleSheet.create({
   cardMeta: { marginTop: 4, fontSize: 12, color: gourmeatColors.textLight },
   itemLine: { marginTop: 4, fontSize: 13, color: gourmeatColors.text },
   hint: { marginTop: shcSpacing.sm, fontSize: 12, color: gourmeatColors.textLight, lineHeight: 18 },
+  invoiceBlock: { marginTop: shcSpacing.sm, gap: 8 },
   actions: { gap: 8, marginTop: shcSpacing.md, marginBottom: shcSpacing.sm },
   disputeInput: {
     borderWidth: 1,

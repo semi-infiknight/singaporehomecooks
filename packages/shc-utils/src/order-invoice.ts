@@ -11,6 +11,37 @@ import {
 
 export type InvoiceAudience = 'customer' | 'cook';
 
+/** Cook settlement PDF is issued only after the cook accepts the order. */
+export const COOK_SETTLEMENT_INVOICE_STATUSES = [
+  'accepted',
+  'preparing',
+  'ready_for_collection',
+  'collected',
+  'completed',
+] as const;
+
+/** Final settlement (not provisional) once collection is marked. */
+export const COOK_SETTLEMENT_INVOICE_FINAL_STATUSES = ['collected', 'completed'] as const;
+
+export const COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE =
+  'Settlement invoice is available after you accept the order.';
+
+export const COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT =
+  'Provisional estimate — final settlement is issued after collection is marked collected.';
+
+export function canDownloadCookSettlementInvoice(shcStatus: string | null | undefined): boolean {
+  const status = String(shcStatus || '').trim();
+  return (COOK_SETTLEMENT_INVOICE_STATUSES as readonly string[]).includes(status);
+}
+
+export function isCookSettlementInvoiceProvisional(shcStatus: string | null | undefined): boolean {
+  const status = String(shcStatus || '').trim();
+  return (
+    canDownloadCookSettlementInvoice(status) &&
+    !(COOK_SETTLEMENT_INVOICE_FINAL_STATUSES as readonly string[]).includes(status)
+  );
+}
+
 export type OrderInvoiceLine = {
   description: string;
   qty: number;
@@ -60,6 +91,8 @@ export type OrderInvoiceDoc = {
   };
   notes: string[];
   audience: InvoiceAudience;
+  /** Cook settlement before collection is marked collected */
+  provisional?: boolean;
 };
 
 export type BuildInvoiceInput = {
@@ -199,6 +232,7 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
   const subtotal = totalCents - gstCents;
 
   const isCook = input.audience === 'cook';
+  const provisional = isCook && isCookSettlementInvoiceProvisional(order.shc_status);
   const notes: string[] = [
     supplier.gst_registered
       ? `GST is included at ${(gstRate * 100).toFixed(0)}% where applicable.`
@@ -213,12 +247,19 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     notes.push(
       `Platform service fee (${(rate * 100).toFixed(0)}%) is deducted from the order total before cook payout.`
     );
+    if (provisional) {
+      notes.unshift(
+        'PROVISIONAL: This settlement estimate is not final until the order is marked collected. Payout may be adjusted if the order is cancelled or disputed.'
+      );
+    }
   }
 
   return {
     doc_type: isCook ? 'settlement_note' : 'tax_invoice',
     title: isCook
-      ? 'Order settlement note'
+      ? provisional
+        ? 'Provisional settlement note'
+        : 'Order settlement note'
       : order.is_corporate
         ? 'Tax invoice (Corporate / group)'
         : 'Tax invoice',
@@ -259,6 +300,7 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     },
     notes,
     audience: input.audience,
+    provisional: provisional || undefined,
   };
 }
 

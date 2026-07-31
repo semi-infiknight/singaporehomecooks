@@ -7,9 +7,13 @@ import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
 import {
   buildOrderChatContext,
+  canDownloadCookSettlementInvoice,
+  COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT,
+  COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE,
   getDishImageUrl,
   getOrderStatusLabel,
   isCookComplianceVerified,
+  isCookSettlementInvoiceProvisional,
   resolveOrderCollectionFields,
   shcOrderStatusBadgeLabel,
   shcOrderStatusBadgeVariant,
@@ -122,6 +126,8 @@ export default function CookOrderDetailPage() {
 
   const orderRecord = order as Record<string, unknown> | undefined;
   const status = String(orderRecord?.shc_status || '');
+  const settlementAvailable = canDownloadCookSettlementInvoice(status);
+  const settlementProvisional = isCookSettlementInvoiceProvisional(status);
   const actions = NEXT_ACTIONS[status] || [];
   const items = (orderRecord?.items as Array<{ name?: string; qty?: number; product_id?: string; image_url?: string }>) || [];
   const dishName = items[0]?.name || `Order ${id}`;
@@ -323,13 +329,26 @@ export default function CookOrderDetailPage() {
         </div>
       )}
 
-      <GourmeatPrimaryButton
-        label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
-        variant="outline"
-        onClick={downloadInvoice}
-        disabled={invoiceBusy}
-        testID="cook-order-download-invoice-btn"
-      />
+      {settlementAvailable ? (
+        <div className="mb-3">
+          {settlementProvisional ? (
+            <p className="text-xs font-semibold text-muted-foreground mb-2" data-testid="cook-settlement-invoice-provisional-hint">
+              {COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT}
+            </p>
+          ) : null}
+          <GourmeatPrimaryButton
+            label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
+            variant="outline"
+            onClick={downloadInvoice}
+            disabled={invoiceBusy}
+            testID="cook-order-download-invoice-btn"
+          />
+        </div>
+      ) : (
+        <p className="text-xs font-semibold text-muted-foreground mb-3" data-testid="cook-settlement-invoice-unavailable">
+          {COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE}
+        </p>
+      )}
 
       <div className="mt-6" id="cook-order-chat">
         <SHCSectionTitle subtitle="Coordinate collection with your customer">Order chat</SHCSectionTitle>

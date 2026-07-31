@@ -106,14 +106,26 @@ async function main() {
   const kList = kOrders.json?.orders || [];
   console.log(`orders customer=${cList.length} cook=${kList.length}`);
 
-  const pickOrder = (list: any[]) => {
+  const pickOrder = (list: any[], opts?: { cookSettlement?: boolean }) => {
+    if (opts?.cookSettlement) {
+      const accepted = list.find(
+        (o) =>
+          ['accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
+            String(o?.shc_status || '')
+          ) &&
+          (Number(o?.total) > 0 || Number(o?.total_cents) > 0)
+      );
+      if (accepted) return accepted;
+    }
     const withTotal = list.find((o) => Number(o?.total) > 0 || Number(o?.total_cents) > 0);
     return withTotal || list[0];
   };
   const picked = pickOrder(cList) || pickOrder(kList);
+  const cookPicked = pickOrder(kList, { cookSettlement: true }) || pickOrder(cList, { cookSettlement: true });
   const oid = picked?.id || picked?.order_id;
+  const cookOid = cookPicked?.id || cookPicked?.order_id || oid;
   if (!oid) throw new Error('No orders on Railway to invoice — place an order first');
-  console.log(`using order ${oid} total=${picked?.total}`);
+  console.log(`using order ${oid} total=${picked?.total} (cook settlement probe ${cookOid})`);
 
   // Customer JSON + PDF
   const invC = await shc(`/store/shc/orders/${encodeURIComponent(oid)}/invoice`, { method: 'GET' }, ctoken);
@@ -141,8 +153,8 @@ async function main() {
   assertPdf(streamC.buf, 'customer format=pdf stream');
   fs.writeFileSync(path.join(OUT, 'customer-stream.pdf'), streamC.buf);
 
-  // Cook settlement
-  const invK = await shc(`/store/shc/orders/${encodeURIComponent(oid)}/invoice`, { method: 'GET' }, ktoken);
+  // Cook settlement (accepted+ only)
+  const invK = await shc(`/store/shc/orders/${encodeURIComponent(cookOid)}/invoice`, { method: 'GET' }, ktoken);
   if (invK.status !== 200 || !invK.json?.pdf_base64) {
     throw new Error(`cook invoice failed ${invK.status}: ${JSON.stringify(invK.json).slice(0, 200)}`);
   }
@@ -155,7 +167,7 @@ async function main() {
 
   // Signed openURL path (mobile least-blast) — no JWT on final PDF fetch
   const linkK = await shc(
-    `/store/shc/orders/${encodeURIComponent(oid)}/invoice?issue_url=1`,
+    `/store/shc/orders/${encodeURIComponent(cookOid)}/invoice?issue_url=1`,
     { method: 'GET' },
     ktoken
   );
@@ -170,12 +182,23 @@ async function main() {
   fs.writeFileSync(path.join(OUT, 'cook-signed.pdf'), signedBuf);
   console.log('✅ GET /hooks/shc/invoice signed PDF');
 
+  const paidOrder = kList.find((o) => String(o?.shc_status) === 'paid');
+  if (paidOrder?.id || paidOrder?.order_id) {
+    const paidId = paidOrder.id || paidOrder.order_id;
+    const blocked = await shc(`/store/shc/orders/${encodeURIComponent(paidId)}/invoice`, { method: 'GET' }, ktoken);
+    if (blocked.status !== 403) {
+      throw new Error(`expected cook settlement 403 on paid order, got ${blocked.status}`);
+    }
+    console.log('✅ cook settlement blocked before accept (paid → 403)');
+  }
+
   // Static wiring: UI must expose download CTAs
   const checks: Array<[string, string]> = [
     ['apps/mobile-customer/app/(customer)/orders/[id].tsx', 'order-download-invoice-btn'],
     ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'cook-order-download-invoice-btn'],
     ['apps/web/app/orders/[id]/page.tsx', 'order-download-invoice-btn'],
     ['apps/web/app/cook-portal/orders/[id]/page.tsx', 'cook-order-download-invoice-btn'],
+    ['apps/web/app/cook-portal/orders/[id]/page.tsx', 'cook-settlement-invoice-unavailable'],
     ['apps/mobile-customer/app/(customer)/orders/[id].tsx', 'getOrderInvoiceDownloadUrl'],
     ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'getOrderInvoiceDownloadUrl'],
     ['apps/mobile-cook/app/(cook)/orders/[id].tsx', 'Linking.openURL'],
