@@ -434,7 +434,7 @@ export default function DiscoverHome() {
                         reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
                         subscriberCount={c.subscriber_count != null ? Number(c.subscriber_count) : undefined}
                         onPress={() => {
-                          if (cid) router.push(`/tiffin/kitchen/${encodeURIComponent(cid)}`);
+                          if (slug) router.push(`/cook/${encodeURIComponent(slug)}`);
                         }}
                         testID={`home-kitchen-${cid}`}
                       />

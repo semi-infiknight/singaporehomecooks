@@ -503,8 +503,8 @@ export default function CustomerDiscover() {
                     subscriberCount={c.subscriber_count}
                     coverUri={getCookKitchenHeroUrl(c.id || c.slug)}
                     onPress={() => {
-                      const id = c.id || c.slug;
-                      if (id) router.push(`/(customer)/tiffin/kitchen/${id}` as any);
+                      const slug = c.slug || c.id;
+                      if (slug) router.push(`/(customer)/cook/${slug}` as any);
                     }}
                   />
                 </View>
