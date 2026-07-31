@@ -53,11 +53,11 @@ set("medusa", [
   // custom domain alone left PWA sign-in as browser "Failed to fetch" when users hit Railway URL.
   [
     "STORE_CORS",
-    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
   ],
   [
     "AUTH_CORS",
-    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
+    "https://web-production-9226.up.railway.app,https://www.homecooksg.com,https://homecooksg.com,https://${{web.RAILWAY_PUBLIC_DOMAIN}},http://localhost:3001,http://localhost:8081,http://localhost:8082",
   ],
 ]);
 

@@ -31,6 +31,7 @@ const STATUS_INDEX: Record<string, number> = {
 };
 
 const HUMAN_STATUS: Record<string, string> = {
+  cart: 'Awaiting PayNow',
   paid: 'Payment confirmed',
   accepted: 'Cook accepted your order',
   preparing: 'Cook is preparing your meal',
@@ -55,6 +56,10 @@ export function getOrderStatusLabel(status: string): string {
 
 export function getOrderTimelineIndex(status: string): number {
   return STATUS_INDEX[status] ?? -1;
+}
+
+export function isAwaitingPayNowStatus(status: string): boolean {
+  return String(status || '').toLowerCase() === 'cart';
 }
 
 export function isActiveOrderStatus(status: string): boolean {

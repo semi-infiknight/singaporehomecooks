@@ -86,15 +86,21 @@ export function missingComplianceTypes(
   return missing;
 }
 
-/** Both SFA and WSQ docs approved (or verified_at set) — safe to show “verified” badge */
+/** Both SFA and WSQ docs approved (or verified_at set) and not expired — safe to show “verified” badge */
 export function isCookComplianceVerified(
-  docs: Array<{ type?: string; status?: string; verified_at?: string | null }>
+  docs: Array<{ type?: string; status?: string; verified_at?: string | null; expiry_date?: string | null }>
 ): boolean {
+  const now = Date.now();
   const approved = (type: 'sfa' | 'wsq') =>
-    docs.some(
-      (d) =>
-        String(d.type || '').toLowerCase() === type &&
-        (d.status === 'approved' || Boolean(d.verified_at))
-    );
+    docs.some((d) => {
+      if (String(d.type || '').toLowerCase() !== type) return false;
+      const verified = d.status === 'approved' || Boolean(d.verified_at);
+      if (!verified) return false;
+      if (d.expiry_date) {
+        const exp = new Date(d.expiry_date).getTime();
+        if (!Number.isNaN(exp) && exp <= now) return false;
+      }
+      return true;
+    });
   return approved('sfa') && approved('wsq');
 }

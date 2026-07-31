@@ -10,6 +10,7 @@ import {
   resolveCookCollectionTimeSlots,
   normalizeCookCollectionTimeSlots,
   validateCookListingDraft,
+  validateCookListingForPublish,
 } from './listing-form';
 
 describe('listing-form', () => {
@@ -32,6 +33,24 @@ describe('listing-form', () => {
     expect(payload.description).toBe('Family recipe');
     expect(payload.allergen_tiers).toEqual({ tier1: ['Shellfish'], tier2: [], tier3: [] });
     expect(payload.portions_per_day).toBe(12);
+  });
+
+  it('rejects publish when allergens and ingredients missing', () => {
+    const bad = validateCookListingForPublish({
+      name: 'Laksa',
+      price: 10,
+      min_qty: 2,
+      cuisine: 'Peranakan',
+      occasion_tags: [],
+      ingredients: [],
+      allergen_tiers: emptyAllergenTiers(),
+      halal: false,
+      portions_per_day: 12,
+      collection_days: [],
+      time_slots: [],
+    });
+    expect(bad.valid).toBe(false);
+    expect(bad.errors.length).toBeGreaterThan(2);
   });
 
   it('rejects invalid listing draft', () => {

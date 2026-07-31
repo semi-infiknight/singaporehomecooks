@@ -6,8 +6,10 @@ import {
   COOK_EARNINGS_IRAS_NOTE,
   formatCookExpenseRowAmount,
   formatCookExpenseTotalDollars,
+  formatCookPayoutHistoryRow,
   recentCookExpenses,
   type CookExpenseRow,
+  type CookPayoutHistoryRow,
 } from '@shc/utils';
 import { shcColors, shcSpacing } from './theme';
 import { SHCButton, SHCButtonText, SHCCard, SHCMetaBadge } from './primitives';
@@ -16,6 +18,29 @@ export function SHCCookEarningsIrasNote({ testID = 'cook-earnings-iras-note' }: 
   return (
     <SHCCard variant="bento-peach" style={styles.noteCard} testID={testID}>
       <Text style={styles.noteText}>{COOK_EARNINGS_IRAS_NOTE}</Text>
+    </SHCCard>
+  );
+}
+
+export function SHCCookEarningsPayoutHistory({
+  payouts,
+  testID = 'cook-earnings-payout-history',
+}: {
+  payouts: CookPayoutHistoryRow[];
+  testID?: string;
+}) {
+  return (
+    <SHCCard variant="bento-yellow" style={styles.payoutCard} testID={testID}>
+      <Text style={styles.sectionLabelInline}>Payout history</Text>
+      {!payouts.length ? (
+        <Text style={styles.noteText}>No payouts yet — earnings batch every Monday after orders complete.</Text>
+      ) : (
+        payouts.slice(0, 6).map((row, idx) => (
+          <Text key={`${row.batch_id || row.week_start || idx}`} style={styles.payoutLine}>
+            {formatCookPayoutHistoryRow(row)}
+          </Text>
+        ))
+      )}
     </SHCCard>
   );
 }
@@ -112,6 +137,9 @@ export function SHCCookEarningsExpenseTracker({
 
 const styles = StyleSheet.create({
   noteCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
+  payoutCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
+  payoutLine: { fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 },
+  sectionLabelInline: { fontSize: 14, fontWeight: '900', color: shcColors.text, marginBottom: shcSpacing.xs },
   noteText: { fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
   sectionLabel: {
     fontSize: 16,

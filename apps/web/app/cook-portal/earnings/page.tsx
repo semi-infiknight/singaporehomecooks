@@ -11,11 +11,12 @@ import {
   todayExpenseDateIso,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import { useCookEarnings, useCookExpenses, useCreateCookExpense } from '../../../lib/useCookPortal';
+import { useCookEarnings, useCookExpenses, useCookPayoutHistory, useCreateCookExpense } from '../../../lib/useCookPortal';
 import {
   CookEarningsCreateListingsCtaWeb,
   CookEarningsExpenseTrackerWeb,
   CookEarningsIrasNoteWeb,
+  CookEarningsPayoutHistoryWeb,
   GourmeatCookHeader,
   GourmeatCard,
   SHCMetaBadge,
@@ -30,6 +31,7 @@ export default function CookEarningsPage() {
   const projectedLabel = formatCookEarningsDisplay(earnings.projected_payout_cents);
   const orderCount = earnings.orders_count;
   const { data: expenses = { expenses: [], total_cents: 0 } } = useCookExpenses();
+  const { data: payoutHistory = { payouts: [] } } = useCookPayoutHistory();
   const expenseMut = useCreateCookExpense();
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('ingredients');
@@ -71,6 +73,8 @@ export default function CookEarningsPage() {
           <p className="text-xl font-black">{orderCount} orders</p>
         </GourmeatCard>
       </div>
+
+      <CookEarningsPayoutHistoryWeb payouts={(payoutHistory.payouts || []) as any} />
 
       <p className="text-sm font-extrabold mb-2">Quick actions</p>
       <div className="grid grid-cols-2 gap-2">

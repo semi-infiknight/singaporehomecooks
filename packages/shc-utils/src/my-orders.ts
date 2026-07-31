@@ -5,6 +5,7 @@
 
 export type DayOrderCardStatus =
   | 'indeterminate'
+  | 'awaiting_payment'
   | 'scheduled'
   | 'delivered'
   | 'skipped'
@@ -23,7 +24,7 @@ export type DayOrderCard = {
   menuPending: boolean;
   /** deep link target */
   hrefOrderId?: string;
-  managePath?: 'order' | 'tiffin';
+  managePath?: 'order' | 'tiffin' | 'pay';
 };
 
 export type CalendarDay = {
@@ -75,6 +76,7 @@ export function markCalendarHasOrders(days: CalendarDay[], datesWithOrders: Set<
 /** Map SHC order pipeline status → day card status. */
 export function mapShcStatusToDayCard(status: string, collectionDate?: string, nowIso?: string): DayOrderCardStatus {
   const s = String(status || '').toLowerCase();
+  if (s === 'cart') return 'awaiting_payment';
   if (s === 'skipped') return 'skipped';
   if (s === 'canceled_by_kitchen' || s === 'cancelled' || s === 'canceled') {
     return s === 'canceled_by_kitchen' ? 'canceled_by_kitchen' : 'canceled_by_kitchen';
@@ -131,7 +133,7 @@ export function oneOffOrderToDayCard(order: Record<string, unknown>, nowIso?: st
     customizable: isOrderCustomizable(status, collectionDate),
     menuPending: menuLines.length === 0 && status === 'scheduled',
     hrefOrderId: String(order.id),
-    managePath: 'order',
+    managePath: status === 'awaiting_payment' ? 'pay' : 'order',
   };
 }
 
@@ -199,6 +201,8 @@ export function dayOrderStatusChip(status: DayOrderCardStatus): {
   color: string;
 } {
   switch (status) {
+    case 'awaiting_payment':
+      return { label: 'Awaiting PayNow', bg: '#FFF8E1', color: '#F57F17' };
     case 'delivered':
       return { label: 'Collected', bg: '#E8F5E9', color: '#2E7D32' };
     case 'skipped':
@@ -213,6 +217,7 @@ export function dayOrderStatusChip(status: DayOrderCardStatus): {
 }
 
 export function primaryActionLabel(card: DayOrderCard): string {
+  if (card.status === 'awaiting_payment') return 'Pay now';
   if (card.status === 'delivered' || card.status === 'skipped' || card.status === 'canceled_by_kitchen') {
     return 'View';
   }

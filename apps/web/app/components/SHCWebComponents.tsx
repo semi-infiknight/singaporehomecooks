@@ -77,8 +77,10 @@ import {
   COOK_EARNINGS_IRAS_NOTE,
   formatCookExpenseRowAmount,
   formatCookExpenseTotalDollars,
+  formatCookPayoutHistoryRow,
   recentCookExpenses,
   type CookExpenseRow,
+  type CookPayoutHistoryRow,
   parseCustomRequestDisplay,
   buildDefaultQuoteLines,
   validateClientQuoteLines,
@@ -4796,6 +4798,29 @@ export function CookEarningsIrasNoteWeb({ testID = 'cook-earnings-iras-note' }: 
   return (
     <GourmeatCard className="bg-[var(--shc-bento-peach)] mt-4" data-testid={testID}>
       <p className="text-xs text-muted-foreground leading-relaxed">{COOK_EARNINGS_IRAS_NOTE}</p>
+    </GourmeatCard>
+  );
+}
+
+export function CookEarningsPayoutHistoryWeb({
+  payouts,
+  testID = 'cook-earnings-payout-history',
+}: {
+  payouts: CookPayoutHistoryRow[];
+  testID?: string;
+}) {
+  return (
+    <GourmeatCard className="bg-[var(--shc-bento-yellow)] mt-4" data-testid={testID}>
+      <p className="text-sm font-extrabold mb-2">Payout history</p>
+      {!payouts.length ? (
+        <p className="text-xs text-muted-foreground">No payouts yet — earnings batch every Monday after orders complete.</p>
+      ) : (
+        payouts.slice(0, 6).map((row, idx) => (
+          <p key={`${row.batch_id || row.week_start || idx}`} className="text-sm font-bold leading-relaxed">
+            {formatCookPayoutHistoryRow(row)}
+          </p>
+        ))
+      )}
     </GourmeatCard>
   );
 }

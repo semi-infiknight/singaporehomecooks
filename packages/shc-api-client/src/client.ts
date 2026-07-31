@@ -453,6 +453,13 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return request("/store/shc/earnings", { method: "GET" });
     },
 
+    async getCookPayoutHistory() {
+      return request<{ cook_id: string; payouts: Array<Record<string, unknown>> }>(
+        "/store/shc/earnings/payouts",
+        { method: "GET" }
+      );
+    },
+
     async createRequest(input: Record<string, unknown>) {
       const r = await request("/store/shc/requests", { method: "POST", body: JSON.stringify(input) });
       return (r as any).request;

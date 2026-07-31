@@ -115,6 +115,7 @@ export const getComplianceDocs = () => cookClient.getComplianceDocs();
 export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
   cookClient.submitComplianceDoc(input);
 export const getCookEarnings = () => cookClient.getEarnings();
+export const getCookPayoutHistory = () => cookClient.getCookPayoutHistory();
 export const listCookExpenses = () => cookClient.listCookExpenses();
 export const createCookExpense = (input: {
   amount_cents: number;

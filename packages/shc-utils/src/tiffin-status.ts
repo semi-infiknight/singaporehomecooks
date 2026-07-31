@@ -5,6 +5,7 @@
 
 export type TiffinOrderCardStatus =
   | 'indeterminate'
+  | 'awaiting_payment'
   | 'scheduled'
   | 'delivered'
   | 'skipped'
@@ -17,6 +18,7 @@ export type TiffinMealStatusChip = {
 };
 
 const TIFFIN_STATUS_COLORS = {
+  awaiting_payment: { bg: '#FFF8E1', text: 'Awaiting PayNow', color: '#F57F17' },
   delivered: { bg: '#E8F5E9', text: 'Delivered', color: '#15803D' },
   skipped: { bg: '#FFF3E0', text: 'Skipped', color: '#E65100' },
   canceled_by_kitchen: { bg: '#FFEBEE', text: 'Canceled by kitchen', color: '#C62828' },
