@@ -97,7 +97,6 @@ describe('Contract tests - mobile mocks & API payloads (Zod .strict() validation
       calories_confidence: 'full',
       ingredients: [{ name: 'Rice', quantity: 200, unit: 'g' }],
       min_qty: 2,
-      last_minute_premium_pct: 10,
     });
     expect(meta.min_qty).toBe(2);
     expect(meta.allergen_tiers.tier1).toContain('Prawn');

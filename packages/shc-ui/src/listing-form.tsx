@@ -237,44 +237,6 @@ export function SHCListingDescriptionInput({
   );
 }
 
-export function SHCLastMinutePremiumInput({
-  value,
-  onChange,
-  testID = 'listing-last-minute-premium',
-}: {
-  value: number | null;
-  onChange: (n: number | null) => void;
-  testID?: string;
-}) {
-  return (
-    <View testID={testID}>
-      <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text, marginBottom: shcSpacing.xs }}>
-        Last-minute premium % (optional)
-      </Text>
-      <Text style={{ fontSize: 11, color: colors.textLight, marginBottom: shcSpacing.xs }}>
-        Extra % for orders within 24h — leave empty for none.
-      </Text>
-      <TextInput
-        value={value != null && value > 0 ? String(value) : ''}
-        onChangeText={(t) => {
-          const n = parseInt(t, 10);
-          onChange(t.trim() === '' || Number.isNaN(n) ? null : Math.min(50, Math.max(0, n)));
-        }}
-        keyboardType="numeric"
-        placeholder="e.g. 15"
-        style={{
-          borderWidth: shcBorders.brutal,
-          borderColor: colors.border,
-          padding: shcSpacing.sm,
-          borderRadius: shcRadii.md,
-          backgroundColor: colors.surface,
-          color: colors.text,
-        }}
-      />
-    </View>
-  );
-}
-
 /** Cook kitchen settings — which collection windows this cook offers. */
 export function SHCCookCollectionSlotEditor({
   value,

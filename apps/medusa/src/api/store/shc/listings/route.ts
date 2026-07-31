@@ -60,9 +60,6 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       recipe_steps: parse.data.recipe_steps ?? [],
     };
     if (parse.data.image_url) metaPayload.image_url = parse.data.image_url;
-    if (parse.data.last_minute_premium_pct != null) {
-      metaPayload.last_minute_premium_pct = parse.data.last_minute_premium_pct;
-    }
     const meta = await metaService.upsertProductMeta(metaPayload as any);
     await availService.upsertAvailability({
       product_id: productId,

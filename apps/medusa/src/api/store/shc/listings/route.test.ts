@@ -80,10 +80,9 @@ describe("POST /store/shc/listings", () => {
     expect(savedMeta.recipe_steps).toHaveLength(1);
     expect(res.body.product.name).toBe("Launch Laksa");
     expect(res.body.product.price).toBe(18);
-    expect(savedMeta.last_minute_premium_pct).toBeUndefined();
   });
 
-  it("creates listing without last_minute_premium_pct (no null 500)", async () => {
+  it("creates listing with minimal fields", async () => {
     const token = signShcToken({ actor_type: "cook", actor_id: "cook_1", shc: true });
     let savedMeta: any;
     const req: any = {
@@ -118,7 +117,7 @@ describe("POST /store/shc/listings", () => {
     const res = makeRes();
     await POST(req, res);
     expect(res.statusCode).toBe(201);
-    expect(savedMeta.last_minute_premium_pct).toBeUndefined();
+    expect(savedMeta.name).toBe("Plain Curry");
   });
 });
 

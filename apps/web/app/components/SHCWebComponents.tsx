@@ -5008,36 +5008,6 @@ export function RecipeStepsEditorWeb({
   );
 }
 
-export function LastMinutePremiumInputWeb({
-  value,
-  onChange,
-  testID = 'listing-last-minute-premium',
-}: {
-  value: number | null;
-  onChange: (n: number | null) => void;
-  testID?: string;
-}) {
-  return (
-    <div data-testid={testID}>
-      <p className="text-xs font-extrabold text-foreground mb-1">Last-minute premium % (optional)</p>
-      <p className="text-[11px] text-muted-foreground mb-2">Extra % for orders within 24h — leave empty for none.</p>
-      <input
-        type="number"
-        min={0}
-        max={50}
-        value={value != null && value > 0 ? value : ''}
-        onChange={(e) => {
-          const t = e.target.value;
-          const n = parseInt(t, 10);
-          onChange(t.trim() === '' || Number.isNaN(n) ? null : Math.min(50, Math.max(0, n)));
-        }}
-        placeholder="e.g. 15"
-        className="w-full rounded-xl border border-border px-3 py-2 text-sm"
-      />
-    </div>
-  );
-}
-
 export function CookQuoteBuilderWeb({
   request,
   onSubmit,

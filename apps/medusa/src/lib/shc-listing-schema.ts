@@ -32,7 +32,6 @@ export const ListingCreateSchema = z.object({
     tier3: z.array(z.string()).optional(),
   }).optional(),
   halal: z.boolean().optional(),
-  last_minute_premium_pct: z.number().int().min(0).max(50).optional(),
   portions_per_day: z.number().int().positive().optional(),
   collection_days: z.array(z.number().int().min(0).max(6)).optional(),
   time_slots: z.array(timeSlotSchema).optional(),

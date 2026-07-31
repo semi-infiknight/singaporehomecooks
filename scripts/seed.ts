@@ -138,7 +138,6 @@ export function validateSeed(): { success: boolean; errors: string[]; data?: See
       calories_confidence: (raw as any).calories_confidence,
       ingredients: (raw as any).ingredients,
       min_qty: (raw as any).min_qty,
-      last_minute_premium_pct: (raw as any).last_minute_premium_pct,
     };
 
     const metaResult = shcProductMetaSchema.safeParse(metaFields);

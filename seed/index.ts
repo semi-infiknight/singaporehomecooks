@@ -97,7 +97,6 @@ export const seedDishes: SeedDish[] = [
       { name: 'Fried egg', quantity: 1, unit: 'whole' },
     ],
     image_placeholder: 'seed/assets/images/nasi-lemak-sambal-prawn-hero.jpg — High-resolution 1200px WebP of plated Nasi Lemak on banana leaf in warm HDB kitchen light, prawns glistening with sambal, peanuts scattered, egg yolk visible. Alt: \'Auntie Rose\'s 1972 Peranakan Nasi Lemak Sambal Prawn — heritage in every grain\'.',
-    last_minute_premium_pct: 15,
     status: 'active',
   },
   {
@@ -127,7 +126,6 @@ export const seedDishes: SeedDish[] = [
       { name: 'Gula melaka', quantity: 1, unit: 'tbsp' },
     ],
     image_placeholder: 'seed/assets/images/ayam-buah-keluak-hero.jpg — Rich dark stew in traditional Peranakan bowl, chicken pieces visible with keluak shells on side for authenticity, on warm wooden table with HDB window light. Close-up of the pounded keluak paste texture.',
-    last_minute_premium_pct: 10,
     status: 'active',
   },
   {
@@ -158,7 +156,6 @@ export const seedDishes: SeedDish[] = [
       { name: 'Potatoes', quantity: 2, unit: 'medium' },
     ],
     image_placeholder: 'seed/assets/images/devils-curry-hero.jpg — Vibrant red-orange gravy with chicken and potato chunks in a large Peranakan-style serving bowl, steam rising, mustard seeds visible, served with sliced baguette or white rice on a festive tablecloth. Background hint of Katong Joo Chiat architecture.',
-    last_minute_premium_pct: 20,
     status: 'active',
   },
 ];

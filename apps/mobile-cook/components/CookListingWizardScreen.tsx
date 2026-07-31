@@ -36,7 +36,6 @@ import {
   SHCHalalToggle,
   SHCListingAvailabilityEditor,
   SHCListingDescriptionInput,
-  SHCLastMinutePremiumInput,
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
@@ -114,8 +113,6 @@ function listingToForm(listing: any, defaultOccasionTag: string) {
     portionsPerDay: avail.portions_per_day,
     collectionDays: avail.collection_days,
     timeSlots: avail.time_slots,
-    lastMinutePremiumPct:
-      typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null,
     occasionTags: listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag],
     ingredients: listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }],
     mealExtras: mealMeta.extras,
@@ -173,7 +170,6 @@ export function CookListingWizardScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -208,7 +204,6 @@ export function CookListingWizardScreen({
     setPortionsPerDay(form.portionsPerDay);
     setCollectionDays(form.collectionDays);
     setTimeSlots(form.timeSlots);
-    setLastMinutePremiumPct(form.lastMinutePremiumPct);
     setOccasionTags(form.occasionTags);
     setIngredients(form.ingredients);
     setMealExtras(form.mealExtras);
@@ -402,7 +397,6 @@ export function CookListingWizardScreen({
       portions_per_day: portionsPerDay,
       collection_days: collectionDays,
       time_slots: timeSlots,
-      last_minute_premium_pct: lastMinutePremiumPct,
       meal_extras: mealExtras,
       meal_addons: mealAddons,
       recipe_steps: recipeSteps,
@@ -672,7 +666,6 @@ export function CookListingWizardScreen({
                 onTimeSlotsChange={setTimeSlots}
                 timeSlotPresets={collectionTimeSlots}
               />
-              <SHCLastMinutePremiumInput value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <View style={styles.tagRow}>
                 {occasionTags.map((t) => (
                   <SHCMetaBadge key={t} kind="occasion">{t}</SHCMetaBadge>

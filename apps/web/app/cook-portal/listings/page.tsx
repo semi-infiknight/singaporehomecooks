@@ -69,7 +69,6 @@ import {
   HalalToggleWeb,
   ListingAvailabilityEditorWeb,
   ListingDescriptionInputWeb,
-  LastMinutePremiumInputWeb,
   MealExtrasEditorWeb,
   MealAddonsEditorWeb,
   RecipeStepsEditorWeb,
@@ -85,7 +84,6 @@ type ListingRow = Record<string, unknown> & {
   description?: string;
   halal?: boolean;
   allergen_tiers?: { tier1?: string[]; tier2?: string[]; tier3?: string[] };
-  last_minute_premium_pct?: number | null;
   occasion_tags?: string[];
   ingredients?: Array<{ name: string; quantity: number; unit: string }>;
   image_url?: string;
@@ -157,7 +155,6 @@ export default function CookListingsPage() {
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [lastMinutePremiumPct, setLastMinutePremiumPct] = useState<number | null>(null);
   const [occasionTags, setOccasionTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -339,7 +336,6 @@ export default function CookListingsPage() {
     setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-    setLastMinutePremiumPct(null);
     setOccasionTags([]);
     setIngredients([]);
     setMealExtras([]);
@@ -363,9 +359,6 @@ export default function CookListingsPage() {
     setPortionsPerDay(avail.portions_per_day);
     setCollectionDays(avail.collection_days);
     setTimeSlots(avail.time_slots);
-    setLastMinutePremiumPct(
-      typeof listing.last_minute_premium_pct === 'number' ? listing.last_minute_premium_pct : null
-    );
     setOccasionTags(listing.occasion_tags?.length ? listing.occasion_tags : [defaultOccasionTag]);
     setIngredients(
       listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
@@ -427,7 +420,6 @@ export default function CookListingsPage() {
       portions_per_day: portionsPerDay,
       collection_days: collectionDays,
       time_slots: timeSlots,
-      last_minute_premium_pct: lastMinutePremiumPct,
       meal_extras: mealExtras,
       meal_addons: mealAddons,
       recipe_steps: recipeSteps,
@@ -911,7 +903,6 @@ export default function CookListingsPage() {
                 onTimeSlotsChange={setTimeSlots}
                 timeSlotPresets={collectionTimeSlots}
               />
-              <LastMinutePremiumInputWeb value={lastMinutePremiumPct} onChange={setLastMinutePremiumPct} />
               <div className="flex flex-wrap gap-1">
                 {occasionTags.map((t) => (
                   <SHCMetaBadge key={t} kind="occasion">

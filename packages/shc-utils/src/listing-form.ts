@@ -165,11 +165,10 @@ export type CookListingFormDraft = {
   ingredients: Array<{ name: string; quantity: number; unit: string }>;
   allergen_tiers: AllergenTiers;
   halal: boolean;
+  portions_per_day: number;
   image_url?: string;
   calories?: number;
   calories_confidence?: string;
-  last_minute_premium_pct?: number | null;
-  portions_per_day: number;
   collection_days: number[];
   time_slots: string[];
   meal_extras?: MealOptionDraft[];
@@ -197,9 +196,6 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.calories != null) {
     payload.calories = draft.calories;
     payload.calories_confidence = draft.calories_confidence || 'category';
-  }
-  if (draft.last_minute_premium_pct != null && draft.last_minute_premium_pct > 0) {
-    payload.last_minute_premium_pct = draft.last_minute_premium_pct;
   }
   if (draft.meal_extras?.length) payload.meal_extras = mealOptionsToApiPayload(draft.meal_extras);
   if (draft.meal_addons?.length) payload.meal_addons = mealOptionsToApiPayload(draft.meal_addons);
