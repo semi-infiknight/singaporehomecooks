@@ -11,4 +11,5 @@ export declare function createSHCError(code: SHCErrorCode, message: string, deta
 export declare function formatError(code: SHCErrorCode, message?: string, details?: Record<string, unknown>): {
     error: SHCError;
 };
+export declare function formatShcErrorUserMessage(message: string, details?: Record<string, unknown>): string;
 //# sourceMappingURL=errors.d.ts.map
