@@ -100,13 +100,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     async registerCook(
       email: string,
       password: string,
-      display_name: string,
-      area: string,
+      display_name?: string,
+      area?: string,
       story?: string
     ) {
       const data = await request<{ token: string; user: ShcUser }>("/store/shc/auth/cook/register", {
         method: "POST",
-        body: JSON.stringify({ email, password, display_name, area, story }),
+        body: JSON.stringify({
+          email,
+          password,
+          ...(display_name ? { display_name } : {}),
+          ...(area ? { area } : {}),
+          ...(story ? { story } : {}),
+        }),
       });
       config.setAccessToken?.(data.token);
       cachedUser = data.user;
@@ -123,20 +129,53 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       display_name?: string;
       area?: string;
       story?: string;
-    collection_address?: string;
-    collection_instructions?: string;
-    collection_time_slots?: string[];
-    availability_paused?: boolean;
+      collection_address?: string;
+      collection_instructions?: string;
+      collection_time_slots?: string[];
+      availability_paused?: boolean;
       avatar_url?: string;
       hero_image_url?: string;
       pdpa_consent?: boolean;
+      terms_consent?: boolean;
       paynow_mobile?: string;
       paynow_uen?: string;
       payout_legal_name?: string;
+      contact_mobile?: string;
+      whatsapp_number?: string;
+      responsible_person_name?: string;
+      nric_fin_last4?: string;
+      alternate_contact?: string;
+      kitchen_halal_certified?: boolean | null;
+      onboarding_completed_at?: string;
     }) {
       return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
         method: "PATCH",
         body: JSON.stringify(input),
+      });
+    },
+
+    async sendCookEmailVerify() {
+      return request<{ ok: boolean; hint?: string }>("/store/shc/auth/cook/verify-email", { method: "POST" });
+    },
+
+    async confirmCookEmail(code: string) {
+      return request<{ ok: boolean }>("/store/shc/auth/cook/confirm-email", {
+        method: "POST",
+        body: JSON.stringify({ code }),
+      });
+    },
+
+    async sendCookMobileVerify(mobile: string) {
+      return request<{ ok: boolean; hint?: string }>("/store/shc/auth/cook/verify-mobile", {
+        method: "POST",
+        body: JSON.stringify({ mobile }),
+      });
+    },
+
+    async confirmCookMobile(code: string) {
+      return request<{ ok: boolean }>("/store/shc/auth/cook/confirm-mobile", {
+        method: "POST",
+        body: JSON.stringify({ code }),
       });
     },
 
@@ -449,7 +488,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).docs || [];
     },
 
-    async submitComplianceDoc(input: { type: "sfa" | "wsq"; file_key: string; expiry_date?: string }) {
+    async submitComplianceDoc(input: { type: "sfa" | "wsq" | "halal"; file_key: string; expiry_date?: string }) {
       const r = await request("/store/shc/compliance", {
         method: "POST",
         body: JSON.stringify(input),

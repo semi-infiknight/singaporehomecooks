@@ -6,7 +6,7 @@ import { notifyOpsComplianceDocSubmitted } from "../../../../lib/shc-compliance-
 import ShcComplianceDocModuleService from "../../../../modules/shc-compliance-doc/service";
 
 const BodySchema = z.object({
-  type: z.enum(["sfa", "wsq"]),
+  type: z.enum(["sfa", "wsq", "halal"]),
   file_key: z.string().min(3),
   expiry_date: z.string().datetime().optional(),
 }).strict();

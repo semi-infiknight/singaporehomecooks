@@ -1,12 +1,14 @@
 import * as SecureStore from 'expo-secure-store';
 
-/** Align with web cook PWA key shape; also accept legacy 'true' value. */
-export const COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen_v1';
+/** Cook onboarding v2 — full kitchen setup wizard. */
+export const COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen_v2';
 const LEGACY_COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen';
 
 export async function hasSeenCookOnboarding(): Promise<boolean> {
   const value = await SecureStore.getItemAsync(COOK_ONBOARDING_SEEN_KEY);
   if (value === '1' || value === 'true') return true;
+  const legacyV1 = await SecureStore.getItemAsync('shc_cook_onboarding_seen_v1');
+  if (legacyV1 === '1' || legacyV1 === 'true') return true;
   const legacy = await SecureStore.getItemAsync(LEGACY_COOK_ONBOARDING_SEEN_KEY);
   return legacy === 'true' || legacy === '1';
 }
