@@ -76,7 +76,8 @@ export function markCalendarHasOrders(days: CalendarDay[], datesWithOrders: Set<
 /** Map SHC order pipeline status → day card status. */
 export function mapShcStatusToDayCard(status: string, collectionDate?: string, nowIso?: string): DayOrderCardStatus {
   const s = String(status || '').toLowerCase();
-  if (s === 'cart') return 'awaiting_payment';
+  if (s === 'accepted') return 'awaiting_payment';
+  if (s === 'cart') return 'scheduled';
   if (s === 'skipped') return 'skipped';
   if (s === 'canceled_by_kitchen' || s === 'cancelled' || s === 'canceled') {
     return s === 'canceled_by_kitchen' ? 'canceled_by_kitchen' : 'canceled_by_kitchen';

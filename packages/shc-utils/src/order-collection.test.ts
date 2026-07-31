@@ -29,7 +29,8 @@ describe('isOrderCollectionAddressReleased', () => {
   });
 
   it('releases for post-paid statuses even without address_released_at', () => {
-    expect(isOrderCollectionAddressReleased({ shc_status: 'accepted' }, now)).toBe(true);
+    expect(isOrderCollectionAddressReleased({ shc_status: 'accepted' }, now)).toBe(false);
+    expect(isOrderCollectionAddressReleased({ shc_status: 'paid' }, now)).toBe(false);
     expect(isOrderCollectionAddressReleased({ shc_status: 'ready_for_collection' }, now)).toBe(true);
   });
 });

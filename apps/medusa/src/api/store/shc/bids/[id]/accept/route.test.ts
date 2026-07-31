@@ -94,7 +94,7 @@ describe("POST /store/shc/bids/:id/accept", () => {
     expect(res.body.order.customer_id).toBe("cust_1");
     expect(savedMeta.customer_id).toBe("cust_1");
     expect(savedMeta.total_cents).toBe(12000);
-    expect(savedMeta.shc_status).toBe("cart");
+    expect(savedMeta.shc_status).toBe("accepted");
     expect(savedMeta.origin_request_id).toBe("req_1");
     expect(savedMeta.collection_slot).toBe("12:00-13:00");
   });

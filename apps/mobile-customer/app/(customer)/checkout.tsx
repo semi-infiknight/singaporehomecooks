@@ -27,7 +27,7 @@ import {
   useMilestoneCelebration,
   contentPadForStickyFooter,
 } from '@shc/ui';
-import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay } from '@shc/utils';
+import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay, orderAwaitingCookCopy } from '@shc/utils';
 import { useCart, useCollectionSlots, useProduct } from '../../hooks/useProducts';
 import { checkout, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
@@ -308,6 +308,7 @@ export default function Checkout() {
   );
 
   if (completedOrderId) {
+    const waitCopy = orderAwaitingCookCopy();
     return (
       <View style={styles.screen}>
         <ScrollView
@@ -316,32 +317,17 @@ export default function Checkout() {
           testID="checkout-screen"
         >
           <SHCCartPageHero
-            title="Order placed"
-            subtitle={`Ref ${completedOrderId} — complete PayNow to confirm`}
+            title={waitCopy.title}
+            subtitle={`${waitCopy.subtitle} Ref ${completedOrderId}`}
             imageUri={BENTO_ACTION_IMAGES.checkout}
           />
           {orderSummaryCard}
-          <PayNowPanel
-            orderId={completedOrderId}
-            total={amountDue}
-            session={paySession}
-            loadingSession={paySessionLoading}
-            onRetry={() => void loadPayNowSession(completedOrderId, true)}
-            waitingForPayment={waitingForPayment}
+          <GourmeatPrimaryButton
+            label="Track order"
+            onPress={navigateToOrder}
+            testID="order-awaiting-cook-track"
           />
-          <Text style={styles.paynowHint}>
-            Scan to pay · cook sees the order after HitPay confirms payment.
-          </Text>
         </ScrollView>
-        <SHCCelebration
-          visible={firstOrderMilestone.show}
-          message="Your first order — thank you for supporting local home cooks!"
-          onDone={() => {
-            firstOrderMilestone.dismiss();
-            navigateToOrder();
-          }}
-          testID="first-order-celebration"
-        />
       </View>
     );
   }

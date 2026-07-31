@@ -22,7 +22,7 @@ describe("POST /admin/shc/internal/order-escalation", () => {
     delete process.env.WORKER_API_KEY;
   });
 
-  it("reminds cooks for paid orders", async () => {
+  it("reminds cooks for cart orders awaiting confirmation", async () => {
     process.env.WORKER_API_KEY = "worker-secret";
     const pushed: Array<{ actor: string; body: string }> = [];
     const req: any = {
@@ -33,8 +33,8 @@ describe("POST /admin/shc/internal/order-escalation", () => {
             return {
               listAndCountOrderMetas: async () => [
                 [
-                  { order_id: "SHC-1", cook_id: "cook_1", shc_status: "paid" },
-                  { order_id: "SHC-2", cook_id: "cook_2", shc_status: "paid" },
+                  { order_id: "SHC-1", cook_id: "cook_1", shc_status: "cart" },
+                  { order_id: "SHC-2", cook_id: "cook_2", shc_status: "cart" },
                 ],
                 2,
               ],

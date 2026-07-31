@@ -129,10 +129,13 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
 
   await cartService.clearCart(customerId);
   const notifService: ShcNotificationModuleService = req.scope.resolve("shcNotification") as any;
-  await notifService.push(customerId, { type: "order", body: `Order ${orderId} placed.` });
+  await notifService.push(customerId, {
+    type: "order",
+    body: `Order ${orderId} placed — waiting for your cook to confirm.`,
+  });
   await notifService.push(cookId, {
     type: "order",
-    body: originDropId ? `Batch order ${orderId}` : `New order ${orderId} — check your dashboard.`,
+    body: originDropId ? `Batch order ${orderId}` : `New order ${orderId} — confirm or decline in your dashboard.`,
   });
 
   const order = {

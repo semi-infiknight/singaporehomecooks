@@ -7,7 +7,6 @@ export const PAYMENT_POLL_ERROR_THRESHOLD = 3;
 
 export const ORDER_PAID_STATUSES = [
   'paid',
-  'accepted',
   'preparing',
   'ready_for_collection',
   'collected',

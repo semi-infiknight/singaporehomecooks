@@ -9,8 +9,8 @@ export type OrderTimelineStep = {
 };
 
 export const COLLECTION_ORDER_TIMELINE: OrderTimelineStep[] = [
-  { id: 'paid', label: 'Payment confirmed', detail: 'PayNow received — cook notified' },
-  { id: 'accepted', label: 'Cook accepted', detail: 'Your home cook confirmed the order' },
+  { id: 'accepted', label: 'Cook confirmed', detail: 'Your home cook accepted the order' },
+  { id: 'paid', label: 'Payment confirmed', detail: 'PayNow received — kitchen notified' },
   { id: 'preparing', label: 'Preparing', detail: 'Fresh cooking in HDB kitchen' },
   { id: 'ready_for_collection', label: 'Ready to collect', detail: 'Head to the collection slot' },
   { id: 'collected', label: 'Collected', detail: 'Enjoy your heritage meal' },
@@ -19,8 +19,8 @@ export const COLLECTION_ORDER_TIMELINE: OrderTimelineStep[] = [
 
 const STATUS_INDEX: Record<string, number> = {
   cart: -1,
-  paid: 0,
-  accepted: 1,
+  accepted: 0,
+  paid: 1,
   preparing: 2,
   ready_for_collection: 3,
   collected: 4,
@@ -31,9 +31,9 @@ const STATUS_INDEX: Record<string, number> = {
 };
 
 const HUMAN_STATUS: Record<string, string> = {
-  cart: 'Awaiting PayNow',
+  cart: 'Awaiting cook confirmation',
+  accepted: 'Cook confirmed — complete PayNow',
   paid: 'Payment confirmed',
-  accepted: 'Cook accepted your order',
   preparing: 'Cook is preparing your meal',
   ready_for_collection: 'Ready for HDB collection',
   collected: 'Collected — thank you!',
@@ -44,8 +44,9 @@ const HUMAN_STATUS: Record<string, string> = {
 };
 
 export const ACTIVE_ORDER_STATUSES = [
-  'paid',
+  'cart',
   'accepted',
+  'paid',
   'preparing',
   'ready_for_collection',
 ] as const;
@@ -59,6 +60,10 @@ export function getOrderTimelineIndex(status: string): number {
 }
 
 export function isAwaitingPayNowStatus(status: string): boolean {
+  return String(status || '').toLowerCase() === 'accepted';
+}
+
+export function isAwaitingCookConfirmStatus(status: string): boolean {
   return String(status || '').toLowerCase() === 'cart';
 }
 
@@ -66,8 +71,8 @@ export function isActiveOrderStatus(status: string): boolean {
   return (ACTIVE_ORDER_STATUSES as readonly string[]).includes(status);
 }
 
-/** Cook must Accept or Decline — paid, awaiting cook action */
-export const COOK_NEEDS_ACTION_STATUSES = ["paid"] as const;
+/** Cook must Accept or Decline — cart, awaiting cook action before customer pays */
+export const COOK_NEEDS_ACTION_STATUSES = ["cart"] as const;
 
 export function isCookNeedsActionOrder(order: { shc_status?: string; status?: string }): boolean {
   const status = String(order.shc_status || order.status || "");

@@ -120,7 +120,8 @@ export default function OrderTracking() {
   };
 
   const orderStatus = order?.shc_status ? String(order.shc_status) : '';
-  const awaitingPayNow = orderStatus === 'cart';
+  const awaitingPayNow = orderStatus === 'accepted';
+  const awaitingCook = orderStatus === 'cart';
   const payAutoStart = pay === '1';
 
   useEffect(() => {
@@ -137,7 +138,7 @@ export default function OrderTracking() {
       try {
         const fresh = await getOrder(orderId);
         const next = String((fresh as { shc_status?: string })?.shc_status || '');
-        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
+        if (['paid', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
           setWaitingForPayment(false);
         }
       } catch {
@@ -162,7 +163,7 @@ export default function OrderTracking() {
 
   const status = order.shc_status as SHCOrderStatus;
   const live = isActiveOrderStatus(status);
-  const isPaid = ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
+  const isPaid = ['paid', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
     String(status)
   );
   const isCorporate = Boolean(order.is_corporate);
@@ -200,10 +201,19 @@ export default function OrderTracking() {
         <SHCOrderTimeline status={status} live={live} />
       </GourmeatCard>
 
+      {awaitingCook ? (
+        <GourmeatCard testID="order-awaiting-cook-panel">
+          <Text style={styles.cardTitle}>Waiting for cook to confirm</Text>
+          <Text style={styles.hintLine}>
+            Your cook will accept or decline shortly. We&apos;ll notify you when it&apos;s time to pay with PayNow.
+          </Text>
+        </GourmeatCard>
+      ) : null}
+
       {awaitingPayNow ? (
         <GourmeatCard testID="order-paynow-panel">
-          <Text style={styles.cardTitle}>Complete PayNow to confirm</Text>
-          <Text style={styles.hintLine}>Your quote was accepted — pay now so your cook can start preparing.</Text>
+          <Text style={styles.cardTitle}>Complete PayNow</Text>
+          <Text style={styles.hintLine}>Your cook confirmed — pay now so they can start preparing.</Text>
           <PayNowPanel
             orderId={orderId}
             total={Number(order.total) || 0}
@@ -226,7 +236,7 @@ export default function OrderTracking() {
             {it.qty}× {it.name}
           </Text>
         ))}
-        {addrReleased && order.shc_status !== 'cart' ? (
+        {addrReleased && isPaid ? (
           <>
             {order.collection_address ? (
               <Text style={styles.addressLine}>HDB address: {order.collection_address}</Text>

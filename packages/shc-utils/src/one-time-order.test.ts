@@ -29,7 +29,7 @@ describe('one-time order flow helpers', () => {
   });
 
   it('success and tracking copy', () => {
-    expect(orderSuccessfulCopy().title).toBe('Order successful!');
+    expect(orderSuccessfulCopy().title).toBe('Order placed!');
     expect(orderTrackingBanner('preparing').tone).toBe('active');
     expect(orderTrackingBanner('collected').tone).toBe('done');
   });

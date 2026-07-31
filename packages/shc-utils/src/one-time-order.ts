@@ -60,8 +60,15 @@ export function cartCollectionHint(): string {
 
 export function orderSuccessfulCopy(): { title: string; subtitle: string } {
   return {
-    title: 'Order successful!',
-    subtitle: 'Processing your order…',
+    title: 'Order placed!',
+    subtitle: 'Your cook will confirm shortly — we’ll notify you when it’s time to pay.',
+  };
+}
+
+export function orderAwaitingCookCopy(): { title: string; subtitle: string } {
+  return {
+    title: 'Waiting for cook to confirm',
+    subtitle: 'You’ll get a notification to complete PayNow once your cook accepts.',
   };
 }
 
@@ -79,14 +86,30 @@ export function orderTrackingBanner(status: string, slotLabel?: string): {
         : 'Your order was collected',
     };
   }
-  if (['paid', 'accepted', 'preparing', 'ready_for_collection'].includes(s)) {
+  if (['paid', 'preparing', 'ready_for_collection'].includes(s)) {
     return {
       tone: 'active',
-      title: 'Order in progress',
-      subtitle: 'Track collection status below · chat with your cook after payment',
+      title: slotLabel ? `Order in progress · ${slotLabel}` : 'Order in progress',
     };
   }
-  return { tone: 'idle', title: 'Order details' };
+  if (s === 'accepted') {
+    return {
+      tone: 'active',
+      title: 'Cook confirmed — complete PayNow',
+      subtitle: 'Pay only after your cook has accepted the order',
+    };
+  }
+  if (s === 'cart') {
+    return {
+      tone: 'idle',
+      title: 'Waiting for cook to confirm',
+      subtitle: 'You will pay with PayNow once your cook accepts',
+    };
+  }
+  return {
+    tone: 'idle',
+    title: 'Order update',
+  };
 }
 
 export function orderDeliveredRateCopy(): {

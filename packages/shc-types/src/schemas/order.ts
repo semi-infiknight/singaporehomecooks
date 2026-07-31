@@ -35,9 +35,9 @@ export type SHCOrderMeta = z.infer<typeof shcOrderMetaSchema>;
 
 // State transition validation per 09-order-state.md
 const validTransitions: Record<SHCOrderStatus, SHCOrderStatus[]> = {
-  cart: ['paid'],
-  paid: ['accepted', 'cancelled'],
-  accepted: ['preparing', 'cancelled'],
+  cart: ['accepted', 'cancelled'],
+  accepted: ['paid', 'cancelled'],
+  paid: ['preparing', 'cancelled'],
   preparing: ['ready_for_collection', 'cancelled'],
   ready_for_collection: ['collected', 'cancelled'],
   collected: ['completed', 'disputed'],

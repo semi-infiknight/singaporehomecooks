@@ -44,12 +44,26 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const status = String(m.shc_status || "");
-  if (["paid", "accepted", "preparing", "ready_for_collection", "collected", "completed"].includes(status)) {
+  if (status === "cart") {
+    return res.status(400).json({
+      error: createSHCError(
+        "SHC-ORDER-003",
+        "Pay only after the cook has confirmed your order"
+      ),
+    });
+  }
+  if (["paid", "preparing", "ready_for_collection", "collected", "completed"].includes(status)) {
     return res.json({
       provider: "already_paid",
       order_id: orderId,
       shc_status: status,
       paynow_reference: m.paynow_reference || null,
+    });
+  }
+
+  if (status !== "accepted") {
+    return res.status(400).json({
+      error: createSHCError("SHC-ORDER-003", "Order is not ready for payment"),
     });
   }
 
