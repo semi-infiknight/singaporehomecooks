@@ -13,6 +13,8 @@ import {
   addToCart,
   getCart,
   clearCart,
+  updateCartItem,
+  removeCartItem,
   createSHCError,
   isAuthenticated,
   hydrateSession,
@@ -108,6 +110,44 @@ export function useClearCart() {
   return useMutation({
     mutationFn: clearCart,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
+  });
+}
+
+export function useUpdateCartItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, qty }: { productId: string; qty: number }) => {
+      await hydrateSession();
+      return updateCartItem(productId, qty);
+    },
+    onSuccess: (cart) => {
+      qc.setQueryData(['cart'], cart);
+      qc.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (err: any) => {
+      const message = err?.message || 'Could not update cart.';
+      Alert.alert('Could not update', message);
+      if (err?.code) throw createSHCError(err.code as SHCErrorCode, message);
+    },
+  });
+}
+
+export function useRemoveCartItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      await hydrateSession();
+      return removeCartItem(productId);
+    },
+    onSuccess: (cart) => {
+      qc.setQueryData(['cart'], cart);
+      qc.invalidateQueries({ queryKey: ['cart'] });
+    },
+    onError: (err: any) => {
+      const message = err?.message || 'Could not remove item.';
+      Alert.alert('Could not remove', message);
+      if (err?.code) throw createSHCError(err.code as SHCErrorCode, message);
+    },
   });
 }
 

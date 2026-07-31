@@ -228,6 +228,22 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).cart;
     },
 
+    async updateCartItem(productId: string, qty: number) {
+      const r = await request("/store/shc/cart", {
+        method: "PATCH",
+        body: JSON.stringify({ product_id: productId, qty }),
+      });
+      return (r as any).cart;
+    },
+
+    async removeCartItem(productId: string) {
+      const r = await request("/store/shc/cart", {
+        method: "PATCH",
+        body: JSON.stringify({ product_id: productId, qty: 0 }),
+      });
+      return (r as any).cart;
+    },
+
     async checkout(
       allergenAck: boolean,
       collection: { date: string; slot: string },

@@ -9,6 +9,8 @@ export type ShcCartItem = {
   qty: number;
   price: number;
   cook_id: string;
+  /** Minimum order qty for this line (product meta or drop) */
+  min_qty?: number;
   /** Cooking soon batch — capacity reserved at checkout complete */
   drop_id?: string;
   collection_date?: string;
@@ -141,6 +143,30 @@ class ShcCartModuleService extends MedusaService({ Cart }) {
     if (existing) existing.qty += item.qty;
     else cart.items.push({ ...item });
 
+    return this.persist(customerId, cart, row);
+  }
+
+  /** Set line qty; qty <= 0 removes the line. */
+  async setItemQty(customerId: string, productId: string, qty: number): Promise<ShcCart> {
+    const row = await this.getRow(customerId);
+    let cart = row ? enrichCart(parseItems(row.items_json), row.cook_id || null) : emptyCart();
+    const idx = cart.items.findIndex((i) => i.product_id === productId);
+    if (idx < 0) {
+      throw createSHCError("SHC-GENERIC-001", "Item not in cart");
+    }
+
+    if (qty <= 0) {
+      cart.items.splice(idx, 1);
+      if (cart.items.length === 0) {
+        cart.cookId = null;
+        cart.drop_id = null;
+        cart.collection_date = null;
+        cart.collection_slot = null;
+      }
+      return this.persist(customerId, cart, row);
+    }
+
+    cart.items[idx] = { ...cart.items[idx], qty };
     return this.persist(customerId, cart, row);
   }
 }
