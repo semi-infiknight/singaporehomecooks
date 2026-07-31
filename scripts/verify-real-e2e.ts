@@ -17,6 +17,8 @@ const CUSTOMER_EMAIL = process.env.SEED_CUSTOMER_EMAIL || 'customer@shc.local';
 const CUSTOMER_PASS = process.env.SEED_CUSTOMER_PASS || 'customersecret';
 const COOK_EMAIL = 'rose@shc.local';
 const COOK_PASS = 'cooksecret';
+const COOK2_EMAIL = process.env.SEED_COOK2_EMAIL || 'doris@shc.local';
+const COOK2_PASS = process.env.SEED_COOK2_PASS || 'cooksecret';
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@shc.local';
 const ADMIN_PASS = process.env.SEED_ADMIN_PASS || 'supersecret';
 
@@ -73,15 +75,162 @@ async function loginCustomer() {
   return r.body.token as string;
 }
 
-async function loginCook() {
+async function loginCook(email = COOK_EMAIL, password = COOK_PASS) {
   const r = await shcFetch('/store/shc/auth/cook/login', {
     method: 'POST',
-    body: JSON.stringify({ email: COOK_EMAIL, password: COOK_PASS }),
+    body: JSON.stringify({ email, password }),
   });
   if (r.status !== 200 || !r.body?.token) {
     throw new Error(`Cook login failed ${r.status}: ${JSON.stringify(r.body)}`);
   }
   return r.body.token as string;
+}
+
+function futureIsoDate(daysAhead = 14): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  return d.toISOString().slice(0, 10);
+}
+
+function parseRequestLineIds(request: { items_json?: string }): string[] {
+  if (!request?.items_json) return [];
+  try {
+    const rows = JSON.parse(request.items_json);
+    if (!Array.isArray(rows)) return [];
+    return rows.map((row: { id?: string }, i: number) => String(row.id || `line_${i}`));
+  } catch {
+    return [];
+  }
+}
+
+/** Custom requests v2 — multi-dish, per-line quote, partial accept, sibling decline, PayNow. */
+async function runCustomRequestV2E2E(customerToken: string, cookToken: string, cookToken2: string) {
+  const stamp = Date.now();
+  const lineA = `line_laksa_${stamp}`;
+  const lineB = `line_kueh_${stamp}`;
+  const dishA = `E2E Laksa ${stamp}`;
+  const dishB = `E2E Kueh ${stamp}`;
+  const collDate = futureIsoDate(21);
+
+  const reqCreate = await shcFetch(
+    '/store/shc/requests',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        body: `${dishA} and ${dishB} for family gathering (E2E v2)`,
+        guest_count: 8,
+        budget_cents: 22000,
+        date: collDate,
+        items: [
+          { id: lineA, name: dishA, servings: 8 },
+          { id: lineB, name: dishB, servings: 8 },
+        ],
+      }),
+    },
+    customerToken
+  );
+  if (reqCreate.status !== 201 && reqCreate.status !== 200) {
+    throw new Error(`Request create v2 failed ${reqCreate.status}: ${JSON.stringify(reqCreate.body)}`);
+  }
+  const requestId = reqCreate.body?.request?.id;
+  if (!requestId) throw new Error('Request id missing from v2 create');
+  const lineIds = parseRequestLineIds(reqCreate.body?.request);
+  if (lineIds.length < 2) {
+    throw new Error(`Expected 2 request lines, got ${lineIds.length}`);
+  }
+  console.log(`✅ /store/shc/requests POST v2 (${requestId}, ${lineIds.length} dishes)`);
+
+  const primaryQuote = await shcFetch(
+    '/store/shc/bids',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        request_id: requestId,
+        message: 'Rose per-line quote (E2E)',
+        line_items: [
+          { request_line_id: lineA, included: true, servings: 8, price_cents: 4500 },
+          { request_line_id: lineB, included: true, servings: 8, price_cents: 3500 },
+        ],
+      }),
+    },
+    cookToken
+  );
+  if (primaryQuote.status !== 201 && primaryQuote.status !== 200) {
+    throw new Error(`Primary quote failed ${primaryQuote.status}: ${JSON.stringify(primaryQuote.body)}`);
+  }
+  const bidId = primaryQuote.body?.bid?.id;
+  if (!bidId) throw new Error('Primary bid id missing');
+  console.log(`✅ /store/shc/bids POST line_items (${bidId})`);
+
+  const siblingQuote = await shcFetch(
+    '/store/shc/bids',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        request_id: requestId,
+        message: 'Doris alternate quote (E2E)',
+        line_items: [{ request_line_id: lineA, included: true, servings: 8, price_cents: 9000 }],
+      }),
+    },
+    cookToken2
+  );
+  if (siblingQuote.status !== 201 && siblingQuote.status !== 200) {
+    throw new Error(`Sibling quote failed ${siblingQuote.status}: ${JSON.stringify(siblingQuote.body)}`);
+  }
+  console.log(`✅ /store/shc/bids POST sibling quote (${siblingQuote.body?.bid?.id})`);
+
+  const bidAccept = await shcFetch(
+    `/store/shc/bids/${bidId}/accept`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        accepted_line_ids: [lineA],
+        collection_date: collDate,
+        collection_slot: '18:00-19:00',
+      }),
+    },
+    customerToken
+  );
+  if (bidAccept.status !== 200) {
+    throw new Error(`Bid accept v2 failed ${bidAccept.status}: ${JSON.stringify(bidAccept.body)}`);
+  }
+  if (!bidAccept.body?.order_id) throw new Error('Bid accept missing order_id');
+  if (!bidAccept.body?.requires_paynow) throw new Error('Bid accept missing requires_paynow');
+  if ((bidAccept.body?.rejected_sibling_quotes ?? 0) < 1) {
+    throw new Error(`Expected rejected_sibling_quotes >= 1, got ${bidAccept.body?.rejected_sibling_quotes}`);
+  }
+  const customOrderId = bidAccept.body.order_id as string;
+  const order = bidAccept.body.order;
+  if (order?.shc_status !== 'cart') {
+    throw new Error(`Expected awaiting PayNow (cart), got ${order?.shc_status}`);
+  }
+  if ((order?.total ?? 0) !== 4500 && order?.total_cents !== 4500) {
+    const total = order?.total_cents ?? order?.total;
+    if (Number(total) !== 4500) {
+      throw new Error(`Partial accept total expected 4500 cents, got ${total}`);
+    }
+  }
+  console.log(
+    `✅ /store/shc/bids/:id/accept partial (${customOrderId}, rejected=${bidAccept.body.rejected_sibling_quotes})`
+  );
+
+  const orderGet = await shcFetch(`/store/shc/orders/${customOrderId}`, { method: 'GET' }, customerToken);
+  if (orderGet.status !== 200) {
+    throw new Error(`Custom order GET failed ${orderGet.status}: ${JSON.stringify(orderGet.body)}`);
+  }
+  if (orderGet.body?.order?.shc_status !== 'cart') {
+    throw new Error(`Custom order not awaiting PayNow: ${orderGet.body?.order?.shc_status}`);
+  }
+  console.log(`✅ /store/shc/orders/:id awaiting PayNow (${customOrderId})`);
+
+  const paynow = await shcFetch(`/store/shc/orders/${customOrderId}/paynow`, { method: 'POST' }, customerToken);
+  if (paynow.status === 200) {
+    console.log(`✅ /store/shc/orders/:id/paynow session (${paynow.body?.provider || 'ok'})`);
+  } else if (paynow.status === 503 && paynow.body?.provider === 'hitpay_unconfigured') {
+    console.log('✅ /store/shc/orders/:id/paynow reachable (HitPay unconfigured on Railway)');
+  } else {
+    throw new Error(`PayNow after custom accept failed ${paynow.status}: ${JSON.stringify(paynow.body)}`);
+  }
 }
 
 async function loginAdmin() {
@@ -219,6 +368,9 @@ async function main() {
   const cookToken = await loginCook();
   console.log('✅ cook auth login (DB-backed)');
 
+  const cookToken2 = await loginCook(COOK2_EMAIL, COOK2_PASS);
+  console.log('✅ cook2 auth login (sibling quote)');
+
   const msgCook = await shcFetch(
     `/store/shc/orders/${orderId}/messages`,
     { method: 'POST', body: JSON.stringify({ body: 'Thanks! Shoes off please, call when you arrive.', from: 'cook' }) },
@@ -274,44 +426,7 @@ async function main() {
   }
   console.log('✅ /store/shc/orders/:id/review GET');
 
-  const reqCreate = await shcFetch(
-    '/store/shc/requests',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        body: 'Looking for ayam buah keluak for 8 guests Hari Raya weekend',
-        party_size: 8,
-        budget_cents: 18000,
-        date: '2026-07-12',
-      }),
-    },
-    customerToken
-  );
-  if (reqCreate.status !== 201 && reqCreate.status !== 200) {
-    throw new Error(`Request create failed ${reqCreate.status}: ${JSON.stringify(reqCreate.body)}`);
-  }
-  const requestId = reqCreate.body?.request?.id;
-  if (!requestId) throw new Error('Request id missing');
-  console.log(`✅ /store/shc/requests POST (${requestId})`);
-
-  const bidCreate = await shcFetch(
-    '/store/shc/bids',
-    { method: 'POST', body: JSON.stringify({ request_id: requestId, price_cents: 16000, message: 'Family recipe from Tampines HDB kitchen.' }) },
-    cookToken
-  );
-  if (bidCreate.status !== 201 && bidCreate.status !== 200) {
-    throw new Error(`Bid create failed ${bidCreate.status}: ${JSON.stringify(bidCreate.body)}`);
-  }
-  const bidId = bidCreate.body?.bid?.id;
-  if (!bidId) throw new Error('Bid id missing');
-  console.log(`✅ /store/shc/bids POST (${bidId})`);
-
-  const bidAccept = await shcFetch(`/store/shc/bids/${bidId}/accept`, { method: 'POST', body: '{}' }, customerToken);
-  if (bidAccept.status !== 200) {
-    throw new Error(`Bid accept failed ${bidAccept.status}: ${JSON.stringify(bidAccept.body)}`);
-  }
-  if (!bidAccept.body?.order_id) throw new Error('Bid accept missing order_id');
-  console.log(`✅ /store/shc/bids/:id/accept (${bidAccept.body.order_id})`);
+  await runCustomRequestV2E2E(customerToken, cookToken, cookToken2);
 
   console.log('\n=== verify:real-e2e PASSED (Tier 1) ===');
 }

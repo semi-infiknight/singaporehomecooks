@@ -97,6 +97,14 @@
 | **3** | Partial accept; auto-decline sibling quotes; PayNow on accept; push on `shc.bid.created` | Shipped (2026-07-31) |
 | **4** | Maestro flows (`custom-request-wizard`, `cook-custom-request-quote`, `custom-request-quote-accept`, `run-custom-request-e2e.sh`) | Shipped (2026-07-31) |
 
+### Post–Phase 4 verification (shipped 2026-07-31)
+
+| Surface | Command | Covers |
+|---------|---------|--------|
+| API smoke | `pnpm verify:real-e2e` | `items[]`, `line_items[]`, `accepted_line_ids`, sibling decline, PayNow after accept |
+| Mobile Maestro | `pnpm e2e:custom-request` | Full happy path (customer wizard → cook quote → accept → PayNow) |
+| Web Playwright | `pnpm e2e:custom-request-web` | `/request` → cook portal quote → partial accept → `order-paynow-panel` |
+
 ---
 
 ## Future ideas
