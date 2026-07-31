@@ -1,14 +1,21 @@
 // @ts-nocheck - suppress list* filters signature + MedusaService override + workspace (pre-existing in whole medusa typecheck)
 import { MedusaService } from "@medusajs/framework/utils";
 import { PayoutBatch } from "./models/payout-batch";
-import { SHCPayoutBatch, shcPayoutBatchSchema, createSHCError, PayoutBatchStatus } from "@shc/types";
+import { PayoutBatchLine } from "./models/payout-batch-line";
+import {
+  SHCPayoutBatch,
+  SHCPayoutBatchLine,
+  shcPayoutBatchSchema,
+  shcPayoutBatchLineSchema,
+  createSHCError,
+} from "@shc/types";
 
 /**
  * shc-payout-batch module.
- * Weekly batches (cron sim Monday). Status: pending -> approved (with sim transfer_ref) -> paid.
- * Linked via ledger batch_id. Idempotent batch creation.
+ * Weekly batches (cron Monday). Per-cook lines with optional transfer_ref.
+ * Status: pending -> approved (sim transfer_ref) -> paid.
  */
-class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
+class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch, PayoutBatchLine }) {
   private getLogger(container?: any) {
     try {
       return (container && container.resolve) ? container.resolve("logger") : console;
@@ -21,7 +28,6 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     const logger = this.getLogger(container);
     shcPayoutBatchSchema.partial().parse({ week_start: weekStart, status: "pending", total_cents: totalCents });
 
-    // Idempotent: unique on week_start via index, use list check
     const existing = await this.listPayoutBatches({ week_start: weekStart });
     if (existing.length) {
       logger.info?.({ event: "payout.batch.exists", week_start: weekStart });
@@ -48,6 +54,51 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     return updated as unknown as SHCPayoutBatch;
   }
 
+  async upsertBatchLine(input: {
+    batchId: string;
+    cookId: string;
+    amountCents: number;
+    orderCount?: number;
+    container?: any;
+  }): Promise<SHCPayoutBatchLine> {
+    const logger = this.getLogger(input.container);
+    const existing = await this.listPayoutBatchLines({
+      batch_id: input.batchId,
+      cook_id: input.cookId,
+      limit: 1,
+    });
+    if (existing.length) {
+      const [updated] = await this.updatePayoutBatchLines({
+        selector: { id: existing[0].id },
+        data: {
+          amount_cents: input.amountCents,
+          order_count: input.orderCount ?? existing[0].order_count ?? 0,
+          updated_at: new Date(),
+        } as any,
+      });
+      return updated as unknown as SHCPayoutBatchLine;
+    }
+
+    const row = {
+      batch_id: input.batchId,
+      cook_id: input.cookId,
+      amount_cents: input.amountCents,
+      order_count: input.orderCount ?? 0,
+      status: "pending",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    shcPayoutBatchLineSchema.partial().parse(row);
+    const [created] = await this.createPayoutBatchLines([row as any]);
+    logger.info?.({
+      event: "payout.batch_line.created",
+      batch_id: input.batchId,
+      cook_id: input.cookId,
+      amount_cents: input.amountCents,
+    });
+    return created as unknown as SHCPayoutBatchLine;
+  }
+
   async approvePayoutBatch(batchId: string, actor = "ops", container?: any): Promise<SHCPayoutBatch> {
     const logger = this.getLogger(container);
     const batches = await this.listPayoutBatches({ id: batchId });
@@ -60,7 +111,6 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     }
 
     const now = new Date().toISOString();
-    // Simulate transfer_ref on approve (manual PayNow style for payout; real bank later Phase 6+)
     const transferRef = `SIM-PAYOUT-${current.week_start.replace(/-/g, "")}-${batchId.slice(0, 8).toUpperCase()}`;
 
     const [updated] = await this.updatePayoutBatches({
@@ -73,12 +123,26 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
       } as any,
     });
 
+    const lines = await this.listPayoutBatchLines({ batch_id: batchId, limit: 500 });
+    for (const line of lines) {
+      const lineRef = `${transferRef}-${String(line.cook_id || "").slice(-6).toUpperCase()}`;
+      await this.updatePayoutBatchLines({
+        selector: { id: line.id },
+        data: {
+          status: "approved",
+          transfer_ref: lineRef,
+          updated_at: now,
+        } as any,
+      });
+    }
+
     logger.info?.({
       event: "payout.batch.approved",
       batch_id: batchId,
       actor,
       transfer_ref: transferRef,
       week_start: current.week_start,
+      line_count: lines.length,
     });
 
     return updated as unknown as SHCPayoutBatch;
@@ -90,20 +154,60 @@ class ShcPayoutBatchModuleService extends MedusaService({ PayoutBatch }) {
     if (filters.status) where.status = filters.status;
     if (filters.week_start) where.week_start = filters.week_start;
     const take = filters.limit || 50;
-    const [batches] = await (this as any).listAndCountPayoutBatches({
-      filters: where,
+    const [batches] = await (this as any).listAndCountPayoutBatches(where, {
       take,
       order: { week_start: "DESC" },
-    } as any);
+    }).catch(() => [[]]);
     return batches;
   }
 
+  async listPayoutBatchLines(filters: {
+    id?: string;
+    batch_id?: string;
+    cook_id?: string;
+    status?: string;
+    limit?: number;
+  } = {}): Promise<any[]> {
+    const where: any = {};
+    if (filters.id) where.id = filters.id;
+    if (filters.batch_id) where.batch_id = filters.batch_id;
+    if (filters.cook_id) where.cook_id = filters.cook_id;
+    if (filters.status) where.status = filters.status;
+    const take = filters.limit || 100;
+    const [lines] = await (this as any).listAndCountPayoutBatchLines(where, {
+      take,
+      order: { created_at: "DESC" },
+    }).catch(() => [[]]);
+    return lines;
+  }
+
+  async getLastCookPayoutLine(cookId: string): Promise<any | null> {
+    const lines = await this.listPayoutBatchLines({ cook_id: cookId, limit: 50 });
+    const paidish = lines.filter((l: any) => ["approved", "paid"].includes(String(l.status || "")));
+    if (!paidish.length) return null;
+    const line = paidish[0];
+    const batches = await this.listPayoutBatches({ id: line.batch_id, limit: 1 });
+    const batch = batches[0];
+    return {
+      ...line,
+      batch_week_start: batch?.week_start,
+      batch_approved_at: batch?.approved_at,
+      batch_transfer_ref: batch?.transfer_ref,
+    };
+  }
+
   async markPaid(batchId: string, container?: any): Promise<SHCPayoutBatch> {
-    // For future full PayNow payout confirm; now stub after approve
     const [updated] = await this.updatePayoutBatches({
       selector: { id: batchId },
       data: { status: "paid", updated_at: new Date() } as any,
     });
+    const lines = await this.listPayoutBatchLines({ batch_id: batchId, limit: 500 });
+    for (const line of lines) {
+      await this.updatePayoutBatchLines({
+        selector: { id: line.id },
+        data: { status: "paid", updated_at: new Date() } as any,
+      });
+    }
     return updated as unknown as SHCPayoutBatch;
   }
 }

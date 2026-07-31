@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BENTO_ACTION_IMAGES,
   defaultExpenseCategory,
@@ -16,6 +17,7 @@ import {
   CookEarningsCreateListingsCtaWeb,
   CookEarningsExpenseTrackerWeb,
   CookEarningsIrasNoteWeb,
+  CookEarningsPayoutStatusWeb,
   GourmeatCookHeader,
   GourmeatCard,
   SHCMetaBadge,
@@ -23,6 +25,7 @@ import {
 } from '../../components/SHCWebComponents';
 
 export default function CookEarningsPage() {
+  const router = useRouter();
   const { user } = useCookAuth();
   const { data: earningsRaw } = useCookEarnings();
   const earnings = resolveCookEarningsSummary(earningsRaw as Record<string, unknown> | undefined);
@@ -71,6 +74,11 @@ export default function CookEarningsPage() {
           <p className="text-xl font-black">{orderCount} orders</p>
         </GourmeatCard>
       </div>
+
+      <CookEarningsPayoutStatusWeb
+        earnings={earnings}
+        onSetupPaynow={() => router.push('/cook-portal/settings')}
+      />
 
       <p className="text-sm font-extrabold mb-2">Quick actions</p>
       <div className="grid grid-cols-2 gap-2">

@@ -28,6 +28,9 @@ type CookProfile = {
   availability_paused?: boolean;
   avatar_url?: string;
   hero_image_url?: string;
+  paynow_mobile?: string;
+  paynow_uen?: string;
+  payout_legal_name?: string;
 };
 
 export default function CookSettingsPage() {
@@ -40,6 +43,9 @@ export default function CookSettingsPage() {
   const [collectionInstructions, setCollectionInstructions] = useState('');
   const [collectionTimeSlots, setCollectionTimeSlots] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
+  const [paynowMobile, setPaynowMobile] = useState('');
+  const [paynowUen, setPaynowUen] = useState('');
+  const [payoutLegalName, setPayoutLegalName] = useState('');
   const [profile, setProfile] = useState<CookProfile | null>(null);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -66,6 +72,9 @@ export default function CookSettingsPage() {
     setCollectionInstructions(String(cook.collection_instructions || ''));
     setCollectionTimeSlots(normalizeCookCollectionTimeSlots(cook.collection_time_slots));
     setPaused(Boolean(cook.availability_paused));
+    setPaynowMobile(String(cook.paynow_mobile || ''));
+    setPaynowUen(String(cook.paynow_uen || ''));
+    setPayoutLegalName(String(cook.payout_legal_name || ''));
   }, [profileQ.data]);
 
   const saveMut = useMutation({
@@ -78,6 +87,9 @@ export default function CookSettingsPage() {
         collection_instructions: collectionInstructions.trim() || undefined,
         collection_time_slots: collectionTimeSlots,
         availability_paused: paused,
+        paynow_mobile: paynowMobile.trim() || undefined,
+        paynow_uen: paynowUen.trim() || undefined,
+        payout_legal_name: payoutLegalName.trim() || undefined,
       }),
     onSuccess: (res) => {
       setError('');
@@ -270,6 +282,43 @@ export default function CookSettingsPage() {
             rows={3}
             className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
             data-testid="cook-settings-instructions"
+          />
+        </div>
+      </GourmeatCard>
+
+      <GourmeatCard className="mb-4 space-y-3">
+        <p className="font-black text-sm">PayNow payouts</p>
+        <p className="text-xs font-semibold text-muted-foreground">
+          Optional. Add your PayNow mobile or UEN + legal name to receive weekly payouts.
+        </p>
+        <div>
+          <p className="text-xs font-extrabold text-muted-foreground mb-1">PayNow mobile</p>
+          <input
+            value={paynowMobile}
+            onChange={(e) => setPaynowMobile(e.target.value)}
+            placeholder="9123 4567"
+            className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+            data-testid="cook-settings-paynow-mobile"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-extrabold text-muted-foreground mb-1">UEN (business)</p>
+          <input
+            value={paynowUen}
+            onChange={(e) => setPaynowUen(e.target.value)}
+            placeholder="201234567A"
+            className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+            data-testid="cook-settings-paynow-uen"
+          />
+        </div>
+        <div>
+          <p className="text-xs font-extrabold text-muted-foreground mb-1">Legal name (for UEN)</p>
+          <input
+            value={payoutLegalName}
+            onChange={(e) => setPayoutLegalName(e.target.value)}
+            placeholder="As per bank / ACRA"
+            className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold"
+            data-testid="cook-settings-payout-legal-name"
           />
         </div>
       </GourmeatCard>

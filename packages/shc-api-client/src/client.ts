@@ -125,6 +125,9 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       avatar_url?: string;
       hero_image_url?: string;
       pdpa_consent?: boolean;
+      paynow_mobile?: string;
+      paynow_uen?: string;
+      payout_legal_name?: string;
     }) {
       return request<{ cook: Record<string, unknown> }>("/store/shc/auth/cook/profile", {
         method: "PATCH",

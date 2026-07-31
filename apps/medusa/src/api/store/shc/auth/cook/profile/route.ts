@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { normalizeCookCollectionTimeSlots, normalizeCookAreaInput } from "@shc/utils";
+import { normalizeCookCollectionTimeSlots, normalizeCookAreaInput, normalizePaynowMobile, normalizePaynowUen } from "@shc/utils";
 import { getCookId } from "../../../../../../lib/shc-actors";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 import { assertCookOwnsMediaKey, shapeCookForStore, type CookMediaRow } from "../../../../../../lib/shc-cook-shape";
@@ -18,6 +18,9 @@ const BodySchema = z
     avatar_url: z.string().max(500).optional(),
     hero_image_url: z.string().max(500).optional(),
     pdpa_consent: z.boolean().optional(),
+    paynow_mobile: z.string().max(20).optional(),
+    paynow_uen: z.string().max(20).optional(),
+    payout_legal_name: z.string().max(120).optional(),
   })
   .strict();
 
@@ -55,11 +58,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
 
   return res.json({
-    cook: await shapeCookForStore({
-      ...shapeCookProfile(cook),
-      id: cook.id,
-      slug: cook.slug,
-    }),
+    cook: {
+      ...(await shapeCookForStore({
+        ...shapeCookProfile(cook),
+        id: cook.id,
+        slug: cook.slug,
+      })),
+      paynow_mobile: cook.paynow_mobile ?? null,
+      paynow_uen: cook.paynow_uen ?? null,
+      payout_legal_name: cook.payout_legal_name ?? null,
+    },
   });
 }
 
@@ -110,6 +118,15 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     data.pdpa_consent_at = new Date().toISOString();
     data.pdpa_consent_version = "2026-07";
   }
+  if (parse.data.paynow_mobile !== undefined) {
+    data.paynow_mobile = normalizePaynowMobile(parse.data.paynow_mobile);
+  }
+  if (parse.data.paynow_uen !== undefined) {
+    data.paynow_uen = normalizePaynowUen(parse.data.paynow_uen);
+  }
+  if (parse.data.payout_legal_name !== undefined) {
+    data.payout_legal_name = parse.data.payout_legal_name.trim() || null;
+  }
 
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
   await cookService.updateCooks({ selector: { id: cookId }, data: data as any });
@@ -118,11 +135,16 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
   return res.json({
     cook: cook
-      ? await shapeCookForStore({
-          ...shapeCookProfile(cook),
-          id: cook.id,
-          slug: cook.slug,
-        })
+      ? {
+          ...(await shapeCookForStore({
+            ...shapeCookProfile(cook),
+            id: cook.id,
+            slug: cook.slug,
+          })),
+          paynow_mobile: cook.paynow_mobile ?? null,
+          paynow_uen: cook.paynow_uen ?? null,
+          payout_legal_name: cook.payout_legal_name ?? null,
+        }
       : { id: cookId },
   });
 }

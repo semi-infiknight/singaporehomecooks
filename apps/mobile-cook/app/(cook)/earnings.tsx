@@ -12,6 +12,7 @@ import {
   SHCCookEarningsCreateListingsCta,
   SHCCookEarningsExpenseTracker,
   SHCCookEarningsIrasNote,
+  SHCCookEarningsPayoutStatus,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
@@ -95,6 +96,11 @@ export default function Earnings() {
           </SHCCard>
         </View>
       </SHCFadeIn>
+
+      <SHCCookEarningsPayoutStatus
+        earnings={earnings}
+        onSetupPaynow={() => router.push('/(cook)/settings' as any)}
+      />
 
       <Text style={styles.sectionLabel}>Quick actions</Text>
       <View style={styles.bentoRow}>

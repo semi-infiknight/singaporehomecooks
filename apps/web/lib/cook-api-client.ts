@@ -80,6 +80,9 @@ export const updateCookProfile = (input: {
   avatar_url?: string;
   hero_image_url?: string;
   pdpa_consent?: boolean;
+  paynow_mobile?: string;
+  paynow_uen?: string;
+  payout_legal_name?: string;
 }) => cookClient.updateCookProfile(input);
 export const getCookProfile = () => cookClient.getCookProfile();
 export const getUploadUrl = (

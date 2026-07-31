@@ -6,7 +6,10 @@ import {
   COOK_EARNINGS_IRAS_NOTE,
   formatCookExpenseRowAmount,
   formatCookExpenseTotalDollars,
+  formatCookLastPayoutLine,
+  formatCookNextPayoutLine,
   recentCookExpenses,
+  type CookEarningsSummary,
   type CookExpenseRow,
 } from '@shc/utils';
 import { shcColors, shcSpacing } from './theme';
@@ -16,6 +19,28 @@ export function SHCCookEarningsIrasNote({ testID = 'cook-earnings-iras-note' }: 
   return (
     <SHCCard variant="bento-peach" style={styles.noteCard} testID={testID}>
       <Text style={styles.noteText}>{COOK_EARNINGS_IRAS_NOTE}</Text>
+    </SHCCard>
+  );
+}
+
+export function SHCCookEarningsPayoutStatus({
+  earnings,
+  onSetupPaynow,
+  testID = 'cook-earnings-payout-status',
+}: {
+  earnings: CookEarningsSummary;
+  onSetupPaynow?: () => void;
+  testID?: string;
+}) {
+  return (
+    <SHCCard variant="bento-mint" style={styles.payoutCard} testID={testID}>
+      <Text style={styles.payoutLine}>{formatCookLastPayoutLine(earnings.last_payout)}</Text>
+      <Text style={styles.payoutLine}>{formatCookNextPayoutLine(earnings.next_payout)}</Text>
+      {!earnings.paynow_configured && onSetupPaynow ? (
+        <SHCButton onPress={onSetupPaynow} testID="cook-earnings-setup-paynow" style={{ marginTop: shcSpacing.sm }}>
+          <SHCButtonText>Add PayNow for payouts</SHCButtonText>
+        </SHCButton>
+      ) : null}
     </SHCCard>
   );
 }
@@ -112,6 +137,8 @@ export function SHCCookEarningsExpenseTracker({
 
 const styles = StyleSheet.create({
   noteCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
+  payoutCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
+  payoutLine: { fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 },
   noteText: { fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
   sectionLabel: {
     fontSize: 16,
