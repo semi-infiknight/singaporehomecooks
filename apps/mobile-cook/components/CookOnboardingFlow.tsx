@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,15 +6,13 @@ import {
   Pressable,
   StyleSheet,
   Alert,
-  Modal,
-  FlatList,
   Switch,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import {
   SHCOnboardingFlowScreen,
+  SHCCookAreaPicker,
   shcColors,
   shcSpacing,
   shcBorders,
@@ -29,17 +27,24 @@ import {
   COOK_ONBOARDING_DEMO_OTP,
   COOK_ONBOARDING_CUISINE_PRESETS,
   COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
+  COOK_ONBOARDING_LEAD_TIME_SLOTS,
   createEmptyCookOnboardingDraft,
   validateCookOnboardingStep,
   cookOnboardingNextStep,
+  cookOnboardingPrevStep,
   cookOnboardingChapterProgress,
+  cookOnboardingChapterDotProgress,
   buildCookOnboardingProfilePayload,
   buildCookOnboardingFirstListingPayload,
-  cookAreaPresetNames,
+  normalizePaynowMobile,
   type CookOnboardingDraft,
   type CookOnboardingStepId,
 } from '@shc/utils';
-import { markCookOnboardingSeen } from '../lib/onboarding';
+import {
+  markCookOnboardingSeen,
+  loadCookOnboardingDraft,
+  saveCookOnboardingDraft,
+} from '../lib/onboarding';
 import {
   updateCookProfile,
   sendCookEmailVerify,
@@ -47,8 +52,10 @@ import {
   sendCookMobileVerify,
   confirmCookMobile,
   createCookListing,
-  submitComplianceDoc,
+  getCurrentUser,
 } from '../lib/api-client';
+import { pickCookMediaImage, uploadCookMediaImage } from '../lib/cook-media-upload';
+import { pickComplianceCertificate, uploadComplianceCertificate } from '../lib/compliance-upload';
 
 const IMAGE_BY_KEY: Record<string, string> = {
   listings: BENTO_ACTION_IMAGES.listings,
@@ -153,8 +160,36 @@ export default function CookOnboardingFlow() {
   const [busy, setBusy] = useState(false);
   const [verifyHint, setVerifyHint] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  const [areaModalOpen, setAreaModalOpen] = useState(false);
-  const areas = useMemo(() => cookAreaPresetNames(), []);
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (maestroE2e) {
+        setDraftReady(true);
+        return;
+      }
+      const saved = await loadCookOnboardingDraft();
+      if (!cancelled && saved) {
+        setStepId(saved.stepId);
+        setDraft(saved.draft);
+      }
+      if (!cancelled) setDraftReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [maestroE2e]);
+
+  useEffect(() => {
+    if (!draftReady || maestroE2e) return;
+    void saveCookOnboardingDraft({ stepId, draft });
+  }, [draft, stepId, draftReady, maestroE2e]);
+
+  useEffect(() => {
+    setOtpCode('');
+    setVerifyHint('');
+  }, [stepId]);
 
   useEffect(() => {
     if (!maestroE2e) return;
@@ -179,17 +214,25 @@ export default function CookOnboardingFlow() {
       dish_price: '12',
       dish_ingredients: 'Rice, coconut milk, sambal',
       dish_description: 'Heritage kitchen test dish for Maestro e2e.',
+      dish_lead_time_slot: COOK_ONBOARDING_LEAD_TIME_SLOTS[2],
     }));
   }, [maestroE2e]);
 
   const stepMeta = COOK_ONBOARDING_STEPS.find((s) => s.id === stepId)!;
   const progress = cookOnboardingChapterProgress(stepId);
+  const chapterDots = cookOnboardingChapterDotProgress(stepId);
   const stepIndex = COOK_ONBOARDING_STEPS.findIndex((s) => s.id === stepId);
   const isLast = stepId === 'complete';
+  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
+
+  const goBack = () => {
+    const prev = cookOnboardingPrevStep(stepId);
+    if (prev) setStepId(prev);
+  };
 
   const goNext = () => {
     const gate = validateCookOnboardingStep(stepId, draft);
@@ -240,6 +283,7 @@ export default function CookOnboardingFlow() {
       await confirmCookEmail(otpCode);
       patch({ email_verified: true });
       setVerifyHint('Email verified ✓');
+      setTimeout(() => goNext(), 400);
     } catch (e) {
       Alert.alert('Invalid code', (e as Error).message);
     } finally {
@@ -270,6 +314,7 @@ export default function CookOnboardingFlow() {
       await confirmCookMobile(otpCode);
       patch({ mobile_verified: true });
       setVerifyHint('Mobile verified ✓');
+      setTimeout(() => goNext(), 400);
     } catch (e) {
       Alert.alert('Invalid code', (e as Error).message);
     } finally {
@@ -277,65 +322,56 @@ export default function CookOnboardingFlow() {
     }
   };
 
+  const fillPaynowFromContact = () => {
+    const mobile = normalizePaynowMobile(draft.contact_mobile) || '';
+    patch({ paynow_mobile: mobile, paynow_mobile_confirm: mobile });
+  };
+
   const markCert = async (type: 'sfa' | 'wsq' | 'halal') => {
+    const cookId = getCurrentUser()?.id;
+    if (!cookId) {
+      Alert.alert('Upload', 'Sign in again to upload certificates.');
+      return;
+    }
+    setBusy(true);
     try {
-      await submitComplianceDoc({
-        type,
-        file_key: `compliance/onboarding/${type}_${Date.now()}.pdf`,
-      });
+      const file = await pickComplianceCertificate();
+      if (!file) return;
+      await uploadComplianceCertificate(cookId, type, file);
       patch({
         compliance_uploaded: { ...draft.compliance_uploaded, [type]: true },
       });
     } catch (e) {
       Alert.alert('Upload', (e as Error).message);
+    } finally {
+      setBusy(false);
     }
   };
 
   const pickPhoto = async (field: 'avatar_url' | 'dish_image_url') => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
-    if (!res.canceled && res.assets[0]?.uri) {
-      patch({ [field]: res.assets[0].uri });
+    const cookId = getCurrentUser()?.id;
+    if (!cookId) {
+      Alert.alert('Photo', 'Sign in again to upload photos.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const file = await pickCookMediaImage();
+      if (!file) return;
+      const kind = field === 'avatar_url' ? 'avatar' : 'hero';
+      const uploaded = await uploadCookMediaImage(cookId, kind, file);
+      patch({ [field]: uploaded.key });
+    } catch (e) {
+      Alert.alert('Photo', (e as Error).message);
+    } finally {
+      setBusy(false);
     }
   };
 
   const renderStep = () => {
     switch (stepId) {
       case 'area':
-        return (
-          <>
-            <FieldLabel>Neighbourhood</FieldLabel>
-            <Pressable style={styles.dropdown} onPress={() => setAreaModalOpen(true)} testID="cook-onboarding-area-input">
-              <Text style={draft.area ? styles.dropdownValue : styles.dropdownPlaceholder}>
-                {draft.area || 'Select area…'}
-              </Text>
-            </Pressable>
-            <Modal visible={areaModalOpen} animationType="slide" transparent>
-              <View style={styles.modalBackdrop}>
-                <View style={styles.modalSheet}>
-                  <Text style={styles.modalTitle}>Select area</Text>
-                  <FlatList
-                    data={areas}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
-                      <Pressable
-                        style={styles.modalRow}
-                        onPress={() => {
-                          patch({ area: item });
-                          setAreaModalOpen(false);
-                        }}
-                      >
-                        <Text style={styles.modalRowText}>{item}</Text>
-                      </Pressable>
-                    )}
-                  />
-                  <SHCButton onPress={() => setAreaModalOpen(false)} testID="cook-onboarding-area-close">
-                    <SHCButtonText>Close</SHCButtonText>
-                  </SHCButton>
-                </View>
-              </View>
-            </Modal>
-          </>
-        );
+        return <SHCCookAreaPicker value={draft.area} onChange={(area) => patch({ area })} testID="cook-onboarding-area-input" />;
       case 'kitchen_address':
         return (
           <>
@@ -404,6 +440,9 @@ export default function CookOnboardingFlow() {
       case 'paynow':
         return (
           <>
+            <SHCButton onPress={fillPaynowFromContact} testID="cook-onboarding-paynow-same">
+              <SHCButtonText>Use contact mobile</SHCButtonText>
+            </SHCButton>
             <FieldLabel>PayNow mobile</FieldLabel>
             <TextField value={draft.paynow_mobile} onChangeText={(paynow_mobile) => patch({ paynow_mobile })} placeholder="9123 4567" keyboardType="phone-pad" testID="cook-onboarding-paynow-mobile" />
             <FieldLabel>Confirm PayNow mobile</FieldLabel>
@@ -449,7 +488,7 @@ export default function CookOnboardingFlow() {
             {(['sfa', 'wsq', 'halal'] as const).map((t) => (
               <Pressable key={t} style={styles.certRow} onPress={() => markCert(t)} testID={`cook-onboarding-cert-${t}`}>
                 <Text style={styles.certLabel}>{t.toUpperCase()} certificate</Text>
-                <Text style={styles.certStatus}>{draft.compliance_uploaded[t] ? '✓ Uploaded' : 'Tap to mark uploaded'}</Text>
+                <Text style={styles.certStatus}>{draft.compliance_uploaded[t] ? '✓ Uploaded' : 'Tap to upload photo'}</Text>
               </Pressable>
             ))}
           </>
@@ -486,6 +525,13 @@ export default function CookOnboardingFlow() {
             <TextField value={draft.dish_description} onChangeText={(dish_description) => patch({ dish_description })} placeholder="Brief heritage story for this dish" multiline testID="cook-onboarding-dish-desc" />
             <FieldLabel>Minimum order lead (days)</FieldLabel>
             <TextField value={String(draft.dish_lead_days)} onChangeText={(t) => patch({ dish_lead_days: Number(t) || 1 })} keyboardType="number-pad" testID="cook-onboarding-lead-days" />
+            <FieldLabel>Preferred collection window</FieldLabel>
+            <ChipRow
+              options={COOK_ONBOARDING_LEAD_TIME_SLOTS}
+              value={draft.dish_lead_time_slot}
+              onChange={(dish_lead_time_slot) => patch({ dish_lead_time_slot })}
+              testIDPrefix="cook-onboarding-lead-slot"
+            />
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Dish available</Text>
               <Switch value={draft.dish_available} onValueChange={(dish_available) => patch({ dish_available })} />
@@ -519,15 +565,20 @@ export default function CookOnboardingFlow() {
     }
   };
 
+  if (!draftReady) return null;
+
   return (
     <SHCOnboardingFlowScreen
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
-      subtitle={`${progress.chapterLabel} · Step ${progress.overallStep} of ${progress.overallTotal}\n${stepMeta.subtitle}`}
-      stepIndex={stepIndex}
-      totalSteps={COOK_ONBOARDING_STEPS.length}
+      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n${stepMeta.subtitle}`}
+      stepIndex={chapterDots.chapterIndex}
+      totalSteps={chapterDots.totalChapters}
       onNext={handlePrimary}
       onSkip={stepMeta.skippable ? goNext : undefined}
+      onSecondary={canGoBack ? goBack : undefined}
+      secondaryLabel={canGoBack ? 'Back' : undefined}
+      secondaryTestID="cook-onboarding-back-btn"
       nextLabel={isLast ? (busy ? 'Finishing…' : stepMeta.nextLabel || 'Finish') : stepMeta.nextLabel || 'Continue'}
       nextTestID={isLast ? 'cook-onboarding-finish-btn' : 'cook-onboarding-next-btn'}
       skipTestID="cook-onboarding-skip-btn"

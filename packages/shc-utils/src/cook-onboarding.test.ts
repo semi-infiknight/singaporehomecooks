@@ -5,6 +5,8 @@ import {
   validateCookOnboardingStep,
   buildCookOnboardingProfilePayload,
   cookOnboardingChapterProgress,
+  cookOnboardingPrevStep,
+  cookOnboardingChapterDotProgress,
 } from './cook-onboarding';
 
 describe('cook-onboarding steps', () => {
@@ -39,5 +41,12 @@ describe('cook-onboarding steps', () => {
     const p = cookOnboardingChapterProgress('paynow');
     expect(p.chapterLabel).toBe('Get paid');
     expect(p.overallStep).toBeGreaterThan(1);
+  });
+
+  it('supports back navigation and chapter dots', () => {
+    expect(cookOnboardingPrevStep('paynow')).toBe('verify_mobile');
+    const dots = cookOnboardingChapterDotProgress('menu_basics');
+    expect(dots.totalChapters).toBe(9);
+    expect(dots.percentComplete).toBeGreaterThan(50);
   });
 });

@@ -64,6 +64,25 @@ export const COOK_ONBOARDING_CHAPTER_LABELS: Record<CookOnboardingChapterId, str
   complete: 'Go live',
 };
 
+/** Chapter order for immersive progress (9 dots, not 20). */
+export const COOK_ONBOARDING_CHAPTER_ORDER: CookOnboardingChapterId[] = [
+  'welcome',
+  'location',
+  'contact',
+  'payout',
+  'legal',
+  'identity',
+  'compliance',
+  'menu',
+  'complete',
+];
+
+export const COOK_ONBOARDING_LEAD_TIME_SLOTS = [
+  'Morning (9am–12pm)',
+  'Afternoon (12pm–5pm)',
+  'Evening (5pm–9pm)',
+] as const;
+
 export const COOK_ONBOARDING_STEPS: CookOnboardingStepMeta[] = [
   {
     id: 'welcome',
@@ -240,6 +259,7 @@ export type CookOnboardingDraft = {
   dish_ingredients: string;
   dish_description: string;
   dish_lead_days: number;
+  dish_lead_time_slot: string;
   dish_available: boolean;
   dish_calories: string;
   dish_image_url: string;
@@ -274,6 +294,7 @@ export function createEmptyCookOnboardingDraft(): CookOnboardingDraft {
     dish_ingredients: '',
     dish_description: '',
     dish_lead_days: 2,
+    dish_lead_time_slot: COOK_ONBOARDING_LEAD_TIME_SLOTS[2],
     dish_available: true,
     dish_calories: '',
     dish_image_url: '',
@@ -375,6 +396,9 @@ export function validateCookOnboardingStep(
       if (!Number.isFinite(draft.dish_lead_days) || draft.dish_lead_days < 1) {
         return { ok: false, message: 'Minimum order time must be at least 1 day.' };
       }
+      if (!draft.dish_lead_time_slot.trim()) {
+        return { ok: false, message: 'Pick a preferred collection time window.' };
+      }
       return { ok: true };
     case 'menu_photo':
       return { ok: true };
@@ -393,6 +417,32 @@ export function cookOnboardingNextStep(stepId: CookOnboardingStepId): CookOnboar
   const idx = cookOnboardingStepIndex(stepId);
   if (idx < 0 || idx >= COOK_ONBOARDING_STEPS.length - 1) return null;
   return COOK_ONBOARDING_STEPS[idx + 1].id;
+}
+
+export function cookOnboardingPrevStep(stepId: CookOnboardingStepId): CookOnboardingStepId | null {
+  const idx = cookOnboardingStepIndex(stepId);
+  if (idx <= 0) return null;
+  return COOK_ONBOARDING_STEPS[idx - 1].id;
+}
+
+export function cookOnboardingChapterDotProgress(stepId: CookOnboardingStepId): {
+  chapterIndex: number;
+  totalChapters: number;
+  chapterLabel: string;
+  percentComplete: number;
+} {
+  const step = COOK_ONBOARDING_STEPS.find((s) => s.id === stepId);
+  const chapter = step?.chapter ?? 'welcome';
+  const chapterIndex = COOK_ONBOARDING_CHAPTER_ORDER.indexOf(chapter);
+  const totalChapters = COOK_ONBOARDING_CHAPTER_ORDER.length;
+  const overallStep = cookOnboardingStepIndex(stepId) + 1;
+  const overallTotal = COOK_ONBOARDING_STEPS.length;
+  return {
+    chapterIndex: Math.max(0, chapterIndex),
+    totalChapters,
+    chapterLabel: COOK_ONBOARDING_CHAPTER_LABELS[chapter],
+    percentComplete: Math.round((overallStep / overallTotal) * 100),
+  };
 }
 
 export function cookOnboardingChapterProgress(stepId: CookOnboardingStepId): {
@@ -459,7 +509,11 @@ export function buildCookOnboardingFirstListingPayload(draft: CookOnboardingDraf
     allergen_none_confirmed: true,
     portions_per_day: 12,
     collection_days: [0, 1, 2, 3, 4, 5, 6],
-    time_slots: ['17:00-19:00', '18:00-20:00'],
+    time_slots: draft.dish_lead_time_slot.includes('Morning')
+      ? ['09:00-12:00']
+      : draft.dish_lead_time_slot.includes('Afternoon')
+        ? ['12:00-17:00']
+        : ['17:00-21:00'],
     paused: !draft.dish_available,
     image_url: draft.dish_image_url.trim() || undefined,
     calories: draft.dish_calories ? Number(draft.dish_calories) : undefined,

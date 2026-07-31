@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -10,16 +10,24 @@ import {
   COOK_ONBOARDING_DEMO_OTP,
   COOK_ONBOARDING_CUISINE_PRESETS,
   COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
+  COOK_ONBOARDING_LEAD_TIME_SLOTS,
   createEmptyCookOnboardingDraft,
   validateCookOnboardingStep,
   cookOnboardingNextStep,
+  cookOnboardingPrevStep,
   cookOnboardingChapterProgress,
+  cookOnboardingChapterDotProgress,
   buildCookOnboardingProfilePayload,
   buildCookOnboardingFirstListingPayload,
+  normalizePaynowMobile,
   type CookOnboardingDraft,
   type CookOnboardingStepId,
 } from '@shc/utils';
-import { markCookOnboardingSeen } from '../../../lib/onboarding';
+import {
+  markCookOnboardingSeen,
+  loadCookOnboardingDraft,
+  saveCookOnboardingDraft,
+} from '../../../lib/onboarding';
 import {
   updateCookProfile,
   sendCookEmailVerify,
@@ -156,14 +164,37 @@ export default function CookOnboardingFlow() {
   const [verifyHint, setVerifyHint] = useState('');
   const [otpCode, setOtpCode] = useState('');
 
+  useEffect(() => {
+    const saved = loadCookOnboardingDraft();
+    if (saved) {
+      setStepId(saved.stepId);
+      setDraft(saved.draft);
+    }
+  }, []);
+
+  useEffect(() => {
+    saveCookOnboardingDraft({ stepId, draft });
+  }, [draft, stepId]);
+
+  useEffect(() => {
+    setOtpCode('');
+    setVerifyHint('');
+  }, [stepId]);
+
   const stepMeta = COOK_ONBOARDING_STEPS.find((s) => s.id === stepId)!;
   const progress = useMemo(() => cookOnboardingChapterProgress(stepId), [stepId]);
-  const stepIndex = COOK_ONBOARDING_STEPS.findIndex((s) => s.id === stepId);
+  const chapterDots = useMemo(() => cookOnboardingChapterDotProgress(stepId), [stepId]);
   const isLast = stepId === 'complete';
+  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
+
+  const goBack = () => {
+    const prev = cookOnboardingPrevStep(stepId);
+    if (prev) setStepId(prev);
+  };
 
   const goNext = () => {
     const gate = validateCookOnboardingStep(stepId, draft);
@@ -216,6 +247,7 @@ export default function CookOnboardingFlow() {
       await confirmCookEmail(otpCode);
       patch({ email_verified: true });
       setVerifyHint('Email verified ✓');
+      setTimeout(() => goNext(), 400);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -246,6 +278,7 @@ export default function CookOnboardingFlow() {
       await confirmCookMobile(otpCode);
       patch({ mobile_verified: true });
       setVerifyHint('Mobile verified ✓');
+      setTimeout(() => goNext(), 400);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -265,6 +298,11 @@ export default function CookOnboardingFlow() {
     } catch (e) {
       setError((e as Error).message);
     }
+  };
+
+  const fillPaynowFromContact = () => {
+    const mobile = normalizePaynowMobile(draft.contact_mobile) || '';
+    patch({ paynow_mobile: mobile, paynow_mobile_confirm: mobile });
   };
 
   const onPhotoPick = (field: 'avatar_url' | 'dish_image_url', file?: File | null) => {
@@ -373,6 +411,14 @@ export default function CookOnboardingFlow() {
       case 'paynow':
         return (
           <>
+            <button
+              type="button"
+              onClick={fillPaynowFromContact}
+              className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 mb-3"
+              data-testid="cook-onboarding-paynow-same"
+            >
+              Use contact mobile
+            </button>
             <FieldLabel>PayNow mobile</FieldLabel>
             <TextField
               value={draft.paynow_mobile}
@@ -583,6 +629,13 @@ export default function CookOnboardingFlow() {
               testID="cook-onboarding-lead-days"
               type="number"
             />
+            <FieldLabel>Preferred collection window</FieldLabel>
+            <ChipRow
+              options={COOK_ONBOARDING_LEAD_TIME_SLOTS}
+              value={draft.dish_lead_time_slot}
+              onChange={(dish_lead_time_slot) => patch({ dish_lead_time_slot })}
+              testIDPrefix="cook-onboarding-lead-slot"
+            />
             <label className="flex items-center justify-between gap-3 py-2">
               <span className="text-sm font-semibold">Dish available</span>
               <input
@@ -640,11 +693,14 @@ export default function CookOnboardingFlow() {
     <SHCOnboardingFlowScreenWeb
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
-      subtitle={`${progress.chapterLabel} · Step ${progress.overallStep} of ${progress.overallTotal}\n${stepMeta.subtitle}`}
-      stepIndex={stepIndex}
-      totalSteps={COOK_ONBOARDING_STEPS.length}
+      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n${stepMeta.subtitle}`}
+      stepIndex={chapterDots.chapterIndex}
+      totalSteps={chapterDots.totalChapters}
       onNext={handlePrimary}
       onSkip={stepMeta.skippable ? goNext : undefined}
+      onSecondary={canGoBack ? goBack : undefined}
+      secondaryLabel={canGoBack ? 'Back' : undefined}
+      secondaryTestID="cook-onboarding-back-btn"
       nextLabel={isLast ? (busy ? 'Finishing…' : stepMeta.nextLabel || 'Finish') : stepMeta.nextLabel || 'Continue'}
       nextTestID={isLast ? 'cook-onboarding-finish-btn' : 'cook-onboarding-next-btn'}
       skipTestID="cook-onboarding-skip-btn"

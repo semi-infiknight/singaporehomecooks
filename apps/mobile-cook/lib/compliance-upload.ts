@@ -49,7 +49,7 @@ export async function pickComplianceCertificate(): Promise<PickedComplianceFile 
 /** Upload cert to MinIO then register compliance doc with ops. */
 export async function uploadComplianceCertificate(
   cookId: string,
-  type: 'sfa' | 'wsq',
+  type: 'sfa' | 'wsq' | 'halal',
   file: PickedComplianceFile
 ) {
   const ext = file.mimeType.includes('png') ? 'png' : file.mimeType.includes('webp') ? 'webp' : 'jpg';

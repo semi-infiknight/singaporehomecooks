@@ -5,7 +5,7 @@ import {
   formatError,
   createSHCError,
   formatShcErrorUserMessage,
-} from './errors.ts';
+} from './errors';
 
 describe('SHC Error Codes (TDD - production contract)', () => {
   it('should export all required error codes from blueprint', () => {
