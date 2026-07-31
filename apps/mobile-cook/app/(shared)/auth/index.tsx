@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows } from '@shc/ui';
+import { validateShcPassword } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../../lib/onboarding';
 
@@ -41,9 +42,17 @@ export default function CookAuthScreen() {
   const submit = async () => {
     if (busy) return;
     const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim();
     if (!trimmedEmail || password.length < 6) {
       Alert.alert('Missing details', 'Enter a valid email and password (6+ characters).');
       return;
+    }
+    if (mode === 'register') {
+      const policy = validateShcPassword(password);
+      if (!policy.ok) {
+        Alert.alert('Weak password', policy.message);
+        return;
+      }
     }
     if (mode === 'register' && (!displayName.trim() || !area.trim())) {
       Alert.alert('Missing details', 'Add your kitchen name and HDB area for customers to find you.');

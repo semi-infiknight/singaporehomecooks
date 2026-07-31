@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { issueCookToken } from "../../../../../../lib/shc-auth";
 import { hashCookPassword } from "../../../../../../lib/shc-password";
+import { validateAuthRegistration } from "../../../../../../lib/shc-auth-password";
 import { checkRateLimit, getRateLimitKey } from "../../../../../../lib/shc-rate-limit";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
@@ -46,6 +47,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const email = parse.data.email.toLowerCase().trim();
+  const policy = validateAuthRegistration(email, parse.data.password);
+  if (policy) {
+    return res.status(400).json(policy);
+  }
+
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
   const existing = await cookService.findByLoginEmail(email);
   if (existing) {

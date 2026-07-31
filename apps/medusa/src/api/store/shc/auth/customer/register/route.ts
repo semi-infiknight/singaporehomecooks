@@ -2,6 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { ensureStoreCustomer, medusaCustomerRegister } from "../../../../../../lib/shc-auth";
+import { validateAuthRegistration } from "../../../../../../lib/shc-auth-password";
 
 const BodySchema = z.object({
   email: z.string().email(),
@@ -14,6 +15,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const parse = BodySchema.safeParse(req.body || {});
   if (!parse.success) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid registration payload") });
+  }
+
+  const policy = validateAuthRegistration(parse.data.email, parse.data.password);
+  if (policy) {
+    return res.status(400).json(policy);
   }
 
   const baseUrl = process.env.MEDUSA_PUBLIC_URL || `http://localhost:${process.env.PORT || 9000}`;
