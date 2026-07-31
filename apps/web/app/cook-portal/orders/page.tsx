@@ -36,8 +36,8 @@ import {
 } from '../../components/SHCWebComponents';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
-  paid: [{ to: 'accepted', label: 'Accept' }],
-  accepted: [{ to: 'preparing', label: 'Prepare' }],
+  cart: [{ to: 'accepted', label: 'Accept' }, { to: 'cancelled', label: 'Decline' }],
+  paid: [{ to: 'preparing', label: 'Start preparing' }],
   preparing: [{ to: 'ready_for_collection', label: 'Ready' }],
   ready_for_collection: [{ to: 'collected', label: 'Collected' }],
 };

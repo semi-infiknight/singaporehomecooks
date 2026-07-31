@@ -130,7 +130,8 @@ export default function TrackOrder() {
   };
 
   const orderStatus = order?.shc_status ? String(order.shc_status) : '';
-  const awaitingPayNow = orderStatus === 'cart';
+  const awaitingPayNow = orderStatus === 'accepted';
+  const awaitingCook = orderStatus === 'cart';
   const payAutoStart = searchParams?.get('pay') === '1';
 
   useEffect(() => {
@@ -147,7 +148,7 @@ export default function TrackOrder() {
       try {
         const fresh = await getOrder(id);
         const next = String((fresh as { shc_status?: string })?.shc_status || '');
-        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
+        if (['paid', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
           setWaitingForPayment(false);
           void refetch();
         }
@@ -174,7 +175,7 @@ export default function TrackOrder() {
   );
   const rateCopy = orderDeliveredRateCopy();
   const isDelivered = status === 'collected' || status === 'completed';
-  const isPaid = ['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
+  const isPaid = ['paid', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(
     String(status)
   );
   const isCorporate = Boolean(order.is_corporate);
@@ -212,11 +213,20 @@ export default function TrackOrder() {
         <OrderTimeline status={status} live={isActiveOrderStatus(status)} />
       </SHCCard>
 
+      {awaitingCook ? (
+        <SHCCard className="mb-6" data-testid="order-awaiting-cook-panel">
+          <p className="font-black mb-2">Waiting for cook to confirm</p>
+          <p className="text-sm text-muted-foreground font-semibold">
+            Your cook will accept or decline shortly. We&apos;ll notify you when it&apos;s time to pay with PayNow.
+          </p>
+        </SHCCard>
+      ) : null}
+
       {awaitingPayNow ? (
         <SHCCard className="mb-6" data-testid="order-paynow-panel">
-          <p className="font-black mb-2">Complete PayNow to confirm</p>
+          <p className="font-black mb-2">Complete PayNow</p>
           <p className="text-sm text-muted-foreground font-semibold mb-4">
-            Your quote was accepted — pay now so your cook can start preparing.
+            Your cook confirmed — pay now so they can start preparing.
           </p>
           <PayNowPanel
             amount={Number(order.total) || 0}

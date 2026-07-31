@@ -3,8 +3,11 @@ import { canTransition, validateTransitionWithCode, isTerminal, getAllowedNext }
 import { SHCOrderStatus } from '@shc/types';
 
 describe('order-state rule (10+ tests, exact 09-order-state.md FSM + transitions)', () => {
-  it('allows cart -> paid', () => expect(canTransition('cart', 'paid')).toBe(true));
-  it('allows paid -> accepted', () => expect(canTransition('paid', 'accepted')).toBe(true));
+  it('allows cart -> accepted (cook confirms before payment)', () =>
+    expect(canTransition('cart', 'accepted')).toBe(true));
+  it('allows accepted -> paid (customer PayNow after cook confirms)', () =>
+    expect(canTransition('accepted', 'paid')).toBe(true));
+  it('allows paid -> preparing', () => expect(canTransition('paid', 'preparing')).toBe(true));
   it('allows paid -> cancelled', () => expect(canTransition('paid', 'cancelled')).toBe(true));
   it('rejects invalid cart -> collected', () => expect(canTransition('cart', 'collected')).toBe(false));
 
@@ -46,6 +49,6 @@ describe('order-state rule (10+ tests, exact 09-order-state.md FSM + transitions
   });
 
   it('pure + deterministic', () => {
-    expect(canTransition('accepted', 'preparing')).toBe(canTransition('accepted', 'preparing'));
+    expect(canTransition('paid', 'preparing')).toBe(canTransition('paid', 'preparing'));
   });
 });

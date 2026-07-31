@@ -3,20 +3,20 @@ import ShcNotificationModuleService from "../../../../../modules/shc-notificatio
 import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
 import { requireWorker } from "../../../../../lib/shc-worker-auth";
 
-/** POST /admin/shc/internal/order-escalation — worker reminder for paid orders awaiting cook acceptance. */
+/** POST /admin/shc/internal/order-escalation — worker reminder for cart orders awaiting cook acceptance. */
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   if (!requireWorker(req, res)) return;
 
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
   const notifService: ShcNotificationModuleService = req.scope.resolve("shcNotification") as any;
-  const [orders] = await metaService.listAndCountOrderMetas({ shc_status: "paid" } as any, { take: 50 }).catch(() => [[]]);
+  const [orders] = await metaService.listAndCountOrderMetas({ shc_status: "cart" } as any, { take: 50 }).catch(() => [[]]);
 
   let reminded = 0;
   for (const order of orders || []) {
     if (!order.cook_id) continue;
     await notifService.push(order.cook_id, {
       type: "order_escalation",
-      body: `Order ${order.order_id} is paid and awaiting acceptance.`,
+      body: `Order ${order.order_id} is awaiting your confirmation.`,
     });
     reminded += 1;
   }

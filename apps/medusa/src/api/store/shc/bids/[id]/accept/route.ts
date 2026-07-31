@@ -101,8 +101,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer_id: effectiveCustomerId,
       collection_date: collDate,
       collection_slot: collSlot,
-      // Awaiting PayNow — same as cart checkout (webhook marks paid)
-      shc_status: "cart" as SHCOrderStatus,
+      // Cook already quoted — customer pays after accepting the quote
+      shc_status: "accepted" as SHCOrderStatus,
       origin_request_id: bid.request_id,
       allergen_acked_at: new Date().toISOString(),
       items,
@@ -113,16 +113,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       orderId,
       "cook",
       bid.cook_id,
-      "Quote accepted — awaiting customer PayNow. Collection details released 2h before slot once paid."
+      "Quote accepted — complete PayNow to confirm. Collection details released 2h before slot once paid."
     );
 
     await notifService.push(effectiveCustomerId, {
       type: "order",
-      body: `Complete PayNow for order ${orderId} to confirm your custom request.`,
+      body: `Complete PayNow for order ${orderId} — your cook confirmed the quote.`,
     });
     await notifService.push(bid.cook_id, {
       type: "order",
-      body: `Your quote was accepted — order ${orderId} awaits customer payment.`,
+      body: `Your quote was accepted — order ${orderId} awaits customer PayNow.`,
     });
 
     const audit = {
@@ -156,7 +156,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       cook_id: bid.cook_id,
       customer_id: effectiveCustomerId,
       items,
-      shc_status: "cart" as SHCOrderStatus,
+      shc_status: "accepted" as SHCOrderStatus,
       collection_date: collDate,
       collection_slot: collSlot,
       total: totalCents,

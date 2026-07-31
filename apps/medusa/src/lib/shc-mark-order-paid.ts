@@ -44,22 +44,30 @@ export async function markOrderPaid(
     }
   }
 
-  // Idempotent: already paid with same (or any) ref
-  if (prevStatus === "paid" || prevStatus === "accepted" || prevStatus === "preparing" ||
-      prevStatus === "ready_for_collection" || prevStatus === "collected" || prevStatus === "completed") {
+  // Idempotent: already paid with same ref
+  if (
+    prevStatus === "paid" ||
+    prevStatus === "preparing" ||
+    prevStatus === "ready_for_collection" ||
+    prevStatus === "collected" ||
+    prevStatus === "completed"
+  ) {
     if (prevRef && String(prevRef) === paynow_reference) {
       return { success: true, total_cents: 0, already_paid: true, meta: existing };
     }
-    // Already past paid — still refresh ref if empty
-    if (prevStatus !== "cart" && prevStatus !== "paid") {
-      return { success: true, total_cents: 0, already_paid: true, meta: existing };
-    }
+    return { success: true, total_cents: 0, already_paid: true, meta: existing };
   }
 
-  // Prefer direct state transition (workflow has been flaky / silent-fail on cart→paid)
+  if (prevStatus === "cart") {
+    throw new Error("Cook must confirm the order before payment");
+  }
+
+  if (prevStatus !== "accepted") {
+    throw new Error(`Order is not awaiting payment (status: ${prevStatus || "unknown"})`);
+  }
+
   const transitioned = await metaService.transitionOrderState(order_id, "paid" as SHCOrderStatus);
   if (!transitioned.valid) {
-    // Force paid when cart→paid is expected after HitPay (still record ref)
     await metaService.createOrUpdateMeta({
       order_id,
       paynow_reference,
@@ -74,7 +82,6 @@ export async function markOrderPaid(
     } as any);
   }
 
-  // Best-effort workflow side-effects (notifications etc.) — do not block paid
   await orderStateTransitionWorkflow
     .run({
       input: { orderId: order_id, to: "paid" as SHCOrderStatus, container },

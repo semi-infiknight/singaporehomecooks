@@ -47,11 +47,11 @@ type OrderAction = {
 };
 
 const NEXT_ACTIONS: Record<string, OrderAction[]> = {
-  paid: [
+  cart: [
     { to: 'accepted', label: 'Accept order' },
     { to: 'cancelled', label: 'Decline order', danger: true },
   ],
-  accepted: [{ to: 'preparing', label: 'Start preparing' }],
+  paid: [{ to: 'preparing', label: 'Start preparing' }],
   preparing: [{ to: 'ready_for_collection', label: 'Mark ready' }],
   ready_for_collection: [{ to: 'collected', label: 'Mark collected' }],
 };

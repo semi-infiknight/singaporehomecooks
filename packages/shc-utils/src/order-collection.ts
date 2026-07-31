@@ -1,7 +1,6 @@
 /** Cook collection address / instructions on orders — gated until release window. */
 
 const POST_PAID_STATUSES = new Set([
-  'accepted',
   'preparing',
   'ready_for_collection',
   'collected',
@@ -9,6 +8,8 @@ const POST_PAID_STATUSES = new Set([
   'disputed',
   'resolved',
 ]);
+
+const PAID_AWAITING_RELEASE_STATUSES = new Set(['paid']);
 
 export type OrderCollectionReleaseInput = {
   shc_status?: string | null;
@@ -22,15 +23,18 @@ export function isOrderCollectionAddressReleased(
   now = input.now ?? new Date()
 ): boolean {
   const status = String(input.shc_status || '').toLowerCase();
-  if (!status || status === 'cart' || status === 'cancelled') return false;
+  if (!status || status === 'cart' || status === 'cancelled' || status === 'accepted') return false;
   if (POST_PAID_STATUSES.has(status)) return true;
-  if (!input.address_released_at) return false;
-  const releaseAt =
-    input.address_released_at instanceof Date
-      ? input.address_released_at
-      : new Date(String(input.address_released_at));
-  if (Number.isNaN(releaseAt.getTime())) return false;
-  return now >= releaseAt;
+  if (PAID_AWAITING_RELEASE_STATUSES.has(status)) {
+    if (!input.address_released_at) return false;
+    const releaseAt =
+      input.address_released_at instanceof Date
+        ? input.address_released_at
+        : new Date(String(input.address_released_at));
+    if (Number.isNaN(releaseAt.getTime())) return false;
+    return now >= releaseAt;
+  }
+  return false;
 }
 
 export const ORDER_COLLECTION_PRIVACY_HINT =

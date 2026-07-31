@@ -201,8 +201,8 @@ async function runCustomRequestV2E2E(customerToken: string, cookToken: string, c
   }
   const customOrderId = bidAccept.body.order_id as string;
   const order = bidAccept.body.order;
-  if (order?.shc_status !== 'cart') {
-    throw new Error(`Expected awaiting PayNow (cart), got ${order?.shc_status}`);
+  if (order?.shc_status !== 'accepted') {
+    throw new Error(`Expected awaiting PayNow (accepted), got ${order?.shc_status}`);
   }
   if ((order?.total ?? 0) !== 4500 && order?.total_cents !== 4500) {
     const total = order?.total_cents ?? order?.total;
@@ -218,7 +218,7 @@ async function runCustomRequestV2E2E(customerToken: string, cookToken: string, c
   if (orderGet.status !== 200) {
     throw new Error(`Custom order GET failed ${orderGet.status}: ${JSON.stringify(orderGet.body)}`);
   }
-  if (orderGet.body?.order?.shc_status !== 'cart') {
+  if (orderGet.body?.order?.shc_status !== 'accepted') {
     throw new Error(`Custom order not awaiting PayNow: ${orderGet.body?.order?.shc_status}`);
   }
   console.log(`✅ /store/shc/orders/:id awaiting PayNow (${customOrderId})`);
