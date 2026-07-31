@@ -13,7 +13,6 @@ import {
   resolveCookEarningsSummary,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import { clearCookOnboardingSeen } from '../../../lib/onboarding';
 import { useCookOrders, useOpenRequests, useCookNotifications, useCookEarnings } from '../../../lib/useCookPortal';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import {
@@ -106,18 +105,6 @@ export default function CookDashboardPage() {
         <p className="font-black text-foreground">Kitchen settings</p>
         <p className="text-xs font-semibold text-muted-foreground mt-0.5">
           Profile · collection · pause orders
-        </p>
-      </Link>
-
-      <Link
-        href="/cook-portal/onboarding"
-        onClick={() => clearCookOnboardingSeen()}
-        data-testid="cook-kitchen-tour-link"
-        className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 mb-4 shadow-[var(--shc-shadow-brutal-sm)]"
-      >
-        <p className="font-black text-foreground">Setup tour</p>
-        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-          Replay onboarding walkthrough
         </p>
       </Link>
 

@@ -41,7 +41,6 @@ import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useO
 import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useAuth } from '../../hooks/useAuth';
 import { useCookConfig } from '../../hooks/useCookConfig';
-import { clearCookOnboardingSeen } from '../../lib/onboarding';
 import { useQuery } from '@tanstack/react-query';
 import { getComplianceDocs } from '../../lib/api-client';
 
@@ -148,19 +147,6 @@ export default function CookDashboard() {
       >
         <Text style={styles.tourBannerTitle}>Kitchen settings</Text>
         <Text style={styles.tourBannerSub}>Profile · collection · pause orders</Text>
-      </Pressable>
-
-      <Pressable
-        onPress={async () => {
-          await clearCookOnboardingSeen();
-          router.push('/(shared)/onboarding' as any);
-        }}
-        style={[styles.tourBanner, styles.tourBannerSecondary]}
-        testID="cook-kitchen-tour-link"
-        accessibilityRole="button"
-      >
-        <Text style={styles.tourBannerTitle}>Setup tour</Text>
-        <Text style={styles.tourBannerSub}>Replay onboarding walkthrough</Text>
       </Pressable>
 
       <Pressable
@@ -359,9 +345,6 @@ const styles = StyleSheet.create({
   },
   tiffinBanner: {
     backgroundColor: shcColors.bentoYellow || '#FFF3C4',
-  },
-  tourBannerSecondary: {
-    backgroundColor: shcColors.surface,
   },
   batchesBanner: {
     backgroundColor: shcColors.bentoMint || '#D8F3E8',
