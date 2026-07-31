@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { SHCErrorCode, SHCErrorCodes, formatError, createSHCError } from './errors';
+import {
+  SHCErrorCode,
+  SHCErrorCodes,
+  formatError,
+  createSHCError,
+  formatShcErrorUserMessage,
+} from './errors.ts';
 
 describe('SHC Error Codes (TDD - production contract)', () => {
   it('should export all required error codes from blueprint', () => {
@@ -47,5 +53,19 @@ describe('SHC Error Codes (TDD - production contract)', () => {
   it('SHCErrorCode schema validates only known codes', () => {
     expect(SHCErrorCode.parse('SHC-LEDGER-001')).toBe('SHC-LEDGER-001');
     expect(() => SHCErrorCode.parse('SHC-FOO-999')).toThrow();
+  });
+
+  it('formatShcErrorUserMessage surfaces Zod field errors instead of generic copy', () => {
+    const msg = formatShcErrorUserMessage('Invalid listing', {
+      occasion_tags: {
+        _errors: ['Array must contain at least 1 element(s)', 'At least one occasion tag required'],
+      },
+    });
+    expect(msg).toContain('At least one occasion tag required');
+    expect(msg).not.toBe('Invalid listing');
+  });
+
+  it('formatShcErrorUserMessage keeps specific API messages when details are absent', () => {
+    expect(formatShcErrorUserMessage('Cook login required')).toBe('Cook login required');
   });
 });
