@@ -1,16 +1,13 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   BENTO_ACTION_IMAGES,
   getFirstCartProductId,
-  orderSuccessfulCopy,
+  orderAwaitingCookCopy,
   computeOneTimeOrderSummary,
-  isOrderPaidStatus,
-  PAYMENT_POLL_INTERVAL_MS,
-  resolvePaymentPollPhase,
 } from '@shc/utils';
 import { useCart } from '../../lib/useProducts';
 import { useCheckout } from '../../lib/useOrder';
@@ -21,20 +18,16 @@ import {
   SHCErrorBanner,
   AllergenAckCheckbox,
   CollectionSlotPicker,
-  PayNowPanel,
   SHCSectionTitle,
   SHCPageHeader,
   BottomStickyBar,
   CheckoutStepper,
   useSHCTrayWeb,
-  SHCCelebrationWeb,
-  useMilestoneCelebrationWeb,
   SHCSkeletonList,
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder } from '@shc/utils';
-import { createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
 
 function extractOrderId(res: unknown): string | null {
@@ -124,91 +117,8 @@ export default function CheckoutPage() {
 
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [paynowRef, setPaynowRef] = useState('');
-  const [payPhase, setPayPhase] = useState<'form' | 'paynow' | 'done'>('form');
-  const [paySession, setPaySession] = useState<
-    (Awaited<ReturnType<typeof createOrderPayNow>> & { error?: string }) | null
-  >(null);
-  const [paySessionLoading, setPaySessionLoading] = useState(false);
-  const [waitingForPayment, setWaitingForPayment] = useState(false);
-  const [paymentPollMessage, setPaymentPollMessage] = useState<string | null>(null);
-  const paySessionOrderRef = useRef<string | null>(null);
+  const [awaitingCook, setAwaitingCook] = useState(false);
   const { openTray, dismiss } = useSHCTrayWeb();
-
-  const loadPayNowSession = useCallback(async (oid: string, force = false) => {
-    if (!force && paySessionOrderRef.current === oid) return;
-    paySessionOrderRef.current = oid;
-    setPaySessionLoading(true);
-    try {
-      const s = await createOrderPayNow(oid);
-      setPaySession(s);
-      if (s.reference) setPaynowRef(s.reference);
-      if (s.provider === 'hitpay') setWaitingForPayment(true);
-      if (s.provider === 'already_paid') {
-        setPayPhase('done');
-        setWaitingForPayment(false);
-      }
-    } catch (e: any) {
-      paySessionOrderRef.current = null;
-      setPaySession({
-        provider: 'hitpay_error',
-        order_id: oid,
-        error: e?.message || 'Could not create PayNow QR',
-      } as any);
-    } finally {
-      setPaySessionLoading(false);
-    }
-  }, []);
-
-  const {
-    show: showFirstOrderCelebration,
-    triggerIfFirst: triggerFirstOrder,
-    dismiss: dismissFirstOrderCelebration,
-  } = useMilestoneCelebrationWeb('first_order', user?.id || user?.name || 'anon');
-
-  useEffect(() => {
-    if (orderId && payPhase === 'paynow') void loadPayNowSession(orderId);
-  }, [orderId, payPhase, loadPayNowSession]);
-
-  // Poll until HitPay webhook marks paid
-  useEffect(() => {
-    if (!orderId || payPhase !== 'paynow' || !waitingForPayment) return;
-    let cancelled = false;
-    const startedAt = Date.now();
-    let consecutiveErrors = 0;
-    const tick = async () => {
-      try {
-        const o = await getOrder(orderId);
-        consecutiveErrors = 0;
-        const st = String((o as any)?.shc_status || '');
-        if (isOrderPaidStatus(st)) {
-          if (cancelled) return;
-          setWaitingForPayment(false);
-          setPaymentPollMessage(null);
-          setPayPhase('done');
-          try {
-            await triggerFirstOrder();
-          } catch {
-            /* ignore */
-          }
-          window.setTimeout(() => router.push(`/orders/${orderId}`), 900);
-          return;
-        }
-        const phase = resolvePaymentPollPhase(Date.now() - startedAt, consecutiveErrors);
-        setPaymentPollMessage(phase.message || null);
-      } catch {
-        consecutiveErrors += 1;
-        const phase = resolvePaymentPollPhase(Date.now() - startedAt, consecutiveErrors);
-        setPaymentPollMessage(phase.message || null);
-      }
-    };
-    void tick();
-    const id = window.setInterval(tick, PAYMENT_POLL_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [orderId, payPhase, waitingForPayment, router, triggerFirstOrder]);
 
   const firstPid = getFirstCartProductId(cart?.items || []);
   const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
@@ -237,7 +147,7 @@ export default function CheckoutPage() {
     }
   };
 
-  /** Place order then show PayNow confirm (or auto-confirm in demo). */
+  /** Place order — customer pays after cook confirms on order detail. */
   const doCheckout = async () => {
     setError(null);
     if (!allergenAck) {
@@ -287,8 +197,7 @@ export default function CheckoutPage() {
         return;
       }
       setOrderId(oid);
-      setPaynowRef(oid);
-      setPayPhase('paynow');
+      setAwaitingCook(true);
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string };
       const message =
@@ -299,73 +208,22 @@ export default function CheckoutPage() {
     }
   };
 
-  // ── Success / processing ──
-  if (orderId && payPhase === 'done') {
-    const okCopy = orderSuccessfulCopy();
+  // ── Awaiting cook confirmation after order placed ──
+  if (orderId && awaitingCook) {
+    const waitCopy = orderAwaitingCookCopy();
     return (
-      <div
-        className="max-w-xl mx-auto px-4 py-16 min-h-[60vh] flex flex-col items-center justify-center text-center"
-        data-testid="order-success-screen"
-      >
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-4xl text-green-700 mb-4">
-          ✓
-        </div>
-        <h1 className="text-2xl font-black mb-2">{okCopy.title}</h1>
-        <p className="text-sm font-semibold text-muted-foreground mb-2">{okCopy.subtitle}</p>
-        <p className="text-xs text-muted-foreground mb-6">Ref {orderId}</p>
-        <SHCButton onClick={() => router.push(`/orders/${orderId}`)} testID="order-success-track">
-          Track order
-        </SHCButton>
-        <SHCCelebrationWeb
-          visible={showFirstOrderCelebration}
-          message="Your first order — thank you for supporting local home cooks!"
-          onDone={() => {
-            dismissFirstOrderCelebration();
-            router.push(`/orders/${orderId}`);
-          }}
-          testID="first-order-celebration"
-        />
-      </div>
-    );
-  }
-
-  // ── PayNow after order placed ──
-  if (orderId && payPhase === 'paynow') {
-    const okCopy = orderSuccessfulCopy();
-    return (
-      <div className="max-w-xl mx-auto px-4 py-8 shc-safe-bottom-pad" data-testid="order-paynow-screen">
+      <div className="max-w-xl mx-auto px-4 py-8 shc-safe-bottom-pad" data-testid="order-awaiting-cook-screen">
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-2xl text-green-700 mx-auto mb-3">
             ✓
           </div>
-          <h1 className="text-xl font-black">{okCopy.title}</h1>
-          <p className="text-sm font-semibold text-muted-foreground mt-1">
-            Complete PayNow to confirm · Ref {orderId}
-          </p>
+          <h1 className="text-xl font-black">{waitCopy.title}</h1>
+          <p className="text-sm font-semibold text-muted-foreground mt-1">{waitCopy.subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-2">Ref {orderId}</p>
         </div>
-        <PayNowPanel
-          amount={amountDue}
-          reference={paynowRef || orderId}
-          session={paySession}
-          loadingSession={paySessionLoading}
-          onRetry={() => orderId && void loadPayNowSession(orderId, true)}
-          waitingForPayment={waitingForPayment}
-        />
-        {paymentPollMessage ? (
-          <p className="mt-3 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-            {paymentPollMessage}
-          </p>
-        ) : null}
-        <p className="mt-3 text-xs font-medium text-muted-foreground">
-          Scan to pay · we confirm via HitPay · cook can accept after paid.
-        </p>
-        <button
-          type="button"
-          className="mt-4 w-full text-sm font-bold text-primary"
-          onClick={() => router.push(`/orders/${orderId}`)}
-        >
-          Skip to order tracking →
-        </button>
+        <SHCButton onClick={() => router.push(`/orders/${orderId}`)} testID="order-awaiting-cook-track">
+          Track order
+        </SHCButton>
       </div>
     );
   }
@@ -398,7 +256,7 @@ export default function CheckoutPage() {
   const checkoutSteps = [
     { id: 'slot', label: 'Collection', done: !!effectiveSlot },
     { id: 'safety', label: 'Safety', done: allergenAck && pdpaConsent },
-    { id: 'pay', label: 'PayNow', done: false },
+    { id: 'confirm', label: 'Confirm', done: false },
   ];
   const checkoutStep = !effectiveSlot ? 1 : !allergenAck || !pdpaConsent ? 2 : 3;
   const placing = checkoutMut.isPending;

@@ -125,7 +125,7 @@ Web: customer checkout/PDP gated (`/login?returnTo=…`); cook portal uses separ
 - Settings: pause, collection address/instructions/**time slots**, avatar/hero upload; `SHCCookAreaPicker` + `@shc/utils/sg-areas.ts`.
 - Listings API: `@shc/ui/listing-form` + product meta; PATCH/DELETE `/store/shc/listings/:id`.
 - Earnings: `GET /store/shc/earnings` ledger-backed; **payout status** (last/next PayNow, setup CTA) + **payout history** (`GET /store/shc/payouts/history`); UI `@shc/ui/cook-earnings.tsx` + web mirrors; weekly batch script `apps/medusa/scripts/weekly-payout.ts`.
-- Orders: accept/decline on `paid`; compliance gate for accept; **cook settlement PDF** only after `accepted` (provisional until `collected`); decline/dispute trays Maestro-covered.
+- Orders: accept/decline on `cart` (before payment); customer PayNow on `accepted`; compliance gate for accept; **cook settlement PDF** only after `accepted` (provisional until `collected`); decline/dispute trays Maestro-covered.
 - **Layout:** single `settings` tab screen in `(cook)/_layout.tsx` (duplicate entry removed 2026-07-29).
 
 ### Admin / SHC Ops (`/app/shc-ops`)

@@ -24,23 +24,23 @@ const STATUS_TEMPLATES: Partial<
   Record<SHCOrderStatus, { cook?: StatusCopy; customer?: StatusCopy }>
 > = {
   paid: {
-    cook: {
-      title: "New paid order",
-      body: "{dishes} · collection {date} {slot}. Tap to accept.",
-    },
     customer: {
-      title: "Order confirmed",
-      body: "{cook} received your order for {dishes}. We'll ping you when it's ready.",
+      title: "Payment received",
+      body: "PayNow confirmed for #{ref}. {cook} will start preparing soon.",
+    },
+    cook: {
+      title: "Order paid",
+      body: "#{ref} is paid — start preparing when ready.",
     },
   },
   accepted: {
     customer: {
-      title: "Cook accepted",
-      body: "{cook} accepted order #{ref} — they're getting started.",
+      title: "Cook confirmed",
+      body: "Complete PayNow for #{ref} — {cook} accepted your order.",
     },
     cook: {
       title: "Order accepted",
-      body: "You accepted #{ref}. Move to preparing when you start cooking.",
+      body: "Waiting for customer PayNow on #{ref}.",
     },
   },
   preparing: {

@@ -19,9 +19,9 @@ export function isTerminal(state: SHCOrderStatus): boolean {
 export function getAllowedNext(from: SHCOrderStatus): SHCOrderStatus[] {
   // mirrored from order.ts validTransitions for rule exposure
   const map: Record<SHCOrderStatus, SHCOrderStatus[]> = {
-    cart: ['paid'],
-    paid: ['accepted', 'cancelled'],
-    accepted: ['preparing', 'cancelled'],
+    cart: ['accepted', 'cancelled'],
+    accepted: ['paid', 'cancelled'],
+    paid: ['preparing', 'cancelled'],
     preparing: ['ready_for_collection', 'cancelled'],
     ready_for_collection: ['collected', 'cancelled'],
     collected: ['completed', 'disputed'],

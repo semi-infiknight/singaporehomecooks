@@ -25,9 +25,10 @@ describe('shc-order-meta schema (TDD from blueprint/05-data-model + 09-order-sta
     ).toThrow();
   });
 
-  it('allows valid transitions per 09-order-state.md', () => {
-    const valid = orderStateTransitionSchema.parse({ from: 'paid', to: 'accepted' });
-    expect(valid.to).toBe('accepted');
+  it('allows valid transitions per 09-order-state.md (pay after cook confirms)', () => {
+    expect(orderStateTransitionSchema.parse({ from: 'cart', to: 'accepted' }).to).toBe('accepted');
+    expect(orderStateTransitionSchema.parse({ from: 'accepted', to: 'paid' }).to).toBe('paid');
+    expect(orderStateTransitionSchema.parse({ from: 'paid', to: 'preparing' }).to).toBe('preparing');
   });
 
   it('enforces one-cook per order via cook_id presence', () => {

@@ -69,6 +69,35 @@ export function createSHCError(code: SHCErrorCode, message: string, details?: Re
   return { code, message, details };
 }
 
+/** Flatten Zod `format()` trees from API `error.details` into user-facing strings. */
+function collectZodDetailMessages(details: unknown): string[] {
+  if (!details || typeof details !== 'object') return [];
+  const obj = details as Record<string, unknown>;
+  const messages: string[] = [];
+  if (Array.isArray(obj._errors)) {
+    for (const entry of obj._errors) {
+      if (typeof entry === 'string' && entry.trim()) messages.push(entry.trim());
+    }
+  }
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === '_errors') continue;
+    messages.push(...collectZodDetailMessages(value));
+  }
+  return messages;
+}
+
+/** Prefer field-level validation copy over generic API messages like "Invalid listing". */
+export function formatShcErrorUserMessage(message: string, details?: Record<string, unknown>): string {
+  const detailMessages = details ? [...new Set(collectZodDetailMessages(details))] : [];
+  if (detailMessages.length === 0) return message;
+  const generic =
+    !message.trim() ||
+    message === 'Invalid listing' ||
+    message === SHCErrorCodes['SHC-GENERIC-001'];
+  if (generic) return detailMessages.join(' ');
+  return `${message} ${detailMessages.join(' ')}`.trim();
+}
+
 export function formatError(code: SHCErrorCode, message?: string, details?: Record<string, unknown>): { error: SHCError } {
   // Enforce only known codes at runtime for production hardening (see production-hardening.md)
   const parsed = SHCErrorCode.safeParse(code);

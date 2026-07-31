@@ -182,14 +182,14 @@ async function main() {
   fs.writeFileSync(path.join(OUT, 'cook-signed.pdf'), signedBuf);
   console.log('✅ GET /hooks/shc/invoice signed PDF');
 
-  const paidOrder = kList.find((o) => String(o?.shc_status) === 'paid');
-  if (paidOrder?.id || paidOrder?.order_id) {
-    const paidId = paidOrder.id || paidOrder.order_id;
-    const blocked = await shc(`/store/shc/orders/${encodeURIComponent(paidId)}/invoice`, { method: 'GET' }, ktoken);
+  const cartOrder = kList.find((o) => String(o?.shc_status) === 'cart');
+  if (cartOrder?.id || cartOrder?.order_id) {
+    const cartId = cartOrder.id || cartOrder.order_id;
+    const blocked = await shc(`/store/shc/orders/${encodeURIComponent(cartId)}/invoice`, { method: 'GET' }, ktoken);
     if (blocked.status !== 403) {
-      throw new Error(`expected cook settlement 403 on paid order, got ${blocked.status}`);
+      throw new Error(`expected cook settlement 403 on cart order, got ${blocked.status}`);
     }
-    console.log('✅ cook settlement blocked before accept (paid → 403)');
+    console.log('✅ cook settlement blocked before accept (cart → 403)');
   }
 
   // Static wiring: UI must expose download CTAs
