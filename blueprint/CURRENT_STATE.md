@@ -19,9 +19,9 @@ pnpm web:dev                    # Next.js :3001 → Railway API
 |------|--------|
 | **Live API** | `https://medusa-production-d2ba.up.railway.app` (`config/railway-client.json`) |
 | **Admin UI** | `{medusaBase}/app` · SHC Ops at `/app/shc-ops` |
-| **Customer** | `customer@shc.local` / `customersecret` |
-| **Cook** | `rose@shc.local` / `cooksecret` |
-| **Admin** | `admin@shc.local` / `supersecret` |
+| **Staging demo accounts** | `customer@shc.local` / `customersecret` · `rose@shc.local` / `cooksecret` (seed/bootstrap only) |
+| **Production sign-up** | Real email + password (8+ chars, letter + number) via **Create account** on web/mobile; `@shc.local` blocked on register |
+| **Admin** | `admin@shc.local` / `supersecret` (staging bootstrap) |
 | **Read next** | [INDEX.md](./INDEX.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md) → task section file |
 
 **Clients never use localhost Medusa.** `resolveRailwayMedusaBase()` throws on `127.0.0.1` / `localhost:9000`. Local `:9000` is backend-dev only when explicitly editing `apps/medusa`.

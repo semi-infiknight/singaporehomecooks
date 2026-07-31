@@ -9,13 +9,37 @@ export type ShcAuthContext = {
   name?: string;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret_jwt_for_shc_local_only_change_in_prod";
+type DevCookCredential = { password: string; cook_id: string; name: string };
 
-/** Dev cook credentials — seeded by bootstrap/seed. Replace with hashed DB lookup in production. */
-export const DEV_COOK_CREDENTIALS: Record<string, { password: string; cook_id: string; name: string }> = {
-  "rose@shc.local": { password: "cooksecret", cook_id: "cook_rose_tampines_001", name: "Auntie Rose (Tampines)" },
-  "doris@shc.local": { password: "cooksecret", cook_id: "cook_doris_katong_002", name: "Auntie Doris (Katong)" },
-};
+function resolveJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (process.env.NODE_ENV === "production") {
+    if (!secret || secret === "supersecret_jwt_for_shc_local_only_change_in_prod") {
+      throw new Error("JWT_SECRET must be set to a strong unique value in production");
+    }
+    return secret;
+  }
+  return secret || "supersecret_jwt_for_shc_local_only_change_in_prod";
+}
+
+const JWT_SECRET = resolveJwtSecret();
+
+/** Dev cook credentials — load from env in non-prod only (never ship plaintext in client bundles). */
+function loadDevCookCredentials(): Record<string, DevCookCredential> {
+  if (process.env.NODE_ENV === "production") return {};
+  const raw = process.env.SHC_DEV_COOK_CREDENTIALS_JSON?.trim();
+  if (!raw) {
+    return {
+      "rose@shc.local": { password: "cooksecret", cook_id: "cook_rose_tampines_001", name: "Auntie Rose (Tampines)" },
+      "doris@shc.local": { password: "cooksecret", cook_id: "cook_doris_katong_002", name: "Auntie Doris (Katong)" },
+    };
+  }
+  try {
+    return JSON.parse(raw) as Record<string, DevCookCredential>;
+  } catch {
+    return {};
+  }
+}
 
 function b64url(input: Buffer | string) {
   return Buffer.from(input)
@@ -63,11 +87,11 @@ export function issueCookToken(email: string, cookId: string, name: string) {
   return signShcToken({ actor_type: "cook", actor_id: cookId, email, name, shc: true });
 }
 
-/** Dev-only plaintext fallback — disable in prod via SHC_COOK_ALLOW_DEV_PLAINTEXT=false */
+/** Dev-only plaintext fallback — never runs in production. */
 export function verifyCookLoginDevFallback(email: string, password: string) {
   if (process.env.NODE_ENV === "production") return null;
   if (process.env.SHC_COOK_ALLOW_DEV_PLAINTEXT === "false") return null;
-  const cred = DEV_COOK_CREDENTIALS[email.toLowerCase().trim()];
+  const cred = loadDevCookCredentials()[email.toLowerCase().trim()];
   if (!cred || cred.password !== password) return null;
   return { cook_id: cred.cook_id, email: email.toLowerCase().trim(), name: cred.name };
 }

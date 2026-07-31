@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows, SHCButton } from '@shc/ui';
+import { validateShcPassword } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { markOnboardingSeen } from '../../../lib/onboarding';
 import { safeAuthReturnTo } from '../../../lib/auth-return';
@@ -29,6 +30,13 @@ export default function AuthScreen() {
 
   const submit = async () => {
     if (busy) return;
+    if (mode === 'register') {
+      const policy = validateShcPassword(password);
+      if (!policy.ok) {
+        Alert.alert('Weak password', policy.message);
+        return;
+      }
+    }
     setBusy(true);
     try {
       if (mode === 'login') {

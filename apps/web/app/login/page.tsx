@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/useAuth';
 import { markOnboardingSeen } from '../../lib/onboarding';
 import { showDevTools } from '../../lib/dev';
+import { validateShcPassword } from '@shc/utils';
 import { SHCButton, SHCCard, SHCPageHeader } from '../components/SHCWebComponents';
 
 export default function LoginPage() {
@@ -24,8 +25,15 @@ export default function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBusy(true);
     setError('');
+    if (mode === 'register') {
+      const policy = validateShcPassword(password);
+      if (!policy.ok) {
+        setError(policy.message);
+        return;
+      }
+    }
+    setBusy(true);
     try {
       if (mode === 'login') await login(email, password);
       else await register(email, password);

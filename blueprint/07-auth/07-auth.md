@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/compliance-pdpa.md](../production/compliance-pdpa.md)
 
-**Last Updated:** 2026-07-08 — Cook mobile sign-up (`POST /store/shc/auth/cook/register`) + onboarding profile (`PATCH /store/shc/auth/cook/profile`); web checkout/PDP auth guards; `ShcRequestError` in api-client; separate cook portal session; Railway explicit CORS. Cook: scrypt password_hash + SHC JWT. Customer: Medusa + ensureStoreCustomer.
+**Last Updated:** 2026-07-31 — Production sign-up: strict password policy, `@shc.local` blocked on register in prod, web cook **Create account**, demo creds staging/docs only (never in client bundles).
 **Owner:** Backend Track
 
 ## Overview
@@ -74,11 +74,18 @@ Hooks: `useAuth.ts`, `useOrder.ts`. Errors surfaced via `ShcRequestError.code` f
 
 Cook portal (`/cook-portal/*`) uses a **separate** auth session from customer:
 
-- `useCookAuth.ts` — cook JWT in dedicated storage
+- `useCookAuth.ts` — cook JWT in dedicated storage; **login + register**
 - `cook-api-client.ts` — cook-scoped api-client instance
-- `CookLoginGate` — wraps cook portal routes
+- `CookLoginGate` — wraps cook portal routes; **Create cook account** on web (parity with mobile)
 
 Customer and cook sessions can coexist in the same browser (different localStorage keys).
+
+### Production password policy (2026-07-31)
+
+- `@shc/utils` `validateShcPassword` — strict when `NODE_ENV=production` (8+ chars, letter + number, blocks `customersecret` / `cooksecret`).
+- `POST /store/shc/auth/*/register` — `validateAuthRegistration` blocks `@shc.local` in production unless `SHC_ALLOW_DEMO_EMAILS=1`.
+- Demo cook plaintext login: **never in production**; optional `SHC_DEV_COOK_CREDENTIALS_JSON` on server for staging only.
+- Client apps: demo email/password prefills only in `__DEV__` / `showDevTools` — not shipped in production builds.
 
 ### Railway CORS (2026-07-07)
 

@@ -7,6 +7,7 @@ import {
   hydrateCookSession,
   loginCook,
   persistCookSession,
+  registerCook,
 } from './cook-api-client';
 
 type CookUser = ReturnType<typeof getCookUser>;
@@ -29,10 +30,20 @@ export function useCookAuth() {
     return u;
   }, []);
 
+  const register = useCallback(
+    async (email: string, password: string, displayName: string, area: string, story?: string) => {
+      const { token, user: u } = await registerCook(email, password, displayName, area, story);
+      await persistCookSession(token, u);
+      setUser(u);
+      return u;
+    },
+    []
+  );
+
   const logout = useCallback(async () => {
     await clearCookSession();
     setUser(null);
   }, []);
 
-  return { user, loading, login, logout, isAuthenticated: !!user };
+  return { user, loading, login, register, logout, isAuthenticated: !!user };
 }

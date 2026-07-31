@@ -69,6 +69,13 @@ export async function clearCookSession() {
 }
 
 export const loginCook = (email: string, password: string) => cookClient.loginCook(email, password);
+export const registerCook = (
+  email: string,
+  password: string,
+  display_name: string,
+  area: string,
+  story?: string
+) => cookClient.registerCook(email, password, display_name, area, story);
 export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
