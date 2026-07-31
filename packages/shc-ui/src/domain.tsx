@@ -759,7 +759,7 @@ export function AllergenAckCheckbox({ checked, onChange, allergens, tier1 }: { c
 }
 
 // Growth + Differentiation components (Phase 7-9 Mobile): SG delight, testIDs, a11y, SHC tokens. Requests, AI stubs.
-export function AICalorieBadge({ calories, confidence = 'category', source = 'AI stub from ingredients' }: { calories: number; confidence?: 'full' | 'category'; source?: string }) {
+export function AICalorieBadge({ calories, confidence = 'category', source = 'Nutrition database estimate' }: { calories: number; confidence?: 'full' | 'category'; source?: string }) {
   const isFull = confidence === 'full';
   return (
     <View style={{ backgroundColor: isFull ? colors.surfaceSuccess : colors.surfaceWarning, borderRadius: shcRadii.sm, paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border }} testID="ai-calorie-badge" accessible accessibilityLabel={`Calories ${calories}, ${confidence} confidence via ${source}`}>
