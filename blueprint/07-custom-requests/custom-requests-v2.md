@@ -95,7 +95,7 @@
 | **1** | Naming, servings vs guests copy, Orders tab + request detail, quote cards with images |
 | **2** | DB migration `items_json`, `guest_count`, `line_items_json`; multi-dish wizard + cook quote builder |
 | **3** | Partial accept; auto-decline sibling quotes; PayNow on accept; push on `shc.bid.created` | Shipped (2026-07-31) |
-| **4** | Maestro flows | Not built |
+| **4** | Maestro flows (`custom-request-wizard`, `cook-custom-request-quote`, `custom-request-quote-accept`, `run-custom-request-e2e.sh`) | Shipped (2026-07-31) |
 
 ---
 

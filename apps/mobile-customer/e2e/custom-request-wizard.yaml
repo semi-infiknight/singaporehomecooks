@@ -1,0 +1,68 @@
+# Custom request — multi-dish wizard smoke (Phase 4)
+# Posts 2 dishes via Railway API. Run before cook-custom-request-quote.yaml.
+# Run: maestro test apps/mobile-customer/e2e/custom-request-wizard.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    stopApp: true
+- runFlow: customer-onboarding-if-needed.yaml
+- runFlow: customer-signed-in.yaml
+- openLink: shc-customer:///(customer)/request
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "request-dish-screen"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "request-step-occasion"
+    timeout: 30000
+- tapOn:
+    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-dishes"
+    timeout: 20000
+- tapOn:
+    id: "request-dish-name-0"
+- eraseText
+- inputText: "Maestro Laksa E2E"
+- hideKeyboard
+- tapOn:
+    id: "request-add-dish"
+- extendedWaitUntil:
+    visible:
+      id: "request-dish-name-1"
+    timeout: 10000
+- tapOn:
+    id: "request-dish-name-1"
+- inputText: "Maestro Kueh E2E"
+- hideKeyboard
+- tapOn:
+    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-gathering"
+    timeout: 20000
+- tapOn:
+    id: "request-guests-8"
+    optional: true
+- tapOn:
+    id: "request-budget-120"
+    optional: true
+- tapOn:
+    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-review"
+    timeout: 20000
+- tapOn:
+    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-success"
+    timeout: 90000
+- assertVisible:
+    text: "Request posted!"

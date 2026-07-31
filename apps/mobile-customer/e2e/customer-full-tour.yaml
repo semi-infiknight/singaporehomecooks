@@ -131,7 +131,7 @@ appId: com.singaporehomecooks.customer
     id: "notif-bell"
 - tapOn:
     id: "notif-bell"
-# Immersive request dish page
+# Immersive request dish — multi-dish wizard (Phase 4)
 - openLink: shc-customer:///(customer)/request
 - tapOn:
     text: "Open"
@@ -142,18 +142,31 @@ appId: com.singaporehomecooks.customer
     timeout: 30000
 - extendedWaitUntil:
     visible:
-      id: "request-desc"
+      id: "request-step-occasion"
     timeout: 20000
 - tapOn:
-    id: "request-desc"
-- inputText: "Demo nasi lemak for Hari Raya family gathering"
+    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-dishes"
+    timeout: 20000
+- tapOn:
+    id: "request-dish-name-0"
+- eraseText
+- inputText: "Demo nasi lemak for Hari Raya"
 - hideKeyboard
 - tapOn:
     id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-gathering"
+    timeout: 20000
 - tapOn:
     id: "submit-request-btn"
-- tapOn:
-    id: "submit-request-btn"
+- extendedWaitUntil:
+    visible:
+      id: "request-step-review"
+    timeout: 20000
 - tapOn:
     id: "submit-request-btn"
     optional: true

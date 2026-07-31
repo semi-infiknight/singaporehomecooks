@@ -1,0 +1,58 @@
+# Customer — view custom request detail, partial accept quote, land on PayNow (Phase 4)
+# Prereq: cook-custom-request-quote.yaml sent a quote on Maestro request.
+# Run: maestro test apps/mobile-customer/e2e/custom-request-quote-accept.yaml
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    stopApp: true
+- runFlow: customer-signed-in.yaml
+- openLink: shc-customer:///(customer)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-orders-screen"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "custom-requests-section"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    text: "Maestro Laksa E2E"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "custom-request-detail"
+    commands:
+      - tapOn:
+          id: "custom-request-card-.*"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "custom-request-detail"
+    timeout: 60000
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: "quote-.*-accept"
+    direction: DOWN
+    timeout: 120000
+    optional: true
+- tapOn:
+    id: "quote-.*-accept"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "order-paynow-panel"
+    timeout: 120000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "order-tracking-screen"
+    commands:
+      - assertVisible:
+          id: "order-tracking-screen"

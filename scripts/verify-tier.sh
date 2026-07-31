@@ -238,6 +238,11 @@ scope_maestro_device() {
       maestro test apps/mobile-customer/e2e/onboarding.yaml
       maestro test apps/mobile-cook/e2e/onboarding.yaml
       ;;
+    requests|custom-request|custom-requests)
+      maestro test apps/mobile-customer/e2e/custom-request-wizard.yaml
+      maestro test apps/mobile-cook/e2e/cook-custom-request-quote.yaml
+      maestro test apps/mobile-customer/e2e/custom-request-quote-accept.yaml
+      ;;
   esac
 }
 

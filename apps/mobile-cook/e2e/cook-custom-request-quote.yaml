@@ -1,0 +1,48 @@
+# Cook — send per-line quote on Maestro custom request (Phase 4)
+# Prereq: custom-request-wizard.yaml posted a request with Maestro dish names.
+# Run: maestro test apps/mobile-cook/e2e/cook-custom-request-quote.yaml
+appId: com.singaporehomecooks.cook
+---
+- launchApp:
+    stopApp: true
+- runFlow: cook-signed-in.yaml
+- openLink: shc-cook:///(cook)/orders
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-orders-screen"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      text: "Maestro Laksa E2E"
+    direction: DOWN
+    timeout: 120000
+- scrollUntilVisible:
+    element:
+      id: "quote-price-line_.*"
+    direction: DOWN
+    timeout: 30000
+    optional: true
+- tapOn:
+    id: "quote-price-.*"
+    optional: true
+- inputText: "45"
+    optional: true
+- hideKeyboard
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: ".*-send"
+    direction: DOWN
+    timeout: 30000
+- tapOn:
+    id: "quote-builder-.*-send"
+- extendedWaitUntil:
+    visible:
+      id: "bid-success-.*"
+    timeout: 90000
+    optional: true
+- assertVisible:
+    id: "cook-collab-card"

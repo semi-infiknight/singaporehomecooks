@@ -1,0 +1,32 @@
+# Customer signed in on discover (subflow).
+appId: com.singaporehomecooks.customer
+---
+- runFlow:
+    when:
+      visible: "Sign in"
+    commands:
+      - openLink: shc-customer:///(shared)/auth
+      - tapOn:
+          text: "Open"
+          optional: true
+      - extendedWaitUntil:
+          visible:
+            id: "auth-submit-btn"
+          timeout: 30000
+      - tapOn:
+          id: "auth-email-input"
+      - eraseText
+      - inputText: customer@shc.local
+      - tapOn:
+          id: "auth-password-input"
+      - eraseText
+      - inputText: customersecret
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000

@@ -21,6 +21,7 @@
     "e2e:ecfdc8-wave": "bash scripts/run-maestro-ecfdc8-wave.sh",
     "smoke:ai-image": "npx tsx scripts/smoke-ai-image.ts",
     "e2e:tiffin": "bash scripts/run-tiffin-e2e.sh",
+    "e2e:custom-request": "bash scripts/run-custom-request-e2e.sh",
     "ship:tiffin": "bash scripts/ship-tiffin-wave7.sh",
     "verify:cook-wiring": "npx tsx scripts/verify-cook-customer-wiring.ts",
     "verify:wip": "bash scripts/verify-tier.sh wip",
