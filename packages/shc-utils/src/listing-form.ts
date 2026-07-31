@@ -164,6 +164,7 @@ export type CookListingFormDraft = {
   occasion_tags: string[];
   ingredients: Array<{ name: string; quantity: number; unit: string }>;
   allergen_tiers: AllergenTiers;
+  allergen_none_confirmed?: boolean;
   halal: boolean;
   portions_per_day: number;
   image_url?: string;
@@ -175,6 +176,9 @@ export type CookListingFormDraft = {
   meal_addons?: MealOptionDraft[];
   recipe_steps?: RecipeStepDraft[];
 };
+
+/** Minimum order value (price × min_qty) for a publishable listing. */
+export const MIN_LISTING_ORDER_VALUE_SGD = 50;
 
 /** Build API payload for POST/PATCH /store/shc/listings. */
 export function buildCookListingPayload(draft: CookListingFormDraft): Record<string, unknown> {
@@ -200,6 +204,9 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.meal_extras?.length) payload.meal_extras = mealOptionsToApiPayload(draft.meal_extras);
   if (draft.meal_addons?.length) payload.meal_addons = mealOptionsToApiPayload(draft.meal_addons);
   if (draft.recipe_steps?.length) payload.recipe_steps = recipeStepsToApiPayload(draft.recipe_steps);
+  if (draft.allergen_none_confirmed !== undefined) {
+    payload.allergen_none_confirmed = draft.allergen_none_confirmed;
+  }
   return payload;
 }
 
@@ -242,13 +249,74 @@ export function validateCookListingDraft(
   return { valid: errors.length === 0, errors, fieldErrors };
 }
 
+function hasValidIngredients(ingredients: CookListingFormDraft['ingredients']): boolean {
+  return (ingredients || []).some((row) => String(row?.name || '').trim().length >= 2);
+}
+
+function hasAllergenDisclosure(draft: Pick<CookListingFormDraft, 'allergen_tiers' | 'allergen_none_confirmed'>): boolean {
+  if (draft.allergen_none_confirmed) return true;
+  return (draft.allergen_tiers?.tier1 || []).length >= 1;
+}
+
+/** Full publish gate — steps 2–4 + order minimum. */
+export function validateCookListingForPublish(draft: CookListingFormDraft): CookListingValidationResult {
+  const basics = validateCookListingDraft(draft);
+  const errors = [...basics.errors];
+  const fieldErrors = { ...basics.fieldErrors };
+
+  const cuisine = String(draft.cuisine || '').trim();
+  if (cuisine.length < 2) {
+    errors.push('Select or enter a cuisine.');
+  }
+  if (!(draft.occasion_tags || []).length) {
+    errors.push('Pick at least one occasion tag.');
+  }
+  if (!hasValidIngredients(draft.ingredients)) {
+    errors.push('Add at least one ingredient with a name.');
+  }
+  if (!hasAllergenDisclosure(draft)) {
+    errors.push('Disclose tier-1 allergens or confirm none apply.');
+  }
+  if (!(draft.collection_days || []).length) {
+    errors.push('Select at least one collection day.');
+  }
+  if (!(draft.time_slots || []).length) {
+    errors.push('Select at least one collection time slot.');
+  }
+  const orderValue = Number(draft.price) * Number(draft.min_qty);
+  if (Number.isFinite(orderValue) && orderValue < MIN_LISTING_ORDER_VALUE_SGD) {
+    errors.push(`Minimum order value must be at least S$${MIN_LISTING_ORDER_VALUE_SGD} (price × servings).`);
+  }
+
+  return { valid: errors.length === 0, errors, fieldErrors };
+}
+
 export function validateCookListingWizardStep(
   step: number,
-  draft: Pick<CookListingFormDraft, 'name' | 'price' | 'min_qty'>
+  draft: CookListingFormDraft
 ): { ok: boolean; message?: string } {
   if (step === 1) {
     const result = validateCookListingDraft(draft);
     return { ok: result.valid, message: result.errors[0] };
+  }
+  if (step === 2) {
+    const cuisine = String(draft.cuisine || '').trim();
+    if (cuisine.length < 2) return { ok: false, message: 'Select a cuisine.' };
+    if (!(draft.occasion_tags || []).length) return { ok: false, message: 'Pick at least one occasion tag.' };
+    return { ok: true };
+  }
+  if (step === 3) {
+    if (!hasValidIngredients(draft.ingredients)) {
+      return { ok: false, message: 'Add at least one ingredient.' };
+    }
+    if (!hasAllergenDisclosure(draft)) {
+      return { ok: false, message: 'Disclose allergens or confirm none apply.' };
+    }
+    return { ok: true };
+  }
+  if (step === 4) {
+    const publish = validateCookListingForPublish(draft);
+    return { ok: publish.valid, message: publish.errors[0] };
   }
   return { ok: true };
 }

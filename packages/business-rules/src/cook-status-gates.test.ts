@@ -3,7 +3,13 @@ import { canCookListProducts, canCookAcceptOrder, canCookRequestPayout, validate
 
 describe('cook-status-gates rule (10+ tests, 05 shc_cook.status + 08 marketplace + 07 auth + compliance)', () => {
   it('active non-paused cook can list', () => {
-    expect(canCookListProducts({ status: 'active', availabilityPaused: false }).valid).toBe(true);
+    expect(canCookListProducts({ status: 'active', availabilityPaused: false, hasVerifiedCompliance: true }).valid).toBe(true);
+  });
+
+  it('blocks list without verified compliance', () => {
+    const r = canCookListProducts({ status: 'active', availabilityPaused: false, hasVerifiedCompliance: false });
+    expect(r.valid).toBe(false);
+    expect(r.code).toBe('SHC-COMPLIANCE-002');
   });
 
   it('non active cannot list', () => {

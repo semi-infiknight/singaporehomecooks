@@ -113,6 +113,7 @@ export const getComplianceDocs = () => client.getComplianceDocs();
 export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
   client.submitComplianceDoc(input);
 export const getEarnings = () => client.getEarnings();
+export const getCookPayoutHistory = () => client.getCookPayoutHistory();
 export const getNotifications = (role: 'cook' | 'customer' = 'cook') => client.getNotifications({ role });
 export const markNotificationsRead = (ids?: string[], all = false, role: 'cook' | 'customer' = 'cook') =>
   client.markNotificationsRead?.(ids, all, role) || Promise.resolve({ success: true });

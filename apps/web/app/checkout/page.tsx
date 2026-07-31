@@ -8,6 +8,9 @@ import {
   getFirstCartProductId,
   orderSuccessfulCopy,
   computeOneTimeOrderSummary,
+  isOrderPaidStatus,
+  PAYMENT_POLL_INTERVAL_MS,
+  resolvePaymentPollPhase,
 } from '@shc/utils';
 import { useCart } from '../../lib/useProducts';
 import { useCheckout } from '../../lib/useOrder';
@@ -128,6 +131,7 @@ export default function CheckoutPage() {
   >(null);
   const [paySessionLoading, setPaySessionLoading] = useState(false);
   const [waitingForPayment, setWaitingForPayment] = useState(false);
+  const [paymentPollMessage, setPaymentPollMessage] = useState<string | null>(null);
   const paySessionOrderRef = useRef<string | null>(null);
   const { openTray, dismiss } = useSHCTrayWeb();
 
@@ -170,13 +174,17 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!orderId || payPhase !== 'paynow' || !waitingForPayment) return;
     let cancelled = false;
+    const startedAt = Date.now();
+    let consecutiveErrors = 0;
     const tick = async () => {
       try {
         const o = await getOrder(orderId);
+        consecutiveErrors = 0;
         const st = String((o as any)?.shc_status || '');
-        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(st)) {
+        if (isOrderPaidStatus(st)) {
           if (cancelled) return;
           setWaitingForPayment(false);
+          setPaymentPollMessage(null);
           setPayPhase('done');
           try {
             await triggerFirstOrder();
@@ -184,13 +192,18 @@ export default function CheckoutPage() {
             /* ignore */
           }
           window.setTimeout(() => router.push(`/orders/${orderId}`), 900);
+          return;
         }
+        const phase = resolvePaymentPollPhase(Date.now() - startedAt, consecutiveErrors);
+        setPaymentPollMessage(phase.message || null);
       } catch {
-        /* keep polling */
+        consecutiveErrors += 1;
+        const phase = resolvePaymentPollPhase(Date.now() - startedAt, consecutiveErrors);
+        setPaymentPollMessage(phase.message || null);
       }
     };
     void tick();
-    const id = window.setInterval(tick, 4000);
+    const id = window.setInterval(tick, PAYMENT_POLL_INTERVAL_MS);
     return () => {
       cancelled = true;
       window.clearInterval(id);
@@ -338,6 +351,11 @@ export default function CheckoutPage() {
           onRetry={() => orderId && void loadPayNowSession(orderId, true)}
           waitingForPayment={waitingForPayment}
         />
+        {paymentPollMessage ? (
+          <p className="mt-3 text-sm font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            {paymentPollMessage}
+          </p>
+        ) : null}
         <p className="mt-3 text-xs font-medium text-muted-foreground">
           Scan to pay · we confirm via HitPay · cook can accept after paid.
         </p>

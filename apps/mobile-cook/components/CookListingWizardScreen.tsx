@@ -56,6 +56,7 @@ import {
   defaultListingOccasionTag,
   listingOccasionTagOptions,
   validateCookListingDraft,
+  validateCookListingForPublish,
   validateCookListingWizardStep,
   type RecipeStepDraft,
 } from '@shc/utils';
@@ -167,6 +168,7 @@ export function CookListingWizardScreen({
   const [cuisine, setCuisine] = useState('');
   const [halal, setHalal] = useState(false);
   const [allergenTiers, setAllergenTiers] = useState(emptyAllergenTiers);
+  const [allergenNoneConfirmed, setAllergenNoneConfirmed] = useState(false);
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
@@ -351,21 +353,56 @@ export function CookListingWizardScreen({
   const toggleTag = (t: string) =>
     setOccasionTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
-  const basicsDraft = useMemo(
+  const listingDraft = useMemo(
     () => ({
       name,
+      description,
       price: price ?? 0,
       min_qty: minQty ?? 0,
+      cuisine,
+      occasion_tags: occasionTags,
+      ingredients,
+      allergen_tiers: allergenTiers,
+      allergen_none_confirmed: allergenNoneConfirmed,
+      halal,
+      portions_per_day: portionsPerDay,
+      collection_days: collectionDays,
+      time_slots: timeSlots,
+      image_url: listingImageUrl || undefined,
+      calories: aiCal?.calories,
+      calories_confidence: aiCal?.confidence,
+      meal_extras: mealExtras,
+      meal_addons: mealAddons,
+      recipe_steps: recipeSteps,
     }),
-    [name, price, minQty]
+    [
+      name,
+      description,
+      price,
+      minQty,
+      cuisine,
+      occasionTags,
+      ingredients,
+      allergenTiers,
+      allergenNoneConfirmed,
+      halal,
+      portionsPerDay,
+      collectionDays,
+      timeSlots,
+      listingImageUrl,
+      aiCal,
+      mealExtras,
+      mealAddons,
+      recipeSteps,
+    ]
   );
 
-  const basicsValidation = useMemo(() => validateCookListingDraft(basicsDraft), [basicsDraft]);
+  const basicsValidation = useMemo(() => validateCookListingDraft(listingDraft), [listingDraft]);
 
   const advanceStep = () => {
-    const gate = validateCookListingWizardStep(step, basicsDraft);
+    const gate = validateCookListingWizardStep(step, listingDraft);
     if (!gate.ok) {
-      showErrorTray('Complete dish basics', gate.message || 'Fix the highlighted fields.');
+      showErrorTray('Complete this step', gate.message || 'Fix the highlighted fields.');
       return;
     }
     goToStep(step + 1);
@@ -377,7 +414,7 @@ export function CookListingWizardScreen({
       showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
     }
-    const validation = validateCookListingDraft(basicsDraft);
+    const validation = validateCookListingForPublish(listingDraft);
     if (!validation.valid) {
       showErrorTray('Cannot publish yet', validation.errors.join(' '));
       if (step !== 1) goToStep(1);
@@ -385,24 +422,11 @@ export function CookListingWizardScreen({
     }
     setPublishing(true);
     const input = buildCookListingPayload({
+      ...listingDraft,
       name: name.trim(),
-      description,
       price: price as number,
       min_qty: minQty as number,
-      cuisine,
-      occasion_tags: occasionTags,
-      ingredients,
-      allergen_tiers: allergenTiers,
-      halal,
-      portions_per_day: portionsPerDay,
-      collection_days: collectionDays,
-      time_slots: timeSlots,
-      meal_extras: mealExtras,
-      meal_addons: mealAddons,
-      recipe_steps: recipeSteps,
       image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
-      calories: aiCal?.calories,
-      calories_confidence: aiCal?.confidence,
     });
     try {
       const prod = editingId
@@ -541,6 +565,15 @@ export function CookListingWizardScreen({
               onChange={setAllergenTiers}
               tier1Presets={cookAllergenTier1Presets(config)}
             />
+            <Pressable
+              onPress={() => setAllergenNoneConfirmed((v) => !v)}
+              style={{ marginTop: shcSpacing.sm }}
+              testID="listing-allergen-none"
+            >
+              <Text style={{ fontWeight: '700', color: allergenNoneConfirmed ? shcColors.primary : shcColors.text }}>
+                {allergenNoneConfirmed ? '✓ ' : ''}No tier-1 allergens in this dish
+              </Text>
+            </Pressable>
           </ListingWizardStep>
         )}
 

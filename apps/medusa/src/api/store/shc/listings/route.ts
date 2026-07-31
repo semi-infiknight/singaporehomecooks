@@ -5,6 +5,7 @@ import ShcAvailabilityModuleService from "../../../../modules/shc-availability/s
 import { getCookId } from "../../../../lib/shc-actors";
 import { shapeProduct } from "../../../../lib/shc-product-shape";
 import { ListingCreateSchema, listingPriceCents } from "../../../../lib/shc-listing-schema";
+import { assertCookCanPublishListing } from "../../../../lib/shc-cook-compliance";
 
 /** GET /store/shc/listings — cook's published product metas */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -31,6 +32,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     cookId = getCookId(req);
   } catch {
     return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Cook login required") });
+  }
+  const publishGate = await assertCookCanPublishListing(req.scope, cookId);
+  if (!publishGate.ok) {
+    return res.status(400).json({ error: createSHCError(publishGate.code, publishGate.message) });
   }
   try {
     const productId = `dish_${parse.data.name

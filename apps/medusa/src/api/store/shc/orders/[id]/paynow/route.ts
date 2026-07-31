@@ -76,7 +76,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   if (!hitpayConfigured()) {
     return res.status(503).json({
-      error: createSHCError("SHC-PAY-001", "PayNow unavailable (HITPAY_API_KEY not configured)"),
+      error: createSHCError("SHC-PAY-002", "PayNow unavailable (HITPAY_API_KEY not configured)"),
       provider: "hitpay_unconfigured",
       order_id: orderId,
     });

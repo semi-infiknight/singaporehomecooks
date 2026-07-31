@@ -12,6 +12,7 @@ import {
   SHCCookEarningsCreateListingsCta,
   SHCCookEarningsExpenseTracker,
   SHCCookEarningsIrasNote,
+  SHCCookEarningsPayoutHistory,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
@@ -26,7 +27,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCookExpense, listCookExpenses } from '../../lib/api-client';
+import { createCookExpense, getCookPayoutHistory, listCookExpenses } from '../../lib/api-client';
 
 export default function Earnings() {
   const insets = useSafeAreaInsets();
@@ -41,6 +42,10 @@ export default function Earnings() {
   const { data: expenses = { expenses: [], total_cents: 0 } } = useQuery({
     queryKey: ['cook-expenses'],
     queryFn: listCookExpenses,
+  });
+  const { data: payoutHistory = { payouts: [] } } = useQuery({
+    queryKey: ['cook-payout-history'],
+    queryFn: getCookPayoutHistory,
   });
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('ingredients');
@@ -95,6 +100,8 @@ export default function Earnings() {
           </SHCCard>
         </View>
       </SHCFadeIn>
+
+      <SHCCookEarningsPayoutHistory payouts={(payoutHistory.payouts || []) as any} />
 
       <Text style={styles.sectionLabel}>Quick actions</Text>
       <View style={styles.bentoRow}>

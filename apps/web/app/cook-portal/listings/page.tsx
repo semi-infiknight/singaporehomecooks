@@ -30,6 +30,7 @@ import {
   listingOccasionTagOptions,
   cookEarningsPreviewFromDollars,
   validateCookListingDraft,
+  validateCookListingForPublish,
   validateCookListingWizardStep,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
@@ -152,6 +153,7 @@ export default function CookListingsPage() {
   const [cuisine, setCuisine] = useState(EMPTY_NEW_LISTING.cuisine);
   const [halal, setHalal] = useState(false);
   const [allergenTiers, setAllergenTiers] = useState(emptyAllergenTiers);
+  const [allergenNoneConfirmed, setAllergenNoneConfirmed] = useState(false);
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
@@ -394,13 +396,52 @@ export default function CookListingsPage() {
     );
   };
 
-  const publish = async () => {
-    const basicsDraft = {
+  const listingDraft = useMemo(
+    () => ({
       name,
+      description,
       price: typeof price === 'number' ? price : 0,
       min_qty: typeof minQty === 'number' ? minQty : 0,
-    };
-    const validation = validateCookListingDraft(basicsDraft);
+      cuisine,
+      occasion_tags: occasionTags,
+      ingredients,
+      allergen_tiers: allergenTiers,
+      allergen_none_confirmed: allergenNoneConfirmed,
+      halal,
+      portions_per_day: portionsPerDay,
+      collection_days: collectionDays,
+      time_slots: timeSlots,
+      image_url: listingImageUrl || undefined,
+      calories: aiCal?.calories,
+      calories_confidence: aiCal?.confidence,
+      meal_extras: mealExtras,
+      meal_addons: mealAddons,
+      recipe_steps: recipeSteps,
+    }),
+    [
+      name,
+      description,
+      price,
+      minQty,
+      cuisine,
+      occasionTags,
+      ingredients,
+      allergenTiers,
+      allergenNoneConfirmed,
+      halal,
+      portionsPerDay,
+      collectionDays,
+      timeSlots,
+      listingImageUrl,
+      aiCal,
+      mealExtras,
+      mealAddons,
+      recipeSteps,
+    ]
+  );
+
+  const publish = async () => {
+    const validation = validateCookListingForPublish(listingDraft);
     if (!validation.valid) {
       showErrorTray('Cannot publish yet', validation.errors.join(' '));
       if (step !== 1) goToStep(1);
@@ -408,26 +449,11 @@ export default function CookListingsPage() {
     }
     setPublishing(true);
     const input = buildCookListingPayload({
+      ...listingDraft,
       name: name.trim(),
-      description,
-      price: basicsDraft.price,
-      min_qty: basicsDraft.min_qty,
-      cuisine,
-      occasion_tags: occasionTags,
-      ingredients,
-      allergen_tiers: allergenTiers,
-      halal,
-      portions_per_day: portionsPerDay,
-      collection_days: collectionDays,
-      time_slots: timeSlots,
-      meal_extras: mealExtras,
-      meal_addons: mealAddons,
-      recipe_steps: recipeSteps,
       image_url:
         listingImageUrl ||
         `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
-      calories: aiCal?.calories,
-      calories_confidence: aiCal?.confidence,
     });
     try {
       const prod = editingId
@@ -450,20 +476,12 @@ export default function CookListingsPage() {
     }
   };
 
-  const basicsDraft = useMemo(
-    () => ({
-      name,
-      price: typeof price === 'number' ? price : 0,
-      min_qty: typeof minQty === 'number' ? minQty : 0,
-    }),
-    [name, price, minQty]
-  );
-  const basicsValidation = useMemo(() => validateCookListingDraft(basicsDraft), [basicsDraft]);
+  const basicsValidation = useMemo(() => validateCookListingDraft(listingDraft), [listingDraft]);
 
   const advanceStep = () => {
-    const gate = validateCookListingWizardStep(step, basicsDraft);
+    const gate = validateCookListingWizardStep(step, listingDraft);
     if (!gate.ok) {
-      showErrorTray('Complete dish basics', gate.message || 'Fix the highlighted fields.');
+      showErrorTray('Complete this step', gate.message || 'Fix the highlighted fields.');
       return;
     }
     goToStep(step + 1);
@@ -771,17 +789,55 @@ export default function CookListingsPage() {
                 onChange={setAllergenTiers}
                 tier1Presets={cookAllergenTier1Presets(config)}
               />
+              <label className="flex items-center gap-2 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={allergenNoneConfirmed}
+                  onChange={(e) => setAllergenNoneConfirmed(e.target.checked)}
+                  data-testid="listing-allergen-none"
+                />
+                No tier-1 allergens in this dish
+              </label>
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-3" data-testid="listing-wizard-step3">
-              <div className="rounded-xl border border-border p-3 text-sm">
-                <p className="font-bold mb-1">{ingredients[0]?.name || 'Chicken'}</p>
-                <p className="text-muted-foreground text-xs">
-                  {ingredients[0]?.quantity} {ingredients[0]?.unit}
-                </p>
+              <div className="grid grid-cols-3 gap-2">
+                <input
+                  className="col-span-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold"
+                  placeholder="Ingredient name"
+                  value={ingredients[0]?.name || ''}
+                  onChange={(e) =>
+                    setIngredients([{ name: e.target.value, quantity: ingredients[0]?.quantity || 100, unit: ingredients[0]?.unit || 'g' }])
+                  }
+                  data-testid="listing-ingredient-name"
+                />
+                <input
+                  className="rounded-xl border border-border px-3 py-2 text-sm font-semibold"
+                  placeholder="Qty"
+                  type="number"
+                  value={ingredients[0]?.quantity || ''}
+                  onChange={(e) =>
+                    setIngredients([
+                      {
+                        name: ingredients[0]?.name || '',
+                        quantity: Number(e.target.value) || 0,
+                        unit: ingredients[0]?.unit || 'g',
+                      },
+                    ])
+                  }
+                  data-testid="listing-ingredient-qty"
+                />
               </div>
+              <label className="flex items-center gap-2 text-sm font-bold">
+                <input
+                  type="checkbox"
+                  checked={allergenNoneConfirmed}
+                  onChange={(e) => setAllergenNoneConfirmed(e.target.checked)}
+                />
+                No tier-1 allergens in this dish
+              </label>
               <SHCButton
                 variant="outline"
                 onClick={async () => {

@@ -10,6 +10,7 @@ import {
   deleteCookListing,
   getComplianceDocs,
   getCookEarnings,
+  getCookPayoutHistory,
   getCookProfile,
   getCookListings,
   getCookOrder,
@@ -160,6 +161,14 @@ export function useCookEarnings() {
   return useQuery({
     queryKey: ['cook-earnings'],
     queryFn: getCookEarnings,
+    enabled: isCookAuthenticated(),
+  });
+}
+
+export function useCookPayoutHistory() {
+  return useQuery({
+    queryKey: ['cook-payout-history'],
+    queryFn: getCookPayoutHistory,
     enabled: isCookAuthenticated(),
   });
 }

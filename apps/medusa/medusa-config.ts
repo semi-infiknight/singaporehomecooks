@@ -21,6 +21,8 @@ const productionCors = parseCorsOrigins(
   process.env.STORE_CORS,
   process.env.WEB_PUBLIC_URL,
   railwayOrigin,
+  "https://www.homecooksg.com",
+  "https://homecooksg.com",
   "http://localhost:3001",
   "http://localhost:8081",
   "http://localhost:8082",

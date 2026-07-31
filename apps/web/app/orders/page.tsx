@@ -107,6 +107,10 @@ export default function OrdersList() {
   const dayCards = useMemo(() => cardsForDate(allCards, selected), [allCards, selected]);
 
   const onManage = (card: DayOrderCard) => {
+    if (card.managePath === 'pay' && card.hrefOrderId) {
+      router.push(`/orders/${card.hrefOrderId}?pay=1`);
+      return;
+    }
     // HomelyEats: Manage opens upcoming-order screen (skip / add items / slot / notes)
     if (card.status === 'scheduled' || card.status === 'indeterminate') {
       router.push(`/orders/manage?${buildManageOrderQuery(card)}`);

@@ -28,6 +28,22 @@ export async function markOrderPaid(
   const prevStatus = (existing?.meta as any)?.shc_status;
   const prevRef = (existing?.meta as any)?.paynow_reference;
 
+  if (paynow_reference.length >= 6) {
+    const [allMetas] = await metaService.listAndCountOrderMetas({} as any, { take: 500 }).catch(() => [[]]);
+    const duplicate = (allMetas as any[]).find(
+      (m) =>
+        m.order_id !== order_id &&
+        m.paynow_reference &&
+        String(m.paynow_reference) === paynow_reference &&
+        m.shc_status &&
+        m.shc_status !== "cart" &&
+        m.shc_status !== "cancelled"
+    );
+    if (duplicate) {
+      throw new Error("SHC-PAY-001: PayNow reference already used on another order");
+    }
+  }
+
   // Idempotent: already paid with same (or any) ref
   if (prevStatus === "paid" || prevStatus === "accepted" || prevStatus === "preparing" ||
       prevStatus === "ready_for_collection" || prevStatus === "collected" || prevStatus === "completed") {
