@@ -200,11 +200,27 @@ export function useCreateBid() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['bids'] }),
   });
 }
+export type AcceptBidInput = {
+  bidId: string;
+  accepted_line_ids?: string[];
+  collection_date?: string;
+  collection_slot?: string;
+};
+
 export function useAcceptBid() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (bidId: string) => { const { acceptBid } = await import('../lib/api-client'); return acceptBid(bidId); },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bids'] }); qc.invalidateQueries({ queryKey: ['orders'] }); qc.invalidateQueries({ queryKey: ['requests'] }); },
+    mutationFn: async (input: AcceptBidInput | string) => {
+      const { acceptBid } = await import('../lib/api-client');
+      if (typeof input === 'string') return acceptBid(input);
+      const { bidId, ...opts } = input;
+      return acceptBid(bidId, opts);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bids'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['requests'] });
+    },
   });
 }
 export function useNotifications() {

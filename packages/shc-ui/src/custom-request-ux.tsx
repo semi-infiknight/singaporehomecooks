@@ -13,6 +13,11 @@ import {
   buildDefaultQuoteLines,
   validateClientQuoteLines,
   sumIncludedQuoteCents,
+  defaultCustomerAcceptLineIds,
+  sumCustomerAcceptCents,
+  validateCustomerAcceptLines,
+  toggleCustomerAcceptLine,
+  cookIncludedQuoteLines,
   type CookQuoteDisplay,
   type CookQuoteLineItem,
   type CustomRequestDisplay,
@@ -87,7 +92,7 @@ export function SHCCookQuoteCard({
 }: {
   quote: CookQuoteDisplay | Record<string, unknown>;
   cookName?: string;
-  onAccept?: () => void;
+  onAccept?: (acceptedLineIds: string[]) => void | Promise<void>;
   accepting?: boolean;
   requestLines?: CustomRequestDisplay['lines'];
   testID?: string;
@@ -97,7 +102,32 @@ export function SHCCookQuoteCard({
       ? (quote as CookQuoteDisplay)
       : parseCookQuoteDisplay(quote as Record<string, unknown>, requestLines);
   const pending = parsed.status === 'pending';
-  const includedLines = (parsed.line_items || []).filter((l) => l.included);
+  const includedLines = cookIncludedQuoteLines(parsed.line_items);
+  const partialAccept = includedLines.length > 1;
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(() => defaultCustomerAcceptLineIds(parsed.line_items));
+  const [acceptError, setAcceptError] = React.useState('');
+
+  React.useEffect(() => {
+    setSelectedIds(defaultCustomerAcceptLineIds(parsed.line_items));
+    setAcceptError('');
+  }, [parsed.id]);
+
+  const displayTotal = partialAccept
+    ? sumCustomerAcceptCents(parsed.line_items || [], selectedIds)
+    : parsed.price_cents;
+
+  const handleAccept = async () => {
+    if (!onAccept) return;
+    setAcceptError('');
+    const check = validateCustomerAcceptLines(parsed.line_items || [], selectedIds);
+    if (!check.ok) {
+      setAcceptError(check.message);
+      return;
+    }
+    const ids = partialAccept ? selectedIds : undefined;
+    await onAccept(ids?.length ? ids : defaultCustomerAcceptLineIds(parsed.line_items));
+  };
+
   return (
     <SHCCard testID={testID} style={{ marginTop: shcSpacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: shcSpacing.sm }}>
@@ -107,23 +137,63 @@ export function SHCCookQuoteCard({
             <Text style={{ fontSize: 13, color: shcColors.textLight, marginTop: 4, lineHeight: 18 }}>{parsed.message}</Text>
           ) : null}
         </View>
-        <Text style={{ fontWeight: '900', fontSize: 16, color: shcColors.primary }}>{formatQuoteTotal(parsed.price_cents)}</Text>
+        <Text style={{ fontWeight: '900', fontSize: 16, color: shcColors.primary }}>{formatQuoteTotal(displayTotal)}</Text>
       </View>
       {includedLines.length > 0 ? (
         <View style={{ marginTop: shcSpacing.sm, gap: 4 }}>
-          {includedLines.map((line) => (
-            <View key={line.request_line_id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, flex: 1 }} numberOfLines={1}>
-                {line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}
-              </Text>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.text }}>{formatQuoteTotal(line.price_cents)}</Text>
-            </View>
-          ))}
+          {partialAccept ? (
+            <Text style={{ fontSize: 11, fontWeight: '700', color: shcColors.textLight, marginBottom: 4 }}>
+              {CUSTOM_REQUEST_COPY.selectDishesHint}
+            </Text>
+          ) : null}
+          {includedLines.map((line) => {
+            const selected = !partialAccept || selectedIds.includes(line.request_line_id);
+            return (
+              <Pressable
+                key={line.request_line_id}
+                onPress={
+                  partialAccept && pending
+                    ? () => setSelectedIds((prev) => toggleCustomerAcceptLine(prev, line.request_line_id))
+                    : undefined
+                }
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  opacity: partialAccept && !selected ? 0.55 : 1,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  {partialAccept && pending ? (
+                    <View
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 4,
+                        borderWidth: 2,
+                        borderColor: shcColors.border,
+                        backgroundColor: selected ? shcColors.primary : shcColors.surface,
+                      }}
+                    />
+                  ) : null}
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, flex: 1 }} numberOfLines={1}>
+                    {line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.text }}>{formatQuoteTotal(line.price_cents)}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
+      {acceptError ? (
+        <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.error, marginTop: shcSpacing.sm }}>{acceptError}</Text>
+      ) : null}
       {pending && onAccept ? (
-        <SHCButton onPress={onAccept} disabled={accepting} style={{ marginTop: shcSpacing.sm }} testID={testID ? `${testID}-accept` : undefined}>
-          <SHCButtonText>{accepting ? 'Accepting…' : CUSTOM_REQUEST_COPY.acceptQuote}</SHCButtonText>
+        <SHCButton onPress={handleAccept} disabled={accepting} style={{ marginTop: shcSpacing.sm }} testID={testID ? `${testID}-accept` : undefined}>
+          <SHCButtonText>
+            {accepting ? 'Accepting…' : partialAccept ? CUSTOM_REQUEST_COPY.acceptSelected : CUSTOM_REQUEST_COPY.acceptQuote}
+          </SHCButtonText>
         </SHCButton>
       ) : quote.status === 'accepted' ? (
         <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.success, marginTop: shcSpacing.sm }}>

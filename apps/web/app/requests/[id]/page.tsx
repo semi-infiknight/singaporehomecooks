@@ -2,28 +2,30 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import {
-  CUSTOM_REQUEST_COPY,
-  formatQuoteTotal,
-  parseCustomRequestDisplay,
-  parseCookQuoteDisplay,
-  shcGuestCountBadgeLabel,
-  shcServingsBadgeLabel,
-  getDishImageUrl,
-} from '@shc/utils';
+import { useParams, useRouter } from 'next/navigation';
+import { CUSTOM_REQUEST_COPY, formatQuoteTotal, parseCustomRequestDisplay, shcGuestCountBadgeLabel, shcServingsBadgeLabel, getDishImageUrl } from '@shc/utils';
 import { useCustomRequest, useBids, useAcceptBid } from '../../../lib/useOrder';
 import {
   GourmeatScreenHeader,
   SHCBadge,
   SHCMetaBadge,
-  SHCButton,
   SHCSkeletonList,
   SHCCard,
+  CookQuoteCardWeb,
 } from '../../components/SHCWebComponents';
 import Image from 'next/image';
 
+function extractOrderId(res: unknown): string | null {
+  if (!res || typeof res !== 'object') return null;
+  const r = res as Record<string, unknown>;
+  if (typeof r.order_id === 'string' && r.order_id) return r.order_id;
+  const order = r.order as Record<string, unknown> | undefined;
+  if (order && typeof order.id === 'string') return order.id;
+  return null;
+}
+
 export default function CustomRequestDetailPage() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id || '';
   const { data: raw, isLoading } = useCustomRequest(id);
@@ -31,6 +33,17 @@ export default function CustomRequestDetailPage() {
   const acceptQuote = useAcceptBid();
   const parsed = useMemo(() => (raw ? parseCustomRequestDisplay(raw as Record<string, unknown>) : null), [raw]);
   const pendingQuotes = (bids as any[]).filter((b) => b.status === 'pending');
+
+  const handleAccept = async (quoteId: string, acceptedLineIds: string[]) => {
+    const res = await acceptQuote.mutateAsync({
+      bidId: quoteId,
+      accepted_line_ids: acceptedLineIds,
+    });
+    const orderId = extractOrderId(res);
+    if (orderId) {
+      router.push(`/orders/${orderId}?pay=1`);
+    }
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 shc-tab-bar-pad" data-testid="custom-request-detail">
@@ -87,39 +100,17 @@ export default function CustomRequestDetailPage() {
             </SHCCard>
           ) : (
             <ul className="space-y-3">
-              {pendingQuotes.map((quote: any) => {
-                const parsedQuote = parseCookQuoteDisplay(quote, parsed.lines);
-                const includedLines = (parsedQuote.line_items || []).filter((l) => l.included);
-                return (
-                <li key={quote.id} className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-4 bg-card">
-                  <div className="flex justify-between gap-3">
-                    <div>
-                      <p className="font-black">{quote.cook_name || 'Home cook'}</p>
-                      {quote.message ? <p className="text-sm text-muted-foreground mt-1">{quote.message}</p> : null}
-                    </div>
-                    <p className="font-black text-primary tabular-nums">{formatQuoteTotal(quote.price_cents)}</p>
-                  </div>
-                  {includedLines.length > 0 ? (
-                    <ul className="mt-2 space-y-1">
-                      {includedLines.map((line) => (
-                        <li key={line.request_line_id} className="flex justify-between text-xs font-semibold text-muted-foreground">
-                          <span>{line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}</span>
-                          <span className="font-bold text-foreground">{formatQuoteTotal(line.price_cents)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  <SHCButton
-                    className="mt-3 w-full"
-                    onClick={() => acceptQuote.mutate(quote.id)}
-                    disabled={acceptQuote.isPending}
-                    data-testid={`accept-quote-${quote.id}`}
-                  >
-                    {acceptQuote.isPending ? 'Accepting…' : CUSTOM_REQUEST_COPY.acceptQuote}
-                  </SHCButton>
-                </li>
-              );
-              })}
+              {pendingQuotes.map((quote: any) => (
+                <CookQuoteCardWeb
+                  key={quote.id}
+                  quote={quote}
+                  cookName={quote.cook_name}
+                  requestLines={parsed.lines}
+                  accepting={acceptQuote.isPending && (acceptQuote.variables as { bidId?: string })?.bidId === quote.id}
+                  onAccept={(acceptedLineIds) => handleAccept(quote.id, acceptedLineIds)}
+                  testID={`quote-${quote.id}`}
+                />
+              ))}
             </ul>
           )}
         </>

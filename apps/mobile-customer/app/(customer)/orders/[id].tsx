@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import {
   shcSpacing,
   OrderTrackingTraySection,
   contentPadSafe,
+  PayNowPanel,
 } from '@shc/ui';
 import {
   getDishImageUrl,
@@ -34,6 +35,8 @@ import {
   getReview,
   submitOrderDispute,
   submitReview,
+  createOrderPayNow,
+  getOrder,
 } from '../../../lib/api-client';
 import type { SHCOrderStatus } from '@shc/types';
 
@@ -57,7 +60,7 @@ type OrderDispute = { status?: string; type?: string; notes?: string };
 export default function OrderTracking() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, pay } = useLocalSearchParams<{ id: string; pay?: string }>();
   const orderId = id || '';
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const { data: orderRaw, isLoading: orderLoading, isFetching } = useOrder(orderId);
@@ -86,6 +89,21 @@ export default function OrderTracking() {
     [disputesRaw, orderId, maestroE2e]
   );
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [paySession, setPaySession] = useState<any>(null);
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+
+  const loadPayNowSession = useCallback(async (oid: string) => {
+    setPaySessionLoading(true);
+    try {
+      const s = await createOrderPayNow(oid);
+      setPaySession(s);
+    } catch (e: any) {
+      setPaySession({ error: e?.message || 'PayNow unavailable' });
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, []);
 
   const downloadInvoice = async () => {
     if (!orderId || invoiceBusy) return;
@@ -100,6 +118,34 @@ export default function OrderTracking() {
       setInvoiceBusy(false);
     }
   };
+
+  const orderStatus = order?.shc_status ? String(order.shc_status) : '';
+  const awaitingPayNow = orderStatus === 'cart';
+  const payAutoStart = pay === '1';
+
+  useEffect(() => {
+    if (!orderId || !awaitingPayNow) return;
+    if ((payAutoStart || paySession === null) && !paySessionLoading) {
+      void loadPayNowSession(orderId);
+      setWaitingForPayment(true);
+    }
+  }, [awaitingPayNow, payAutoStart, orderId, loadPayNowSession, paySession, paySessionLoading]);
+
+  useEffect(() => {
+    if (!orderId || !waitingForPayment || !awaitingPayNow) return;
+    const timer = setInterval(async () => {
+      try {
+        const fresh = await getOrder(orderId);
+        const next = String((fresh as { shc_status?: string })?.shc_status || '');
+        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
+          setWaitingForPayment(false);
+        }
+      } catch {
+        /* retry */
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [orderId, waitingForPayment, awaitingPayNow]);
 
   if (orderLoading || !order) {
     return (
@@ -153,6 +199,21 @@ export default function OrderTracking() {
       <GourmeatCard>
         <SHCOrderTimeline status={status} live={live} />
       </GourmeatCard>
+
+      {awaitingPayNow ? (
+        <GourmeatCard testID="order-paynow-panel">
+          <Text style={styles.cardTitle}>Complete PayNow to confirm</Text>
+          <Text style={styles.hintLine}>Your quote was accepted — pay now so your cook can start preparing.</Text>
+          <PayNowPanel
+            orderId={orderId}
+            total={Number(order.total) || 0}
+            session={paySession}
+            loadingSession={paySessionLoading}
+            onRetry={() => void loadPayNowSession(orderId)}
+            waitingForPayment={waitingForPayment}
+          />
+        </GourmeatCard>
+      ) : null}
 
       <GourmeatCard>
         <Text style={styles.cardTitle}>Collection</Text>

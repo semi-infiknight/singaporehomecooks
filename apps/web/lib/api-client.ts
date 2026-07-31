@@ -135,7 +135,10 @@ export const createBid = (
   message?: string,
   lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>
 ) => client.createBid(requestId, priceCents, message, lineItems);
-export const acceptBid = (bidId: string) => client.acceptBid(bidId);
+export const acceptBid = (
+  bidId: string,
+  opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }
+) => client.acceptBid(bidId, opts);
 export const estimateCaloriesAI = (ingredients: unknown[]) => client.estimateCaloriesAI(ingredients);
 export const getPhotoTips = () => client.getPhotoTips();
 export const getReview = (orderId: string) => client.getReview(orderId);

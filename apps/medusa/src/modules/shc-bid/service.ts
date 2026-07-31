@@ -40,6 +40,25 @@ class ShcBidModuleService extends MedusaService({ Bid }) {
     return updated as unknown as SHCBid;
   }
 
+  async rejectBid(bidId: string): Promise<SHCBid | null> {
+    const [updated] = await this.updateBids({
+      selector: { id: bidId },
+      data: { status: "rejected", updated_at: new Date() } as any,
+    });
+    return (updated as unknown as SHCBid) || null;
+  }
+
+  /** Decline all other pending quotes when customer accepts one. */
+  async rejectPendingBidsForRequest(requestId: string, exceptBidId: string): Promise<number> {
+    const pending = (await this.listBidsForRequest(requestId)).filter(
+      (b) => b.status === "pending" && b.id !== exceptBidId
+    );
+    for (const bid of pending) {
+      await this.rejectBid(bid.id);
+    }
+    return pending.length;
+  }
+
   async getBid(id: string): Promise<SHCBid | null> {
     const [rows] = await this.listAndCountBids({ id } as any, { take: 1 }).catch(() => [[]]);
     return ((rows as SHCBid[])?.[0] as SHCBid) || null;

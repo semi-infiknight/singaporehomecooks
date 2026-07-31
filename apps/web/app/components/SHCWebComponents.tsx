@@ -88,6 +88,13 @@ import {
   shcServingsBadgeLabel,
   CUSTOM_REQUEST_COPY,
   type CookQuoteLineItem,
+  type CookQuoteDisplay,
+  parseCookQuoteDisplay,
+  defaultCustomerAcceptLineIds,
+  sumCustomerAcceptCents,
+  validateCustomerAcceptLines,
+  toggleCustomerAcceptLine,
+  cookIncludedQuoteLines,
 } from '@shc/utils';
 import { ContainedVirtualRowList } from './ContainedVirtualList';
 import {
@@ -5005,6 +5012,105 @@ export function RecipeStepsEditorWeb({
         + Add step
       </button>
     </div>
+  );
+}
+
+export function CookQuoteCardWeb({
+  quote,
+  cookName,
+  onAccept,
+  accepting,
+  requestLines,
+  testID = 'cook-quote-card',
+}: {
+  quote: CookQuoteDisplay | Record<string, unknown>;
+  cookName?: string;
+  onAccept?: (acceptedLineIds: string[]) => void | Promise<void>;
+  accepting?: boolean;
+  requestLines?: ReturnType<typeof parseCustomRequestDisplay>['lines'];
+  testID?: string;
+}) {
+  const parsed =
+    quote && (quote as CookQuoteDisplay).line_items
+      ? (quote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(quote as Record<string, unknown>, requestLines);
+  const pending = parsed.status === 'pending';
+  const includedLines = cookIncludedQuoteLines(parsed.line_items);
+  const partialAccept = includedLines.length > 1;
+  const [selectedIds, setSelectedIds] = React.useState<string[]>(() => defaultCustomerAcceptLineIds(parsed.line_items));
+  const [acceptError, setAcceptError] = React.useState('');
+
+  React.useEffect(() => {
+    setSelectedIds(defaultCustomerAcceptLineIds(parsed.line_items));
+    setAcceptError('');
+  }, [parsed.id]);
+
+  const displayTotal = partialAccept
+    ? sumCustomerAcceptCents(parsed.line_items || [], selectedIds)
+    : parsed.price_cents;
+
+  const handleAccept = async () => {
+    if (!onAccept) return;
+    setAcceptError('');
+    const check = validateCustomerAcceptLines(parsed.line_items || [], selectedIds);
+    if (!check.ok) {
+      setAcceptError(check.message);
+      return;
+    }
+    const ids = partialAccept ? selectedIds : defaultCustomerAcceptLineIds(parsed.line_items);
+    await onAccept(ids);
+  };
+
+  return (
+    <li className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-4 bg-card" data-testid={testID}>
+      <div className="flex justify-between gap-3">
+        <div>
+          <p className="font-black">{cookName || parsed.cook_name || 'Home cook'}</p>
+          {parsed.message ? <p className="text-sm text-muted-foreground mt-1">{parsed.message}</p> : null}
+        </div>
+        <p className="font-black text-primary tabular-nums">{formatQuoteTotal(displayTotal)}</p>
+      </div>
+      {includedLines.length > 0 ? (
+        <ul className="mt-2 space-y-1">
+          {partialAccept ? (
+            <p className="text-[11px] font-bold text-muted-foreground mb-1">{CUSTOM_REQUEST_COPY.selectDishesHint}</p>
+          ) : null}
+          {includedLines.map((line) => {
+            const selected = !partialAccept || selectedIds.includes(line.request_line_id);
+            return (
+              <li key={line.request_line_id}>
+                <label className="flex justify-between items-center gap-2 text-xs font-semibold text-muted-foreground cursor-pointer">
+                  <span className="flex items-center gap-2 min-w-0">
+                    {partialAccept && pending ? (
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() =>
+                          setSelectedIds((prev) => toggleCustomerAcceptLine(prev, line.request_line_id))
+                        }
+                        data-testid={`${testID}-line-${line.request_line_id}`}
+                      />
+                    ) : null}
+                    <span className={selected ? '' : 'opacity-60'}>
+                      {line.name || 'Dish'} · {shcServingsBadgeLabel(line.servings || 1)}
+                    </span>
+                  </span>
+                  <span className="font-bold text-foreground">{formatQuoteTotal(line.price_cents)}</span>
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {acceptError ? <p className="text-sm font-bold text-red-600 mt-2">{acceptError}</p> : null}
+      {pending && onAccept ? (
+        <SHCButton className="mt-3 w-full" onClick={handleAccept} disabled={accepting} data-testid={`${testID}-accept`}>
+          {accepting ? 'Accepting…' : partialAccept ? CUSTOM_REQUEST_COPY.acceptSelected : CUSTOM_REQUEST_COPY.acceptQuote}
+        </SHCButton>
+      ) : parsed.status === 'accepted' ? (
+        <p className="text-xs font-bold text-green-700 mt-2">{CUSTOM_REQUEST_COPY.quoteAccepted}</p>
+      ) : null}
+    </li>
   );
 }
 

@@ -140,7 +140,10 @@ export const listMyDrops = () => client.listDrops({ mine: true });
 export const createDrop = (input: Record<string, unknown>) => client.createDrop(input);
 export const patchDrop = (id: string, input: Record<string, unknown>) => client.patchDrop(id, input);
 export const getBids = (requestId?: string) => client.getBids(requestId);
-export const acceptBid = (bidId: string) => client.acceptBid(bidId);
+export const acceptBid = (
+  bidId: string,
+  opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }
+) => client.acceptBid(bidId, opts);
 export const getUploadUrl = (objectName: string, resourceOwner?: string, options?: any) => client.getUploadUrl(objectName, resourceOwner, options);
 export const listCookExpenses = () => client.listCookExpenses();
 export const createCookExpense = (input: { amount_cents: number; category: string; receipt_key?: string; date: string }) =>

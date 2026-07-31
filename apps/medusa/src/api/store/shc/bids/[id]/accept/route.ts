@@ -5,20 +5,24 @@ import ShcBidModuleService from "../../../../../../modules/shc-bid/service";
 import ShcRequestModuleService from "../../../../../../modules/shc-request/service";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import ShcNotificationModuleService from "../../../../../../modules/shc-notification/service";
-import { orderStateTransitionWorkflow } from "../../../../../../workflows/order-state-transition";
 import { emitShcEvent } from "../../../../../../lib/shc-event-bus";
 import { getAuthContext, getCustomerId, unauthorized } from "../../../../../../lib/shc-actors";
-import { notifyOrderStatusChange } from "../../../../../../lib/shc-order-push";
-import { buildOrderLinesFromQuote } from "../../../../../../lib/shc-quote-lines";
+import {
+  buildOrderLinesFromQuote,
+  parseQuoteLinesJson,
+  validateCustomerAcceptSelection,
+} from "../../../../../../lib/shc-quote-lines";
 
 /**
  * POST /store/shc/bids/:id/accept
- * Customer accepts a pending cook bid → request matched, order meta created (request-originated).
+ * Customer accepts a pending cook quote → request matched, order meta created (awaiting PayNow).
+ * Optional accepted_line_ids[] for partial accept (subset of cook-included dishes).
  */
 const BodySchema = z
   .object({
     collection_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     collection_slot: z.string().optional(),
+    accepted_line_ids: z.array(z.string()).min(1).max(12).optional(),
   })
   .strict();
 
@@ -63,14 +67,21 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       return res.status(401).json({ error: createSHCError("SHC-GENERIC-001", "Customer login required to accept bid") });
     }
 
+    const quoteLines = parseQuoteLinesJson((bid as any).line_items_json);
+    const selection = validateCustomerAcceptSelection(quoteLines, parsedBody.accepted_line_ids);
+    if (!selection.ok) {
+      return res.status(400).json({ error: createSHCError("SHC-REQ-001", selection.message) });
+    }
+
     const beforeBid = { ...bid };
     const accepted = await bidService.acceptBid(bidId);
+    const rejectedCount = await bidService.rejectPendingBidsForRequest(bid.request_id, bidId);
     await reqService.updateRequestStatus(bid.request_id, "matched");
 
     const orderId = `SHC-${Date.now().toString().slice(-8)}`;
     const collDate = parsedBody.collection_date || request.date || new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
     const collSlot = parsedBody.collection_slot || "18:00-19:00";
-    const totalCents = bid.price_cents || request.budget_cents || 0;
+    const totalCents = selection.total_cents;
 
     const items = buildOrderLinesFromQuote(
       {
@@ -80,7 +91,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         request_id: bid.request_id,
       },
       { price_cents: totalCents, line_items_json: (bid as any).line_items_json },
-      bid.request_id
+      bid.request_id,
+      parsedBody.accepted_line_ids
     );
 
     await metaService.createOrUpdateMeta({
@@ -89,7 +101,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer_id: effectiveCustomerId,
       collection_date: collDate,
       collection_slot: collSlot,
-      shc_status: "paid" as SHCOrderStatus,
+      // Awaiting PayNow — same as cart checkout (webhook marks paid)
+      shc_status: "cart" as SHCOrderStatus,
       origin_request_id: bid.request_id,
       allergen_acked_at: new Date().toISOString(),
       items,
@@ -100,29 +113,32 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       orderId,
       "cook",
       bid.cook_id,
-      "Bid accepted — I'll prepare your custom dish. Collection details released 2h before slot."
+      "Quote accepted — awaiting customer PayNow. Collection details released 2h before slot once paid."
     );
-
-    await orderStateTransitionWorkflow
-      .run({ input: { orderId, to: "paid" as SHCOrderStatus, container: req.scope } as any })
-      .catch(() => {});
 
     await notifService.push(effectiveCustomerId, {
       type: "order",
-      body: `Order ${orderId} confirmed from your dish request.`,
+      body: `Complete PayNow for order ${orderId} to confirm your custom request.`,
     });
     await notifService.push(bid.cook_id, {
       type: "order",
-      body: `Your bid was accepted — order ${orderId} is now active.`,
+      body: `Your quote was accepted — order ${orderId} awaits customer payment.`,
     });
-    await notifyOrderStatusChange(req.scope, orderId, "paid", logger);
 
     const audit = {
       ts: new Date().toISOString(),
       actor,
       action: "bid.accept",
       before: { bid: beforeBid },
-      after: { bid: accepted, order_id: orderId, request_id: bid.request_id, customer_id: effectiveCustomerId },
+      after: {
+        bid: accepted,
+        order_id: orderId,
+        request_id: bid.request_id,
+        customer_id: effectiveCustomerId,
+        accepted_line_ids: parsedBody.accepted_line_ids || selection.lines.map((l) => l.request_line_id),
+        rejected_sibling_quotes: rejectedCount,
+        total_cents: totalCents,
+      },
     };
     logger.info?.(`[SHC-AUDIT] ${JSON.stringify(audit)}`);
     await emitShcEvent(req.scope, "shc.bid.accepted", {
@@ -131,6 +147,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       requestId: bid.request_id,
       cookId: bid.cook_id,
       customerId: effectiveCustomerId,
+      acceptedLineIds: parsedBody.accepted_line_ids,
+      rejectedSiblingQuotes: rejectedCount,
     });
 
     const order = {
@@ -138,7 +156,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       cook_id: bid.cook_id,
       customer_id: effectiveCustomerId,
       items,
-      shc_status: "paid" as SHCOrderStatus,
+      shc_status: "cart" as SHCOrderStatus,
       collection_date: collDate,
       collection_slot: collSlot,
       total: totalCents,
@@ -150,6 +168,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       bid: accepted,
       order_id: orderId,
       order,
+      requires_paynow: true,
+      rejected_sibling_quotes: rejectedCount,
       shc_meta: { origin_request_id: bid.request_id, customer_id: effectiveCustomerId, total_cents: totalCents },
     });
   } catch (e: any) {

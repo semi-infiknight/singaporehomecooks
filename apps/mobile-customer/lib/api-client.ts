@@ -119,7 +119,10 @@ export const createBid = (
   lineItems?: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>
 ) => client.createBid(requestId, priceCents, message, lineItems);
 export const getBids = (requestId?: string) => client.getBids(requestId);
-export const acceptBid = (bidId: string) => client.acceptBid(bidId);
+export const acceptBid = (
+  bidId: string,
+  opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }
+) => client.acceptBid(bidId, opts);
 export const listDrops = (opts?: { cook_id?: string; mine?: boolean }) => client.listDrops(opts);
 export const getDrop = (id: string) => client.getDrop(id);
 export const addDropToCart = (dropId: string, qty: number) => client.addDropToCart(dropId, qty);

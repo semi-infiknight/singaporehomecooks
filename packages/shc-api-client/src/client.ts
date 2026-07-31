@@ -533,8 +533,18 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).bids || [];
     },
 
-    async acceptBid(bidId: string) {
-      return request(`/store/shc/bids/${encodeURIComponent(bidId)}/accept`, { method: "POST", body: "{}" });
+    async acceptBid(
+      bidId: string,
+      opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }
+    ) {
+      const body: Record<string, unknown> = {};
+      if (opts?.collection_date) body.collection_date = opts.collection_date;
+      if (opts?.collection_slot) body.collection_slot = opts.collection_slot;
+      if (opts?.accepted_line_ids?.length) body.accepted_line_ids = opts.accepted_line_ids;
+      return request(`/store/shc/bids/${encodeURIComponent(bidId)}/accept`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
     },
 
     async getNotifications(opts?: { role?: "customer" | "cook" }) {

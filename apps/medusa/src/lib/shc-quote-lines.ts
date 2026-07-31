@@ -78,10 +78,59 @@ export function validateAndNormalizeQuoteLines(
   };
 }
 
+/** Cook-included quote lines the customer may accept (subset optional). */
+export function resolveCustomerAcceptedQuoteLines(
+  quoteLines: QuoteLineInput[],
+  acceptedLineIds?: string[]
+): QuoteLineInput[] {
+  const cookIncluded = (quoteLines || []).filter((l) => l.included);
+  if (!acceptedLineIds?.length) return cookIncluded;
+  const allowed = new Set(acceptedLineIds.map(String));
+  return cookIncluded.filter((l) => allowed.has(l.request_line_id));
+}
+
+export function validateCustomerAcceptSelection(
+  quoteLines: QuoteLineInput[],
+  acceptedLineIds?: string[]
+): { ok: true; lines: QuoteLineInput[]; total_cents: number } | { ok: false; message: string } {
+  const cookIncluded = (quoteLines || []).filter((l) => l.included);
+  if (!cookIncluded.length) {
+    return { ok: false, message: "Quote has no dishes to accept." };
+  }
+  const selected = resolveCustomerAcceptedQuoteLines(quoteLines, acceptedLineIds);
+  if (!selected.length) {
+    return { ok: false, message: "Select at least one dish to accept from this quote." };
+  }
+  if (acceptedLineIds?.length) {
+    const cookIds = new Set(cookIncluded.map((l) => l.request_line_id));
+    for (const id of acceptedLineIds) {
+      if (!cookIds.has(String(id))) {
+        return { ok: false, message: "Selected dish is not part of this quote." };
+      }
+    }
+  }
+  const total_cents = selected.reduce((s, l) => s + Math.max(0, l.price_cents), 0);
+  if (total_cents <= 0) {
+    return { ok: false, message: "Accepted dishes must have a positive total." };
+  }
+  return { ok: true, lines: selected, total_cents };
+}
+
+export function parseQuoteLinesJson(lineItemsJson?: string | null): QuoteLineInput[] {
+  if (typeof lineItemsJson !== "string" || !lineItemsJson.trim()) return [];
+  try {
+    const parsed = JSON.parse(lineItemsJson);
+    return Array.isArray(parsed) ? (parsed as QuoteLineInput[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function buildOrderLinesFromQuote(
   request: { items_json?: string; body?: string; party_size?: number; request_id: string },
   bid: { price_cents?: number; line_items_json?: string },
-  requestId: string
+  requestId: string,
+  acceptedLineIds?: string[]
 ): Array<{ product_id: string; name: string; qty: number; price: number }> {
   const requestLines = parseRequestLines(request.items_json);
   const totalCents = bid.price_cents || 0;
@@ -90,7 +139,7 @@ export function buildOrderLinesFromQuote(
   if (typeof quoteLinesRaw === "string" && quoteLinesRaw.trim()) {
     try {
       const quoteLines = JSON.parse(quoteLinesRaw) as QuoteLineInput[];
-      const included = (quoteLines || []).filter((l) => l.included);
+      const included = resolveCustomerAcceptedQuoteLines(quoteLines, acceptedLineIds);
       if (included.length) {
         return included.map((q) => {
           const reqLine = requestLines.find((r) => r.id === q.request_line_id);

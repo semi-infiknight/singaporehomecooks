@@ -3,6 +3,7 @@ import {
   buildOrderLinesFromQuote,
   parseRequestLines,
   validateAndNormalizeQuoteLines,
+  validateCustomerAcceptSelection,
 } from "./shc-quote-lines";
 
 describe("shc-quote-lines", () => {
@@ -43,5 +44,24 @@ describe("shc-quote-lines", () => {
 
   it("parses request lines from items_json", () => {
     expect(parseRequestLines(itemsJson)).toHaveLength(2);
+  });
+
+  it("validates customer partial accept selection", () => {
+    const quoteLines = [
+      { request_line_id: "a", included: true, servings: 6, price_cents: 8000 },
+      { request_line_id: "b", included: true, servings: 12, price_cents: 4000 },
+    ];
+    const partial = validateCustomerAcceptSelection(quoteLines, ["a"]);
+    expect(partial.ok).toBe(true);
+    if (partial.ok) expect(partial.total_cents).toBe(8000);
+
+    const items = buildOrderLinesFromQuote(
+      { items_json: itemsJson, body: "Party", party_size: 6, request_id: "req_1" },
+      { price_cents: 8000, line_items_json: JSON.stringify(quoteLines) },
+      "req_1",
+      ["a"]
+    );
+    expect(items).toHaveLength(1);
+    expect(items[0].name).toBe("Laksa");
   });
 });

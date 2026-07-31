@@ -1,5 +1,5 @@
 /**
- * Custom request detail — dish lines, status, cook quotes, accept.
+ * Custom request detail — dish lines, status, cook quotes, accept + PayNow.
  */
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
@@ -24,6 +24,15 @@ import {
 } from '@shc/utils';
 import { useCustomRequest, useBids, useAcceptBid } from '../../../hooks/useOrder';
 
+function extractOrderId(res: unknown): string | null {
+  if (!res || typeof res !== 'object') return null;
+  const r = res as Record<string, unknown>;
+  if (typeof r.order_id === 'string' && r.order_id) return r.order_id;
+  const order = r.order as Record<string, unknown> | undefined;
+  if (order && typeof order.id === 'string') return order.id;
+  return null;
+}
+
 export default function CustomRequestDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -33,6 +42,17 @@ export default function CustomRequestDetail() {
   const acceptQuote = useAcceptBid();
   const parsed = useMemo(() => (raw ? parseCustomRequestDisplay(raw as Record<string, unknown>) : null), [raw]);
   const pendingQuotes = (bids as any[]).filter((b) => b.status === 'pending');
+
+  const handleAccept = async (quoteId: string, acceptedLineIds: string[]) => {
+    const res = await acceptQuote.mutateAsync({
+      bidId: quoteId,
+      accepted_line_ids: acceptedLineIds,
+    });
+    const orderId = extractOrderId(res);
+    if (orderId) {
+      router.push(`/(customer)/orders/${orderId}?pay=1`);
+    }
+  };
 
   return (
     <View style={styles.screen} testID="custom-request-detail">
@@ -76,8 +96,11 @@ export default function CustomRequestDetail() {
                   quote={quote}
                   cookName={quote.cook_name}
                   requestLines={parsed.lines}
-                  accepting={acceptQuote.isPending && acceptQuote.variables === quote.id}
-                  onAccept={() => acceptQuote.mutate(quote.id)}
+                  accepting={
+                    acceptQuote.isPending &&
+                    (acceptQuote.variables as { bidId?: string })?.bidId === quote.id
+                  }
+                  onAccept={(acceptedLineIds) => handleAccept(quote.id, acceptedLineIds)}
                   testID={`quote-${quote.id}`}
                 />
               ))

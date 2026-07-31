@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   useOrder,
   useChat,
   useOrderDisputes,
   useReview,
 } from '../../../lib/useOrder';
-import { submitReview, submitOrderDispute, getOrderInvoice } from '../../../lib/api-client';
+import { submitReview, submitOrderDispute, getOrderInvoice, createOrderPayNow, getOrder } from '../../../lib/api-client';
 import { downloadPdfBase64InBrowser } from '../../../lib/download-pdf';
 import { OrderTrackingTraySectionWeb } from '../../../lib/order-tray-section-web';
 import {
@@ -18,6 +18,7 @@ import {
   GourmeatScreenHeader,
   OrderTimeline,
   SHCSkeletonList,
+  PayNowPanel,
 } from '../../components/SHCWebComponents';
 import {
   getOrderStatusLabel,
@@ -51,10 +52,11 @@ type OrderDispute = { status?: string; type?: string; notes?: string };
 
 export default function TrackOrder() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
-  const { data: orderRaw, isLoading, isFetching } = useOrder(id);
+  const { data: orderRaw, isLoading, isFetching, refetch } = useOrder(id);
   const order = useMemo(
     () => resolveOrderForDisplay<OrderDisplay>(orderRaw as OrderDisplay | undefined, id, { maestroE2e }),
     [orderRaw, id, maestroE2e]
@@ -71,6 +73,24 @@ export default function TrackOrder() {
     [disputesRaw, id, maestroE2e]
   );
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [paySession, setPaySession] = useState<
+    (Awaited<ReturnType<typeof createOrderPayNow>> & { error?: string }) | null
+  >(null);
+  const [paySessionLoading, setPaySessionLoading] = useState(false);
+  const [waitingForPayment, setWaitingForPayment] = useState(false);
+
+  const loadPayNowSession = useCallback(async (oid: string) => {
+    setPaySessionLoading(true);
+    try {
+      const s = await createOrderPayNow(oid);
+      setPaySession(s);
+    } catch (e) {
+      setPaySession({ provider: 'hitpay_error', order_id: oid, error: (e as Error).message } as any);
+    } finally {
+      setPaySessionLoading(false);
+    }
+  }, []);
+
   const chatContext = useMemo(() => {
     if (!order) return null;
     const base = buildOrderChatContext({
@@ -108,6 +128,35 @@ export default function TrackOrder() {
       setInvoiceBusy(false);
     }
   };
+
+  const orderStatus = order?.shc_status ? String(order.shc_status) : '';
+  const awaitingPayNow = orderStatus === 'cart';
+  const payAutoStart = searchParams?.get('pay') === '1';
+
+  useEffect(() => {
+    if (!id || !awaitingPayNow) return;
+    if ((payAutoStart || paySession === null) && !paySessionLoading) {
+      void loadPayNowSession(id);
+      setWaitingForPayment(true);
+    }
+  }, [awaitingPayNow, payAutoStart, id, loadPayNowSession, paySession, paySessionLoading]);
+
+  useEffect(() => {
+    if (!id || !waitingForPayment || !awaitingPayNow) return;
+    const timer = setInterval(async () => {
+      try {
+        const fresh = await getOrder(id);
+        const next = String((fresh as { shc_status?: string })?.shc_status || '');
+        if (['paid', 'accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'].includes(next)) {
+          setWaitingForPayment(false);
+          void refetch();
+        }
+      } catch {
+        /* retry poll */
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [id, waitingForPayment, awaitingPayNow, refetch]);
 
   if ((!maestroE2e && isLoading) || !order) {
     return (
@@ -162,6 +211,23 @@ export default function TrackOrder() {
       <SHCCard className="mb-6 rounded-2xl shadow-[var(--shc-shadow-card)] border border-border">
         <OrderTimeline status={status} live={isActiveOrderStatus(status)} />
       </SHCCard>
+
+      {awaitingPayNow ? (
+        <SHCCard className="mb-6" data-testid="order-paynow-panel">
+          <p className="font-black mb-2">Complete PayNow to confirm</p>
+          <p className="text-sm text-muted-foreground font-semibold mb-4">
+            Your quote was accepted — pay now so your cook can start preparing.
+          </p>
+          <PayNowPanel
+            amount={Number(order.total) || 0}
+            reference={id}
+            session={paySession}
+            loadingSession={paySessionLoading}
+            onRetry={() => void loadPayNowSession(id)}
+            waitingForPayment={waitingForPayment}
+          />
+        </SHCCard>
+      ) : null}
 
       <div className="mb-6">
         {isCorporate ? (

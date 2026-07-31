@@ -9,6 +9,8 @@ export const CUSTOM_REQUEST_COPY = {
   quoteNounPlural: 'quotes',
   sendQuote: 'Send quote',
   acceptQuote: 'Accept quote',
+  acceptSelected: 'Accept selected',
+  selectDishesHint: 'Choose which dishes to accept from this quote.',
   quotePending: 'Quote received',
   quoteAccepted: 'Quote accepted',
   noQuotesYet: 'No quotes yet — home cooks will respond soon.',
@@ -248,6 +250,46 @@ export function validateClientQuoteLines(lineItems: CookQuoteLineItem[]): { ok: 
     }
   }
   return { ok: true };
+}
+
+/** Lines the cook included that the customer can toggle when accepting. */
+export function cookIncludedQuoteLines(lineItems?: CookQuoteLineItem[]): CookQuoteLineItem[] {
+  return (lineItems || []).filter((l) => l.included);
+}
+
+/** Default selection — all cook-included dishes. */
+export function defaultCustomerAcceptLineIds(lineItems?: CookQuoteLineItem[]): string[] {
+  return cookIncludedQuoteLines(lineItems).map((l) => l.request_line_id);
+}
+
+export function sumCustomerAcceptCents(lineItems: CookQuoteLineItem[], selectedIds: string[]): number {
+  const selected = new Set(selectedIds);
+  return lineItems
+    .filter((l) => l.included && selected.has(l.request_line_id))
+    .reduce((s, l) => s + Math.max(0, l.price_cents), 0);
+}
+
+export function validateCustomerAcceptLines(
+  lineItems: CookQuoteLineItem[],
+  selectedIds: string[]
+): { ok: true } | { ok: false; message: string } {
+  const included = cookIncludedQuoteLines(lineItems);
+  if (!included.length) return { ok: false, message: 'This quote has no dishes to accept.' };
+  if (!selectedIds.length) return { ok: false, message: 'Select at least one dish to accept.' };
+  const allowed = new Set(included.map((l) => l.request_line_id));
+  for (const id of selectedIds) {
+    if (!allowed.has(id)) return { ok: false, message: 'Invalid dish selection.' };
+  }
+  if (sumCustomerAcceptCents(lineItems, selectedIds) <= 0) {
+    return { ok: false, message: 'Selected dishes must have a positive total.' };
+  }
+  return { ok: true };
+}
+
+export function toggleCustomerAcceptLine(selectedIds: string[], lineId: string): string[] {
+  return selectedIds.includes(lineId)
+    ? selectedIds.filter((id) => id !== lineId)
+    : [...selectedIds, lineId];
 }
 
 export function buildRequestBodyFromItems(occasion: string | undefined, items: CustomRequestLine[], context?: string): string {

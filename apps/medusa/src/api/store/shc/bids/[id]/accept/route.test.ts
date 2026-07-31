@@ -19,7 +19,7 @@ function makeRes() {
 }
 
 describe("POST /store/shc/bids/:id/accept", () => {
-  it("creates a customer-scoped order from an accepted bid", async () => {
+  it("creates a customer-scoped order awaiting PayNow from an accepted bid", async () => {
     const token = signShcToken({ actor_type: "customer", actor_id: "cust_1", shc: true });
     let savedMeta: any;
     const req: any = {
@@ -36,8 +36,12 @@ describe("POST /store/shc/bids/:id/accept", () => {
                 cook_id: "cook_1",
                 price_cents: 12000,
                 status: "pending",
+                line_items_json: JSON.stringify([
+                  { request_line_id: "a", included: true, servings: 6, price_cents: 12000 },
+                ]),
               }),
               acceptBid: async (id: string) => ({ id, status: "accepted", price_cents: 12000 }),
+              rejectPendingBidsForRequest: async () => 2,
             };
           }
           if (name === "shcRequest") {
@@ -49,6 +53,7 @@ describe("POST /store/shc/bids/:id/accept", () => {
                 party_size: 6,
                 date: "2026-07-12",
                 status: "open",
+                items_json: JSON.stringify([{ id: "a", name: "Ayam buah keluak", servings: 6 }]),
               }),
               updateRequestStatus: async () => ({}),
             };
@@ -83,10 +88,13 @@ describe("POST /store/shc/bids/:id/accept", () => {
       throw new Error(`Unexpected ${res.statusCode}: ${JSON.stringify(res.body)}`);
     }
     expect(res.body.ok).toBe(true);
+    expect(res.body.requires_paynow).toBe(true);
+    expect(res.body.rejected_sibling_quotes).toBe(2);
     expect(res.body.order_id).toMatch(/^SHC-/);
     expect(res.body.order.customer_id).toBe("cust_1");
     expect(savedMeta.customer_id).toBe("cust_1");
     expect(savedMeta.total_cents).toBe(12000);
+    expect(savedMeta.shc_status).toBe("cart");
     expect(savedMeta.origin_request_id).toBe("req_1");
     expect(savedMeta.collection_slot).toBe("12:00-13:00");
   });
