@@ -29,6 +29,8 @@ import {
   defaultListingOccasionTag,
   listingOccasionTagOptions,
   cookEarningsPreviewFromDollars,
+  validateCookListingDraft,
+  validateCookListingWizardStep,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
@@ -400,12 +402,23 @@ export default function CookListingsPage() {
   };
 
   const publish = async () => {
-    setPublishing(true);
-    const input = buildCookListingPayload({
+    const basicsDraft = {
       name,
-      description,
       price: typeof price === 'number' ? price : 0,
       min_qty: typeof minQty === 'number' ? minQty : 0,
+    };
+    const validation = validateCookListingDraft(basicsDraft);
+    if (!validation.valid) {
+      showErrorTray('Cannot publish yet', validation.errors.join(' '));
+      if (step !== 1) goToStep(1);
+      return;
+    }
+    setPublishing(true);
+    const input = buildCookListingPayload({
+      name: name.trim(),
+      description,
+      price: basicsDraft.price,
+      min_qty: basicsDraft.min_qty,
       cuisine,
       occasion_tags: occasionTags,
       ingredients,
@@ -443,6 +456,25 @@ export default function CookListingsPage() {
     } finally {
       setPublishing(false);
     }
+  };
+
+  const basicsDraft = useMemo(
+    () => ({
+      name,
+      price: typeof price === 'number' ? price : 0,
+      min_qty: typeof minQty === 'number' ? minQty : 0,
+    }),
+    [name, price, minQty]
+  );
+  const basicsValidation = useMemo(() => validateCookListingDraft(basicsDraft), [basicsDraft]);
+
+  const advanceStep = () => {
+    const gate = validateCookListingWizardStep(step, basicsDraft);
+    if (!gate.ok) {
+      showErrorTray('Complete dish basics', gate.message || 'Fix the highlighted fields.');
+      return;
+    }
+    goToStep(step + 1);
   };
 
   const performDelete = useCallback(
@@ -655,22 +687,38 @@ export default function CookListingsPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Dish name"
+                data-testid="listing-name-input"
               />
+              {basicsValidation.fieldErrors.name ? (
+                <p className="text-xs font-bold text-red-600">{basicsValidation.fieldErrors.name}</p>
+              ) : null}
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  className="rounded-xl border border-border px-3 py-2 text-sm"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="Price"
-                />
-                <input
-                  type="number"
-                  className="rounded-xl border border-border px-3 py-2 text-sm"
-                  value={minQty}
-                  onChange={(e) => setMinQty(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="Min qty"
-                />
+                <div>
+                  <input
+                    type="number"
+                    className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Price"
+                    data-testid="listing-price-input"
+                  />
+                  {basicsValidation.fieldErrors.price ? (
+                    <p className="text-xs font-bold text-red-600 mt-1">{basicsValidation.fieldErrors.price}</p>
+                  ) : null}
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    className="w-full rounded-xl border border-border px-3 py-2 text-sm"
+                    value={minQty}
+                    onChange={(e) => setMinQty(e.target.value === '' ? '' : Number(e.target.value))}
+                    placeholder="Min qty"
+                    data-testid="listing-min-qty-input"
+                  />
+                  {basicsValidation.fieldErrors.min_qty ? (
+                    <p className="text-xs font-bold text-red-600 mt-1">{basicsValidation.fieldErrors.min_qty}</p>
+                  ) : null}
+                </div>
               </div>
               <ListingDescriptionInputWeb value={description} onChange={setDescription} />
             </div>
@@ -893,8 +941,8 @@ export default function CookListingsPage() {
             <ListingWizardMorphCtaWeb
               step={step}
               editing={!!editingId}
-              onPress={step >= 4 ? publish : () => goToStep(step + 1)}
-              disabled={step >= 4 && saving}
+              onPress={step >= 4 ? publish : advanceStep}
+              disabled={(step < 4 && step === 1 && !basicsValidation.valid) || (step >= 4 && saving)}
               testID={step >= 4 ? 'listing-wizard-publish' : `listing-wizard-next-step${step}`}
               showChevron={step < 4}
             />

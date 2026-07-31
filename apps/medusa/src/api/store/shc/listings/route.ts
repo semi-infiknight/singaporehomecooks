@@ -41,7 +41,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const priceCents = listingPriceCents(parse.data);
     const metaService: ShcProductMetaModuleService = req.scope.resolve("shcProductMeta") as any;
     const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
-    const meta = await metaService.upsertProductMeta({
+    const metaPayload: Record<string, unknown> = {
       product_id: productId,
       cook_id: cookId,
       name: parse.data.name,
@@ -55,12 +55,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       ingredients: parse.data.ingredients || [],
       min_qty: parse.data.min_qty,
       price_cents: priceCents,
-      image_url: parse.data.image_url,
-      last_minute_premium_pct: parse.data.last_minute_premium_pct ?? null,
       meal_extras: parse.data.meal_extras ?? [],
       meal_addons: parse.data.meal_addons ?? [],
       recipe_steps: parse.data.recipe_steps ?? [],
-    } as any);
+    };
+    if (parse.data.image_url) metaPayload.image_url = parse.data.image_url;
+    if (parse.data.last_minute_premium_pct != null) {
+      metaPayload.last_minute_premium_pct = parse.data.last_minute_premium_pct;
+    }
+    const meta = await metaService.upsertProductMeta(metaPayload as any);
     await availService.upsertAvailability({
       product_id: productId,
       portions_per_day: parse.data.portions_per_day ?? 18,

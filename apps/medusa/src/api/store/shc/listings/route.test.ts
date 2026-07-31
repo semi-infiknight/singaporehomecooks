@@ -80,6 +80,45 @@ describe("POST /store/shc/listings", () => {
     expect(savedMeta.recipe_steps).toHaveLength(1);
     expect(res.body.product.name).toBe("Launch Laksa");
     expect(res.body.product.price).toBe(18);
+    expect(savedMeta.last_minute_premium_pct).toBeUndefined();
+  });
+
+  it("creates listing without last_minute_premium_pct (no null 500)", async () => {
+    const token = signShcToken({ actor_type: "cook", actor_id: "cook_1", shc: true });
+    let savedMeta: any;
+    const req: any = {
+      headers: { authorization: `Bearer ${token}` },
+      body: {
+        name: "Plain Curry",
+        price: 16,
+        min_qty: 2,
+        cuisine: "Indian",
+        allergen_tiers: { tier1: [], tier2: [], tier3: [] },
+      },
+      scope: {
+        resolve(name: string) {
+          if (name === "shcProductMeta") {
+            return {
+              upsertProductMeta: async (meta: any) => {
+                savedMeta = meta;
+                return meta;
+              },
+            };
+          }
+          if (name === "shcAvailability") {
+            return { upsertAvailability: async () => ({}), getAvailability: async () => null };
+          }
+          if (name === "shcCook") {
+            return { listAndCountCooks: async () => [[{ id: "cook_1", slug: "rose", display_name: "Rose" }]] };
+          }
+          throw new Error(`Unknown dependency ${name}`);
+        },
+      },
+    };
+    const res = makeRes();
+    await POST(req, res);
+    expect(res.statusCode).toBe(201);
+    expect(savedMeta.last_minute_premium_pct).toBeUndefined();
   });
 });
 

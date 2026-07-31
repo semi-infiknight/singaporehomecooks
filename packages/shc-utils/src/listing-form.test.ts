@@ -9,6 +9,7 @@ import {
   resolveDefaultBatchCollectionSlot,
   resolveCookCollectionTimeSlots,
   normalizeCookCollectionTimeSlots,
+  validateCookListingDraft,
 } from './listing-form';
 
 describe('listing-form', () => {
@@ -33,6 +34,34 @@ describe('listing-form', () => {
     expect(payload.allergen_tiers).toEqual({ tier1: ['Shellfish'], tier2: [], tier3: [] });
     expect(payload.portions_per_day).toBe(12);
     expect(payload.last_minute_premium_pct).toBe(10);
+  });
+
+  it('rejects invalid listing draft', () => {
+    const bad = validateCookListingDraft({ name: 'ab', price: 0, min_qty: 0 });
+    expect(bad.valid).toBe(false);
+    expect(bad.fieldErrors.name).toBeTruthy();
+    expect(bad.fieldErrors.price).toBeTruthy();
+    expect(bad.fieldErrors.min_qty).toBeTruthy();
+    const ok = validateCookListingDraft({ name: 'Laksa', price: 14, min_qty: 4 });
+    expect(ok.valid).toBe(true);
+  });
+
+  it('omits last_minute_premium_pct when unset in payload', () => {
+    const payload = buildCookListingPayload({
+      name: 'Laksa',
+      price: 14,
+      min_qty: 4,
+      cuisine: 'Peranakan',
+      occasion_tags: [],
+      ingredients: [],
+      allergen_tiers: emptyAllergenTiers(),
+      halal: false,
+      portions_per_day: 12,
+      collection_days: [1, 2, 3, 4, 5],
+      time_slots: ['17:00-19:00'],
+      last_minute_premium_pct: null,
+    });
+    expect(payload.last_minute_premium_pct).toBeUndefined();
   });
 
   it('toggles allergens and collection days', () => {

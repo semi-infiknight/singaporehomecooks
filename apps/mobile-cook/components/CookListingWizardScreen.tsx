@@ -56,6 +56,8 @@ import {
   recipeStepsFromListing,
   defaultListingOccasionTag,
   listingOccasionTagOptions,
+  validateCookListingDraft,
+  validateCookListingWizardStep,
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -354,18 +356,44 @@ export function CookListingWizardScreen({
   const toggleTag = (t: string) =>
     setOccasionTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
+  const basicsDraft = useMemo(
+    () => ({
+      name,
+      price: price ?? 0,
+      min_qty: minQty ?? 0,
+    }),
+    [name, price, minQty]
+  );
+
+  const basicsValidation = useMemo(() => validateCookListingDraft(basicsDraft), [basicsDraft]);
+
+  const advanceStep = () => {
+    const gate = validateCookListingWizardStep(step, basicsDraft);
+    if (!gate.ok) {
+      showErrorTray('Complete dish basics', gate.message || 'Fix the highlighted fields.');
+      return;
+    }
+    goToStep(step + 1);
+  };
+
   const publish = async () => {
     if (publishing) return;
     if (!user?.id) {
       showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
     }
+    const validation = validateCookListingDraft(basicsDraft);
+    if (!validation.valid) {
+      showErrorTray('Cannot publish yet', validation.errors.join(' '));
+      if (step !== 1) goToStep(1);
+      return;
+    }
     setPublishing(true);
     const input = buildCookListingPayload({
-      name,
+      name: name.trim(),
       description,
-      price: price ?? 0,
-      min_qty: minQty ?? 0,
+      price: price as number,
+      min_qty: minQty as number,
       cuisine,
       occasion_tags: occasionTags,
       ingredients,
@@ -443,7 +471,10 @@ export function CookListingWizardScreen({
         {step === 1 && (
           <ListingWizardStep step={1} title="Dish Basics">
             <SHCFoodImage uri={previewImage} height={100} rounded={shcRadii.md} />
-            <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} />
+            <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} testID="listing-name-input" />
+            {basicsValidation.fieldErrors.name ? (
+              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.name}</Text>
+            ) : null}
             <TextInput
               value={price != null ? String(price) : ''}
               onChangeText={(t) => {
@@ -458,7 +489,11 @@ export function CookListingWizardScreen({
               keyboardType="numeric"
               placeholder="Price S$"
               style={inputStyle}
+              testID="listing-price-input"
             />
+            {basicsValidation.fieldErrors.price ? (
+              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.price}</Text>
+            ) : null}
             <TextInput
               value={minQty != null ? String(minQty) : ''}
               onChangeText={(t) => {
@@ -473,7 +508,11 @@ export function CookListingWizardScreen({
               keyboardType="numeric"
               placeholder="Min Qty"
               style={inputStyle}
+              testID="listing-min-qty-input"
             />
+            {basicsValidation.fieldErrors.min_qty ? (
+              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.min_qty}</Text>
+            ) : null}
             <SHCListingDescriptionInput value={description} onChange={setDescription} />
           </ListingWizardStep>
         )}
@@ -661,8 +700,8 @@ export function CookListingWizardScreen({
           <ListingWizardMorphCta
             step={step}
             editing={!!editingId}
-            onPress={step >= 4 ? publish : () => goToStep(step + 1)}
-            disabled={step >= 4 && publishing}
+            onPress={step >= 4 ? publish : advanceStep}
+            disabled={(step < 4 && step === 1 && !basicsValidation.valid) || (step >= 4 && publishing)}
             testID={step >= 4 ? 'listing-wizard-publish' : `listing-wizard-next-step${step}`}
             showChevron={step < 4}
           />
@@ -723,6 +762,7 @@ const styles = StyleSheet.create({
   photoPanelHint: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginBottom: 4 },
   photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoNote: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
+  fieldError: { fontSize: 12, fontWeight: '700', color: '#b91c1c', marginTop: -4, marginBottom: shcSpacing.sm },
   photoOffline: {
     fontSize: 11,
     fontWeight: '700',

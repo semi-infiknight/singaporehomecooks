@@ -206,3 +206,53 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.recipe_steps?.length) payload.recipe_steps = recipeStepsToApiPayload(draft.recipe_steps);
   return payload;
 }
+
+export type CookListingFieldErrors = {
+  name?: string;
+  price?: string;
+  min_qty?: string;
+};
+
+export type CookListingValidationResult = {
+  valid: boolean;
+  errors: string[];
+  fieldErrors: CookListingFieldErrors;
+};
+
+/** Client-side gate before publish or leaving step 1. */
+export function validateCookListingDraft(
+  draft: Pick<CookListingFormDraft, 'name' | 'price' | 'min_qty'>
+): CookListingValidationResult {
+  const errors: string[] = [];
+  const fieldErrors: CookListingFieldErrors = {};
+  const name = String(draft.name || '').trim();
+  if (name.length < 3) {
+    const msg = 'Dish name must be at least 3 characters.';
+    errors.push(msg);
+    fieldErrors.name = msg;
+  }
+  const price = Number(draft.price);
+  if (!Number.isFinite(price) || price <= 0) {
+    const msg = 'Enter a price greater than S$0.';
+    errors.push(msg);
+    fieldErrors.price = msg;
+  }
+  const minQty = Number(draft.min_qty);
+  if (!Number.isFinite(minQty) || minQty < 1 || !Number.isInteger(minQty)) {
+    const msg = 'Minimum order must be at least 1 serving.';
+    errors.push(msg);
+    fieldErrors.min_qty = msg;
+  }
+  return { valid: errors.length === 0, errors, fieldErrors };
+}
+
+export function validateCookListingWizardStep(
+  step: number,
+  draft: Pick<CookListingFormDraft, 'name' | 'price' | 'min_qty'>
+): { ok: boolean; message?: string } {
+  if (step === 1) {
+    const result = validateCookListingDraft(draft);
+    return { ok: result.valid, message: result.errors[0] };
+  }
+  return { ok: true };
+}
