@@ -50,9 +50,6 @@ appId: com.singaporehomecooks.customer
     id: "request-guests-8"
     optional: true
 - tapOn:
-    id: "request-budget-120"
-    optional: true
-- tapOn:
     id: "submit-request-btn"
 - extendedWaitUntil:
     visible:

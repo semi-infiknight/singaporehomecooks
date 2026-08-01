@@ -788,7 +788,7 @@ export function RequestDishForm({
   onSubmit,
   onClose,
 }: {
-  onSubmit: (data: { body: string; youtube_url?: string; party_size?: number; budget_cents?: number; date?: string }) => void;
+  onSubmit: (data: { body: string; youtube_url?: string; party_size?: number; date?: string }) => void;
   onClose?: () => void;
 }) {
   return (

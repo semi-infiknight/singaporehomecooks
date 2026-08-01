@@ -17,7 +17,6 @@ export type RequestDishPayload = {
   youtube_url?: string;
   party_size?: number;
   guest_count?: number;
-  budget_cents?: number;
   date?: string;
   occasion?: string;
 };
@@ -30,7 +29,6 @@ const STEPS = [
 ];
 
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
-const BUDGET_PRESETS = [80, 120, 150, 200];
 
 function defaultDate() {
   const d = new Date();
@@ -65,7 +63,6 @@ export function RequestDishExperience({
   ]);
   const [youtube, setYoutube] = React.useState('');
   const [guestCount, setGuestCount] = React.useState(8);
-  const [budget, setBudget] = React.useState(120);
   const [date, setDate] = React.useState(defaultDate);
 
   React.useEffect(() => {
@@ -84,7 +81,7 @@ export function RequestDishExperience({
       : step === 2
         ? dishLines.some((l) => l.name.trim().length >= 2)
         : step === 3
-          ? guestCount >= 2 && budget >= 20 && /^\d{4}-\d{2}-\d{2}$/.test(date)
+          ? guestCount >= 2 && /^\d{4}-\d{2}-\d{2}$/.test(date)
           : body.length >= 10;
 
   const goNext = () => {
@@ -104,7 +101,6 @@ export function RequestDishExperience({
         youtube_url: youtube.trim() || undefined,
         party_size: dishLines[0]?.servings,
         guest_count: guestCount,
-        budget_cents: Math.round(budget * 100),
         date,
         occasion,
       });
@@ -170,7 +166,7 @@ export function RequestDishExperience({
               <Text style={{ fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.9)', marginTop: 6 }}>
                 {step === 1 && 'Pick an occasion and optional context'}
                 {step === 2 && 'Add each dish with servings — cooks quote per line'}
-                {step === 3 && 'Guest count, budget, date, and optional YouTube'}
+                {step === 3 && 'Guest count, date, and optional YouTube'}
                 {step === 4 && 'Review before cooks send quotes'}
               </Text>
             </SHCFadeIn>
@@ -283,17 +279,9 @@ export function RequestDishExperience({
                   keyboardType="url"
                   placeholder="https://youtube.com/watch?v=…"
                   placeholderTextColor={shcColors.textLight}
-                  style={inputSingle}
+                  style={[inputSingle, { marginBottom: shcSpacing.md }]}
                   testID="request-yt"
                 />
-                <Text style={labelStyle}>Budget (S$)</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.md }}>
-                  {BUDGET_PRESETS.map((b) => (
-                    <Pressable key={b} onPress={() => setBudget(b)} style={chipStyle(budget === b)} testID={`request-budget-${b}`}>
-                      <Text style={chipText(budget === b)}>S${b}</Text>
-                    </Pressable>
-                  ))}
-                </View>
                 <Text style={labelStyle}>Collection date</Text>
                 <TextInput
                   value={date}
@@ -326,10 +314,6 @@ export function RequestDishExperience({
                     <View style={reviewPill}>
                       <SHCIcon name="people" size={14} color={shcColors.text} />
                       <Text style={reviewPillText}>{dishLines.length} dishes · {totalServings} servings · {guestCount} guests</Text>
-                    </View>
-                    <View style={reviewPill}>
-                      <SHCIcon name="credits" size={14} color={shcColors.text} />
-                      <Text style={reviewPillText}>S${budget}</Text>
                     </View>
                     <View style={reviewPill}>
                       <SHCIcon name="orders" size={14} color={shcColors.text} />

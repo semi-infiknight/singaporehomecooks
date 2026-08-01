@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Users, Wallet, Calendar } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Users, Calendar } from 'lucide-react';
 import {
   BENTO_ACTION_IMAGES,
   getOccasionImageUrl,
@@ -22,7 +22,6 @@ import { useCustomerConfig } from '../../lib/useCustomerConfig';
 import { SHCButton, SHCCard, SHCSectionTitle, SHCSkeletonList } from '../components/SHCWebComponents';
 
 const PARTY_PRESETS = [4, 6, 8, 10, 12];
-const BUDGET_PRESETS = [80, 120, 150, 200];
 const STEPS = ['Occasion', 'Dishes', 'Gathering', 'Review'];
 
 function defaultDate() {
@@ -48,7 +47,6 @@ export default function RequestDishPage() {
   ]);
   const [youtube, setYoutube] = useState('');
   const [guestCount, setGuestCount] = useState(8);
-  const [budget, setBudget] = useState(120);
   const [date, setDate] = useState(defaultDate);
   const [featureLoading, setFeatureLoading] = useState(true);
   const [requestDishEnabled, setRequestDishEnabled] = useState(true);
@@ -87,7 +85,7 @@ export default function RequestDishPage() {
       : step === 2
         ? dishLines.some((l) => l.name.trim().length >= 2)
         : step === 3
-          ? guestCount >= 2 && budget >= 20
+          ? guestCount >= 2
           : body.length >= 10;
 
   const handlePost = async () => {
@@ -106,7 +104,6 @@ export default function RequestDishPage() {
       youtube_url: youtube.trim() || undefined,
       party_size: items[0]?.servings,
       guest_count: guestCount,
-      budget_cents: Math.round(budget * 100),
       date,
     });
     setRequestId((req as { id?: string })?.id);
@@ -182,7 +179,7 @@ export default function RequestDishPage() {
             <p className="text-sm md:text-base font-semibold text-white/90 mt-2 max-w-xl">
               {step === 1 && 'Pick an occasion and optional context'}
               {step === 2 && 'Add each dish with servings — cooks quote per line'}
-              {step === 3 && 'Guest count, budget, date, and optional YouTube'}
+              {step === 3 && 'Guest count, date, and optional YouTube'}
               {step === 4 && 'Review before cooks send quotes'}
             </p>
           </div>
@@ -317,21 +314,6 @@ export default function RequestDishPage() {
                 </button>
               ))}
             </div>
-            <SHCSectionTitle>Budget (S$)</SHCSectionTitle>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {BUDGET_PRESETS.map((b) => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setBudget(b)}
-                  className={`px-4 py-2 rounded-full text-sm font-bold border-2 border-[var(--shc-border-brutal)] ${
-                    budget === b ? 'bg-primary text-primary-foreground' : 'bg-card'
-                  }`}
-                >
-                  S${b}
-                </button>
-              ))}
-            </div>
             <label className="block text-sm font-bold mb-2">YouTube URL (optional)</label>
             <input
               value={youtube}
@@ -371,9 +353,6 @@ export default function RequestDishPage() {
               <div className="flex flex-wrap gap-2 mt-4">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card text-xs font-bold">
                   <Users className="w-3.5 h-3.5" /> {shcGuestCountBadgeLabel(guestCount)}
-                </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card text-xs font-bold">
-                  <Wallet className="w-3.5 h-3.5" /> S${budget}
                 </span>
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full border-2 border-[var(--shc-border-brutal)] bg-card text-xs font-bold">
                   <Calendar className="w-3.5 h-3.5" /> {date}

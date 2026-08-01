@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { CUSTOM_REQUEST_COPY, formatQuoteTotal, parseCustomRequestDisplay, shcGuestCountBadgeLabel, shcServingsBadgeLabel, getDishImageUrl } from '@shc/utils';
+import { CUSTOM_REQUEST_COPY, parseCustomRequestDisplay, shcGuestCountBadgeLabel, shcServingsBadgeLabel, getDishImageUrl } from '@shc/utils';
 import { useCustomRequest, useBids, useAcceptBid } from '../../../lib/useOrder';
 import {
   GourmeatScreenHeader,
@@ -70,9 +70,6 @@ export default function CustomRequestDetailPage() {
           </SHCBadge>
           <div className="flex flex-wrap gap-2 mt-3 mb-4">
             {parsed.guest_count ? <SHCMetaBadge kind="party_size">{shcGuestCountBadgeLabel(parsed.guest_count)}</SHCMetaBadge> : null}
-            {parsed.budget_cents != null ? (
-              <SHCMetaBadge kind="price">Budget {formatQuoteTotal(parsed.budget_cents)}</SHCMetaBadge>
-            ) : null}
             {parsed.date ? <SHCMetaBadge kind="date">{parsed.date}</SHCMetaBadge> : null}
           </div>
 

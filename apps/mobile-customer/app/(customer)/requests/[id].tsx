@@ -18,7 +18,6 @@ import {
 } from '@shc/ui';
 import {
   CUSTOM_REQUEST_COPY,
-  formatQuoteTotal,
   parseCustomRequestDisplay,
   shcGuestCountBadgeLabel,
 } from '@shc/utils';
@@ -76,9 +75,6 @@ export default function CustomRequestDetail() {
             <View style={styles.metaRow}>
               {parsed.guest_count ? (
                 <SHCMetaBadge kind="party_size">{shcGuestCountBadgeLabel(parsed.guest_count)}</SHCMetaBadge>
-              ) : null}
-              {parsed.budget_cents != null ? (
-                <SHCMetaBadge kind="price">Budget {formatQuoteTotal(parsed.budget_cents)}</SHCMetaBadge>
               ) : null}
               {parsed.date ? <SHCMetaBadge kind="date">{parsed.date}</SHCMetaBadge> : null}
             </View>

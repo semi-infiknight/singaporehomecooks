@@ -44,7 +44,7 @@ type RequestRow = {
   body?: string;
   status?: string;
   party_size?: number;
-  budget_cents?: number;
+  date?: string;
 };
 
 type BidRow = {
@@ -68,10 +68,8 @@ function MyRequestCard({ request }: { request: RequestRow }) {
         </SHCBadge>
       </div>
       <p className="text-xs text-muted-foreground font-semibold mb-3">
-        {request.party_size ? `${request.party_size} pax · ` : ''}
-        {request.budget_cents
-          ? `Budget S$${Math.round(request.budget_cents / 100)}`
-          : 'Open budget'}
+        {request.party_size ? `${request.party_size} pax` : 'Custom request'}
+        {request.date ? ` · ${request.date}` : ''}
       </p>
       {pendingBids.length === 0 ? (
         <p className="text-sm text-muted-foreground">No pending bids yet. Cooks respond from their dashboard.</p>

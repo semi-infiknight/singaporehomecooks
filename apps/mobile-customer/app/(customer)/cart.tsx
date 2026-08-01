@@ -54,8 +54,8 @@ function MyRequestCard({ request }: { request: any }) {
         <SHCBadge variant={request.status === 'matched' ? 'success' : 'warning'}>{request.status}</SHCBadge>
       </View>
       <Text style={styles.requestMeta}>
-        {request.party_size ? `${request.party_size} pax · ` : ''}
-        {request.budget_cents ? `Budget S$${Math.round(request.budget_cents / 100)}` : 'Open budget'}
+        {request.party_size ? `${request.party_size} pax` : 'Custom request'}
+        {request.date ? ` · ${request.date}` : ''}
       </Text>
       {pendingBids.length === 0 && (
         <Text style={styles.requestEmpty}>No pending bids yet. Cooks will respond from their dashboard.</Text>
