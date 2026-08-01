@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { gourmeatColors, SHCSkeletonList, SHCButton, SHCButtonText, shcSpacing, shcRadii } from '@shc/ui';
 import { normalizeRouteParam, resolveCookListingById } from '@shc/utils';
 import { useCookListings } from '../../../hooks/useProducts';
-import { CookListingWizardScreen } from '../../../components/CookListingWizardScreen';
+import { CookListingEditScreen } from '../../../components/CookListingEditScreen';
 
 export default function EditListingScreen() {
   const router = useRouter();
@@ -57,9 +57,9 @@ export default function EditListingScreen() {
   }
 
   return (
-    <CookListingWizardScreen
-      editingId={listingId}
-      initialListing={listing}
+    <CookListingEditScreen
+      listingId={listingId}
+      initialListing={listing as Record<string, unknown>}
       onExit={() => router.back()}
     />
   );

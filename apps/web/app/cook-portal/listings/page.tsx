@@ -371,9 +371,8 @@ export default function CookListingsPage() {
           ? { calories: listing.calories, confidence: listing.calories_confidence || 'category', source: 'saved' }
           : null
       );
-      goToStep(1);
     },
-    [goToStep]
+    []
   );
 
   useEffect(() => {
@@ -694,13 +693,20 @@ export default function CookListingsPage() {
 
       <div ref={wizardRef}>
         <SHCSectionTitle>{editingId ? 'Edit listing' : 'New listing'}</SHCSectionTitle>
-        <SHCWizardProgressWeb step={step} />
+        {editingId ? (
+          <p className="text-xs font-semibold text-muted-foreground mb-3" data-testid="cook-listing-edit-form">
+            Update everything below, then save.
+          </p>
+        ) : (
+          <SHCWizardProgressWeb step={step} />
+        )}
       </div>
 
       <GourmeatCard>
-        <SHCWizardPaneWeb stepKey={step}>
-          {step === 1 && (
+        <SHCWizardPaneWeb stepKey={editingId ? 'edit' : step}>
+          {(editingId || step === 1) && (
             <div className="space-y-3" data-testid="listing-wizard-step1">
+              {editingId ? <p className="text-sm font-extrabold text-foreground">Dish basics</p> : null}
               <div className="relative h-28 rounded-xl overflow-hidden">
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
               </div>
@@ -746,8 +752,9 @@ export default function CookListingsPage() {
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-3" data-testid="listing-wizard-step2">
+          {(editingId || step === 2) && (
+            <div className={`space-y-3 ${editingId ? 'mt-6' : ''}`} data-testid="listing-wizard-step2">
+              {editingId ? <p className="text-sm font-extrabold text-foreground">Cuisine & allergens</p> : null}
               <div className="relative h-20 rounded-xl overflow-hidden">
                 <Image
                   src={CUISINE_IMAGE[cuisine as keyof typeof CUISINE_IMAGE] || BENTO_ACTION_IMAGES.listings}
@@ -798,8 +805,9 @@ export default function CookListingsPage() {
             </div>
           )}
 
-          {step === 3 && (
-            <div className="space-y-3" data-testid="listing-wizard-step3">
+          {(editingId || step === 3) && (
+            <div className={`space-y-3 ${editingId ? 'mt-6' : ''}`} data-testid="listing-wizard-step3">
+              {editingId ? <p className="text-sm font-extrabold text-foreground">Ingredients, photo & options</p> : null}
               <IngredientsEditorWeb value={ingredients} onChange={setIngredients} />
               <SHCButton
                 variant="outline"
@@ -896,7 +904,7 @@ export default function CookListingsPage() {
             </div>
           )}
 
-          {step === 4 && (
+          {!editingId && step === 4 && (
             <div className="space-y-3" data-testid="listing-wizard-step4">
               <div className="relative h-32 rounded-xl overflow-hidden">
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
@@ -916,9 +924,6 @@ export default function CookListingsPage() {
               <p className="text-xs text-muted-foreground">
                 Pause or unpause this dish from My Listings when you want it off the menu.
               </p>
-              {editingId ? (
-                <GourmeatPrimaryButton label="Cancel edit" onClick={resetWizard} />
-              ) : null}
               {published ? (
                 <p className="text-sm font-bold text-[var(--shc-success)]">
                   Live: {String(published.name || name)}
@@ -926,8 +931,48 @@ export default function CookListingsPage() {
               ) : null}
             </div>
           )}
+
+          {editingId ? (
+            <div className="mt-6 space-y-3" data-testid="listing-edit-review">
+              <p className="text-sm font-extrabold text-foreground">Earnings preview</p>
+              <div className="relative h-32 rounded-xl overflow-hidden">
+                <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
+                <div className="absolute inset-0 bg-black/35 flex items-end p-3 gap-2">
+                  <p className="text-white font-extrabold flex-1">{name}</p>
+                  <SHCMetaBadge kind="price">{typeof price === 'number' ? `S$${price}` : 'Price TBD'}</SHCMetaBadge>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Earnings preview: S$
+                {cookEarningsPreviewFromDollars(
+                  (typeof price === 'number' ? price : 0) * (typeof minQty === 'number' ? minQty : 0),
+                  commissionRate
+                )}{' '}
+                per minimum order
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Pause or unpause this dish from My Listings when you want it off the menu.
+              </p>
+            </div>
+          ) : null}
         </SHCWizardPaneWeb>
 
+        {editingId ? (
+          <div className="flex gap-2 mt-4">
+            <GourmeatPrimaryButton
+              label="Cancel"
+              variant="outline"
+              onClick={resetWizard}
+              testID="listing-edit-cancel"
+            />
+            <GourmeatPrimaryButton
+              label={saving ? 'Saving…' : 'Save changes'}
+              onClick={publish}
+              disabled={saving || !basicsValidation.valid}
+              testID="listing-edit-save"
+            />
+          </div>
+        ) : (
         <div className={`flex gap-2 mt-4 ${step === 1 ? '' : ''}`}>
           {step > 1 && step <= 4 ? (
             <SHCButton variant="outline" onClick={() => goToStep(step - 1)} testID={`listing-wizard-back-step${step}`}>
@@ -945,6 +990,7 @@ export default function CookListingsPage() {
             />
           </div>
         </div>
+        )}
       </GourmeatCard>
 
       <SHCCelebrationWeb

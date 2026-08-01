@@ -1,5 +1,12 @@
 import type { IngredientDraft, MealOptionDraft, RecipeStepDraft } from './product-meta-form';
-import { ingredientsToApiPayload, mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
+import {
+  ingredientsToApiPayload,
+  mealOptionsFromListing,
+  mealOptionsToApiPayload,
+  normalizeIngredients,
+  recipeStepsFromListing,
+  recipeStepsToApiPayload,
+} from './product-meta-form';
 
 /** Shared cook listing wizard defaults + helpers (tri-platform). */
 
@@ -176,6 +183,41 @@ export type CookListingFormDraft = {
   meal_addons?: MealOptionDraft[];
   recipe_steps?: RecipeStepDraft[];
 };
+
+/** Hydrate a cook listing API row into a full form draft (edit screen). */
+export function cookListingToFormDraft(listing: Record<string, unknown>): CookListingFormDraft {
+  const avail = availabilityFromListing(
+    listing.shc_availability as Partial<ListingAvailabilityDraft> | null | undefined
+  );
+  const mealMeta = mealOptionsFromListing(listing as Parameters<typeof mealOptionsFromListing>[0]);
+  const ingredientsRaw = listing.ingredients as IngredientDraft[] | undefined;
+  return {
+    name: String(listing.name || 'Dish'),
+    description: String(listing.description || ''),
+    price: Number(listing.price) || 12,
+    min_qty: Number(listing.min_qty) || 4,
+    cuisine: String(listing.cuisine || 'Singapore'),
+    halal: !!listing.halal,
+    allergen_tiers: allergenTiersFromListing(
+      listing.allergen_tiers as Partial<AllergenTiers> | null | undefined
+    ),
+    allergen_none_confirmed: false,
+    portions_per_day: avail.portions_per_day,
+    collection_days: avail.collection_days,
+    time_slots: avail.time_slots,
+    occasion_tags: Array.isArray(listing.occasion_tags) ? (listing.occasion_tags as string[]) : [],
+    ingredients: normalizeIngredients(
+      ingredientsRaw?.length ? ingredientsRaw : [{ name: 'Chicken' }]
+    ),
+    meal_extras: mealMeta.extras,
+    meal_addons: mealMeta.addons,
+    recipe_steps: recipeStepsFromListing(listing as Parameters<typeof recipeStepsFromListing>[0]),
+    image_url: listing.image_url ? String(listing.image_url) : undefined,
+    calories: listing.calories != null ? Number(listing.calories) : undefined,
+    calories_confidence:
+      listing.calories_confidence != null ? String(listing.calories_confidence) : undefined,
+  };
+}
 
 /** Minimum order value (price × min_qty) for a publishable listing. */
 export const MIN_LISTING_ORDER_VALUE_SGD = 50;
