@@ -8,7 +8,6 @@ import {
   SHCButton,
   SHCButtonText,
   ListingWizardStep,
-  IngredientTierEditor,
   PriceEarningsCalc,
   SHCSectionTitle,
   SHCFoodImage,
@@ -37,6 +36,7 @@ import {
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
+  SHCIngredientsEditor,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -563,7 +563,7 @@ export function CookListingWizardScreen({
 
         {step === 3 && (
           <ListingWizardStep step={3} title="Ingredients & photo">
-            <IngredientTierEditor value={ingredients} onChange={setIngredients} />
+            <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
             <SHCButton
               variant="outline"
               onPress={async () => {

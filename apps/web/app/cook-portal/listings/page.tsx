@@ -64,6 +64,7 @@ import {
   CalorieBadge,
   AllergenTierPickerWeb,
   HalalToggleWeb,
+  IngredientsEditorWeb,
   ListingDescriptionInputWeb,
   MealExtrasEditorWeb,
   MealAddonsEditorWeb,
@@ -798,41 +799,7 @@ export default function CookListingsPage() {
 
           {step === 3 && (
             <div className="space-y-3" data-testid="listing-wizard-step3">
-              <div className="grid grid-cols-3 gap-2">
-                <input
-                  className="col-span-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold"
-                  placeholder="Ingredient name"
-                  value={ingredients[0]?.name || ''}
-                  onChange={(e) =>
-                    setIngredients([{ name: e.target.value, quantity: ingredients[0]?.quantity || 100, unit: ingredients[0]?.unit || 'g' }])
-                  }
-                  data-testid="listing-ingredient-name"
-                />
-                <input
-                  className="rounded-xl border border-border px-3 py-2 text-sm font-semibold"
-                  placeholder="Qty"
-                  type="number"
-                  value={ingredients[0]?.quantity || ''}
-                  onChange={(e) =>
-                    setIngredients([
-                      {
-                        name: ingredients[0]?.name || '',
-                        quantity: Number(e.target.value) || 0,
-                        unit: ingredients[0]?.unit || 'g',
-                      },
-                    ])
-                  }
-                  data-testid="listing-ingredient-qty"
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm font-bold">
-                <input
-                  type="checkbox"
-                  checked={allergenNoneConfirmed}
-                  onChange={(e) => setAllergenNoneConfirmed(e.target.checked)}
-                />
-                No tier-1 allergens in this dish
-              </label>
+              <IngredientsEditorWeb value={ingredients} onChange={setIngredients} />
               <SHCButton
                 variant="outline"
                 onClick={async () => {

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   defaultMealAddonsDraft,
   defaultMealExtrasDraft,
+  addIngredientRow,
+  updateIngredientRow,
+  normalizeIngredients,
   mealOptionsFromListing,
   mealOptionsToApiPayload,
   normalizeMealOptions,
@@ -36,5 +39,15 @@ describe('product-meta-form', () => {
     expect(slugMealOptionId('Extra sambal', 0)).toBe('extra-sambal');
     expect(defaultMealExtrasDraft('Indian').length).toBeGreaterThan(0);
     expect(defaultMealAddonsDraft(false).some((a) => a.id === 'egg')).toBe(true);
+  });
+
+  it('normalizes and edits ingredient rows', () => {
+    expect(normalizeIngredients([{ name: '  Coconut milk ', quantity: 200, unit: 'ml' }])).toEqual([
+      { name: 'Coconut milk', quantity: 200, unit: 'ml' },
+    ]);
+    const rows = addIngredientRow([]);
+    expect(rows).toHaveLength(1);
+    const updated = updateIngredientRow(rows, 0, { name: 'Prawns', quantity: 6, unit: 'pcs' });
+    expect(updated[0]).toEqual({ name: 'Prawns', quantity: 6, unit: 'pcs' });
   });
 });

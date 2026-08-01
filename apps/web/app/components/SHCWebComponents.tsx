@@ -56,12 +56,18 @@ import {
   type AllergenTiers,
   addMealOptionRow,
   addRecipeStepRow,
+  addIngredientRow,
   removeMealOptionRow,
   removeRecipeStepRow,
+  removeIngredientRow,
   updateMealOptionRow,
   updateRecipeStepRow,
+  updateIngredientRow,
+  defaultIngredientRow,
+  INGREDIENT_UNIT_PRESETS,
   type MealOptionDraft,
   type RecipeStepDraft,
+  type IngredientDraft,
   shcBadgeVariant,
   type ShcBadgeSemanticKind,
   shcOrderStatusBadgeVariant,
@@ -5026,6 +5032,95 @@ function MealOptionsEditorWeb({
         data-testid={`${testID}-add`}
       >
         + Add option
+      </button>
+    </div>
+  );
+}
+
+function ingredientRowsForEditorWeb(value: IngredientDraft[]): IngredientDraft[] {
+  return value.length ? value : [defaultIngredientRow()];
+}
+
+export function IngredientsEditorWeb({
+  value,
+  onChange,
+  testID = 'listing-ingredients',
+}: {
+  value: IngredientDraft[];
+  onChange: (next: IngredientDraft[]) => void;
+  testID?: string;
+}) {
+  const rows = ingredientRowsForEditorWeb(value);
+  const patchRows = (next: IngredientDraft[]) => onChange(next);
+
+  return (
+    <div className="space-y-2" data-testid={testID}>
+      <p className="text-xs font-extrabold">Ingredients</p>
+      <p className="text-[11px] text-muted-foreground">
+        List what goes into this dish — families see this on the dish page.
+      </p>
+      {rows.map((row, index) => (
+        <div key={`ingredient-${index}`} className="rounded-xl border border-border p-3 space-y-2">
+          <input
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+            value={row.name}
+            onChange={(e) => patchRows(updateIngredientRow(rows, index, { name: e.target.value }))}
+            placeholder="e.g. Coconut milk"
+            data-testid={`${testID}-name-${index}`}
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0"
+              step="any"
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              value={row.quantity}
+              onChange={(e) =>
+                patchRows(updateIngredientRow(rows, index, { quantity: Number(e.target.value) || 0 }))
+              }
+              placeholder="Amount"
+              data-testid={`${testID}-qty-${index}`}
+            />
+            <input
+              className="w-20 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+              value={row.unit}
+              onChange={(e) => patchRows(updateIngredientRow(rows, index, { unit: e.target.value }))}
+              placeholder="Unit"
+              data-testid={`${testID}-unit-${index}`}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {INGREDIENT_UNIT_PRESETS.map((unit) => (
+              <button
+                key={unit}
+                type="button"
+                className={`text-[11px] px-2.5 py-1 rounded-full border font-bold ${
+                  row.unit === unit ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
+                }`}
+                onClick={() => patchRows(updateIngredientRow(rows, index, { unit }))}
+                data-testid={`${testID}-unit-preset-${unit}-${index}`}
+              >
+                {unit}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+            onClick={() => patchRows(removeIngredientRow(rows, index))}
+            data-testid={`${testID}-remove-${index}`}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+        onClick={() => patchRows(addIngredientRow(rows))}
+        data-testid={`${testID}-add`}
+      >
+        + Add ingredient
       </button>
     </div>
   );

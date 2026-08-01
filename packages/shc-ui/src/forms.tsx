@@ -1,29 +1,28 @@
 // @ts-nocheck -- RN JSX types resolution for shared lib (consumed by Expo mobile only); runtime correct.
 import React from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
-import { SHCCard, SHCButton, SHCButtonText, SHCSectionTitle } from './primitives';
-import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
+import { View, Text } from 'react-native';
+import { SHCCard } from './primitives';
+import { shcColors as colors } from './theme';
+import { SHCIngredientsEditor } from './product-meta-form';
 
 // Re-export improved AllergenAckCheckbox from domain for forms consumers
 export { AllergenAckCheckbox } from './domain';
 export { OccasionTagPicker } from './occasion-picker';
 
-export function IngredientTierEditor({ value, onChange, label = '3-Tier Ingredients (JSON-like array)' }: { value: Array<{name: string; quantity: number; unit: string}>; onChange: (v: any[]) => void; label?: string }) {
-  const [text, setText] = React.useState(JSON.stringify(value || [], null, 2));
+/** @deprecated Use SHCIngredientsEditor — kept for older imports. */
+export function IngredientTierEditor({
+  value,
+  onChange,
+  label,
+}: {
+  value: Array<{ name: string; quantity: number; unit: string }>;
+  onChange: (v: any[]) => void;
+  label?: string;
+}) {
   return (
     <View>
-      <Text style={{ fontWeight: '500', marginBottom: 4 }}>{label}</Text>
-      <TextInput
-        multiline
-        value={text}
-        onChangeText={setText}
-        onBlur={() => {
-          try { onChange(JSON.parse(text)); } catch {}
-        }}
-        style={{ height: 120, borderWidth: shcBorders.brutal, borderColor: colors.borderLight, borderRadius: shcRadii.md, padding: shcSpacing.sm, fontFamily: 'monospace', backgroundColor: colors.surface, color: colors.text }}
-        placeholder='[{"name":"Coconut milk","quantity":200,"unit":"ml"}, ...]'
-      />
-      <Text style={{ fontSize: 10, color: colors.textLight }}>Tier1 (mandatory allergens) disclosed to customer. Use for product-meta.ingredients</Text>
+      {label ? <Text style={{ fontWeight: '500', marginBottom: 4 }}>{label}</Text> : null}
+      <SHCIngredientsEditor value={value} onChange={onChange} testID="listing-ingredients" />
     </View>
   );
 }

@@ -15,6 +15,14 @@ export type RecipeStepDraft = {
   tip?: string;
 };
 
+export type IngredientDraft = {
+  name: string;
+  quantity: number;
+  unit: string;
+};
+
+export const INGREDIENT_UNIT_PRESETS = ['g', 'ml', 'pcs', 'tbsp', 'tsp', 'cup'] as const;
+
 export function slugMealOptionId(label: string, index: number): string {
   const slug = label
     .toLowerCase()
@@ -176,4 +184,52 @@ export function updateRecipeStepRow(
 
 export function removeRecipeStepRow(steps: RecipeStepDraft[], index: number): RecipeStepDraft[] {
   return normalizeRecipeSteps(steps.filter((_, i) => i !== index));
+}
+
+export function defaultIngredientRow(): IngredientDraft {
+  return { name: '', quantity: 100, unit: 'g' };
+}
+
+export function normalizeIngredients(
+  ingredients?: Array<Partial<IngredientDraft>> | null
+): IngredientDraft[] {
+  if (!Array.isArray(ingredients)) return [];
+  return ingredients
+    .map((row) => {
+      const name = String(row?.name || '').trim();
+      if (!name) return null;
+      const quantity = Number(row?.quantity);
+      const unit = String(row?.unit || 'g').trim() || 'g';
+      return {
+        name,
+        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 100,
+        unit,
+      };
+    })
+    .filter((row): row is IngredientDraft => row != null);
+}
+
+export function addIngredientRow(ingredients: IngredientDraft[]): IngredientDraft[] {
+  return [...ingredients, defaultIngredientRow()];
+}
+
+export function updateIngredientRow(
+  ingredients: IngredientDraft[],
+  index: number,
+  patch: Partial<IngredientDraft>
+): IngredientDraft[] {
+  const next = [...ingredients];
+  const current = next[index];
+  if (!current) return next;
+  next[index] = {
+    name: patch.name !== undefined ? patch.name : current.name,
+    quantity: patch.quantity !== undefined ? patch.quantity : current.quantity,
+    unit: patch.unit !== undefined ? patch.unit : current.unit,
+  };
+  return next;
+}
+
+export function removeIngredientRow(ingredients: IngredientDraft[], index: number): IngredientDraft[] {
+  const next = ingredients.filter((_, i) => i !== index);
+  return next.length ? next : [defaultIngredientRow()];
 }

@@ -4,12 +4,18 @@ import { View, Text, Pressable, TextInput } from 'react-native';
 import {
   addMealOptionRow,
   addRecipeStepRow,
+  addIngredientRow,
   removeMealOptionRow,
   removeRecipeStepRow,
+  removeIngredientRow,
   updateMealOptionRow,
   updateRecipeStepRow,
+  updateIngredientRow,
+  defaultIngredientRow,
+  INGREDIENT_UNIT_PRESETS,
   type MealOptionDraft,
   type RecipeStepDraft,
+  type IngredientDraft,
 } from '@shc/utils';
 import { shcColors as colors, shcSpacing, shcRadii, shcBorders } from './theme';
 import { SHCButton, SHCButtonText } from './primitives';
@@ -122,6 +128,106 @@ export function SHCMealAddonsEditor({
       onChange={onChange}
       testID={testID}
     />
+  );
+}
+
+function ingredientRowsForEditor(value: IngredientDraft[]): IngredientDraft[] {
+  return value.length ? value : [defaultIngredientRow()];
+}
+
+export function SHCIngredientsEditor({
+  value,
+  onChange,
+  testID = 'listing-ingredients',
+}: {
+  value: IngredientDraft[];
+  onChange: (next: IngredientDraft[]) => void;
+  testID?: string;
+}) {
+  const rows = ingredientRowsForEditor(value);
+  const patchRows = (next: IngredientDraft[]) => onChange(next);
+
+  return (
+    <View testID={testID}>
+      <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Ingredients</Text>
+      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 2, marginBottom: shcSpacing.xs }}>
+        List what goes into this dish — families see this on the dish page.
+      </Text>
+      {rows.map((row, index) => (
+        <View key={`ingredient-${index}`} style={{ marginBottom: shcSpacing.sm }}>
+          <TextInput
+            style={[fieldStyle, { marginBottom: 6 }]}
+            value={row.name}
+            onChangeText={(text) => patchRows(updateIngredientRow(rows, index, { name: text }))}
+            placeholder="e.g. Coconut milk"
+            testID={`${testID}-name-${index}`}
+          />
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+            <TextInput
+              style={[fieldStyle, { flex: 1 }]}
+              value={String(row.quantity)}
+              onChangeText={(text) =>
+                patchRows(updateIngredientRow(rows, index, { quantity: Number(text) || 0 }))
+              }
+              keyboardType="decimal-pad"
+              placeholder="Amount"
+              testID={`${testID}-qty-${index}`}
+            />
+            <TextInput
+              style={[fieldStyle, { width: 72 }]}
+              value={row.unit}
+              onChangeText={(text) => patchRows(updateIngredientRow(rows, index, { unit: text }))}
+              placeholder="Unit"
+              testID={`${testID}-unit-${index}`}
+            />
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+            {INGREDIENT_UNIT_PRESETS.map((unit) => (
+              <Pressable
+                key={unit}
+                onPress={() => patchRows(updateIngredientRow(rows, index, { unit }))}
+                style={{
+                  borderWidth: shcBorders.brutal,
+                  borderColor: row.unit === unit ? colors.primary : colors.border,
+                  borderRadius: shcRadii.pill,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  backgroundColor: row.unit === unit ? colors.primary : colors.surface,
+                }}
+                testID={`${testID}-unit-preset-${unit}-${index}`}
+              >
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '800',
+                    color: row.unit === unit ? colors.onPrimary : colors.text,
+                  }}
+                >
+                  {unit}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <Pressable
+            onPress={() => patchRows(removeIngredientRow(rows, index))}
+            style={{
+              alignSelf: 'flex-start',
+              borderWidth: shcBorders.brutal,
+              borderColor: colors.border,
+              borderRadius: shcRadii.md,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+            }}
+            testID={`${testID}-remove-${index}`}
+          >
+            <Text style={{ fontWeight: '800', color: colors.text }}>Remove</Text>
+          </Pressable>
+        </View>
+      ))}
+      <SHCButton variant="outline" onPress={() => patchRows(addIngredientRow(rows))} testID={`${testID}-add`}>
+        <SHCButtonText>+ Add ingredient</SHCButtonText>
+      </SHCButton>
+    </View>
   );
 }
 
