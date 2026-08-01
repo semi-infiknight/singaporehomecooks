@@ -21,6 +21,14 @@ const BodySchema = z
     paynow_mobile: z.string().max(20).optional(),
     paynow_uen: z.string().max(20).optional(),
     payout_legal_name: z.string().max(120).optional(),
+    contact_mobile: z.string().max(20).optional(),
+    whatsapp_number: z.string().max(20).optional(),
+    responsible_person_name: z.string().max(120).optional(),
+    nric_fin_last4: z.string().max(8).optional(),
+    alternate_contact: z.string().max(40).optional(),
+    kitchen_halal_certified: z.boolean().nullable().optional(),
+    terms_consent: z.boolean().optional(),
+    onboarding_completed_at: z.string().datetime().optional(),
   })
   .strict();
 
@@ -67,6 +75,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       paynow_mobile: cook.paynow_mobile ?? null,
       paynow_uen: cook.paynow_uen ?? null,
       payout_legal_name: cook.payout_legal_name ?? null,
+      onboarding_completed_at: cook.onboarding_completed_at ?? null,
+      email_verified_at: cook.email_verified_at ?? null,
+      mobile_verified_at: cook.mobile_verified_at ?? null,
     },
   });
 }
@@ -126,6 +137,31 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   }
   if (parse.data.payout_legal_name !== undefined) {
     data.payout_legal_name = parse.data.payout_legal_name.trim() || null;
+  }
+  if (parse.data.contact_mobile !== undefined) {
+    data.contact_mobile = normalizePaynowMobile(parse.data.contact_mobile);
+  }
+  if (parse.data.whatsapp_number !== undefined) {
+    data.whatsapp_number = normalizePaynowMobile(parse.data.whatsapp_number);
+  }
+  if (parse.data.responsible_person_name !== undefined) {
+    data.responsible_person_name = parse.data.responsible_person_name.trim() || null;
+  }
+  if (parse.data.nric_fin_last4 !== undefined) {
+    data.nric_fin_last4 = parse.data.nric_fin_last4.trim().toUpperCase() || null;
+  }
+  if (parse.data.alternate_contact !== undefined) {
+    data.alternate_contact = parse.data.alternate_contact.trim() || null;
+  }
+  if (parse.data.kitchen_halal_certified !== undefined) {
+    data.kitchen_halal_certified = parse.data.kitchen_halal_certified;
+  }
+  if (parse.data.terms_consent === true) {
+    data.terms_accepted_at = new Date().toISOString();
+    data.terms_version = "2026-07";
+  }
+  if (parse.data.onboarding_completed_at !== undefined) {
+    data.onboarding_completed_at = parse.data.onboarding_completed_at;
   }
 
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;

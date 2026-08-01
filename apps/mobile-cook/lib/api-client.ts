@@ -71,13 +71,8 @@ export async function clearSession() {
 }
 
 export const login = (email: string, password: string) => client.loginCook(email, password);
-export const register = (
-  email: string,
-  password: string,
-  display_name: string,
-  area: string,
-  story?: string
-) => client.registerCook(email, password, display_name, area, story);
+export const register = (email: string, password: string, display_name?: string, area?: string, story?: string) =>
+  client.registerCook(email, password, display_name, area, story);
 export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
@@ -89,10 +84,22 @@ export const updateCookProfile = (input: {
   avatar_url?: string;
   hero_image_url?: string;
   pdpa_consent?: boolean;
+  terms_consent?: boolean;
   paynow_mobile?: string;
   paynow_uen?: string;
   payout_legal_name?: string;
+  contact_mobile?: string;
+  whatsapp_number?: string;
+  responsible_person_name?: string;
+  nric_fin_last4?: string;
+  alternate_contact?: string;
+  kitchen_halal_certified?: boolean | null;
+  onboarding_completed_at?: string;
 }) => client.updateCookProfile(input);
+export const sendCookEmailVerify = () => client.sendCookEmailVerify();
+export const confirmCookEmail = (code: string) => client.confirmCookEmail(code);
+export const sendCookMobileVerify = (mobile: string) => client.sendCookMobileVerify(mobile);
+export const confirmCookMobile = (code: string) => client.confirmCookMobile(code);
 export const getCookProfile = () => client.getCookProfile();
 export const getMe = () => client.getMe();
 export const getCurrentUser = () => client.getCurrentUser();
@@ -113,7 +120,7 @@ export const createCookListing = (input: Record<string, unknown>) => client.crea
 export const updateCookListing = (id: string, input: Record<string, unknown>) => client.updateCookListing(id, input);
 export const deleteCookListing = (id: string) => client.deleteCookListing(id);
 export const getComplianceDocs = () => client.getComplianceDocs();
-export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
+export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq' | 'halal'; file_key: string; expiry_date?: string }) =>
   client.submitComplianceDoc(input);
 export const getEarnings = () => client.getEarnings();
 export const getCookPayoutHistory = () => client.getCookPayoutHistory();

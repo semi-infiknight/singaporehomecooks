@@ -11,22 +11,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { shcColors, shcSpacing, shcBorders, shcRadii, shcShadows } from '@shc/ui';
+import { shcColors, shcSpacing, shcBorders, shcRadii } from '@shc/ui';
 import { validateShcPassword } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
-import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../../lib/onboarding';
+import { hasSeenCookOnboarding } from '../../../lib/onboarding';
 
 export default function CookAuthScreen() {
   const { login, register } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
-  const displayNameRef = useRef<TextInput>(null);
-  const areaRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState(__DEV__ ? 'rose@shc.local' : '');
   const [password, setPassword] = useState(__DEV__ ? 'cooksecret' : '');
-  const [displayName, setDisplayName] = useState('');
-  const [area, setArea] = useState('');
   const [busy, setBusy] = useState(false);
 
   const afterAuth = async (isNewAccount: boolean) => {
@@ -42,7 +38,6 @@ export default function CookAuthScreen() {
   const submit = async () => {
     if (busy) return;
     const trimmedEmail = email.trim();
-    const trimmedEmail = email.trim();
     if (!trimmedEmail || password.length < 6) {
       Alert.alert('Missing details', 'Enter a valid email and password (6+ characters).');
       return;
@@ -54,17 +49,13 @@ export default function CookAuthScreen() {
         return;
       }
     }
-    if (mode === 'register' && (!displayName.trim() || !area.trim())) {
-      Alert.alert('Missing details', 'Add your kitchen name and HDB area for customers to find you.');
-      return;
-    }
     setBusy(true);
     try {
       if (mode === 'login') {
         await login(trimmedEmail, password);
         await afterAuth(false);
       } else {
-        await register(trimmedEmail, password, displayName.trim(), area.trim());
+        await register(trimmedEmail, password);
         await afterAuth(true);
       }
     } catch (e) {
@@ -88,147 +79,85 @@ export default function CookAuthScreen() {
         <Text style={styles.subtitle}>
           {mode === 'login'
             ? 'Sign in to manage listings, orders, and earnings.'
-            : 'Create your home kitchen account — list dishes customers can book.'}
+            : 'Create your home kitchen account — we’ll guide you through setup step by step.'}
         </Text>
-
-        {mode === 'register' && (
-          <>
-            <TextInput
-              ref={displayNameRef}
-              value={displayName}
-              onChangeText={setDisplayName}
-              placeholder="Kitchen / display name (e.g. Auntie Mei)"
-              placeholderTextColor={shcColors.textLight}
-              style={styles.input}
-              testID="auth-display-name-input"
-              returnKeyType="next"
-              onSubmitEditing={() => areaRef.current?.focus()}
-            />
-            <TextInput
-              ref={areaRef}
-              value={area}
-              onChangeText={setArea}
-              placeholder="HDB area (e.g. Tampines, Bedok)"
-              placeholderTextColor={shcColors.textLight}
-              style={styles.input}
-              testID="auth-area-input"
-              returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-            />
-          </>
-        )}
 
         <TextInput
           value={email}
           onChangeText={setEmail}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="username"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => passwordRef.current?.focus()}
           placeholder="Email"
           placeholderTextColor={shcColors.textLight}
+          autoCapitalize="none"
+          keyboardType="email-address"
           style={styles.input}
           testID="auth-email-input"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
         />
         <TextInput
           ref={passwordRef}
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="off"
-          autoCorrect={false}
-          textContentType={mode === 'register' ? 'none' : 'password'}
-          returnKeyType="go"
-          onSubmitEditing={submit}
-          placeholder="Password (6+ characters)"
+          placeholder={mode === 'register' ? 'Password (8+ chars)' : 'Password'}
           placeholderTextColor={shcColors.textLight}
+          secureTextEntry
           style={styles.input}
           testID="auth-password-input"
+          returnKeyType="done"
+          onSubmitEditing={submit}
         />
 
         <Pressable
           onPress={submit}
           disabled={busy}
-          style={({ pressed }) => [
-            styles.submitBtn,
-            pressed && !busy && styles.submitBtnPressed,
-            busy && styles.submitBtnDisabled,
-          ]}
+          style={[styles.submitBtn, busy && styles.submitBtnDisabled]}
           testID="auth-submit-btn"
-          accessibilityRole="button"
         >
-          <Text style={styles.submitBtnText}>
-            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in as cook' : 'Create cook account'}
+          <Text style={styles.submitText}>
+            {busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </Text>
         </Pressable>
 
         <Pressable
           onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
-          style={styles.modeToggle}
+          style={styles.toggle}
           testID="auth-mode-toggle"
         >
-          <Text style={styles.modeToggleText}>
+          <Text style={styles.toggleText}>
             {mode === 'login' ? 'New home cook? Create an account' : 'Have an account? Sign in'}
           </Text>
         </Pressable>
-
-        {mode === 'login' && (
-          <Pressable
-            onPress={async () => {
-              await clearCookOnboardingSeen();
-              setMode('register');
-            }}
-            style={styles.modeToggle}
-            testID="cook-auth-tour-hint"
-          >
-            <Text style={styles.modeToggleText}>Want the kitchen tour? Create account → setup after sign-up</Text>
-          </Pressable>
-        )}
-
-        {__DEV__ && mode === 'login' && (
-          <Text style={styles.demoHint}>Demo: rose@shc.local / cooksecret — tour shows if not completed yet</Text>
-        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
-  content: { flexGrow: 1, padding: shcSpacing.lg, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '800', marginBottom: shcSpacing.sm, color: shcColors.text },
-  subtitle: { fontSize: 14, color: shcColors.textLight, marginBottom: shcSpacing.lg },
+  screen: { flex: 1, backgroundColor: '#FFFBF7' },
+  content: { padding: shcSpacing.lg, paddingTop: 64 },
+  title: { fontSize: 28, fontWeight: '900', color: shcColors.text, marginBottom: 8 },
+  subtitle: { fontSize: 15, color: shcColors.textLight, marginBottom: shcSpacing.lg, lineHeight: 22 },
   input: {
-    borderWidth: shcBorders.brutal,
+    borderWidth: shcBorders.thin,
     borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
+    borderRadius: shcRadii.lg,
     padding: shcSpacing.md,
-    marginBottom: shcSpacing.md,
-    backgroundColor: shcColors.surface,
     fontSize: 16,
+    marginBottom: shcSpacing.sm,
+    backgroundColor: '#FFFFFF',
     color: shcColors.text,
   },
   submitBtn: {
-    alignSelf: 'stretch',
-    marginTop: shcSpacing.xs,
     backgroundColor: shcColors.primary,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    paddingVertical: shcSpacing.md,
-    paddingHorizontal: shcSpacing.lg,
-    minHeight: 52,
+    borderRadius: shcRadii.lg,
+    paddingVertical: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    ...shcShadows.brutalSm,
+    marginTop: shcSpacing.md,
+    borderWidth: shcBorders.thin,
+    borderColor: shcColors.border,
   },
-  submitBtnPressed: { ...shcShadows.brutalPressed, transform: [{ scale: 0.98 }] },
   submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
-  modeToggle: { marginTop: shcSpacing.lg, paddingVertical: shcSpacing.sm },
-  modeToggleText: { textAlign: 'center', fontSize: 14, fontWeight: '600', color: shcColors.primary },
-  demoHint: { textAlign: 'center', marginTop: shcSpacing.md, fontSize: 11, color: shcColors.textLight },
+  submitText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
+  toggle: { marginTop: shcSpacing.lg, alignItems: 'center' },
+  toggleText: { color: shcColors.primary, fontWeight: '700', fontSize: 14 },
 });

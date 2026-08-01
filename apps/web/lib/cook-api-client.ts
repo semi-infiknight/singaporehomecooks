@@ -69,13 +69,8 @@ export async function clearCookSession() {
 }
 
 export const loginCook = (email: string, password: string) => cookClient.loginCook(email, password);
-export const registerCook = (
-  email: string,
-  password: string,
-  display_name: string,
-  area: string,
-  story?: string
-) => cookClient.registerCook(email, password, display_name, area, story);
+export const registerCook = (email: string, password: string, display_name?: string, area?: string, story?: string) =>
+  cookClient.registerCook(email, password, display_name, area, story);
 export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
@@ -87,10 +82,22 @@ export const updateCookProfile = (input: {
   avatar_url?: string;
   hero_image_url?: string;
   pdpa_consent?: boolean;
+  terms_consent?: boolean;
   paynow_mobile?: string;
   paynow_uen?: string;
   payout_legal_name?: string;
+  contact_mobile?: string;
+  whatsapp_number?: string;
+  responsible_person_name?: string;
+  nric_fin_last4?: string;
+  alternate_contact?: string;
+  kitchen_halal_certified?: boolean | null;
+  onboarding_completed_at?: string;
 }) => cookClient.updateCookProfile(input);
+export const sendCookEmailVerify = () => cookClient.sendCookEmailVerify();
+export const confirmCookEmail = (code: string) => cookClient.confirmCookEmail(code);
+export const sendCookMobileVerify = (mobile: string) => cookClient.sendCookMobileVerify(mobile);
+export const confirmCookMobile = (code: string) => cookClient.confirmCookMobile(code);
 export const getCookProfile = () => cookClient.getCookProfile();
 export const getUploadUrl = (
   objectName: string,
@@ -115,7 +122,7 @@ export const createCookListing = (input: Record<string, unknown>) => cookClient.
 export const updateCookListing = (id: string, input: Record<string, unknown>) => cookClient.updateCookListing(id, input);
 export const deleteCookListing = (id: string) => cookClient.deleteCookListing(id);
 export const getComplianceDocs = () => cookClient.getComplianceDocs();
-export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq'; file_key: string; expiry_date?: string }) =>
+export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq' | 'halal'; file_key: string; expiry_date?: string }) =>
   cookClient.submitComplianceDoc(input);
 export const getCookEarnings = () => cookClient.getEarnings();
 export const getCookPayoutHistory = () => cookClient.getCookPayoutHistory();

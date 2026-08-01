@@ -58,6 +58,7 @@ export * from './compliance-courses';
 export * from './virtual-grid';
 export * from './password-policy';
 export * from './payment-poll';
-export * from './cook-payout-history';
 export * from './cook-payout';
+export * from './cook-payout-history';
+export * from './cook-onboarding';
 export * from './crash-report';

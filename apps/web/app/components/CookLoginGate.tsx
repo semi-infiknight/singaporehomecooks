@@ -18,8 +18,6 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [email, setEmail] = useState(showDevTools ? 'rose@shc.local' : '');
   const [password, setPassword] = useState(showDevTools ? 'cooksecret' : '');
-  const [displayName, setDisplayName] = useState('');
-  const [area, setArea] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -51,8 +49,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       setBusy(false);
       return;
     }
-    if (mode === 'register' && (!displayName.trim() || !area.trim())) {
-      setError('Add your kitchen name and HDB area.');
+    if (mode === 'register' && password.length < 6) {
+      setError('Password must be at least 6 characters.');
       setBusy(false);
       return;
     }
@@ -60,7 +58,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       if (mode === 'login') {
         await login(trimmedEmail, password);
       } else {
-        await register(trimmedEmail, password, displayName.trim(), area.trim());
+        await register(trimmedEmail, password);
         clearCookOnboardingSeen();
       }
     } catch (e) {
@@ -95,30 +93,12 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-semibold opacity-95 mt-1">
             {mode === 'login'
               ? 'Sign in to manage listings, orders, and earnings.'
-              : 'Create a fresh kitchen account — no demo data. List dishes customers can book.'}
+              : 'Create a fresh kitchen account — guided setup for area, payouts, and your first dish.'}
           </p>
         </div>
 
         <GourmeatCard>
           <div className="space-y-3">
-            {mode === 'register' && (
-              <>
-                <input
-                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Kitchen / display name"
-                  data-testid="cook-register-display-name"
-                />
-                <input
-                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  placeholder="HDB area (e.g. Tampines)"
-                  data-testid="cook-register-area"
-                />
-              </>
-            )}
             <input
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
               value={email}

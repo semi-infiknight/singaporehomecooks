@@ -1,4 +1,4 @@
-# Cook app — sign-up + multi-step onboarding
+# Cook app — sign-up + immersive onboarding v2
 # Run: maestro test apps/mobile-cook/e2e/onboarding.yaml
 # Optional override: maestro test ... -e COOK_EMAIL=you@shc.local
 appId: com.singaporehomecooks.cook
@@ -13,51 +13,30 @@ appId: com.singaporehomecooks.cook
 - tapOn: "New home cook? Create an account"
 - extendedWaitUntil:
     visible:
-      id: "auth-display-name-input"
+      id: "auth-email-input"
     timeout: 15000
-- tapOn:
-    id: "auth-display-name-input"
-- inputText: "Maestro Test Cook"
-- tapOn:
-    id: "auth-area-input"
-- inputText: "Tampines"
 - tapOn:
     id: "auth-email-input"
 - inputText: ${output.cookEmail}
 - tapOn:
     id: "auth-password-input"
 - inputText: "maestrosecret1"
-- tapOn: "SHC Cook Portal"
 - tapOn:
     id: "auth-submit-btn"
 - extendedWaitUntil:
     visible:
       id: "cook-onboarding-screen"
     timeout: 60000
-- tapOn:
-    id: "cook-onboarding-next-btn"
-- tapOn:
-    id: "cook-onboarding-story-input"
-- inputText: "Heritage kitchen for Maestro test"
-- tapOn: "Your heritage story"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-- extendedWaitUntil:
-    visible:
-      id: "cook-onboarding-collection-input"
-    timeout: 15000
-- tapOn:
-    id: "cook-onboarding-collection-input"
-- inputText: "Block 88 lift lobby"
-- tapOn: "Collection instructions"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-- extendedWaitUntil:
-    visible:
-      id: "cook-onboarding-pdpa-checkbox"
-    timeout: 15000
-- tapOn:
-    id: "cook-onboarding-pdpa-checkbox"
+# Maestro pre-fills draft when EXPO_PUBLIC_MAESTRO_E2E=1 — tap through to complete
+- repeat:
+    times: 19
+    commands:
+      - tapOn:
+          id: "cook-onboarding-next-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "cook-onboarding-screen"
+          timeout: 15000
 - tapOn:
     id: "cook-onboarding-finish-btn"
 - extendedWaitUntil:

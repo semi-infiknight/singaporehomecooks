@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // shc_compliance_doc exact from blueprint/05-data-model/05-data-model.md
-export const ComplianceDocType = z.enum(['sfa', 'wsq']);
+export const ComplianceDocType = z.enum(['sfa', 'wsq', 'halal']);
 export type ComplianceDocType = z.infer<typeof ComplianceDocType>;
 
 export const shcComplianceDocSchema = z.object({

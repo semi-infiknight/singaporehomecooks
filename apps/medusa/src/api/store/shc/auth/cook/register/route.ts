@@ -10,8 +10,8 @@ import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 const BodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  display_name: z.string().min(2).max(80),
-  area: z.string().min(2).max(80),
+  display_name: z.string().min(2).max(80).optional(),
+  area: z.string().min(2).max(80).optional(),
   story: z.string().max(500).optional(),
 });
 
@@ -52,8 +52,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(409).json({ error: createSHCError("SHC-GENERIC-001", "A cook account with this email already exists") });
   }
 
+  const displayName = parse.data.display_name?.trim() || "New Home Cook";
+  const area = parse.data.area?.trim() || "";
   const cookId = cookIdFromEmail(email);
-  const slug = `${slugFromDisplayName(parse.data.display_name)}-${Date.now().toString(36).slice(-4)}`;
+  const slug = `${slugFromDisplayName(displayName)}-${Date.now().toString(36).slice(-4)}`;
   const now = new Date();
 
   try {
@@ -61,9 +63,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       id: cookId,
       auth_identity_id: randomUUID(),
       slug,
-      display_name: parse.data.display_name.trim(),
+      display_name: displayName,
       story: parse.data.story?.trim() || "",
-      area: parse.data.area.trim(),
+      area,
       status: "active",
       availability_paused: false,
       login_email: email,
@@ -77,14 +79,14 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     });
   }
 
-  const token = issueCookToken(email, cookId, parse.data.display_name.trim());
+  const token = issueCookToken(email, cookId, displayName);
   return res.status(201).json({
     token,
     user: {
       role: "cook" as const,
       id: cookId,
       email,
-      name: parse.data.display_name.trim(),
+      name: displayName,
     },
   });
 }

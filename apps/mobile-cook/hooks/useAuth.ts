@@ -39,7 +39,7 @@ export function useAuth() {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, display_name: string, area: string, story?: string) => {
+    async (email: string, password: string, display_name?: string, area?: string, story?: string) => {
       const { token, user: u } = await apiRegister(email, password, display_name, area, story);
       await persistSession(token, u);
       await clearCookOnboardingSeen();

@@ -22,6 +22,19 @@ export const Cook = model.define("shc_cook", {
   paynow_mobile: model.text().nullable(),
   paynow_uen: model.text().nullable(),
   payout_legal_name: model.text().nullable(),
+  contact_mobile: model.text().nullable(),
+  whatsapp_number: model.text().nullable(),
+  email_verified_at: model.dateTime().nullable(),
+  mobile_verified_at: model.dateTime().nullable(),
+  responsible_person_name: model.text().nullable(),
+  nric_fin_last4: model.text().nullable(),
+  alternate_contact: model.text().nullable(),
+  kitchen_halal_certified: model.boolean().nullable(),
+  terms_accepted_at: model.dateTime().nullable(),
+  terms_version: model.text().nullable(),
+  onboarding_completed_at: model.dateTime().nullable(),
+  pdpa_consent_at: model.dateTime().nullable(),
+  pdpa_consent_version: model.text().nullable(),
 });
 
 // Do not define created_at/updated_at/deleted_at explicitly - Medusa DML adds them automatically.

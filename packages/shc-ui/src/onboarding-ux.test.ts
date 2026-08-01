@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const ONBOARDING_UX = resolve(__dirname, 'onboarding-ux.tsx');
-const COOK_ONBOARDING = resolve(__dirname, '../../../apps/mobile-cook/app/(shared)/onboarding/index.tsx');
+const COOK_ONBOARDING = resolve(__dirname, '../../../apps/mobile-cook/components/CookOnboardingFlow.tsx');
 const CUSTOMER_ONBOARDING = resolve(__dirname, '../../../apps/mobile-customer/app/(shared)/onboarding/index.tsx');
 
 describe('HomelyEats-style onboarding shell', () => {
@@ -25,11 +25,11 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('screenTestID="cook-onboarding-screen"');
     expect(src).toContain('cook-onboarding-next-btn');
     expect(src).toContain('cook-onboarding-finish-btn');
-    expect(src).toContain('cook-onboarding-story-input');
+    expect(src).toContain('cook-onboarding-address-input');
     expect(src).toContain('cook-onboarding-collection-input');
     expect(src).toContain('cook-onboarding-pdpa-checkbox');
-    expect(src).toContain('Your heritage story');
-    expect(src).toContain('Collection instructions');
+    expect(src).toContain('cook-onboarding-back-btn');
+    expect(src).toContain('COOK_ONBOARDING_STEPS');
   });
 
   it('customer onboarding is warm carousel with guest explore (HomelyEats)', () => {
