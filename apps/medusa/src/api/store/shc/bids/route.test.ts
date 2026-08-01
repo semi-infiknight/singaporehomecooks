@@ -1,5 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { GET, POST } from "./route";
+import * as shcActors from "../../../../lib/shc-actors";
+import * as shcEventBus from "../../../../lib/shc-event-bus";
+
+vi.mock("../../../../lib/shc-actors");
+vi.mock("../../../../lib/shc-event-bus");
 
 function makeRes() {
   const res: any = {
@@ -66,9 +71,9 @@ describe("POST /store/shc/bids", () => {
         },
       },
     };
-    vi.spyOn(await import("../../../../lib/shc-actors"), "getAuthContext").mockImplementation(() => ({}) as any);
-    vi.spyOn(await import("../../../../lib/shc-actors"), "getCookId").mockReturnValue("cook_rose");
-    vi.spyOn(await import("../../../../lib/shc-event-bus"), "emitShcEvent").mockResolvedValue(undefined);
+    vi.mocked(shcActors.getAuthContext).mockImplementation(() => ({}) as any);
+    vi.mocked(shcActors.getCookId).mockReturnValue("cook_rose");
+    vi.mocked(shcEventBus.emitShcEvent).mockResolvedValue(undefined);
 
     const res = makeRes();
     await POST(req, res);
@@ -89,7 +94,7 @@ describe("GET /store/shc/bids?mine=1", () => {
         resolve: () => ({ listBidsForCook }),
       },
     };
-    vi.spyOn(await import("../../../../lib/shc-actors"), "getCookId").mockReturnValue("cook_rose");
+    vi.mocked(shcActors.getCookId).mockReturnValue("cook_rose");
 
     const res = makeRes();
     await GET(req, res);
