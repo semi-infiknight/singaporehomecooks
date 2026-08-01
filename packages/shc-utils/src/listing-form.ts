@@ -275,12 +275,6 @@ export function validateCookListingForPublish(draft: CookListingFormDraft): Cook
   if (!hasAllergenDisclosure(draft)) {
     errors.push('Disclose tier-1 allergens or confirm none apply.');
   }
-  if (!(draft.collection_days || []).length) {
-    errors.push('Select at least one collection day.');
-  }
-  if (!(draft.time_slots || []).length) {
-    errors.push('Select at least one collection time slot.');
-  }
   const orderValue = Number(draft.price) * Number(draft.min_qty);
   if (Number.isFinite(orderValue) && orderValue < MIN_LISTING_ORDER_VALUE_SGD) {
     errors.push(`Minimum order value must be at least S$${MIN_LISTING_ORDER_VALUE_SGD} (price × servings).`);

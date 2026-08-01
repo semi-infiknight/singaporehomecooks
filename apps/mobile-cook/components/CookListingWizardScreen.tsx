@@ -33,7 +33,6 @@ import {
   contentPadForTabBar,
   SHCAllergenTierPicker,
   SHCHalalToggle,
-  SHCListingAvailabilityEditor,
   SHCListingDescriptionInput,
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
@@ -44,7 +43,6 @@ import {
   CUISINE_IMAGE,
   getDishImageUrl,
   cookAllergenTier1Presets,
-  resolveCookCollectionTimeSlots,
   buildCookListingPayload,
   emptyAllergenTiers,
   DEFAULT_LISTING_AVAILABILITY,
@@ -70,8 +68,6 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
-import { useCookProfile } from '../hooks/useCookProfile';
-
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
 async function loadImagePicker(): Promise<typeof import('expo-image-picker') | null> {
@@ -137,8 +133,6 @@ export function CookListingWizardScreen({
   const { user } = useAuth();
   const { config } = useCookConfig();
   const { commissionRatePct } = useBusinessRules();
-  const { data: cookProfile } = useCookProfile();
-  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
   const { openTray, dismiss } = useSHCTray();
   const {
@@ -680,15 +674,9 @@ export function CookListingWizardScreen({
                 minQty={minQty ?? 0}
                 commissionRatePct={commissionRatePct}
               />
-              <SHCListingAvailabilityEditor
-                portionsPerDay={portionsPerDay}
-                collectionDays={collectionDays}
-                timeSlots={timeSlots}
-                onPortionsChange={setPortionsPerDay}
-                onCollectionDaysChange={setCollectionDays}
-                onTimeSlotsChange={setTimeSlots}
-                timeSlotPresets={collectionTimeSlots}
-              />
+              <Text style={styles.availabilityHint}>
+                Pause or unpause this dish from My Listings when you want it off the menu.
+              </Text>
               {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
               {published && (
                 <SHCCard variant="bento-mint" style={styles.publishedCard}>
@@ -758,6 +746,7 @@ const styles = StyleSheet.create({
     padding: shcSpacing.sm,
   },
   reviewName: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15, flex: 1 },
+  availabilityHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: shcSpacing.sm },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 8 },
   photoPanel: {
     marginTop: 8,

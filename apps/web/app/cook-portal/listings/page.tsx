@@ -26,7 +26,6 @@ import {
   mealOptionsFromListing,
   recipeStepsFromListing,
   cookAllergenTier1Presets,
-  resolveCookCollectionTimeSlots,
   cookEarningsPreviewFromDollars,
   validateCookListingDraft,
   validateCookListingForPublish,
@@ -35,7 +34,6 @@ import {
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import { useBusinessRules } from '../../../lib/useBusinessRules';
-import { useCookProfile } from '../../../lib/useCookPortal';
 import {
   useCookListings,
   useCreateCookListing,
@@ -66,7 +64,6 @@ import {
   CalorieBadge,
   AllergenTierPickerWeb,
   HalalToggleWeb,
-  ListingAvailabilityEditorWeb,
   ListingDescriptionInputWeb,
   MealExtrasEditorWeb,
   MealAddonsEditorWeb,
@@ -122,8 +119,6 @@ export default function CookListingsPage() {
   const { user } = useCookAuth();
   const { config } = useCookConfig();
   const { commissionRate } = useBusinessRules();
-  const { data: cookProfile } = useCookProfile();
-  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as ListingRow[]) ?? [];
   const createListing = useCreateCookListing();
@@ -950,15 +945,9 @@ export default function CookListingsPage() {
                 )}{' '}
                 per minimum order
               </p>
-              <ListingAvailabilityEditorWeb
-                portionsPerDay={portionsPerDay}
-                collectionDays={collectionDays}
-                timeSlots={timeSlots}
-                onPortionsChange={setPortionsPerDay}
-                onCollectionDaysChange={setCollectionDays}
-                onTimeSlotsChange={setTimeSlots}
-                timeSlotPresets={collectionTimeSlots}
-              />
+              <p className="text-xs text-muted-foreground">
+                Pause or unpause this dish from My Listings when you want it off the menu.
+              </p>
               {editingId ? (
                 <GourmeatPrimaryButton label="Cancel edit" onClick={resetWizard} />
               ) : null}
