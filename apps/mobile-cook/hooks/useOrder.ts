@@ -56,6 +56,17 @@ export function useRequests() {
   });
 }
 
+export function useCustomRequest(id: string) {
+  return useQuery({
+    queryKey: ['custom-request', id],
+    queryFn: async () => {
+      const { getRequest } = await import('../lib/api-client');
+      return getRequest(id);
+    },
+    enabled: !!id,
+  });
+}
+
 export function useBids(requestId?: string) {
   return useQuery({
     queryKey: ['bids', requestId],
@@ -96,6 +107,7 @@ export function useCreateBid() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bids'] });
       qc.invalidateQueries({ queryKey: ['requests'] });
+      qc.invalidateQueries({ queryKey: ['custom-request'] });
       qc.invalidateQueries({ queryKey: ['cook-my-bids'] });
     },
   });

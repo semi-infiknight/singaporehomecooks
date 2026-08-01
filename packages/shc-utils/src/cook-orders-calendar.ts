@@ -54,6 +54,6 @@ export function emptyCookOrdersDayCopy(opts: { isToday: boolean }): { title: str
       }
     : {
         title: 'No orders this day',
-        body: 'Pick another date above or scroll to custom requests below.',
+        body: 'Pick another date above, or browse custom requests from Home.',
       };
 }

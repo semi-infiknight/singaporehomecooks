@@ -37,12 +37,12 @@ import {
   orderIdFromNotificationType,
   resolveCookEarningsSummary,
 } from '@shc/utils';
-import { useMyOrders, useRequests, useCookNotifications } from '../../hooks/useOrder';
-import { useCookEarnings } from '../../hooks/useCookEarnings';
-import { useAuth } from '../../hooks/useAuth';
-import { useCookConfig } from '../../hooks/useCookConfig';
+import { useMyOrders, useRequests, useCookNotifications } from '../../../hooks/useOrder';
+import { useCookEarnings } from '../../../hooks/useCookEarnings';
+import { useAuth } from '../../../hooks/useAuth';
+import { useCookConfig } from '../../../hooks/useCookConfig';
 import { useQuery } from '@tanstack/react-query';
-import { getComplianceDocs } from '../../lib/api-client';
+import { getComplianceDocs } from '../../../lib/api-client';
 
 export default function CookDashboard() {
   const insets = useSafeAreaInsets();
@@ -57,7 +57,7 @@ export default function CookDashboard() {
   };
   const { data: orders, isLoading: ordersLoading } = useMyOrders();
   const orderList = (orders as any[]) ?? [];
-  // Request count only (bidding UI lives under Orders) — never reference openReqs in JSX
+  // Request count — bidding UI lives under Home → Custom requests
   const requestsQuery = useRequests();
   const reqCount = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0;
   const reqsLoading = requestsQuery.isLoading;
@@ -199,15 +199,17 @@ export default function CookDashboard() {
           )}
           <Text style={styles.statLabel}>Active</Text>
         </SHCBentoCell>
-        <SHCBentoCell variant="bento-peach">
-          <SHCBentoIconBadge iconKey="request" size={24} />
-          {reqsLoading ? (
-            <SHCSkeletonBone height={22} width={36} style={{ marginTop: 8 }} />
-          ) : (
-            <Text style={styles.statNum}>{reqCount}</Text>
-          )}
-          <Text style={styles.statLabel}>Requests</Text>
-        </SHCBentoCell>
+        <Pressable onPress={() => router.push('/(cook)/dashboard/requests' as any)}>
+          <SHCBentoCell variant="bento-peach">
+            <SHCBentoIconBadge iconKey="request" size={24} />
+            {reqsLoading ? (
+              <SHCSkeletonBone height={22} width={36} style={{ marginTop: 8 }} />
+            ) : (
+              <Text style={styles.statNum}>{reqCount}</Text>
+            )}
+            <Text style={styles.statLabel}>Requests</Text>
+          </SHCBentoCell>
+        </Pressable>
       </SHCBentoGrid>
       </SHCFadeIn>
 
@@ -257,15 +259,16 @@ export default function CookDashboard() {
         </View>
       ) : null}
 
-      {/* Collaboration lives under Orders tab */}
       <Pressable
-        onPress={() => router.push('/(cook)/orders' as any)}
+        onPress={() => router.push('/(cook)/dashboard/requests' as any)}
         style={styles.collabLink}
         testID="collab-board-link"
         accessibilityRole="button"
       >
         <Text style={styles.collabLinkTitle}>Custom requests</Text>
-        <Text style={styles.collabLinkBody}>Dish requests & quotes → open under Orders</Text>
+        <Text style={styles.collabLinkBody}>
+          {reqCount > 0 ? `${reqCount} open — tap to browse and send bids` : 'Dish requests from customers — any cook can quote'}
+        </Text>
       </Pressable>
 
       <Text style={styles.recentLabel}>Recent Orders</Text>

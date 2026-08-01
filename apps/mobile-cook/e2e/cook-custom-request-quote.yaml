@@ -6,32 +6,41 @@ appId: com.singaporehomecooks.cook
 - launchApp:
     stopApp: true
 - runFlow: cook-signed-in.yaml
-- openLink: shc-cook:///(cook)/orders
-- tapOn:
-    text: "Open"
-    optional: true
+- openLink: shc-cook:///(cook)/dashboard/requests
 - extendedWaitUntil:
     visible:
-      id: "cook-orders-screen"
+      id: "cook-custom-requests-screen"
     timeout: 90000
 - scrollUntilVisible:
     element:
       text: "Maestro Laksa E2E"
     direction: DOWN
     timeout: 120000
+- tapOn:
+    id: "cook-open-request-.*"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "cook-custom-request-detail"
+    timeout: 60000
+    optional: true
 - scrollUntilVisible:
     element:
-      id: "quote-price-line_.*"
+      id: "cook-request-dish-.*"
     direction: DOWN
     timeout: 30000
-    optional: true
+- tapOn:
+    id: "cook-request-dish-.*"
+- extendedWaitUntil:
+    visible:
+      id: "quote-price-.*"
+    timeout: 30000
 - tapOn:
     id: "quote-price-.*"
-    optional: true
 - inputText: "45"
-    optional: true
 - hideKeyboard
-    optional: true
+- tapOn:
+    id: "cook-request-dish-done"
 - scrollUntilVisible:
     element:
       id: ".*-send"
@@ -43,6 +52,3 @@ appId: com.singaporehomecooks.cook
     visible:
       id: "cook-saved-quote-.*"
     timeout: 90000
-    optional: true
-- assertVisible:
-    id: "cook-collab-card"

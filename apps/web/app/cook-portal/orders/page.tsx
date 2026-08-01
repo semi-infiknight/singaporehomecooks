@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Cook Orders — collection orders + Collaboration Board (recipe request bids).
+ * Cook Orders — collection orders calendar + day list.
  */
 import { useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -11,8 +11,6 @@ import {
   getOrderStatusLabel,
   isCookComplianceVerified,
   partitionCookOrders,
-  parseCustomRequestDisplay,
-  parseCookQuoteDisplay,
   todayIsoInSingapore,
   monthLabelForDate,
   collectCookOrderDates,
@@ -21,14 +19,7 @@ import {
   emptyCookOrdersDayCopy,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import {
-  useCookOrders,
-  useCookTransitionOrder,
-  useOpenRequests,
-  useCookMyBids,
-  useCreateBid,
-  useComplianceDocs,
-} from '../../../lib/useCookPortal';
+import { useCookOrders, useCookTransitionOrder, useComplianceDocs } from '../../../lib/useCookPortal';
 import {
   GourmeatCookHeader,
   GourmeatOrderRow,
@@ -36,11 +27,7 @@ import {
   GourmeatActionRow,
   GourmeatCard,
   GourmeatEmptyState,
-  SHCBadge,
-  SHCMetaBadge,
   SHCSkeletonOrderList,
-  CookQuoteBuilderWeb,
-  CookSavedQuoteWeb,
   OrdersCalendarStrip,
 } from '../../components/SHCWebComponents';
 
@@ -56,28 +43,9 @@ export default function CookOrdersPage() {
   const { user } = useCookAuth();
   const { data: orders, isLoading: ordersLoading } = useCookOrders();
   const orderList = (orders as any[]) ?? [];
-  const { data: openReqs = [] } = useOpenRequests();
-  const { data: myBids = [] } = useCookMyBids();
   const { data: complianceDocs = [] } = useComplianceDocs();
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
-  const createBid = useCreateBid();
   const transMut = useCookTransitionOrder();
-  const [bidError, setBidError] = useState('');
-  const [biddingId, setBiddingId] = useState<string | null>(null);
-  const [editingQuoteRequestId, setEditingQuoteRequestId] = useState<string | null>(null);
-
-  const myBidByRequestId = useMemo(() => {
-    const map = new Map<string, Record<string, unknown>>();
-    for (const bid of myBids as Array<Record<string, unknown>>) {
-      const requestId = String(bid.request_id || '');
-      if (!requestId) continue;
-      const status = String(bid.status || 'pending');
-      if (status === 'pending' || status === 'accepted') {
-        map.set(requestId, bid);
-      }
-    }
-    return map;
-  }, [myBids]);
 
   const todayRef = useRef(todayIsoInSingapore());
   const today = todayRef.current;
@@ -95,7 +63,6 @@ export default function CookOrdersPage() {
   );
   const { needsAction: allNeedsAction, inProgress: allInProgress } = partitionCookOrders(orderList);
   const { needsAction, inProgress } = partitionCookOrders(dayOrders);
-  const reqList = Array.isArray(openReqs) ? openReqs : [];
   const dayEmpty = needsAction.length === 0 && inProgress.length === 0;
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
@@ -107,31 +74,6 @@ export default function CookOrdersPage() {
       await transMut.mutateAsync({ orderId, to });
     } catch (e) {
       alert((e as Error).message || 'Transition failed');
-    }
-  };
-
-  const handleQuote = async (
-    reqId: string,
-    payload: {
-      line_items: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
-      message?: string;
-      price_cents: number;
-    }
-  ) => {
-    setBidError('');
-    setBiddingId(reqId);
-    try {
-      await createBid.mutateAsync({
-        requestId: reqId,
-        priceCents: payload.price_cents,
-        message: payload.message || 'Heritage HDB recipe interpretation ready.',
-        lineItems: payload.line_items,
-      });
-      setEditingQuoteRequestId(null);
-    } catch (e) {
-      setBidError((e as Error).message || 'Could not send quote. Check cook login and try again.');
-    } finally {
-      setBiddingId(null);
     }
   };
 
@@ -257,71 +199,6 @@ export default function CookOrdersPage() {
           )}
         </>
       )}
-
-      <div className="flex items-center justify-between mt-8 mb-1" data-testid="cook-custom-requests-board">
-        <p className="text-sm font-extrabold text-foreground">Custom requests</p>
-        {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
-      </div>
-      <p className="text-xs font-semibold text-muted-foreground mb-2">
-        Customer dish requests. Send a quote in S$ — accepted quotes become collection orders.
-      </p>
-      {bidError ? (
-        <p className="text-sm font-bold text-red-600 mb-2" data-testid="custom-request-quote-error">
-          {bidError}
-        </p>
-      ) : null}
-      <GourmeatCard className="mb-6 bg-[var(--shc-bento-peach)]" data-testid="cook-custom-requests-card">
-        {reqList.length === 0 ? (
-          <GourmeatEmptyState
-            title="No open requests"
-            body="Custom dish requests from customers show here for quoting."
-          />
-        ) : (
-          reqList.map((r) => {
-            const parsed = parseCustomRequestDisplay(r as Record<string, unknown>);
-            const savedBidRaw = myBidByRequestId.get(r.id);
-            const savedBid = savedBidRaw
-              ? parseCookQuoteDisplay(savedBidRaw, parsed.lines)
-              : null;
-            const showBuilder = !savedBid || editingQuoteRequestId === r.id;
-            return (
-              <div
-                key={r.id}
-                className="bg-card rounded-xl p-3 mb-3 last:mb-0 shadow-[var(--shc-shadow-soft)]"
-                data-testid={`collab-req-${r.id}`}
-              >
-                <p className="font-bold text-sm line-clamp-2">{parsed.summary}</p>
-                {parsed.lines.map((line) => (
-                  <p key={line.id} className="text-xs text-muted-foreground font-semibold">
-                    · {line.name} ({line.servings} servings)
-                  </p>
-                ))}
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {parsed.guest_count ? <SHCMetaBadge kind="party_size">{parsed.guest_count} guests</SHCMetaBadge> : null}
-                  {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
-                </div>
-                {showBuilder ? (
-                  <CookQuoteBuilderWeb
-                    request={r as Record<string, unknown>}
-                    busy={biddingId === r.id}
-                    initialQuote={savedBidRaw}
-                    submitLabel={savedBid ? 'Save quote' : undefined}
-                    onSubmit={(payload) => handleQuote(r.id, payload)}
-                    testID={`quote-builder-${r.id}`}
-                  />
-                ) : savedBid ? (
-                  <CookSavedQuoteWeb
-                    quote={savedBid}
-                    requestLines={parsed.lines}
-                    onEdit={() => setEditingQuoteRequestId(r.id)}
-                    testID={`cook-saved-quote-${r.id}`}
-                  />
-                ) : null}
-              </div>
-            );
-          })
-        )}
-      </GourmeatCard>
     </div>
   );
 }

@@ -198,6 +198,17 @@ export function useOpenRequests() {
   });
 }
 
+export function useCookCustomRequest(id: string) {
+  return useQuery({
+    queryKey: ['cook-custom-request', id],
+    queryFn: async () => {
+      const { getRequest } = await import('./cook-api-client');
+      return getRequest(id);
+    },
+    enabled: isCookAuthenticated() && !!id,
+  });
+}
+
 export function useCookMyBids() {
   return useQuery({
     queryKey: ['cook-my-bids'],
@@ -225,6 +236,7 @@ export function useCreateBid() {
     }) => createBid(requestId, priceCents, message, lineItems),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cook-open-requests'] });
+      qc.invalidateQueries({ queryKey: ['cook-custom-request'] });
       qc.invalidateQueries({ queryKey: ['cook-orders'] });
       qc.invalidateQueries({ queryKey: ['cook-my-bids'] });
     },

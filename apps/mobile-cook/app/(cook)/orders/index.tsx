@@ -1,6 +1,5 @@
 /**
- * Cook Orders — active collections + Collaboration Board (recipe request bids).
- * Bids live here (not dashboard) so cooks work requests next to order ops.
+ * Cook Orders — collection calendar + order ops only (custom requests live under Home).
  */
 import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
@@ -15,12 +14,8 @@ import {
   GourmeatEmptyState,
   SHCErrorBanner,
   SHCFadeIn,
-  SHCBadge,
-  SHCMetaBadge,
   SHCSectionTitle,
   SHCSkeletonOrderList,
-  SHCCookQuoteBuilder,
-  SHCCookSavedQuote,
   SHCTiffinCalendarStrip,
   gourmeatColors,
   shcSpacing,
@@ -30,8 +25,6 @@ import {
   getOrderStatusLabel,
   isCookComplianceVerified,
   partitionCookOrders,
-  parseCustomRequestDisplay,
-  parseCookQuoteDisplay,
   todayIsoInSingapore,
   monthLabelForDate,
   collectCookOrderDates,
@@ -40,7 +33,7 @@ import {
   emptyCookOrdersDayCopy,
 } from '@shc/utils';
 
-import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useCookMyBids, useComplianceDocs } from '../../../hooks/useOrder';
+import { useMyOrders, useTransitionOrder, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { SHCOrderStatus } from '@shc/types';
 
@@ -57,29 +50,10 @@ export default function CookOrders() {
   const { user } = useAuth();
   const { data: orders, isLoading: ordersLoading, isError: ordersError, error: ordersErr, refetch: refetchOrders } = useMyOrders();
   const orderList = (orders as any[]) ?? [];
-  const { data: openReqs = [] } = useRequests();
-  const { data: myBids = [] } = useCookMyBids();
-  const createBidMut = useCreateBid();
   const { data: complianceDocs = [] } = useComplianceDocs();
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
-  const [bidError, setBidError] = useState('');
-  const [biddingId, setBiddingId] = useState<string | null>(null);
-  const [editingQuoteRequestId, setEditingQuoteRequestId] = useState<string | null>(null);
-
-  const myBidByRequestId = useMemo(() => {
-    const map = new Map<string, Record<string, unknown>>();
-    for (const bid of myBids as Array<Record<string, unknown>>) {
-      const requestId = String(bid.request_id || '');
-      if (!requestId) continue;
-      const status = String(bid.status || 'pending');
-      if (status === 'pending' || status === 'accepted') {
-        map.set(requestId, bid);
-      }
-    }
-    return map;
-  }, [myBids]);
 
   const todayRef = useRef(todayIsoInSingapore());
   const today = todayRef.current;
@@ -118,37 +92,6 @@ export default function CookOrders() {
     }
   };
 
-  const handleQuote = async (
-    reqId: string,
-    payload: {
-      line_items: Array<{ request_line_id: string; included: boolean; servings?: number; price_cents: number }>;
-      message?: string;
-      price_cents: number;
-    }
-  ) => {
-    setBidError('');
-    setBiddingId(reqId);
-    try {
-      await createBidMut.mutateAsync({
-        requestId: reqId,
-        priceCents: payload.price_cents,
-        message: payload.message || 'Heritage HDB recipe interpretation ready.',
-        lineItems: payload.line_items.map((l) => ({
-          request_line_id: l.request_line_id,
-          included: l.included,
-          servings: l.servings,
-          price_cents: l.price_cents,
-        })),
-      });
-      setEditingQuoteRequestId(null);
-    } catch (e: any) {
-      setBidError(e?.message || 'Could not send quote. Check login and try again.');
-    } finally {
-      setBiddingId(null);
-    }
-  };
-
-  const reqList = Array.isArray(openReqs) ? openReqs : [];
   const dayEmpty = needsAction.length === 0 && inProgress.length === 0;
 
   const renderOrderRow = (o: any) => {
@@ -315,70 +258,6 @@ export default function CookOrders() {
         </>
       )}
 
-      {/* Collaboration Board — below collection orders */}
-      <View style={[styles.collabHeader, { marginTop: shcSpacing.lg }]} testID="cook-collab-board">
-        <SHCSectionTitle style={styles.collabTitle}>Custom requests</SHCSectionTitle>
-        {reqList.length > 0 ? <SHCBadge variant="warning">{reqList.length} open</SHCBadge> : null}
-      </View>
-      <Text style={styles.collabHint}>
-        Customer dish requests. Send a quote in S$ — accepted quotes become orders you fulfil like any other.
-      </Text>
-      {bidError ? (
-        <Text style={styles.bidError} testID="collab-bid-error">
-          {bidError}
-        </Text>
-      ) : null}
-      <GourmeatCard testID="cook-collab-card">
-        {reqList.length === 0 ? (
-          <GourmeatEmptyState
-            title="No open requests"
-            body="When customers post custom dish requests, they appear here for quoting."
-          />
-        ) : (
-          reqList.map((r: any) => {
-            const parsed = parseCustomRequestDisplay(r);
-            const savedBidRaw = myBidByRequestId.get(r.id);
-            const savedBid = savedBidRaw
-              ? parseCookQuoteDisplay(savedBidRaw, parsed.lines)
-              : null;
-            const showBuilder = !savedBid || editingQuoteRequestId === r.id;
-            return (
-            <View key={r.id} style={styles.collabItem} testID={`collab-req-${r.id}`}>
-              <Text style={styles.collabBody} numberOfLines={2}>
-                {parsed.summary}
-              </Text>
-              {parsed.lines.map((line) => (
-                <Text key={line.id} style={styles.collabLine}>
-                  · {line.name} ({line.servings} servings)
-                </Text>
-              ))}
-              <View style={styles.collabBadges}>
-                {parsed.guest_count ? <SHCMetaBadge kind="party_size">{parsed.guest_count} guests</SHCMetaBadge> : null}
-                {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
-              </View>
-              {showBuilder ? (
-                <SHCCookQuoteBuilder
-                  request={r}
-                  busy={biddingId === r.id}
-                  initialQuote={savedBidRaw || undefined}
-                  submitLabel={savedBid ? 'Save quote' : undefined}
-                  onSubmit={(payload) => handleQuote(r.id, payload)}
-                  testID={`quote-builder-${r.id}`}
-                />
-              ) : savedBid ? (
-                <SHCCookSavedQuote
-                  quote={savedBid}
-                  requestLines={parsed.lines}
-                  onEdit={() => setEditingQuoteRequestId(r.id)}
-                  testID={`cook-saved-quote-${r.id}`}
-                />
-              ) : null}
-            </View>
-          );
-          })
-        )}
-      </GourmeatCard>
-
       <Link href="/(cook)/listings" asChild>
         <Pressable style={styles.listingsBtn}>
           <Text style={styles.listingsBtnText}>Manage listings →</Text>
@@ -397,30 +276,6 @@ const styles = StyleSheet.create({
     color: gourmeatColors.text,
     marginBottom: shcSpacing.sm,
   },
-  collabHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  collabTitle: { marginBottom: 0 },
-  collabHint: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: gourmeatColors.textLight,
-    marginBottom: shcSpacing.sm,
-  },
-  collabItem: {
-    marginBottom: shcSpacing.md,
-    paddingBottom: shcSpacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: gourmeatColors.border,
-  },
-  collabBody: { fontSize: 14, fontWeight: '700', color: gourmeatColors.text },
-  collabLine: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2 },
-  collabBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8, marginBottom: 8 },
-  bidError: { fontSize: 13, fontWeight: '700', color: '#b91c1c', marginBottom: 8 },
-  bidOk: { fontSize: 13, fontWeight: '700', color: '#15803d', marginBottom: 6 },
   listingsBtn: {
     marginTop: shcSpacing.md,
     backgroundColor: gourmeatColors.primary,

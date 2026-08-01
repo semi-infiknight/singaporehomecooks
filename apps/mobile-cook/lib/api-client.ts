@@ -153,6 +153,7 @@ export const getAiImageStatus = () => client.getAiImageStatus();
 export const registerPushToken = (cookId: string, token: string) =>
   client.registerPushToken(token, { cookId, role: 'cook' });
 export const listOpenRequests = () => client.listOpenRequests();
+export const getRequest = (id: string) => client.getRequest(id);
 export const createBid = (
   requestId: string,
   priceCents: number,

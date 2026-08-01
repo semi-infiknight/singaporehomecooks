@@ -96,6 +96,7 @@ import {
   validateClientQuoteLines,
   sumIncludedQuoteCents,
   formatQuoteTotal,
+  formatBidCentsAsDollars,
   parseBidDollarsToCents,
   shcServingsBadgeLabel,
   CUSTOM_REQUEST_COPY,
@@ -5287,6 +5288,48 @@ export function CookQuoteCardWeb({
   );
 }
 
+export function CookRequestDishRowWeb({
+  line,
+  quoteLine,
+  href,
+  testID,
+}: {
+  line: CustomRequestLine;
+  quoteLine?: CookQuoteLineItem;
+  href: string;
+  testID?: string;
+}) {
+  const included = quoteLine?.included;
+  const priced = included && (quoteLine?.price_cents || 0) > 0;
+  const statusLabel = !included ? 'Skipped' : priced ? formatQuoteTotal(quoteLine!.price_cents) : 'Set price';
+
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 mb-3 rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 shadow-[var(--shc-shadow-brutal-sm)] ${
+        included ? 'bg-card' : 'bg-muted/40'
+      }`}
+      data-testid={testID}
+    >
+      <img
+        src={getDishImageUrl({ name: line.name })}
+        alt=""
+        className="w-14 h-14 rounded-lg object-cover shrink-0"
+      />
+      <div className="flex-1 min-w-0">
+        <p className="font-extrabold text-sm line-clamp-2">{line.name}</p>
+        <p className="text-xs font-semibold text-muted-foreground mt-0.5">{shcServingsBadgeLabel(line.servings)}</p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className={`text-xs font-black ${priced ? 'text-primary' : included ? 'text-foreground' : 'text-muted-foreground'}`}>
+          {statusLabel}
+        </p>
+        <p className="text-[11px] font-bold text-primary mt-1">Open →</p>
+      </div>
+    </Link>
+  );
+}
+
 export function CookSavedQuoteWeb({
   quote,
   requestLines,
@@ -5343,6 +5386,10 @@ export function CookQuoteBuilderWeb({
   testID = 'cook-quote-builder',
   initialQuote,
   submitLabel,
+  lines: controlledLines,
+  message: controlledMessage,
+  onMessageChange,
+  hideDishRows = false,
 }: {
   request: Record<string, unknown>;
   onSubmit: (payload: { line_items: CookQuoteLineItem[]; message?: string; price_cents: number }) => void | Promise<void>;
@@ -5350,6 +5397,10 @@ export function CookQuoteBuilderWeb({
   testID?: string;
   initialQuote?: CookQuoteDisplay | Record<string, unknown>;
   submitLabel?: string;
+  lines?: CookQuoteLineItem[];
+  message?: string;
+  onMessageChange?: (message: string) => void;
+  hideDishRows?: boolean;
 }) {
   const parsed = parseCustomRequestDisplay(request);
   const savedParsed = initialQuote
@@ -5357,27 +5408,48 @@ export function CookQuoteBuilderWeb({
       ? (initialQuote as CookQuoteDisplay)
       : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, parsed.lines)
     : null;
-  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() =>
+  const [internalLines, setInternalLines] = React.useState<CookQuoteLineItem[]>(() =>
     savedParsed ? buildQuoteLinesFromSaved(savedParsed, parsed.lines) : buildDefaultQuoteLines(parsed.lines)
   );
-  const [message, setMessage] = React.useState(savedParsed?.message || '');
+  const [internalMessage, setInternalMessage] = React.useState(savedParsed?.message || '');
   const [error, setError] = React.useState('');
 
+  const lines = controlledLines ?? internalLines;
+  const message = controlledMessage ?? internalMessage;
+  const setLines = (next: CookQuoteLineItem[]) => {
+    if (controlledLines) return;
+    setInternalLines(next);
+  };
+  const setMessage = onMessageChange ?? setInternalMessage;
+
   React.useEffect(() => {
+    if (controlledLines) return;
     const nextParsed = parseCustomRequestDisplay(request);
     if (initialQuote) {
       const saved = (initialQuote as CookQuoteDisplay).line_items
         ? (initialQuote as CookQuoteDisplay)
         : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, nextParsed.lines);
-      setLines(buildQuoteLinesFromSaved(saved, nextParsed.lines));
-      setMessage(saved.message || '');
+      setInternalLines(buildQuoteLinesFromSaved(saved, nextParsed.lines));
+      setInternalMessage(saved.message || '');
     } else {
-      setLines(buildDefaultQuoteLines(nextParsed.lines));
-      setMessage('');
+      setInternalLines(buildDefaultQuoteLines(nextParsed.lines));
+      setInternalMessage('');
     }
-  }, [request.id, initialQuote]);
+  }, [request.id, initialQuote, controlledLines]);
 
   const total = sumIncludedQuoteCents(lines);
+
+  const updateLine = (id: string, patch: Partial<CookQuoteLineItem>) => {
+    setLines(lines.map((l) => (l.request_line_id === id ? { ...l, ...patch } : l)));
+  };
+
+  const handlePriceInput = (id: string, raw: string) => {
+    const parsedPrice = parseBidDollarsToCents(raw);
+    updateLine(id, {
+      price_cents: parsedPrice.ok ? parsedPrice.cents : 0,
+      included: parsedPrice.ok && parsedPrice.cents > 0,
+    });
+  };
 
   const handleSend = async () => {
     setError('');
@@ -5391,53 +5463,58 @@ export function CookQuoteBuilderWeb({
 
   return (
     <div data-testid={testID} className="mt-2 space-y-2">
-      {parsed.lines.map((reqLine) => {
-        const qLine = lines.find((l) => l.request_line_id === reqLine.id);
-        if (!qLine) return null;
-        return (
-          <div key={reqLine.id} className="rounded-xl border border-border p-3 bg-card" data-testid={`quote-line-${reqLine.id}`}>
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-bold text-sm truncate">{reqLine.name}</p>
-                <p className="text-xs text-muted-foreground font-semibold">{shcServingsBadgeLabel(reqLine.servings)}</p>
+      {!hideDishRows
+        ? parsed.lines.map((reqLine) => {
+            const qLine = lines.find((l) => l.request_line_id === reqLine.id);
+            if (!qLine) return null;
+            const priceLabel =
+              qLine.included && qLine.price_cents > 0 ? formatBidCentsAsDollars(qLine.price_cents) : '';
+            return (
+              <div
+                key={reqLine.id}
+                className={`rounded-xl border-2 p-3 ${
+                  qLine.included
+                    ? 'border-primary bg-[var(--shc-bento-peach)]'
+                    : 'border-[var(--shc-border-brutal)] bg-muted/30'
+                }`}
+                data-testid={`quote-line-${reqLine.id}`}
+              >
+                <p className="font-extrabold text-sm">{reqLine.name}</p>
+                <p className="text-xs text-muted-foreground font-semibold mb-2">{shcServingsBadgeLabel(reqLine.servings)}</p>
+                {qLine.included ? (
+                  <>
+                    <p className="text-[11px] font-bold text-muted-foreground mb-1">Your price for this dish</p>
+                    <input
+                      className="w-full rounded-lg border-2 border-[var(--shc-border-brutal)] px-3 py-2 text-base font-extrabold"
+                      placeholder="e.g. 45"
+                      inputMode="decimal"
+                      value={priceLabel}
+                      onChange={(e) => handlePriceInput(reqLine.id, e.target.value)}
+                      data-testid={`quote-price-${reqLine.id}`}
+                    />
+                    <button
+                      type="button"
+                      className="text-xs font-extrabold text-muted-foreground mt-2"
+                      onClick={() => updateLine(reqLine.id, { included: false, price_cents: 0 })}
+                      data-testid={`quote-skip-${reqLine.id}`}
+                    >
+                      Skip this dish
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-sm font-extrabold text-primary"
+                    onClick={() => updateLine(reqLine.id, { included: true })}
+                    data-testid={`quote-include-${reqLine.id}`}
+                  >
+                    + Quote this dish
+                  </button>
+                )}
               </div>
-              <label className="flex items-center gap-2 text-xs font-bold">
-                <input
-                  type="checkbox"
-                  checked={qLine.included}
-                  onChange={(e) =>
-                    setLines((prev) =>
-                      prev.map((l) => (l.request_line_id === reqLine.id ? { ...l, included: e.target.checked } : l))
-                    )
-                  }
-                  data-testid={`quote-include-${reqLine.id}`}
-                />
-                Include
-              </label>
-            </div>
-            {qLine.included ? (
-              <input
-                className="w-full mt-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
-                placeholder="Price S$ (e.g. 45)"
-                inputMode="decimal"
-                onChange={(e) => {
-                  const parsedPrice = parseBidDollarsToCents(e.target.value);
-                  setLines((prev) =>
-                    prev.map((l) =>
-                      l.request_line_id === reqLine.id
-                        ? { ...l, price_cents: parsedPrice.ok ? parsedPrice.cents : 0 }
-                        : l
-                    )
-                  );
-                }}
-                data-testid={`quote-price-${reqLine.id}`}
-              />
-            ) : (
-              <p className="text-[11px] text-muted-foreground font-semibold mt-2">Not included in quote</p>
-            )}
-          </div>
-        );
-      })}
+            );
+          })
+        : null}
       <input
         className="w-full rounded-lg border border-border px-3 py-2 text-sm"
         placeholder="Message to customer (optional)"

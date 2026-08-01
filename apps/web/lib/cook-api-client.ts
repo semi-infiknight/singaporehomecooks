@@ -146,6 +146,7 @@ export const createCookExpense = (input: {
   date: string;
 }) => cookClient.createCookExpense(input);
 export const listOpenRequests = () => cookClient.listOpenRequests();
+export const getRequest = (id: string) => cookClient.getRequest(id);
 export const listMyBids = () => cookClient.listMyBids();
 export const createBid = (
   requestId: string,

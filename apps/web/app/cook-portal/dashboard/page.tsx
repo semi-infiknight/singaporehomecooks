@@ -171,16 +171,18 @@ export default function CookDashboardPage() {
       </div>
 
       <Link
-        href="/cook-portal/orders"
+        href="/cook-portal/requests"
         data-testid="collab-board-link"
         className="block rounded-2xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-peach)] p-4 mb-6 shadow-[var(--shc-shadow-brutal-sm)]"
       >
         <div className="flex items-center justify-between gap-2">
-          <p className="font-black text-foreground">Collaboration Board</p>
+          <p className="font-black text-foreground">Custom requests</p>
           {reqCount > 0 ? <SHCBadge variant="warning">{reqCount} open</SHCBadge> : null}
         </div>
         <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-          Recipe requests &amp; bids live under Orders — place bids in S$
+          {reqCount > 0
+            ? `${reqCount} open — tap to browse and send bids`
+            : 'Dish requests from customers — any cook can quote'}
         </p>
       </Link>
 
