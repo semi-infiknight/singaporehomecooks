@@ -71,15 +71,16 @@ export async function clearSession() {
 }
 
 export const login = (email: string, password: string) => client.loginCook(email, password);
-export const sendCookRegisterEmailOtp = (email: string) => client.sendCookRegisterEmailOtp(email);
+export const sendCookRegisterWhatsappOtp = (mobile: string) => client.sendCookRegisterWhatsappOtp(mobile);
 export const register = (
   email: string,
   password: string,
-  email_otp: string,
+  mobile: string,
+  whatsapp_otp: string,
   display_name?: string,
   area?: string,
   story?: string
-) => client.registerCook(email, password, email_otp, display_name, area, story);
+) => client.registerCook(email, password, mobile, whatsapp_otp, display_name, area, story);
 export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
@@ -106,7 +107,7 @@ export const updateCookProfile = (input: {
 export const sendCookEmailVerify = () => client.sendCookEmailVerify();
 export const confirmCookEmail = (code: string) => client.confirmCookEmail(code);
 export const sendCookMobileVerify = (mobile: string) => client.sendCookMobileVerify(mobile);
-export const confirmCookMobile = (code: string) => client.confirmCookMobile(code);
+export const confirmCookMobile = (code: string, mobile?: string) => client.confirmCookMobile(code, mobile);
 export const getCookProfile = () => client.getCookProfile();
 export const getMe = () => client.getMe();
 export const getCurrentUser = () => client.getCurrentUser();

@@ -5,11 +5,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { COOK_ONBOARDING_DEMO_OTP, validateShcPassword } from '@shc/utils';
 import { useCookAuth } from '../../lib/useCookAuth';
 import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../lib/onboarding';
-import { sendCookRegisterEmailOtp } from '../../lib/cook-api-client';
+import { sendCookRegisterWhatsappOtp } from '../../lib/cook-api-client';
 import { GourmeatCookHeader, GourmeatPrimaryButton, GourmeatCard } from './SHCWebComponents';
 import { showDevTools } from '../../lib/dev';
 
-type RegisterStep = 'email' | 'verify';
+type RegisterStep = 'mobile' | 'verify';
 
 /**
  * Cook PWA auth + first-run kitchen onboarding.
@@ -20,10 +20,11 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '';
   const router = useRouter();
   const [email, setEmail] = useState(showDevTools ? 'rose@shc.local' : '');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(showDevTools ? 'cooksecret' : '');
-  const [emailOtp, setEmailOtp] = useState('');
+  const [whatsappOtp, setWhatsappOtp] = useState('');
   const [otpHint, setOtpHint] = useState('');
-  const [registerStep, setRegisterStep] = useState<RegisterStep>('email');
+  const [registerStep, setRegisterStep] = useState<RegisterStep>('mobile');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -46,8 +47,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   }, [loading, user, isOnboardingPath, router]);
 
   const resetRegister = () => {
-    setRegisterStep('email');
-    setEmailOtp('');
+    setRegisterStep('mobile');
+    setWhatsappOtp('');
     setOtpHint('');
     setError('');
   };
@@ -57,20 +58,20 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
     resetRegister();
   };
 
-  const sendEmailOtp = async () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError('Enter your email to receive a verification code.');
+  const sendWhatsappOtp = async () => {
+    const trimmedMobile = mobile.trim();
+    if (!trimmedMobile || trimmedMobile.replace(/\D/g, '').length < 8) {
+      setError('Enter your Singapore WhatsApp number (e.g. 9123 4567).');
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const res = await sendCookRegisterEmailOtp(trimmedEmail);
-      setOtpHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
+      const res = await sendCookRegisterWhatsappOtp(trimmedMobile);
+      setOtpHint(res.hint || `Check WhatsApp (demo: ${COOK_ONBOARDING_DEMO_OTP})`);
       setRegisterStep('verify');
     } catch (e) {
-      setError((e as Error).message || 'Could not send verification code');
+      setError((e as Error).message || 'Could not send WhatsApp code');
     } finally {
       setBusy(false);
     }
@@ -80,6 +81,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
     setBusy(true);
     setError('');
     const trimmedEmail = email.trim();
+    const trimmedMobile = mobile.trim();
 
     if (mode === 'login') {
       const policy = validateShcPassword(password);
@@ -98,13 +100,18 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (registerStep === 'email') {
-      await sendEmailOtp();
+    if (registerStep === 'mobile') {
+      await sendWhatsappOtp();
       return;
     }
 
-    if (!emailOtp.trim()) {
-      setError('Enter the verification code from your email.');
+    if (!whatsappOtp.trim()) {
+      setError('Enter the verification code from WhatsApp.');
+      setBusy(false);
+      return;
+    }
+    if (!trimmedEmail) {
+      setError('Enter your email address.');
       setBusy(false);
       return;
     }
@@ -120,7 +127,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      await register(trimmedEmail, password, emailOtp.trim());
+      await register(trimmedEmail, password, trimmedMobile, whatsappOtp.trim());
       clearCookOnboardingSeen();
     } catch (e) {
       setError((e as Error).message || 'Sign up failed');
@@ -156,32 +163,44 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-semibold opacity-95 mt-1">
             {mode === 'login'
               ? 'Sign in to manage listings, orders, and earnings.'
-              : registerStep === 'email'
-                ? 'Create a fresh kitchen account — we verify your email before setup.'
-                : 'Enter the code we sent and choose a password.'}
+              : registerStep === 'mobile'
+                ? 'We verify your WhatsApp first — then email and password.'
+                : 'Enter the WhatsApp code, email, and password.'}
           </p>
         </div>
 
         <GourmeatCard>
           <div className="space-y-3">
-            <input
-              className={`w-full rounded-xl border border-border px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)] ${
-                isRegisterVerify ? 'bg-muted text-muted-foreground' : 'bg-card'
-              }`}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              type="email"
-              readOnly={isRegisterVerify}
-              data-testid="cook-login-email"
-            />
+            {(mode === 'login' || isRegisterVerify) && (
+              <input
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                type="email"
+                data-testid="cook-login-email"
+              />
+            )}
+            {mode === 'register' && (
+              <input
+                className={`w-full rounded-xl border border-border px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)] ${
+                  isRegisterVerify ? 'bg-muted text-muted-foreground' : 'bg-card'
+                }`}
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                placeholder="WhatsApp mobile (e.g. 9123 4567)"
+                type="tel"
+                readOnly={isRegisterVerify}
+                data-testid="cook-login-mobile"
+              />
+            )}
             {isRegisterVerify ? (
               <>
                 <input
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value)}
-                  placeholder="6-digit verification code"
+                  value={whatsappOtp}
+                  onChange={(e) => setWhatsappOtp(e.target.value)}
+                  placeholder="6-digit WhatsApp code"
                   inputMode="numeric"
                   data-testid="cook-login-otp"
                 />
@@ -191,9 +210,9 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                   className="text-sm font-bold text-primary"
                   data-testid="cook-login-resend-otp"
                   disabled={busy}
-                  onClick={() => void sendEmailOtp()}
+                  onClick={() => void sendWhatsappOtp()}
                 >
-                  Resend code
+                  Resend WhatsApp code
                 </button>
               </>
             ) : null}
@@ -214,8 +233,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                   ? 'Please wait…'
                   : mode === 'login'
                     ? 'Sign in as cook'
-                    : registerStep === 'email'
-                      ? 'Send verification code'
+                    : registerStep === 'mobile'
+                      ? 'Send WhatsApp code'
                       : 'Create cook account'
               }
               disabled={busy}
@@ -226,10 +245,10 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 className="w-full text-center text-sm font-bold text-primary py-2"
-                data-testid="cook-login-change-email"
+                data-testid="cook-login-change-mobile"
                 onClick={resetRegister}
               >
-                Use a different email
+                Use a different mobile number
               </button>
             ) : null}
             <button

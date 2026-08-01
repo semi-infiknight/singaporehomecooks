@@ -46,13 +46,13 @@ const LOCAL_PUBLISHABLE_KEY =
 
 const COOK_REGISTER_DEMO_OTP = '123456';
 
-async function sendRegisterEmailOtp(base: string, email: string, pubKey?: string) {
+async function sendRegisterWhatsappOtp(base: string, mobile: string, pubKey?: string) {
   return shcFetchAt(
     base,
-    '/store/shc/auth/cook/register/send-email-otp',
+    '/store/shc/auth/cook/register/send-whatsapp-otp',
     {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ mobile }),
     },
     undefined,
     pubKey
@@ -61,7 +61,8 @@ async function sendRegisterEmailOtp(base: string, email: string, pubKey?: string
 
 async function probeRegister(base: string, pubKey: string): Promise<{ ok: boolean; status: number; body: unknown }> {
   const email = `probe_${RUN_ID}@shc.test`;
-  const otpRes = await sendRegisterEmailOtp(base, email, pubKey);
+  const mobile = `9${String(RUN_ID).slice(-7).padStart(7, '0')}`;
+  const otpRes = await sendRegisterWhatsappOtp(base, mobile, pubKey);
   if (otpRes.status !== 200) {
     return { ok: false, status: otpRes.status, body: otpRes.body };
   }
@@ -73,7 +74,8 @@ async function probeRegister(base: string, pubKey: string): Promise<{ ok: boolea
       body: JSON.stringify({
         email,
         password: NEW_COOK_PASS,
-        email_otp: COOK_REGISTER_DEMO_OTP,
+        mobile,
+        whatsapp_otp: COOK_REGISTER_DEMO_OTP,
         display_name: 'Probe',
         area: 'Probe',
       }),
@@ -208,7 +210,8 @@ async function registerCook() {
     }
   }
 
-  const otpRes = await sendRegisterEmailOtp(activeBase, NEW_COOK_EMAIL);
+  const wiringMobile = `9${String(RUN_ID).slice(-7).padStart(7, '0')}`;
+  const otpRes = await sendRegisterWhatsappOtp(activeBase, wiringMobile);
   if (otpRes.status !== 200) {
     throw new Error(`Cook register OTP failed ${otpRes.status}: ${JSON.stringify(otpRes.body)}`);
   }
@@ -218,7 +221,8 @@ async function registerCook() {
     body: JSON.stringify({
       email: NEW_COOK_EMAIL,
       password: NEW_COOK_PASS,
-      email_otp: COOK_REGISTER_DEMO_OTP,
+      mobile: wiringMobile,
+      whatsapp_otp: COOK_REGISTER_DEMO_OTP,
       display_name: `Wiring Cook ${RUN_ID}`,
       area: 'Punggol',
       story: 'E2E wiring test kitchen',

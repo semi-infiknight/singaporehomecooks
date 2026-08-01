@@ -69,15 +69,16 @@ export async function clearCookSession() {
 }
 
 export const loginCook = (email: string, password: string) => cookClient.loginCook(email, password);
-export const sendCookRegisterEmailOtp = (email: string) => cookClient.sendCookRegisterEmailOtp(email);
+export const sendCookRegisterWhatsappOtp = (mobile: string) => cookClient.sendCookRegisterWhatsappOtp(mobile);
 export const registerCook = (
   email: string,
   password: string,
-  email_otp: string,
+  mobile: string,
+  whatsapp_otp: string,
   display_name?: string,
   area?: string,
   story?: string
-) => cookClient.registerCook(email, password, email_otp, display_name, area, story);
+) => cookClient.registerCook(email, password, mobile, whatsapp_otp, display_name, area, story);
 export const updateCookProfile = (input: {
   display_name?: string;
   area?: string;
@@ -104,7 +105,7 @@ export const updateCookProfile = (input: {
 export const sendCookEmailVerify = () => cookClient.sendCookEmailVerify();
 export const confirmCookEmail = (code: string) => cookClient.confirmCookEmail(code);
 export const sendCookMobileVerify = (mobile: string) => cookClient.sendCookMobileVerify(mobile);
-export const confirmCookMobile = (code: string) => cookClient.confirmCookMobile(code);
+export const confirmCookMobile = (code: string, mobile?: string) => cookClient.confirmCookMobile(code, mobile);
 export const getCookProfile = () => cookClient.getCookProfile();
 export const getUploadUrl = (
   objectName: string,

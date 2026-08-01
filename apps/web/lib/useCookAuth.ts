@@ -34,12 +34,13 @@ export function useCookAuth() {
     async (
       email: string,
       password: string,
-      emailOtp: string,
+      mobile: string,
+      whatsappOtp: string,
       displayName?: string,
       area?: string,
       story?: string
     ) => {
-      const { token, user: u } = await registerCook(email, password, emailOtp, displayName, area, story);
+      const { token, user: u } = await registerCook(email, password, mobile, whatsappOtp, displayName, area, story);
       await persistCookSession(token, u);
       setUser(u);
       return u;

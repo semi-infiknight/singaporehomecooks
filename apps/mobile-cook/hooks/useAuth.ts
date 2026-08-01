@@ -42,12 +42,13 @@ export function useAuth() {
     async (
       email: string,
       password: string,
-      email_otp: string,
+      mobile: string,
+      whatsappOtp: string,
       display_name?: string,
       area?: string,
       story?: string
     ) => {
-      const { token, user: u } = await apiRegister(email, password, email_otp, display_name, area, story);
+      const { token, user: u } = await apiRegister(email, password, mobile, whatsappOtp, display_name, area, story);
       await persistSession(token, u);
       await clearCookOnboardingSeen();
       setUser(u);

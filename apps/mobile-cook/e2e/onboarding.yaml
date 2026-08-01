@@ -1,4 +1,4 @@
-# Cook app — sign-up (email OTP) + immersive onboarding v2
+# Cook app — sign-up (WhatsApp OTP) + immersive onboarding v2
 # Run: maestro test apps/mobile-cook/e2e/onboarding.yaml
 # Optional override: maestro test ... -e COOK_EMAIL=you@shc.local
 appId: com.singaporehomecooks.cook
@@ -16,14 +16,17 @@ appId: com.singaporehomecooks.cook
       id: "auth-email-input"
     timeout: 15000
 - tapOn:
-    id: "auth-email-input"
-- inputText: ${output.cookEmail}
+    id: "auth-mobile-input"
+- inputText: "91234567"
 - tapOn:
     id: "auth-submit-btn"
 - extendedWaitUntil:
     visible:
       id: "auth-otp-input"
     timeout: 30000
+- tapOn:
+    id: "auth-email-input"
+- inputText: ${output.cookEmail}
 - tapOn:
     id: "auth-otp-input"
 - inputText: "123456"

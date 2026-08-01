@@ -49,6 +49,12 @@ class ShcCookModuleService extends MedusaService({ Cook }) {
     const [rows] = await this.listAndCountCooks({ login_email: normalized } as any, { take: 1 }).catch(() => [[]]);
     return (rows as any[])?.[0] || null;
   }
+
+  async findByContactMobile(mobileE164: string) {
+    const normalized = mobileE164.trim();
+    const [rows] = await this.listAndCountCooks({ contact_mobile: normalized } as any, { take: 1 }).catch(() => [[]]);
+    return (rows as any[])?.[0] || null;
+  }
 }
 
 export default ShcCookModuleService;

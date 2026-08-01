@@ -2,19 +2,21 @@ import { randomUUID } from "crypto";
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
+import { normalizePaynowMobile } from "@shc/utils";
 import { issueCookToken } from "../../../../../../lib/shc-auth";
 import { hashCookPassword } from "../../../../../../lib/shc-password";
 import { validateAuthRegistration } from "../../../../../../lib/shc-auth-password";
 import {
-  verifyCookRegisterEmailOtp,
-  clearCookRegisterEmailOtp,
-} from "../../../../../../lib/shc-cook-register-otp";
+  verifyCookWhatsappOtp,
+  clearCookWhatsappOtp,
+} from "../../../../../../lib/shc-cook-whatsapp-otp";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const BodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  email_otp: z.string().min(4).max(8),
+  mobile: z.string().min(8).max(20),
+  whatsapp_otp: z.string().min(4).max(8),
   display_name: z.string().min(2).max(80).optional(),
   area: z.string().min(2).max(80).optional(),
   story: z.string().max(500).optional(),
@@ -46,22 +48,31 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const email = parse.data.email.toLowerCase().trim();
+  const mobile = normalizePaynowMobile(parse.data.mobile);
+  if (!mobile) {
+    return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid Singapore mobile number") });
+  }
+
   const policy = validateAuthRegistration(email, parse.data.password);
   if (policy) {
     return res.status(400).json(policy);
   }
 
-  const otpOk = await verifyCookRegisterEmailOtp(email, parse.data.email_otp);
+  const otpOk = await verifyCookWhatsappOtp("register", mobile, parse.data.whatsapp_otp);
   if (!otpOk) {
     return res.status(400).json({
-      error: createSHCError("SHC-AUTH-001", "Invalid or expired email verification code"),
+      error: createSHCError("SHC-AUTH-001", "Invalid or expired WhatsApp verification code"),
     });
   }
 
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
-  const existing = await cookService.findByLoginEmail(email);
-  if (existing) {
+  const existingEmail = await cookService.findByLoginEmail(email);
+  if (existingEmail) {
     return res.status(409).json({ error: createSHCError("SHC-GENERIC-001", "A cook account with this email already exists") });
+  }
+  const existingMobile = await cookService.findByContactMobile(mobile);
+  if (existingMobile) {
+    return res.status(409).json({ error: createSHCError("SHC-GENERIC-001", "A cook account with this mobile number already exists") });
   }
 
   const displayName = parse.data.display_name?.trim() || "New Home Cook";
@@ -82,11 +93,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       availability_paused: false,
       login_email: email,
       password_hash: hashCookPassword(parse.data.password),
-      email_verified_at: now.toISOString(),
+      contact_mobile: mobile,
+      whatsapp_number: mobile,
+      mobile_verified_at: now.toISOString(),
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
     } as any);
-    await clearCookRegisterEmailOtp(email);
+    await clearCookWhatsappOtp("register", mobile);
   } catch (e) {
     return res.status(500).json({
       error: createSHCError("SHC-GENERIC-001", (e as Error).message || "Cook registration failed"),

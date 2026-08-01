@@ -36,6 +36,20 @@ See root LOCAL_TEST.md (or root README).
 
 `pnpm --filter medusa dev` (after docker postgres) — Admin at :9000
 
+## WhatsApp OTP (cook signup + mobile verify)
+
+Production delivery uses **Twilio WhatsApp Business API**. Set on Railway `medusa` service:
+
+| Variable | Example |
+|----------|---------|
+| `TWILIO_ACCOUNT_SID` | `AC…` |
+| `TWILIO_AUTH_TOKEN` | (secret) |
+| `TWILIO_WHATSAPP_FROM` | `whatsapp:+14155238886` (your Twilio WhatsApp sender) |
+
+Local dev / Maestro without Twilio: `SHC_ALLOW_DEMO_OTP=1` (returns hint with code `123456`). Optional override: `SHC_COOK_REGISTER_DEMO_OTP`.
+
+Routes: `POST /store/shc/auth/cook/register/send-whatsapp-otp`, register body includes `mobile` + `whatsapp_otp`.
+
 Contracts verified. Money Wave ready for stitch. Mobile will consume new store earnings/ledger queries later (no contract change).
 
 ## Example future client call

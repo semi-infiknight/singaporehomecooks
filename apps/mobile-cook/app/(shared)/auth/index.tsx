@@ -15,26 +15,28 @@ import { shcColors, shcSpacing, shcBorders, shcRadii } from '@shc/ui';
 import { COOK_ONBOARDING_DEMO_OTP, validateShcPassword } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { hasSeenCookOnboarding } from '../../../lib/onboarding';
-import { sendCookRegisterEmailOtp } from '../../../lib/api-client';
+import { sendCookRegisterWhatsappOtp } from '../../../lib/api-client';
 
-type RegisterStep = 'email' | 'verify';
+type RegisterStep = 'mobile' | 'verify';
 
 export default function CookAuthScreen() {
   const { login, register } = useAuth();
   const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
   const otpRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [registerStep, setRegisterStep] = useState<RegisterStep>('email');
+  const [registerStep, setRegisterStep] = useState<RegisterStep>('mobile');
   const [email, setEmail] = useState(__DEV__ ? 'rose@shc.local' : '');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(__DEV__ ? 'cooksecret' : '');
-  const [emailOtp, setEmailOtp] = useState('');
+  const [whatsappOtp, setWhatsappOtp] = useState('');
   const [otpHint, setOtpHint] = useState('');
   const [busy, setBusy] = useState(false);
 
   const resetRegister = () => {
-    setRegisterStep('email');
-    setEmailOtp('');
+    setRegisterStep('mobile');
+    setWhatsappOtp('');
     setOtpHint('');
   };
 
@@ -53,17 +55,17 @@ export default function CookAuthScreen() {
     router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
   };
 
-  const sendEmailOtp = async () => {
+  const sendWhatsappOtp = async () => {
     if (busy) return;
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      Alert.alert('Missing email', 'Enter your email to receive a verification code.');
+    const trimmedMobile = mobile.trim();
+    if (!trimmedMobile || trimmedMobile.replace(/\D/g, '').length < 8) {
+      Alert.alert('Missing mobile', 'Enter your Singapore WhatsApp number (e.g. 9123 4567).');
       return;
     }
     setBusy(true);
     try {
-      const res = await sendCookRegisterEmailOtp(trimmedEmail);
-      setOtpHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
+      const res = await sendCookRegisterWhatsappOtp(trimmedMobile);
+      setOtpHint(res.hint || `Check WhatsApp for your code (demo: ${COOK_ONBOARDING_DEMO_OTP})`);
       setRegisterStep('verify');
     } catch (e) {
       Alert.alert('Could not send code', (e as Error).message);
@@ -75,6 +77,8 @@ export default function CookAuthScreen() {
   const submit = async () => {
     if (busy) return;
     const trimmedEmail = email.trim();
+    const trimmedMobile = mobile.trim();
+
     if (mode === 'login') {
       if (!trimmedEmail || password.length < 6) {
         Alert.alert('Missing details', 'Enter a valid email and password (6+ characters).');
@@ -92,13 +96,13 @@ export default function CookAuthScreen() {
       return;
     }
 
-    if (registerStep === 'email') {
-      await sendEmailOtp();
+    if (registerStep === 'mobile') {
+      await sendWhatsappOtp();
       return;
     }
 
-    if (!emailOtp.trim() || password.length < 6) {
-      Alert.alert('Missing details', 'Enter the verification code and a password (6+ characters).');
+    if (!whatsappOtp.trim() || !trimmedEmail || password.length < 6) {
+      Alert.alert('Missing details', 'Enter the WhatsApp code, email, and password (6+ characters).');
       return;
     }
     const policy = validateShcPassword(password);
@@ -108,7 +112,7 @@ export default function CookAuthScreen() {
     }
     setBusy(true);
     try {
-      await register(trimmedEmail, password, emailOtp.trim());
+      await register(trimmedEmail, password, trimmedMobile, whatsappOtp.trim());
       await afterAuth(true);
     } catch (e) {
       Alert.alert('Sign up failed', (e as Error).message);
@@ -133,51 +137,67 @@ export default function CookAuthScreen() {
         <Text style={styles.subtitle}>
           {mode === 'login'
             ? 'Sign in to manage listings, orders, and earnings.'
-            : registerStep === 'email'
-              ? 'Create your home kitchen account — we’ll verify your email first.'
-              : 'Enter the code we sent and choose a password.'}
+            : registerStep === 'mobile'
+              ? 'Create your home kitchen account — we verify your WhatsApp first.'
+              : 'Enter the WhatsApp code, then your email and password.'}
         </Text>
 
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Email"
-          placeholderTextColor={shcColors.textLight}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={[styles.input, isRegisterVerify && styles.inputReadonly]}
-          testID="auth-email-input"
-          editable={!isRegisterVerify}
-          returnKeyType={mode === 'login' ? 'next' : registerStep === 'email' ? 'done' : 'next'}
-          onSubmitEditing={() => {
-            if (mode === 'login') passwordRef.current?.focus();
-            else if (registerStep === 'email') void sendEmailOtp();
-            else otpRef.current?.focus();
-          }}
-        />
+        {(mode === 'login' || isRegisterVerify) && (
+          <TextInput
+            ref={emailRef}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor={shcColors.textLight}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            style={styles.input}
+            testID="auth-email-input"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+          />
+        )}
+
+        {mode === 'register' && (
+          <TextInput
+            value={mobile}
+            onChangeText={setMobile}
+            placeholder="WhatsApp mobile (e.g. 9123 4567)"
+            placeholderTextColor={shcColors.textLight}
+            keyboardType="phone-pad"
+            style={[styles.input, isRegisterVerify && styles.inputReadonly]}
+            testID="auth-mobile-input"
+            editable={!isRegisterVerify}
+            returnKeyType={registerStep === 'mobile' ? 'done' : 'next'}
+            onSubmitEditing={() => {
+              if (registerStep === 'mobile') void sendWhatsappOtp();
+              else otpRef.current?.focus();
+            }}
+          />
+        )}
 
         {isRegisterVerify ? (
           <>
             <TextInput
               ref={otpRef}
-              value={emailOtp}
-              onChangeText={setEmailOtp}
-              placeholder="6-digit verification code"
+              value={whatsappOtp}
+              onChangeText={setWhatsappOtp}
+              placeholder="6-digit WhatsApp code"
               placeholderTextColor={shcColors.textLight}
               keyboardType="number-pad"
               style={styles.input}
               testID="auth-otp-input"
               returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
+              onSubmitEditing={() => emailRef.current?.focus()}
             />
             {otpHint ? <Text style={styles.hint}>{otpHint}</Text> : null}
             <Pressable
-              onPress={() => void sendEmailOtp()}
+              onPress={() => void sendWhatsappOtp()}
               disabled={busy}
               style={styles.resend}
               testID="auth-resend-otp-btn"
             >
-              <Text style={styles.resendText}>Resend code</Text>
+              <Text style={styles.resendText}>Resend WhatsApp code</Text>
             </Pressable>
           </>
         ) : null}
@@ -208,15 +228,15 @@ export default function CookAuthScreen() {
               ? 'Please wait…'
               : mode === 'login'
                 ? 'Sign in'
-                : registerStep === 'email'
-                  ? 'Send verification code'
+                : registerStep === 'mobile'
+                  ? 'Send WhatsApp code'
                   : 'Create account'}
           </Text>
         </Pressable>
 
         {isRegisterVerify ? (
-          <Pressable onPress={resetRegister} style={styles.toggle} testID="auth-change-email-btn">
-            <Text style={styles.toggleText}>Use a different email</Text>
+          <Pressable onPress={resetRegister} style={styles.toggle} testID="auth-change-mobile-btn">
+            <Text style={styles.toggleText}>Use a different mobile number</Text>
           </Pressable>
         ) : null}
 

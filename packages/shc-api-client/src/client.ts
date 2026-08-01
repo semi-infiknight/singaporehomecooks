@@ -104,20 +104,25 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return data;
     },
 
-    async sendCookRegisterEmailOtp(email: string) {
-      return request<{ ok: boolean; sent: boolean; hint?: string; email_masked?: string }>(
-        "/store/shc/auth/cook/register/send-email-otp",
-        {
-          method: "POST",
-          body: JSON.stringify({ email }),
-        }
-      );
+    async sendCookRegisterWhatsappOtp(mobile: string) {
+      return request<{
+        ok: boolean;
+        sent: boolean;
+        delivered?: boolean;
+        channel?: string;
+        hint?: string;
+        mobile_masked?: string;
+      }>("/store/shc/auth/cook/register/send-whatsapp-otp", {
+        method: "POST",
+        body: JSON.stringify({ mobile }),
+      });
     },
 
     async registerCook(
       email: string,
       password: string,
-      email_otp: string,
+      mobile: string,
+      whatsapp_otp: string,
       display_name?: string,
       area?: string,
       story?: string
@@ -127,7 +132,8 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         body: JSON.stringify({
           email,
           password,
-          email_otp,
+          mobile,
+          whatsapp_otp,
           ...(display_name ? { display_name } : {}),
           ...(area ? { area } : {}),
           ...(story ? { story } : {}),
@@ -185,16 +191,19 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     },
 
     async sendCookMobileVerify(mobile: string) {
-      return request<{ ok: boolean; hint?: string }>("/store/shc/auth/cook/verify-mobile", {
-        method: "POST",
-        body: JSON.stringify({ mobile }),
-      });
+      return request<{ ok: boolean; hint?: string; delivered?: boolean; channel?: string }>(
+        "/store/shc/auth/cook/verify-mobile",
+        {
+          method: "POST",
+          body: JSON.stringify({ mobile }),
+        }
+      );
     },
 
-    async confirmCookMobile(code: string) {
+    async confirmCookMobile(code: string, mobile?: string) {
       return request<{ ok: boolean }>("/store/shc/auth/cook/confirm-mobile", {
         method: "POST",
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, ...(mobile ? { mobile } : {}) }),
       });
     },
 

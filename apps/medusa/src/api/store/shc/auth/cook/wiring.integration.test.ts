@@ -3,7 +3,7 @@ import { enforceOneCookOnAdd } from "@shc/business-rules";
 import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
 import { signShcToken } from "../../../../../lib/shc-auth";
 import { POST as registerCook } from "./register/route";
-import { issueCookRegisterEmailOtp } from "../../../../../lib/shc-cook-register-otp";
+import { issueCookWhatsappOtp } from "../../../../../lib/shc-cook-whatsapp-otp";
 import { PATCH as patchProfile } from "./profile/route";
 import { POST as createListing } from "../../listings/route";
 import { POST as addToCart, DELETE as clearCart } from "../../cart/route";
@@ -167,14 +167,16 @@ describe("cook ↔ customer wiring (handler chain)", () => {
     const customerToken = signShcToken({ actor_type: "customer", actor_id: customerId, shc: true });
 
     const regEmail = "wiring@test.local";
-    const { code: emailOtp } = await issueCookRegisterEmailOtp(regEmail);
+    const regMobile = "+6590000001";
+    await issueCookWhatsappOtp("register", regMobile);
     const regRes = makeRes();
     await registerCook(
       {
         body: {
           email: regEmail,
           password: "secret12",
-          email_otp: emailOtp,
+          mobile: "90000001",
+          whatsapp_otp: "123456",
           display_name: "Wiring Cook",
           area: "Bedok",
         },

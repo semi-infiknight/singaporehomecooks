@@ -51,6 +51,7 @@ import {
   confirmCookMobile,
   createCookListing,
   getCurrentUser,
+  getCookProfile,
 } from '../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../lib/cook-media-upload';
 import { pickComplianceCertificate, uploadComplianceCertificate } from '../lib/compliance-upload';
@@ -181,6 +182,27 @@ export default function CookOnboardingFlow() {
 
   useEffect(() => {
     if (!draftReady || maestroE2e) return;
+    void getCookProfile()
+      .then((res) => {
+        const cook = res.cook as { contact_mobile?: string; mobile_verified_at?: string | null };
+        if (!cook?.mobile_verified_at) return;
+        setDraft((d) => ({
+          ...d,
+          mobile_verified: true,
+          contact_mobile: cook.contact_mobile?.replace(/^\+65/, '') || d.contact_mobile,
+        }));
+      })
+      .catch(() => null);
+  }, [draftReady, maestroE2e]);
+
+  useEffect(() => {
+    if (stepId !== 'verify_mobile' || !draft.mobile_verified) return;
+    const next = cookOnboardingNextStep(stepId);
+    if (next) setStepId(next);
+  }, [stepId, draft.mobile_verified]);
+
+  useEffect(() => {
+    if (!draftReady || maestroE2e) return;
     void saveCookOnboardingDraft({ stepId, draft });
   }, [draft, stepId, draftReady, maestroE2e]);
 
@@ -282,7 +304,7 @@ export default function CookOnboardingFlow() {
   const confirmMobile = async () => {
     setBusy(true);
     try {
-      await confirmCookMobile(otpCode);
+      await confirmCookMobile(otpCode, draft.contact_mobile);
       patch({ mobile_verified: true });
       setVerifyHint('Mobile verified ✓');
       setTimeout(() => goNext(), 400);
