@@ -116,7 +116,7 @@ export const COOK_ONBOARDING_STEPS: CookOnboardingStepMeta[] = [
     id: 'verify_mobile',
     chapter: 'contact',
     title: 'Verify your mobile',
-    subtitle: 'Enter the SMS code we sent to confirm your number.',
+    subtitle: 'Tap Get verify code — we confirm your number (WhatsApp when live, demo code until then).',
     imageKey: 'orders',
   },
   {
@@ -316,7 +316,7 @@ export function validateCookOnboardingStep(
       return { ok: true };
     }
     case 'verify_mobile':
-      if (!draft.mobile_verified) return { ok: false, message: 'Verify your mobile with the SMS code.' };
+      if (!draft.mobile_verified) return { ok: false, message: 'Tap Get verify code and enter the code we show you.' };
       return { ok: true };
     case 'paynow': {
       const a = normalizePaynowMobile(draft.paynow_mobile);
@@ -400,16 +400,37 @@ export function cookOnboardingStepIndex(stepId: CookOnboardingStepId): number {
   return COOK_ONBOARDING_STEPS.findIndex((s) => s.id === stepId);
 }
 
-export function cookOnboardingNextStep(stepId: CookOnboardingStepId): CookOnboardingStepId | null {
+export type CookOnboardingNavOptions = {
+  /** Skip verify_mobile when mobile was already verified at signup. */
+  mobileVerified?: boolean;
+};
+
+export function cookOnboardingNextStep(
+  stepId: CookOnboardingStepId,
+  options?: CookOnboardingNavOptions
+): CookOnboardingStepId | null {
   const idx = cookOnboardingStepIndex(stepId);
   if (idx < 0 || idx >= COOK_ONBOARDING_STEPS.length - 1) return null;
-  return COOK_ONBOARDING_STEPS[idx + 1].id;
+  let nextIdx = idx + 1;
+  if (options?.mobileVerified && COOK_ONBOARDING_STEPS[nextIdx]?.id === 'verify_mobile') {
+    nextIdx += 1;
+    if (nextIdx >= COOK_ONBOARDING_STEPS.length) return null;
+  }
+  return COOK_ONBOARDING_STEPS[nextIdx].id;
 }
 
-export function cookOnboardingPrevStep(stepId: CookOnboardingStepId): CookOnboardingStepId | null {
+export function cookOnboardingPrevStep(
+  stepId: CookOnboardingStepId,
+  options?: CookOnboardingNavOptions
+): CookOnboardingStepId | null {
   const idx = cookOnboardingStepIndex(stepId);
   if (idx <= 0) return null;
-  return COOK_ONBOARDING_STEPS[idx - 1].id;
+  let prevIdx = idx - 1;
+  if (options?.mobileVerified && COOK_ONBOARDING_STEPS[prevIdx]?.id === 'verify_mobile') {
+    prevIdx -= 1;
+    if (prevIdx < 0) return null;
+  }
+  return COOK_ONBOARDING_STEPS[prevIdx].id;
 }
 
 export function cookOnboardingChapterDotProgress(stepId: CookOnboardingStepId): {

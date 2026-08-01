@@ -208,13 +208,16 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     },
 
     async sendCookMobileVerify(mobile: string) {
-      return request<{ ok: boolean; hint?: string; delivered?: boolean; channel?: string }>(
-        "/store/shc/auth/cook/verify-mobile",
-        {
-          method: "POST",
-          body: JSON.stringify({ mobile }),
-        }
-      );
+      return request<{
+        ok: boolean;
+        hint?: string;
+        delivered?: boolean;
+        channel?: string;
+        demo_code?: string;
+      }>("/store/shc/auth/cook/verify-mobile", {
+        method: "POST",
+        body: JSON.stringify({ mobile }),
+      });
     },
 
     async confirmCookMobile(code: string, mobile?: string) {

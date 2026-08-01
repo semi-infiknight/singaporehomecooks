@@ -54,7 +54,11 @@ Production uses **Meta WhatsApp Cloud API** (Graph). Set on Railway `medusa` ser
 
 No auth template required for signup OTP (user messages first). Onboarding mobile verify may still use templates when pushing outbound.
 
-Local dev / Maestro: `SHC_ALLOW_DEMO_OTP=1` (auto demo code on prepare). Optional: `SHC_COOK_REGISTER_DEMO_OTP`.
+Local dev / Maestro: demo code `123456` auto-works when Meta is not configured.
+
+**Stub mode (no Meta yet):** If `WHATSAPP_CLOUD_ACCESS_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` are unset, signup and onboarding use demo OTP `123456` in all environments. Set `SHC_ALLOW_DEMO_OTP=0` to disable. Once Meta vars are set, live WhatsApp is used automatically.
+
+Optional: `SHC_COOK_REGISTER_DEMO_OTP` to force a specific demo code.
 
 Routes:
 - `POST /store/shc/auth/cook/register/send-whatsapp-otp` → `{ whatsapp_url, verify_token, hint }`

@@ -187,7 +187,7 @@ export default function CookOnboardingFlow() {
 
   useEffect(() => {
     if (stepId !== 'verify_mobile' || !draft.mobile_verified) return;
-    const next = cookOnboardingNextStep(stepId);
+    const next = cookOnboardingNextStep(stepId, { mobileVerified: true });
     if (next) setStepId(next);
   }, [stepId, draft.mobile_verified]);
 
@@ -204,14 +204,15 @@ export default function CookOnboardingFlow() {
   const progress = useMemo(() => cookOnboardingChapterProgress(stepId), [stepId]);
   const chapterDots = useMemo(() => cookOnboardingChapterDotProgress(stepId), [stepId]);
   const isLast = stepId === 'complete';
-  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
+  const navOpts = useMemo(() => ({ mobileVerified: draft.mobile_verified }), [draft.mobile_verified]);
+  const canGoBack = cookOnboardingPrevStep(stepId, navOpts) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
 
   const goBack = () => {
-    const prev = cookOnboardingPrevStep(stepId);
+    const prev = cookOnboardingPrevStep(stepId, navOpts);
     if (prev) setStepId(prev);
   };
 
@@ -222,7 +223,7 @@ export default function CookOnboardingFlow() {
       return;
     }
     setError('');
-    const next = cookOnboardingNextStep(stepId);
+    const next = cookOnboardingNextStep(stepId, navOpts);
     if (next) setStepId(next);
   };
 
@@ -257,7 +258,11 @@ export default function CookOnboardingFlow() {
     setBusy(true);
     try {
       const res = await sendCookMobileVerify(draft.contact_mobile);
-      setVerifyHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
+      const demoCode = (res as { demo_code?: string }).demo_code;
+      if (demoCode) setOtpCode(demoCode);
+      setVerifyHint(
+        res.hint || (demoCode ? `Demo code: ${demoCode}` : `Enter code ${COOK_ONBOARDING_DEMO_OTP}`)
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -359,7 +364,7 @@ export default function CookOnboardingFlow() {
               className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 mb-3"
               data-testid="cook-onboarding-send-mobile"
             >
-              Send SMS code
+              Get verify code
             </button>
             <FieldLabel>6-digit code</FieldLabel>
             <TextField value={otpCode} onChange={setOtpCode} placeholder="123456" testID="cook-onboarding-mobile-otp" />

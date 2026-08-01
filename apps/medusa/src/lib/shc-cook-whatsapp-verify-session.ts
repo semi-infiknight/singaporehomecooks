@@ -125,7 +125,7 @@ export async function prepareCookRegisterWhatsappVerify(mobileInput: string): Pr
       mobile_masked,
       demo_code,
       otp_ready: true,
-      hint: `Tap Verify on WhatsApp and send the pre-filled message. Demo code: ${demo_code}`,
+      hint: `Tap Message us to verify and send the pre-filled WhatsApp message. Demo code: ${demo_code}`,
     };
   }
 
@@ -135,7 +135,7 @@ export async function prepareCookRegisterWhatsappVerify(mobileInput: string): Pr
     prefill_message,
     mobile_masked,
     otp_ready: false,
-    hint: `Tap Verify on WhatsApp, send the pre-filled message, then enter the code we reply with.`,
+    hint: `Tap Message us to verify, send the pre-filled WhatsApp message, then enter the code we reply with.`,
   };
 }
 
@@ -151,7 +151,7 @@ export async function handleInboundCookRegisterVerifyMessage(
   if (!session) {
     await sendWhatsappSessionText(
       waFrom,
-      "This verification link has expired. Go back to the SHC app and tap Verify on WhatsApp again."
+      "This verification link has expired. Go back to the SHC app and tap Message us to verify again."
     ).catch(() => null);
     return { handled: true, replied: true };
   }
