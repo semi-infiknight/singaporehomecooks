@@ -134,6 +134,8 @@ export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq' | 'halal'; file
   client.submitComplianceDoc(input);
 export const getEarnings = () => client.getEarnings();
 export const getCookPayoutHistory = () => client.getCookPayoutHistory();
+export const getCookPayoutInvoiceDownloadUrl = (batchId: string) =>
+  client.getCookPayoutInvoiceDownloadUrl(batchId);
 export const getNotifications = (role: 'cook' | 'customer' = 'cook') => client.getNotifications({ role });
 export const markNotificationsRead = (ids?: string[], all = false, role: 'cook' | 'customer' = 'cook') =>
   client.markNotificationsRead?.(ids, all, role) || Promise.resolve({ success: true });

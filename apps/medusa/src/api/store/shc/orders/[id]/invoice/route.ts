@@ -1,6 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
-import { buildOrderInvoice, canDownloadCookSettlementInvoice, invoiceToHtml, invoiceToPdfBase64 } from "@shc/utils";
+import { COOK_WEEKLY_PAYOUT_INVOICE_HINT, invoiceToHtml, invoiceToPdfBase64 } from "@shc/utils";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
 import {
   getAuthContext,
@@ -9,13 +9,12 @@ import {
   unauthorized,
 } from "../../../../../../lib/shc-actors";
 import { buildInvoiceDownloadUrl } from "../../../../../../lib/shc-invoice-sign";
+import { buildCustomerOrderInvoice } from "../../../../../../lib/shc-order-invoice-build";
 
 /**
  * GET /store/shc/orders/:id/invoice
- * SG tax invoice (customer) or settlement note (cook).
- * Query:
- *   format=json|pdf|html  (default json)
- *   issue_url=1           → { download_url } short-lived signed PDF link for mobile openURL
+ * Per-dish invoice: cook → customer (JSON + PDF).
+ * Cooks receive weekly payout invoices via GET /store/shc/earnings/payouts/:batchId/invoice.
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params as { id: string };
@@ -35,52 +34,39 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
   const m = data.meta as any;
 
-  let audience: "customer" | "cook" = "customer";
-  try {
-    if (auth.actor_type === "cook") {
+  if (auth.actor_type === "cook") {
+    try {
       const cookId = requireCookId(req);
       if (m.cook_id && m.cook_id !== cookId) {
         return res.status(403).json({ error: createSHCError("SHC-GENERIC-001", "Not your order") });
       }
-      audience = "cook";
-    } else if (auth.actor_type === "customer") {
-      const customerId = requireCustomerId(req);
-      // Enforce ownership when order has customer_id; legacy rows without owner remain downloadable when logged in
-      if (m.customer_id && String(m.customer_id).length > 0 && m.customer_id !== customerId) {
-        return res.status(403).json({ error: createSHCError("SHC-GENERIC-001", "Not your order") });
-      }
-      audience = "customer";
-    } else {
+    } catch {
       return unauthorized(res, "Login required");
     }
-  } catch {
-    return unauthorized(res, "Login required");
-  }
-
-  if (audience === "cook" && !canDownloadCookSettlementInvoice(m.shc_status)) {
     return res.status(403).json({
-      error: createSHCError(
-        "SHC-ORDER-001",
-        "Settlement invoice is available after you accept the order."
-      ),
+      error: createSHCError("SHC-GENERIC-001", COOK_WEEKLY_PAYOUT_INVOICE_HINT),
     });
   }
 
-  // Normalize money: meta may store total_cents OR dollars in total
-  const rawTotal = m.total_cents != null ? Number(m.total_cents) : Number(m.total);
-  const total_cents =
-    Number.isFinite(rawTotal) && rawTotal > 0
-      ? rawTotal >= 1000 && Number.isInteger(rawTotal)
-        ? rawTotal // likely already cents
-        : Math.round(rawTotal * (rawTotal < 1000 ? 100 : 1))
-      : 0;
-  // Prefer explicit total_cents when present
+  if (auth.actor_type === "customer") {
+    try {
+      const customerId = requireCustomerId(req);
+      if (m.customer_id && String(m.customer_id).length > 0 && m.customer_id !== customerId) {
+        return res.status(403).json({ error: createSHCError("SHC-GENERIC-001", "Not your order") });
+      }
+    } catch {
+      return unauthorized(res, "Login required");
+    }
+  } else {
+    return unauthorized(res, "Login required");
+  }
+
   const resolvedTotalCents =
     m.total_cents != null && Number(m.total_cents) > 0
       ? Math.round(Number(m.total_cents))
       : m.total != null && Number(m.total) > 0
         ? Math.round(Number(m.total) * 100)
-        : total_cents;
+        : 0;
 
   const order = {
     id: m.order_id,
@@ -106,21 +92,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
           : m.updated_at,
   };
 
-  const invoice = buildOrderInvoice({
-    order,
-    audience,
-    actorName: auth.actor_type === "cook" ? "Cook" : "Customer",
-    supplier: {
-      uen: process.env.SHC_PLATFORM_UEN || process.env.PAYNOW_UEN || undefined,
-      legal_name: process.env.SHC_PLATFORM_LEGAL_NAME || "Singapore Home Cooks",
-    },
-  });
+  const invoice = await buildCustomerOrderInvoice(req.scope, order, "Customer");
 
   const filename = `${invoice.invoice_number}.pdf`;
 
-  // Mobile: short-lived signed URL only (no base64 payload)
   if (issueUrl || format === "link" || format === "url") {
-    const link = buildInvoiceDownloadUrl({ order_id: id, audience });
+    const link = buildInvoiceDownloadUrl({ order_id: id, audience: "customer" });
     return res.json({
       download_url: link.download_url,
       expires_at: link.expires_at,

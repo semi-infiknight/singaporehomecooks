@@ -27,21 +27,33 @@ export function SHCCookEarningsIrasNote({ testID = 'cook-earnings-iras-note' }: 
 
 export function SHCCookEarningsPayoutHistory({
   payouts,
+  onDownloadInvoice,
   testID = 'cook-earnings-payout-history',
 }: {
   payouts: CookPayoutHistoryRow[];
+  onDownloadInvoice?: (row: CookPayoutHistoryRow) => void;
   testID?: string;
 }) {
   return (
     <SHCCard variant="bento-yellow" style={styles.payoutCard} testID={testID}>
       <Text style={styles.sectionLabelInline}>Payout history</Text>
+      <Text style={styles.noteText}>Weekly payout invoices are issued by Singapore Home Cooks.</Text>
       {!payouts.length ? (
         <Text style={styles.noteText}>No payouts yet — earnings batch every Monday after orders complete.</Text>
       ) : (
         payouts.slice(0, 6).map((row, idx) => (
-          <Text key={`${row.batch_id || row.week_start || idx}`} style={styles.payoutLine}>
-            {formatCookPayoutHistoryRow(row)}
-          </Text>
+          <View key={`${row.batch_id || row.week_start || idx}`} style={styles.payoutRow}>
+            <Text style={styles.payoutLine}>{formatCookPayoutHistoryRow(row)}</Text>
+            {row.batch_id && onDownloadInvoice ? (
+              <SHCButton
+                variant="outline"
+                onPress={() => onDownloadInvoice(row)}
+                testID={`cook-payout-invoice-${row.batch_id}`}
+              >
+                <SHCButtonText>Invoice</SHCButtonText>
+              </SHCButton>
+            ) : null}
+          </View>
         ))
       )}
     </SHCCard>
@@ -163,7 +175,8 @@ export function SHCCookEarningsExpenseTracker({
 const styles = StyleSheet.create({
   noteCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
   payoutCard: { marginTop: shcSpacing.md, padding: shcSpacing.md },
-  payoutLine: { fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20 },
+  payoutLine: { fontSize: 13, fontWeight: '700', color: shcColors.text, lineHeight: 20, flex: 1 },
+  payoutRow: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginTop: shcSpacing.xs },
   sectionLabelInline: { fontSize: 14, fontWeight: '900', color: shcColors.text, marginBottom: shcSpacing.xs },
   noteText: { fontSize: 12, color: shcColors.textLight, lineHeight: 18 },
   sectionLabel: {

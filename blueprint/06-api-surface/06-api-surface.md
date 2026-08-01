@@ -59,7 +59,10 @@ Client methods: `getTiffinKitchens`, `getTiffinKitchen`, `getTiffinSubscription`
 
 Smoke: `pnpm smoke:tiffin` · Ship: `bash scripts/ship-tiffin-wave7.sh`
 
-**Order invoices (SG):** `GET /store/shc/orders/:id/invoice` — customer tax invoice or cook settlement note (JSON + `pdf_base64` + HTML). Query `?format=pdf` streams PDF; `?issue_url=1` returns short-lived signed `download_url` for mobile (`GET /hooks/shc/invoice?…`). Bulk corporate ZIP: `GET /store/shc/orders/corporate/invoices?format=zip` (web blob) or `?issue_url=1` → `GET /hooks/shc/corporate-invoices?…`. Auth: order owner (customer JWT or cook JWT). **Cook settlement:** only when `shc_status` is `accepted` through `completed` (403 before accept); provisional PDF title until `collected`/`completed`. Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
+**Order invoices (SG):**
+- **Dish invoice (cook → customer):** `GET /store/shc/orders/:id/invoice` — customer JWT only (cook JWT → 403 + weekly payout hint). JSON + `pdf_base64` + HTML; `?format=pdf` streams PDF; `?issue_url=1` → signed `download_url` (`GET /hooks/shc/invoice?…`). Supplier on PDF = cook; SHC shown as facilitator. Built via `@shc/utils` `buildOrderInvoice` / `invoiceToPdfBase64`.
+- **Weekly payout invoice (SHC → cook):** `GET /store/shc/earnings/payouts/:batchId/invoice` — cook JWT; same response shapes + `GET /hooks/shc/payout-invoice?…` signed URL. Built via `@shc/utils` `buildPayoutInvoice` / `payoutInvoiceToPdfBase64`.
+- **Corporate bundle:** `GET /store/shc/orders/corporate/invoices?format=zip` or `?issue_url=1` → `GET /hooks/shc/corporate-invoices?…`.
 
 **PayNow (HitPay):** `POST /store/shc/orders/:id/paynow` (customer JWT) → HitPay `paynow_online` QR (`qr_image_data_url`). `POST /hooks/shc/hitpay` — HitPay webhook (`charge.created` / `payment_request.completed`) → `markOrderPaid`. No customer manual confirm. Ops: `POST /admin/shc/payment-confirm`. See `content/hitpay-setup.md`.
 

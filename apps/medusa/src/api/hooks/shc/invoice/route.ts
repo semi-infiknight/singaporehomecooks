@@ -1,13 +1,13 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
-import { buildOrderInvoice, canDownloadCookSettlementInvoice, invoiceToPdfBase64 } from "@shc/utils";
+import { invoiceToPdfBase64 } from "@shc/utils";
 import ShcOrderMetaModuleService from "../../../../modules/shc-order-meta/service";
 import { verifyInvoiceDownload } from "../../../../lib/shc-invoice-sign";
+import { buildCustomerOrderInvoice } from "../../../../lib/shc-order-invoice-build";
 
 /**
- * GET /hooks/shc/invoice?order_id=&audience=cook|customer&exp=&sig=
- * Public short-lived signed PDF download (no JWT, no publishable key).
- * Issued only after authenticated GET …/invoice?issue_url=1
+ * GET /hooks/shc/invoice?order_id=&audience=customer&exp=&sig=
+ * Public short-lived signed dish invoice PDF (customer only).
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const q = (req.query || {}) as Record<string, string>;
@@ -29,21 +29,18 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     });
   }
 
+  if (verified.audience !== "customer") {
+    return res.status(403).json({
+      error: createSHCError("SHC-GENERIC-001", "Cook payout invoices use /hooks/shc/payout-invoice"),
+    });
+  }
+
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
   const data = await metaService.getOrderMetaWithMessages(orderId);
   if (!data.meta) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${orderId}`) });
   }
   const m = data.meta as any;
-
-  if (verified.audience === "cook" && !canDownloadCookSettlementInvoice(m.shc_status)) {
-    return res.status(403).json({
-      error: createSHCError(
-        "SHC-ORDER-001",
-        "Settlement invoice is available after you accept the order."
-      ),
-    });
-  }
 
   const resolvedTotalCents =
     m.total_cents != null && Number(m.total_cents) > 0
@@ -76,15 +73,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
           : m.updated_at,
   };
 
-  const invoice = buildOrderInvoice({
-    order,
-    audience: verified.audience,
-    actorName: verified.audience === "cook" ? "Cook" : "Customer",
-    supplier: {
-      uen: process.env.SHC_PLATFORM_UEN || process.env.PAYNOW_UEN || undefined,
-      legal_name: process.env.SHC_PLATFORM_LEGAL_NAME || "Singapore Home Cooks",
-    },
-  });
+  const invoice = await buildCustomerOrderInvoice(req.scope, order, "Customer");
 
   const pdf_base64 = invoiceToPdfBase64(invoice);
   const filename = `${invoice.invoice_number}.pdf`;

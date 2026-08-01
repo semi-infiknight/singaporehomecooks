@@ -264,8 +264,8 @@ export default function OrderTracking() {
           invoiceBusy
             ? 'Opening PDF…'
             : isCorporate
-              ? 'Open corporate tax invoice (PDF)'
-              : 'Open tax invoice (PDF)'
+              ? 'Open corporate dish invoice (PDF)'
+              : 'Open dish invoice (PDF)'
         }
         variant="outline"
         onPress={downloadInvoice}

@@ -32,7 +32,7 @@ export function OrderManageSupportWeb({
 
   const invoiceLabel = useMemo(() => {
     if (invoiceBusy) return 'Preparing PDF…';
-    return isCorporate ? 'Download corporate tax invoice (PDF)' : 'Download tax invoice (PDF)';
+    return isCorporate ? 'Download corporate dish invoice (PDF)' : 'Download dish invoice (PDF)';
   }, [invoiceBusy, isCorporate]);
 
   const downloadInvoice = useCallback(async () => {

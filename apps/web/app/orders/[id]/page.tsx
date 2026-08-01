@@ -254,8 +254,8 @@ export default function TrackOrder() {
           {invoiceBusy
             ? 'Preparing PDF…'
             : isCorporate
-              ? 'Download corporate tax invoice (PDF)'
-              : 'Download tax invoice (PDF)'}
+              ? 'Download corporate dish invoice (PDF)'
+              : 'Download dish invoice (PDF)'}
         </SHCButton>
         {!isPaid ? (
           <p className="text-[11px] font-semibold text-muted-foreground mt-2">

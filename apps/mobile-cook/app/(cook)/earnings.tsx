@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Text, View, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Text, View, ScrollView, StyleSheet, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -28,7 +28,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useCookEarnings } from '../../hooks/useCookEarnings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createCookExpense, getCookPayoutHistory, listCookExpenses } from '../../lib/api-client';
+import { createCookExpense, getCookPayoutHistory, getCookPayoutInvoiceDownloadUrl, listCookExpenses } from '../../lib/api-client';
 
 export default function Earnings() {
   const insets = useSafeAreaInsets();
@@ -72,6 +72,17 @@ export default function Earnings() {
     });
   };
 
+  const downloadPayoutInvoice = async (row: { batch_id?: string }) => {
+    if (!row.batch_id) return;
+    try {
+      const res = await getCookPayoutInvoiceDownloadUrl(row.batch_id);
+      if (!res.download_url) throw new Error('No invoice download URL from server');
+      await Linking.openURL(res.download_url);
+    } catch (e) {
+      Alert.alert('Payout invoice', (e as Error).message || 'Could not open payout invoice PDF.');
+    }
+  };
+
   return (
     <ScrollView
       style={styles.screen}
@@ -106,7 +117,10 @@ export default function Earnings() {
         earnings={earnings}
         onSetupPaynow={() => router.push('/(cook)/settings' as any)}
       />
-      <SHCCookEarningsPayoutHistory payouts={(payoutHistory.payouts || []) as any} />
+      <SHCCookEarningsPayoutHistory
+        payouts={(payoutHistory.payouts || []) as any}
+        onDownloadInvoice={downloadPayoutInvoice}
+      />
 
       <Text style={styles.sectionLabel}>Quick actions</Text>
       <View style={styles.bentoRow}>

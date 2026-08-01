@@ -4813,21 +4813,37 @@ export function CookEarningsIrasNoteWeb({ testID = 'cook-earnings-iras-note' }: 
 
 export function CookEarningsPayoutHistoryWeb({
   payouts,
+  onDownloadInvoice,
   testID = 'cook-earnings-payout-history',
 }: {
   payouts: CookPayoutHistoryRow[];
+  onDownloadInvoice?: (row: CookPayoutHistoryRow) => void;
   testID?: string;
 }) {
   return (
     <GourmeatCard className="bg-[var(--shc-bento-yellow)] mt-4" data-testid={testID}>
       <p className="text-sm font-extrabold mb-2">Payout history</p>
+      <p className="text-xs text-muted-foreground mb-2">Weekly payout invoices are issued by Singapore Home Cooks.</p>
       {!payouts.length ? (
         <p className="text-xs text-muted-foreground">No payouts yet — earnings batch every Monday after orders complete.</p>
       ) : (
         payouts.slice(0, 6).map((row, idx) => (
-          <p key={`${row.batch_id || row.week_start || idx}`} className="text-sm font-bold leading-relaxed">
-            {formatCookPayoutHistoryRow(row)}
-          </p>
+          <div
+            key={`${row.batch_id || row.week_start || idx}`}
+            className="flex items-center justify-between gap-2 py-1"
+          >
+            <p className="text-sm font-bold leading-relaxed flex-1">{formatCookPayoutHistoryRow(row)}</p>
+            {row.batch_id && onDownloadInvoice ? (
+              <button
+                type="button"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold shrink-0"
+                onClick={() => onDownloadInvoice(row)}
+                data-testid={`cook-payout-invoice-${row.batch_id}`}
+              >
+                Invoice
+              </button>
+            ) : null}
+          </div>
         ))
       )}
     </GourmeatCard>

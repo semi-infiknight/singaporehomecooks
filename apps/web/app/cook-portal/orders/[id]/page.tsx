@@ -7,13 +7,10 @@ import { useParams } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
 import {
   buildOrderChatContext,
-  canDownloadCookSettlementInvoice,
-  COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT,
-  COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE,
+  COOK_WEEKLY_PAYOUT_INVOICE_HINT,
   getDishImageUrl,
   getOrderStatusLabel,
   isCookComplianceVerified,
-  isCookSettlementInvoiceProvisional,
   resolveOrderCollectionFields,
   shcOrderStatusBadgeLabel,
   shcOrderStatusBadgeVariant,
@@ -25,8 +22,6 @@ import {
   useComplianceDocs,
   useCookOrderDisputes,
 } from '../../../../lib/useCookPortal';
-import { getCookOrderInvoice } from '../../../../lib/cook-api-client';
-import { downloadPdfBase64InBrowser } from '../../../../lib/download-pdf';
 import {
   GourmeatScreenHeader,
   GourmeatCard,
@@ -98,7 +93,6 @@ export default function CookOrderDetailPage() {
   const { disputes, submit: submitDispute, isSubmitting: disputeSubmitting } = useCookOrderDisputes(id);
   const transMut = useCookTransitionOrder();
   const { openTray, dismiss } = useSHCTrayWeb();
-  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const [transitionErr, setTransitionErr] = useState<{ code?: string; message: string } | null>(null);
 
   useEffect(() => {
@@ -107,27 +101,8 @@ export default function CookOrderDetailPage() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [order]);
 
-  const downloadInvoice = async () => {
-    if (!id || invoiceBusy) return;
-    setInvoiceBusy(true);
-    try {
-      const res = await getCookOrderInvoice(id);
-      downloadPdfBase64InBrowser({
-        pdf_base64: res.pdf_base64,
-        filename: res.filename || `settlement-${id}.pdf`,
-        mime: res.mime || 'application/pdf',
-      });
-    } catch (e) {
-      alert((e as Error).message || 'Could not download settlement invoice.');
-    } finally {
-      setInvoiceBusy(false);
-    }
-  };
-
   const orderRecord = order as Record<string, unknown> | undefined;
   const status = String(orderRecord?.shc_status || '');
-  const settlementAvailable = canDownloadCookSettlementInvoice(status);
-  const settlementProvisional = isCookSettlementInvoiceProvisional(status);
   const actions = NEXT_ACTIONS[status] || [];
   const items = (orderRecord?.items as Array<{ name?: string; qty?: number; product_id?: string; image_url?: string }>) || [];
   const dishName = items[0]?.name || `Order ${id}`;
@@ -329,26 +304,14 @@ export default function CookOrderDetailPage() {
         </div>
       )}
 
-      {settlementAvailable ? (
-        <div className="mb-3">
-          {settlementProvisional ? (
-            <p className="text-xs font-semibold text-muted-foreground mb-2" data-testid="cook-settlement-invoice-provisional-hint">
-              {COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT}
-            </p>
-          ) : null}
-          <GourmeatPrimaryButton
-            label={invoiceBusy ? 'Preparing PDF…' : 'Download settlement invoice (PDF)'}
-            variant="outline"
-            onClick={downloadInvoice}
-            disabled={invoiceBusy}
-            testID="cook-order-download-invoice-btn"
-          />
-        </div>
-      ) : (
-        <p className="text-xs font-semibold text-muted-foreground mb-3" data-testid="cook-settlement-invoice-unavailable">
-          {COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE}
+      <div className="mb-3">
+        <p className="text-xs font-semibold text-muted-foreground mb-2" data-testid="cook-weekly-payout-invoice-hint">
+          {COOK_WEEKLY_PAYOUT_INVOICE_HINT}
         </p>
-      )}
+        <Link href="/cook-portal/earnings" className="text-sm font-bold text-primary">
+          Open Earnings & payout invoices →
+        </Link>
+      </div>
 
       <div className="mt-6" id="cook-order-chat">
         <SHCSectionTitle subtitle="Coordinate collection with your customer">Order chat</SHCSectionTitle>
