@@ -2,7 +2,7 @@
  * Cook Orders — active collections + Collaboration Board (recipe request bids).
  * Bids live here (not dashboard) so cooks work requests next to order ops.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,11 +21,24 @@ import {
   SHCSkeletonOrderList,
   SHCCookQuoteBuilder,
   SHCCookSavedQuote,
+  SHCTiffinCalendarStrip,
   gourmeatColors,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, isCookComplianceVerified, partitionCookOrders, parseCustomRequestDisplay, parseCookQuoteDisplay } from '@shc/utils';
+import {
+  getOrderStatusLabel,
+  isCookComplianceVerified,
+  partitionCookOrders,
+  parseCustomRequestDisplay,
+  parseCookQuoteDisplay,
+  todayIsoInSingapore,
+  monthLabelForDate,
+  collectCookOrderDates,
+  buildCookCalendarDays,
+  filterCookOrdersByDate,
+  emptyCookOrdersDayCopy,
+} from '@shc/utils';
 
 import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useCookMyBids, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
@@ -67,6 +80,27 @@ export default function CookOrders() {
     }
     return map;
   }, [myBids]);
+
+  const todayRef = useRef(todayIsoInSingapore());
+  const today = todayRef.current;
+  const [selected, setSelected] = useState(today);
+
+  const selectDay = useCallback((date: string) => {
+    setSelected(date);
+  }, []);
+
+  useEffect(() => {
+    setSelected(today);
+  }, [today]);
+
+  const orderDates = useMemo(() => collectCookOrderDates(orderList), [orderList]);
+  const calendarDays = useMemo(() => buildCookCalendarDays(today, orderDates), [today, orderDates]);
+  const dayOrders = useMemo(
+    () => filterCookOrdersByDate(orderList, selected, today),
+    [orderList, selected, today]
+  );
+  const { needsAction: allNeedsAction, inProgress: allInProgress } = partitionCookOrders(orderList);
+  const { needsAction, inProgress } = partitionCookOrders(dayOrders);
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
     setErr(null);
@@ -114,8 +148,8 @@ export default function CookOrders() {
     }
   };
 
-  const { needsAction, inProgress } = partitionCookOrders(orderList);
   const reqList = Array.isArray(openReqs) ? openReqs : [];
+  const dayEmpty = needsAction.length === 0 && inProgress.length === 0;
 
   const renderOrderRow = (o: any) => {
     const actions = NEXT_ACTIONS[o.shc_status] || [];
@@ -173,9 +207,9 @@ export default function CookOrders() {
     >
       <GourmeatCookHeader
         title="Orders"
-        subtitle={user?.name}
+        subtitle={[user?.name, monthLabelForDate(selected)].filter(Boolean).join(' · ')}
         badges={
-          needsAction.length > 0 ? (
+          allNeedsAction.length > 0 ? (
             <Text
               style={{
                 fontSize: 11,
@@ -187,9 +221,9 @@ export default function CookOrders() {
                 borderRadius: 12,
               }}
             >
-              {needsAction.length} need action
+              {allNeedsAction.length} need action
             </Text>
-          ) : inProgress.length > 0 ? (
+          ) : allInProgress.length > 0 ? (
             <Text
               style={{
                 fontSize: 11,
@@ -201,7 +235,7 @@ export default function CookOrders() {
                 borderRadius: 12,
               }}
             >
-              {inProgress.length} in progress
+              {allInProgress.length} in progress
             </Text>
           ) : undefined
         }
@@ -214,7 +248,7 @@ export default function CookOrders() {
         />
       )}
 
-      {!complianceOk && needsAction.length > 0 && (
+      {!complianceOk && allNeedsAction.length > 0 && (
         <GourmeatCard style={{ marginBottom: shcSpacing.sm, backgroundColor: '#FEF3C7' }} testID="cook-compliance-gate-banner">
           <Text style={{ fontSize: 13, fontWeight: '700', color: gourmeatColors.text }}>
             Upload SFA + WSQ and wait for ops verification before accepting orders.
@@ -229,6 +263,18 @@ export default function CookOrders() {
           />
         </GourmeatCard>
       )}
+
+      <SHCTiffinCalendarStrip
+        days={calendarDays}
+        selectedDate={selected}
+        todayDate={today}
+        onSelect={selectDay}
+        testID="cook-orders-calendar-strip"
+      />
+
+      <Text style={styles.dayHeading} testID="cook-orders-selected-date">
+        {selected === today ? 'Today' : selected}
+      </Text>
 
       {needsAction.length > 0 && (
         <>
@@ -248,17 +294,18 @@ export default function CookOrders() {
         </>
       )}
 
-      {needsAction.length === 0 && inProgress.length === 0 && (
+      {dayEmpty && (
         <>
-          <SHCSectionTitle>Collection orders</SHCSectionTitle>
-
           {ordersLoading && orderList.length === 0 && (
             <SHCSkeletonOrderList count={4} variant="row" />
           )}
 
-          {!ordersLoading && orderList.length === 0 && !ordersError && (
-            <GourmeatCard>
-              <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+          {!ordersLoading && !ordersError && (
+            <GourmeatCard testID="cook-orders-day-empty">
+              <GourmeatEmptyState
+                title={emptyCookOrdersDayCopy({ isToday: selected === today }).title}
+                body={emptyCookOrdersDayCopy({ isToday: selected === today }).body}
+              />
             </GourmeatCard>
           )}
 
@@ -344,6 +391,12 @@ export default function CookOrders() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
   content: { paddingHorizontal: shcSpacing.md },
+  dayHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: gourmeatColors.text,
+    marginBottom: shcSpacing.sm,
+  },
   collabHeader: {
     flexDirection: 'row',
     alignItems: 'center',
