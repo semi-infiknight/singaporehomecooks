@@ -244,9 +244,7 @@ export default function DiscoverHome() {
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
 
   const handleAddToCart = useCallback(
-    (productId: string, qty = 1) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty });
+    (productId: string, qty = 1) => {      addMut.mutate({ productId, qty });
     },
     [addMut, requireAuth]
   );

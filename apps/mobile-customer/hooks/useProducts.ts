@@ -18,6 +18,7 @@ import {
   createSHCError,
   isAuthenticated,
   hydrateSession,
+  ensureGuestSession,
 } from '../lib/api-client';
 import type { SHCErrorCode } from '@shc/types';
 import { useAuth } from './useAuth';
@@ -92,16 +93,17 @@ export function useAddToCart(options?: { silent?: boolean }) {
 }
 
 export function useCart() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   return useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
       await hydrateSession();
+      await ensureGuestSession();
       return getCart();
     },
     staleTime: 0,
     refetchOnMount: 'always',
-    enabled: (!!user || isAuthenticated()) && !loading,
+    enabled: !loading,
   });
 }
 

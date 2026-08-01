@@ -161,9 +161,7 @@ export default function SearchScreen() {
   }, []);
 
   const handleAdd = useCallback(
-    (id: string) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId: id, qty: 1 });
+    (id: string) => {      addMut.mutate({ productId: id, qty: 1 });
     },
     [requireAuth, addMut]
   );

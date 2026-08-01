@@ -31,11 +31,11 @@ import { BENTO_ACTION_IMAGES, getFirstCartProductId, resolveCartForDisplay, orde
 import { useCart, useCollectionSlots, useProduct } from '../../hooks/useProducts';
 import { checkout, createOrderPayNow, getOrder } from '../../lib/api-client';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
-import { authRouteWithReturn } from '../../lib/auth-return';
+import { readGuestContact, saveGuestContact, recordGuestOrder } from '../../lib/guest-session';
 import { SHCErrorCode } from '@shc/types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCustomerLocation } from '../../hooks/useCustomerLocation';
-import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder, isGuestCheckoutContactComplete, type GuestCheckoutContact } from '@shc/utils';
 
 function AllergenGateTrayContent({
   tier1,
@@ -74,6 +74,14 @@ export default function Checkout() {
   );
   const [collectionUnit, setCollectionUnit] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
+  const [guestContact, setGuestContact] = useState<GuestCheckoutContact>({ name: '', email: '', phone: '' });
+
+  useEffect(() => {
+    if (user) return;
+    void readGuestContact().then((saved) => {
+      if (saved) setGuestContact(saved);
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!collectionPrefill) {
@@ -95,11 +103,6 @@ export default function Checkout() {
   const firstOrderMilestone = useMilestoneCelebration('first_order', user?.id || user?.name || 'anon', milestoneStorage);
   const triggerFirstOrderCelebration = firstOrderMilestone.triggerIfFirst;
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace(authRouteWithReturn('/(customer)/checkout') as any);
-    }
-  }, [authLoading, user, router]);
   const { data: cartRaw = { items: [] } } = useCart();
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const cart = useMemo(
@@ -145,9 +148,12 @@ export default function Checkout() {
 
   const effectiveSlot =
     selectedSlot ?? (dropCart && dropCollection ? dropCollection : null);
-  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill);
+  const guestContactOk = Boolean(user) || isGuestCheckoutContactComplete(guestContact);
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill && guestContactOk);
   const checkoutHint = !collectionPrefill
     ? 'Set your collection point to continue'
+    : !guestContactOk
+      ? 'Enter your name, email, and mobile to continue'
     : !effectiveSlot
     ? 'Select a collection date and time to continue'
     : !allergenAck
@@ -182,6 +188,10 @@ export default function Checkout() {
       setError({ code: 'SHC-GENERIC-001', message: 'PDPA consent checkbox is required for Singapore compliance (personal data processing)' });
       return;
     }
+    if (!guestContactOk) {
+      setError({ code: 'SHC-GENERIC-001', message: 'Enter your name, email, and mobile number.' });
+      return;
+    }
     if (!collectionPrefill) {
       setError({ code: 'SHC-GENERIC-001', message: 'Set your HDB collection point before checkout.' });
       router.push('/(customer)/location' as any);
@@ -201,12 +211,15 @@ export default function Checkout() {
         cartCollectionNotes: cartNotes.collectionNotes,
       });
       const customerCollection = customerCollectionForOrder(collectionLocation ?? undefined, collectionUnit);
+      if (!user) await saveGuestContact(guestContact);
       const res = await checkout(allergenAck, effectiveSlot, pdpaConsent, {
         ...toOrderNotesPayload(cartNotes),
         collection_notes,
         ...customerCollection,
+        guest_contact: user ? undefined : guestContact,
       });
       const orderId = (res as { order?: { id?: string } }).order?.id || '';
+      if (!user && orderId) await recordGuestOrder(orderId);
       setCompletedOrderId(orderId);
       await clearCartCheckoutNotes();
     } catch (e: any) {
@@ -341,6 +354,38 @@ export default function Checkout() {
       >
         <Text style={styles.checkoutTitle}>Checkout</Text>
         <Text style={styles.checkoutSubtitle}>{itemCount} portion{itemCount !== 1 ? 's' : ''} · HDB collection</Text>
+
+        {!user ? (
+          <SHCCard variant="bento-yellow" style={styles.sectionCard}>
+            <SHCSectionTitle style={styles.sectionTitle}>Your details</SHCSectionTitle>
+            <Text style={styles.fieldLabel}>Name</Text>
+            <TextInput
+              value={guestContact.name}
+              onChangeText={(name) => setGuestContact((c) => ({ ...c, name }))}
+              style={styles.input}
+              testID="guest-checkout-name"
+            />
+            <Text style={styles.fieldLabel}>Email</Text>
+            <TextInput
+              value={guestContact.email}
+              onChangeText={(email) => setGuestContact((c) => ({ ...c, email }))}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
+              testID="guest-checkout-email"
+            />
+            <Text style={styles.fieldLabel}>Mobile</Text>
+            <TextInput
+              value={guestContact.phone}
+              onChangeText={(phone) => setGuestContact((c) => ({ ...c, phone }))}
+              keyboardType="phone-pad"
+              placeholder="9123 4567"
+              style={styles.input}
+              testID="guest-checkout-phone"
+            />
+            <Text style={styles.pdpaHint}>Saved on this device only — no account needed.</Text>
+          </SHCCard>
+        ) : null}
 
         <SHCCard variant="bento-mint" style={styles.sectionCard}>
           <SHCSectionTitle style={styles.sectionTitle}>Your collection point</SHCSectionTitle>

@@ -1,6 +1,7 @@
 /** AGENT: Web customer client — auth-gate checkout/PDP. CORS via pnpm railway:wire. blueprint/agent/build-protocol.md */
 import { createShcApiClient } from '@shc/api-client';
 import { resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
+import { ensureGuestId, getGuestId } from './guest-session';
 
 const TOKEN_KEY = 'shc_web_token';
 const USER_KEY = 'shc_web_user';
@@ -17,6 +18,7 @@ export const client = createShcApiClient({
   publishableKey: resolveRailwayPublishableKey(process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   appRole: 'customer',
   getAccessToken: readToken,
+  getGuestId: () => getGuestId(),
   setAccessToken: (token) => {
     accessToken = token;
     if (typeof window !== 'undefined') {
@@ -31,7 +33,10 @@ export async function hydrateSession() {
   if (typeof window === 'undefined') return null;
   const token = localStorage.getItem(TOKEN_KEY);
   const userRaw = localStorage.getItem(USER_KEY);
-  if (!token) return null;
+  if (!token) {
+    ensureGuestId();
+    return null;
+  }
   accessToken = token;
   if (userRaw) {
     try {
@@ -94,7 +99,15 @@ export const checkout = (
   ack: boolean,
   coll: { date: string; slot: string },
   pdpa = true,
-  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+  notes?: {
+    cooking_notes?: string | null;
+    collection_notes?: string | null;
+    customer_collection_lat?: number | null;
+    customer_collection_lng?: number | null;
+    customer_collection_postal_code?: string | null;
+    customer_collection_line1?: string | null;
+    guest_contact?: { name: string; email: string; phone: string } | null;
+  }
 ) => client.checkout(ack, coll, pdpa, notes);
 export const transitionOrder = (oid: string, to: string) => client.transitionOrder(oid, to);
 export const flagCorporateOrder = (orderId: string, note: string) => client.flagCorporateOrder(orderId, note);

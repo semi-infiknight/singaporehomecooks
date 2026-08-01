@@ -4,7 +4,8 @@ import { createSHCError, SHCOrderStatus } from "@shc/types";
 import ShcOrderMetaModuleService from "../modules/shc-order-meta/service";
 import ShcCartModuleService from "../modules/shc-cart/service";
 import ShcDropModuleService from "../modules/shc-drop/service";
-import { getCustomerId } from "./shc-actors";
+import { getCartActorId } from "./shc-actors";
+import { isGuestCartActorId } from "./shc-guest";
 import ShcNotificationModuleService from "../modules/shc-notification/service";
 
 export type DemoCheckoutInput = {
@@ -19,10 +20,19 @@ export type DemoCheckoutInput = {
   customer_collection_lng?: number | null;
   customer_collection_postal_code?: string | null;
   customer_collection_line1?: string | null;
+  guest_contact?: {
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
 };
 
 export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCheckoutInput) {
-  const customerId = getCustomerId(req);
+  const customerId = getCartActorId(req);
+  const guestOrder = isGuestCartActorId(customerId);
+  if (guestOrder && !input.guest_contact?.name?.trim()) {
+    throw createSHCError("SHC-GENERIC-001", "Name, email, and phone are required for guest checkout");
+  }
   let {
     collection_date,
     collection_slot,
@@ -35,6 +45,7 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     customer_collection_lng = null,
     customer_collection_postal_code = null,
     customer_collection_line1 = null,
+    guest_contact = null,
   } = input;
 
   const trimNote = (v: string | null | undefined) => {
@@ -109,6 +120,9 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
     customer_collection_lng,
     customer_collection_postal_code: customer_collection_postal_code?.trim() || null,
     customer_collection_line1: customer_collection_line1?.trim() || null,
+    guest_name: guest_contact?.name?.trim() || null,
+    guest_email: guest_contact?.email?.trim() || null,
+    guest_phone: guest_contact?.phone?.trim() || null,
     origin_request_id: originDropId ? `drop:${originDropId}` : undefined,
     items: cart.items,
     total_cents: total,
@@ -129,10 +143,12 @@ export async function completeDemoCartCheckout(req: MedusaRequest, input: DemoCh
 
   await cartService.clearCart(customerId);
   const notifService: ShcNotificationModuleService = req.scope.resolve("shcNotification") as any;
-  await notifService.push(customerId, {
-    type: "order",
-    body: `Order ${orderId} placed — waiting for your cook to confirm.`,
-  });
+  if (!guestOrder) {
+    await notifService.push(customerId, {
+      type: "order",
+      body: `Order ${orderId} placed — waiting for your cook to confirm.`,
+    });
+  }
   await notifService.push(cookId, {
     type: "order",
     body: originDropId ? `Batch order ${orderId}` : `New order ${orderId} — confirm or decline in your dashboard.`,

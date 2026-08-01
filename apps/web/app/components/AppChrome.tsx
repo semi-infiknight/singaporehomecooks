@@ -35,20 +35,6 @@ function isCustomerMarketplaceRoute(pathname: string): boolean {
  * Completing guest/sign-in marks `shc_onboarding_seen_v1` in localStorage.
  */
 function FirstVisitOnboardingGate() {
-  const pathname = usePathname() || '';
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (loading) return;
-    if (user) return;
-    if (pathname.startsWith('/onboarding')) return;
-    if (!isCustomerMarketplaceRoute(pathname)) return;
-    if (hasSeenOnboarding()) return;
-    const next = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname)}`;
-    router.replace(`/onboarding${next}`);
-  }, [loading, user, pathname, router]);
-
   return null;
 }
 

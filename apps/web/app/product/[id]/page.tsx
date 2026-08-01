@@ -104,9 +104,7 @@ function ProductDetailContent() {
     if (!allergenAck) {
       setError('Please acknowledge allergens before adding to cart.');
       return;
-    }
-    if (!requireAuth('Sign in to add this dish to your cart.', `/product/${id}`)) return;
-    try {
+    }    try {
       await addMut.mutateAsync({ productId: product.id, qty: effectiveQty });
       setAdded(true);
       setTimeout(() => router.push('/cart'), 600);

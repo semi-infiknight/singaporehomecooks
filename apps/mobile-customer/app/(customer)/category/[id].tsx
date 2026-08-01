@@ -174,9 +174,7 @@ export default function CategoryExploreScreen() {
   }, [cookList, categoryProducts, categoryId, collectionLocation]);
 
   const handleAdd = useCallback(
-    (productId: string) => {
-      if (!requireAuth('Sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty: 1 });
+    (productId: string) => {      addMut.mutate({ productId, qty: 1 });
     },
     [requireAuth, addMut]
   );

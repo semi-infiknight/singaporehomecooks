@@ -19,6 +19,7 @@ import {
   isAuthenticated,
   hydrateSession,
 } from './api-client';
+import { ensureGuestId } from './guest-session';
 import type { SHCErrorCode } from '@shc/types';
 import { SHCTrayActionWeb, useSHCTrayWeb } from '../app/components/SHCWebComponents';
 
@@ -97,9 +98,12 @@ const EMPTY_CART = { items: [] as { qty: number; price: number }[], cookId: null
 export function useCart() {
   return useQuery({
     queryKey: ['cart'],
-    queryFn: getCart,
+    queryFn: async () => {
+      await hydrateSession();
+      ensureGuestId();
+      return getCart();
+    },
     staleTime: 5000,
-    enabled: isAuthenticated(),
     placeholderData: EMPTY_CART,
   });
 }

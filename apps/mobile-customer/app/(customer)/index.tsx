@@ -242,9 +242,7 @@ export default function CustomerDiscover() {
   const goToProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
 
   const handleAddToCart = useCallback(
-    (productId: string, qty = 1) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty });
+    (productId: string, qty = 1) => {      addMut.mutate({ productId, qty });
     },
     [requireAuth, addMut]
   );

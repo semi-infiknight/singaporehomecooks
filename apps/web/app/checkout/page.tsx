@@ -27,8 +27,9 @@ import {
 } from '../components/SHCWebComponents';
 import { useAuth } from '../../lib/useAuth';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
-import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder } from '@shc/utils';
+import { checkoutCollectionPrefill, buildCheckoutCollectionNotes, customerCollectionForOrder, isGuestCheckoutContactComplete, type GuestCheckoutContact } from '@shc/utils';
 import { clearCartCheckoutNotes, readCartCheckoutNotes, toOrderNotesPayload } from '../../lib/cart-notes';
+import { readGuestContact, saveGuestContact, recordGuestOrder } from '../../lib/guest-session';
 
 function extractOrderId(res: unknown): string | null {
   if (!res || typeof res !== 'object') return null;
@@ -55,6 +56,17 @@ export default function CheckoutPage() {
   );
   const [collectionUnit, setCollectionUnit] = useState('');
   const [collectionInstructions, setCollectionInstructions] = useState('');
+  const [guestContact, setGuestContact] = useState<GuestCheckoutContact>({
+    name: '',
+    email: '',
+    phone: '',
+  });
+
+  useEffect(() => {
+    if (user) return;
+    const saved = readGuestContact();
+    if (saved) setGuestContact(saved);
+  }, [user]);
 
   useEffect(() => {
     if (!collectionPrefill) {
@@ -67,12 +79,6 @@ export default function CheckoutPage() {
   }, [collectionPrefill?.line1, collectionPrefill?.line2, collectionPrefill?.instructions]);
 
   const { data: cart, isLoading: cartLoading } = useCart();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.replace('/login?next=/checkout');
-    }
-  }, [authLoading, user, router]);
 
   const checkoutMut = useCheckout();
 
@@ -104,9 +110,12 @@ export default function CheckoutPage() {
   }, [dropCart, dropCollection?.date, dropCollection?.slot]);
 
   const effectiveSlot = selected ?? (dropCart && dropCollection ? dropCollection : null);
-  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill);
+  const guestContactOk = Boolean(user) || isGuestCheckoutContactComplete(guestContact);
+  const checkoutReady = Boolean(effectiveSlot && allergenAck && pdpaConsent && collectionPrefill && guestContactOk);
   const checkoutHint = !collectionPrefill
     ? 'Set your collection point to continue'
+    : !guestContactOk
+      ? 'Enter your name, email, and mobile to continue'
     : !effectiveSlot
     ? 'Select a collection date and time to continue'
     : !allergenAck
@@ -159,6 +168,10 @@ export default function CheckoutPage() {
       showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Please consent to data processing to continue.' });
       return;
     }
+    if (!guestContactOk) {
+      showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Enter your name, email, and mobile number.' });
+      return;
+    }
     if (!collectionPrefill) {
       showCheckoutError({ code: 'SHC-GENERIC-001', message: 'Set your HDB collection point before checkout.' });
       router.push('/location');
@@ -177,6 +190,7 @@ export default function CheckoutPage() {
         cartCollectionNotes: cartNotes.collectionNotes,
       });
       const customerCollection = customerCollectionForOrder(collectionLocation ?? undefined, collectionUnit);
+      if (!user) saveGuestContact(guestContact);
       const res = await checkoutMut.mutateAsync({
         allergenAck,
         collection: effectiveSlot,
@@ -185,6 +199,7 @@ export default function CheckoutPage() {
           ...toOrderNotesPayload(cartNotes),
           collection_notes,
           ...customerCollection,
+          guest_contact: user ? undefined : guestContact,
         },
       });
       clearCartCheckoutNotes();
@@ -196,6 +211,7 @@ export default function CheckoutPage() {
         });
         return;
       }
+      if (!user) recordGuestOrder(oid);
       setOrderId(oid);
       setAwaitingCook(true);
     } catch (e: unknown) {
@@ -228,7 +244,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (authLoading || (cartLoading && !cart)) {
+  if (cartLoading && !cart) {
     return (
       <div className="max-w-xl mx-auto px-4 py-8" data-testid="checkout-skeleton">
         <SHCSkeletonList count={5} rowHeight={56} />
@@ -280,6 +296,35 @@ export default function CheckoutPage() {
       </p>
 
       <CheckoutStepper steps={checkoutSteps} currentStep={checkoutStep} />
+
+      {!user ? (
+        <SHCCard className="mb-6 shc-bento-yellow">
+          <SHCSectionTitle subtitle="Saved on this device only — no account needed">Your details</SHCSectionTitle>
+          <label className="block text-xs font-extrabold text-muted-foreground mb-1">Name</label>
+          <input
+            value={guestContact.name}
+            onChange={(e) => setGuestContact((c) => ({ ...c, name: e.target.value }))}
+            className="shc-input w-full mb-3"
+            data-testid="guest-checkout-name"
+          />
+          <label className="block text-xs font-extrabold text-muted-foreground mb-1">Email</label>
+          <input
+            type="email"
+            value={guestContact.email}
+            onChange={(e) => setGuestContact((c) => ({ ...c, email: e.target.value }))}
+            className="shc-input w-full mb-3"
+            data-testid="guest-checkout-email"
+          />
+          <label className="block text-xs font-extrabold text-muted-foreground mb-1">Mobile</label>
+          <input
+            value={guestContact.phone}
+            onChange={(e) => setGuestContact((c) => ({ ...c, phone: e.target.value }))}
+            className="shc-input w-full"
+            placeholder="9123 4567"
+            data-testid="guest-checkout-phone"
+          />
+        </SHCCard>
+      ) : null}
 
       <SHCCard className="mb-6 shc-bento-mint">
         <SHCSectionTitle>Your collection point</SHCSectionTitle>
