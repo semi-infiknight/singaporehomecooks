@@ -66,6 +66,16 @@ export function useBids(requestId?: string) {
   });
 }
 
+export function useCookMyBids() {
+  return useQuery({
+    queryKey: ['cook-my-bids'],
+    queryFn: async () => {
+      const { listMyBids } = await import('../lib/api-client');
+      return listMyBids();
+    },
+  });
+}
+
 export function useCreateBid() {
   const qc = useQueryClient();
   return useMutation({
@@ -86,6 +96,7 @@ export function useCreateBid() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bids'] });
       qc.invalidateQueries({ queryKey: ['requests'] });
+      qc.invalidateQueries({ queryKey: ['cook-my-bids'] });
     },
   });
 }

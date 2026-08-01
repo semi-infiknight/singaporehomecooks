@@ -5,6 +5,7 @@ import {
   shcServingsBadgeLabel,
   shcGuestCountBadgeLabel,
   buildDefaultQuoteLines,
+  buildQuoteLinesFromSaved,
   validateClientQuoteLines,
   sumIncludedQuoteCents,
 } from './custom-request';
@@ -57,5 +58,27 @@ describe('custom-request utils', () => {
     lines[1].included = false;
     expect(validateClientQuoteLines(lines).ok).toBe(true);
     expect(sumIncludedQuoteCents(lines)).toBe(5000);
+  });
+
+  it('restores quote builder lines from saved bid', () => {
+    const requestLines = [
+      { id: 'a', name: 'Laksa', servings: 6 },
+      { id: 'b', name: 'Kueh', servings: 12 },
+    ];
+    const restored = buildQuoteLinesFromSaved(
+      {
+        id: 'bid_1',
+        cook_id: 'cook_a',
+        price_cents: 4500,
+        status: 'pending',
+        line_items: [
+          { request_line_id: 'a', included: true, servings: 6, price_cents: 4500 },
+          { request_line_id: 'b', included: false, servings: 12, price_cents: 0 },
+        ],
+      },
+      requestLines
+    );
+    expect(restored[0].price_cents).toBe(4500);
+    expect(restored[1].included).toBe(false);
   });
 });

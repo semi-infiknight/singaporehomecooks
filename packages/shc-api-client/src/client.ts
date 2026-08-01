@@ -651,6 +651,12 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return (r as any).bids || [];
     },
 
+    /** Cook's own quotes on custom requests (collaboration board). */
+    async listMyBids() {
+      const r = await request("/store/shc/bids?mine=1", { method: "GET" });
+      return (r as any).bids || [];
+    },
+
     async acceptBid(
       bidId: string,
       opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }

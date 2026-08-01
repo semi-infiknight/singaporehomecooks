@@ -161,6 +161,7 @@ export const listMyDrops = () => client.listDrops({ mine: true });
 export const createDrop = (input: Record<string, unknown>) => client.createDrop(input);
 export const patchDrop = (id: string, input: Record<string, unknown>) => client.patchDrop(id, input);
 export const getBids = (requestId?: string) => client.getBids(requestId);
+export const listMyBids = () => client.listMyBids();
 export const acceptBid = (
   bidId: string,
   opts?: { collection_date?: string; collection_slot?: string; accepted_line_ids?: string[] }

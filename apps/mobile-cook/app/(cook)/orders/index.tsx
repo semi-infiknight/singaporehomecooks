@@ -2,7 +2,7 @@
  * Cook Orders — active collections + Collaboration Board (recipe request bids).
  * Bids live here (not dashboard) so cooks work requests next to order ops.
  */
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,13 +20,14 @@ import {
   SHCSectionTitle,
   SHCSkeletonOrderList,
   SHCCookQuoteBuilder,
+  SHCCookSavedQuote,
   gourmeatColors,
   shcSpacing,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, formatBidCentsAsDollars, isCookComplianceVerified, partitionCookOrders, parseCustomRequestDisplay } from '@shc/utils';
+import { getOrderStatusLabel, isCookComplianceVerified, partitionCookOrders, parseCustomRequestDisplay, parseCookQuoteDisplay } from '@shc/utils';
 
-import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useComplianceDocs } from '../../../hooks/useOrder';
+import { useMyOrders, useTransitionOrder, useRequests, useCreateBid, useCookMyBids, useComplianceDocs } from '../../../hooks/useOrder';
 import { useAuth } from '../../../hooks/useAuth';
 import { SHCOrderStatus } from '@shc/types';
 
@@ -44,14 +45,28 @@ export default function CookOrders() {
   const { data: orders, isLoading: ordersLoading, isError: ordersError, error: ordersErr, refetch: refetchOrders } = useMyOrders();
   const orderList = (orders as any[]) ?? [];
   const { data: openReqs = [] } = useRequests();
+  const { data: myBids = [] } = useCookMyBids();
   const createBidMut = useCreateBid();
   const { data: complianceDocs = [] } = useComplianceDocs();
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
-  const [bidSuccess, setBidSuccess] = useState<Record<string, string>>({});
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
+  const [editingQuoteRequestId, setEditingQuoteRequestId] = useState<string | null>(null);
+
+  const myBidByRequestId = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>();
+    for (const bid of myBids as Array<Record<string, unknown>>) {
+      const requestId = String(bid.request_id || '');
+      if (!requestId) continue;
+      const status = String(bid.status || 'pending');
+      if (status === 'pending' || status === 'accepted') {
+        map.set(requestId, bid);
+      }
+    }
+    return map;
+  }, [myBids]);
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
     setErr(null);
@@ -78,11 +93,6 @@ export default function CookOrders() {
     }
   ) => {
     setBidError('');
-    setBidSuccess((s) => {
-      const next = { ...s };
-      delete next[reqId];
-      return next;
-    });
     setBiddingId(reqId);
     try {
       await createBidMut.mutateAsync({
@@ -96,10 +106,7 @@ export default function CookOrders() {
           price_cents: l.price_cents,
         })),
       });
-      setBidSuccess((s) => ({
-        ...s,
-        [reqId]: `Quote sent · ${formatBidCentsAsDollars(payload.price_cents)}`,
-      }));
+      setEditingQuoteRequestId(null);
     } catch (e: any) {
       setBidError(e?.message || 'Could not send quote. Check login and try again.');
     } finally {
@@ -283,6 +290,11 @@ export default function CookOrders() {
         ) : (
           reqList.map((r: any) => {
             const parsed = parseCustomRequestDisplay(r);
+            const savedBidRaw = myBidByRequestId.get(r.id);
+            const savedBid = savedBidRaw
+              ? parseCookQuoteDisplay(savedBidRaw, parsed.lines)
+              : null;
+            const showBuilder = !savedBid || editingQuoteRequestId === r.id;
             return (
             <View key={r.id} style={styles.collabItem} testID={`collab-req-${r.id}`}>
               <Text style={styles.collabBody} numberOfLines={2}>
@@ -295,23 +307,25 @@ export default function CookOrders() {
               ))}
               <View style={styles.collabBadges}>
                 {parsed.guest_count ? <SHCMetaBadge kind="party_size">{parsed.guest_count} guests</SHCMetaBadge> : null}
-                <SHCMetaBadge kind="price">
-                  Budget S${r.budget_cents != null ? (Number(r.budget_cents) / 100).toFixed(0) : '—'}
-                </SHCMetaBadge>
                 {r.date ? <SHCMetaBadge kind="date">{r.date}</SHCMetaBadge> : null}
               </View>
-              {bidSuccess[r.id] ? (
-                <Text style={styles.bidOk} testID={`bid-success-${r.id}`}>
-                  {bidSuccess[r.id]}
-                </Text>
-              ) : (
+              {showBuilder ? (
                 <SHCCookQuoteBuilder
                   request={r}
                   busy={biddingId === r.id}
+                  initialQuote={savedBidRaw || undefined}
+                  submitLabel={savedBid ? 'Save quote' : undefined}
                   onSubmit={(payload) => handleQuote(r.id, payload)}
                   testID={`quote-builder-${r.id}`}
                 />
-              )}
+              ) : savedBid ? (
+                <SHCCookSavedQuote
+                  quote={savedBid}
+                  requestLines={parsed.lines}
+                  onEdit={() => setEditingQuoteRequestId(r.id)}
+                  testID={`cook-saved-quote-${r.id}`}
+                />
+              ) : null}
             </View>
           );
           })

@@ -41,7 +41,7 @@ appId: com.singaporehomecooks.cook
     id: "quote-builder-.*-send"
 - extendedWaitUntil:
     visible:
-      id: "bid-success-.*"
+      id: "cook-saved-quote-.*"
     timeout: 90000
     optional: true
 - assertVisible:

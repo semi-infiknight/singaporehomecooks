@@ -86,6 +86,7 @@ import {
   type CookPayoutHistoryRow,
   parseCustomRequestDisplay,
   buildDefaultQuoteLines,
+  buildQuoteLinesFromSaved,
   validateClientQuoteLines,
   sumIncludedQuoteCents,
   formatQuoteTotal,
@@ -94,6 +95,7 @@ import {
   CUSTOM_REQUEST_COPY,
   type CookQuoteLineItem,
   type CookQuoteDisplay,
+  type CustomRequestLine,
   parseCookQuoteDisplay,
   defaultCustomerAcceptLineIds,
   sumCustomerAcceptCents,
@@ -5224,25 +5226,95 @@ export function CookQuoteCardWeb({
   );
 }
 
+export function CookSavedQuoteWeb({
+  quote,
+  requestLines,
+  onEdit,
+  testID = 'cook-saved-quote',
+}: {
+  quote: CookQuoteDisplay | Record<string, unknown>;
+  requestLines?: CustomRequestLine[];
+  onEdit?: () => void;
+  testID?: string;
+}) {
+  const parsed =
+    quote && (quote as CookQuoteDisplay).line_items
+      ? (quote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(quote as Record<string, unknown>, requestLines);
+  const included = cookIncludedQuoteLines(parsed.line_items || []);
+
+  return (
+    <div data-testid={testID} className="mt-2 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-black text-sm">{CUSTOM_REQUEST_COPY.quoteSaved}</p>
+        <SHCBadge variant={parsed.status === 'accepted' ? 'success' : 'warning'}>
+          {parsed.status === 'pending' ? 'Waiting' : parsed.status}
+        </SHCBadge>
+      </div>
+      <p className="text-xs font-semibold text-muted-foreground mt-1">{CUSTOM_REQUEST_COPY.quoteSavedHint}</p>
+      <ul className="mt-2 space-y-1">
+        {included.map((line) => (
+          <li key={line.request_line_id} className="text-sm font-bold">
+            · {line.name || 'Dish'} — {formatQuoteTotal(line.price_cents)}
+          </li>
+        ))}
+      </ul>
+      <p className="font-black text-primary mt-2">Total {formatQuoteTotal(parsed.price_cents)}</p>
+      {parsed.message ? <p className="text-xs font-semibold mt-2 line-clamp-3">“{parsed.message}”</p> : null}
+      {onEdit && parsed.status === 'pending' ? (
+        <button
+          type="button"
+          className="text-sm font-black text-primary mt-2"
+          onClick={onEdit}
+          data-testid={`${testID}-edit`}
+        >
+          {CUSTOM_REQUEST_COPY.updateQuote}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function CookQuoteBuilderWeb({
   request,
   onSubmit,
   busy = false,
   testID = 'cook-quote-builder',
+  initialQuote,
+  submitLabel,
 }: {
   request: Record<string, unknown>;
   onSubmit: (payload: { line_items: CookQuoteLineItem[]; message?: string; price_cents: number }) => void | Promise<void>;
   busy?: boolean;
   testID?: string;
+  initialQuote?: CookQuoteDisplay | Record<string, unknown>;
+  submitLabel?: string;
 }) {
   const parsed = parseCustomRequestDisplay(request);
-  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() => buildDefaultQuoteLines(parsed.lines));
-  const [message, setMessage] = React.useState('');
+  const savedParsed = initialQuote
+    ? (initialQuote as CookQuoteDisplay).line_items
+      ? (initialQuote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, parsed.lines)
+    : null;
+  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() =>
+    savedParsed ? buildQuoteLinesFromSaved(savedParsed, parsed.lines) : buildDefaultQuoteLines(parsed.lines)
+  );
+  const [message, setMessage] = React.useState(savedParsed?.message || '');
   const [error, setError] = React.useState('');
 
   React.useEffect(() => {
-    setLines(buildDefaultQuoteLines(parseCustomRequestDisplay(request).lines));
-  }, [request.id]);
+    const nextParsed = parseCustomRequestDisplay(request);
+    if (initialQuote) {
+      const saved = (initialQuote as CookQuoteDisplay).line_items
+        ? (initialQuote as CookQuoteDisplay)
+        : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, nextParsed.lines);
+      setLines(buildQuoteLinesFromSaved(saved, nextParsed.lines));
+      setMessage(saved.message || '');
+    } else {
+      setLines(buildDefaultQuoteLines(nextParsed.lines));
+      setMessage('');
+    }
+  }, [request.id, initialQuote]);
 
   const total = sumIncludedQuoteCents(lines);
 
@@ -5315,7 +5387,7 @@ export function CookQuoteBuilderWeb({
       <p className="font-black text-sm">Quote total: {formatQuoteTotal(total)}</p>
       {error ? <p className="text-sm font-bold text-red-600">{error}</p> : null}
       <GourmeatPrimaryButton
-        label={busy ? 'Sending…' : CUSTOM_REQUEST_COPY.sendQuote}
+        label={busy ? 'Saving…' : submitLabel || CUSTOM_REQUEST_COPY.sendQuote}
         onClick={handleSend}
         disabled={busy}
         testID={`${testID}-send`}

@@ -34,6 +34,10 @@ const CreateBidSchema = z
 const QuerySchema = z.object({
   request_id: z.string().optional(),
   cook_id: z.string().optional(),
+  mine: z
+    .union([z.literal("1"), z.literal("true"), z.literal("0"), z.literal("false")])
+    .optional()
+    .transform((v) => v === "1" || v === "true"),
   limit: z.coerce.number().default(50),
 }).strict();
 
@@ -49,6 +53,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       bids = await bidService.listBidsForRequest(parse.data.request_id);
     } else if (parse.data.cook_id) {
       bids = await bidService.listBidsForCook(parse.data.cook_id);
+    } else if (parse.data.mine) {
+      const cookId = getCookId(req);
+      bids = await bidService.listBidsForCook(cookId);
     } else {
       // broad recent for admin-ish; in prod scope to actor
       bids = [];
@@ -95,7 +102,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     if (normalized.line_items_json) {
       bidPayload.line_items_json = normalized.line_items_json;
     }
-    const bid = await bidService.createBid(bidPayload as any);
+    const bid = await bidService.upsertPendingBid(bidPayload as any);
     // update request status to bidding
     await reqService.updateRequestStatus(parse.data.request_id, "bidding").catch(() => {});
     const logger = (req.scope as any).resolve?.("logger") || console;

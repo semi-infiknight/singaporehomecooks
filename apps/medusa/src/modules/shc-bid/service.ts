@@ -22,6 +22,34 @@ class ShcBidModuleService extends MedusaService({ Bid }) {
     return created as unknown as SHCBid;
   }
 
+  async findPendingBidForCookOnRequest(cookId: string, requestId: string): Promise<SHCBid | null> {
+    const bids = await this.listBidsForRequest(requestId);
+    return bids.find((b) => b.cook_id === cookId && b.status === "pending") || null;
+  }
+
+  /** Save quote — update existing pending bid from same cook, or create new. */
+  async upsertPendingBid(data: Partial<SHCBid> & { cook_id: string; request_id: string }): Promise<SHCBid> {
+    const validated = shcBidSchema.partial().parse(data);
+    if (!validated.price_cents || validated.price_cents <= 0) {
+      throw createSHCError("SHC-REQ-001", "Bid price_cents must be positive");
+    }
+    const existing = await this.findPendingBidForCookOnRequest(data.cook_id, data.request_id);
+    const now = new Date().toISOString();
+    if (existing) {
+      const [updated] = await this.updateBids({
+        selector: { id: existing.id },
+        data: {
+          price_cents: validated.price_cents,
+          message: validated.message ?? null,
+          line_items_json: (validated as any).line_items_json ?? null,
+          updated_at: now,
+        } as any,
+      });
+      return updated as unknown as SHCBid;
+    }
+    return this.createBid(validated);
+  }
+
   async listBidsForRequest(requestId: string): Promise<SHCBid[]> {
     const [bids] = await this.listAndCountBids({ request_id: requestId } as any, { take: 50, order: { created_at: "ASC" } }).catch(() => [[]]);
     return bids as unknown as SHCBid[];

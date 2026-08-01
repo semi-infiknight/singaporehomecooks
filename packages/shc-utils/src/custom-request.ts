@@ -8,6 +8,9 @@ export const CUSTOM_REQUEST_COPY = {
   quoteNoun: 'quote',
   quoteNounPlural: 'quotes',
   sendQuote: 'Send quote',
+  updateQuote: 'Update quote',
+  quoteSaved: 'Quote saved',
+  quoteSavedHint: 'Waiting for the customer to accept. You can update your quote anytime.',
   acceptQuote: 'Accept quote',
   acceptSelected: 'Accept selected',
   selectDishesHint: 'Choose which dishes to accept from this quote.',
@@ -235,6 +238,27 @@ export function buildDefaultQuoteLines(lines: CustomRequestLine[]): CookQuoteLin
     price_cents: 0,
     name: line.name,
   }));
+}
+
+/** Restore quote builder state from a saved cook bid. */
+export function buildQuoteLinesFromSaved(
+  saved: CookQuoteDisplay,
+  requestLines: CustomRequestLine[]
+): CookQuoteLineItem[] {
+  const savedMap = new Map((saved.line_items || []).map((l) => [l.request_line_id, l]));
+  return requestLines.map((line) => {
+    const hit = savedMap.get(line.id);
+    if (hit) {
+      return { ...hit, name: line.name, servings: hit.servings ?? line.servings };
+    }
+    return {
+      request_line_id: line.id,
+      included: false,
+      servings: line.servings,
+      price_cents: 0,
+      name: line.name,
+    };
+  });
 }
 
 export function sumIncludedQuoteCents(lineItems: CookQuoteLineItem[]): number {

@@ -11,6 +11,7 @@ import {
   shcGuestCountBadgeLabel,
   shcServingsBadgeLabel,
   buildDefaultQuoteLines,
+  buildQuoteLinesFromSaved,
   validateClientQuoteLines,
   sumIncludedQuoteCents,
   defaultCustomerAcceptLineIds,
@@ -204,11 +205,73 @@ export function SHCCookQuoteCard({
   );
 }
 
+export function SHCCookSavedQuote({
+  quote,
+  requestLines,
+  onEdit,
+  testID,
+}: {
+  quote: CookQuoteDisplay | Record<string, unknown>;
+  requestLines?: CustomRequestDisplay['lines'];
+  onEdit?: () => void;
+  testID?: string;
+}) {
+  const parsed =
+    quote && (quote as CookQuoteDisplay).line_items
+      ? (quote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(quote as Record<string, unknown>, requestLines);
+  const included = cookIncludedQuoteLines(parsed.line_items || []);
+
+  return (
+    <View
+      testID={testID}
+      style={{
+        borderWidth: shcBorders.brutal,
+        borderColor: shcColors.border,
+        borderRadius: shcRadii.md,
+        padding: shcSpacing.sm,
+        backgroundColor: shcColors.bentoMint,
+        marginTop: shcSpacing.xs,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <Text style={{ fontWeight: '900', fontSize: 14, color: shcColors.text }}>{CUSTOM_REQUEST_COPY.quoteSaved}</Text>
+        <SHCBadge variant={parsed.status === 'accepted' ? 'success' : 'warning'}>
+          {parsed.status === 'pending' ? 'Waiting' : parsed.status}
+        </SHCBadge>
+      </View>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 16 }}>
+        {CUSTOM_REQUEST_COPY.quoteSavedHint}
+      </Text>
+      {included.map((line) => (
+        <Text key={line.request_line_id} style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, marginTop: 6 }}>
+          · {line.name || 'Dish'} — {formatQuoteTotal(line.price_cents)}
+        </Text>
+      ))}
+      <Text style={{ fontSize: 15, fontWeight: '900', color: shcColors.primary, marginTop: shcSpacing.sm }}>
+        Total {formatQuoteTotal(parsed.price_cents)}
+      </Text>
+      {parsed.message ? (
+        <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.text, marginTop: 6 }} numberOfLines={3}>
+          “{parsed.message}”
+        </Text>
+      ) : null}
+      {onEdit && parsed.status === 'pending' ? (
+        <Pressable onPress={onEdit} style={{ marginTop: shcSpacing.sm }} testID={testID ? `${testID}-edit` : 'cook-saved-quote-edit'}>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: shcColors.primary }}>{CUSTOM_REQUEST_COPY.updateQuote}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 export function SHCCookQuoteBuilder({
   request,
   onSubmit,
   busy = false,
   testID,
+  initialQuote,
+  submitLabel,
 }: {
   request: Record<string, unknown>;
   onSubmit: (payload: {
@@ -218,15 +281,34 @@ export function SHCCookQuoteBuilder({
   }) => void | Promise<void>;
   busy?: boolean;
   testID?: string;
+  initialQuote?: CookQuoteDisplay | Record<string, unknown>;
+  submitLabel?: string;
 }) {
   const parsed = parseCustomRequestDisplay(request);
-  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() => buildDefaultQuoteLines(parsed.lines));
-  const [message, setMessage] = React.useState('');
+  const savedParsed = initialQuote
+    ? (initialQuote as CookQuoteDisplay).line_items
+      ? (initialQuote as CookQuoteDisplay)
+      : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, parsed.lines)
+    : null;
+  const [lines, setLines] = React.useState<CookQuoteLineItem[]>(() =>
+    savedParsed ? buildQuoteLinesFromSaved(savedParsed, parsed.lines) : buildDefaultQuoteLines(parsed.lines)
+  );
+  const [message, setMessage] = React.useState(savedParsed?.message || '');
   const [error, setError] = React.useState('');
 
   React.useEffect(() => {
-    setLines(buildDefaultQuoteLines(parseCustomRequestDisplay(request).lines));
-  }, [request.id]);
+    const nextParsed = parseCustomRequestDisplay(request);
+    if (initialQuote) {
+      const saved = (initialQuote as CookQuoteDisplay).line_items
+        ? (initialQuote as CookQuoteDisplay)
+        : parseCookQuoteDisplay(initialQuote as Record<string, unknown>, nextParsed.lines);
+      setLines(buildQuoteLinesFromSaved(saved, nextParsed.lines));
+      setMessage(saved.message || '');
+    } else {
+      setLines(buildDefaultQuoteLines(nextParsed.lines));
+      setMessage('');
+    }
+  }, [request.id, initialQuote]);
 
   const total = sumIncludedQuoteCents(lines);
 
@@ -329,7 +411,7 @@ export function SHCCookQuoteBuilder({
       </Text>
       {error ? <Text style={{ color: shcColors.error, fontWeight: '700', marginBottom: shcSpacing.sm }}>{error}</Text> : null}
       <SHCButton onPress={handleSend} disabled={busy} testID={testID ? `${testID}-send` : 'quote-send-btn'}>
-        <SHCButtonText>{busy ? 'Sending…' : CUSTOM_REQUEST_COPY.sendQuote}</SHCButtonText>
+        <SHCButtonText>{busy ? 'Saving…' : submitLabel || CUSTOM_REQUEST_COPY.sendQuote}</SHCButtonText>
       </SHCButton>
     </View>
   );
