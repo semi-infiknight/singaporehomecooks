@@ -326,6 +326,12 @@ async function main() {
   const orderId = checkout.body.order.id as string;
   console.log(`✅ /store/shc/carts/demo-complete (${orderId})`);
 
+  const cookToken = await loginCook();
+  console.log('✅ cook auth login (DB-backed)');
+
+  await transitionOrder(orderId, 'accepted', cookToken);
+  console.log('✅ order transition cart → accepted (awaiting PayNow)');
+
   const adminToken = await loginAdmin();
   const paid = await adminFetch(
     '/admin/shc/payment-confirm',
@@ -342,7 +348,7 @@ async function main() {
   if (paid.status !== 200) {
     throw new Error(`Payment confirm failed ${paid.status}: ${JSON.stringify(paid.body)}`);
   }
-  console.log('✅ /admin/shc/payment-confirm (cart → paid)');
+  console.log('✅ /admin/shc/payment-confirm (accepted → paid)');
 
   const customerOrders = await shcFetch('/store/shc/orders?role=customer&limit=100', { method: 'GET' }, customerToken);
   if (customerOrders.status !== 200) throw new Error(`Customer orders failed ${customerOrders.status}`);
@@ -365,9 +371,6 @@ async function main() {
   }
   console.log('✅ /store/shc/orders/:id/messages POST (customer)');
 
-  const cookToken = await loginCook();
-  console.log('✅ cook auth login (DB-backed)');
-
   const cookToken2 = await loginCook(COOK2_EMAIL, COOK2_PASS);
   console.log('✅ cook2 auth login (sibling quote)');
 
@@ -385,7 +388,7 @@ async function main() {
   if (cookOrders.status !== 200) throw new Error(`Cook orders failed ${cookOrders.status}`);
   console.log('✅ /store/shc/orders?role=cook');
 
-  for (const state of ['accepted', 'preparing', 'ready_for_collection', 'collected', 'completed'] as const) {
+  for (const state of ['preparing', 'ready_for_collection', 'collected', 'completed'] as const) {
     await transitionOrder(orderId, state, cookToken);
     console.log(`✅ order transition → ${state}`);
   }
