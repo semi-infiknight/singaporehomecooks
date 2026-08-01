@@ -9,6 +9,7 @@ export * from './occasion-browse';
 export * from './cart';
 export * from './order-tracking';
 export * from './auth-session';
+export * from './guest-session';
 export * from './favorites';
 export * from './sg-areas';
 export * from './location';

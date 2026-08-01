@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { getCustomerId, unauthorized } from "../../../../../lib/shc-actors";
+import { getCartActorId, unauthorized } from "../../../../../lib/shc-actors";
 import { completeDemoCartCheckout } from "../../../../../lib/shc-demo-checkout";
 
 /**
@@ -20,6 +20,13 @@ const BodySchema = z.object({
   customer_collection_lng: z.number().min(103.6).max(104.1).nullable().optional(),
   customer_collection_postal_code: z.string().regex(/^\d{6}$/).nullable().optional(),
   customer_collection_line1: z.string().max(200).nullable().optional(),
+  guest_contact: z
+    .object({
+      name: z.string().min(2).max(80),
+      email: z.string().email(),
+      phone: z.string().min(8).max(20),
+    })
+    .optional(),
 }).strict();
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -28,9 +35,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json({ error: createSHCError("SHC-GENERIC-001", "Invalid demo complete", parse.error.format() as any) });
   }
   try {
-    getCustomerId(req);
+    getCartActorId(req);
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required");
   }
 
   try {
@@ -46,6 +53,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer_collection_lng,
       customer_collection_postal_code,
       customer_collection_line1,
+      guest_contact,
     } = parse.data;
     const result = await completeDemoCartCheckout(req, {
       collection_date,
@@ -59,6 +67,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       customer_collection_lng,
       customer_collection_postal_code,
       customer_collection_line1,
+      guest_contact: guest_contact ?? null,
     });
     const logger = (req.scope as any).resolve?.("logger") || console;
     logger.info?.(`[SHC-STORE] demo-complete persisted order=${result.order.id}`);

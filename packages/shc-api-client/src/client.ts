@@ -24,6 +24,8 @@ export type ShcApiClientConfig = {
   appRole: "customer" | "cook";
   getAccessToken: () => string | null;
   setAccessToken?: (token: string | null) => void;
+  /** Device-local guest session id (UUID) when customer is not signed in. */
+  getGuestId?: () => string | null;
   logPrefix?: string;
 };
 
@@ -36,6 +38,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
 
   async function request<T>(path: string, init?: RequestInit, schema?: z.ZodType<T>): Promise<T> {
     const token = config.getAccessToken();
+    const guestId = !token ? config.getGuestId?.() : null;
     const requestId =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
@@ -45,6 +48,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       "x-request-id": requestId,
       ...(config.publishableKey ? { "x-publishable-api-key": config.publishableKey } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!token && guestId ? { "x-shc-guest-id": guestId } : {}),
       ...(init?.headers as Record<string, string>),
     };
 
@@ -343,6 +347,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         customer_collection_lng?: number | null;
         customer_collection_postal_code?: string | null;
         customer_collection_line1?: string | null;
+        guest_contact?: { name: string; email: string; phone: string } | null;
       }
     ) {
       return request("/store/shc/carts/demo-complete", {
@@ -358,6 +363,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
           customer_collection_lng: notes?.customer_collection_lng ?? null,
           customer_collection_postal_code: notes?.customer_collection_postal_code ?? null,
           customer_collection_line1: notes?.customer_collection_line1 ?? null,
+          guest_contact: notes?.guest_contact ?? undefined,
         }),
       });
     },

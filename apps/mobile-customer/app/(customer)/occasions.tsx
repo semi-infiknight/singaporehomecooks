@@ -92,9 +92,7 @@ export default function OccasionsScreen() {
   const goToProduct = (id: string) => router.push(`/(customer)/product/${id}` as any);
 
   const handleAddToCart = useCallback(
-    (productId: string) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty: 1 });
+    (productId: string) => {      addMut.mutate({ productId, qty: 1 });
     },
     [requireAuth, addMut]
   );

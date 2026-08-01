@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { dropCanOrder, dropClampOrderQty } from "@shc/business-rules";
-import { getCustomerId, unauthorized } from "../../../../lib/shc-actors";
+import { getCartActorId, unauthorized } from "../../../../lib/shc-actors";
 import ShcCartModuleService from "../../../../modules/shc-cart/service";
 import ShcProductMetaModuleService from "../../../../modules/shc-product-meta/service";
 import ShcDropModuleService from "../../../../modules/shc-drop/service";
@@ -30,23 +30,23 @@ async function enrichCartMinQty(cart: Awaited<ReturnType<ShcCartModuleService["g
 /** GET /store/shc/cart */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const customerId = getCustomerId(req);
+    const customerId = getCartActorId(req);
     const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
     const cart = await cartService.getCart(customerId);
     res.json({ cart: await enrichCartMinQty(cart, req.scope) });
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required");
   }
 }
 
 /** DELETE /store/shc/cart */
 export async function DELETE(req: MedusaRequest, res: MedusaResponse) {
   try {
-    const customerId = getCustomerId(req);
+    const customerId = getCartActorId(req);
     const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
     res.json({ cart: await cartService.clearCart(customerId) });
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required");
   }
 }
 
@@ -69,9 +69,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   }
   let customerId: string;
   try {
-    customerId = getCustomerId(req);
+    customerId = getCartActorId(req);
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required");
   }
 
   const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;
@@ -165,9 +165,9 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
   }
   let customerId: string;
   try {
-    customerId = getCustomerId(req);
+    customerId = getCartActorId(req);
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required");
   }
 
   const cartService: ShcCartModuleService = req.scope.resolve("shcCart") as any;

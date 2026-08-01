@@ -2,6 +2,7 @@
 import { createShcApiClient } from '@shc/api-client';
 import { isMaestroE2eOrderId, resolveRailwayMedusaBase, resolveRailwayPublishableKey } from '@shc/utils';
 import * as SecureStore from 'expo-secure-store';
+import { ensureGuestId, getGuestIdSync, primeGuestId } from './guest-session';
 
 const TOKEN_KEY = 'shc_customer_token';
 const USER_KEY = 'shc_customer_user';
@@ -13,6 +14,7 @@ export const client = createShcApiClient({
   publishableKey: resolveRailwayPublishableKey(process.env.EXPO_PUBLIC_MEDUSA_PUBLISHABLE_KEY),
   appRole: 'customer',
   getAccessToken: () => accessToken,
+  getGuestId: () => getGuestIdSync(),
   setAccessToken: (token) => {
     accessToken = token;
   },
@@ -22,25 +24,33 @@ export const client = createShcApiClient({
 export async function hydrateSession() {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
   const userRaw = await SecureStore.getItemAsync(USER_KEY);
-  if (token) {
-    accessToken = token;
-    if (userRaw) {
-      try {
-        client.setCurrentUser(JSON.parse(userRaw));
-      } catch {
-        /* refresh below */
-      }
-    }
+  if (!token) {
+    const guestId = await ensureGuestId();
+    primeGuestId(guestId);
+    return null;
+  }
+  accessToken = token;
+  if (userRaw) {
     try {
-      const user = await client.getMe();
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
-      return user;
+      client.setCurrentUser(JSON.parse(userRaw));
     } catch {
-      await clearSession();
-      return null;
+      /* refresh below */
     }
   }
-  return null;
+  try {
+    const user = await client.getMe();
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    return user;
+  } catch {
+    await clearSession();
+    return null;
+  }
+}
+
+export async function ensureGuestSession() {
+  if (accessToken) return;
+  const guestId = await ensureGuestId();
+  primeGuestId(guestId);
 }
 
 export async function persistSession(token: string, user: ReturnType<typeof client.getCurrentUser>) {
@@ -83,7 +93,15 @@ export const checkout = (
   allergenAck: boolean,
   collection: { date: string; slot: string },
   pdpaConsent = true,
-  notes?: { cooking_notes?: string | null; collection_notes?: string | null }
+  notes?: {
+    cooking_notes?: string | null;
+    collection_notes?: string | null;
+    customer_collection_lat?: number | null;
+    customer_collection_lng?: number | null;
+    customer_collection_postal_code?: string | null;
+    customer_collection_line1?: string | null;
+    guest_contact?: { name: string; email: string; phone: string } | null;
+  }
 ) => client.checkout(allergenAck, collection, pdpaConsent, notes);
 export const transitionOrder = (orderId: string, to: string) => client.transitionOrder(orderId, to);
 export const getOrder = (id: string) => client.getOrder(id);

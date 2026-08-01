@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
 import { resolveAuthFromRequest, type ShcAuthContext } from "./shc-auth";
+import { resolveGuestCartActorId } from "./shc-guest";
 
 export function getAuthContext(req: MedusaRequest): ShcAuthContext | null {
   const auth = resolveAuthFromRequest(req);
@@ -41,6 +42,23 @@ export function tryCustomerId(req: MedusaRequest): string | null {
 export function tryCookId(req: MedusaRequest): string | null {
   try {
     return getCookId(req);
+  } catch {
+    return null;
+  }
+}
+
+/** Customer JWT id, or `guest_<uuid>` from `x-shc-guest-id` for device-local guest carts. */
+export function getCartActorId(req: MedusaRequest): string {
+  const customer = tryCustomerId(req);
+  if (customer) return customer;
+  const guest = resolveGuestCartActorId(req);
+  if (guest) return guest;
+  throw new Error("UNAUTHORIZED");
+}
+
+export function tryCartActorId(req: MedusaRequest): string | null {
+  try {
+    return getCartActorId(req);
   } catch {
     return null;
   }

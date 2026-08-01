@@ -112,9 +112,7 @@ export default function SearchPage() {
     setOcc(id);
   };
 
-  const handleAdd = (id: string) => {
-    if (!requireAuth('Browse freely — sign in to add dishes to your cart.', '/search')) return;
-    addMut.mutate({ productId: id, qty: 1 });
+  const handleAdd = (id: string) => {    addMut.mutate({ productId: id, qty: 1 });
   };
 
   return (

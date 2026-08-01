@@ -2,7 +2,7 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
 import {
   getAuthContext,
-  requireCustomerId,
+  getCartActorId,
   unauthorized,
 } from "../../../../../../lib/shc-actors";
 import ShcOrderMetaModuleService from "../../../../../../modules/shc-order-meta/service";
@@ -20,17 +20,11 @@ import {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const { id: orderId } = req.params as { id: string };
   const auth = getAuthContext(req);
-  if (!auth || auth.actor_type !== "customer") {
-    return unauthorized(res, "Customer login required for PayNow");
-  }
-
-  let customerId: string;
+  let actorId: string;
   try {
-    const cid = requireCustomerId(req);
-    if (!cid) return unauthorized(res, "Customer login required");
-    customerId = String(cid);
+    actorId = getCartActorId(req);
   } catch {
-    return unauthorized(res, "Customer login required");
+    return unauthorized(res, "Customer login or guest session required for PayNow");
   }
 
   const metaService: ShcOrderMetaModuleService = req.scope.resolve("shcOrderMeta") as any;
@@ -39,7 +33,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(404).json({ error: createSHCError("SHC-GENERIC-001", `Order not found: ${orderId}`) });
   }
   const m = data.meta as any;
-  if (m.customer_id && String(m.customer_id).length > 0 && m.customer_id !== customerId) {
+  if (m.customer_id && String(m.customer_id).length > 0 && String(m.customer_id) !== actorId) {
     return res.status(403).json({ error: createSHCError("SHC-GENERIC-001", "Not your order") });
   }
 
@@ -101,7 +95,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       amountDollars,
       referenceNumber: orderId,
       purpose: `SHC order ${orderId}`,
-      name: auth.actor_type === "customer" ? "Customer" : undefined,
+      name: m.guest_name || (auth?.actor_type === "customer" ? "Customer" : "Guest"),
     });
 
     // Stash HitPay id in paynow_reference prefix so webhook can match (until dedicated column)

@@ -7,7 +7,6 @@ import { GourmeatFloatingTabBar, GourmeatStickyCartBar, type SHCBottomTab, useTa
 import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
-import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
 import { useOrders } from '../hooks/useOrder';
 
 const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
@@ -64,7 +63,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
 
   // Guests browse signed-out — never show sticky cart or tab badge (web parity).
-  const canShowCart = Boolean(user) && !authLoading;
+  // Guests can browse and order — cart uses device-local guest session.
+  const canShowCart = !authLoading;
   const items = ((canShowCart ? cart?.items : undefined) ?? []) as Parameters<typeof summarizeCart>[0];
   const firstItem = items[0];
   const firstName =
@@ -94,16 +94,8 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   });
 
   const openCart = useCallback(() => {
-    if (!user) {
-      showGuestAuthTray(
-        'Sign in to view cart',
-        'Browse freely — sign in to checkout and track orders.',
-        '/(customer)/cart'
-      );
-      return;
-    }
     navigation.navigate('cart');
-  }, [navigation, showGuestAuthTray, user]);
+  }, [navigation]);
 
   if (hideTabBar) {
     return showCartBar ? (
@@ -156,25 +148,6 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
-          // Guest browse: Home only for free navigation; account tabs need sign-in
-          if (!user && key !== 'index') {
-            const returnTo =
-              key === 'orders/index'
-                ? '/(customer)/orders'
-                : key === 'cart'
-                  ? '/(customer)/cart'
-                  : '/(customer)/profile';
-            showGuestAuthTray(
-              key === 'orders/index'
-                ? 'Sign in to view orders'
-                : key === 'cart'
-                  ? 'Sign in to view cart'
-                  : 'Sign in for wallet & account',
-              'Browse kitchens on Home — sign in for orders, cart, and wallet.',
-              returnTo
-            );
-            return;
-          }
           notifyTabChange(key);
           navigation.navigate(key);
         }}

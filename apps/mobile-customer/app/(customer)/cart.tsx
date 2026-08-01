@@ -143,14 +143,6 @@ export default function Cart() {
   const hasItems = items.length > 0;
 
   const goCheckout = async () => {
-    if (!user) {
-      showGuestAuthTray(
-        'Sign in to checkout',
-        'Create an account or sign in to complete your order.',
-        '/(customer)/checkout'
-      );
-      return;
-    }
     await persistCartCheckoutNotes({ cookingNotes, collectionNotes });
     router.push('/(customer)/checkout' as any);
   };

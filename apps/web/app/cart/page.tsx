@@ -19,9 +19,6 @@ import {
   checkoutCollectionPrefill,
 } from '@shc/utils';
 import { useCart, useClearCart, useUpdateCartItem, useRemoveCartItem } from '../../lib/useProducts';
-import { isAuthenticated } from '../../lib/api-client';
-import { useAuth } from '../../lib/useAuth';
-import { useGuestAuthTray } from '../../lib/useGuestAuthTray';
 import { useAcceptBid, useBids, useMyRequests } from '../../lib/useOrder';
 import { useCustomerLocation } from '../../lib/useCustomerLocation';
 import { persistCartCheckoutNotes } from '../../lib/cart-notes';
@@ -139,8 +136,6 @@ type CartItem = {
 
 export default function CartPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart, isLoading } = useCart();
   const cartData = cart ?? { items: [] };
   const clear = useClearCart();
@@ -168,13 +163,9 @@ export default function CartPage() {
   const summary = computeOneTimeOrderSummary(items);
   const kitchen = cartKitchenLabel(items as Array<Record<string, unknown>>);
 
-  const promptGuestCheckout = useCallback(() => {
-    showGuestAuthTray(
-      'Sign in to checkout',
-      'Create an account or sign in to complete your order and track collection.',
-      '/checkout'
-    );
-  }, [showGuestAuthTray]);
+  const goCheckout = useCallback(() => {
+    router.push('/checkout');
+  }, [router]);
 
   if (isLoading && !cart) {
     return (
@@ -363,12 +354,8 @@ export default function CartPage() {
                 amount={summary.totalLabel}
                 testID="proceed-checkout-web"
                 onClick={() => {
-                  if (!authLoading && !user && !isAuthenticated()) {
-                    promptGuestCheckout();
-                    return;
-                  }
                   persistCartCheckoutNotes({ cookingNotes, collectionNotes });
-                  router.push('/checkout');
+                  goCheckout();
                 }}
               />
             </div>

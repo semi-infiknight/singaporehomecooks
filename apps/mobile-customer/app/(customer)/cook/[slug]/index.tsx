@@ -145,9 +145,7 @@ export default function KitchenPage() {
   }, [menuSections]);
 
   const openCustomize = useCallback(
-    (dish: Record<string, unknown>) => {
-      if (!requireAuth('Sign in to add dishes to your cart.')) return;
-      setCustomizeDish(dish);
+    (dish: Record<string, unknown>) => {      setCustomizeDish(dish);
       setDraft(buildCustomizeDraft(dish));
     },
     [requireAuth]

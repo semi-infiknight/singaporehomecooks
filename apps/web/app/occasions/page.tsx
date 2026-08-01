@@ -88,9 +88,7 @@ function OccasionsPageContent() {
   const goToProduct = useCallback((id: string) => router.push(`/product/${id}`), [router]);
 
   const handleAddToCart = useCallback(
-    (productId: string) => {
-      if (!requireAuth('Browse freely — sign in to add dishes to your cart.')) return;
-      addMut.mutate({ productId, qty: 1 });
+    (productId: string) => {      addMut.mutate({ productId, qty: 1 });
     },
     [addMut, requireAuth]
   );

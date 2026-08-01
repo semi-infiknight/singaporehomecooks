@@ -44,7 +44,15 @@ export function useCheckout() {
       allergenAck: boolean;
       collection: { date: string; slot: string };
       pdpaConsent?: boolean;
-      notes?: { cooking_notes?: string | null; collection_notes?: string | null };
+      notes?: {
+        cooking_notes?: string | null;
+        collection_notes?: string | null;
+        customer_collection_lat?: number | null;
+        customer_collection_lng?: number | null;
+        customer_collection_postal_code?: string | null;
+        customer_collection_line1?: string | null;
+        guest_contact?: { name: string; email: string; phone: string } | null;
+      };
     }) => checkout(allergenAck, collection, pdpaConsent ?? true, notes),
     onSuccess: (data:any) => { qc.invalidateQueries({queryKey:['orders']}); qc.invalidateQueries({queryKey:['cart']}); if(data?.order?.id) qc.setQueryData(['order',data.order.id], data.order); },
     onError:(err:any)=>{ throw err?.code ? createSHCError(err.code as SHCErrorCode, err.message||'Checkout violation') : err; }

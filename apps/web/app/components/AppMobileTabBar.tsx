@@ -48,7 +48,6 @@ const TAB_ROUTES: Array<{
     iconKey: 'cart',
     testID: 'cart-tab',
     match: (p) => p === '/cart' || p === '/checkout',
-    needsAuth: true,
   },
   {
     key: 'profile/index',
@@ -75,7 +74,7 @@ export function AppMobileTabBar() {
   const { data: orders = [] } = useOrders();
   const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
 
-  const canShowCart = Boolean(user) && !authLoading;
+  const canShowCart = !authLoading;
   const rawItems = canShowCart ? cart?.items : undefined;
   const items = Array.isArray(rawItems) ? rawItems : [];
   const firstItem = items[0];
@@ -128,16 +127,14 @@ export function AppMobileTabBar() {
             onTabPress={(key) => {
               const tab = TAB_ROUTES.find((t) => t.key === key);
               if (!tab) return;
-              if (tab.needsAuth && !authLoading && !user) {
+              if (tab.needsAuth && tab.key !== 'cart' && !authLoading && !user) {
                 const title =
                   tab.key === 'orders/index'
                     ? 'Sign in to view orders'
-                    : tab.key === 'cart'
-                      ? 'Sign in to view cart'
-                      : 'Sign in for wallet & account';
+                    : 'Sign in for wallet & account';
                 showGuestAuthTray(
                   title,
-                  'Browse kitchens on Home — sign in for orders, cart, and wallet.',
+                  'Browse kitchens on Home — sign in for orders and wallet.',
                   tab.href
                 );
                 return;

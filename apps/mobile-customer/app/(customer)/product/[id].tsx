@@ -94,9 +94,7 @@ export default function ProductDetail() {
 
   const handleAdd = async () => {
     setError(null);
-    await hydrateSession();
-    if (!isAuthenticated() && !requireAuth('Sign in to add this dish to your cart.')) return;
-    if (!allergenAck) {
+    await hydrateSession();    if (!allergenAck) {
       setError('Please acknowledge allergens before adding to cart.');
       return;
     }

@@ -159,9 +159,7 @@ export default function KitchenPage() {
   const chefBg = useMemo(() => kitchenChefBackground(cook as any), [cook]);
 
   const openCustomize = useCallback(
-    (dish: Record<string, unknown>) => {
-      if (!requireAuth('Sign in to add dishes to your cart.', `/cook/${slug}`)) return;
-      setCustomizeDish(dish);
+    (dish: Record<string, unknown>) => {      setCustomizeDish(dish);
     },
     [requireAuth, slug]
   );
@@ -175,9 +173,7 @@ export default function KitchenPage() {
   );
 
   const bumpLineQty = useCallback(
-    (productId: string, delta: number) => {
-      if (delta > 0 && !requireAuth('Sign in to add dishes to your cart.', `/cook/${slug}`)) return;
-      setOrderLines((prev) => {
+    (productId: string, delta: number) => {      setOrderLines((prev) => {
         const cur = lineQtyForProduct(prev, productId);
         const next = cur + delta;
         if (next <= 0) return setKitchenOrderLineQty(prev, productId, 0);
