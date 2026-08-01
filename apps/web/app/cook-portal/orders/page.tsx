@@ -3,7 +3,7 @@
 /**
  * Cook Orders — collection orders + Collaboration Board (recipe request bids).
  */
-import { useState } from 'react';
+import { useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { SHCOrderStatus } from '@shc/types';
@@ -13,6 +13,12 @@ import {
   isCookComplianceVerified,
   partitionCookOrders,
   parseCustomRequestDisplay,
+  todayIsoInSingapore,
+  monthLabelForDate,
+  collectCookOrderDates,
+  buildCookCalendarDays,
+  filterCookOrdersByDate,
+  emptyCookOrdersDayCopy,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import {
@@ -33,6 +39,7 @@ import {
   SHCMetaBadge,
   SHCSkeletonOrderList,
   CookQuoteBuilderWeb,
+  OrdersCalendarStrip,
 } from '../../components/SHCWebComponents';
 
 const NEXT_ACTIONS: Record<string, { to: SHCOrderStatus; label: string }[]> = {
@@ -56,8 +63,24 @@ export default function CookOrdersPage() {
   const [bidError, setBidError] = useState('');
   const [biddingId, setBiddingId] = useState<string | null>(null);
 
-  const { needsAction, inProgress } = partitionCookOrders(orderList);
+  const todayRef = useRef(todayIsoInSingapore());
+  const today = todayRef.current;
+  const [selected, setSelected] = useState(today);
+
+  const selectDay = useCallback((date: string) => {
+    setSelected(date);
+  }, []);
+
+  const orderDates = useMemo(() => collectCookOrderDates(orderList), [orderList]);
+  const calendarDays = useMemo(() => buildCookCalendarDays(today, orderDates), [today, orderDates]);
+  const dayOrders = useMemo(
+    () => filterCookOrdersByDate(orderList, selected, today),
+    [orderList, selected, today]
+  );
+  const { needsAction: allNeedsAction, inProgress: allInProgress } = partitionCookOrders(orderList);
+  const { needsAction, inProgress } = partitionCookOrders(dayOrders);
   const reqList = Array.isArray(openReqs) ? openReqs : [];
+  const dayEmpty = needsAction.length === 0 && inProgress.length === 0;
 
   const doTransition = async (orderId: string, to: SHCOrderStatus) => {
     if (to === 'accepted' && !complianceOk) {
@@ -156,21 +179,21 @@ export default function CookOrdersPage() {
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-orders-screen">
       <GourmeatCookHeader
         title="Orders"
-        subtitle={user?.name}
+        subtitle={[user?.name, monthLabelForDate(selected)].filter(Boolean).join(' · ')}
         badges={
-          needsAction.length > 0 ? (
+          allNeedsAction.length > 0 ? (
             <span className="text-[11px] font-bold text-primary bg-secondary px-2.5 py-1 rounded-full">
-              {needsAction.length} need action
+              {allNeedsAction.length} need action
             </span>
-          ) : inProgress.length > 0 ? (
+          ) : allInProgress.length > 0 ? (
             <span className="text-[11px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-              {inProgress.length} in progress
+              {allInProgress.length} in progress
             </span>
           ) : undefined
         }
       />
 
-      {!complianceOk && needsAction.length > 0 && (
+      {!complianceOk && allNeedsAction.length > 0 && (
         <GourmeatCard className="mb-3 bg-amber-50 border-amber-200" data-testid="cook-compliance-gate-banner">
           <p className="text-sm font-bold">Upload SFA + WSQ and wait for ops verification before accepting orders.</p>
           <Link href="/cook-portal/compliance" className="inline-block mt-2 text-sm font-semibold text-primary">
@@ -178,6 +201,18 @@ export default function CookOrdersPage() {
           </Link>
         </GourmeatCard>
       )}
+
+      <OrdersCalendarStrip
+        days={calendarDays}
+        selectedDate={selected}
+        todayDate={today}
+        onSelect={selectDay}
+        testID="cook-orders-calendar-strip"
+      />
+
+      <h2 className="text-sm font-extrabold text-foreground mb-3" data-testid="cook-orders-selected-date">
+        {selected === today ? 'Today' : selected}
+      </h2>
 
       {needsAction.length > 0 && (
         <>
@@ -197,17 +232,19 @@ export default function CookOrdersPage() {
         </>
       )}
 
-      {needsAction.length === 0 && inProgress.length === 0 && (
+      {dayEmpty && (
         <>
-          <p className="text-sm font-extrabold text-foreground mb-2">Collection orders</p>
           {ordersLoading && orderList.length === 0 && (
             <div className="mb-4">
               <SHCSkeletonOrderList count={4} variant="row" />
             </div>
           )}
-          {!ordersLoading && orderList.length === 0 && (
-            <GourmeatCard className="mb-4">
-              <GourmeatEmptyState title="No orders yet" body="New collection orders will appear here." />
+          {!ordersLoading && (
+            <GourmeatCard className="mb-4" data-testid="cook-orders-day-empty">
+              <GourmeatEmptyState
+                title={emptyCookOrdersDayCopy({ isToday: selected === today }).title}
+                body={emptyCookOrdersDayCopy({ isToday: selected === today }).body}
+              />
             </GourmeatCard>
           )}
         </>
