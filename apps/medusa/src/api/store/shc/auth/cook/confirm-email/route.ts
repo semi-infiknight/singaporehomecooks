@@ -1,8 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
-import { getCookId } from "../../../../../lib/shc-actors";
-import ShcCookModuleService from "../../../../../modules/shc-cook/service";
+import { getCookId } from "../../../../../../lib/shc-actors";
+import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const DEMO_OTP = "123456";
 const BodySchema = z.object({ code: z.string().min(4).max(8) }).strict();

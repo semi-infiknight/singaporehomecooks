@@ -5,13 +5,14 @@ import ShcNotificationModuleService from "../modules/shc-notification/service";
 export type ComplianceDocSubmittedInput = {
   cook_id: string;
   doc_id: string;
-  type: "sfa" | "wsq";
+  type: "sfa" | "wsq" | "halal";
   file_key: string;
 };
 
 const DOC_LABELS: Record<ComplianceDocSubmittedInput["type"], string> = {
   sfa: "SFA licence",
   wsq: "WSQ certificate",
+  halal: "Halal certificate",
 };
 
 function resolveOpsActorId() {

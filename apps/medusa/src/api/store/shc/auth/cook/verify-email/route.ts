@@ -1,7 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { createSHCError } from "@shc/types";
-import { getCookId } from "../../../../../lib/shc-actors";
-import ShcCookModuleService from "../../../../../modules/shc-cook/service";
+import { getCookId } from "../../../../../../lib/shc-actors";
+import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const DEMO_OTP = "123456";
 

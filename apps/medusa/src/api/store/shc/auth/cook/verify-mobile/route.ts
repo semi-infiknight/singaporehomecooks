@@ -2,8 +2,8 @@ import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
 import { z } from "zod";
 import { createSHCError } from "@shc/types";
 import { normalizePaynowMobile } from "@shc/utils";
-import { getCookId } from "../../../../../lib/shc-actors";
-import ShcCookModuleService from "../../../../../modules/shc-cook/service";
+import { getCookId } from "../../../../../../lib/shc-actors";
+import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const DEMO_OTP = "123456";
 const BodySchema = z.object({ mobile: z.string().min(8).max(20) }).strict();
