@@ -15,6 +15,10 @@ export type RecipeStepDraft = {
   tip?: string;
 };
 
+export type IngredientDraft = {
+  name: string;
+};
+
 export function slugMealOptionId(label: string, index: number): string {
   const slug = label
     .toLowerCase()
@@ -176,4 +180,49 @@ export function updateRecipeStepRow(
 
 export function removeRecipeStepRow(steps: RecipeStepDraft[], index: number): RecipeStepDraft[] {
   return normalizeRecipeSteps(steps.filter((_, i) => i !== index));
+}
+
+export function defaultIngredientRow(): IngredientDraft {
+  return { name: '' };
+}
+
+export function normalizeIngredients(
+  ingredients?: Array<Partial<IngredientDraft> & { quantity?: unknown; unit?: unknown }> | null
+): IngredientDraft[] {
+  if (!Array.isArray(ingredients)) return [];
+  return ingredients
+    .map((row) => {
+      const name = String(row?.name || '').trim();
+      if (!name) return null;
+      return { name };
+    })
+    .filter((row): row is IngredientDraft => row != null);
+}
+
+/** Persist name-only — amounts/units are not stored (recipe privacy). */
+export function ingredientsToApiPayload(ingredients: IngredientDraft[]) {
+  return normalizeIngredients(ingredients).map((row) => ({ name: row.name }));
+}
+
+export function addIngredientRow(ingredients: IngredientDraft[]): IngredientDraft[] {
+  return [...ingredients, defaultIngredientRow()];
+}
+
+export function updateIngredientRow(
+  ingredients: IngredientDraft[],
+  index: number,
+  patch: Partial<IngredientDraft>
+): IngredientDraft[] {
+  const next = [...ingredients];
+  const current = next[index];
+  if (!current) return next;
+  next[index] = {
+    name: patch.name !== undefined ? patch.name : current.name,
+  };
+  return next;
+}
+
+export function removeIngredientRow(ingredients: IngredientDraft[], index: number): IngredientDraft[] {
+  const next = ingredients.filter((_, i) => i !== index);
+  return next.length ? next : [defaultIngredientRow()];
 }

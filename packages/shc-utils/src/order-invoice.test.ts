@@ -26,16 +26,22 @@ const sampleOrder = {
 };
 
 describe('order-invoice', () => {
-  it('builds customer tax invoice with SGD totals', () => {
-    const inv = buildOrderInvoice({ order: sampleOrder, audience: 'customer' });
+  it('builds customer dish invoice with cook as supplier', () => {
+    const inv = buildOrderInvoice({
+      order: sampleOrder,
+      audience: 'customer',
+      cook_supplier: {
+        legal_name: 'Rose Kitchen',
+        address: 'Tampines St 45',
+        uen: 'SFA-ROSE-001',
+      },
+    });
     expect(inv.doc_type).toBe('tax_invoice');
-    expect(inv.invoice_number).toMatch(/^INV-SHC-71655263-/);
+    expect(inv.title).toBe('Dish invoice');
+    expect(inv.supplier.legal_name).toBe('Rose Kitchen');
     expect(inv.total_cents).toBe(11600);
-    expect(inv.lines[0].description).toMatch(/Laksa/);
-    expect(inv.lines[0].line_cents).toBe(11600);
-    expect(inv.gst_cents).toBe(0);
-    expect(inv.supplier.gst_registered).toBe(false);
     expect(inv.bill_to.role_label).toMatch(/Customer/i);
+    expect(inv.facilitated_by?.legal_name).toMatch(/Singapore Home Cooks/i);
   });
 
   it('builds cook settlement with 15% platform fee split', () => {
@@ -69,7 +75,7 @@ describe('order-invoice', () => {
     const inv = buildOrderInvoice({ order: sampleOrder, audience: 'customer' });
     expect(formatInvoiceMoney(11600)).toBe('S$116.00');
     const html = invoiceToHtml(inv);
-    expect(html).toContain('Tax invoice');
+    expect(html).toContain('Dish invoice');
     expect(html).toContain('Not GST-registered');
     expect(html).toContain('S$116.00');
     const b64 = invoiceToPdfBase64(inv);

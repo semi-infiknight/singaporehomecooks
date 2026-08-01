@@ -557,6 +557,18 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       );
     },
 
+    async getCookPayoutInvoiceDownloadUrl(batchId: string) {
+      return request(`/store/shc/earnings/payouts/${encodeURIComponent(batchId)}/invoice?issue_url=1`, {
+        method: "GET",
+      }) as Promise<{
+        download_url: string;
+        expires_at?: string;
+        expires_in?: number;
+        filename?: string;
+        mime?: string;
+      }>;
+    },
+
     async createRequest(input: Record<string, unknown>) {
       const r = await request("/store/shc/requests", { method: "POST", body: JSON.stringify(input) });
       return (r as any).request;

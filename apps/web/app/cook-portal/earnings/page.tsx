@@ -13,6 +13,7 @@ import {
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookEarnings, useCookExpenses, useCookPayoutHistory, useCreateCookExpense } from '../../../lib/useCookPortal';
+import { getCookPayoutInvoiceDownloadUrl } from '../../../lib/cook-api-client';
 import {
   CookEarningsCreateListingsCtaWeb,
   CookEarningsExpenseTrackerWeb,
@@ -53,6 +54,17 @@ export default function CookEarningsPage() {
     setExpenseAmount('');
   };
 
+  const downloadPayoutInvoice = async (row: { batch_id?: string }) => {
+    if (!row.batch_id) return;
+    try {
+      const res = await getCookPayoutInvoiceDownloadUrl(row.batch_id);
+      if (!res.download_url) throw new Error('No invoice download URL from server');
+      window.open(res.download_url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      alert((e as Error).message || 'Could not open payout invoice PDF.');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-4" data-testid="cook-earnings-screen">
       <GourmeatCookHeader
@@ -81,7 +93,10 @@ export default function CookEarningsPage() {
         earnings={earnings}
         onSetupPaynow={() => router.push('/cook-portal/settings')}
       />
-      <CookEarningsPayoutHistoryWeb payouts={(payoutHistory.payouts || []) as any} />
+      <CookEarningsPayoutHistoryWeb
+        payouts={(payoutHistory.payouts || []) as any}
+        onDownloadInvoice={downloadPayoutInvoice}
+      />
 
       <p className="text-sm font-extrabold mb-2">Quick actions</p>
       <div className="grid grid-cols-2 gap-2">

@@ -136,6 +136,8 @@ export const submitComplianceDoc = (input: { type: 'sfa' | 'wsq' | 'halal'; file
   cookClient.submitComplianceDoc(input);
 export const getCookEarnings = () => cookClient.getEarnings();
 export const getCookPayoutHistory = () => cookClient.getCookPayoutHistory();
+export const getCookPayoutInvoiceDownloadUrl = (batchId: string) =>
+  cookClient.getCookPayoutInvoiceDownloadUrl(batchId);
 export const listCookExpenses = () => cookClient.listCookExpenses();
 export const createCookExpense = (input: {
   amount_cents: number;

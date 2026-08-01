@@ -3,6 +3,8 @@ import {
   cookListingE2eTestId,
   E2E_COOK_SEED_LISTING,
   filterCookListings,
+  normalizeRouteParam,
+  resolveCookListingById,
   resolveCookListingsForDisplay,
   uniqueListingCuisines,
 } from './cook-listings';
@@ -50,5 +52,22 @@ describe('resolveCookListingsForDisplay (Maestro seed)', () => {
   it('assigns listing-card-e2e testID to seed row', () => {
     expect(cookListingE2eTestId(E2E_COOK_SEED_LISTING, 0)).toBe('listing-card-e2e');
     expect(cookListingE2eTestId({ id: 'abc' }, 1)).toBe('listing-card-abc');
+  });
+});
+
+describe('normalizeRouteParam', () => {
+  it('unwraps array params', () => {
+    expect(normalizeRouteParam(['dish_abc'])).toBe('dish_abc');
+  });
+});
+
+describe('resolveCookListingById', () => {
+  it('finds API listing by id', () => {
+    expect(resolveCookListingById(sample as any, '2')?.name).toBe('Chicken Rice');
+  });
+
+  it('falls back to E2E seed when empty and maestro flag set', () => {
+    const row = resolveCookListingById([], E2E_COOK_SEED_LISTING.id, { maestroE2e: true });
+    expect(row?.id).toBe('e2e-seed');
   });
 });

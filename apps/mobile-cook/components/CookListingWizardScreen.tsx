@@ -8,7 +8,6 @@ import {
   SHCButton,
   SHCButtonText,
   ListingWizardStep,
-  IngredientTierEditor,
   PriceEarningsCalc,
   SHCSectionTitle,
   SHCFoodImage,
@@ -33,28 +32,30 @@ import {
   contentPadForTabBar,
   SHCAllergenTierPicker,
   SHCHalalToggle,
-  SHCListingAvailabilityEditor,
   SHCListingDescriptionInput,
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
+  SHCIngredientsEditor,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
   CUISINE_IMAGE,
   getDishImageUrl,
   cookAllergenTier1Presets,
-  resolveCookCollectionTimeSlots,
   buildCookListingPayload,
   emptyAllergenTiers,
   DEFAULT_LISTING_AVAILABILITY,
+  E2E_COOK_SEED_LISTING,
   allergenTiersFromListing,
   availabilityFromListing,
   mealOptionsFromListing,
   recipeStepsFromListing,
+  normalizeIngredients,
   validateCookListingDraft,
   validateCookListingForPublish,
   validateCookListingWizardStep,
+  type IngredientDraft,
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -69,8 +70,6 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
-import { useCookProfile } from '../hooks/useCookProfile';
-
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
 async function loadImagePicker(): Promise<typeof import('expo-image-picker') | null> {
@@ -110,7 +109,9 @@ function listingToForm(listing: any) {
     portionsPerDay: avail.portions_per_day,
     collectionDays: avail.collection_days,
     timeSlots: avail.time_slots,
-    ingredients: listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }],
+    ingredients: normalizeIngredients(
+      listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken' }]
+    ),
     mealExtras: mealMeta.extras,
     mealAddons: mealMeta.addons,
     recipeSteps: recipeStepsFromListing(listing),
@@ -136,8 +137,6 @@ export function CookListingWizardScreen({
   const { user } = useAuth();
   const { config } = useCookConfig();
   const { commissionRatePct } = useBusinessRules();
-  const { data: cookProfile } = useCookProfile();
-  const collectionTimeSlots = resolveCookCollectionTimeSlots(cookProfile);
   const qc = useQueryClient();
   const { openTray, dismiss } = useSHCTray();
   const {
@@ -164,7 +163,7 @@ export function CookListingWizardScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
+  const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [recipeSteps, setRecipeSteps] = useState<RecipeStepDraft[]>([]);
@@ -396,6 +395,10 @@ export function CookListingWizardScreen({
 
   const publish = async () => {
     if (publishing) return;
+    if (editingId === E2E_COOK_SEED_LISTING.id) {
+      showErrorTray('Preview listing', 'This is a demo dish for testing. Tap + to add your first real listing.');
+      return;
+    }
     if (!user?.id) {
       showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
@@ -564,7 +567,7 @@ export function CookListingWizardScreen({
 
         {step === 3 && (
           <ListingWizardStep step={3} title="Ingredients & photo">
-            <IngredientTierEditor value={ingredients} onChange={setIngredients} />
+            <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
             <SHCButton
               variant="outline"
               onPress={async () => {
@@ -675,15 +678,9 @@ export function CookListingWizardScreen({
                 minQty={minQty ?? 0}
                 commissionRatePct={commissionRatePct}
               />
-              <SHCListingAvailabilityEditor
-                portionsPerDay={portionsPerDay}
-                collectionDays={collectionDays}
-                timeSlots={timeSlots}
-                onPortionsChange={setPortionsPerDay}
-                onCollectionDaysChange={setCollectionDays}
-                onTimeSlotsChange={setTimeSlots}
-                timeSlotPresets={collectionTimeSlots}
-              />
+              <Text style={styles.availabilityHint}>
+                Pause or unpause this dish from My Listings when you want it off the menu.
+              </Text>
               {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
               {published && (
                 <SHCCard variant="bento-mint" style={styles.publishedCard}>
@@ -753,6 +750,7 @@ const styles = StyleSheet.create({
     padding: shcSpacing.sm,
   },
   reviewName: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 15, flex: 1 },
+  availabilityHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: shcSpacing.sm },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginVertical: 8 },
   photoPanel: {
     marginTop: 8,

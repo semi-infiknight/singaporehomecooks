@@ -56,12 +56,18 @@ import {
   type AllergenTiers,
   addMealOptionRow,
   addRecipeStepRow,
+  addIngredientRow,
   removeMealOptionRow,
   removeRecipeStepRow,
+  removeIngredientRow,
   updateMealOptionRow,
   updateRecipeStepRow,
+  updateIngredientRow,
+  defaultIngredientRow,
+  formatRecipeIngredient,
   type MealOptionDraft,
   type RecipeStepDraft,
+  type IngredientDraft,
   shcBadgeVariant,
   type ShcBadgeSemanticKind,
   shcOrderStatusBadgeVariant,
@@ -3275,17 +3281,11 @@ export function DishOrderingInfo({
         <div className="pt-2 mt-2 border-t border-[var(--shc-border)]">
           <p className="text-[11px] font-extrabold text-muted-foreground mb-1">INGREDIENTS</p>
           <ul className="space-y-0.5">
-            {ingredients.slice(0, 8).map((ing, i) => {
-              const label =
-                typeof ing === 'string'
-                  ? ing
-                  : `${ing.name || ''}${ing.qty || ing.quantity ? ` — ${ing.qty || ing.quantity}${ing.unit ? ` ${ing.unit}` : ''}` : ''}`;
-              return (
-                <li key={i} className="text-xs font-semibold text-foreground">
-                  · {label}
-                </li>
-              );
-            })}
+            {ingredients.slice(0, 8).map((ing, i) => (
+              <li key={i} className="text-xs font-semibold text-foreground">
+                · {formatRecipeIngredient(ing)}
+              </li>
+            ))}
           </ul>
         </div>
       )}
@@ -3317,14 +3317,6 @@ export function RecipeStoryCard({
   cookName?: string;
   testID?: string;
 }) {
-  const formatIng = (ing: { name?: string; quantity?: number | string; unit?: string } | string) => {
-    if (typeof ing === 'string') return ing;
-    const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
-    const unit = ing.unit ? ` ${ing.unit}` : '';
-    const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
-    return `${ing.name || ''}${suffix}`.trim();
-  };
-
   return (
     <div data-testid={testID} className="space-y-4 mb-4">
       <p className="text-[11px] font-extrabold text-muted-foreground tracking-wide">FAMILY RECIPE</p>
@@ -3367,7 +3359,7 @@ export function RecipeStoryCard({
             {ingredients.map((ing, i) => (
               <li key={i} className="flex items-start gap-2 text-xs font-semibold text-foreground">
                 <span className="w-[18px] h-[18px] shrink-0 mt-0.5 rounded border-2 border-primary" aria-hidden />
-                {formatIng(ing)}
+                {formatRecipeIngredient(ing)}
               </li>
             ))}
           </ul>
@@ -4809,21 +4801,37 @@ export function CookEarningsIrasNoteWeb({ testID = 'cook-earnings-iras-note' }: 
 
 export function CookEarningsPayoutHistoryWeb({
   payouts,
+  onDownloadInvoice,
   testID = 'cook-earnings-payout-history',
 }: {
   payouts: CookPayoutHistoryRow[];
+  onDownloadInvoice?: (row: CookPayoutHistoryRow) => void;
   testID?: string;
 }) {
   return (
     <GourmeatCard className="bg-[var(--shc-bento-yellow)] mt-4" data-testid={testID}>
       <p className="text-sm font-extrabold mb-2">Payout history</p>
+      <p className="text-xs text-muted-foreground mb-2">Weekly payout invoices are issued by Singapore Home Cooks.</p>
       {!payouts.length ? (
         <p className="text-xs text-muted-foreground">No payouts yet — earnings batch every Monday after orders complete.</p>
       ) : (
         payouts.slice(0, 6).map((row, idx) => (
-          <p key={`${row.batch_id || row.week_start || idx}`} className="text-sm font-bold leading-relaxed">
-            {formatCookPayoutHistoryRow(row)}
-          </p>
+          <div
+            key={`${row.batch_id || row.week_start || idx}`}
+            className="flex items-center justify-between gap-2 py-1"
+          >
+            <p className="text-sm font-bold leading-relaxed flex-1">{formatCookPayoutHistoryRow(row)}</p>
+            {row.batch_id && onDownloadInvoice ? (
+              <button
+                type="button"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold shrink-0"
+                onClick={() => onDownloadInvoice(row)}
+                data-testid={`cook-payout-invoice-${row.batch_id}`}
+              >
+                Invoice
+              </button>
+            ) : null}
+          </div>
         ))
       )}
     </GourmeatCard>
@@ -5028,6 +5036,59 @@ function MealOptionsEditorWeb({
         data-testid={`${testID}-add`}
       >
         + Add option
+      </button>
+    </div>
+  );
+}
+
+function ingredientRowsForEditorWeb(value: IngredientDraft[]): IngredientDraft[] {
+  return value.length ? value : [defaultIngredientRow()];
+}
+
+export function IngredientsEditorWeb({
+  value,
+  onChange,
+  testID = 'listing-ingredients',
+}: {
+  value: IngredientDraft[];
+  onChange: (next: IngredientDraft[]) => void;
+  testID?: string;
+}) {
+  const rows = ingredientRowsForEditorWeb(value);
+  const patchRows = (next: IngredientDraft[]) => onChange(next);
+
+  return (
+    <div className="space-y-2" data-testid={testID}>
+      <p className="text-xs font-extrabold">Ingredients</p>
+      <p className="text-[11px] text-muted-foreground">
+        Ingredient names only — families see the list, not amounts (we don&apos;t publish exact recipes).
+      </p>
+      {rows.map((row, index) => (
+        <div key={`ingredient-${index}`} className="flex gap-2 items-center">
+          <input
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+            value={row.name}
+            onChange={(e) => patchRows(updateIngredientRow(rows, index, { name: e.target.value }))}
+            placeholder="e.g. Coconut milk"
+            data-testid={`${testID}-name-${index}`}
+          />
+          <button
+            type="button"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-bold shrink-0"
+            onClick={() => patchRows(removeIngredientRow(rows, index))}
+            data-testid={`${testID}-remove-${index}`}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+        onClick={() => patchRows(addIngredientRow(rows))}
+        data-testid={`${testID}-add`}
+      >
+        + Add ingredient
       </button>
     </div>
   );

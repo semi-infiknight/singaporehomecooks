@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View, ScrollView, StyleSheet, Pressable, Alert, Linking } from 'react-native';
+import { Text, TextInput, View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,9 +17,9 @@ import {
   SHCSkeletonList,
   contentPadForTabBar,
 } from '@shc/ui';
-import { getOrderStatusLabel, getDishImageUrl, isCookComplianceVerified, canDownloadCookSettlementInvoice, COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT, COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE, isCookSettlementInvoiceProvisional } from '@shc/utils';
+import { getOrderStatusLabel, getDishImageUrl, isCookComplianceVerified, COOK_WEEKLY_PAYOUT_INVOICE_HINT } from '@shc/utils';
 import { useOrder, useTransitionOrder, useComplianceDocs } from '../../../hooks/useOrder';
-import { getOrderDisputes, getOrderInvoiceDownloadUrl, submitOrderDispute } from '../../../lib/api-client';
+import { getOrderDisputes, submitOrderDispute } from '../../../lib/api-client';
 import { SHCOrderStatus } from '@shc/types';
 
 function CookOrderDisputeTrayContent({
@@ -75,7 +75,6 @@ export default function CookManageOrder() {
   const complianceOk = isCookComplianceVerified(complianceDocs as any[]);
   const transMut = useTransitionOrder();
   const [err, setErr] = React.useState<any>(null);
-  const [invoiceBusy, setInvoiceBusy] = React.useState(false);
   const { openTray, dismiss } = useSHCTray();
 
   const { data: disputes } = useQuery({
@@ -153,20 +152,6 @@ export default function CookManageOrder() {
     ));
   };
 
-  const downloadInvoice = async () => {
-    if (!id || invoiceBusy) return;
-    setInvoiceBusy(true);
-    try {
-      const res = await getOrderInvoiceDownloadUrl(id);
-      if (!res.download_url) throw new Error('No invoice download URL from server');
-      await Linking.openURL(res.download_url);
-    } catch (e: any) {
-      Alert.alert('Invoice', e?.message || 'Could not open settlement PDF.');
-    } finally {
-      setInvoiceBusy(false);
-    }
-  };
-
   if (!id) {
     return (
       <View style={[styles.loading, { paddingTop: insets.top }]}>
@@ -197,8 +182,6 @@ export default function CookManageOrder() {
 
   const actions = NEXT_ACTIONS[order.shc_status] || [];
   const dishName = order.items?.[0]?.name;
-  const settlementAvailable = canDownloadCookSettlementInvoice(String(order.shc_status || ''));
-  const settlementProvisional = isCookSettlementInvoiceProvisional(String(order.shc_status || ''));
 
   return (
     <ScrollView
@@ -281,26 +264,15 @@ export default function CookManageOrder() {
         </View>
       )}
 
-      {settlementAvailable ? (
-        <View style={styles.invoiceBlock}>
-          {settlementProvisional ? (
-            <Text style={styles.hint} testID="cook-settlement-invoice-provisional-hint">
-              {COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT}
-            </Text>
-          ) : null}
-          <GourmeatPrimaryButton
-            label={invoiceBusy ? 'Opening PDF…' : 'Open settlement invoice (PDF)'}
-            variant="outline"
-            onPress={downloadInvoice}
-            loading={invoiceBusy}
-            testID="cook-order-download-invoice-btn"
-          />
-        </View>
-      ) : (
-        <Text style={styles.hint} testID="cook-settlement-invoice-unavailable">
-          {COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE}
-        </Text>
-      )}
+      <Text style={styles.hint} testID="cook-weekly-payout-invoice-hint">
+        {COOK_WEEKLY_PAYOUT_INVOICE_HINT}
+      </Text>
+      <GourmeatPrimaryButton
+        label="Open Earnings & payout invoices"
+        variant="outline"
+        onPress={() => router.push('/(cook)/earnings' as any)}
+        testID="cook-order-earnings-link"
+      />
 
       <GourmeatPrimaryButton
         label="Chat with customer"

@@ -23,8 +23,8 @@ describe('recipe-ux', () => {
     ).toBe('Family recipe since 1972.');
   });
 
-  it('formats ingredient lines with quantity and unit', () => {
-    expect(formatRecipeIngredient({ name: 'Chicken', quantity: 500, unit: 'g' })).toBe('Chicken — 500 g');
+  it('formats ingredient lines as name only (no recipe amounts)', () => {
+    expect(formatRecipeIngredient({ name: 'Chicken', quantity: 500, unit: 'g' })).toBe('Chicken');
   });
 
   it('builds at-a-glance chips', () => {

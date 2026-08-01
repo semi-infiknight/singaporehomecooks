@@ -33,6 +33,7 @@ describe('listing-form', () => {
     expect(payload.description).toBe('Family recipe');
     expect(payload.allergen_tiers).toEqual({ tier1: ['Shellfish'], tier2: [], tier3: [] });
     expect(payload.portions_per_day).toBe(12);
+    expect(payload.ingredients).toEqual([{ name: 'Prawn' }]);
   });
 
   it('rejects publish when allergens and ingredients missing', () => {

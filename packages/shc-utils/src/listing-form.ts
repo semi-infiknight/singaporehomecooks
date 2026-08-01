@@ -1,5 +1,5 @@
-import type { MealOptionDraft, RecipeStepDraft } from './product-meta-form';
-import { mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
+import type { IngredientDraft, MealOptionDraft, RecipeStepDraft } from './product-meta-form';
+import { ingredientsToApiPayload, mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
 
 /** Shared cook listing wizard defaults + helpers (tri-platform). */
 
@@ -162,7 +162,7 @@ export type CookListingFormDraft = {
   min_qty: number;
   cuisine: string;
   occasion_tags: string[];
-  ingredients: Array<{ name: string; quantity: number; unit: string }>;
+  ingredients: IngredientDraft[];
   allergen_tiers: AllergenTiers;
   allergen_none_confirmed?: boolean;
   halal: boolean;
@@ -188,7 +188,7 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
     min_qty: draft.min_qty,
     cuisine: draft.cuisine,
     occasion_tags: draft.occasion_tags,
-    ingredients: draft.ingredients,
+    ingredients: ingredientsToApiPayload(draft.ingredients),
     allergen_tiers: draft.allergen_tiers,
     halal: draft.halal,
     portions_per_day: draft.portions_per_day,
@@ -199,7 +199,8 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.image_url) payload.image_url = draft.image_url;
   if (draft.calories != null) {
     payload.calories = draft.calories;
-    payload.calories_confidence = draft.calories_confidence || 'category';
+    const confidence = draft.calories_confidence;
+    payload.calories_confidence = confidence === 'full' || confidence === 'category' ? confidence : 'category';
   }
   if (draft.meal_extras?.length) payload.meal_extras = mealOptionsToApiPayload(draft.meal_extras);
   if (draft.meal_addons?.length) payload.meal_addons = mealOptionsToApiPayload(draft.meal_addons);
@@ -273,12 +274,6 @@ export function validateCookListingForPublish(draft: CookListingFormDraft): Cook
   }
   if (!hasAllergenDisclosure(draft)) {
     errors.push('Disclose tier-1 allergens or confirm none apply.');
-  }
-  if (!(draft.collection_days || []).length) {
-    errors.push('Select at least one collection day.');
-  }
-  if (!(draft.time_slots || []).length) {
-    errors.push('Select at least one collection time slot.');
   }
   const orderValue = Number(draft.price) * Number(draft.min_qty);
   if (Number.isFinite(orderValue) && orderValue < MIN_LISTING_ORDER_VALUE_SGD) {

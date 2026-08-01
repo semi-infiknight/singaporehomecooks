@@ -29,6 +29,10 @@ export const COOK_SETTLEMENT_INVOICE_UNAVAILABLE_MESSAGE =
 export const COOK_SETTLEMENT_INVOICE_PROVISIONAL_HINT =
   'Provisional estimate — final settlement is issued after collection is marked collected.';
 
+/** Cook order detail should link to weekly payout invoice instead of per-order settlement. */
+export const COOK_WEEKLY_PAYOUT_INVOICE_HINT =
+  'Weekly payout invoices are issued by Singapore Home Cooks — download from Earnings → Payout history.';
+
 export function canDownloadCookSettlementInvoice(shcStatus: string | null | undefined): boolean {
   const status = String(shcStatus || '').trim();
   return (COOK_SETTLEMENT_INVOICE_STATUSES as readonly string[]).includes(status);
@@ -93,6 +97,12 @@ export type OrderInvoiceDoc = {
   audience: InvoiceAudience;
   /** Cook settlement before collection is marked collected */
   provisional?: boolean;
+  /** Weekly SHC→cook payout remittance (total is paid to bill_to, not charged) */
+  payout_remittance?: boolean;
+  facilitated_by?: {
+    legal_name: string;
+    uen: string;
+  };
 };
 
 export type BuildInvoiceInput = {
@@ -101,6 +111,7 @@ export type BuildInvoiceInput = {
     order_id?: string;
     cook_id?: string;
     cook_name?: string;
+    cook_area?: string;
     customer_id?: string;
     customer_name?: string;
     shc_status?: string;
@@ -121,7 +132,9 @@ export type BuildInvoiceInput = {
   };
   audience: InvoiceAudience;
   actorName?: string;
-  /** Override supplier (tests / env) */
+  /** Cook issues the per-dish invoice to the customer (customer audience only). */
+  cook_supplier?: Partial<OrderInvoiceDoc['supplier']>;
+  /** Override platform supplier (weekly payout / tests) */
   supplier?: Partial<OrderInvoiceDoc['supplier']>;
   now?: Date;
   commissionRate?: number;
@@ -223,7 +236,21 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     last.unit_cents = last.qty > 0 ? Math.round(last.line_cents / last.qty) : last.line_cents;
   }
 
-  const supplier = { ...DEFAULT_PLATFORM_SUPPLIER, ...input.supplier };
+  const isCook = input.audience === 'cook';
+  const supplier = isCook
+    ? { ...DEFAULT_PLATFORM_SUPPLIER, ...input.supplier }
+    : {
+        legal_name:
+          input.cook_supplier?.legal_name ||
+          order.cook_name ||
+          'Home cook',
+        uen:
+          input.cook_supplier?.uen ||
+          (order.cook_id ? `Kitchen ${String(order.cook_id).slice(-8)}` : 'Home-based food business'),
+        address: input.cook_supplier?.address || order.cook_area || 'Singapore',
+        gst_registered: !!input.cook_supplier?.gst_registered,
+        gst_registration_number: input.cook_supplier?.gst_registration_number || null,
+      };
   const gstRate = supplier.gst_registered ? 0.09 : 0;
   // Total is treated as GST-inclusive when registered (not currently)
   const gstCents = supplier.gst_registered
@@ -231,22 +258,23 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     : 0;
   const subtotal = totalCents - gstCents;
 
-  const isCook = input.audience === 'cook';
   const provisional = isCook && isCookSettlementInvoiceProvisional(order.shc_status);
   const notes: string[] = [
     supplier.gst_registered
       ? `GST is included at ${(gstRate * 100).toFixed(0)}% where applicable.`
       : 'Supplier is not GST-registered. This tax invoice does not charge GST.',
+    isCook
+      ? `Platform service fee (${(rate * 100).toFixed(0)}%) is deducted from the order total before cook payout.`
+      : 'Issued by the cook for home-prepared meals. Payment is collected via Singapore Home Cooks PayNow (marketplace facilitator).',
     'Collection-first marketplace: customer collects from the cook’s kitchen at the stated slot.',
-    'This document is issued by the platform for the marketplace order. Keep for your records.',
   ];
+  if (!isCook) {
+    notes.push('Keep this dish invoice for your records.');
+  }
   if (order.is_corporate) {
     notes.push('Corporate / group order flag was set at checkout.');
   }
   if (isCook) {
-    notes.push(
-      `Platform service fee (${(rate * 100).toFixed(0)}%) is deducted from the order total before cook payout.`
-    );
     if (provisional) {
       notes.unshift(
         'PROVISIONAL: This settlement estimate is not final until the order is marked collected. Payout may be adjusted if the order is cancelled or disputed.'
@@ -261,8 +289,8 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
         ? 'Provisional settlement note'
         : 'Order settlement note'
       : order.is_corporate
-        ? 'Tax invoice (Corporate / group)'
-        : 'Tax invoice',
+        ? 'Dish invoice (Corporate / group)'
+        : 'Dish invoice',
     invoice_number: invoiceNumber(orderId, date),
     invoice_date: date,
     order_id: orderId,
@@ -279,10 +307,13 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
           role_label: 'Customer',
           id: order.customer_id,
         },
-    fulfilled_by: {
-      cook_name: order.cook_name || 'Home kitchen',
-      cook_id: order.cook_id,
-    },
+    fulfilled_by: undefined,
+    facilitated_by: isCook
+      ? undefined
+      : {
+          legal_name: DEFAULT_PLATFORM_SUPPLIER.legal_name,
+          uen: DEFAULT_PLATFORM_SUPPLIER.uen,
+        },
     lines,
     subtotal_cents: subtotal,
     gst_cents: gstCents,
@@ -292,7 +323,7 @@ export function buildOrderInvoice(input: BuildInvoiceInput): OrderInvoiceDoc {
     cook_earnings_cents: isCook ? cookEarn : undefined,
     commission_rate: isCook ? rate : undefined,
     payment: {
-      method: 'PayNow (platform UEN)',
+      method: isCook ? 'PayNow (platform UEN)' : 'PayNow via Singapore Home Cooks',
       reference: order.paynow_reference || orderId,
       collection_date: order.collection_date || null,
       collection_slot: order.collection_slot || null,
@@ -372,6 +403,11 @@ export function invoiceToHtml(doc: OrderInvoiceDoc): string {
         ? `<br/><br/><strong>Fulfilled by kitchen</strong><br/>${escapeHtml(doc.fulfilled_by.cook_name)}`
         : ''
     }
+    ${
+      doc.facilitated_by
+        ? `<br/><br/><strong>Payment facilitator</strong><br/>${escapeHtml(doc.facilitated_by.legal_name)} · UEN ${escapeHtml(doc.facilitated_by.uen)}`
+        : ''
+    }
   </div>
 
   <p><strong>Order:</strong> ${escapeHtml(doc.order_id)}
@@ -400,7 +436,7 @@ export function invoiceToHtml(doc: OrderInvoiceDoc): string {
     <tr><td>Subtotal</td><td style="text-align:right">${formatInvoiceMoney(doc.subtotal_cents)}</td></tr>
     <tr><td>GST (${(doc.gst_rate * 100).toFixed(0)}%)</td>
         <td style="text-align:right">${formatInvoiceMoney(doc.gst_cents)}</td></tr>
-    <tr><td><strong>Total payable</strong></td>
+    <tr><td><strong>${doc.payout_remittance ? 'Total paid to cook' : 'Total payable'}</strong></td>
         <td style="text-align:right"><strong>${formatInvoiceMoney(doc.total_cents)}</strong></td></tr>
     ${settlement}
   </table>

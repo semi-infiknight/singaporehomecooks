@@ -38,7 +38,7 @@ export function CustomerOrderManageSupportActions({
 
   const invoiceLabel = useMemo(() => {
     if (invoiceBusy) return 'Opening PDF…';
-    return isCorporate ? 'Open corporate tax invoice (PDF)' : 'Open tax invoice (PDF)';
+    return isCorporate ? 'Open corporate dish invoice (PDF)' : 'Open dish invoice (PDF)';
   }, [invoiceBusy, isCorporate]);
 
   const downloadInvoice = useCallback(async () => {
