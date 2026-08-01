@@ -38,15 +38,22 @@ See root LOCAL_TEST.md (or root README).
 
 ## WhatsApp OTP (cook signup + mobile verify)
 
-Production delivery uses **Twilio WhatsApp Business API**. Set on Railway `medusa` service:
+Production delivery uses **Meta WhatsApp Cloud API** (Graph) directly — no Twilio/BSP markup.
 
-| Variable | Example |
+Set on Railway `medusa` service:
+
+| Variable | Purpose |
 |----------|---------|
-| `TWILIO_ACCOUNT_SID` | `AC…` |
-| `TWILIO_AUTH_TOKEN` | (secret) |
-| `TWILIO_WHATSAPP_FROM` | `whatsapp:+14155238886` (your Twilio WhatsApp sender) |
+| `WHATSAPP_CLOUD_ACCESS_TOKEN` | System user / permanent token from Meta Business |
+| `WHATSAPP_PHONE_NUMBER_ID` | Phone number ID from WhatsApp → API Setup |
+| `WHATSAPP_OTP_TEMPLATE_NAME` | Approved **authentication** template name (e.g. `shc_cook_verify`) |
+| `WHATSAPP_OTP_TEMPLATE_LANGUAGE` | Optional, default `en` |
+| `WHATSAPP_OTP_BUTTON_STYLE` | Optional: `copy_code` (default) or `url` for auth button |
+| `WHATSAPP_GRAPH_API_VERSION` | Optional, default `v22.0` |
 
-Local dev / Maestro without Twilio: `SHC_ALLOW_DEMO_OTP=1` (returns hint with code `123456`). Optional override: `SHC_COOK_REGISTER_DEMO_OTP`.
+Create an authentication template in Meta Business Manager with a body variable for the OTP and a copy-code (or URL) button. Meta charges ~S$0.0205 per auth message in Singapore.
+
+Local dev / Maestro without Meta: `SHC_ALLOW_DEMO_OTP=1` (hint shows code `123456`). Optional: `SHC_COOK_REGISTER_DEMO_OTP`.
 
 Routes: `POST /store/shc/auth/cook/register/send-whatsapp-otp`, register body includes `mobile` + `whatsapp_otp`.
 

@@ -4,7 +4,7 @@ import {
   maskWhatsappMobile,
   sendWhatsappOtpMessage,
   shouldAllowDemoWhatsappOtp,
-} from "./shc-twilio-whatsapp";
+} from "./shc-meta-whatsapp";
 
 const TTL_SEC = 60 * 15;
 const KEY_PREFIX = "shc:cook:whatsapp:otp:";
