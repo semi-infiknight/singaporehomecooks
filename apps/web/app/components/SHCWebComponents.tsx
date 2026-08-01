@@ -64,7 +64,7 @@ import {
   updateRecipeStepRow,
   updateIngredientRow,
   defaultIngredientRow,
-  INGREDIENT_UNIT_PRESETS,
+  formatRecipeIngredient,
   type MealOptionDraft,
   type RecipeStepDraft,
   type IngredientDraft,
@@ -3279,17 +3279,11 @@ export function DishOrderingInfo({
         <div className="pt-2 mt-2 border-t border-[var(--shc-border)]">
           <p className="text-[11px] font-extrabold text-muted-foreground mb-1">INGREDIENTS</p>
           <ul className="space-y-0.5">
-            {ingredients.slice(0, 8).map((ing, i) => {
-              const label =
-                typeof ing === 'string'
-                  ? ing
-                  : `${ing.name || ''}${ing.qty || ing.quantity ? ` — ${ing.qty || ing.quantity}${ing.unit ? ` ${ing.unit}` : ''}` : ''}`;
-              return (
-                <li key={i} className="text-xs font-semibold text-foreground">
-                  · {label}
-                </li>
-              );
-            })}
+            {ingredients.slice(0, 8).map((ing, i) => (
+              <li key={i} className="text-xs font-semibold text-foreground">
+                · {formatRecipeIngredient(ing)}
+              </li>
+            ))}
           </ul>
         </div>
       )}
@@ -3321,14 +3315,6 @@ export function RecipeStoryCard({
   cookName?: string;
   testID?: string;
 }) {
-  const formatIng = (ing: { name?: string; quantity?: number | string; unit?: string } | string) => {
-    if (typeof ing === 'string') return ing;
-    const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
-    const unit = ing.unit ? ` ${ing.unit}` : '';
-    const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
-    return `${ing.name || ''}${suffix}`.trim();
-  };
-
   return (
     <div data-testid={testID} className="space-y-4 mb-4">
       <p className="text-[11px] font-extrabold text-muted-foreground tracking-wide">FAMILY RECIPE</p>
@@ -3371,7 +3357,7 @@ export function RecipeStoryCard({
             {ingredients.map((ing, i) => (
               <li key={i} className="flex items-start gap-2 text-xs font-semibold text-foreground">
                 <span className="w-[18px] h-[18px] shrink-0 mt-0.5 rounded border-2 border-primary" aria-hidden />
-                {formatIng(ing)}
+                {formatRecipeIngredient(ing)}
               </li>
             ))}
           </ul>
@@ -5073,56 +5059,20 @@ export function IngredientsEditorWeb({
     <div className="space-y-2" data-testid={testID}>
       <p className="text-xs font-extrabold">Ingredients</p>
       <p className="text-[11px] text-muted-foreground">
-        List what goes into this dish — families see this on the dish page.
+        Ingredient names only — families see the list, not amounts (we don&apos;t publish exact recipes).
       </p>
       {rows.map((row, index) => (
-        <div key={`ingredient-${index}`} className="rounded-xl border border-border p-3 space-y-2">
+        <div key={`ingredient-${index}`} className="flex gap-2 items-center">
           <input
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm font-semibold"
+            className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
             value={row.name}
             onChange={(e) => patchRows(updateIngredientRow(rows, index, { name: e.target.value }))}
             placeholder="e.g. Coconut milk"
             data-testid={`${testID}-name-${index}`}
           />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min="0"
-              step="any"
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
-              value={row.quantity}
-              onChange={(e) =>
-                patchRows(updateIngredientRow(rows, index, { quantity: Number(e.target.value) || 0 }))
-              }
-              placeholder="Amount"
-              data-testid={`${testID}-qty-${index}`}
-            />
-            <input
-              className="w-20 rounded-lg border border-border px-3 py-2 text-sm font-semibold"
-              value={row.unit}
-              onChange={(e) => patchRows(updateIngredientRow(rows, index, { unit: e.target.value }))}
-              placeholder="Unit"
-              data-testid={`${testID}-unit-${index}`}
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {INGREDIENT_UNIT_PRESETS.map((unit) => (
-              <button
-                key={unit}
-                type="button"
-                className={`text-[11px] px-2.5 py-1 rounded-full border font-bold ${
-                  row.unit === unit ? 'bg-primary text-primary-foreground border-primary' : 'border-border'
-                }`}
-                onClick={() => patchRows(updateIngredientRow(rows, index, { unit }))}
-                data-testid={`${testID}-unit-preset-${unit}-${index}`}
-              >
-                {unit}
-              </button>
-            ))}
-          </div>
           <button
             type="button"
-            className="rounded-lg border border-border px-3 py-2 text-xs font-bold"
+            className="rounded-lg border border-border px-3 py-2 text-xs font-bold shrink-0"
             onClick={() => patchRows(removeIngredientRow(rows, index))}
             data-testid={`${testID}-remove-${index}`}
           >

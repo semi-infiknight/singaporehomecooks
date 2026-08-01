@@ -51,12 +51,9 @@ export const SEED_RECIPE_STEPS: Record<string, RecipeStep[]> = {
   ],
 };
 
-export function formatRecipeIngredient(ing: RecipeIngredient | string): string {
-  if (typeof ing === 'string') return ing;
-  const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
-  const unit = ing.unit ? ` ${ing.unit}` : '';
-  const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
-  return `${ing.name || ''}${suffix}`.trim();
+export function formatRecipeIngredient(ing: RecipeIngredient | string | { name?: string | null }): string {
+  if (typeof ing === 'string') return ing.trim();
+  return String(ing?.name || '').trim();
 }
 
 export function recipeHeritageLead(product: RecipeProductInput): string | null {

@@ -18,8 +18,8 @@ export const shcProductMetaSchema = z.object({
   calories_confidence: z.enum(['full', 'category']),
   ingredients: z.array(z.object({
     name: z.string(),
-    quantity: z.number(),
-    unit: z.string(),
+    quantity: z.number().optional(),
+    unit: z.string().optional(),
   })),
   min_qty: z.number().int().positive(),
   price_cents: z.number().int().positive().optional(),

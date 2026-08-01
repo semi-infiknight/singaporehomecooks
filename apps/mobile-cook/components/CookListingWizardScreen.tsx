@@ -51,9 +51,11 @@ import {
   availabilityFromListing,
   mealOptionsFromListing,
   recipeStepsFromListing,
+  normalizeIngredients,
   validateCookListingDraft,
   validateCookListingForPublish,
   validateCookListingWizardStep,
+  type IngredientDraft,
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
@@ -107,7 +109,9 @@ function listingToForm(listing: any) {
     portionsPerDay: avail.portions_per_day,
     collectionDays: avail.collection_days,
     timeSlots: avail.time_slots,
-    ingredients: listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }],
+    ingredients: normalizeIngredients(
+      listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken' }]
+    ),
     mealExtras: mealMeta.extras,
     mealAddons: mealMeta.addons,
     recipeSteps: recipeStepsFromListing(listing),
@@ -159,7 +163,7 @@ export function CookListingWizardScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
+  const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [recipeSteps, setRecipeSteps] = useState<RecipeStepDraft[]>([]);

@@ -5,6 +5,7 @@ import {
   addIngredientRow,
   updateIngredientRow,
   normalizeIngredients,
+  ingredientsToApiPayload,
   mealOptionsFromListing,
   mealOptionsToApiPayload,
   normalizeMealOptions,
@@ -41,13 +42,14 @@ describe('product-meta-form', () => {
     expect(defaultMealAddonsDraft(false).some((a) => a.id === 'egg')).toBe(true);
   });
 
-  it('normalizes and edits ingredient rows', () => {
+  it('normalizes and edits ingredient rows (name only)', () => {
     expect(normalizeIngredients([{ name: '  Coconut milk ', quantity: 200, unit: 'ml' }])).toEqual([
-      { name: 'Coconut milk', quantity: 200, unit: 'ml' },
+      { name: 'Coconut milk' },
     ]);
     const rows = addIngredientRow([]);
     expect(rows).toHaveLength(1);
-    const updated = updateIngredientRow(rows, 0, { name: 'Prawns', quantity: 6, unit: 'pcs' });
-    expect(updated[0]).toEqual({ name: 'Prawns', quantity: 6, unit: 'pcs' });
+    const updated = updateIngredientRow(rows, 0, { name: 'Prawns' });
+    expect(updated[0]).toEqual({ name: 'Prawns' });
+    expect(ingredientsToApiPayload(updated)).toEqual([{ name: 'Prawns' }]);
   });
 });

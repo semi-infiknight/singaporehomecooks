@@ -1,5 +1,5 @@
-import type { MealOptionDraft, RecipeStepDraft } from './product-meta-form';
-import { mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
+import type { IngredientDraft, MealOptionDraft, RecipeStepDraft } from './product-meta-form';
+import { ingredientsToApiPayload, mealOptionsToApiPayload, recipeStepsToApiPayload } from './product-meta-form';
 
 /** Shared cook listing wizard defaults + helpers (tri-platform). */
 
@@ -162,7 +162,7 @@ export type CookListingFormDraft = {
   min_qty: number;
   cuisine: string;
   occasion_tags: string[];
-  ingredients: Array<{ name: string; quantity: number; unit: string }>;
+  ingredients: IngredientDraft[];
   allergen_tiers: AllergenTiers;
   allergen_none_confirmed?: boolean;
   halal: boolean;
@@ -188,7 +188,7 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
     min_qty: draft.min_qty,
     cuisine: draft.cuisine,
     occasion_tags: draft.occasion_tags,
-    ingredients: draft.ingredients,
+    ingredients: ingredientsToApiPayload(draft.ingredients),
     allergen_tiers: draft.allergen_tiers,
     halal: draft.halal,
     portions_per_day: draft.portions_per_day,

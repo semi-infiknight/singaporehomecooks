@@ -7,6 +7,7 @@ import { SHCIcon, type SHCIconKey } from './icons';
 import { SHCButton } from './primitives';
 import {
   COLLECTION_ORDER_TIMELINE,
+  formatRecipeIngredient,
   getOrderTimelineIndex,
   getOrderStatusLabel,
   recipeHasStory,
@@ -468,17 +469,11 @@ export function SHCDishOrderingInfo({
         {ingredients.length > 0 && (
           <View style={{ marginTop: shcSpacing.sm, paddingTop: shcSpacing.sm, borderTopWidth: 1, borderTopColor: shcColors.borderLight }}>
             <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, marginBottom: 4 }}>INGREDIENTS</Text>
-            {ingredients.slice(0, 8).map((ing, i) => {
-              const label =
-                typeof ing === 'string'
-                  ? ing
-                  : `${ing.name || ''}${ing.qty || ing.quantity ? ` — ${ing.qty || ing.quantity}${ing.unit ? ` ${ing.unit}` : ''}` : ''}`;
-              return (
-                <Text key={i} style={{ fontSize: 12, fontWeight: '600', color: shcColors.text, marginTop: 2 }}>
-                  · {label}
-                </Text>
-              );
-            })}
+            {ingredients.slice(0, 8).map((ing, i) => (
+              <Text key={i} style={{ fontSize: 12, fontWeight: '600', color: shcColors.text, marginTop: 2 }}>
+                · {formatRecipeIngredient(ing)}
+              </Text>
+            ))}
           </View>
         )}
 
@@ -596,14 +591,6 @@ export function SHCRecipeStoryCard({
   cookName?: string;
   testID?: string;
 }) {
-  const formatIng = (ing: { name?: string; quantity?: number | string; unit?: string } | string) => {
-    if (typeof ing === 'string') return ing;
-    const qty = ing.quantity != null && ing.quantity !== '' ? String(ing.quantity) : '';
-    const unit = ing.unit ? ` ${ing.unit}` : '';
-    const suffix = qty ? ` — ${qty}${unit}` : unit ? ` — ${unit.trim()}` : '';
-    return `${ing.name || ''}${suffix}`.trim();
-  };
-
   return (
     <View testID={testID} style={{ gap: shcSpacing.md, marginBottom: shcSpacing.md }}>
       <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.textLight, letterSpacing: 0.6 }}>
@@ -680,7 +667,7 @@ export function SHCRecipeStoryCard({
                 }}
               />
               <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: shcColors.text, lineHeight: 17 }}>
-                {formatIng(ing)}
+                {formatRecipeIngredient(ing)}
               </Text>
             </View>
           ))}

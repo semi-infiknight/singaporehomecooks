@@ -15,7 +15,7 @@ export function IngredientTierEditor({
   onChange,
   label,
 }: {
-  value: Array<{ name: string; quantity: number; unit: string }>;
+  value: IngredientDraft[];
   onChange: (v: any[]) => void;
   label?: string;
 }) {

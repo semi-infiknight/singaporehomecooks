@@ -483,7 +483,7 @@ export function buildCookOnboardingFirstListingPayload(draft: CookOnboardingDraf
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 12)
-    .map((name) => ({ name, quantity: 1, unit: draft.dish_portion_unit }));
+    .map((name) => ({ name }));
 
   return {
     name: draft.dish_name.trim(),
@@ -492,7 +492,7 @@ export function buildCookOnboardingFirstListingPayload(draft: CookOnboardingDraf
     price,
     min_qty: minQty,
     halal: draft.kitchen_halal_certified === true,
-    ingredients: ingredients.length ? ingredients : [{ name: 'See description', quantity: 1, unit: 'portion' }],
+    ingredients: ingredients.length ? ingredients : [{ name: 'See description' }],
     allergen_none_confirmed: true,
     portions_per_day: 12,
     collection_days: [0, 1, 2, 3, 4, 5, 6],

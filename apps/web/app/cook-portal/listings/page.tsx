@@ -25,6 +25,7 @@ import {
   defaultMealAddonsDraft,
   mealOptionsFromListing,
   recipeStepsFromListing,
+  normalizeIngredients,
   cookAllergenTier1Presets,
   cookEarningsPreviewFromDollars,
   validateCookListingDraft,
@@ -82,7 +83,7 @@ type ListingRow = Record<string, unknown> & {
   halal?: boolean;
   allergen_tiers?: { tier1?: string[]; tier2?: string[]; tier3?: string[] };
   occasion_tags?: string[];
-  ingredients?: Array<{ name: string; quantity: number; unit: string }>;
+  ingredients?: Array<{ name: string; quantity?: number; unit?: string }>;
   image_url?: string;
   shc_availability?: {
     paused?: boolean;
@@ -151,7 +152,7 @@ export default function CookListingsPage() {
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
-  const [ingredients, setIngredients] = useState<Array<{ name: string; quantity: number; unit: string }>>([]);
+  const [ingredients, setIngredients] = useState<import('@shc/utils').IngredientDraft[]>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [recipeSteps, setRecipeSteps] = useState<import('@shc/utils').RecipeStepDraft[]>([]);
@@ -356,7 +357,7 @@ export default function CookListingsPage() {
       setCollectionDays(avail.collection_days);
       setTimeSlots(avail.time_slots);
       setIngredients(
-        listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
+        normalizeIngredients(listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken' }])
       );
       const mealMeta = mealOptionsFromListing(listing);
       setMealExtras(mealMeta.extras);

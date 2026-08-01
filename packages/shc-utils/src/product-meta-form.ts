@@ -17,11 +17,7 @@ export type RecipeStepDraft = {
 
 export type IngredientDraft = {
   name: string;
-  quantity: number;
-  unit: string;
 };
-
-export const INGREDIENT_UNIT_PRESETS = ['g', 'ml', 'pcs', 'tbsp', 'tsp', 'cup'] as const;
 
 export function slugMealOptionId(label: string, index: number): string {
   const slug = label
@@ -187,26 +183,25 @@ export function removeRecipeStepRow(steps: RecipeStepDraft[], index: number): Re
 }
 
 export function defaultIngredientRow(): IngredientDraft {
-  return { name: '', quantity: 100, unit: 'g' };
+  return { name: '' };
 }
 
 export function normalizeIngredients(
-  ingredients?: Array<Partial<IngredientDraft>> | null
+  ingredients?: Array<Partial<IngredientDraft> & { quantity?: unknown; unit?: unknown }> | null
 ): IngredientDraft[] {
   if (!Array.isArray(ingredients)) return [];
   return ingredients
     .map((row) => {
       const name = String(row?.name || '').trim();
       if (!name) return null;
-      const quantity = Number(row?.quantity);
-      const unit = String(row?.unit || 'g').trim() || 'g';
-      return {
-        name,
-        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 100,
-        unit,
-      };
+      return { name };
     })
     .filter((row): row is IngredientDraft => row != null);
+}
+
+/** Persist name-only — amounts/units are not stored (recipe privacy). */
+export function ingredientsToApiPayload(ingredients: IngredientDraft[]) {
+  return normalizeIngredients(ingredients).map((row) => ({ name: row.name }));
 }
 
 export function addIngredientRow(ingredients: IngredientDraft[]): IngredientDraft[] {
@@ -223,8 +218,6 @@ export function updateIngredientRow(
   if (!current) return next;
   next[index] = {
     name: patch.name !== undefined ? patch.name : current.name,
-    quantity: patch.quantity !== undefined ? patch.quantity : current.quantity,
-    unit: patch.unit !== undefined ? patch.unit : current.unit,
   };
   return next;
 }
