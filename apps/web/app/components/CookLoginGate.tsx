@@ -194,8 +194,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
             {mode === 'login'
               ? 'Sign in to manage listings, orders, and earnings.'
               : registerStep === 'details'
-                ? 'Verify on WhatsApp — message us first, we reply with your code (free).'
-                : 'Open WhatsApp, send the pre-filled message, then enter the code below.'}
+                ? 'We verify you on WhatsApp — tap the button, send us a message, we reply with your code (free).'
+                : 'Tap Message us to verify — WhatsApp opens with a ready-to-send message. Enter the code we reply with below.'}
           </p>
         </div>
 
@@ -260,15 +260,20 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                   data-testid="cook-login-mobile"
                 />
                 {whatsappUrl ? (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full rounded-xl bg-[#25D366] text-white text-center font-bold py-3 border border-[#128C7E]"
-                    data-testid="cook-login-whatsapp-verify"
-                  >
-                    Verify on WhatsApp
-                  </a>
+                  <>
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full rounded-xl bg-[#25D366] text-white text-center font-bold py-3 border border-[#128C7E]"
+                      data-testid="cook-login-whatsapp-verify"
+                    >
+                      Message us to verify
+                    </a>
+                    <p className="text-sm text-muted-foreground">
+                      Opens WhatsApp with a message ready to send. Hit send — we reply with your 6-digit code.
+                    </p>
+                  </>
                 ) : null}
                 <input
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"

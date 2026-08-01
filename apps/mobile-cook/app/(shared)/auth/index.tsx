@@ -191,7 +191,7 @@ export default function CookAuthScreen() {
             ? 'Sign in to manage listings, orders, and earnings.'
             : registerStep === 'details'
               ? 'Create your account — we verify you on WhatsApp (free, no spam templates).'
-              : 'Tap Verify on WhatsApp, send the pre-filled message, then enter the code we reply with.'}
+              : 'Tap Message us to verify — WhatsApp opens with a ready-to-send message. We reply with your code.'}
         </Text>
 
         {mode === 'login' && (
@@ -276,8 +276,11 @@ export default function CookAuthScreen() {
               style={styles.whatsappBtn}
               testID="auth-whatsapp-verify-btn"
             >
-              <Text style={styles.whatsappBtnText}>Verify on WhatsApp</Text>
+              <Text style={styles.whatsappBtnText}>Message us to verify</Text>
             </Pressable>
+            <Text style={styles.whatsappHint}>
+              Opens WhatsApp with a message ready to send. Hit send — we reply with your 6-digit code.
+            </Text>
             <TextInput
               ref={otpRef}
               value={whatsappOtp}
@@ -370,6 +373,7 @@ const styles = StyleSheet.create({
     borderColor: '#128C7E',
   },
   whatsappBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
+  whatsappHint: { fontSize: 13, color: shcColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 18 },
   hint: { fontSize: 13, color: shcColors.primary, fontWeight: '600', marginBottom: shcSpacing.sm },
   waiting: { fontSize: 13, color: shcColors.textLight, marginBottom: shcSpacing.sm },
   resend: { alignSelf: 'flex-start', marginBottom: shcSpacing.sm },
