@@ -1,11 +1,24 @@
 // HomelyEats-style onboarding shell: warm hero, dots, primary CTA + guest explore.
 // @ts-nocheck
 import React from 'react';
-import { View, Text, Pressable, Image, ScrollView, StyleSheet, Dimensions, type ViewStyle } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { shcColors, shcSpacing, shcRadii, gourmeatColors } from './theme';
 
 const HERO_RATIO = 0.48;
+const HERO_RATIO_FORM = 0.28;
+const HERO_MAX_FORM = 200;
 
 export function SHCOnboardingDots({
   total,
@@ -88,49 +101,55 @@ export function SHCOnboardingFlowScreen({
   contentStyle?: ViewStyle;
 }) {
   const insets = useSafeAreaInsets();
-  const heroHeight = Math.round(Dimensions.get('window').height * HERO_RATIO);
+  const windowHeight = Dimensions.get('window').height;
+  const hasForm = Boolean(children);
+  const heroHeight = hasForm
+    ? Math.min(HERO_MAX_FORM, Math.round(windowHeight * HERO_RATIO_FORM))
+    : Math.round(windowHeight * HERO_RATIO);
+  const footerInset = (onSecondary ? 188 : 132) + Math.max(insets.bottom, shcSpacing.md);
 
   return (
-    <View style={styles.screen} testID={screenTestID}>
-      <View style={[styles.hero, { height: heroHeight }]}>
-        <Image source={{ uri: imageUri }} style={styles.heroImage} resizeMode="cover" accessibilityIgnoresInvertColors />
-        <View style={styles.heroOverlay} />
-        <View style={[styles.heroBrand, { top: insets.top + shcSpacing.sm }]}>
-          <Text style={styles.heroBrandText}>Singapore Home Cooks</Text>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      testID={screenTestID}
+    >
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: footerInset }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
+        <View style={[styles.hero, { height: heroHeight }]}>
+          <Image source={{ uri: imageUri }} style={styles.heroImage} resizeMode="cover" accessibilityIgnoresInvertColors />
+          <View style={styles.heroOverlay} />
+          <View style={[styles.heroBrand, { top: insets.top + shcSpacing.sm }]}>
+            <Text style={styles.heroBrandText}>Singapore Home Cooks</Text>
+          </View>
+          {onSkip ? (
+            <Pressable
+              onPress={onSkip}
+              hitSlop={12}
+              style={[styles.skipBtn, { top: insets.top + shcSpacing.sm }]}
+              testID={skipTestID}
+              accessibilityRole="button"
+              accessibilityLabel={skipLabel}
+            >
+              <Text style={styles.skipText}>{skipLabel}</Text>
+            </Pressable>
+          ) : null}
         </View>
-        {onSkip ? (
-          <Pressable
-            onPress={onSkip}
-            hitSlop={12}
-            style={[styles.skipBtn, { top: insets.top + shcSpacing.sm }]}
-            testID={skipTestID}
-            accessibilityRole="button"
-            accessibilityLabel={skipLabel}
-          >
-            <Text style={styles.skipText}>{skipLabel}</Text>
-          </Pressable>
-        ) : null}
-      </View>
 
-      <View style={[styles.body, contentStyle]}>
-        <SHCOnboardingDots total={totalSteps} active={stepIndex} />
-        <Text style={styles.title} accessibilityRole="header">
-          {title}
-        </Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-        {children ? (
-          <ScrollView
-            style={styles.formScroll}
-            contentContainerStyle={styles.formScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View style={styles.formSpacer} />
-        )}
-      </View>
+        <View style={[styles.body, contentStyle]}>
+          <SHCOnboardingDots total={totalSteps} active={stepIndex} />
+          <Text style={styles.title} accessibilityRole="header">
+            {title}
+          </Text>
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {children}
+        </View>
+      </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, shcSpacing.md) }]}>
         <Pressable
@@ -176,12 +195,14 @@ export function SHCOnboardingFlowScreen({
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#FFFBF7' },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   hero: { width: '100%', backgroundColor: gourmeatColors.primaryLight || '#FFE8DE', overflow: 'hidden' },
   heroImage: { width: '100%', height: '100%' },
   heroOverlay: {
@@ -211,9 +232,9 @@ const styles = StyleSheet.create({
   },
   skipText: { fontSize: 14, fontWeight: '700', color: shcColors.text },
   body: {
-    flex: 1,
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.lg,
+    paddingBottom: shcSpacing.md,
     backgroundColor: '#FFFBF7',
   },
   dotsRow: {
@@ -241,9 +262,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: shcSpacing.md,
   },
-  formScroll: { flex: 1, marginTop: shcSpacing.xs },
-  formScrollContent: { paddingBottom: shcSpacing.sm },
-  formSpacer: { flex: 1 },
   footer: {
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.sm,

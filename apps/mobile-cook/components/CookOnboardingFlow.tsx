@@ -571,7 +571,7 @@ export default function CookOnboardingFlow() {
     <SHCOnboardingFlowScreen
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
-      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n${stepMeta.subtitle}`}
+      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n\n${stepMeta.subtitle}`}
       stepIndex={chapterDots.chapterIndex}
       totalSteps={chapterDots.totalChapters}
       onNext={handlePrimary}

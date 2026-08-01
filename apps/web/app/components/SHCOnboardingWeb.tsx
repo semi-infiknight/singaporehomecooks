@@ -74,9 +74,17 @@ export function SHCOnboardingFlowScreenWeb({
   children?: React.ReactNode;
   screenTestID?: string;
 }) {
+  const hasForm = Boolean(children);
   return (
-    <section className="max-w-lg mx-auto min-h-[100dvh] flex flex-col bg-[#FFFBF7] pb-8" data-testid={screenTestID}>
-      <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-muted overflow-hidden">
+    <section
+      className="max-w-lg mx-auto min-h-[100dvh] max-h-[100dvh] flex flex-col bg-[#FFFBF7] overflow-hidden"
+      data-testid={screenTestID}
+    >
+      <div
+        className={`relative w-full shrink-0 bg-muted overflow-hidden ${
+          hasForm ? 'h-40 sm:h-44' : 'aspect-[4/3] sm:aspect-[16/9]'
+        }`}
+      >
         <Image src={imageUri} alt="" fill className="object-cover" sizes="640px" priority />
         <div className="absolute inset-0 bg-gradient-to-t from-[#FFFBF7]/90 via-black/20 to-transparent" />
         <p className="absolute top-4 left-4 text-xs font-extrabold text-primary tracking-wide bg-white/90 px-3 py-1.5 rounded-full">
@@ -94,43 +102,44 @@ export function SHCOnboardingFlowScreenWeb({
         ) : null}
       </div>
 
-      <div className="flex-1 px-5 pt-5 flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-5">
         <SHCOnboardingDotsWeb total={totalSteps} active={stepIndex} />
         <h1 className="text-2xl font-black text-foreground tracking-tight mb-2">{title}</h1>
         {subtitle ? <p className="text-sm font-semibold text-muted-foreground leading-relaxed mb-4">{subtitle}</p> : null}
         {children}
-        <div className="mt-auto space-y-3 pt-4 border-t border-[#F0E6DC]">
-          <SHCButton
+      </div>
+
+      <div className="shrink-0 px-5 pt-3 pb-8 space-y-3 border-t border-[#F0E6DC] bg-[#FFFBF7]">
+        <SHCButton
+          type="button"
+          size="lg"
+          className="w-full min-h-[52px]"
+          onClick={onNext}
+          disabled={disabled || loading}
+          testID={nextTestID}
+        >
+          {loading ? 'Please wait…' : nextLabel}
+        </SHCButton>
+        {onSecondary && secondaryLabel ? (
+          <button
             type="button"
-            size="lg"
-            className="w-full min-h-[52px]"
-            onClick={onNext}
-            disabled={disabled || loading}
-            testID={nextTestID}
+            onClick={onSecondary}
+            className="w-full min-h-[48px] rounded-xl border-2 border-primary text-sm font-bold text-primary"
+            data-testid={secondaryTestID}
           >
-            {loading ? 'Please wait…' : nextLabel}
-          </SHCButton>
-          {onSecondary && secondaryLabel ? (
-            <button
-              type="button"
-              onClick={onSecondary}
-              className="w-full text-center text-sm font-bold text-primary py-1"
-              data-testid={secondaryTestID}
-            >
-              {secondaryLabel}
-            </button>
-          ) : null}
-          {onGuest ? (
-            <button
-              type="button"
-              onClick={onGuest}
-              className="w-full text-center text-sm font-bold text-muted-foreground underline py-2"
-              data-testid={guestTestID}
-            >
-              {guestLabel}
-            </button>
-          ) : null}
-        </div>
+            {secondaryLabel}
+          </button>
+        ) : null}
+        {onGuest ? (
+          <button
+            type="button"
+            onClick={onGuest}
+            className="w-full text-center text-sm font-bold text-muted-foreground underline py-2"
+            data-testid={guestTestID}
+          >
+            {guestLabel}
+          </button>
+        ) : null}
       </div>
     </section>
   );
