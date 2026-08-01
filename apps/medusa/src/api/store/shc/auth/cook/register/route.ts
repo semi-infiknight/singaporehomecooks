@@ -5,11 +5,16 @@ import { createSHCError } from "@shc/types";
 import { issueCookToken } from "../../../../../../lib/shc-auth";
 import { hashCookPassword } from "../../../../../../lib/shc-password";
 import { validateAuthRegistration } from "../../../../../../lib/shc-auth-password";
+import {
+  verifyCookRegisterEmailOtp,
+  clearCookRegisterEmailOtp,
+} from "../../../../../../lib/shc-cook-register-otp";
 import ShcCookModuleService from "../../../../../../modules/shc-cook/service";
 
 const BodySchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  email_otp: z.string().min(4).max(8),
   display_name: z.string().min(2).max(80).optional(),
   area: z.string().min(2).max(80).optional(),
   story: z.string().max(500).optional(),
@@ -46,6 +51,13 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json(policy);
   }
 
+  const otpOk = await verifyCookRegisterEmailOtp(email, parse.data.email_otp);
+  if (!otpOk) {
+    return res.status(400).json({
+      error: createSHCError("SHC-AUTH-001", "Invalid or expired email verification code"),
+    });
+  }
+
   const cookService: ShcCookModuleService = req.scope.resolve("shcCook") as any;
   const existing = await cookService.findByLoginEmail(email);
   if (existing) {
@@ -70,9 +82,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       availability_paused: false,
       login_email: email,
       password_hash: hashCookPassword(parse.data.password),
+      email_verified_at: now.toISOString(),
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
     } as any);
+    await clearCookRegisterEmailOtp(email);
   } catch (e) {
     return res.status(500).json({
       error: createSHCError("SHC-GENERIC-001", (e as Error).message || "Cook registration failed"),

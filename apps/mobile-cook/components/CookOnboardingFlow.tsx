@@ -47,8 +47,6 @@ import {
 } from '../lib/onboarding';
 import {
   updateCookProfile,
-  sendCookEmailVerify,
-  confirmCookEmail,
   sendCookMobileVerify,
   confirmCookMobile,
   createCookListing,
@@ -197,7 +195,6 @@ export default function CookOnboardingFlow() {
       ...d,
       area: 'Tampines',
       kitchen_address: 'Blk 88 Tampines Street 1, #08-88',
-      email_verified: true,
       contact_mobile: '91234567',
       mobile_verified: true,
       paynow_mobile: '91234567',
@@ -263,32 +260,6 @@ export default function CookOnboardingFlow() {
   const handlePrimary = () => {
     if (isLast) void finish();
     else goNext();
-  };
-
-  const sendEmail = async () => {
-    setBusy(true);
-    try {
-      const res = await sendCookEmailVerify();
-      setVerifyHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
-    } catch (e) {
-      Alert.alert('Email verify', (e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmEmail = async () => {
-    setBusy(true);
-    try {
-      await confirmCookEmail(otpCode);
-      patch({ email_verified: true });
-      setVerifyHint('Email verified ✓');
-      setTimeout(() => goNext(), 400);
-    } catch (e) {
-      Alert.alert('Invalid code', (e as Error).message);
-    } finally {
-      setBusy(false);
-    }
   };
 
   const sendMobile = async () => {
@@ -390,20 +361,6 @@ export default function CookOnboardingFlow() {
               testID="cook-onboarding-collection-input"
               multiline
             />
-          </>
-        );
-      case 'verify_email':
-        return (
-          <>
-            <SHCButton onPress={sendEmail} disabled={busy} testID="cook-onboarding-send-email">
-              <SHCButtonText>{busy ? 'Sending…' : 'Send verification code'}</SHCButtonText>
-            </SHCButton>
-            <FieldLabel>6-digit code</FieldLabel>
-            <TextField value={otpCode} onChangeText={setOtpCode} placeholder="123456" keyboardType="number-pad" testID="cook-onboarding-email-otp" />
-            <SHCButton onPress={confirmEmail} disabled={busy} testID="cook-onboarding-confirm-email">
-              <SHCButtonText>Confirm email</SHCButtonText>
-            </SHCButton>
-            {verifyHint ? <Text style={styles.hint}>{verifyHint}</Text> : null}
           </>
         );
       case 'mobile':

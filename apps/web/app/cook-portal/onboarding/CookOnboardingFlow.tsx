@@ -30,8 +30,6 @@ import {
 } from '../../../lib/onboarding';
 import {
   updateCookProfile,
-  sendCookEmailVerify,
-  confirmCookEmail,
   sendCookMobileVerify,
   confirmCookMobile,
   createCookListing,
@@ -229,32 +227,6 @@ export default function CookOnboardingFlow() {
     else goNext();
   };
 
-  const sendEmail = async () => {
-    setBusy(true);
-    try {
-      const res = await sendCookEmailVerify();
-      setVerifyHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmEmail = async () => {
-    setBusy(true);
-    try {
-      await confirmCookEmail(otpCode);
-      patch({ email_verified: true });
-      setVerifyHint('Email verified ✓');
-      setTimeout(() => goNext(), 400);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const sendMobile = async () => {
     const gate = validateCookOnboardingStep('mobile', draft);
     if (!gate.ok) {
@@ -333,32 +305,6 @@ export default function CookOnboardingFlow() {
               testID="cook-onboarding-collection-input"
               multiline
             />
-          </>
-        );
-      case 'verify_email':
-        return (
-          <>
-            <button
-              type="button"
-              onClick={sendEmail}
-              disabled={busy}
-              className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 mb-3"
-              data-testid="cook-onboarding-send-email"
-            >
-              {busy ? 'Sending…' : 'Send verification code'}
-            </button>
-            <FieldLabel>6-digit code</FieldLabel>
-            <TextField value={otpCode} onChange={setOtpCode} placeholder="123456" testID="cook-onboarding-email-otp" />
-            <button
-              type="button"
-              onClick={confirmEmail}
-              disabled={busy}
-              className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] font-bold py-3 mb-2"
-              data-testid="cook-onboarding-confirm-email"
-            >
-              Confirm email
-            </button>
-            {verifyHint ? <p className="text-sm font-bold text-primary">{verifyHint}</p> : null}
           </>
         );
       case 'mobile':

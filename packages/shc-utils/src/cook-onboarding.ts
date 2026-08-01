@@ -24,7 +24,6 @@ export type CookOnboardingStepId =
   | 'welcome'
   | 'area'
   | 'kitchen_address'
-  | 'verify_email'
   | 'mobile'
   | 'verify_mobile'
   | 'paynow'
@@ -105,13 +104,6 @@ export const COOK_ONBOARDING_STEPS: CookOnboardingStepMeta[] = [
     title: 'Kitchen address',
     subtitle: 'Your HDB block address — shared with customers only after they pay and you accept.',
     imageKey: 'compliance',
-  },
-  {
-    id: 'verify_email',
-    chapter: 'contact',
-    title: 'Verify your email',
-    subtitle: 'We sent a 6-digit code to your registered email. Enter it below.',
-    imageKey: 'orders',
   },
   {
     id: 'mobile',
@@ -235,7 +227,6 @@ export type CookOnboardingDraft = {
   area: string;
   kitchen_address: string;
   collection_instructions: string;
-  email_verified: boolean;
   contact_mobile: string;
   whatsapp_same: boolean;
   mobile_verified: boolean;
@@ -270,7 +261,6 @@ export function createEmptyCookOnboardingDraft(): CookOnboardingDraft {
     area: '',
     kitchen_address: '',
     collection_instructions: '',
-    email_verified: false,
     contact_mobile: '',
     whatsapp_same: true,
     mobile_verified: false,
@@ -319,9 +309,6 @@ export function validateCookOnboardingStep(
       if (draft.kitchen_address.trim().length < 8) {
         return { ok: false, message: 'Enter your HDB kitchen address (block, street, unit).' };
       }
-      return { ok: true };
-    case 'verify_email':
-      if (!draft.email_verified) return { ok: false, message: 'Verify your email with the 6-digit code.' };
       return { ok: true };
     case 'mobile': {
       const m = normalizePaynowMobile(draft.contact_mobile);

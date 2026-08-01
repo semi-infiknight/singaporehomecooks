@@ -104,9 +104,20 @@ export function createShcApiClient(config: ShcApiClientConfig) {
       return data;
     },
 
+    async sendCookRegisterEmailOtp(email: string) {
+      return request<{ ok: boolean; sent: boolean; hint?: string; email_masked?: string }>(
+        "/store/shc/auth/cook/register/send-email-otp",
+        {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        }
+      );
+    },
+
     async registerCook(
       email: string,
       password: string,
+      email_otp: string,
       display_name?: string,
       area?: string,
       story?: string
@@ -116,6 +127,7 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         body: JSON.stringify({
           email,
           password,
+          email_otp,
           ...(display_name ? { display_name } : {}),
           ...(area ? { area } : {}),
           ...(story ? { story } : {}),

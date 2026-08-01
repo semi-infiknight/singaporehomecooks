@@ -31,8 +31,15 @@ export function useCookAuth() {
   }, []);
 
   const register = useCallback(
-    async (email: string, password: string, displayName?: string, area?: string, story?: string) => {
-      const { token, user: u } = await registerCook(email, password, displayName, area, story);
+    async (
+      email: string,
+      password: string,
+      emailOtp: string,
+      displayName?: string,
+      area?: string,
+      story?: string
+    ) => {
+      const { token, user: u } = await registerCook(email, password, emailOtp, displayName, area, story);
       await persistCookSession(token, u);
       setUser(u);
       return u;
