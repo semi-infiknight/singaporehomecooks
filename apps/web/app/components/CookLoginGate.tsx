@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { COOK_ONBOARDING_DEMO_OTP, validateShcPassword } from '@shc/utils';
+import { validateShcPassword } from '@shc/utils';
 import { useCookAuth } from '../../lib/useCookAuth';
 import { hasSeenCookOnboarding, clearCookOnboardingSeen } from '../../lib/onboarding';
-import { sendCookRegisterWhatsappOtp } from '../../lib/cook-api-client';
+import {
+  getCookRegisterWhatsappVerifyStatus,
+  sendCookRegisterWhatsappOtp,
+} from '../../lib/cook-api-client';
 import { GourmeatCookHeader, GourmeatPrimaryButton, GourmeatCard } from './SHCWebComponents';
 import { showDevTools } from '../../lib/dev';
 
-type RegisterStep = 'mobile' | 'verify';
+type RegisterStep = 'details' | 'verify';
 
 /**
  * Cook PWA auth + first-run kitchen onboarding.
@@ -23,8 +26,10 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(showDevTools ? 'cooksecret' : '');
   const [whatsappOtp, setWhatsappOtp] = useState('');
+  const [whatsappUrl, setWhatsappUrl] = useState('');
   const [otpHint, setOtpHint] = useState('');
-  const [registerStep, setRegisterStep] = useState<RegisterStep>('mobile');
+  const [otpReady, setOtpReady] = useState(false);
+  const [registerStep, setRegisterStep] = useState<RegisterStep>('details');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -47,9 +52,11 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
   }, [loading, user, isOnboardingPath, router]);
 
   const resetRegister = () => {
-    setRegisterStep('mobile');
+    setRegisterStep('details');
     setWhatsappOtp('');
+    setWhatsappUrl('');
     setOtpHint('');
+    setOtpReady(false);
     setError('');
   };
 
@@ -58,24 +65,62 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
     resetRegister();
   };
 
-  const sendWhatsappOtp = async () => {
+  const prepareWhatsappVerify = async () => {
     const trimmedMobile = mobile.trim();
+    const trimmedEmail = email.trim();
     if (!trimmedMobile || trimmedMobile.replace(/\D/g, '').length < 8) {
       setError('Enter your Singapore WhatsApp number (e.g. 9123 4567).');
       return;
     }
+    if (!trimmedEmail) {
+      setError('Enter your email address.');
+      return;
+    }
+    const policy = validateShcPassword(password);
+    if (!policy.ok) {
+      setError(policy.message);
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
     setBusy(true);
     setError('');
     try {
       const res = await sendCookRegisterWhatsappOtp(trimmedMobile);
-      setOtpHint(res.hint || `Check WhatsApp (demo: ${COOK_ONBOARDING_DEMO_OTP})`);
+      setWhatsappUrl(res.whatsapp_url || '');
+      setOtpHint(res.hint || 'Message us on WhatsApp — we will reply with your code.');
+      if (res.demo_code) {
+        setWhatsappOtp(res.demo_code);
+        setOtpReady(true);
+      } else {
+        setOtpReady(Boolean(res.otp_ready));
+      }
       setRegisterStep('verify');
     } catch (e) {
-      setError((e as Error).message || 'Could not send WhatsApp code');
+      setError((e as Error).message || 'Could not start WhatsApp verification');
     } finally {
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (mode !== 'register' || registerStep !== 'verify' || otpReady) return;
+    const trimmedMobile = mobile.trim();
+    if (!trimmedMobile) return;
+
+    const timer = setInterval(() => {
+      void getCookRegisterWhatsappVerifyStatus(trimmedMobile)
+        .then((res) => {
+          if (res.otp_ready) setOtpReady(true);
+        })
+        .catch(() => null);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [mode, registerStep, mobile, otpReady]);
 
   const submit = async () => {
     setBusy(true);
@@ -100,29 +145,14 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (registerStep === 'mobile') {
-      await sendWhatsappOtp();
+    if (registerStep === 'details') {
+      setBusy(false);
+      await prepareWhatsappVerify();
       return;
     }
 
     if (!whatsappOtp.trim()) {
-      setError('Enter the verification code from WhatsApp.');
-      setBusy(false);
-      return;
-    }
-    if (!trimmedEmail) {
-      setError('Enter your email address.');
-      setBusy(false);
-      return;
-    }
-    const policy = validateShcPassword(password);
-    if (!policy.ok) {
-      setError(policy.message);
-      setBusy(false);
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError('Message us on WhatsApp first, then enter the code we reply with.');
       setBusy(false);
       return;
     }
@@ -163,69 +193,109 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
           <p className="text-sm font-semibold opacity-95 mt-1">
             {mode === 'login'
               ? 'Sign in to manage listings, orders, and earnings.'
-              : registerStep === 'mobile'
-                ? 'We verify your WhatsApp first — then email and password.'
-                : 'Enter the WhatsApp code, email, and password.'}
+              : registerStep === 'details'
+                ? 'Verify on WhatsApp — message us first, we reply with your code (free).'
+                : 'Open WhatsApp, send the pre-filled message, then enter the code below.'}
           </p>
         </div>
 
         <GourmeatCard>
           <div className="space-y-3">
-            {(mode === 'login' || isRegisterVerify) && (
-              <input
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                type="email"
-                data-testid="cook-login-email"
-              />
-            )}
-            {mode === 'register' && (
-              <input
-                className={`w-full rounded-xl border border-border px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)] ${
-                  isRegisterVerify ? 'bg-muted text-muted-foreground' : 'bg-card'
-                }`}
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="WhatsApp mobile (e.g. 9123 4567)"
-                type="tel"
-                readOnly={isRegisterVerify}
-                data-testid="cook-login-mobile"
-              />
-            )}
-            {isRegisterVerify ? (
+            {mode === 'login' && (
               <>
+                <input
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                  data-testid="cook-login-email"
+                />
+                <input
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  data-testid="cook-login-password"
+                />
+              </>
+            )}
+
+            {mode === 'register' && registerStep === 'details' && (
+              <>
+                <input
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  type="email"
+                  data-testid="cook-login-email"
+                />
+                <input
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password (8+ chars, letter + number in prod)"
+                  data-testid="cook-login-password"
+                />
+                <input
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="WhatsApp mobile (e.g. 9123 4567)"
+                  type="tel"
+                  data-testid="cook-login-mobile"
+                />
+              </>
+            )}
+
+            {isRegisterVerify && (
+              <>
+                <input
+                  className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium"
+                  value={mobile}
+                  readOnly
+                  data-testid="cook-login-mobile"
+                />
+                {whatsappUrl ? (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full rounded-xl bg-[#25D366] text-white text-center font-bold py-3 border border-[#128C7E]"
+                    data-testid="cook-login-whatsapp-verify"
+                  >
+                    Verify on WhatsApp
+                  </a>
+                ) : null}
                 <input
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
                   value={whatsappOtp}
                   onChange={(e) => setWhatsappOtp(e.target.value)}
-                  placeholder="6-digit WhatsApp code"
+                  placeholder="6-digit code from WhatsApp"
                   inputMode="numeric"
                   data-testid="cook-login-otp"
                 />
                 {otpHint ? <p className="text-sm font-bold text-primary">{otpHint}</p> : null}
+                {!otpReady ? (
+                  <p className="text-sm text-muted-foreground">Waiting for your WhatsApp message…</p>
+                ) : (
+                  <p className="text-sm font-bold text-primary">Code received — enter it above.</p>
+                )}
                 <button
                   type="button"
                   className="text-sm font-bold text-primary"
                   data-testid="cook-login-resend-otp"
                   disabled={busy}
-                  onClick={() => void sendWhatsappOtp()}
+                  onClick={() => void prepareWhatsappVerify()}
                 >
-                  Resend WhatsApp code
+                  Get a new verify link
                 </button>
               </>
-            ) : null}
-            {(mode === 'login' || isRegisterVerify) && (
-              <input
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-[var(--shc-shadow-soft)]"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'Password (8+ chars, letter + number in prod)' : 'Password'}
-                data-testid="cook-login-password"
-              />
             )}
+
             {error ? <p className="text-sm font-bold text-destructive">{error}</p> : null}
             <GourmeatPrimaryButton
               label={
@@ -233,8 +303,8 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                   ? 'Please wait…'
                   : mode === 'login'
                     ? 'Sign in as cook'
-                    : registerStep === 'mobile'
-                      ? 'Send WhatsApp code'
+                    : registerStep === 'details'
+                      ? 'Continue'
                       : 'Create cook account'
               }
               disabled={busy}
@@ -248,7 +318,7 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
                 data-testid="cook-login-change-mobile"
                 onClick={resetRegister}
               >
-                Use a different mobile number
+                Start over
               </button>
             ) : null}
             <button

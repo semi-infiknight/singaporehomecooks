@@ -110,12 +110,25 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         sent: boolean;
         delivered?: boolean;
         channel?: string;
+        verify_token?: string;
+        whatsapp_url?: string;
+        prefill_message?: string;
+        otp_ready?: boolean;
+        demo_code?: string;
         hint?: string;
         mobile_masked?: string;
       }>("/store/shc/auth/cook/register/send-whatsapp-otp", {
         method: "POST",
         body: JSON.stringify({ mobile }),
       });
+    },
+
+    async getCookRegisterWhatsappVerifyStatus(mobile: string) {
+      const qs = `?mobile=${encodeURIComponent(mobile)}`;
+      return request<{ ok: boolean; otp_ready: boolean }>(
+        `/store/shc/auth/cook/register/whatsapp-verify-status${qs}`,
+        { method: "GET" }
+      );
     },
 
     async registerCook(

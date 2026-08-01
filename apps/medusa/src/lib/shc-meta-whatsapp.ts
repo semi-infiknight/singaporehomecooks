@@ -1,6 +1,33 @@
 const DEMO_OTP = "123456";
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const DEFAULT_TEMPLATE_LANG = "en";
+const VERIFY_PREFIX = "SHC-VERIFY";
+
+export function formatVerifyPrefillMessage(token: string): string {
+  return `${VERIFY_PREFIX} ${token}`;
+}
+
+export function parseVerifyPrefillMessage(text: string): string | null {
+  const match = String(text || "").match(new RegExp(`${VERIFY_PREFIX}\\s+([a-f0-9]{8,16})`, "i"));
+  return match?.[1]?.toLowerCase() || null;
+}
+
+export function getWhatsAppBusinessWaMePhone(): string | null {
+  const raw =
+    process.env.WHATSAPP_BUSINESS_WA_ME_PHONE?.trim() ||
+    process.env.WHATSAPP_BUSINESS_DISPLAY_PHONE?.trim();
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  return digits || null;
+}
+
+export function buildCookVerifyWhatsAppUrl(prefillMessage: string): string {
+  const phone = getWhatsAppBusinessWaMePhone();
+  if (!phone) {
+    return `https://wa.me/?text=${encodeURIComponent(prefillMessage)}`;
+  }
+  return `https://wa.me/${phone}?text=${encodeURIComponent(prefillMessage)}`;
+}
 
 export function isMetaWhatsAppConfigured(): boolean {
   return Boolean(
@@ -120,6 +147,45 @@ export async function sendWhatsappOtpMessage(
   }
 
   return { delivered: true, channel: "whatsapp" };
+}
+
+/** Reply inside the 24h customer service window (free — user messaged first). */
+export async function sendWhatsappSessionText(waRecipientId: string, body: string): Promise<void> {
+  if (!isMetaWhatsAppConfigured()) {
+    if (shouldAllowDemoWhatsappOtp()) return;
+    throw new Error("WhatsApp verification is not configured");
+  }
+
+  const token = process.env.WHATSAPP_CLOUD_ACCESS_TOKEN!.trim();
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!.trim();
+  const url = `https://graph.facebook.com/${graphApiVersion()}/${phoneNumberId}/messages`;
+  const to = waRecipientId.replace(/\D/g, "");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "text",
+      text: { preview_url: false, body },
+    }),
+  });
+
+  if (!res.ok) {
+    let message = `WhatsApp session reply failed (${res.status})`;
+    try {
+      const parsed = (await res.json()) as { error?: { message?: string; error_user_msg?: string } };
+      message = parsed.error?.error_user_msg || parsed.error?.message || message;
+    } catch {
+      /* keep default */
+    }
+    throw new Error(message);
+  }
 }
 
 export function maskWhatsappMobile(mobileE164: string): string {

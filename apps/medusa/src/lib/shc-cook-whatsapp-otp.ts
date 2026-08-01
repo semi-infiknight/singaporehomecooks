@@ -75,6 +75,15 @@ async function deleteOtp(key: string) {
   memory.delete(key);
 }
 
+/** Store register OTP after inbound WhatsApp verify (or demo prepare). */
+export async function storeRegisterOtpForMobile(mobileE164: string, code: string) {
+  await storeOtp(storageKey("register", mobileE164), code);
+}
+
+export async function readRegisterOtpForMobile(mobileE164: string): Promise<string | null> {
+  return readOtp(storageKey("register", mobileE164));
+}
+
 export async function issueCookWhatsappOtp(
   scope: CookWhatsappOtpScope,
   mobileE164: string,

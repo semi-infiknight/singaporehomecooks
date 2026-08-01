@@ -3,7 +3,7 @@ import { enforceOneCookOnAdd } from "@shc/business-rules";
 import ShcOrderMetaModuleService from "../../../../../modules/shc-order-meta/service";
 import { signShcToken } from "../../../../../lib/shc-auth";
 import { POST as registerCook } from "./register/route";
-import { issueCookWhatsappOtp } from "../../../../../lib/shc-cook-whatsapp-otp";
+import { prepareCookRegisterWhatsappVerify } from "../../../../../lib/shc-cook-whatsapp-verify-session";
 import { PATCH as patchProfile } from "./profile/route";
 import { POST as createListing } from "../../listings/route";
 import { POST as addToCart, DELETE as clearCart } from "../../cart/route";
@@ -168,7 +168,7 @@ describe("cook ↔ customer wiring (handler chain)", () => {
 
     const regEmail = "wiring@test.local";
     const regMobile = "+6590000001";
-    await issueCookWhatsappOtp("register", regMobile);
+    const prepared = await prepareCookRegisterWhatsappVerify("90000001");
     const regRes = makeRes();
     await registerCook(
       {
@@ -176,7 +176,7 @@ describe("cook ↔ customer wiring (handler chain)", () => {
           email: regEmail,
           password: "secret12",
           mobile: "90000001",
-          whatsapp_otp: "123456",
+          whatsapp_otp: prepared.demo_code || "123456",
           display_name: "Wiring Cook",
           area: "Bedok",
         },

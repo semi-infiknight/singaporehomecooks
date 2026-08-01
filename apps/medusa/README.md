@@ -38,24 +38,28 @@ See root LOCAL_TEST.md (or root README).
 
 ## WhatsApp OTP (cook signup + mobile verify)
 
-Production delivery uses **Meta WhatsApp Cloud API** (Graph) directly — no Twilio/BSP markup.
+Cook signup uses **message-us-first** verification (free session replies — user taps Verify on WhatsApp, sends a pre-filled message, we reply with OTP).
 
-Set on Railway `medusa` service:
+Production uses **Meta WhatsApp Cloud API** (Graph). Set on Railway `medusa` service:
 
 | Variable | Purpose |
 |----------|---------|
 | `WHATSAPP_CLOUD_ACCESS_TOKEN` | System user / permanent token from Meta Business |
 | `WHATSAPP_PHONE_NUMBER_ID` | Phone number ID from WhatsApp → API Setup |
-| `WHATSAPP_OTP_TEMPLATE_NAME` | Approved **authentication** template name (e.g. `shc_cook_verify`) |
-| `WHATSAPP_OTP_TEMPLATE_LANGUAGE` | Optional, default `en` |
-| `WHATSAPP_OTP_BUTTON_STYLE` | Optional: `copy_code` (default) or `url` for auth button |
+| `WHATSAPP_BUSINESS_WA_ME_PHONE` | Digits only for wa.me link, e.g. `6591234567` |
+| `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | Meta webhook verify token (default `shc-whatsapp-verify`) |
 | `WHATSAPP_GRAPH_API_VERSION` | Optional, default `v22.0` |
 
-Create an authentication template in Meta Business Manager with a body variable for the OTP and a copy-code (or URL) button. Meta charges ~S$0.0205 per auth message in Singapore.
+**Webhook URL (Meta app):** `https://<medusa-host>/hooks/shc/whatsapp` — subscribe to `messages`.
 
-Local dev / Maestro without Meta: `SHC_ALLOW_DEMO_OTP=1` (hint shows code `123456`). Optional: `SHC_COOK_REGISTER_DEMO_OTP`.
+No auth template required for signup OTP (user messages first). Onboarding mobile verify may still use templates when pushing outbound.
 
-Routes: `POST /store/shc/auth/cook/register/send-whatsapp-otp`, register body includes `mobile` + `whatsapp_otp`.
+Local dev / Maestro: `SHC_ALLOW_DEMO_OTP=1` (auto demo code on prepare). Optional: `SHC_COOK_REGISTER_DEMO_OTP`.
+
+Routes:
+- `POST /store/shc/auth/cook/register/send-whatsapp-otp` → `{ whatsapp_url, verify_token, hint }`
+- `GET /store/shc/auth/cook/register/whatsapp-verify-status?mobile=`
+- `POST /hooks/shc/whatsapp` (Meta inbound)
 
 Contracts verified. Money Wave ready for stitch. Mobile will consume new store earnings/ledger queries later (no contract change).
 

@@ -72,6 +72,8 @@ export async function clearSession() {
 
 export const login = (email: string, password: string) => client.loginCook(email, password);
 export const sendCookRegisterWhatsappOtp = (mobile: string) => client.sendCookRegisterWhatsappOtp(mobile);
+export const getCookRegisterWhatsappVerifyStatus = (mobile: string) =>
+  client.getCookRegisterWhatsappVerifyStatus(mobile);
 export const register = (
   email: string,
   password: string,
