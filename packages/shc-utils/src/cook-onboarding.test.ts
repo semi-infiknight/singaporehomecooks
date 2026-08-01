@@ -5,6 +5,7 @@ import {
   validateCookOnboardingStep,
   buildCookOnboardingProfilePayload,
   cookOnboardingChapterProgress,
+  cookOnboardingNextStep,
   cookOnboardingPrevStep,
   cookOnboardingChapterDotProgress,
 } from './cook-onboarding';
@@ -41,6 +42,11 @@ describe('cook-onboarding steps', () => {
     const p = cookOnboardingChapterProgress('paynow');
     expect(p.chapterLabel).toBe('Get paid');
     expect(p.overallStep).toBeGreaterThan(1);
+  });
+
+  it('skips verify_mobile when mobile already verified at signup', () => {
+    expect(cookOnboardingNextStep('mobile', { mobileVerified: true })).toBe('paynow');
+    expect(cookOnboardingPrevStep('paynow', { mobileVerified: true })).toBe('mobile');
   });
 
   it('supports back navigation and chapter dots', () => {

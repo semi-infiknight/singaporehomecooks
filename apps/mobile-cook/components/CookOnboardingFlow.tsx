@@ -197,7 +197,7 @@ export default function CookOnboardingFlow() {
 
   useEffect(() => {
     if (stepId !== 'verify_mobile' || !draft.mobile_verified) return;
-    const next = cookOnboardingNextStep(stepId);
+    const next = cookOnboardingNextStep(stepId, { mobileVerified: true });
     if (next) setStepId(next);
   }, [stepId, draft.mobile_verified]);
 
@@ -242,14 +242,15 @@ export default function CookOnboardingFlow() {
   const chapterDots = cookOnboardingChapterDotProgress(stepId);
   const stepIndex = COOK_ONBOARDING_STEPS.findIndex((s) => s.id === stepId);
   const isLast = stepId === 'complete';
-  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
+  const navOpts = { mobileVerified: draft.mobile_verified };
+  const canGoBack = cookOnboardingPrevStep(stepId, navOpts) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
 
   const goBack = () => {
-    const prev = cookOnboardingPrevStep(stepId);
+    const prev = cookOnboardingPrevStep(stepId, navOpts);
     if (prev) setStepId(prev);
   };
 
@@ -259,7 +260,7 @@ export default function CookOnboardingFlow() {
       Alert.alert('Almost there', gate.message);
       return;
     }
-    const next = cookOnboardingNextStep(stepId);
+    const next = cookOnboardingNextStep(stepId, navOpts);
     if (next) setStepId(next);
   };
 
@@ -293,9 +294,13 @@ export default function CookOnboardingFlow() {
     setBusy(true);
     try {
       const res = await sendCookMobileVerify(draft.contact_mobile);
-      setVerifyHint(res.hint || `Enter code ${COOK_ONBOARDING_DEMO_OTP}`);
+      const demoCode = (res as { demo_code?: string }).demo_code;
+      if (demoCode) setOtpCode(demoCode);
+      setVerifyHint(
+        res.hint || (demoCode ? `Demo code: ${demoCode}` : `Enter code ${COOK_ONBOARDING_DEMO_OTP}`)
+      );
     } catch (e) {
-      Alert.alert('SMS', (e as Error).message);
+      Alert.alert('Verify', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -406,7 +411,7 @@ export default function CookOnboardingFlow() {
         return (
           <>
             <SHCButton onPress={sendMobile} disabled={busy} testID="cook-onboarding-send-mobile">
-              <SHCButtonText>Send SMS code</SHCButtonText>
+              <SHCButtonText>Get verify code</SHCButtonText>
             </SHCButton>
             <FieldLabel>6-digit code</FieldLabel>
             <TextField value={otpCode} onChangeText={setOtpCode} placeholder="123456" keyboardType="number-pad" testID="cook-onboarding-mobile-otp" />

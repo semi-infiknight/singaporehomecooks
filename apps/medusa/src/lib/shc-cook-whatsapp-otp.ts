@@ -93,6 +93,7 @@ export async function issueCookWhatsappOtp(
   channel: "whatsapp" | "demo";
   hint: string;
   mobile_masked: string;
+  demo_code?: string;
 }> {
   const id = scopeId(scope, mobileE164, cookId);
   const key = storageKey(scope, id);
@@ -104,10 +105,16 @@ export async function issueCookWhatsappOtp(
   const hint = delivered
     ? `We sent a 6-digit code to WhatsApp ${mobile_masked}.`
     : shouldAllowDemoWhatsappOtp()
-      ? `Enter code ${code} to verify (demo — WhatsApp delivery not configured).`
+      ? `Enter code ${code} to verify (demo — WhatsApp not configured yet).`
       : "Could not deliver WhatsApp code. Try again shortly.";
 
-  return { delivered, channel, hint, mobile_masked };
+  return {
+    delivered,
+    channel,
+    hint,
+    mobile_masked,
+    ...(channel === "demo" ? { demo_code: code } : {}),
+  };
 }
 
 export async function verifyCookWhatsappOtp(

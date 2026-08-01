@@ -40,11 +40,20 @@ function otpTemplateName(): string | null {
   return name || null;
 }
 
-/** Demo OTP when Meta WhatsApp Cloud API is not configured (local dev, Maestro). */
+/**
+ * Demo / stub OTP when Meta WhatsApp Cloud API is not configured.
+ * Active in all environments until WHATSAPP_* vars are set (set SHC_ALLOW_DEMO_OTP=0 to disable).
+ */
 export function shouldAllowDemoWhatsappOtp(): boolean {
+  if (process.env.SHC_ALLOW_DEMO_OTP === "0") return false;
   if (process.env.SHC_ALLOW_DEMO_OTP === "1") return true;
-  if (!isMetaWhatsAppConfigured() && process.env.NODE_ENV !== "production") return true;
+  if (!isMetaWhatsAppConfigured()) return true;
   return false;
+}
+
+/** True when signup/onboarding use demo codes instead of live WhatsApp delivery. */
+export function isWhatsappVerificationStubbed(): boolean {
+  return shouldAllowDemoWhatsappOtp() && !isMetaWhatsAppConfigured();
 }
 
 export function generateWhatsappOtpCode(): string {

@@ -22,10 +22,15 @@ describe("shc-meta-whatsapp", () => {
     process.env = { ...env };
   });
 
-  it("reports Meta WhatsApp as unconfigured without env", () => {
-    expect(isMetaWhatsAppConfigured()).toBe(false);
+  it("uses demo stub in production when Meta is not configured", () => {
+    process.env.NODE_ENV = "production";
     expect(shouldAllowDemoWhatsappOtp()).toBe(true);
     expect(generateWhatsappOtpCode()).toBe("123456");
+  });
+
+  it("disables demo stub when SHC_ALLOW_DEMO_OTP=0", () => {
+    process.env.SHC_ALLOW_DEMO_OTP = "0";
+    expect(shouldAllowDemoWhatsappOtp()).toBe(false);
   });
 
   it("detects configured Meta WhatsApp credentials", () => {

@@ -30,7 +30,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     data: { contact_mobile: mobile, updated_at: new Date() } as any,
   });
   try {
-    const { hint, delivered, channel, mobile_masked } = await issueCookWhatsappOtp("mobile_verify", mobile, cookId);
+    const { hint, delivered, channel, mobile_masked, demo_code } = await issueCookWhatsappOtp(
+      "mobile_verify",
+      mobile,
+      cookId
+    );
     return res.json({
       ok: true,
       sent: true,
@@ -38,6 +42,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       channel,
       hint,
       mobile_masked,
+      ...(demo_code ? { demo_code } : {}),
     });
   } catch (e) {
     return res.status(503).json({
