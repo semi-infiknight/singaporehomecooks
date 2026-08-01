@@ -56,6 +56,28 @@ export function resolveCookListingsForDisplay<T extends { id?: string }>(
   return [];
 }
 
+/** Normalize Expo/Next dynamic route params (string | string[]). */
+export function normalizeRouteParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return String(value[0] || '').trim();
+  return String(value || '').trim();
+}
+
+/** Resolve a listing for edit — API row first, then Maestro/dev seed when id matches. */
+export function resolveCookListingById<T extends { id?: string }>(
+  myListings: T[] | undefined,
+  listingId: string,
+  opts: { dev?: boolean; maestroE2e?: boolean } = {}
+): T | undefined {
+  const id = normalizeRouteParam(listingId);
+  if (!id) return undefined;
+  const fromApi = (myListings || []).find((row) => String(row.id) === id);
+  if (fromApi) return fromApi;
+  if (id === E2E_COOK_SEED_LISTING.id && (opts.dev || opts.maestroE2e)) {
+    return E2E_COOK_SEED_LISTING as unknown as T;
+  }
+  return undefined;
+}
+
 export function cookListingE2eTestId(listing: { id?: string }, index: number): string {
   if (listing.id === E2E_COOK_SEED_LISTING.id || index === 0) return 'listing-card-e2e';
   return `listing-card-${listing.id}`;

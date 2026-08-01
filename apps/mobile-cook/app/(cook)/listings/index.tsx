@@ -228,7 +228,7 @@ export default function CookListingsIndex() {
               onChipPress={handleFilterChip}
               testID="cook-listings-filter-chips"
             />
-            <Text style={styles.holdHint}>Press and hold a dish for edit, pause, or delete</Text>
+            <Text style={styles.holdHint}>Tap a dish to edit · press and hold for pause or delete</Text>
           </>
         ) : null}
 
@@ -252,11 +252,12 @@ export default function CookListingsIndex() {
             keyExtractor={(p: any) => String(p.id)}
             renderItem={(p: any, index: number) => (
               <Pressable
+                onPress={() => router.push(`/(cook)/listings/${p.id}` as any)}
                 onLongPress={() => showListingActions(p)}
                 delayLongPress={400}
                 testID={cookListingE2eTestId(p, index)}
                 accessibilityRole="button"
-                accessibilityLabel={`${p.name}, long press for options`}
+                accessibilityLabel={`${p.name}, tap to edit, long press for more options`}
               >
                 <SHCCard style={styles.listingCard}>
                   <View style={styles.listingRow}>

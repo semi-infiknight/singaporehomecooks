@@ -11,6 +11,7 @@ import {
   uniqueListingCuisines,
   resolveCookListingsForDisplay,
   cookListingE2eTestId,
+  E2E_COOK_SEED_LISTING,
   type CookListingStatusFilter,
   VIRTUAL_LISTING_ROW_HEIGHT,
   buildCookListingPayload,
@@ -133,12 +134,15 @@ export default function CookListingsPage() {
   const wizardRef = useRef<HTMLDivElement>(null);
 
   const step = Math.min(4, Math.max(1, parseInt(searchParams.get('step') || '1', 10) || 1));
-  const goToStep = (next: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('step', String(next));
-    router.replace(`?${params.toString()}`, { scroll: false });
-    wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  const goToStep = useCallback(
+    (next: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('step', String(next));
+      router.replace(`?${params.toString()}`, { scroll: false });
+      wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [router, searchParams]
+  );
 
   const [name, setName] = useState(EMPTY_NEW_LISTING.name);
   const [description, setDescription] = useState('');
@@ -167,6 +171,7 @@ export default function CookListingsPage() {
   const [statusFilter, setStatusFilter] = useState<CookListingStatusFilter>('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
 
   const maestroE2e = process.env.NEXT_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
@@ -340,35 +345,44 @@ export default function CookListingsPage() {
     goToStep(1);
   };
 
-  const startEdit = useCallback((listing: ListingRow) => {
-    setEditingId(String(listing.id));
-    setName(String(listing.name || 'Dish'));
-    setDescription(String(listing.description || ''));
-    setPrice(Number(listing.price) || 12);
-    setMinQty(Number(listing.min_qty) || 4);
-    setCuisine(String(listing.cuisine || 'Singapore'));
-    setHalal(!!listing.halal);
-    setAllergenTiers(allergenTiersFromListing(listing.allergen_tiers));
-    const avail = availabilityFromListing(listing.shc_availability);
-    setPortionsPerDay(avail.portions_per_day);
-    setCollectionDays(avail.collection_days);
-    setTimeSlots(avail.time_slots);
-    setIngredients(
-      listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
-    );
-    const mealMeta = mealOptionsFromListing(listing);
-    setMealExtras(mealMeta.extras);
-    setMealAddons(mealMeta.addons);
-    setRecipeSteps(recipeStepsFromListing(listing));
-    setPublished(null);
-    setAiCal(
-      listing.calories
-        ? { calories: listing.calories, confidence: listing.calories_confidence || 'category', source: 'saved' }
-        : null
-    );
-    goToStep(1);
+  const startEdit = useCallback(
+    (listing: ListingRow) => {
+      setEditingId(String(listing.id));
+      setName(String(listing.name || 'Dish'));
+      setDescription(String(listing.description || ''));
+      setPrice(Number(listing.price) || 12);
+      setMinQty(Number(listing.min_qty) || 4);
+      setCuisine(String(listing.cuisine || 'Singapore'));
+      setHalal(!!listing.halal);
+      setAllergenTiers(allergenTiersFromListing(listing.allergen_tiers));
+      const avail = availabilityFromListing(listing.shc_availability);
+      setPortionsPerDay(avail.portions_per_day);
+      setCollectionDays(avail.collection_days);
+      setTimeSlots(avail.time_slots);
+      setIngredients(
+        listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken', quantity: 300, unit: 'g' }]
+      );
+      const mealMeta = mealOptionsFromListing(listing);
+      setMealExtras(mealMeta.extras);
+      setMealAddons(mealMeta.addons);
+      setRecipeSteps(recipeStepsFromListing(listing));
+      setListingImageUrl(listing.image_url ? String(listing.image_url) : null);
+      setAiPhotoNote(null);
+      setPublished(null);
+      setAiCal(
+        listing.calories
+          ? { calories: listing.calories, confidence: listing.calories_confidence || 'category', source: 'saved' }
+          : null
+      );
+      goToStep(1);
+    },
+    [goToStep]
+  );
+
+  useEffect(() => {
+    if (!editingId) return;
     wizardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
+  }, [editingId]);
 
   const openPhotoTipsTray = async () => {
     const tipsRes = await getPhotoTips();
@@ -427,6 +441,10 @@ export default function CookListingsPage() {
   );
 
   const publish = async () => {
+    if (editingId === E2E_COOK_SEED_LISTING.id) {
+      showErrorTray('Preview listing', 'This is a demo dish for testing. Add a real listing first.');
+      return;
+    }
     const validation = validateCookListingForPublish(listingDraft);
     if (!validation.valid) {
       showErrorTray('Cannot publish yet', validation.errors.join(' '));
@@ -562,12 +580,23 @@ export default function CookListingsPage() {
 
   const bindListingLongPress = useCallback(
     (listing: ListingRow) => ({
+      onClick: () => {
+        if (longPressFired.current) {
+          longPressFired.current = false;
+          return;
+        }
+        startEdit(listing);
+      },
       onContextMenu: (e: React.MouseEvent) => {
         e.preventDefault();
         showListingActions(listing);
       },
       onTouchStart: () => {
-        longPressTimer.current = setTimeout(() => showListingActions(listing), 500);
+        longPressFired.current = false;
+        longPressTimer.current = setTimeout(() => {
+          longPressFired.current = true;
+          showListingActions(listing);
+        }, 500);
       },
       onTouchEnd: () => {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -576,7 +605,7 @@ export default function CookListingsPage() {
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
       },
     }),
-    [showListingActions]
+    [showListingActions, startEdit]
   );
 
   const saving = createListing.isPending || updateListing.isPending || publishing;
@@ -609,7 +638,7 @@ export default function CookListingsPage() {
             onChipClick={handleFilterChip}
             testID="cook-listings-filter-chips"
           />
-          <p className="text-xs text-[var(--shc-text-light)] mb-3">Press and hold a dish for edit, pause, or delete</p>
+          <p className="text-xs text-[var(--shc-text-light)] mb-3">Tap a dish to edit · press and hold for pause or delete</p>
         </>
       ) : null}
 

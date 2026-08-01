@@ -199,7 +199,8 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
   if (draft.image_url) payload.image_url = draft.image_url;
   if (draft.calories != null) {
     payload.calories = draft.calories;
-    payload.calories_confidence = draft.calories_confidence || 'category';
+    const confidence = draft.calories_confidence;
+    payload.calories_confidence = confidence === 'full' || confidence === 'category' ? confidence : 'category';
   }
   if (draft.meal_extras?.length) payload.meal_extras = mealOptionsToApiPayload(draft.meal_extras);
   if (draft.meal_addons?.length) payload.meal_addons = mealOptionsToApiPayload(draft.meal_addons);

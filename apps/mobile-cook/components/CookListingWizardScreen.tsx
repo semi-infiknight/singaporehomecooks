@@ -48,6 +48,7 @@ import {
   buildCookListingPayload,
   emptyAllergenTiers,
   DEFAULT_LISTING_AVAILABILITY,
+  E2E_COOK_SEED_LISTING,
   allergenTiersFromListing,
   availabilityFromListing,
   mealOptionsFromListing,
@@ -396,6 +397,10 @@ export function CookListingWizardScreen({
 
   const publish = async () => {
     if (publishing) return;
+    if (editingId === E2E_COOK_SEED_LISTING.id) {
+      showErrorTray('Preview listing', 'This is a demo dish for testing. Tap + to add your first real listing.');
+      return;
+    }
     if (!user?.id) {
       showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
