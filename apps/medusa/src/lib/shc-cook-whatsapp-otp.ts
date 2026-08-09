@@ -127,7 +127,10 @@ export async function verifyCookWhatsappOtp(
   const key = storageKey(scope, id);
   const trimmed = code.trim();
   const stored = await readOtp(key);
-  return Boolean(stored && stored === trimmed);
+  if (stored && stored === trimmed) return true;
+  // Demo/stub: accept fixed OTP even when send-whatsapp-otp was skipped (rate limit, client dev).
+  if (shouldAllowDemoWhatsappOtp() && trimmed === generateWhatsappOtpCode()) return true;
+  return false;
 }
 
 export async function clearCookWhatsappOtp(

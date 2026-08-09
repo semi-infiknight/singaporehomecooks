@@ -78,6 +78,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       onboarding_completed_at: cook.onboarding_completed_at ?? null,
       email_verified_at: cook.email_verified_at ?? null,
       mobile_verified_at: cook.mobile_verified_at ?? null,
+      contact_mobile: cook.contact_mobile ?? null,
+      whatsapp_number: cook.whatsapp_number ?? null,
     },
   });
 }

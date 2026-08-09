@@ -8,6 +8,7 @@ import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrder';
+import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
 
 const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
   index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
@@ -148,6 +149,24 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
+          if (key !== 'cart' && !authLoading && !user) {
+            if (key === 'orders/index') {
+              showGuestAuthTray(
+                'Sign in to view orders',
+                'Browse kitchens on Home — sign in for orders and wallet.',
+                '/(customer)/orders'
+              );
+              return;
+            }
+            if (key === 'profile/index') {
+              showGuestAuthTray(
+                'Sign in for wallet & account',
+                'Browse kitchens on Home — sign in for orders and wallet.',
+                '/(customer)/profile'
+              );
+              return;
+            }
+          }
           notifyTabChange(key);
           navigation.navigate(key);
         }}

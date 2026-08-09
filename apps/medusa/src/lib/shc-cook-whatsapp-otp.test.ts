@@ -16,6 +16,13 @@ describe("shc-cook-whatsapp-otp", () => {
     expect(await verifyCookWhatsappOtp("register", mobile, "000000")).toBe(false);
 
     await clearCookWhatsappOtp("register", mobile);
-    expect(await verifyCookWhatsappOtp("register", mobile, "123456")).toBe(false);
+    // Demo stub accepts fixed code even when no OTP was issued (e.g. rate-limited send).
+    expect(await verifyCookWhatsappOtp("register", mobile, "123456")).toBe(true);
+  });
+
+  it("accepts demo OTP without prior issue when WhatsApp is stubbed", async () => {
+    const mobile = "+6592223333";
+    expect(await verifyCookWhatsappOtp("register", mobile, "123456")).toBe(true);
+    expect(await verifyCookWhatsappOtp("register", mobile, "000000")).toBe(false);
   });
 });

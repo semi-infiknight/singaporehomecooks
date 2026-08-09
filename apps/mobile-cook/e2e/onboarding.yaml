@@ -1,28 +1,17 @@
-# Cook app — sign-up (WhatsApp message-us verify) + immersive onboarding v2
+# Cook app — sign-up (WhatsApp phone verify) + immersive onboarding v2
 # Run: maestro test apps/mobile-cook/e2e/onboarding.yaml
 appId: com.singaporehomecooks.cook
 ---
-- runScript: cook-e2e-email.js
+- runScript: cook-e2e-mobile.js
 - launchApp:
     clearState: true
     clearKeychain: true
 - extendedWaitUntil:
-    visible: "SHC Cook Portal"
+    visible: "Log in or sign up"
     timeout: 90000
-- tapOn: "New home cook? Create an account"
-- extendedWaitUntil:
-    visible:
-      id: "auth-email-input"
-    timeout: 15000
-- tapOn:
-    id: "auth-email-input"
-- inputText: ${output.cookEmail}
-- tapOn:
-    id: "auth-password-input"
-- inputText: "maestrosecret1"
 - tapOn:
     id: "auth-mobile-input"
-- inputText: "91234567"
+- inputText: ${output.cookMobile}
 - tapOn:
     id: "auth-submit-btn"
 - extendedWaitUntil:
@@ -39,7 +28,7 @@ appId: com.singaporehomecooks.cook
       id: "cook-onboarding-screen"
     timeout: 60000
 - repeat:
-    times: 18
+    times: 24
     commands:
       - tapOn:
           id: "cook-onboarding-next-btn"

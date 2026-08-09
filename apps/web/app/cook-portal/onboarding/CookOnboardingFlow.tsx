@@ -7,7 +7,6 @@ import {
   BENTO_ACTION_IMAGES,
   PROMO_BANNER_IMAGES,
   COOK_ONBOARDING_STEPS,
-  COOK_ONBOARDING_DEMO_OTP,
   COOK_ONBOARDING_CUISINE_PRESETS,
   COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
   COOK_ONBOARDING_LEAD_TIME_SLOTS,
@@ -15,11 +14,9 @@ import {
   validateCookOnboardingStep,
   cookOnboardingNextStep,
   cookOnboardingPrevStep,
-  cookOnboardingChapterProgress,
-  cookOnboardingChapterDotProgress,
+  cookOnboardingLinearProgress,
   buildCookOnboardingProfilePayload,
   buildCookOnboardingFirstListingPayload,
-  normalizePaynowMobile,
   type CookOnboardingDraft,
   type CookOnboardingStepId,
 } from '@shc/utils';
@@ -30,8 +27,6 @@ import {
 } from '../../../lib/onboarding';
 import {
   updateCookProfile,
-  sendCookMobileVerify,
-  confirmCookMobile,
   createCookListing,
   submitComplianceDoc,
   getCookProfile,
@@ -160,8 +155,6 @@ export default function CookOnboardingFlow() {
   const [draft, setDraft] = useState<CookOnboardingDraft>(createEmptyCookOnboardingDraft);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [verifyHint, setVerifyHint] = useState('');
-  const [otpCode, setOtpCode] = useState('');
 
   useEffect(() => {
     const saved = loadCookOnboardingDraft();
@@ -175,44 +168,33 @@ export default function CookOnboardingFlow() {
     void getCookProfile()
       .then((res) => {
         const cook = res.cook as { contact_mobile?: string; mobile_verified_at?: string | null };
-        if (!cook?.mobile_verified_at) return;
+        const mobile = cook?.contact_mobile?.replace(/^\+65/, '') || '';
+        if (!mobile) return;
         setDraft((d) => ({
           ...d,
           mobile_verified: true,
-          contact_mobile: cook.contact_mobile?.replace(/^\+65/, '') || d.contact_mobile,
+          contact_mobile: mobile,
+          whatsapp_same: true,
         }));
       })
       .catch(() => null);
   }, []);
 
   useEffect(() => {
-    if (stepId !== 'verify_mobile' || !draft.mobile_verified) return;
-    const next = cookOnboardingNextStep(stepId, { mobileVerified: true });
-    if (next) setStepId(next);
-  }, [stepId, draft.mobile_verified]);
-
-  useEffect(() => {
     saveCookOnboardingDraft({ stepId, draft });
   }, [draft, stepId]);
 
-  useEffect(() => {
-    setOtpCode('');
-    setVerifyHint('');
-  }, [stepId]);
-
   const stepMeta = COOK_ONBOARDING_STEPS.find((s) => s.id === stepId)!;
-  const progress = useMemo(() => cookOnboardingChapterProgress(stepId), [stepId]);
-  const chapterDots = useMemo(() => cookOnboardingChapterDotProgress(stepId), [stepId]);
+  const linear = useMemo(() => cookOnboardingLinearProgress(stepId), [stepId]);
   const isLast = stepId === 'complete';
-  const navOpts = useMemo(() => ({ mobileVerified: draft.mobile_verified }), [draft.mobile_verified]);
-  const canGoBack = cookOnboardingPrevStep(stepId, navOpts) !== null;
+  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
 
   const goBack = () => {
-    const prev = cookOnboardingPrevStep(stepId, navOpts);
+    const prev = cookOnboardingPrevStep(stepId);
     if (prev) setStepId(prev);
   };
 
@@ -223,7 +205,7 @@ export default function CookOnboardingFlow() {
       return;
     }
     setError('');
-    const next = cookOnboardingNextStep(stepId, navOpts);
+    const next = cookOnboardingNextStep(stepId);
     if (next) setStepId(next);
   };
 
@@ -249,41 +231,6 @@ export default function CookOnboardingFlow() {
     else goNext();
   };
 
-  const sendMobile = async () => {
-    const gate = validateCookOnboardingStep('mobile', draft);
-    if (!gate.ok) {
-      setError(gate.message);
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await sendCookMobileVerify(draft.contact_mobile);
-      const demoCode = (res as { demo_code?: string }).demo_code;
-      if (demoCode) setOtpCode(demoCode);
-      setVerifyHint(
-        res.hint || (demoCode ? `Demo code: ${demoCode}` : `Enter code ${COOK_ONBOARDING_DEMO_OTP}`)
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmMobile = async () => {
-    setBusy(true);
-    try {
-      await confirmCookMobile(otpCode, draft.contact_mobile);
-      patch({ mobile_verified: true });
-      setVerifyHint('Mobile verified ✓');
-      setTimeout(() => goNext(), 400);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const markCert = async (type: 'sfa' | 'wsq' | 'halal') => {
     try {
       await submitComplianceDoc({
@@ -298,10 +245,25 @@ export default function CookOnboardingFlow() {
     }
   };
 
-  const fillPaynowFromContact = () => {
-    const mobile = normalizePaynowMobile(draft.contact_mobile) || '';
-    patch({ paynow_mobile: mobile, paynow_mobile_confirm: mobile });
+  const applyPaynowFromWhatsapp = (enabled: boolean) => {
+    if (!enabled) {
+      patch({ whatsapp_same: false });
+      return;
+    }
+    const digits = draft.contact_mobile.replace(/^\+65/, '').trim();
+    patch({
+      whatsapp_same: true,
+      paynow_mobile: digits,
+      paynow_mobile_confirm: digits,
+    });
   };
+
+  useEffect(() => {
+    if (stepId !== 'paynow' || !draft.whatsapp_same || !draft.contact_mobile.trim()) return;
+    const digits = draft.contact_mobile.replace(/^\+65/, '').trim();
+    if (draft.paynow_mobile === digits && draft.paynow_mobile_confirm === digits) return;
+    patch({ paynow_mobile: digits, paynow_mobile_confirm: digits });
+  }, [stepId, draft.contact_mobile, draft.whatsapp_same, draft.paynow_mobile, draft.paynow_mobile_confirm, patch]);
 
   const onPhotoPick = (field: 'avatar_url' | 'dish_image_url', file?: File | null) => {
     if (!file) return;
@@ -333,68 +295,25 @@ export default function CookOnboardingFlow() {
             />
           </>
         );
-      case 'mobile':
-        return (
-          <>
-            <FieldLabel>Mobile number</FieldLabel>
-            <TextField
-              value={draft.contact_mobile}
-              onChange={(contact_mobile) => patch({ contact_mobile })}
-              placeholder="9123 4567"
-              testID="cook-onboarding-mobile-input"
-              type="tel"
-            />
-            <label className="flex items-center justify-between gap-3 py-2">
-              <span className="text-sm font-semibold">Same number for WhatsApp</span>
-              <input
-                type="checkbox"
-                checked={draft.whatsapp_same}
-                onChange={(e) => patch({ whatsapp_same: e.target.checked })}
-              />
-            </label>
-          </>
-        );
-      case 'verify_mobile':
-        return (
-          <>
-            <button
-              type="button"
-              onClick={sendMobile}
-              disabled={busy}
-              className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 mb-3"
-              data-testid="cook-onboarding-send-mobile"
-            >
-              Get verify code
-            </button>
-            <FieldLabel>6-digit code</FieldLabel>
-            <TextField value={otpCode} onChange={setOtpCode} placeholder="123456" testID="cook-onboarding-mobile-otp" />
-            <button
-              type="button"
-              onClick={confirmMobile}
-              disabled={busy}
-              className="w-full rounded-xl border-2 border-[var(--shc-border-brutal)] font-bold py-3 mb-2"
-              data-testid="cook-onboarding-confirm-mobile"
-            >
-              Confirm mobile
-            </button>
-            {verifyHint ? <p className="text-sm font-bold text-primary">{verifyHint}</p> : null}
-          </>
-        );
       case 'paynow':
         return (
           <>
-            <button
-              type="button"
-              onClick={fillPaynowFromContact}
-              className="w-full rounded-xl bg-primary text-primary-foreground font-bold py-3 mb-3"
-              data-testid="cook-onboarding-paynow-same"
-            >
-              Use contact mobile
-            </button>
+            <label className="flex items-center justify-between gap-3 py-2 mb-2">
+              <span className="text-sm font-semibold">
+                Same as WhatsApp
+                {draft.contact_mobile ? ` (+65 ${draft.contact_mobile.replace(/^\+65/, '')})` : ''}
+              </span>
+              <input
+                type="checkbox"
+                checked={draft.whatsapp_same}
+                onChange={(e) => applyPaynowFromWhatsapp(e.target.checked)}
+                data-testid="cook-onboarding-paynow-same"
+              />
+            </label>
             <FieldLabel>PayNow mobile</FieldLabel>
             <TextField
               value={draft.paynow_mobile}
-              onChange={(paynow_mobile) => patch({ paynow_mobile })}
+              onChange={(paynow_mobile) => patch({ paynow_mobile, whatsapp_same: false })}
               placeholder="9123 4567"
               testID="cook-onboarding-paynow-mobile"
               type="tel"
@@ -402,7 +321,7 @@ export default function CookOnboardingFlow() {
             <FieldLabel>Confirm PayNow mobile</FieldLabel>
             <TextField
               value={draft.paynow_mobile_confirm}
-              onChange={(paynow_mobile_confirm) => patch({ paynow_mobile_confirm })}
+              onChange={(paynow_mobile_confirm) => patch({ paynow_mobile_confirm, whatsapp_same: false })}
               placeholder="9123 4567"
               testID="cook-onboarding-paynow-confirm"
               type="tel"
@@ -528,49 +447,57 @@ export default function CookOnboardingFlow() {
             />
           </label>
         );
-      case 'menu_basics':
+      case 'menu_intro':
+        return null;
+      case 'menu_cuisine':
         return (
-          <>
-            <FieldLabel>Cuisine</FieldLabel>
-            <ChipRow
-              options={COOK_ONBOARDING_CUISINE_PRESETS}
-              value={draft.dish_cuisine}
-              onChange={(dish_cuisine) => patch({ dish_cuisine })}
-              testIDPrefix="cook-onboarding-cuisine"
-            />
-            <FieldLabel>Dish name</FieldLabel>
-            <TextField
-              value={draft.dish_name}
-              onChange={(dish_name) => patch({ dish_name })}
-              placeholder="Nasi Lemak"
-              testID="cook-onboarding-dish-name"
-            />
-            <FieldLabel>Portion</FieldLabel>
-            <ChipRow
-              options={['plate', 'piece']}
-              value={draft.dish_portion_unit}
-              onChange={(v) => patch({ dish_portion_unit: v as 'plate' | 'piece' })}
-            />
-            <FieldLabel>Recommended pax</FieldLabel>
-            <ChipRow
-              options={['2', '3', '4']}
-              value={String(draft.dish_recommended_pax)}
-              onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 | 4 })}
-            />
-            <FieldLabel>List price (S$)</FieldLabel>
-            <TextField
-              value={draft.dish_price}
-              onChange={(dish_price) => patch({ dish_price })}
-              placeholder="12"
-              testID="cook-onboarding-dish-price"
-              type="number"
-            />
-          </>
+          <ChipRow
+            options={COOK_ONBOARDING_CUISINE_PRESETS}
+            value={draft.dish_cuisine}
+            onChange={(dish_cuisine) => patch({ dish_cuisine })}
+            testIDPrefix="cook-onboarding-cuisine"
+          />
         );
-      case 'menu_details':
+      case 'menu_dish_name':
+        return (
+          <TextField
+            value={draft.dish_name}
+            onChange={(dish_name) => patch({ dish_name })}
+            placeholder="Nasi Lemak"
+            testID="cook-onboarding-dish-name"
+          />
+        );
+      case 'menu_portion':
+        return (
+          <ChipRow
+            options={['plate', 'piece']}
+            value={draft.dish_portion_unit}
+            onChange={(v) => patch({ dish_portion_unit: v as 'plate' | 'piece' })}
+            testIDPrefix="cook-onboarding-portion"
+          />
+        );
+      case 'menu_pax':
+        return (
+          <ChipRow
+            options={['2', '3']}
+            value={String(draft.dish_recommended_pax)}
+            onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 })}
+            testIDPrefix="cook-onboarding-pax"
+          />
+        );
+      case 'menu_price':
+        return (
+          <TextField
+            value={draft.dish_price}
+            onChange={(dish_price) => patch({ dish_price })}
+            placeholder="12"
+            testID="cook-onboarding-dish-price"
+            type="number"
+          />
+        );
+      case 'menu_ingredients':
         return (
           <>
-            <FieldLabel>Ingredients</FieldLabel>
             <ChipRow
               options={COOK_ONBOARDING_INGREDIENT_SUGGESTIONS}
               value=""
@@ -586,15 +513,22 @@ export default function CookOnboardingFlow() {
               testID="cook-onboarding-ingredients"
               multiline
             />
-            <FieldLabel>Description</FieldLabel>
-            <TextField
-              value={draft.dish_description}
-              onChange={(dish_description) => patch({ dish_description })}
-              placeholder="Brief heritage story for this dish"
-              testID="cook-onboarding-dish-desc"
-              multiline
-            />
-            <FieldLabel>Minimum order lead (days)</FieldLabel>
+          </>
+        );
+      case 'menu_description':
+        return (
+          <TextField
+            value={draft.dish_description}
+            onChange={(dish_description) => patch({ dish_description })}
+            placeholder="Brief heritage story for this dish"
+            testID="cook-onboarding-dish-desc"
+            multiline
+          />
+        );
+      case 'menu_lead_time':
+        return (
+          <>
+            <FieldLabel>Minimum lead (days)</FieldLabel>
             <TextField
               value={String(draft.dish_lead_days)}
               onChange={(t) => patch({ dish_lead_days: Number(t) || 1 })}
@@ -608,22 +542,25 @@ export default function CookOnboardingFlow() {
               onChange={(dish_lead_time_slot) => patch({ dish_lead_time_slot })}
               testIDPrefix="cook-onboarding-lead-slot"
             />
-            <label className="flex items-center justify-between gap-3 py-2">
-              <span className="text-sm font-semibold">Dish available</span>
-              <input
-                type="checkbox"
-                checked={draft.dish_available}
-                onChange={(e) => patch({ dish_available: e.target.checked })}
-              />
-            </label>
-            <FieldLabel>Calories (optional)</FieldLabel>
-            <TextField
-              value={draft.dish_calories}
-              onChange={(dish_calories) => patch({ dish_calories })}
-              testID="cook-onboarding-calories"
-              type="number"
-            />
           </>
+        );
+      case 'menu_dish_available':
+        return (
+          <ChipRow
+            options={['Yes', 'No']}
+            value={draft.dish_available ? 'Yes' : 'No'}
+            onChange={(v) => patch({ dish_available: v === 'Yes' })}
+            testIDPrefix="cook-onboarding-dish-available"
+          />
+        );
+      case 'menu_calories':
+        return (
+          <TextField
+            value={draft.dish_calories}
+            onChange={(dish_calories) => patch({ dish_calories })}
+            testID="cook-onboarding-calories"
+            type="number"
+          />
         );
       case 'menu_photo':
         return (
@@ -665,9 +602,9 @@ export default function CookOnboardingFlow() {
     <SHCOnboardingFlowScreenWeb
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
-      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n${stepMeta.subtitle}`}
-      stepIndex={chapterDots.chapterIndex}
-      totalSteps={chapterDots.totalChapters}
+      subtitle={stepMeta.subtitle}
+      stepIndex={linear.current - 1}
+      totalSteps={linear.total}
       onNext={handlePrimary}
       onSkip={stepMeta.skippable ? goNext : undefined}
       onSecondary={canGoBack ? goBack : undefined}

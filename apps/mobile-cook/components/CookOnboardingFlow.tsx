@@ -10,8 +10,10 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
   SHCOnboardingFlowScreen,
+  SHCOnboardingOptionStack,
   SHCCookAreaPicker,
   shcColors,
   shcSpacing,
@@ -24,7 +26,6 @@ import {
   BENTO_ACTION_IMAGES,
   PROMO_BANNER_IMAGES,
   COOK_ONBOARDING_STEPS,
-  COOK_ONBOARDING_DEMO_OTP,
   COOK_ONBOARDING_CUISINE_PRESETS,
   COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
   COOK_ONBOARDING_LEAD_TIME_SLOTS,
@@ -32,8 +33,7 @@ import {
   validateCookOnboardingStep,
   cookOnboardingNextStep,
   cookOnboardingPrevStep,
-  cookOnboardingChapterProgress,
-  cookOnboardingChapterDotProgress,
+  cookOnboardingLinearProgress,
   buildCookOnboardingProfilePayload,
   buildCookOnboardingFirstListingPayload,
   normalizePaynowMobile,
@@ -47,12 +47,12 @@ import {
 } from '../lib/onboarding';
 import {
   updateCookProfile,
-  sendCookMobileVerify,
-  confirmCookMobile,
   createCookListing,
   getCurrentUser,
   getCookProfile,
 } from '../lib/api-client';
+import { loadCookSignupMobile } from '../lib/cook-signup-mobile';
+import { CookKitchenAddressPicker } from './CookKitchenAddressPicker';
 import { pickCookMediaImage, uploadCookMediaImage } from '../lib/cook-media-upload';
 import { pickComplianceCertificate, uploadComplianceCertificate } from '../lib/compliance-upload';
 
@@ -63,6 +63,12 @@ const IMAGE_BY_KEY: Record<string, string> = {
   family: PROMO_BANNER_IMAGES.family,
   checkout: BENTO_ACTION_IMAGES.checkout,
 };
+
+const WELCOME_HERO_CARDS = [
+  BENTO_ACTION_IMAGES.listings,
+  PROMO_BANNER_IMAGES.family,
+  BENTO_ACTION_IMAGES.checkout,
+] as const;
 
 function FieldLabel({ children }: { children: string }) {
   return <Text style={styles.fieldLabel}>{children}</Text>;
@@ -96,6 +102,10 @@ function TextField({
       multiline={multiline}
       style={[multiline ? styles.input : styles.inputShort]}
       testID={testID}
+      autoCorrect
+      spellCheck
+      textAlign="left"
+      textAlignVertical={multiline ? 'top' : 'center'}
     />
   );
 }
@@ -151,14 +161,24 @@ function ConsentRow({
   );
 }
 
+function resolveOnboardingPhotoUri(stored: string, preview?: string): string | undefined {
+  if (preview?.trim()) return preview;
+  const value = stored.trim();
+  if (!value) return undefined;
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('file://') || value.startsWith('data:')) {
+    return value;
+  }
+  return undefined;
+}
+
 export default function CookOnboardingFlow() {
   const router = useRouter();
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const [stepId, setStepId] = useState<CookOnboardingStepId>('welcome');
   const [draft, setDraft] = useState<CookOnboardingDraft>(createEmptyCookOnboardingDraft);
   const [busy, setBusy] = useState(false);
-  const [verifyHint, setVerifyHint] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState<'avatar_url' | 'dish_image_url' | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<{ avatar_url?: string; dish_image_url?: string }>({});
   const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
@@ -182,34 +202,44 @@ export default function CookOnboardingFlow() {
 
   useEffect(() => {
     if (!draftReady || maestroE2e) return;
-    void getCookProfile()
-      .then((res) => {
-        const cook = res.cook as { contact_mobile?: string; mobile_verified_at?: string | null };
-        if (!cook?.mobile_verified_at) return;
+    void (async () => {
+      const signupMobile = await loadCookSignupMobile();
+      if (signupMobile) {
         setDraft((d) => ({
           ...d,
+          contact_mobile: signupMobile,
           mobile_verified: true,
-          contact_mobile: cook.contact_mobile?.replace(/^\+65/, '') || d.contact_mobile,
+          whatsapp_same: true,
         }));
-      })
-      .catch(() => null);
+      }
+      void getCookProfile()
+        .then((res) => {
+          const cook = res.cook as {
+            contact_mobile?: string;
+            whatsapp_number?: string;
+            mobile_verified_at?: string | null;
+          };
+          const mobile =
+            cook?.contact_mobile?.replace(/^\+65/, '') ||
+            cook?.whatsapp_number?.replace(/^\+65/, '') ||
+            signupMobile ||
+            '';
+          if (!mobile) return;
+          setDraft((d) => ({
+            ...d,
+            mobile_verified: true,
+            contact_mobile: mobile,
+            whatsapp_same: true,
+          }));
+        })
+        .catch(() => null);
+    })();
   }, [draftReady, maestroE2e]);
-
-  useEffect(() => {
-    if (stepId !== 'verify_mobile' || !draft.mobile_verified) return;
-    const next = cookOnboardingNextStep(stepId, { mobileVerified: true });
-    if (next) setStepId(next);
-  }, [stepId, draft.mobile_verified]);
 
   useEffect(() => {
     if (!draftReady || maestroE2e) return;
     void saveCookOnboardingDraft({ stepId, draft });
   }, [draft, stepId, draftReady, maestroE2e]);
-
-  useEffect(() => {
-    setOtpCode('');
-    setVerifyHint('');
-  }, [stepId]);
 
   useEffect(() => {
     if (!maestroE2e) return;
@@ -238,19 +268,16 @@ export default function CookOnboardingFlow() {
   }, [maestroE2e]);
 
   const stepMeta = COOK_ONBOARDING_STEPS.find((s) => s.id === stepId)!;
-  const progress = cookOnboardingChapterProgress(stepId);
-  const chapterDots = cookOnboardingChapterDotProgress(stepId);
-  const stepIndex = COOK_ONBOARDING_STEPS.findIndex((s) => s.id === stepId);
+  const linear = cookOnboardingLinearProgress(stepId);
   const isLast = stepId === 'complete';
-  const navOpts = { mobileVerified: draft.mobile_verified };
-  const canGoBack = cookOnboardingPrevStep(stepId, navOpts) !== null;
+  const canGoBack = cookOnboardingPrevStep(stepId) !== null;
 
   const patch = useCallback((partial: Partial<CookOnboardingDraft>) => {
     setDraft((d) => ({ ...d, ...partial }));
   }, []);
 
   const goBack = () => {
-    const prev = cookOnboardingPrevStep(stepId, navOpts);
+    const prev = cookOnboardingPrevStep(stepId);
     if (prev) setStepId(prev);
   };
 
@@ -260,7 +287,7 @@ export default function CookOnboardingFlow() {
       Alert.alert('Almost there', gate.message);
       return;
     }
-    const next = cookOnboardingNextStep(stepId, navOpts);
+    const next = cookOnboardingNextStep(stepId);
     if (next) setStepId(next);
   };
 
@@ -269,7 +296,20 @@ export default function CookOnboardingFlow() {
     try {
       await updateCookProfile(buildCookOnboardingProfilePayload(draft) as any);
       if (draft.dish_name.trim()) {
-        await createCookListing(buildCookOnboardingFirstListingPayload(draft));
+        try {
+          await createCookListing(buildCookOnboardingFirstListingPayload(draft));
+        } catch (listingErr) {
+          const listingMsg = (listingErr as Error).message || '';
+          await markCookOnboardingSeen();
+          router.replace('/(cook)/dashboard');
+          Alert.alert(
+            'Profile saved',
+            listingMsg.includes('Compliance') || listingMsg.includes('SFA') || listingMsg.includes('WSQ')
+              ? 'Your kitchen profile is ready. Upload SFA & WSQ certificates in Compliance to publish your first dish.'
+              : `Your kitchen profile is saved. We could not publish your dish yet — ${listingMsg || 'try again from Listings.'}`
+          );
+          return;
+        }
       }
       await markCookOnboardingSeen();
       router.replace('/(cook)/dashboard');
@@ -285,45 +325,38 @@ export default function CookOnboardingFlow() {
     else goNext();
   };
 
-  const sendMobile = async () => {
-    const gate = validateCookOnboardingStep('mobile', draft);
-    if (!gate.ok) {
-      Alert.alert('Mobile', gate.message);
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await sendCookMobileVerify(draft.contact_mobile);
-      const demoCode = (res as { demo_code?: string }).demo_code;
-      if (demoCode) setOtpCode(demoCode);
-      setVerifyHint(
-        res.hint || (demoCode ? `Demo code: ${demoCode}` : `Enter code ${COOK_ONBOARDING_DEMO_OTP}`)
-      );
-    } catch (e) {
-      Alert.alert('Verify', (e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const applyPaynowFromWhatsapp = useCallback(
+    async (enabled: boolean) => {
+      if (!enabled) {
+        patch({ whatsapp_same: false });
+        return;
+      }
+      let source = draft.contact_mobile.trim();
+      if (!source) {
+        source = (await loadCookSignupMobile()) ?? '';
+      }
+      if (!source && draft.paynow_mobile.trim()) {
+        source = draft.paynow_mobile;
+      }
+      const normalized = normalizePaynowMobile(source);
+      const display = normalized ? normalized.replace(/^\+65/, '') : source.replace(/^\+65/, '').trim();
+      patch({
+        whatsapp_same: true,
+        ...(source ? { contact_mobile: display } : {}),
+        paynow_mobile: display,
+        paynow_mobile_confirm: display,
+      });
+    },
+    [draft.contact_mobile, draft.paynow_mobile, patch]
+  );
 
-  const confirmMobile = async () => {
-    setBusy(true);
-    try {
-      await confirmCookMobile(otpCode, draft.contact_mobile);
-      patch({ mobile_verified: true });
-      setVerifyHint('Mobile verified ✓');
-      setTimeout(() => goNext(), 400);
-    } catch (e) {
-      Alert.alert('Invalid code', (e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const fillPaynowFromContact = () => {
-    const mobile = normalizePaynowMobile(draft.contact_mobile) || '';
-    patch({ paynow_mobile: mobile, paynow_mobile_confirm: mobile });
-  };
+  useEffect(() => {
+    if (stepId !== 'paynow' || !draft.whatsapp_same || !draft.contact_mobile.trim()) return;
+    const normalized = normalizePaynowMobile(draft.contact_mobile);
+    const display = normalized ? normalized.replace(/^\+65/, '') : draft.contact_mobile.replace(/^\+65/, '').trim();
+    if (draft.paynow_mobile === display && draft.paynow_mobile_confirm === display) return;
+    patch({ paynow_mobile: display, paynow_mobile_confirm: display });
+  }, [stepId, draft.contact_mobile, draft.whatsapp_same, draft.paynow_mobile, draft.paynow_mobile_confirm, patch]);
 
   const markCert = async (type: 'sfa' | 'wsq' | 'halal') => {
     const cookId = getCurrentUser()?.id;
@@ -352,16 +385,24 @@ export default function CookOnboardingFlow() {
       Alert.alert('Photo', 'Sign in again to upload photos.');
       return;
     }
+    setUploadingPhoto(field);
     setBusy(true);
     try {
       const file = await pickCookMediaImage();
       if (!file) return;
+      if (file.uri) {
+        setMediaPreview((prev) => ({ ...prev, [field]: file.uri }));
+      }
       const kind = field === 'avatar_url' ? 'avatar' : 'hero';
       const uploaded = await uploadCookMediaImage(cookId, kind, file);
       patch({ [field]: uploaded.key });
+      if (uploaded.url) {
+        setMediaPreview((prev) => ({ ...prev, [field]: uploaded.url }));
+      }
     } catch (e) {
       Alert.alert('Photo', (e as Error).message);
     } finally {
+      setUploadingPhoto(null);
       setBusy(false);
     }
   };
@@ -373,12 +414,17 @@ export default function CookOnboardingFlow() {
       case 'kitchen_address':
         return (
           <>
-            <FieldLabel>Kitchen address</FieldLabel>
-            <TextField
-              value={draft.kitchen_address}
-              onChangeText={(kitchen_address) => patch({ kitchen_address })}
-              placeholder="Blk 456 Tampines St 42, #05-123"
-              testID="cook-onboarding-address-input"
+            <CookKitchenAddressPicker
+              kitchenAddress={draft.kitchen_address}
+              collectionInstructions={draft.collection_instructions}
+              areaHint={draft.area || undefined}
+              onConfirm={({ kitchen_address, collection_instructions }) =>
+                patch({
+                  kitchen_address,
+                  ...(collection_instructions !== undefined ? { collection_instructions } : {}),
+                })
+              }
+              testID="cook-onboarding-kitchen-address"
             />
             <FieldLabel>Collection instructions (optional)</FieldLabel>
             <TextField
@@ -390,47 +436,23 @@ export default function CookOnboardingFlow() {
             />
           </>
         );
-      case 'mobile':
-        return (
-          <>
-            <FieldLabel>Mobile number</FieldLabel>
-            <TextField
-              value={draft.contact_mobile}
-              onChangeText={(contact_mobile) => patch({ contact_mobile })}
-              placeholder="9123 4567"
-              keyboardType="phone-pad"
-              testID="cook-onboarding-mobile-input"
-            />
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Same number for WhatsApp</Text>
-              <Switch value={draft.whatsapp_same} onValueChange={(whatsapp_same) => patch({ whatsapp_same })} />
-            </View>
-          </>
-        );
-      case 'verify_mobile':
-        return (
-          <>
-            <SHCButton onPress={sendMobile} disabled={busy} testID="cook-onboarding-send-mobile">
-              <SHCButtonText>Get verify code</SHCButtonText>
-            </SHCButton>
-            <FieldLabel>6-digit code</FieldLabel>
-            <TextField value={otpCode} onChangeText={setOtpCode} placeholder="123456" keyboardType="number-pad" testID="cook-onboarding-mobile-otp" />
-            <SHCButton onPress={confirmMobile} disabled={busy} testID="cook-onboarding-confirm-mobile">
-              <SHCButtonText>Confirm mobile</SHCButtonText>
-            </SHCButton>
-            {verifyHint ? <Text style={styles.hint}>{verifyHint}</Text> : null}
-          </>
-        );
       case 'paynow':
         return (
           <>
-            <SHCButton onPress={fillPaynowFromContact} testID="cook-onboarding-paynow-same">
-              <SHCButtonText>Use contact mobile</SHCButtonText>
-            </SHCButton>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>
+                Same as WhatsApp{draft.contact_mobile ? ` (+65 ${draft.contact_mobile.replace(/^\+65/, '')})` : ''}
+              </Text>
+              <Switch
+                value={draft.whatsapp_same}
+                onValueChange={applyPaynowFromWhatsapp}
+                testID="cook-onboarding-paynow-same"
+              />
+            </View>
             <FieldLabel>PayNow mobile</FieldLabel>
-            <TextField value={draft.paynow_mobile} onChangeText={(paynow_mobile) => patch({ paynow_mobile })} placeholder="9123 4567" keyboardType="phone-pad" testID="cook-onboarding-paynow-mobile" />
+            <TextField value={draft.paynow_mobile} onChangeText={(paynow_mobile) => patch({ paynow_mobile, whatsapp_same: false })} placeholder="9123 4567" keyboardType="phone-pad" testID="cook-onboarding-paynow-mobile" />
             <FieldLabel>Confirm PayNow mobile</FieldLabel>
-            <TextField value={draft.paynow_mobile_confirm} onChangeText={(paynow_mobile_confirm) => patch({ paynow_mobile_confirm })} placeholder="9123 4567" keyboardType="phone-pad" testID="cook-onboarding-paynow-confirm" />
+            <TextField value={draft.paynow_mobile_confirm} onChangeText={(paynow_mobile_confirm) => patch({ paynow_mobile_confirm, whatsapp_same: false })} placeholder="9123 4567" keyboardType="phone-pad" testID="cook-onboarding-paynow-confirm" />
           </>
         );
       case 'legal':
@@ -440,15 +462,19 @@ export default function CookOnboardingFlow() {
             <ConsentRow checked={draft.terms_consent} onToggle={() => patch({ terms_consent: !draft.terms_consent })} label="I accept the Terms & Conditions and marketplace rules." testID="cook-onboarding-terms-checkbox" />
           </>
         );
-      case 'profile_photo':
+      case 'profile_photo': {
+        const avatarUri = resolveOnboardingPhotoUri(draft.avatar_url, mediaPreview.avatar_url);
         return (
           <>
-            {draft.avatar_url ? <Image source={{ uri: draft.avatar_url }} style={styles.avatar} /> : null}
-            <SHCButton onPress={() => pickPhoto('avatar_url')} testID="cook-onboarding-avatar-pick">
-              <SHCButtonText>{draft.avatar_url ? 'Change photo' : 'Add profile photo'}</SHCButtonText>
+            {avatarUri ? <Image source={{ uri: avatarUri }} style={styles.avatar} /> : null}
+            <SHCButton onPress={() => pickPhoto('avatar_url')} testID="cook-onboarding-avatar-pick" disabled={uploadingPhoto === 'avatar_url'}>
+              <SHCButtonText>
+                {uploadingPhoto === 'avatar_url' ? 'Uploading…' : avatarUri || draft.avatar_url ? 'Change photo' : 'Add profile photo'}
+              </SHCButtonText>
             </SHCButton>
           </>
         );
+      }
       case 'cook_name':
         return <TextField value={draft.display_name} onChangeText={(display_name) => patch({ display_name })} placeholder="Auntie Rose's Kitchen" testID="cook-onboarding-cook-name" />;
       case 'responsible_person':
@@ -459,10 +485,13 @@ export default function CookOnboardingFlow() {
         return <TextField value={draft.alternate_contact} onChangeText={(alternate_contact) => patch({ alternate_contact })} placeholder="Backup mobile" keyboardType="phone-pad" testID="cook-onboarding-alt-contact" />;
       case 'halal':
         return (
-          <ChipRow
-            options={['Yes', 'No']}
-            value={draft.kitchen_halal_certified === true ? 'Yes' : draft.kitchen_halal_certified === false ? 'No' : ''}
-            onChange={(v) => patch({ kitchen_halal_certified: v === 'Yes' })}
+          <SHCOnboardingOptionStack
+            options={[
+              { label: 'Yes, halal certified', value: 'yes' },
+              { label: 'No, not halal certified', value: 'no' },
+            ]}
+            value={draft.kitchen_halal_certified === true ? 'yes' : draft.kitchen_halal_certified === false ? 'no' : ''}
+            onChange={(v) => patch({ kitchen_halal_certified: v === 'yes' })}
             testIDPrefix="cook-onboarding-halal"
           />
         );
@@ -479,60 +508,105 @@ export default function CookOnboardingFlow() {
         );
       case 'kitchen_available':
         return (
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Kitchen accepting orders</Text>
-            <Switch value={draft.kitchen_available} onValueChange={(kitchen_available) => patch({ kitchen_available })} testID="cook-onboarding-kitchen-available" />
-          </View>
+          <SHCOnboardingOptionStack
+            options={[
+              { label: 'Yes — accepting orders', value: 'yes' },
+              { label: 'No — taking a break', value: 'no' },
+            ]}
+            value={draft.kitchen_available ? 'yes' : 'no'}
+            onChange={(v) => patch({ kitchen_available: v === 'yes' })}
+            testIDPrefix="cook-onboarding-kitchen-available"
+          />
         );
-      case 'menu_basics':
+      case 'menu_intro':
+        return null;
+      case 'menu_cuisine':
+        return (
+          <SHCOnboardingOptionStack
+            options={COOK_ONBOARDING_CUISINE_PRESETS.map((c) => ({ label: c, value: c }))}
+            value={draft.dish_cuisine}
+            onChange={(dish_cuisine) => patch({ dish_cuisine })}
+            testIDPrefix="cook-onboarding-cuisine"
+          />
+        );
+      case 'menu_dish_name':
+        return <TextField value={draft.dish_name} onChangeText={(dish_name) => patch({ dish_name })} placeholder="Nasi Lemak" testID="cook-onboarding-dish-name" />;
+      case 'menu_portion':
+        return (
+          <SHCOnboardingOptionStack
+            options={[
+              { label: 'Plate', value: 'plate' },
+              { label: 'Piece', value: 'piece' },
+            ]}
+            value={draft.dish_portion_unit}
+            onChange={(v) => patch({ dish_portion_unit: v as 'plate' | 'piece' })}
+            testIDPrefix="cook-onboarding-portion"
+          />
+        );
+      case 'menu_pax':
+        return (
+          <SHCOnboardingOptionStack
+            options={[
+              { label: '2 pax', value: '2' },
+              { label: '3 pax', value: '3' },
+            ]}
+            value={String(draft.dish_recommended_pax)}
+            onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 })}
+            testIDPrefix="cook-onboarding-pax"
+          />
+        );
+      case 'menu_price':
+        return <TextField value={draft.dish_price} onChangeText={(dish_price) => patch({ dish_price })} placeholder="12" keyboardType="number-pad" testID="cook-onboarding-dish-price" />;
+      case 'menu_ingredients':
         return (
           <>
-            <FieldLabel>Cuisine</FieldLabel>
-            <ChipRow options={COOK_ONBOARDING_CUISINE_PRESETS} value={draft.dish_cuisine} onChange={(dish_cuisine) => patch({ dish_cuisine })} testIDPrefix="cook-onboarding-cuisine" />
-            <FieldLabel>Dish name</FieldLabel>
-            <TextField value={draft.dish_name} onChangeText={(dish_name) => patch({ dish_name })} placeholder="Nasi Lemak" testID="cook-onboarding-dish-name" />
-            <FieldLabel>Portion</FieldLabel>
-            <ChipRow options={['plate', 'piece']} value={draft.dish_portion_unit} onChange={(v) => patch({ dish_portion_unit: v as 'plate' | 'piece' })} />
-            <FieldLabel>Recommended pax</FieldLabel>
-            <ChipRow options={['2', '3', '4']} value={String(draft.dish_recommended_pax)} onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 | 4 })} />
-            <FieldLabel>List price (S$)</FieldLabel>
-            <TextField value={draft.dish_price} onChangeText={(dish_price) => patch({ dish_price })} placeholder="12" keyboardType="number-pad" testID="cook-onboarding-dish-price" />
-          </>
-        );
-      case 'menu_details':
-        return (
-          <>
-            <FieldLabel>Ingredients</FieldLabel>
             <ChipRow options={COOK_ONBOARDING_INGREDIENT_SUGGESTIONS} value="" onChange={(ing) => patch({ dish_ingredients: draft.dish_ingredients ? `${draft.dish_ingredients}, ${ing}` : ing })} testIDPrefix="cook-onboarding-ingredient" />
             <TextField value={draft.dish_ingredients} onChangeText={(dish_ingredients) => patch({ dish_ingredients })} placeholder="Rice, coconut milk, sambal…" multiline testID="cook-onboarding-ingredients" />
-            <FieldLabel>Description</FieldLabel>
-            <TextField value={draft.dish_description} onChangeText={(dish_description) => patch({ dish_description })} placeholder="Brief heritage story for this dish" multiline testID="cook-onboarding-dish-desc" />
-            <FieldLabel>Minimum order lead (days)</FieldLabel>
+          </>
+        );
+      case 'menu_description':
+        return <TextField value={draft.dish_description} onChangeText={(dish_description) => patch({ dish_description })} placeholder="Brief heritage story for this dish" multiline testID="cook-onboarding-dish-desc" />;
+      case 'menu_lead_time':
+        return (
+          <>
+            <FieldLabel>Minimum lead (days)</FieldLabel>
             <TextField value={String(draft.dish_lead_days)} onChangeText={(t) => patch({ dish_lead_days: Number(t) || 1 })} keyboardType="number-pad" testID="cook-onboarding-lead-days" />
             <FieldLabel>Preferred collection window</FieldLabel>
-            <ChipRow
-              options={COOK_ONBOARDING_LEAD_TIME_SLOTS}
+            <SHCOnboardingOptionStack
+              options={COOK_ONBOARDING_LEAD_TIME_SLOTS.map((s) => ({ label: s, value: s }))}
               value={draft.dish_lead_time_slot}
               onChange={(dish_lead_time_slot) => patch({ dish_lead_time_slot })}
               testIDPrefix="cook-onboarding-lead-slot"
             />
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Dish available</Text>
-              <Switch value={draft.dish_available} onValueChange={(dish_available) => patch({ dish_available })} />
-            </View>
-            <FieldLabel>Calories (optional)</FieldLabel>
-            <TextField value={draft.dish_calories} onChangeText={(dish_calories) => patch({ dish_calories })} keyboardType="number-pad" testID="cook-onboarding-calories" />
           </>
         );
-      case 'menu_photo':
+      case 'menu_dish_available':
+        return (
+          <SHCOnboardingOptionStack
+            options={[
+              { label: 'Yes — dish available', value: 'yes' },
+              { label: 'No — pause this dish', value: 'no' },
+            ]}
+            value={draft.dish_available ? 'yes' : 'no'}
+            onChange={(v) => patch({ dish_available: v === 'yes' })}
+            testIDPrefix="cook-onboarding-dish-available"
+          />
+        );
+      case 'menu_calories':
+        return <TextField value={draft.dish_calories} onChangeText={(dish_calories) => patch({ dish_calories })} placeholder="e.g. 450" keyboardType="number-pad" testID="cook-onboarding-calories" />;
+      case 'menu_photo': {
+        const dishUri = resolveOnboardingPhotoUri(draft.dish_image_url, mediaPreview.dish_image_url);
         return (
           <>
-            {draft.dish_image_url ? <Image source={{ uri: draft.dish_image_url }} style={styles.dishPhoto} /> : null}
-            <SHCButton onPress={() => pickPhoto('dish_image_url')} testID="cook-onboarding-dish-photo">
-              <SHCButtonText>{draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}</SHCButtonText>
+            {dishUri ? <Image source={{ uri: dishUri }} style={styles.dishPhoto} /> : null}
+            <SHCButton onPress={() => pickPhoto('dish_image_url')} testID="cook-onboarding-dish-photo" disabled={uploadingPhoto === 'dish_image_url'}>
+              <SHCButtonText>
+                {uploadingPhoto === 'dish_image_url' ? 'Uploading…' : dishUri || draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}
+              </SHCButtonText>
             </SHCButton>
           </>
         );
+      }
       case 'complete':
         return (
           <>
@@ -551,17 +625,25 @@ export default function CookOnboardingFlow() {
 
   if (!draftReady) return null;
 
+  const isWelcome = stepId === 'welcome';
+
   return (
-    <SHCOnboardingFlowScreen
+    <>
+      <StatusBar style={isWelcome ? 'light' : 'dark'} />
+      <SHCOnboardingFlowScreen
+      variant={isWelcome ? 'hero' : 'default'}
+      heroCardUris={isWelcome ? [...WELCOME_HERO_CARDS] : undefined}
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
-      subtitle={`${chapterDots.chapterLabel} · ${chapterDots.percentComplete}% · Step ${progress.stepInChapter}/${progress.stepsInChapter}\n\n${stepMeta.subtitle}`}
-      stepIndex={chapterDots.chapterIndex}
-      totalSteps={chapterDots.totalChapters}
+      subtitle={stepMeta.subtitle}
+      stepIndex={linear.current - 1}
+      totalSteps={linear.total}
+      progressPercent={linear.percent}
+      chapterLabel={isWelcome ? undefined : `Step ${linear.current} of ${linear.total}`}
+      showHero={stepMeta.hero && !isWelcome}
       onNext={handlePrimary}
       onSkip={stepMeta.skippable ? goNext : undefined}
-      onSecondary={canGoBack ? goBack : undefined}
-      secondaryLabel={canGoBack ? 'Back' : undefined}
+      onBack={canGoBack ? goBack : undefined}
       secondaryTestID="cook-onboarding-back-btn"
       nextLabel={isLast ? (busy ? 'Finishing…' : stepMeta.nextLabel || 'Finish') : stepMeta.nextLabel || 'Continue'}
       nextTestID={isLast ? 'cook-onboarding-finish-btn' : 'cook-onboarding-next-btn'}
@@ -572,32 +654,39 @@ export default function CookOnboardingFlow() {
     >
       {renderStep()}
     </SHCOnboardingFlowScreen>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, fontWeight: '800', color: shcColors.text, marginBottom: 4, marginTop: 8 },
   inputShort: {
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
     borderRadius: shcRadii.lg,
     padding: shcSpacing.md,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: shcColors.surface,
     color: shcColors.text,
     fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0,
     marginBottom: shcSpacing.sm,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
     borderRadius: shcRadii.lg,
     padding: shcSpacing.md,
+    paddingHorizontal: shcSpacing.md,
     minHeight: 88,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: shcColors.surface,
     color: shcColors.text,
     fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0,
     textAlignVertical: 'top',
     marginBottom: shcSpacing.sm,
+    width: '100%',
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: shcSpacing.sm },
   chip: {
@@ -606,7 +695,7 @@ const styles = StyleSheet.create({
     borderRadius: shcRadii.pill,
     borderWidth: shcBorders.thin,
     borderColor: shcColors.border,
-    backgroundColor: '#FFF',
+    backgroundColor: shcColors.surface,
   },
   chipOn: { backgroundColor: shcColors.primary, borderColor: shcColors.primary },
   chipText: { fontSize: 13, fontWeight: '700', color: shcColors.text },
@@ -621,30 +710,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: shcColors.surface,
   },
   checkboxOn: { backgroundColor: shcColors.primary, borderColor: shcColors.primary },
   checkMark: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 14 },
   consentLabel: { flex: 1, fontSize: 15, color: shcColors.text, lineHeight: 22 },
-  dropdown: {
-    borderWidth: shcBorders.thin,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.lg,
-    padding: shcSpacing.md,
-    backgroundColor: '#FAFAFA',
-    marginBottom: shcSpacing.sm,
-  },
-  dropdownValue: { fontSize: 16, fontWeight: '700', color: shcColors.text },
-  dropdownPlaceholder: { fontSize: 16, color: shcColors.textLight },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#FFFBF7', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%', padding: shcSpacing.lg },
-  modalTitle: { fontSize: 18, fontWeight: '800', marginBottom: shcSpacing.md },
-  modalRow: { paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E8DDD4' },
-  modalRowText: { fontSize: 16, fontWeight: '600' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: shcSpacing.md },
   switchLabel: { flex: 1, fontSize: 15, fontWeight: '600', color: shcColors.text, paddingRight: 12 },
+  sentTo: { fontSize: 14, fontWeight: '600', color: shcColors.textLight, marginBottom: shcSpacing.md },
   hint: { fontSize: 13, color: shcColors.primary, fontWeight: '700', marginTop: 8 },
-  certRow: { padding: shcSpacing.md, borderWidth: 1, borderColor: '#E5E5E5', borderRadius: shcRadii.lg, marginBottom: 8 },
+  certRow: {
+    padding: shcSpacing.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    borderRadius: shcRadii.lg,
+    marginBottom: 8,
+    backgroundColor: shcColors.surface,
+  },
   certLabel: { fontWeight: '800', fontSize: 14 },
   certStatus: { fontSize: 12, color: shcColors.textLight, marginTop: 4 },
   avatar: { width: 120, height: 120, borderRadius: 60, alignSelf: 'center', marginBottom: shcSpacing.md },

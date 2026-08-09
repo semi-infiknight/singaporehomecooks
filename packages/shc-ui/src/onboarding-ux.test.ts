@@ -11,12 +11,15 @@ describe('HomelyEats-style onboarding shell', () => {
     const src = readFileSync(ONBOARDING_UX, 'utf8');
     expect(src).toContain('export function SHCOnboardingFlowScreen');
     expect(src).toContain('export function SHCOnboardingDots');
+    expect(src).toContain('export function SHCOnboardingProgressBar');
+    expect(src).toContain('export function SHCOnboardingOptionStack');
     expect(src).toContain('HERO_RATIO');
     expect(src).toMatch(/<Image[\s\S]*?resizeMode="cover"/);
     expect(src).toContain('SHCOnboardingDots');
     expect(src).toContain('onGuest');
     expect(src).toContain('Continue as guest');
-    expect(src).toContain('ctaText');
+    expect(src).toContain('SHCOnboardingHeroSplash');
+    expect(src).toContain("variant?: 'default' | 'hero'");
   });
 
   it('cook onboarding uses flow screen and preserves Maestro testIDs', () => {
@@ -29,6 +32,7 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('cook-onboarding-collection-input');
     expect(src).toContain('cook-onboarding-pdpa-checkbox');
     expect(src).toContain('cook-onboarding-back-btn');
+    expect(src).toContain('variant={isWelcome ? \'hero\' : \'default\'}');
     expect(src).toContain('COOK_ONBOARDING_STEPS');
   });
 

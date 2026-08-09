@@ -59,10 +59,12 @@ export function createShcApiClient(config: ShcApiClientConfig) {
         error?: { code?: SHCErrorCode; message?: string; details?: Record<string, unknown> };
       }).error;
       const msg = apiError
-        ? formatShcErrorUserMessage(
-            apiError.message || `HTTP ${res.status}`,
-            apiError.details
-          )
+        ? typeof formatShcErrorUserMessage === "function"
+          ? formatShcErrorUserMessage(
+              apiError.message || `HTTP ${res.status}`,
+              apiError.details
+            )
+          : apiError.message || `HTTP ${res.status}`
         : (errBody as { message?: string }).message || `HTTP ${res.status}`;
       const code = apiError?.code;
       if (code) throw new ShcRequestError(msg, code);

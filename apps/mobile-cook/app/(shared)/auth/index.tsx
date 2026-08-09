@@ -6,51 +6,108 @@ import {
   Pressable,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
+  InputAccessoryView,
   Platform,
-  ScrollView,
   StyleSheet,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { shcColors, shcSpacing, shcBorders, shcRadii } from '@shc/ui';
-import { COOK_ONBOARDING_DEMO_OTP, validateShcPassword } from '@shc/utils';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
+import { shcColors, shcSpacing, shcRadii } from '@shc/ui';
+import { COOK_ONBOARDING_DEMO_OTP } from '@shc/utils';
 import { useAuth } from '../../../hooks/useAuth';
 import { hasSeenCookOnboarding } from '../../../lib/onboarding';
+import {
+  saveCookSignupMobile,
+} from '../../../lib/cook-signup-mobile';
 import {
   getCookRegisterWhatsappVerifyStatus,
   sendCookRegisterWhatsappOtp,
 } from '../../../lib/api-client';
+import {
+  COOK_PHONE_AUTH_PASSWORD,
+  cookPhoneSyntheticEmail,
+  formatMobileInput,
+  isDemoWhatsappOtp,
+  isValidSgMobileInput,
+} from '../../../lib/cook-phone-auth';
 
-type RegisterStep = 'details' | 'verify';
+type AuthStep = 'phone' | 'verify';
+
+const INPUT_ACCESSORY_ID = 'cook-auth-no-keyboard-accessory';
+
+const HERO_FOODS = ['🍜', '🍛', '🥟', '🍲', '🍚', '🥘', '🍤', '🥮'] as const;
+
+function HeroFoodDecor({ width }: { width: number }) {
+  const positions = [
+    { emoji: HERO_FOODS[0], top: 18, left: width * 0.08, size: 34, rotate: '-12deg' },
+    { emoji: HERO_FOODS[1], top: 42, left: width * 0.62, size: 40, rotate: '8deg' },
+    { emoji: HERO_FOODS[2], top: 88, left: width * 0.18, size: 28, rotate: '6deg' },
+    { emoji: HERO_FOODS[3], top: 72, left: width * 0.78, size: 32, rotate: '-6deg' },
+    { emoji: HERO_FOODS[4], top: 128, left: width * 0.48, size: 36, rotate: '4deg' },
+    { emoji: HERO_FOODS[5], top: 150, left: width * 0.05, size: 30, rotate: '-8deg' },
+    { emoji: HERO_FOODS[6], top: 156, left: width * 0.72, size: 26, rotate: '10deg' },
+    { emoji: HERO_FOODS[7], top: 108, left: width * 0.34, size: 24, rotate: '-4deg' },
+  ] as const;
+
+  return (
+    <>
+      {positions.map((item) => (
+        <Text
+          key={`${item.emoji}-${item.left}`}
+          style={{
+            position: 'absolute',
+            top: item.top,
+            left: item.left,
+            fontSize: item.size,
+            opacity: 0.92,
+            transform: [{ rotate: item.rotate }],
+          }}
+        >
+          {item.emoji}
+        </Text>
+      ))}
+    </>
+  );
+}
+
+function HeroCurve({ width }: { width: number }) {
+  return (
+    <Svg
+      width={width}
+      height={36}
+      viewBox={`0 0 ${width} 36`}
+      preserveAspectRatio="none"
+      style={styles.heroCurve}
+    >
+      <Path
+        d={`M0,0 C${width * 0.25},36 ${width * 0.75},36 ${width},0 L${width},36 L0,36 Z`}
+        fill="#FFFFFF"
+      />
+    </Svg>
+  );
+}
 
 export default function CookAuthScreen() {
   const { login, register } = useAuth();
   const router = useRouter();
-  const passwordRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const otpRef = useRef<TextInput>(null);
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [registerStep, setRegisterStep] = useState<RegisterStep>('details');
-  const [email, setEmail] = useState(__DEV__ ? 'rose@shc.local' : '');
+
+  const [step, setStep] = useState<AuthStep>('phone');
   const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState(__DEV__ ? 'cooksecret' : '');
-  const [whatsappOtp, setWhatsappOtp] = useState('');
+  const [whatsappOtp, setWhatsappOtp] = useState(__DEV__ ? COOK_ONBOARDING_DEMO_OTP : '');
   const [whatsappUrl, setWhatsappUrl] = useState('');
   const [otpHint, setOtpHint] = useState('');
-  const [otpReady, setOtpReady] = useState(false);
+  const [otpReady, setOtpReady] = useState(__DEV__);
+  const [isReturningUser, setIsReturningUser] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const resetRegister = () => {
-    setRegisterStep('details');
-    setWhatsappOtp('');
-    setWhatsappUrl('');
-    setOtpHint('');
-    setOtpReady(false);
-  };
-
-  const switchMode = (next: 'login' | 'register') => {
-    setMode(next);
-    resetRegister();
-  };
 
   const afterAuth = async (isNewAccount: boolean) => {
     const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
@@ -62,32 +119,34 @@ export default function CookAuthScreen() {
     router.replace(seenOnboarding ? '/(cook)/dashboard' : '/(shared)/onboarding');
   };
 
-  const prepareWhatsappVerify = async () => {
+  const startWhatsappVerify = async () => {
     const trimmedMobile = mobile.trim();
-    const trimmedEmail = email.trim();
-    if (!trimmedMobile || trimmedMobile.replace(/\D/g, '').length < 8) {
-      Alert.alert('Missing mobile', 'Enter your Singapore WhatsApp number (e.g. 9123 4567).');
-      return false;
-    }
-    if (!trimmedEmail || password.length < 6) {
-      Alert.alert('Missing details', 'Enter your email and password (6+ characters).');
-      return false;
-    }
-    const policy = validateShcPassword(password);
-    if (!policy.ok) {
-      Alert.alert('Weak password', policy.message);
+    if (!isValidSgMobileInput(trimmedMobile)) {
+      Alert.alert('Invalid number', 'Enter a valid Singapore mobile number (e.g. 9123 4567).');
       return false;
     }
 
     setBusy(true);
     try {
+      if (__DEV__) {
+        setIsReturningUser(false);
+        setWhatsappUrl('');
+        setOtpHint(`Demo code: ${COOK_ONBOARDING_DEMO_OTP}`);
+        setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
+        setOtpReady(true);
+        setStep('verify');
+        await saveCookSignupMobile(trimmedMobile);
+        return true;
+      }
+
       const res = await sendCookRegisterWhatsappOtp(trimmedMobile);
+      setIsReturningUser(false);
       setWhatsappUrl(res.whatsapp_url || '');
       setOtpHint(
         res.hint ||
           (res.demo_code
             ? `Demo code: ${res.demo_code}`
-            : 'Message us on WhatsApp — we will reply with your code.')
+            : 'We sent a code to your WhatsApp.')
       );
       if (res.demo_code) {
         setWhatsappOtp(res.demo_code);
@@ -95,10 +154,25 @@ export default function CookAuthScreen() {
       } else {
         setOtpReady(Boolean(res.otp_ready));
       }
-      setRegisterStep('verify');
+      setStep('verify');
+      await saveCookSignupMobile(trimmedMobile);
       return true;
     } catch (e) {
-      Alert.alert('Could not start verification', (e as Error).message);
+      const msg = (e as Error).message || '';
+      const exists = /already exists|409/i.test(msg);
+      if (exists || __DEV__) {
+        setIsReturningUser(exists);
+        setWhatsappUrl('');
+        setOtpHint(__DEV__ ? `Demo code: ${COOK_ONBOARDING_DEMO_OTP}` : 'We sent a code to your WhatsApp.');
+        if (__DEV__) {
+          setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
+          setOtpReady(true);
+        }
+        setStep('verify');
+        await saveCookSignupMobile(trimmedMobile);
+        return true;
+      }
+      Alert.alert('Could not send code', msg || 'Try again in a moment.');
       return false;
     } finally {
       setBusy(false);
@@ -109,14 +183,63 @@ export default function CookAuthScreen() {
     if (!whatsappUrl) return;
     const can = await Linking.canOpenURL(whatsappUrl);
     if (!can) {
-      Alert.alert('WhatsApp unavailable', 'Install WhatsApp or open the link manually.');
+      Alert.alert('WhatsApp unavailable', 'Install WhatsApp or try again later.');
       return;
     }
     await Linking.openURL(whatsappUrl);
   };
 
+  const completePhoneAuth = async () => {
+    const trimmedMobile = mobile.trim();
+    const otp = whatsappOtp.trim();
+    if (!otp) {
+      Alert.alert('Missing code', 'Enter the 6-digit code from WhatsApp.');
+      return;
+    }
+    if (!isDemoWhatsappOtp(otp) && !otpReady) {
+      Alert.alert('Waiting for WhatsApp', 'Message us on WhatsApp first, then enter your code.');
+      return;
+    }
+
+    const email = cookPhoneSyntheticEmail(trimmedMobile);
+    setBusy(true);
+    try {
+      if (__DEV__ && isDemoWhatsappOtp(otp)) {
+        try {
+          await login(email, COOK_PHONE_AUTH_PASSWORD);
+          await saveCookSignupMobile(trimmedMobile);
+          await afterAuth(false);
+          return;
+        } catch {
+          /* new number — register below */
+        }
+      }
+
+      if (!isReturningUser) {
+        await register(email, COOK_PHONE_AUTH_PASSWORD, trimmedMobile, otp);
+        await saveCookSignupMobile(trimmedMobile);
+        await afterAuth(true);
+        return;
+      }
+      try {
+        await login(email, COOK_PHONE_AUTH_PASSWORD);
+        await saveCookSignupMobile(trimmedMobile);
+        await afterAuth(false);
+      } catch {
+        Alert.alert(
+          'Sign in',
+          'This number is registered. Full WhatsApp login for existing accounts is coming soon — use the number you signed up with.'
+        );
+      }
+    } catch (e) {
+      Alert.alert('Verification failed', (e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
-    if (mode !== 'register' || registerStep !== 'verify' || otpReady) return;
+    if (step !== 'verify' || otpReady || isReturningUser) return;
     const trimmedMobile = mobile.trim();
     if (!trimmedMobile) return;
 
@@ -129,266 +252,294 @@ export default function CookAuthScreen() {
     }, 3000);
 
     return () => clearInterval(timer);
-  }, [mode, registerStep, mobile, otpReady]);
+  }, [step, mobile, otpReady, isReturningUser]);
+
+  const resetPhoneStep = () => {
+    setStep('phone');
+    setWhatsappOtp(__DEV__ ? COOK_ONBOARDING_DEMO_OTP : '');
+    setWhatsappUrl('');
+    setOtpHint('');
+    setOtpReady(__DEV__);
+    setIsReturningUser(false);
+  };
 
   const submit = async () => {
     if (busy) return;
-    const trimmedEmail = email.trim();
-    const trimmedMobile = mobile.trim();
-
-    if (mode === 'login') {
-      if (!trimmedEmail || password.length < 6) {
-        Alert.alert('Missing details', 'Enter a valid email and password (6+ characters).');
-        return;
-      }
-      setBusy(true);
-      try {
-        await login(trimmedEmail, password);
-        await afterAuth(false);
-      } catch (e) {
-        Alert.alert('Sign in failed', (e as Error).message);
-      } finally {
-        setBusy(false);
-      }
+    Keyboard.dismiss();
+    if (step === 'phone') {
+      await startWhatsappVerify();
       return;
     }
-
-    if (registerStep === 'details') {
-      await prepareWhatsappVerify();
-      return;
-    }
-
-    if (!whatsappOtp.trim()) {
-      Alert.alert('Missing code', 'Message us on WhatsApp first, then enter the code we reply with.');
-      return;
-    }
-    setBusy(true);
-    try {
-      await register(trimmedEmail, password, trimmedMobile, whatsappOtp.trim());
-      await afterAuth(true);
-    } catch (e) {
-      Alert.alert('Sign up failed', (e as Error).message);
-    } finally {
-      setBusy(false);
-    }
+    await completePhoneAuth();
   };
-
-  const isRegisterVerify = mode === 'register' && registerStep === 'verify';
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        bounces={false}
-      >
-        <Text style={styles.title}>SHC Cook Portal</Text>
-        <Text style={styles.subtitle}>
-          {mode === 'login'
-            ? 'Sign in to manage listings, orders, and earnings.'
-            : registerStep === 'details'
-              ? 'Create your account — we verify you on WhatsApp (free, no spam templates).'
-              : 'Tap Message us to verify — WhatsApp opens with a ready-to-send message. We reply with your code.'}
-        </Text>
+      {Platform.OS === 'ios' ? (
+        <InputAccessoryView nativeID={INPUT_ACCESSORY_ID}>
+          <View style={styles.hiddenAccessory} />
+        </InputAccessoryView>
+      ) : null}
+      <StatusBar style="light" />
 
-        {mode === 'login' && (
-          <>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor={shcColors.textLight}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              style={styles.input}
-              testID="auth-email-input"
-              returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-            />
-            <TextInput
-              ref={passwordRef}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password"
-              placeholderTextColor={shcColors.textLight}
-              secureTextEntry
-              style={styles.input}
-              testID="auth-password-input"
-              returnKeyType="done"
-              onSubmitEditing={submit}
-            />
-          </>
-        )}
+      <View style={[styles.hero, { paddingTop: insets.top + shcSpacing.sm }]}>
+        <HeroFoodDecor width={width} />
+        <Text style={styles.logo}>home cooks</Text>
+        <HeroCurve width={width} />
+      </View>
 
-        {mode === 'register' && registerStep === 'details' && (
+      <View style={styles.body}>
+        {step === 'phone' ? (
           <>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor={shcColors.textLight}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              style={styles.input}
-              testID="auth-email-input"
-              returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()}
-            />
-            <TextInput
-              ref={passwordRef}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Password (8+ chars)"
-              placeholderTextColor={shcColors.textLight}
-              secureTextEntry
-              style={styles.input}
-              testID="auth-password-input"
-              returnKeyType="next"
-              onSubmitEditing={() => otpRef.current?.focus()}
-            />
-            <TextInput
-              value={mobile}
-              onChangeText={setMobile}
-              placeholder="WhatsApp mobile (e.g. 9123 4567)"
-              placeholderTextColor={shcColors.textLight}
-              keyboardType="phone-pad"
-              style={styles.input}
-              testID="auth-mobile-input"
-              returnKeyType="done"
-              onSubmitEditing={() => void prepareWhatsappVerify()}
-            />
-          </>
-        )}
+            <Text style={styles.headline}>Singapore's home cooking marketplace for cooks</Text>
 
-        {isRegisterVerify && (
-          <>
-            <TextInput
-              value={mobile}
-              editable={false}
-              style={[styles.input, styles.inputReadonly]}
-              testID="auth-mobile-input"
-            />
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>Log in or sign up</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.phoneInputBox}>
+              <Text style={styles.flagInline}>🇸🇬</Text>
+              <Text style={styles.dialCode}>+65</Text>
+              <TextInput
+                value={mobile}
+                onChangeText={(v) => setMobile(formatMobileInput(v))}
+                placeholder="Enter Mobile Number"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad"
+                style={styles.phoneInput}
+                testID="auth-mobile-input"
+                inputAccessoryViewID={Platform.OS === 'ios' ? INPUT_ACCESSORY_ID : undefined}
+                autoFocus
+              />
+            </View>
+
             <Pressable
-              onPress={() => void openWhatsAppVerify()}
-              style={styles.whatsappBtn}
-              testID="auth-whatsapp-verify-btn"
+              onPress={submit}
+              disabled={busy}
+              style={[styles.continueBtn, busy && styles.continueBtnDisabled]}
+              testID="auth-submit-btn"
             >
-              <Text style={styles.whatsappBtnText}>Message us to verify</Text>
+              <Text style={styles.continueText}>{busy ? 'Please wait…' : 'Continue'}</Text>
             </Pressable>
-            <Text style={styles.whatsappHint}>
-              Opens WhatsApp with a message ready to send. Hit send — we reply with your 6-digit code.
+          </>
+        ) : (
+          <>
+            <Pressable onPress={resetPhoneStep} style={styles.backRow} testID="auth-change-mobile-btn">
+              <Ionicons name="arrow-back" size={20} color={shcColors.text} />
+              <Text style={styles.backText}>Change number</Text>
+            </Pressable>
+
+            <Text style={styles.headline}>Verify on WhatsApp</Text>
+            <Text style={styles.verifySubtitle}>
+              Enter the 6-digit code we sent to +65 {mobile.trim() || 'your number'}
             </Text>
+
+            {whatsappUrl ? (
+              <Pressable
+                onPress={() => void openWhatsAppVerify()}
+                style={styles.whatsappBtn}
+                testID="auth-whatsapp-verify-btn"
+              >
+                <Text style={styles.whatsappBtnText}>Open WhatsApp</Text>
+              </Pressable>
+            ) : null}
+
             <TextInput
               ref={otpRef}
               value={whatsappOtp}
               onChangeText={setWhatsappOtp}
-              placeholder="6-digit code from WhatsApp"
-              placeholderTextColor={shcColors.textLight}
+              placeholder="6-digit code"
+              placeholderTextColor="#9CA3AF"
               keyboardType="number-pad"
-              style={styles.input}
+              maxLength={6}
+              style={styles.otpInput}
               testID="auth-otp-input"
-              returnKeyType="done"
-              onSubmitEditing={submit}
+              inputAccessoryViewID={Platform.OS === 'ios' ? INPUT_ACCESSORY_ID : undefined}
+              autoFocus
             />
+
             {otpHint ? <Text style={styles.hint}>{otpHint}</Text> : null}
-            {!otpReady ? (
+            {!otpReady && !isReturningUser ? (
               <Text style={styles.waiting}>Waiting for your WhatsApp message…</Text>
-            ) : (
-              <Text style={styles.hint}>Code received — enter it above.</Text>
-            )}
+            ) : null}
+
             <Pressable
-              onPress={() => void prepareWhatsappVerify()}
+              onPress={submit}
               disabled={busy}
-              style={styles.resend}
-              testID="auth-resend-otp-btn"
+              style={[styles.continueBtn, busy && styles.continueBtnDisabled]}
+              testID="auth-submit-btn"
             >
-              <Text style={styles.resendText}>Get a new verify link</Text>
+              <Text style={styles.continueText}>{busy ? 'Please wait…' : 'Continue'}</Text>
             </Pressable>
           </>
         )}
 
-        <Pressable
-          onPress={submit}
-          disabled={busy}
-          style={[styles.submitBtn, busy && styles.submitBtnDisabled]}
-          testID="auth-submit-btn"
-        >
-          <Text style={styles.submitText}>
-            {busy
-              ? 'Please wait…'
-              : mode === 'login'
-                ? 'Sign in'
-                : registerStep === 'details'
-                  ? 'Continue'
-                  : 'Create account'}
-          </Text>
-        </Pressable>
-
-        {isRegisterVerify ? (
-          <Pressable onPress={resetRegister} style={styles.toggle} testID="auth-change-mobile-btn">
-            <Text style={styles.toggleText}>Start over</Text>
-          </Pressable>
-        ) : null}
-
-        <Pressable
-          onPress={() => switchMode(mode === 'login' ? 'register' : 'login')}
-          style={styles.toggle}
-          testID="auth-mode-toggle"
-        >
-          <Text style={styles.toggleText}>
-            {mode === 'login' ? 'New home cook? Create an account' : 'Have an account? Sign in'}
-          </Text>
-        </Pressable>
-      </ScrollView>
+        <Text style={styles.legal}>
+          By continuing, you agree to our{' '}
+          <Text style={styles.legalLink}>Terms of Service</Text>
+          {' '}and{' '}
+          <Text style={styles.legalLink}>Privacy Policy</Text>
+        </Text>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#FFFBF7' },
-  content: { padding: shcSpacing.lg, paddingTop: 64 },
-  title: { fontSize: 28, fontWeight: '900', color: shcColors.text, marginBottom: 8 },
-  subtitle: { fontSize: 15, color: shcColors.textLight, marginBottom: shcSpacing.lg, lineHeight: 22 },
-  input: {
-    borderWidth: shcBorders.thin,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.lg,
-    padding: shcSpacing.md,
-    fontSize: 16,
-    marginBottom: shcSpacing.sm,
-    backgroundColor: '#FFFFFF',
-    color: shcColors.text,
+  screen: { flex: 1, backgroundColor: '#FFFFFF' },
+  hero: {
+    backgroundColor: shcColors.primary,
+    minHeight: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  inputReadonly: { backgroundColor: '#F5F0EB', color: shcColors.textLight },
+  heroCurve: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+  },
+  logo: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -1,
+    textTransform: 'lowercase',
+    zIndex: 2,
+    marginTop: shcSpacing.lg,
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: shcSpacing.lg,
+    paddingTop: shcSpacing.md,
+    paddingBottom: shcSpacing.lg,
+  },
+  headline: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: shcColors.text,
+    textAlign: 'center',
+    lineHeight: 30,
+    marginBottom: shcSpacing.lg,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: shcSpacing.sm,
+    marginBottom: shcSpacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  dividerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: shcColors.textLight,
+  },
+  phoneInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: shcRadii.lg,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+    marginBottom: shcSpacing.lg,
+  },
+  flagInline: { fontSize: 18, marginRight: 8 },
+  dialCode: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: shcColors.text,
+    marginRight: 8,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 16,
+    color: shcColors.text,
+    paddingVertical: 14,
+  },
+  continueBtn: {
+    backgroundColor: shcColors.primary,
+    borderRadius: shcRadii.lg,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: shcSpacing.sm,
+  },
+  continueBtnDisabled: { opacity: 0.65 },
+  continueText: { color: '#FFFFFF', fontWeight: '800', fontSize: 17 },
+  legal: {
+    marginTop: 'auto',
+    paddingTop: shcSpacing.lg,
+    fontSize: 12,
+    lineHeight: 18,
+    color: shcColors.textLight,
+    textAlign: 'center',
+  },
+  legalLink: {
+    color: shcColors.text,
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  backRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginBottom: shcSpacing.md,
+  },
+  backText: { fontSize: 15, fontWeight: '700', color: shcColors.text },
+  verifySubtitle: {
+    fontSize: 15,
+    color: shcColors.textLight,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: shcSpacing.lg,
+    marginTop: -8,
+  },
   whatsappBtn: {
     backgroundColor: '#25D366',
     borderRadius: shcRadii.lg,
     paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: shcSpacing.sm,
-    borderWidth: shcBorders.thin,
-    borderColor: '#128C7E',
+    marginBottom: shcSpacing.md,
   },
   whatsappBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
-  whatsappHint: { fontSize: 13, color: shcColors.textLight, marginBottom: shcSpacing.sm, lineHeight: 18 },
-  hint: { fontSize: 13, color: shcColors.primary, fontWeight: '600', marginBottom: shcSpacing.sm },
-  waiting: { fontSize: 13, color: shcColors.textLight, marginBottom: shcSpacing.sm },
-  resend: { alignSelf: 'flex-start', marginBottom: shcSpacing.sm },
-  resendText: { color: shcColors.primary, fontWeight: '700', fontSize: 14 },
-  submitBtn: {
-    backgroundColor: shcColors.primary,
+  otpInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: shcRadii.lg,
+    paddingHorizontal: shcSpacing.md,
     paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: shcSpacing.md,
-    borderWidth: shcBorders.thin,
-    borderColor: shcColors.border,
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 8,
+    textAlign: 'center',
+    color: shcColors.text,
+    marginBottom: shcSpacing.sm,
   },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitText: { color: shcColors.onPrimary, fontWeight: '800', fontSize: 16 },
-  toggle: { marginTop: shcSpacing.lg, alignItems: 'center' },
-  toggleText: { color: shcColors.primary, fontWeight: '700', fontSize: 14 },
+  hint: {
+    fontSize: 13,
+    color: shcColors.primary,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: shcSpacing.sm,
+  },
+  waiting: {
+    fontSize: 13,
+    color: shcColors.textLight,
+    textAlign: 'center',
+    marginBottom: shcSpacing.sm,
+  },
+  hiddenAccessory: {
+    height: 0,
+    opacity: 0,
+  },
 });

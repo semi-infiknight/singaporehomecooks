@@ -34,7 +34,9 @@ export function useSHCFonts(): boolean {
       anyComp.render = function patchedRender(props: { style?: unknown }, ref: unknown) {
         const flat = StyleSheet.flatten(props.style) as TextStyle | undefined;
         const fontFamily = shcFontFamilyForWeight(flat?.fontWeight);
-        return original({ ...props, style: [{ fontFamily }, props.style] }, ref);
+        // Reset letterSpacing unless explicitly set — prevents OTP-style spacing leaking to other inputs.
+        const letterSpacing = flat?.letterSpacing ?? 0;
+        return original({ ...props, style: [{ fontFamily, letterSpacing }, props.style] }, ref);
       };
       anyComp.__shcFontPatched = true;
     };

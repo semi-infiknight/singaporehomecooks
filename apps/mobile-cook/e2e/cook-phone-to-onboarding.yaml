@@ -1,8 +1,6 @@
-# Cook app — phone auth + dashboard
-# Run: pnpm ios:dev && maestro test apps/mobile-cook/e2e/cook-auth.yaml
+# One-shot: fresh phone signup → onboarding (stop before wizard steps)
 appId: com.singaporehomecooks.cook
 ---
-- runScript: cook-e2e-mobile.js
 - launchApp:
     clearState: true
     clearKeychain: true
@@ -11,7 +9,7 @@ appId: com.singaporehomecooks.cook
     timeout: 90000
 - tapOn:
     id: "auth-mobile-input"
-- inputText: ${output.cookMobile}
+- inputText: ${COOK_MOBILE}
 - tapOn:
     id: "auth-submit-btn"
 - extendedWaitUntil:
@@ -23,10 +21,7 @@ appId: com.singaporehomecooks.cook
 - inputText: "123456"
 - tapOn:
     id: "auth-submit-btn"
-- runFlow: cook-onboarding-if-needed.yaml
 - extendedWaitUntil:
     visible:
-      id: "cook-dashboard"
-    timeout: 120000
-- assertVisible:
-    id: "cook-dashboard"
+      id: "cook-onboarding-screen"
+    timeout: 90000

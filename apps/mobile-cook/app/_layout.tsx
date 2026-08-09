@@ -47,8 +47,8 @@ function AppShell() {
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(cook)" options={{ headerShown: false }} />
-          <Stack.Screen name="(shared)/auth/index" options={{ title: 'Cook sign in' }} />
-          <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome' }} />
+          <Stack.Screen name="(shared)/auth/index" options={{ headerShown: false }} />
+          <Stack.Screen name="(shared)/onboarding/index" options={{ headerShown: false }} />
           <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
         </Stack>
       </ErrorBoundary>

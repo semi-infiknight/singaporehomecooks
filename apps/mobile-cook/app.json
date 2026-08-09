@@ -50,6 +50,12 @@
       "expo-font",
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Singapore Home Cooks Cook uses your location to pin your HDB kitchen address on the map."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Singapore Home Cooks Cook uses your photos for dish listing images."

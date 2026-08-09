@@ -23,6 +23,7 @@ function loadMapsModule(): MapsModule | null {
 const mapsModule = loadMapsModule();
 
 const MAP_HEIGHT = 240;
+const MAP_HEIGHT_SWIGGY = 260;
 const TILE_ROWS = 3;
 const TILE_ZOOM = 17;
 
@@ -40,15 +41,17 @@ function AndroidOsmPinMap({
   lng,
   onPinChange,
   testID = 'location-map',
+  height = MAP_HEIGHT,
 }: {
   lat: number;
   lng: number;
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
+  height?: number;
 }) {
   const tiles = useMemo(() => getOsmTileGrid(lat, lng, TILE_ZOOM), [lat, lng]);
-  const tileHeight = MAP_HEIGHT / TILE_ROWS;
-  const [frameSize, setFrameSize] = useState({ width: 360, height: MAP_HEIGHT });
+  const tileHeight = height / TILE_ROWS;
+  const [frameSize, setFrameSize] = useState({ width: 360, height });
   const [drag, setDrag] = useState({ x: 0, y: 0 });
   const dragStart = useRef({ lat, lng });
 
@@ -92,14 +95,14 @@ function AndroidOsmPinMap({
 
   return (
     <View
-      style={styles.frame}
+      style={[styles.frame, { height }]}
       testID={testID}
       onLayout={(e) => {
         const { width, height } = e.nativeEvent.layout;
         if (width > 0 && height > 0) setFrameSize({ width, height });
       }}
     >
-      <View style={styles.tileGrid}>
+      <View style={[styles.tileGrid, { height }]}>
         {tiles.map((uri, i) => (
           <Image key={`${uri}-${i}`} source={{ uri }} style={{ width: '33.333%', height: tileHeight }} resizeMode="cover" />
         ))}
@@ -140,18 +143,20 @@ function IosDraggableMap({
   lng,
   onPinChange,
   testID = 'location-map',
+  height = MAP_HEIGHT,
 }: {
   lat: number;
   lng: number;
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
+  height?: number;
 }) {
   const MapView = mapsModule?.default;
   const Marker = mapsModule?.Marker;
   const mapRef = useRef<any>(null);
 
   if (!MapView || !Marker) {
-    return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;
+    return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} height={height} />;
   }
 
   useEffect(() => {
@@ -159,10 +164,10 @@ function IosDraggableMap({
   }, [lat, lng]);
 
   return (
-    <View style={styles.frame} testID={testID}>
+    <View style={[styles.frame, { height }]} testID={testID}>
       <MapView
         ref={mapRef}
-        style={styles.map}
+        style={[styles.map, { height }]}
         initialRegion={regionFor(lat, lng)}
         onPress={(e) => {
           const { latitude, longitude } = e.nativeEvent.coordinate;
@@ -192,16 +197,18 @@ export function SHCLocationDraggableMap({
   lng,
   onPinChange,
   testID = 'location-map',
+  height = MAP_HEIGHT,
 }: {
   lat: number;
   lng: number;
   onPinChange: (coords: { lat: number; lng: number }) => void;
   testID?: string;
+  height?: number;
 }) {
   if (Platform.OS === 'android' || !mapsModule) {
-    return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;
+    return <AndroidOsmPinMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} height={height} />;
   }
-  return <IosDraggableMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} />;
+  return <IosDraggableMap lat={lat} lng={lng} onPinChange={onPinChange} testID={testID} height={height} />;
 }
 
 const styles = StyleSheet.create({

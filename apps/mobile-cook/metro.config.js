@@ -84,7 +84,7 @@ config.server.unstable_serverRoot = projectRoot;
 const cacheDir = path.join(projectRoot, '.metro-cache');
 fs.mkdirSync(cacheDir, { recursive: true });
 config.cacheStores = [new FileStore({ root: cacheDir })];
-config.cacheVersion = 'mobile-cook-v37-expo-router-fix';
+config.cacheVersion = 'mobile-cook-v39-auth-dev-bypass';
 
 function isExpoRouterEntryRequest(name) {
   if (typeof name !== 'string') return false;

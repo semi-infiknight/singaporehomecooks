@@ -33,6 +33,7 @@ import { getCookAvatarUrl, getCookKitchenHeroUrl, normalizeCookAreaInput, normal
 import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
+import { CookKitchenAddressPicker } from '../../components/CookKitchenAddressPicker';
 
 type CookProfile = {
   display_name?: string;
@@ -230,12 +231,16 @@ export default function CookSettingsScreen() {
         <Text style={styles.sectionTitle}>Collection</Text>
         <Text style={styles.hint}>Shared with customers after you accept an order.</Text>
         <Text style={styles.fieldLabel}>HDB address</Text>
-        <TextInput
-          value={collectionAddress}
-          onChangeText={setCollectionAddress}
-          placeholder="Blk, street, unit"
-          placeholderTextColor={shcColors.textLight}
-          style={styles.input}
+        <CookKitchenAddressPicker
+          kitchenAddress={collectionAddress}
+          collectionInstructions={collectionInstructions}
+          areaHint={area || profile?.area || undefined}
+          onConfirm={({ kitchen_address, collection_instructions }) => {
+            setCollectionAddress(kitchen_address);
+            if (collection_instructions !== undefined) {
+              setCollectionInstructions(collection_instructions);
+            }
+          }}
           testID="cook-settings-address"
         />
         <Text style={styles.fieldLabel}>Pickup instructions</Text>
@@ -312,6 +317,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     color: shcColors.text,
     fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0,
   },
   textArea: { minHeight: 96, textAlignVertical: 'top' },
   switchRow: {

@@ -6,7 +6,6 @@ import {
   SHCButton,
   SHCButtonText,
   PriceEarningsCalc,
-  SHCSectionTitle,
   SHCFoodImage,
   SHCMetaBadge,
   SHCFadeIn,
@@ -29,6 +28,9 @@ import {
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
   SHCIngredientsEditor,
+  GourmeatCookHeader,
+  shcScreenInset,
+  shcTitleBlock,
 } from '@shc/ui';
 import {
   BENTO_ACTION_IMAGES,
@@ -63,15 +65,25 @@ async function loadImagePicker(): Promise<typeof import('expo-image-picker') | n
 const inputStyle = {
   borderWidth: shcBorders.brutal,
   borderColor: shcColors.border,
-  padding: shcSpacing.sm,
+  padding: shcSpacing.md,
   marginBottom: shcSpacing.sm,
-  borderRadius: shcRadii.md,
+  borderRadius: shcRadii.lg,
   backgroundColor: shcColors.surface,
+  fontSize: 16,
+  fontWeight: '400' as const,
+  letterSpacing: 0,
+  color: shcColors.text,
   ...shcShadows.brutalSm,
 };
 
-function SectionLabel({ children }: { children: string }) {
-  return <Text style={styles.sectionLabel}>{children}</Text>;
+function SectionCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <SHCCard style={styles.sectionCard}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {hint ? <Text style={styles.sectionHint}>{hint}</Text> : null}
+      {children}
+    </SHCCard>
+  );
 }
 
 export function CookListingEditScreen({
@@ -337,8 +349,12 @@ export function CookListingEditScreen({
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) + 80 },
+        shcScreenInset,
+        {
+          paddingTop: insets.top + shcSpacing.md,
+          paddingBottom: contentPadForTabBar(insets.bottom) + shcSpacing.lg,
+          gap: shcSpacing.md,
+        },
       ]}
       keyboardShouldPersistTaps="handled"
       testID="cook-listing-edit-screen"
@@ -347,156 +363,173 @@ export function CookListingEditScreen({
         <Pressable onPress={onExit} style={styles.backBtn} testID="listing-edit-back" accessibilityRole="button">
           <SHCIcon name="chevron-back" size={24} color={shcColors.text} active />
         </Pressable>
-        <View style={{ flex: 1 }}>
-          <SHCSectionTitle>Edit listing</SHCSectionTitle>
-          <Text style={styles.subtitle}>Update everything on this page, then save.</Text>
-        </View>
       </View>
 
+      <GourmeatCookHeader
+        title="Edit listing"
+        subtitle="Update your dish, then save changes."
+        testID="listing-edit-hero"
+      />
+
       <SHCFadeIn>
-        <SHCCard variant="bento-peach" style={{ marginBottom: shcSpacing.md, overflow: 'hidden', padding: 0 }}>
+        <View style={{ gap: shcSpacing.md }}>
+        <SHCCard variant="bento-peach" style={{ overflow: 'hidden', padding: 0 }}>
           <SHCFoodImage uri={previewImage} height={140} rounded={0} />
-          <View style={{ padding: shcSpacing.sm }}>
+          <View style={{ padding: shcSpacing.md }}>
             <Text style={styles.previewName}>{name || 'Your dish'}</Text>
             <SHCMetaBadge kind="price">{price != null ? `S$${price}` : 'Price'}</SHCMetaBadge>
           </View>
         </SHCCard>
 
-        <SectionLabel>Dish basics</SectionLabel>
-        <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} testID="listing-name-input" />
-        {basicsValidation.fieldErrors.name ? (
-          <Text style={styles.fieldError}>{basicsValidation.fieldErrors.name}</Text>
-        ) : null}
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TextInput
-            value={price != null ? String(price) : ''}
-            onChangeText={(t) => {
-              const trimmed = t.trim();
-              if (!trimmed) return setPrice(null);
-              const n = parseInt(trimmed, 10);
-              setPrice(Number.isNaN(n) ? null : n);
-            }}
-            keyboardType="numeric"
-            placeholder="Price S$"
-            style={[inputStyle, { flex: 1 }]}
-            testID="listing-price-input"
-          />
-          <TextInput
-            value={minQty != null ? String(minQty) : ''}
-            onChangeText={(t) => {
-              const trimmed = t.trim();
-              if (!trimmed) return setMinQty(null);
-              const n = parseInt(trimmed, 10);
-              setMinQty(Number.isNaN(n) ? null : n);
-            }}
-            keyboardType="numeric"
-            placeholder="Min qty"
-            style={[inputStyle, { flex: 1 }]}
-            testID="listing-min-qty-input"
-          />
-        </View>
-        <SHCListingDescriptionInput value={description} onChange={setDescription} />
-
-        <SectionLabel>Cuisine & allergens</SectionLabel>
-        <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={72} rounded={shcRadii.md} />
-        <View style={styles.cuisinePresets} testID="listing-cuisine-presets">
-          {cuisinePresets.map((c) => (
-            <Pressable
-              key={c}
-              onPress={() => setCuisine(c)}
-              style={[styles.cuisineChip, cuisine === c && styles.cuisineChipActive]}
-              testID={`cuisine-preset-${c}`}
-            >
-              <Text style={[styles.cuisineChipText, cuisine === c && styles.cuisineChipTextActive]}>{c}</Text>
-            </Pressable>
-          ))}
-        </View>
-        <TextInput value={cuisine} onChangeText={setCuisine} style={inputStyle} placeholder="Cuisine" testID="listing-cuisine-input" />
-        <SHCHalalToggle value={halal} onChange={setHalal} />
-        <SHCAllergenTierPicker
-          value={allergenTiers}
-          onChange={setAllergenTiers}
-          tier1Presets={cookAllergenTier1Presets(config)}
-        />
-        <Pressable onPress={() => setAllergenNoneConfirmed((v) => !v)} style={{ marginBottom: shcSpacing.md }} testID="listing-allergen-none">
-          <Text style={{ fontWeight: '700', color: allergenNoneConfirmed ? shcColors.primary : shcColors.text }}>
-            {allergenNoneConfirmed ? '✓ ' : ''}No tier-1 allergens in this dish
-          </Text>
-        </Pressable>
-
-        <SectionLabel>Ingredients & nutrition</SectionLabel>
-        <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
-        <SHCButton
-          variant="outline"
-          onPress={async () => setAiCal(await aiEstMut.mutateAsync(ingredients))}
-          testID="ai-cal-est-btn"
-          style={{ marginBottom: shcSpacing.sm }}
-        >
-          <SHCButtonText>🔥 AI Calories</SHCButtonText>
-        </SHCButton>
-        {aiCal ? <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} /> : null}
-
-        <SectionLabel>Dish photo</SectionLabel>
-        <View style={styles.photoPanel} testID="listing-photo-panel">
-          {listingImageUrl ? (
-            <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
-          ) : (
-            <SHCFoodImage uri={previewImage} height={140} rounded={shcRadii.md} testID="listing-photo-preview" />
-          )}
-          <View style={styles.photoActions}>
-            <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-upload" onPress={() => void polishFromPicker('upload')}>
-              <SHCButtonText>Upload</SHCButtonText>
-            </SHCButton>
-            <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-brighten" onPress={() => void polishFromPicker('brighten')}>
-              <SHCButtonText>Brighten</SHCButtonText>
-            </SHCButton>
-            <SHCButton variant="outline" disabled={aiPhotoBusy || !name.trim() || !generateAvailable} testID="listing-photo-generate" onPress={() => void runGenerateAi()}>
-              <SHCButtonText>{aiPhotoBusy ? '…' : 'Generate AI'}</SHCButtonText>
-            </SHCButton>
+        <SectionCard title="Dish basics">
+          <Text style={styles.fieldLabel}>Dish name</Text>
+          <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} testID="listing-name-input" />
+          {basicsValidation.fieldErrors.name ? (
+            <Text style={styles.fieldError}>{basicsValidation.fieldErrors.name}</Text>
+          ) : null}
+          <View style={{ flexDirection: 'row', gap: shcSpacing.sm }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Price (S$)</Text>
+              <TextInput
+                value={price != null ? String(price) : ''}
+                onChangeText={(t) => {
+                  const trimmed = t.trim();
+                  if (!trimmed) return setPrice(null);
+                  const n = parseInt(trimmed, 10);
+                  setPrice(Number.isNaN(n) ? null : n);
+                }}
+                keyboardType="numeric"
+                placeholder="12"
+                style={inputStyle}
+                testID="listing-price-input"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Min qty</Text>
+              <TextInput
+                value={minQty != null ? String(minQty) : ''}
+                onChangeText={(t) => {
+                  const trimmed = t.trim();
+                  if (!trimmed) return setMinQty(null);
+                  const n = parseInt(trimmed, 10);
+                  setMinQty(Number.isNaN(n) ? null : n);
+                }}
+                keyboardType="numeric"
+                placeholder="5"
+                style={inputStyle}
+                testID="listing-min-qty-input"
+              />
+            </View>
           </View>
-          {aiPhotoNote ? <Text style={styles.photoNote}>{aiPhotoNote}</Text> : null}
-        </View>
-        <Pressable
-          onPress={async () => {
-            openTray(
-              { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
-              <ScrollView>
-                <PhotoTipsModalContent onClose={dismiss} />
-              </ScrollView>
-            );
-          }}
-          testID="photo-tips-btn"
-          style={styles.photoTipsBtn}
-        >
-          <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-          <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
-        </Pressable>
+          <SHCListingDescriptionInput value={description} onChange={setDescription} />
+        </SectionCard>
 
-        <SectionLabel>Meal options</SectionLabel>
-        <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
-        <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
-        <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />
+        <SectionCard title="Cuisine & allergens" hint="Helps discovery and AI plate styling.">
+          <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={72} rounded={shcRadii.md} />
+          <View style={styles.cuisinePresets} testID="listing-cuisine-presets">
+            {cuisinePresets.map((c) => (
+              <Pressable
+                key={c}
+                onPress={() => setCuisine(c)}
+                style={[styles.cuisineChip, cuisine === c && styles.cuisineChipActive]}
+                testID={`cuisine-preset-${c}`}
+              >
+                <Text style={[styles.cuisineChipText, cuisine === c && styles.cuisineChipTextActive]}>{c}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={styles.fieldLabel}>Cuisine</Text>
+          <TextInput value={cuisine} onChangeText={setCuisine} style={inputStyle} placeholder="e.g. Peranakan" testID="listing-cuisine-input" />
+          <SHCHalalToggle value={halal} onChange={setHalal} />
+          <SHCAllergenTierPicker
+            value={allergenTiers}
+            onChange={setAllergenTiers}
+            tier1Presets={cookAllergenTier1Presets(config)}
+          />
+          <Pressable onPress={() => setAllergenNoneConfirmed((v) => !v)} testID="listing-allergen-none">
+            <Text style={{ fontWeight: '700', color: allergenNoneConfirmed ? shcColors.primary : shcColors.text }}>
+              {allergenNoneConfirmed ? '✓ ' : ''}No tier-1 allergens in this dish
+            </Text>
+          </Pressable>
+        </SectionCard>
 
-        <SectionLabel>Earnings preview</SectionLabel>
-        <PriceEarningsCalc
-          price={price ?? 0}
-          qty={minQty ?? 0}
-          minQty={minQty ?? 0}
-          commissionRatePct={commissionRatePct}
-        />
-        <Text style={styles.hint}>Pause or unpause from My Listings when you want this dish off the menu.</Text>
+        <SectionCard title="Ingredients & nutrition">
+          <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
+          <SHCButton
+            variant="outline"
+            onPress={async () => setAiCal(await aiEstMut.mutateAsync(ingredients))}
+            testID="ai-cal-est-btn"
+            style={{ marginTop: shcSpacing.sm }}
+          >
+            <SHCButtonText>🔥 AI Calories</SHCButtonText>
+          </SHCButton>
+          {aiCal ? <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} /> : null}
+        </SectionCard>
+
+        <SectionCard title="Dish photo">
+          <View style={styles.photoPanel} testID="listing-photo-panel">
+            {listingImageUrl ? (
+              <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
+            ) : (
+              <SHCFoodImage uri={previewImage} height={140} rounded={shcRadii.md} testID="listing-photo-preview" />
+            )}
+            <View style={styles.photoActions}>
+              <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-upload" onPress={() => void polishFromPicker('upload')}>
+                <SHCButtonText>Upload</SHCButtonText>
+              </SHCButton>
+              <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-brighten" onPress={() => void polishFromPicker('brighten')}>
+                <SHCButtonText>Brighten</SHCButtonText>
+              </SHCButton>
+              <SHCButton variant="outline" disabled={aiPhotoBusy || !name.trim() || !generateAvailable} testID="listing-photo-generate" onPress={() => void runGenerateAi()}>
+                <SHCButtonText>{aiPhotoBusy ? '…' : 'Generate AI'}</SHCButtonText>
+              </SHCButton>
+            </View>
+            {aiPhotoNote ? <Text style={styles.photoNote}>{aiPhotoNote}</Text> : null}
+          </View>
+          <Pressable
+            onPress={async () => {
+              openTray(
+                { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
+                <ScrollView>
+                  <PhotoTipsModalContent onClose={dismiss} />
+                </ScrollView>
+              );
+            }}
+            testID="photo-tips-btn"
+            style={styles.photoTipsBtn}
+          >
+            <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
+            <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
+          </Pressable>
+        </SectionCard>
+
+        <SectionCard title="Meal options">
+          <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
+          <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
+          <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />
+        </SectionCard>
+
+        <SectionCard title="Earnings preview">
+          <PriceEarningsCalc
+            price={price ?? 0}
+            qty={minQty ?? 0}
+            minQty={minQty ?? 0}
+            commissionRatePct={commissionRatePct}
+          />
+          <Text style={styles.hint}>Pause or unpause from My Listings when you want this dish off the menu.</Text>
+        </SectionCard>
 
         <SHCButton
           onPress={() => void save()}
           disabled={saving || !basicsValidation.valid}
           testID="listing-edit-save"
-          style={{ marginTop: shcSpacing.lg }}
         >
           <SHCButtonText>{saving ? 'Saving…' : 'Save changes'}</SHCButtonText>
         </SHCButton>
-        <SHCButton variant="outline" onPress={onExit} testID="listing-edit-cancel" style={{ marginTop: shcSpacing.sm }}>
+        <SHCButton variant="outline" onPress={onExit} testID="listing-edit-cancel">
           <SHCButtonText>Cancel</SHCButtonText>
         </SHCButton>
+        </View>
       </SHCFadeIn>
     </ScrollView>
   );
@@ -504,9 +537,7 @@ export function CookListingEditScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: gourmeatColors.background },
-  content: { paddingHorizontal: shcSpacing.md },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
-  subtitle: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', ...shcTitleBlock },
   backBtn: {
     width: 40,
     height: 40,
@@ -518,10 +549,13 @@ const styles = StyleSheet.create({
     backgroundColor: shcColors.surface,
     ...shcShadows.brutalSm,
   },
-  sectionLabel: { fontSize: 15, fontWeight: '900', color: shcColors.text, marginTop: shcSpacing.md, marginBottom: shcSpacing.sm },
+  sectionCard: { gap: shcSpacing.sm },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: shcColors.text },
+  sectionHint: { fontSize: 13, fontWeight: '600', color: gourmeatColors.textLight, lineHeight: 18 },
+  fieldLabel: { fontSize: 12, fontWeight: '800', color: shcColors.text, marginTop: shcSpacing.xs },
   previewName: { fontSize: 18, fontWeight: '900', color: shcColors.text, marginBottom: 6 },
   fieldError: { fontSize: 12, fontWeight: '700', color: '#b91c1c', marginTop: -4, marginBottom: shcSpacing.sm },
-  cuisinePresets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+  cuisinePresets: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm, marginVertical: shcSpacing.sm },
   cuisineChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -534,16 +568,15 @@ const styles = StyleSheet.create({
   cuisineChipText: { fontSize: 12, fontWeight: '800', color: shcColors.text },
   cuisineChipTextActive: { color: '#fff' },
   photoPanel: {
-    marginBottom: shcSpacing.sm,
     padding: shcSpacing.sm,
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
     borderRadius: shcRadii.md,
-    backgroundColor: shcColors.surface,
-    gap: 8,
+    backgroundColor: shcColors.surfaceAlt,
+    gap: shcSpacing.sm,
   },
-  photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  photoActions: { flexDirection: 'row', flexWrap: 'wrap', gap: shcSpacing.sm },
   photoNote: { fontSize: 11, fontWeight: '600', color: shcColors.textLight },
-  photoTipsBtn: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
-  hint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: shcSpacing.sm, marginBottom: shcSpacing.sm },
+  photoTipsBtn: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, marginTop: shcSpacing.sm },
+  hint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginTop: shcSpacing.sm },
 });

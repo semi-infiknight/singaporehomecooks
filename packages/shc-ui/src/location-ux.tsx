@@ -48,6 +48,13 @@ export function LocationPickerExperience({
   onPinDrag,
   onQuickPickArea,
   searchNotice,
+  embedded = false,
+  showSavedAddresses = true,
+  showQuickPick = true,
+  uiVariant = 'default',
+  areaHint,
+  searchPlaceholder,
+  confirmLabel = 'Confirm & save',
   testID = 'location-picker',
 }: {
   step: 1 | 2;
@@ -73,14 +80,26 @@ export function LocationPickerExperience({
   onPinDrag?: (coords: { lat: number; lng: number }) => void;
   onQuickPickArea?: (areaName: string) => void;
   searchNotice?: string | null;
+  /** Hide full-screen header when nested inside onboarding / settings. */
+  embedded?: boolean;
+  showSavedAddresses?: boolean;
+  /** Hide area chips — e.g. cook already picked neighbourhood in onboarding. */
+  showQuickPick?: boolean;
+  /** Swiggy-style search + map confirm (full-width search, no Go button). */
+  uiVariant?: 'default' | 'swiggy';
+  /** Shown above search when neighbourhood was chosen earlier (not a second picker). */
+  areaHint?: string;
+  searchPlaceholder?: string;
+  confirmLabel?: string;
   testID?: string;
 }) {
+  const isSwiggy = uiVariant === 'swiggy';
   const goBack = () => {
     if (step === 2) onStepChange(1);
     else onBack?.();
   };
 
-  const header = (
+  const header = embedded ? null : (
     <View style={{ paddingHorizontal: shcSpacing.md, paddingTop: shcSpacing.md, backgroundColor: gourmeatColors.background }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: shcSpacing.sm }}>
         <Pressable onPress={goBack} testID="location-back-btn" style={backBtn}>
@@ -103,24 +122,90 @@ export function LocationPickerExperience({
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: gourmeatColors.background }} testID={testID}>
+    <View style={{ flex: embedded ? undefined : 1, backgroundColor: gourmeatColors.background }} testID={testID}>
       {header}
       <ScrollView
         key={`location-scroll-${step}`}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        contentContainerStyle={{ paddingBottom: shcSpacing.xl, flexGrow: 1 }}
-        showsVerticalScrollIndicator
-        style={{ flex: 1, backgroundColor: gourmeatColors.background }}
+        scrollEnabled={!embedded}
+        nestedScrollEnabled
+        contentContainerStyle={{ paddingBottom: shcSpacing.xl, flexGrow: embedded ? undefined : 1 }}
+        showsVerticalScrollIndicator={!embedded}
+        style={embedded ? { backgroundColor: gourmeatColors.background } : { flex: 1, backgroundColor: gourmeatColors.background }}
       >
-        <View key={`location-body-${step}`} style={{ paddingHorizontal: shcSpacing.md, backgroundColor: gourmeatColors.background }}>
+        <View key={`location-body-${step}`} style={{ paddingHorizontal: embedded ? 0 : shcSpacing.md, backgroundColor: gourmeatColors.background }}>
             {step === 1 ? (
               <View testID="location-step-find">
+                {areaHint ? (
+                  <Text style={areaHintText}>Kitchen area: {areaHint}</Text>
+                ) : null}
+
+                {isSwiggy ? (
+                  <>
+                    <View style={swiggySearchWrap}>
+                      <View style={swiggySearchIcon}>
+                        <SHCIcon name="search" size={18} color={shcColors.textLight} />
+                      </View>
+                      <TextInput
+                        value={query}
+                        onChangeText={onQueryChange}
+                        placeholder={searchPlaceholder ?? 'Search any address in Singapore'}
+                        placeholderTextColor={shcColors.textLight}
+                        style={swiggySearchInput}
+                        testID="location-search-input"
+                        returnKeyType="search"
+                        onSubmitEditing={onSearch}
+                        autoCorrect={false}
+                      />
+                      {query.length > 0 ? (
+                        <Pressable
+                          onPress={() => onQueryChange('')}
+                          hitSlop={8}
+                          testID="location-search-clear"
+                          style={{ paddingRight: shcSpacing.md }}
+                        >
+                          <Text style={{ fontSize: 18, fontWeight: '700', color: shcColors.textLight }}>×</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                    <Pressable
+                      onPress={onUseCurrentLocation}
+                      disabled={locating}
+                      style={swiggyGpsRow}
+                      testID="location-use-gps"
+                    >
+                      <SHCIcon name="location" size={18} color={shcColors.primary} active />
+                      <Text style={swiggyGpsText}>{locating ? 'Getting GPS…' : 'Use my current location'}</Text>
+                    </Pressable>
+                    {searching && <ActivityIndicator color={shcColors.primary} style={{ marginVertical: shcSpacing.sm }} />}
+                    {!searching && searchNotice ? (
+                      <SHCCard variant="bento-peach" style={{ marginBottom: shcSpacing.sm }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', lineHeight: 18, color: shcColors.text }}>{searchNotice}</Text>
+                      </SHCCard>
+                    ) : null}
+                    {results.length > 0 ? <Text style={searchResultsEyebrow}>SEARCH RESULTS</Text> : null}
+                    {results.map((r) => (
+                      <Pressable key={r.id} onPress={() => onSelectResult(r)} testID={`location-result-${r.id}`} style={{ marginBottom: shcSpacing.sm }}>
+                        <View style={swiggyResultRow}>
+                          <View style={swiggyResultIcon}>
+                            <SHCIcon name="location" size={16} color={shcColors.textLight} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontWeight: '800', fontSize: 14 }}>{r.title}</Text>
+                            <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2, lineHeight: 17 }}>{r.subtitle}</Text>
+                          </View>
+                        </View>
+                      </Pressable>
+                    ))}
+                  </>
+                ) : (
+                  <>
                 <SHCButton variant="outline" onPress={onUseCurrentLocation} disabled={locating} testID="location-use-gps" style={{ marginBottom: shcSpacing.md }}>
                   <SHCButtonText variant="outline">{locating ? 'Getting GPS…' : '📍 Use my current location'}</SHCButtonText>
                 </SHCButton>
 
-                {onQuickPickArea ? (
+                {showQuickPick && onQuickPickArea ? (
                   <>
                     <Text style={sectionLabel}>Quick pick — your area</Text>
                     <Text style={hint}>One tap to browse kitchens near you. Add your block later at checkout.</Text>
@@ -144,7 +229,7 @@ export function LocationPickerExperience({
                   </>
                 ) : null}
 
-                {saved.length > 0 && (
+                {showSavedAddresses && saved.length > 0 && (
                   <>
                     <Text style={sectionLabel}>Saved addresses</Text>
                     {saved.map((addr) => (
@@ -206,9 +291,93 @@ export function LocationPickerExperience({
                     </SHCCard>
                   </Pressable>
                 ))}
+                  </>
+                )}
               </View>
             ) : draft ? (
               <View testID="location-step-confirm">
+                {isSwiggy ? (
+                  <>
+                    <View style={swiggyConfirmHeader}>
+                      <Pressable onPress={() => onStepChange(1)} testID="location-embedded-back" style={backBtn}>
+                        <Text style={{ fontSize: 20, fontWeight: '800', color: shcColors.text }}>←</Text>
+                      </Pressable>
+                      <View style={[swiggySearchWrap, { flex: 1, marginBottom: 0 }]}>
+                        <View style={swiggySearchIcon}>
+                          <SHCIcon name="search" size={18} color={shcColors.textLight} />
+                        </View>
+                        <TextInput
+                          value={query}
+                          onChangeText={onQueryChange}
+                          placeholder={searchPlaceholder ?? 'Search any address in Singapore'}
+                          placeholderTextColor={shcColors.textLight}
+                          style={swiggySearchInput}
+                          testID="location-search-input-confirm"
+                          returnKeyType="search"
+                          onFocus={() => onStepChange(1)}
+                          autoCorrect={false}
+                        />
+                      </View>
+                    </View>
+
+                    {draft.source === 'gps' && !draft.line1 ? (
+                      <View style={geocodeBanner}>
+                        <ActivityIndicator color={shcColors.primary} size="small" />
+                        <Text style={geocodeBannerText}>Looking up your block from GPS…</Text>
+                      </View>
+                    ) : null}
+
+                    {draft.lat != null && draft.lng != null && onPinDrag ? (
+                      <View style={swiggyMapWrap} testID="location-pin-panel">
+                        <SHCLocationDraggableMap
+                          lat={draft.lat}
+                          lng={draft.lng}
+                          onPinChange={onPinDrag}
+                          height={340}
+                        />
+                      </View>
+                    ) : null}
+
+                    <View style={swiggyBottomSheet}>
+                      <Text style={swiggySheetHint}>Place the pin at exact collection location</Text>
+                      <View style={swiggyAddressRow}>
+                        <SHCIcon name="location" size={22} color={shcColors.primary} active />
+                        <View style={{ flex: 1 }}>
+                          <Text style={swiggyAddressTitle}>
+                            {draft.line1?.split(',')[0]?.trim() || 'Selected location'}
+                          </Text>
+                          <Text style={swiggyAddressSub}>
+                            {formatLocationLabel(draft as SHCSavedAddress)}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={sectionLabel}>Unit / floor (optional)</Text>
+                      <TextInput
+                        value={draft.line2 ?? ''}
+                        onChangeText={(t) => onDraftChange({ line2: t })}
+                        placeholder="#05-123"
+                        placeholderTextColor={shcColors.textLight}
+                        style={inputStyle}
+                        testID="location-line2"
+                      />
+                      <SHCButton
+                        size="lg"
+                        onPress={onConfirm}
+                        disabled={busy || !draft.line1 || (draft.line1?.length ?? 0) < 3}
+                        testID="location-confirm-btn"
+                        style={{ marginTop: shcSpacing.sm, width: '100%' }}
+                      >
+                        <SHCButtonText>{busy ? 'Saving…' : confirmLabel}</SHCButtonText>
+                      </SHCButton>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                {embedded ? (
+                  <Pressable onPress={() => onStepChange(1)} testID="location-embedded-back" style={{ marginBottom: shcSpacing.sm, alignSelf: 'flex-start' }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: shcColors.primary }}>← Back to search</Text>
+                  </Pressable>
+                ) : null}
                 {draft.source === 'gps' && !draft.line1 ? (
                   <View style={geocodeBanner}>
                     <ActivityIndicator color={shcColors.primary} size="small" />
@@ -255,7 +424,6 @@ export function LocationPickerExperience({
                     </Pressable>
                   ))}
                 </View>
-
                 <Text style={sectionLabel}>Block & street</Text>
                 <TextInput
                   value={draft.line1 ?? ''}
@@ -290,13 +458,11 @@ export function LocationPickerExperience({
                   multiline
                   testID="location-instructions"
                 />
-
                 <SHCCard variant="bento-peach" style={{ marginTop: shcSpacing.sm }}>
                   <Text style={{ fontSize: 12, fontWeight: '700', lineHeight: 18 }}>
                     Preview: {formatLocationLabel(draft as SHCSavedAddress)}
                   </Text>
                 </SHCCard>
-
                 <SHCButton
                   size="lg"
                   onPress={onConfirm}
@@ -304,8 +470,10 @@ export function LocationPickerExperience({
                   testID="location-confirm-btn"
                   style={{ marginTop: shcSpacing.lg, width: '100%' }}
                 >
-                  <SHCButtonText>{busy ? 'Saving…' : 'Save collection location'}</SHCButtonText>
+                  <SHCButtonText>{busy ? 'Saving…' : confirmLabel}</SHCButtonText>
                 </SHCButton>
+                  </>
+                )}
               </View>
             ) : (
               <View testID="location-step-empty" style={{ paddingVertical: shcSpacing.lg }}>
@@ -349,6 +517,120 @@ const quickAreaChip = {
   backgroundColor: shcColors.surface,
 };
 const quickAreaChipText = { fontSize: 13, fontWeight: '800', color: shcColors.text };
+
+const areaHintText = {
+  fontSize: 12,
+  fontWeight: '700',
+  color: shcColors.textLight,
+  marginBottom: shcSpacing.sm,
+};
+const swiggyGpsRow = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  paddingVertical: shcSpacing.sm,
+  marginBottom: shcSpacing.md,
+};
+const swiggyGpsText = { fontSize: 15, fontWeight: '800', color: shcColors.primary };
+const swiggySearchWrap = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: shcBorders.brutal,
+  borderColor: shcColors.border,
+  borderRadius: shcRadii.lg,
+  backgroundColor: shcColors.surface,
+  marginBottom: shcSpacing.sm,
+  ...shcShadows.brutalSm,
+};
+const swiggySearchIcon = { paddingLeft: shcSpacing.md };
+const swiggySearchInput = {
+  flex: 1,
+  paddingVertical: shcSpacing.md,
+  paddingRight: shcSpacing.md,
+  fontSize: 15,
+  color: shcColors.text,
+  letterSpacing: 0,
+};
+const searchResultsEyebrow = {
+  fontSize: 11,
+  fontWeight: '800',
+  color: shcColors.textLight,
+  letterSpacing: 0.8,
+  marginBottom: shcSpacing.sm,
+  marginTop: shcSpacing.xs,
+};
+const swiggyResultRow = {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: shcSpacing.sm,
+  paddingVertical: shcSpacing.sm,
+  borderBottomWidth: 1,
+  borderBottomColor: '#EEE',
+};
+const swiggyResultIcon = {
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: shcColors.surfaceAlt,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 2,
+};
+const swiggyPinHint = {
+  fontSize: 13,
+  fontWeight: '700',
+  color: shcColors.text,
+  marginTop: shcSpacing.sm,
+  textAlign: 'center',
+};
+const swiggyConfirmHeader = {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: shcSpacing.sm,
+  marginBottom: shcSpacing.sm,
+};
+const swiggyMapWrap = {
+  marginHorizontal: -shcSpacing.md,
+  marginBottom: shcSpacing.sm,
+  overflow: 'hidden',
+};
+const swiggyBottomSheet = {
+  marginTop: -shcSpacing.lg,
+  paddingTop: shcSpacing.lg,
+  paddingHorizontal: shcSpacing.md,
+  paddingBottom: shcSpacing.md,
+  borderTopLeftRadius: shcRadii.xl,
+  borderTopRightRadius: shcRadii.xl,
+  borderWidth: shcBorders.brutal,
+  borderColor: shcColors.border,
+  backgroundColor: shcColors.surface,
+  ...shcShadows.brutalSm,
+};
+const swiggySheetHint = {
+  fontSize: 12,
+  fontWeight: '600',
+  color: shcColors.textLight,
+  marginBottom: shcSpacing.md,
+};
+const swiggyAddressRow = {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: shcSpacing.sm,
+  marginBottom: shcSpacing.md,
+};
+const swiggyAddressTitle = {
+  fontSize: 16,
+  fontWeight: '900',
+  color: shcColors.text,
+  lineHeight: 22,
+};
+const swiggyAddressSub = {
+  fontSize: 12,
+  fontWeight: '600',
+  color: shcColors.textLight,
+  marginTop: 4,
+  lineHeight: 18,
+};
 
 const nudgeBanner = {
   flexDirection: 'row',
@@ -415,6 +697,7 @@ const inputStyle = {
   backgroundColor: shcColors.surface,
   fontSize: 15,
   color: shcColors.text,
+  letterSpacing: 0,
   marginBottom: shcSpacing.sm,
   ...shcShadows.brutalSm,
 };

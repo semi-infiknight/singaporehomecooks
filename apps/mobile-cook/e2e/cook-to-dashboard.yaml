@@ -1,0 +1,53 @@
+# Finish onboarding (if open) or phone-login → cook dashboard. Keeps app state.
+appId: com.singaporehomecooks.cook
+env:
+  COOK_MOBILE: "90025225"
+---
+- launchApp:
+    clearState: false
+- runFlow:
+    when:
+      visible:
+        id: "cook-onboarding-finish-btn"
+    commands:
+      - tapOn:
+          id: "cook-onboarding-finish-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- runFlow:
+    when:
+      visible: "Log in or sign up"
+    commands:
+      - tapOn:
+          id: "auth-mobile-input"
+      - inputText: ${COOK_MOBILE}
+      - tapOn:
+          id: "auth-submit-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "auth-otp-input"
+          timeout: 15000
+      - tapOn:
+          id: "auth-otp-input"
+      - inputText: "123456"
+      - tapOn:
+          id: "auth-submit-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- runFlow:
+    when:
+      visible:
+        id: "cook-onboarding-finish-btn"
+    commands:
+      - tapOn:
+          id: "cook-onboarding-finish-btn"
+      - tapOn:
+          text: "OK"
+          optional: true
+- openLink: shc-cook:///(cook)/dashboard
+- extendedWaitUntil:
+    visible:
+      id: "cook-dashboard"
+    timeout: 90000

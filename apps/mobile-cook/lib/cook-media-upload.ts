@@ -6,6 +6,8 @@ export type PickedCookMediaFile = {
   name: string;
   base64: string;
   mimeType: string;
+  /** Local file URI for immediate preview before upload completes. */
+  uri?: string;
 };
 
 async function loadImagePicker(): Promise<typeof import('expo-image-picker') | null> {
@@ -43,6 +45,7 @@ export async function pickCookMediaImage(): Promise<PickedCookMediaFile | null> 
     name,
     base64: `data:${mimeType};base64,${asset.base64}`,
     mimeType,
+    uri: asset.uri,
   };
 }
 
@@ -54,5 +57,9 @@ export async function uploadCookMediaImage(
   const objectName = cookMediaObjectName(cookId, kind, file.name, file.mimeType);
   const uploaded = await uploadImageToServer(file.base64, objectName, cookId, file.mimeType);
   const key = String((uploaded as { key?: string }).key || objectName);
-  return { key, url: (uploaded as { url?: string }).url };
+  const url =
+    (uploaded as { image_url?: string }).image_url ||
+    (uploaded as { url?: string }).url ||
+    undefined;
+  return { key, url };
 }
