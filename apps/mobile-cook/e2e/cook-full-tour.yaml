@@ -77,12 +77,6 @@ appId: com.singaporehomecooks.cook
 - extendedWaitUntil:
     visible: "Ingredients & photo"
     timeout: 15000
-- tapOn:
-    id: "ai-cal-est-btn"
-    optional: true
-- tapOn:
-    text: "Cancel"
-    optional: true
 - scrollUntilVisible:
     element:
       id: "listing-wizard-next-step3"

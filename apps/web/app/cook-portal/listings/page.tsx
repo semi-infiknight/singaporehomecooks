@@ -26,6 +26,7 @@ import {
   mealOptionsFromListing,
   recipeStepsFromListing,
   normalizeIngredients,
+  ingredientsForCalorieEstimate,
   cookAllergenTier1Presets,
   cookEarningsPreviewFromDollars,
   validateCookListingDraft,
@@ -41,8 +42,7 @@ import {
   useUpdateCookListing,
   useDeleteCookListing,
 } from '../../../lib/useCookPortal';
-import { useAICalorieEstimate } from '../../../lib/useProducts';
-import { getPhotoTips, generateListingImage, getAiImageStatus } from '../../../lib/api-client';
+import { getPhotoTips, generateListingImage, getAiImageStatus, estimateCaloriesAI } from '../../../lib/api-client';
 import {
   GourmeatCookHeader,
   GourmeatSearchBar,
@@ -62,7 +62,6 @@ import {
   useMilestoneCelebrationWeb,
   SHCSkeletonList,
   PhotoTipsTrayContentWeb,
-  CalorieBadge,
   AllergenTierPickerWeb,
   HalalToggleWeb,
   IngredientsEditorWeb,
@@ -126,7 +125,6 @@ export default function CookListingsPage() {
   const createListing = useCreateCookListing();
   const updateListing = useUpdateCookListing();
   const deleteListing = useDeleteCookListing();
-  const aiEstMut = useAICalorieEstimate();
   const { openTray, pushTrayContent, popTray, dismiss } = useSHCTrayWeb();
   const wizardRef = useRef<HTMLDivElement>(null);
 
@@ -448,12 +446,32 @@ export default function CookListingsPage() {
       return;
     }
     setPublishing(true);
+    let calories = aiCal?.calories;
+    let calories_confidence = aiCal?.confidence as string | undefined;
+    const calPayload = ingredientsForCalorieEstimate(ingredients);
+    if (calPayload.length > 0) {
+      try {
+        const est = (await estimateCaloriesAI(calPayload)) as {
+          calories?: number;
+          confidence?: string;
+        };
+        if (est?.calories != null) {
+          calories = est.calories;
+          calories_confidence = est.confidence === 'full' ? 'full' : 'category';
+          setAiCal({ calories: est.calories, confidence: calories_confidence, source: 'ai' });
+        }
+      } catch {
+        // Non-blocking — publish still proceeds without calories.
+      }
+    }
     const input = buildCookListingPayload({
       ...listingDraft,
       name: name.trim(),
       image_url:
         listingImageUrl ||
         `https://picsum.photos/seed/${name.replace(/\s+/g, '')}/400/300`,
+      calories,
+      calories_confidence,
     });
     try {
       const prod = editingId
@@ -809,17 +827,12 @@ export default function CookListingsPage() {
             <div className={`space-y-3 ${editingId ? 'mt-6' : ''}`} data-testid="listing-wizard-step3">
               {editingId ? <p className="text-sm font-extrabold text-foreground">Ingredients, photo & options</p> : null}
               <IngredientsEditorWeb value={ingredients} onChange={setIngredients} />
-              <SHCButton
-                variant="outline"
-                onClick={async () => {
-                  const est = await aiEstMut.mutateAsync(ingredients);
-                  setAiCal(est as { calories: number; confidence: string; source?: string });
-                }}
-                testID="ai-cal-est-btn"
-              >
-                🔥 AI Calories
-              </SHCButton>
-              {aiCal ? <CalorieBadge calories={aiCal.calories} /> : null}
+              <p className="text-xs text-muted-foreground">
+                Calorie estimate is applied automatically when you publish with ingredients listed.
+              </p>
+              {aiCal?.calories != null ? (
+                <p className="text-sm font-bold text-muted-foreground">~{aiCal.calories} cal per portion (auto)</p>
+              ) : null}
               <div className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 space-y-2" data-testid="listing-photo-panel">
                 <p className="text-sm font-extrabold">Dish photo</p>
                 <p className="text-xs text-muted-foreground">

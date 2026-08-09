@@ -738,7 +738,24 @@ export function createShcApiClient(config: ShcApiClientConfig) {
     },
 
     async estimateCaloriesAI(ingredients: unknown[]) {
-      return request("/store/shc/ai", { method: "POST", body: JSON.stringify({ ingredients }) });
+      // Name-only listing ingredients → API needs qty/unit (100g default).
+      const normalized = (Array.isArray(ingredients) ? ingredients : [])
+        .map((raw) => {
+          const row = raw as { name?: string; quantity?: number; unit?: string };
+          const name = String(row?.name || "").trim();
+          if (!name) return null;
+          const q = Number(row?.quantity);
+          return {
+            name,
+            quantity: Number.isFinite(q) && q > 0 ? q : 100,
+            unit: String(row?.unit || "g").trim() || "g",
+          };
+        })
+        .filter(Boolean);
+      return request("/store/shc/ai", {
+        method: "POST",
+        body: JSON.stringify({ ingredients: normalized }),
+      });
     },
 
     async getPhotoTips() {

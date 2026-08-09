@@ -16,8 +16,9 @@ const EstimateSchema = z
         z
           .object({
             name: z.string().trim().min(1),
-            quantity: z.number().nonnegative(),
-            unit: z.string(),
+            /** Optional — name-only listings default to 100g for category estimate. */
+            quantity: z.number().nonnegative().optional().default(100),
+            unit: z.string().optional().default("g"),
           })
           .strict()
       )

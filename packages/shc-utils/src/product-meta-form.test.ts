@@ -6,6 +6,7 @@ import {
   updateIngredientRow,
   normalizeIngredients,
   ingredientsToApiPayload,
+  ingredientsForCalorieEstimate,
   mealOptionsFromListing,
   mealOptionsToApiPayload,
   normalizeMealOptions,
@@ -51,5 +52,11 @@ describe('product-meta-form', () => {
     const updated = updateIngredientRow(rows, 0, { name: 'Prawns' });
     expect(updated[0]).toEqual({ name: 'Prawns' });
     expect(ingredientsToApiPayload(updated)).toEqual([{ name: 'Prawns' }]);
+    expect(ingredientsForCalorieEstimate([{ name: 'Chicken' }, { name: '  ' }])).toEqual([
+      { name: 'Chicken', quantity: 100, unit: 'g' },
+    ]);
+    expect(ingredientsForCalorieEstimate([{ name: 'Rice', quantity: 200, unit: 'g' }])).toEqual([
+      { name: 'Rice', quantity: 200, unit: 'g' },
+    ]);
   });
 });

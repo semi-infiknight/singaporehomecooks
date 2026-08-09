@@ -74,6 +74,13 @@ describe("POST /store/shc/ai", () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it("accepts name-only ingredients with default qty/unit", async () => {
+    const res = makeRes();
+    await POST(makeReq({ ingredients: [{ name: "Chicken" }, { name: "Coconut" }] }), res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.calories).toBe(475);
+  });
+
   it("rejects empty ingredient name", async () => {
     const res = makeRes();
     await POST(makeReq({ ingredients: [{ name: "", quantity: 100, unit: "g" }] }), res);

@@ -17,7 +17,6 @@ import {
   SHCIcon,
   gourmeatColors,
   shcColors,
-  AICalorieBadge,
   PhotoTipsModalContent,
   useSHCTray,
   SHCTrayAction,
@@ -52,6 +51,7 @@ import {
   mealOptionsFromListing,
   recipeStepsFromListing,
   normalizeIngredients,
+  ingredientsForCalorieEstimate,
   validateCookListingDraft,
   validateCookListingForPublish,
   validateCookListingWizardStep,
@@ -59,13 +59,13 @@ import {
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAICalorieEstimate } from '../hooks/useProducts';
 import {
   getPhotoTips,
   createCookListing,
   updateCookListing,
   generateListingImage,
   getAiImageStatus,
+  estimateCaloriesAI,
 } from '../lib/api-client';
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
@@ -168,8 +168,7 @@ export function CookListingWizardScreen({
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [recipeSteps, setRecipeSteps] = useState<RecipeStepDraft[]>([]);
   const [published, setPublished] = useState<any>(null);
-  const [aiCal, setAiCal] = useState<any>(null);
-  const aiEstMut = useAICalorieEstimate();
+  const [aiCal, setAiCal] = useState<{ calories: number; confidence?: string; source?: string } | null>(null);
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
   const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
   const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
@@ -410,12 +409,33 @@ export function CookListingWizardScreen({
       return;
     }
     setPublishing(true);
+    // Auto AI calories when ingredients are listed (no manual button).
+    let calories = aiCal?.calories;
+    let calories_confidence = aiCal?.confidence as 'full' | 'category' | undefined;
+    const calPayload = ingredientsForCalorieEstimate(ingredients);
+    if (calPayload.length > 0) {
+      try {
+        const est = (await estimateCaloriesAI(calPayload)) as {
+          calories?: number;
+          confidence?: string;
+        };
+        if (est?.calories != null) {
+          calories = est.calories;
+          calories_confidence = est.confidence === 'full' ? 'full' : 'category';
+          setAiCal({ calories: est.calories, confidence: calories_confidence, source: 'ai' });
+        }
+      } catch {
+        // Non-blocking — publish still proceeds without calories.
+      }
+    }
     const input = buildCookListingPayload({
       ...listingDraft,
       name: name.trim(),
       price: price as number,
       min_qty: minQty as number,
       image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
+      calories,
+      calories_confidence,
     });
     try {
       const prod = editingId
@@ -568,18 +588,9 @@ export function CookListingWizardScreen({
         {step === 3 && (
           <ListingWizardStep step={3} title="Ingredients & photo">
             <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
-            <SHCButton
-              variant="outline"
-              onPress={async () => {
-                const est = await aiEstMut.mutateAsync(ingredients);
-                setAiCal(est);
-              }}
-              testID="ai-cal-est-btn"
-              style={{ marginTop: 6 }}
-            >
-              <SHCButtonText>🔥 AI Calories</SHCButtonText>
-            </SHCButton>
-            {aiCal && <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} />}
+            <Text style={styles.photoPanelHint}>
+              Calorie estimate is applied automatically when you publish with ingredients listed.
+            </Text>
             <View style={styles.photoPanel} testID="listing-photo-panel">
               <Text style={styles.photoPanelTitle}>Dish photo</Text>
               <Text style={styles.photoPanelHint}>

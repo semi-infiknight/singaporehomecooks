@@ -204,6 +204,27 @@ export function ingredientsToApiPayload(ingredients: IngredientDraft[]) {
   return normalizeIngredients(ingredients).map((row) => ({ name: row.name }));
 }
 
+/**
+ * Payload for POST /store/shc/ai calorie estimate.
+ * Listings store name-only ingredients; AI API still needs qty+unit —
+ * use a neutral 100g default per named ingredient (category estimate).
+ */
+export function ingredientsForCalorieEstimate(
+  ingredients?: Array<{ name?: string; quantity?: number; unit?: string } | null> | null
+): Array<{ name: string; quantity: number; unit: string }> {
+  if (!Array.isArray(ingredients)) return [];
+  return ingredients
+    .map((row) => {
+      const name = String(row?.name || '').trim();
+      if (!name) return null;
+      const q = Number(row?.quantity);
+      const quantity = Number.isFinite(q) && q > 0 ? q : 100;
+      const unit = String(row?.unit || 'g').trim() || 'g';
+      return { name, quantity, unit };
+    })
+    .filter((row): row is { name: string; quantity: number; unit: string } => row != null);
+}
+
 export function addIngredientRow(ingredients: IngredientDraft[]): IngredientDraft[] {
   return [...ingredients, defaultIngredientRow()];
 }

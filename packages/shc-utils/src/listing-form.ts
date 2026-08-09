@@ -219,9 +219,6 @@ export function cookListingToFormDraft(listing: Record<string, unknown>): CookLi
   };
 }
 
-/** Minimum order value (price × min_qty) for a publishable listing. */
-export const MIN_LISTING_ORDER_VALUE_SGD = 50;
-
 /** Build API payload for POST/PATCH /store/shc/listings. */
 export function buildCookListingPayload(draft: CookListingFormDraft): Record<string, unknown> {
   const payload: Record<string, unknown> = {
@@ -301,7 +298,7 @@ function hasAllergenDisclosure(draft: Pick<CookListingFormDraft, 'allergen_tiers
   return (draft.allergen_tiers?.tier1 || []).length >= 1;
 }
 
-/** Full publish gate — steps 2–4 + order minimum. */
+/** Full publish gate — cuisine, ingredients, allergen disclosure. No artificial price floor. */
 export function validateCookListingForPublish(draft: CookListingFormDraft): CookListingValidationResult {
   const basics = validateCookListingDraft(draft);
   const errors = [...basics.errors];
@@ -316,10 +313,6 @@ export function validateCookListingForPublish(draft: CookListingFormDraft): Cook
   }
   if (!hasAllergenDisclosure(draft)) {
     errors.push('Disclose tier-1 allergens or confirm none apply.');
-  }
-  const orderValue = Number(draft.price) * Number(draft.min_qty);
-  if (Number.isFinite(orderValue) && orderValue < MIN_LISTING_ORDER_VALUE_SGD) {
-    errors.push(`Minimum order value must be at least S$${MIN_LISTING_ORDER_VALUE_SGD} (price × servings).`);
   }
 
   return { valid: errors.length === 0, errors, fieldErrors };

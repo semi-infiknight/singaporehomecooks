@@ -51,7 +51,26 @@ describe('listing-form', () => {
       time_slots: [],
     });
     expect(bad.valid).toBe(false);
-    expect(bad.errors.length).toBeGreaterThan(2);
+    expect(bad.errors.some((e) => /ingredient/i.test(e))).toBe(true);
+    expect(bad.errors.some((e) => /allergen/i.test(e))).toBe(true);
+  });
+
+  it('allows low price × servings (no artificial order-value floor)', () => {
+    const ok = validateCookListingForPublish({
+      name: 'Nasi Lemak',
+      price: 8,
+      min_qty: 2,
+      cuisine: 'Malay',
+      occasion_tags: [],
+      ingredients: [{ name: 'Rice' }],
+      allergen_tiers: emptyAllergenTiers(),
+      allergen_none_confirmed: true,
+      halal: true,
+      portions_per_day: 12,
+      collection_days: [1, 2, 3],
+      time_slots: ['17:00-19:00'],
+    });
+    expect(ok.valid).toBe(true);
   });
 
   it('rejects invalid listing draft', () => {

@@ -21,13 +21,12 @@ const allergenTiersSchema = z.object({
   tier3: z.array(z.string()).optional(),
 });
 
+/** Name-only — amounts not stored (recipe privacy). Quantity/unit optional for legacy clients. */
 const ingredientSchema = z.object({
   name: z.string().min(2),
-  quantity: z.number().positive(),
-  unit: z.string().min(1),
+  quantity: z.number().positive().optional(),
+  unit: z.string().min(1).optional(),
 });
-
-const MIN_LISTING_ORDER_VALUE_SGD = 50;
 
 function listingPublishRefines<T extends z.ZodTypeAny>(schema: T) {
   return schema
@@ -48,16 +47,7 @@ function listingPublishRefines<T extends z.ZodTypeAny>(schema: T) {
       (data: any) =>
         (data.collection_days?.length ?? 0) >= 1 && (data.time_slots?.length ?? 0) >= 1,
       { message: "Collection days and time slots required", path: ["collection_days"] }
-    )
-    .refine((data: any) => {
-      const cents =
-        data.price_cents ?? (data.price != null ? Math.round(Number(data.price) * 100) : 0);
-      const minQty = data.min_qty ?? 5;
-      return cents * minQty >= MIN_LISTING_ORDER_VALUE_SGD * 100;
-    }, {
-      message: `Minimum order value must be at least S$${MIN_LISTING_ORDER_VALUE_SGD}`,
-      path: ["min_qty"],
-    });
+    );
 }
 
 export const ListingCreateSchema = listingPublishRefines(

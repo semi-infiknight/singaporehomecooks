@@ -12,7 +12,6 @@ import {
   SHCIcon,
   gourmeatColors,
   shcColors,
-  AICalorieBadge,
   PhotoTipsModalContent,
   useSHCTray,
   SHCTrayAction,
@@ -40,14 +39,20 @@ import {
   buildCookListingPayload,
   cookListingToFormDraft,
   E2E_COOK_SEED_LISTING,
+  ingredientsForCalorieEstimate,
   validateCookListingDraft,
   validateCookListingForPublish,
   type IngredientDraft,
   type RecipeStepDraft,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAICalorieEstimate } from '../hooks/useProducts';
-import { getPhotoTips, updateCookListing, generateListingImage, getAiImageStatus } from '../lib/api-client';
+import {
+  getPhotoTips,
+  updateCookListing,
+  generateListingImage,
+  getAiImageStatus,
+  estimateCaloriesAI,
+} from '../lib/api-client';
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
@@ -101,7 +106,6 @@ export function CookListingEditScreen({
   const { commissionRatePct } = useBusinessRules();
   const qc = useQueryClient();
   const { openTray, dismiss } = useSHCTray();
-  const aiEstMut = useAICalorieEstimate();
 
   const [hydrated, setHydrated] = useState(false);
   const [name, setName] = useState('');
@@ -319,12 +323,32 @@ export function CookListingEditScreen({
       return;
     }
     setSaving(true);
+    let calories = aiCal?.calories;
+    let calories_confidence = aiCal?.confidence as 'full' | 'category' | undefined;
+    const calPayload = ingredientsForCalorieEstimate(ingredients);
+    if (calPayload.length > 0) {
+      try {
+        const est = (await estimateCaloriesAI(calPayload)) as {
+          calories?: number;
+          confidence?: string;
+        };
+        if (est?.calories != null) {
+          calories = est.calories;
+          calories_confidence = est.confidence === 'full' ? 'full' : 'category';
+          setAiCal({ calories: est.calories, confidence: calories_confidence, source: 'ai' });
+        }
+      } catch {
+        // Non-blocking — save still proceeds without fresh calories.
+      }
+    }
     const input = buildCookListingPayload({
       ...listingDraft,
       name: name.trim(),
       price: price as number,
       min_qty: minQty as number,
       image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
+      calories,
+      calories_confidence,
     });
     try {
       await updateCookListing(listingId, input);
@@ -453,17 +477,16 @@ export function CookListingEditScreen({
           </Pressable>
         </SectionCard>
 
-        <SectionCard title="Ingredients & nutrition">
+        <SectionCard
+          title="Ingredients & nutrition"
+          hint="Calorie estimate is applied automatically when you save with ingredients listed."
+        >
           <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
-          <SHCButton
-            variant="outline"
-            onPress={async () => setAiCal(await aiEstMut.mutateAsync(ingredients))}
-            testID="ai-cal-est-btn"
-            style={{ marginTop: shcSpacing.sm }}
-          >
-            <SHCButtonText>🔥 AI Calories</SHCButtonText>
-          </SHCButton>
-          {aiCal ? <AICalorieBadge calories={aiCal.calories} confidence={aiCal.confidence} source={aiCal.source} /> : null}
+          {aiCal?.calories != null ? (
+            <Text style={{ marginTop: shcSpacing.sm, fontWeight: '700', color: shcColors.textLight }}>
+              ~{aiCal.calories} cal per portion (auto)
+            </Text>
+          ) : null}
         </SectionCard>
 
         <SectionCard title="Dish photo">
