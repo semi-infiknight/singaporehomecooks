@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const DASHBOARD_SRC = resolve(__dirname, '../../../apps/mobile-cook/app/(cook)/dashboard.tsx');
+const DASHBOARD_SRC = resolve(__dirname, '../../../apps/mobile-cook/app/(cook)/dashboard/index.tsx');
 const API_CLIENT_SRC = resolve(__dirname, '../../../apps/mobile-cook/lib/api-client.ts');
 const USE_AUTH_SRC = resolve(__dirname, '../../../apps/mobile-cook/hooks/useAuth.ts');
 

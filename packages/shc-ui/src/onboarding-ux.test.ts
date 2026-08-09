@@ -28,7 +28,7 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('screenTestID="cook-onboarding-screen"');
     expect(src).toContain('cook-onboarding-next-btn');
     expect(src).toContain('cook-onboarding-finish-btn');
-    expect(src).toContain('cook-onboarding-address-input');
+    expect(src).toContain('cook-onboarding-kitchen-address');
     expect(src).toContain('cook-onboarding-collection-input');
     expect(src).toContain('cook-onboarding-pdpa-checkbox');
     expect(src).toContain('cook-onboarding-back-btn');
