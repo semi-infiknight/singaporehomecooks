@@ -3,7 +3,6 @@ import { Tabs, usePathname } from 'expo-router';
 import { gourmeatColors } from '@shc/ui/theme';
 import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CookTabBar } from '../../components/CookTabBar';
-import { CookAuthGate } from '../../components/CookAuthGate';
 import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
 
 const COOK_TAB_ORDER = ['dashboard', 'orders', 'listings', 'compliance'];
@@ -21,7 +20,6 @@ function CookTabIndexSync({ children }: { children: React.ReactNode }) {
 
 export default function CookLayout() {
   return (
-    <CookAuthGate>
     <TabDirectionProvider routeOrder={COOK_TAB_ORDER}>
     <CookTabIndexSync>
     <Tabs
@@ -52,6 +50,5 @@ export default function CookLayout() {
     </Tabs>
     </CookTabIndexSync>
     </TabDirectionProvider>
-    </CookAuthGate>
   );
 }

@@ -14,6 +14,7 @@ import { SHCTrayProvider } from '@shc/ui';
 import { useSHCFonts } from '@shc/ui/fonts';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { CookSessionEnforcer } from '../components/CookSessionEnforcer';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,13 +38,15 @@ function AppShell() {
     <>
       <StatusBar style="dark" />
       <ErrorBoundary>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(cook)" />
-          <Stack.Screen name="(shared)/auth/index" />
-          <Stack.Screen name="(shared)/onboarding/index" />
-          <Stack.Screen name="(shared)/chat/[orderId]/index" />
-        </Stack>
+        <CookSessionEnforcer>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(cook)" />
+            <Stack.Screen name="(shared)/auth/index" />
+            <Stack.Screen name="(shared)/onboarding/index" />
+            <Stack.Screen name="(shared)/chat/[orderId]/index" />
+          </Stack>
+        </CookSessionEnforcer>
       </ErrorBoundary>
     </>
   );

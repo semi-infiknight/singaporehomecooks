@@ -1,15 +1,15 @@
-import React, { useEffect, useState, type ReactNode } from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { Redirect } from 'expo-router';
-import { shcColors } from '@shc/ui/theme';
-import { useAuth } from '../hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { useAuth } from './useAuth';
 import { hasSeenCookOnboarding } from '../lib/onboarding';
 
-/**
- * Blocks all (cook) tab routes until the cook is signed in and has finished onboarding.
- * Mirrors web CookLoginGate on /cook-portal/*.
- */
-export function CookAuthGate({ children }: { children: ReactNode }) {
+export type CookSessionGateState =
+  | { status: 'loading' }
+  | { status: 'unauthenticated' }
+  | { status: 'needs_onboarding'; user: NonNullable<ReturnType<typeof useAuth>['user']> }
+  | { status: 'ready'; user: NonNullable<ReturnType<typeof useAuth>['user']> };
+
+/** Single source of truth: cook must be signed in + onboarded before (cook) routes. */
+export function useCookSessionGate(): CookSessionGateState {
   const { user, loading } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -38,20 +38,13 @@ export function CookAuthGate({ children }: { children: ReactNode }) {
   }, [loading, user]);
 
   if (loading || (user && !onboardingChecked)) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: shcColors.background }}>
-        <ActivityIndicator color={shcColors.primary} />
-      </View>
-    );
+    return { status: 'loading' };
   }
-
   if (!user) {
-    return <Redirect href="/(shared)/auth" />;
+    return { status: 'unauthenticated' };
   }
-
   if (needsOnboarding) {
-    return <Redirect href="/(shared)/onboarding" />;
+    return { status: 'needs_onboarding', user };
   }
-
-  return <>{children}</>;
+  return { status: 'ready', user };
 }
