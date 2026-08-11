@@ -313,13 +313,7 @@ export default function CustomerDiscover() {
 
   const headerLocationLabel = proximityLabel || 'Near you';
   const gridHeading = isSearching
-    ? {
-        title: `Dishes for “${query.trim()}”`,
-        hint:
-          searchDishes.some((d) => (d.kitchenCount ?? 0) > 1)
-            ? 'Same dish at multiple kitchens is labelled for you'
-            : 'Tap a dish for details · kitchens that cook it are under Kitchens',
-      }
+    ? { title: `Dishes for “${query.trim()}”` }
     : discoverGridHeading(mode, filters, Boolean(proximity));
   const kitchensHeading = isSearching
     ? {
@@ -327,7 +321,6 @@ export default function CustomerDiscover() {
           searchKitchens.length === 1
             ? `1 kitchen for “${query.trim()}”`
             : `${searchKitchens.length} kitchens for “${query.trim()}”`,
-        hint: searchKitchens.length > 0 ? 'Tap a kitchen to open their page' : undefined,
       }
     : discoverKitchensHeading(cookList.length, Boolean(proximity));
   const emptyCopy = isSearching
@@ -672,7 +665,6 @@ export default function CustomerDiscover() {
         return (
           <View>
             <GourmeatSectionTitle title={gridHeading.title} testID="all-dishes-header" />
-            <Text style={styles.gridHint}>{gridHeading.hint}</Text>
             {isLoading && !isSearching && <SHCSkeletonDishGrid count={6} />}
             {gridProducts.length === 0 && !(isLoading && !isSearching) && (
               isSearching ? (
@@ -778,13 +770,6 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   searchOverlay: { zIndex: 20, elevation: 12, paddingHorizontal: shcSpacing.md },
   listContent: { paddingHorizontal: shcSpacing.md },
-  gridHint: {
-    paddingHorizontal: shcSpacing.md,
-    fontSize: 12,
-    color: gourmeatColors.textLight,
-    fontWeight: '600',
-    marginBottom: shcSpacing.sm,
-  },
   kitchenHintWrap: { paddingHorizontal: shcSpacing.md, marginBottom: shcSpacing.sm },
   kitchenHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.primary },
   dropCard: {

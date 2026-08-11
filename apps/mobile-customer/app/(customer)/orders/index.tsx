@@ -159,7 +159,6 @@ export default function MyOrdersList() {
         {activeRequests.length > 0 ? (
           <View style={styles.requestsSection} testID="custom-requests-section">
             <Text style={styles.requestsTitle}>{CUSTOM_REQUEST_COPY.customerSectionTitle}</Text>
-            <Text style={styles.requestsHint}>{CUSTOM_REQUEST_COPY.customerSectionHint}</Text>
             {activeRequests.map((req: any) => (
               <SHCCustomRequestCard
                 key={req.id}
@@ -249,11 +248,6 @@ export default function MyOrdersList() {
             </View>
           ))
         )}
-
-        <Text style={styles.legend}>
-          Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
-          Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
-        </Text>
       </ScrollView>
     </DirectionalTabScreen>
   );
@@ -281,14 +275,6 @@ const styles = StyleSheet.create({
   cardWrap: { marginBottom: shcSpacing.sm },
   chatLink: { marginTop: -4, marginBottom: shcSpacing.sm, paddingLeft: 4 },
   chatLinkText: { fontSize: 13, fontWeight: '700', color: gourmeatColors.primary },
-  legend: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: gourmeatColors.textLight,
-    lineHeight: 16,
-    marginTop: shcSpacing.md,
-  },
   requestsSection: { marginBottom: shcSpacing.md },
-  requestsTitle: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text },
-  requestsHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: shcSpacing.sm, marginTop: 4 },
+  requestsTitle: { fontSize: 15, fontWeight: '900', color: gourmeatColors.text, marginBottom: shcSpacing.sm },
 });

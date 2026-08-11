@@ -65,7 +65,7 @@ export default function CustomRequestDetail() {
         <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>
           <Text style={styles.back}>← Back</Text>
         </Pressable>
-        <GourmeatScreenHeader title="Request detail" subtitle={CUSTOM_REQUEST_COPY.customerSectionHint} />
+        <GourmeatScreenHeader title="Request detail" />
 
         {isLoading || !parsed ? (
           <SHCSkeletonList count={4} rowHeight={72} />

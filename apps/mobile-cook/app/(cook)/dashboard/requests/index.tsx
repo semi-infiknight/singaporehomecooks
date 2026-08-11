@@ -50,10 +50,7 @@ export default function CookCustomRequestsList() {
       <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>
         <Text style={styles.back}>← Home</Text>
       </Pressable>
-      <GourmeatCookHeader
-        title={CUSTOM_REQUEST_COPY.cookBoardTitle}
-        subtitle={CUSTOM_REQUEST_COPY.cookBoardHint}
-      />
+      <GourmeatCookHeader title={CUSTOM_REQUEST_COPY.cookBoardTitle} />
 
       {isLoading ? (
         <SHCSkeletonList count={4} rowHeight={96} />

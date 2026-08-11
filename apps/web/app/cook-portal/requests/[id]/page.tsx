@@ -87,7 +87,7 @@ export default function CookCustomRequestDetailPage() {
       <Link href="/cook-portal/requests" className="text-sm font-black text-primary">
         ← Requests
       </Link>
-      <GourmeatCookHeader title="Request detail" subtitle={CUSTOM_REQUEST_COPY.cookBoardHint} />
+      <GourmeatCookHeader title="Request detail" />
 
       {isLoading || !parsed || !raw ? (
         <SHCSkeletonOrderList count={4} variant="row" />
@@ -111,10 +111,7 @@ export default function CookCustomRequestDetailPage() {
             {parsed.date ? <SHCMetaBadge kind="date">{parsed.date}</SHCMetaBadge> : null}
           </div>
 
-          <p className="text-sm font-extrabold text-foreground mt-6 mb-1">Dishes to quote</p>
-          <p className="text-xs font-semibold text-muted-foreground mb-3">
-            Tap each dish to open its page and set your price.
-          </p>
+          <p className="text-sm font-extrabold text-foreground mt-6 mb-3">Dishes to quote</p>
           {parsed.lines.map((line) => {
             const qLine = lines.find((l) => l.request_line_id === line.id);
             return (

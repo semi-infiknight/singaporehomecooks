@@ -33,7 +33,7 @@ export default function CookCustomRequestsPage() {
       <Link href="/cook-portal/dashboard" className="text-sm font-black text-primary">
         ← Home
       </Link>
-      <GourmeatCookHeader title={CUSTOM_REQUEST_COPY.cookBoardTitle} subtitle={CUSTOM_REQUEST_COPY.cookBoardHint} />
+      <GourmeatCookHeader title={CUSTOM_REQUEST_COPY.cookBoardTitle} />
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading requests…</p>

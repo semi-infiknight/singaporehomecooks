@@ -5500,9 +5500,6 @@ export function CookQuoteCardWeb({
       </div>
       {includedLines.length > 0 ? (
         <ul className="mt-2 space-y-1">
-          {partialAccept ? (
-            <p className="text-[11px] font-bold text-muted-foreground mb-1">{CUSTOM_REQUEST_COPY.selectDishesHint}</p>
-          ) : null}
           {includedLines.map((line) => {
             const selected = !partialAccept || selectedIds.includes(line.request_line_id);
             return (
@@ -5609,7 +5606,6 @@ export function CookSavedQuoteWeb({
           {parsed.status === 'pending' ? 'Waiting' : parsed.status}
         </SHCBadge>
       </div>
-      <p className="text-xs font-semibold text-muted-foreground mt-1">{CUSTOM_REQUEST_COPY.quoteSavedHint}</p>
       <ul className="mt-2 space-y-1">
         {included.map((line) => (
           <li key={line.request_line_id} className="text-sm font-bold">

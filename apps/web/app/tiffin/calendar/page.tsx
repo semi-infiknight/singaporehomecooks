@@ -51,7 +51,7 @@ export default function TiffinCalendarPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 shc-safe-bottom-pad" data-testid="tiffin-calendar-screen">
-      <SHCPageHeader title="My tiffin meals" subtitle="Calendar of collection days (HomelyEats My Orders)" />
+      <SHCPageHeader title="My tiffin meals" />
 
       <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4" data-testid="tiffin-calendar-strip">
         {days.map((date) => {

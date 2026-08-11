@@ -257,11 +257,6 @@ export function SHCCookQuoteCard({
       </View>
       {includedLines.length > 0 ? (
         <View style={{ marginTop: shcSpacing.sm, gap: 4 }}>
-          {partialAccept ? (
-            <Text style={{ fontSize: 11, fontWeight: '700', color: shcColors.textLight, marginBottom: 4 }}>
-              {CUSTOM_REQUEST_COPY.selectDishesHint}
-            </Text>
-          ) : null}
           {includedLines.map((line) => {
             const selected = !partialAccept || selectedIds.includes(line.request_line_id);
             return (
@@ -355,9 +350,6 @@ export function SHCCookSavedQuote({
           {parsed.status === 'pending' ? 'Waiting' : parsed.status}
         </SHCBadge>
       </View>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 4, lineHeight: 16 }}>
-        {CUSTOM_REQUEST_COPY.quoteSavedHint}
-      </Text>
       {included.map((line) => (
         <Text key={line.request_line_id} style={{ fontSize: 13, fontWeight: '700', color: shcColors.text, marginTop: 6 }}>
           · {line.name || 'Dish'} — {formatQuoteTotal(line.price_cents)}

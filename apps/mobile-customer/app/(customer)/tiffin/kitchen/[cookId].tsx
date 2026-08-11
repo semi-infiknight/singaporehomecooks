@@ -333,9 +333,6 @@ export default function TiffinKitchenScreen() {
         <>
       <SHCSubscribeFunnelProgress current="plan" />
       <GourmeatSectionTitle title="Subscription plans" testID="kitchen-plans-header" />
-      <Text style={styles.sectionHint} testID="kitchen-plans-hint">
-        Choose meals per week — same kitchen every collection.
-      </Text>
       <SHCTiffinMealsPicker
         options={mealsOptions}
         selected={mealsPerWeek}
@@ -382,7 +379,6 @@ export default function TiffinKitchenScreen() {
         title={dishes.length ? `Full menu · ${dishes.length}` : 'Full menu'}
         testID="kitchen-menu-header"
       />
-      <Text style={styles.sectionHint}>Pick dishes when you build your weekly plan after subscribe.</Text>
       {dishes[0] ? (
         <GourmeatPrimaryButton
           label="Order once (try without plan)"

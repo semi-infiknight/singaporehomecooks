@@ -72,11 +72,7 @@ export default function TiffinCalendarScreen() {
       }}
       testID="tiffin-calendar-screen"
     >
-      <GourmeatScreenHeader
-        title="My tiffin meals"
-        subtitle="HomelyEats-style calendar — each day is one collection"
-        onBack={() => router.back()}
-      />
+      <GourmeatScreenHeader title="My tiffin meals" onBack={() => router.back()} />
 
       <SHCTiffinCalendarStrip days={days} selectedDate={selected} onSelect={setSelected} />
 

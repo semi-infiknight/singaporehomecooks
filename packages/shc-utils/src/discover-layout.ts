@@ -322,15 +322,14 @@ export function discoverSectionIds(state: DiscoverLayoutState): DiscoverSectionI
 
 /** Grid heading reflects the active mode and filters so the list is never unlabelled. */
 export function discoverGridHeading(
-  mode: DiscoverModeId,
+  _mode: DiscoverModeId,
   filters: DiscoverFilters,
-  hasLocation = false
-): { title: string; hint: string } {
-  const proximityHint = hasLocation ? 'Sorted by nearest kitchen' : 'Add to cart for a single meal';
+  _hasLocation = false
+): { title: string } {
   if (filters.cuisine) {
-    return { title: `${filters.cuisine} dishes`, hint: proximityHint };
+    return { title: `${filters.cuisine} dishes` };
   }
-  return { title: 'All dishes', hint: proximityHint };
+  return { title: 'All dishes' };
 }
 
 /**

@@ -307,7 +307,7 @@ export default function TiffinManageScreen() {
         />
       ) : (
         <View style={styles.reasons}>
-          <Text style={styles.hint}>Why are you cancelling? (HomelyEats feedback step)</Text>
+          <Text style={styles.hint}>Why are you cancelling?</Text>
           {CANCEL_REASONS.map((r) => (
             <GourmeatPrimaryButton
               key={r}

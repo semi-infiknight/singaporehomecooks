@@ -50,7 +50,7 @@ export default function CustomRequestDetailPage() {
       <Link href="/orders" className="text-sm font-bold text-primary mb-3 inline-block">
         ← Orders
       </Link>
-      <GourmeatScreenHeader title="Request detail" subtitle={CUSTOM_REQUEST_COPY.customerSectionHint} />
+      <GourmeatScreenHeader title="Request detail" />
 
       {isLoading || !parsed ? (
         <SHCSkeletonList count={4} rowHeight={72} />

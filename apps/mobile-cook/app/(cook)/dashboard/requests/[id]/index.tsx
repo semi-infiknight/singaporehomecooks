@@ -75,7 +75,7 @@ export default function CookCustomRequestDetail() {
         })),
       });
       setEditing(false);
-      Alert.alert(CUSTOM_REQUEST_COPY.bidSentLabel, CUSTOM_REQUEST_COPY.quoteSavedHint);
+      Alert.alert(CUSTOM_REQUEST_COPY.bidSentLabel);
     } catch (e) {
       Alert.alert('Could not send bid', (e as Error).message || 'Please try again.');
     }
@@ -93,7 +93,7 @@ export default function CookCustomRequestDetail() {
         <Pressable onPress={() => router.back()} style={{ marginBottom: shcSpacing.sm }}>
           <Text style={styles.back}>← Requests</Text>
         </Pressable>
-        <GourmeatScreenHeader title="Request detail" subtitle={CUSTOM_REQUEST_COPY.cookBoardHint} />
+        <GourmeatScreenHeader title="Request detail" />
 
         {isLoading || !parsed || !raw ? (
           <SHCSkeletonList count={4} rowHeight={72} />
@@ -108,7 +108,6 @@ export default function CookCustomRequestDetail() {
             </View>
 
             <Text style={styles.sectionTitle}>Dishes to quote</Text>
-            <Text style={styles.sectionHint}>Tap each dish to open its page and set your price.</Text>
             {parsed.lines.map((line) => {
               const qLine = lines.find((l) => l.request_line_id === line.id);
               return (
@@ -159,5 +158,4 @@ const styles = StyleSheet.create({
   back: { fontWeight: '800', color: gourmeatColors.primary },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: shcSpacing.md },
   sectionTitle: { fontSize: 15, fontWeight: '900', marginTop: shcSpacing.lg, marginBottom: 4 },
-  sectionHint: { fontSize: 12, fontWeight: '600', color: gourmeatColors.textLight, marginBottom: shcSpacing.sm },
 });

@@ -130,8 +130,7 @@ export default function OrdersList() {
 
       {user && activeRequests.length > 0 ? (
         <section className="mb-6" data-testid="custom-requests-section">
-          <p className="text-sm font-extrabold">{CUSTOM_REQUEST_COPY.customerSectionTitle}</p>
-          <p className="text-xs text-muted-foreground font-semibold mb-3">{CUSTOM_REQUEST_COPY.customerSectionHint}</p>
+          <p className="text-sm font-extrabold mb-3">{CUSTOM_REQUEST_COPY.customerSectionTitle}</p>
           <ul className="space-y-2">
             {(activeRequests as any[]).map((req) => (
               <li key={req.id}>
@@ -246,11 +245,6 @@ export default function OrdersList() {
           );
         })}
       </div>
-
-      <p className="text-[11px] font-semibold text-muted-foreground mt-6 leading-relaxed">
-        Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
-        Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
-      </p>
     </div>
   );
 }

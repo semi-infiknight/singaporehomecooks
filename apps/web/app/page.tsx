@@ -322,13 +322,7 @@ export default function DiscoverHome() {
     }));
   }, [isSearching, sortedCookList, searchKitchens]);
   const gridHeading = isSearching
-    ? {
-        title: `Dishes for “${query.trim()}”`,
-        hint:
-          searchDishes.some((d) => (d.kitchenCount ?? 0) > 1)
-            ? 'Same dish at multiple kitchens is labelled for you'
-            : 'Tap a dish for details · kitchens that cook it are under Kitchens',
-      }
+    ? { title: `Dishes for “${query.trim()}”` }
     : discoverGridHeading(mode, filters, Boolean(proximity));
   const kitchensHeading = isSearching
     ? {
@@ -336,7 +330,6 @@ export default function DiscoverHome() {
           searchKitchens.length === 1
             ? `1 kitchen for “${query.trim()}”`
             : `${searchKitchens.length} kitchens for “${query.trim()}”`,
-        hint: searchKitchens.length > 0 ? 'Tap a kitchen to open their page' : undefined,
       }
     : discoverKitchensHeading(cookList.length, Boolean(proximity));
   const emptyCopy = isSearching
@@ -586,7 +579,6 @@ export default function DiscoverHome() {
         return (
           <div>
             <GourmeatSectionTitle title={gridHeading.title} testID="all-dishes-header" />
-            <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">{gridHeading.hint}</p>
             {isLoading && <SHCSkeletonGrid />}
             {!isLoading && gridProducts.length === 0 && (
               isSearching ? (
