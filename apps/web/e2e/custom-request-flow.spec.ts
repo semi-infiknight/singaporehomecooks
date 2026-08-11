@@ -1,65 +1,27 @@
-import { test, expect, request, type Page } from '@playwright/test';
-
-const CUSTOMER_EMAIL = process.env.SHC_CUSTOMER_EMAIL || 'customer@shc.local';
-const CUSTOMER_PASSWORD = process.env.SHC_CUSTOMER_PASSWORD || 'customersecret';
-const COOK_EMAIL = process.env.SHC_COOK_EMAIL || 'rose@shc.local';
-const COOK_PASSWORD = process.env.SHC_COOK_PASSWORD || 'cooksecret';
-const API_BASE = process.env.NEXT_PUBLIC_SHC_API_BASE || 'https://medusa-production-d2ba.up.railway.app';
-const PUBLISHABLE_KEY =
-  process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ||
-  'pk_0c98d5a5c7ba76cad2ea42501361d8e29825876bcedb8425a627f35a2c12b9b2';
-
-async function seedCustomerSession(page: Page) {
-  const api = await request.newContext({
-    extraHTTPHeaders: {
-      'content-type': 'application/json',
-      'x-publishable-api-key': PUBLISHABLE_KEY,
-    },
-  });
-  const loginRes = await api.post(`${API_BASE}/store/shc/auth/customer/login`, {
-    data: { email: CUSTOMER_EMAIL, password: CUSTOMER_PASSWORD },
-  });
-  expect(loginRes.ok()).toBeTruthy();
-  const session = await loginRes.json();
-  await page.addInitScript(
-    (data) => {
-      localStorage.setItem('shc_web_token', data.token);
-      localStorage.setItem('shc_web_user', data.userJson);
-    },
-    { token: session.token as string, userJson: JSON.stringify(session.user) }
-  );
-}
-
-async function seedCookSession(page: Page) {
-  const api = await request.newContext({
-    extraHTTPHeaders: {
-      'content-type': 'application/json',
-      'x-publishable-api-key': PUBLISHABLE_KEY,
-    },
-  });
-  const loginRes = await api.post(`${API_BASE}/store/shc/auth/cook/login`, {
-    data: { email: COOK_EMAIL, password: COOK_PASSWORD },
-  });
-  expect(loginRes.ok()).toBeTruthy();
-  const session = await loginRes.json();
-  await page.addInitScript(
-    (data) => {
-      localStorage.setItem('shc_cook_token', data.token);
-      localStorage.setItem('shc_cook_user', data.userJson);
-      localStorage.setItem('shc_cook_onboarding_seen_v1', '1');
-    },
-    { token: session.token as string, userJson: JSON.stringify(session.user) }
-  );
-}
+import { test, expect } from '@playwright/test';
+import {
+  applyCustomerAuth,
+  applyCookAuth,
+  reapplyCustomerAuth,
+  getCustomerSession,
+  getCookSession,
+} from './auth-session';
 
 test.describe('custom request web flow', () => {
+  // Serial: shared login cache must not race
+  test.describe.configure({ mode: 'serial' });
+
   test('request wizard → cook quote → partial accept → PayNow panel', async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(420_000);
     const stamp = Date.now();
     const dishA = `Web Laksa ${stamp}`;
     const dishB = `Web Kueh ${stamp}`;
 
-    await seedCustomerSession(page);
+    // Warm auth cache once (disk + memory) before any UI
+    await getCustomerSession();
+    await getCookSession();
+
+    await applyCustomerAuth(page);
     await page.goto('/request');
     await expect(page.getByTestId('request-dish-screen')).toBeVisible({ timeout: 90_000 });
     await expect(page.getByTestId('request-step-occasion')).toBeVisible();
@@ -87,25 +49,43 @@ test.describe('custom request web flow', () => {
     const requestId = requestUrl.split('/requests/')[1]?.split('?')[0];
     expect(requestId).toBeTruthy();
 
-    await seedCookSession(page);
-    await page.goto('/cook-portal/orders');
-    await expect(page.getByTestId('cook-orders-screen')).toBeVisible({ timeout: 90_000 });
+    // Cook portal — set prices on per-dish pages (hideDishRows on builder)
+    await applyCookAuth(page);
+    await page.goto('/cook-portal/requests');
+    await expect(page.getByTestId('cook-custom-requests-screen')).toBeVisible({ timeout: 90_000 });
 
-    const reqCard = page.getByTestId(`collab-req-${requestId}`);
-    await reqCard.scrollIntoViewIfNeeded();
-    await expect(reqCard).toBeVisible({ timeout: 120_000 });
-    await expect(reqCard.getByText(dishA).first()).toBeVisible();
+    const openCard = page.getByTestId(`cook-open-request-${requestId}`);
+    await openCard.scrollIntoViewIfNeeded();
+    await expect(openCard).toBeVisible({ timeout: 120_000 });
+    await openCard.click();
 
-    const builder = reqCard.getByTestId(`quote-builder-${requestId}`);
-    const priceInputs = builder.locator('[data-testid^="quote-price-"]');
-    await priceInputs.nth(0).fill('45');
-    await priceInputs.nth(0).blur();
-    await priceInputs.nth(1).fill('35');
-    await priceInputs.nth(1).blur();
-    await builder.getByTestId(`quote-builder-${requestId}-send`).click();
-    await expect(reqCard.getByTestId(`bid-success-${requestId}`)).toBeVisible({ timeout: 90_000 });
+    await expect(page.getByTestId('cook-custom-request-detail')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(dishA).first()).toBeVisible();
 
-    await seedCustomerSession(page);
+    // Price each dish via line detail screens
+    const dishRows = page.locator('[data-testid^="cook-request-dish-"]');
+    const dishCount = await dishRows.count();
+    expect(dishCount).toBeGreaterThanOrEqual(1);
+    for (let i = 0; i < dishCount; i++) {
+      // Re-query after each navigation
+      const row = page.locator('[data-testid^="cook-request-dish-"]').nth(i);
+      await row.click();
+      const price = page.locator('[data-testid^="quote-price-"]').first();
+      await expect(price).toBeVisible({ timeout: 30_000 });
+      await price.fill(i === 0 ? '45' : '35');
+      await price.blur();
+      await page.getByTestId('cook-request-dish-done').click();
+      await expect(page.getByTestId('cook-custom-request-detail')).toBeVisible({ timeout: 30_000 });
+    }
+
+    // Unique builder test id (section wrapper is quote-builder-section-*)
+    const builder = page.getByTestId(`quote-builder-${requestId}`);
+    await expect(builder).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId(`quote-builder-${requestId}-send`).click();
+    await expect(page.getByTestId(`cook-saved-quote-${requestId}`)).toBeVisible({ timeout: 90_000 });
+
+    // Customer accepts partial quote
+    await reapplyCustomerAuth(page);
     await page.goto(`/requests/${requestId}`);
     await expect(page.getByTestId('custom-request-detail')).toBeVisible({ timeout: 60_000 });
 

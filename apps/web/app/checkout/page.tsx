@@ -130,7 +130,9 @@ export default function CheckoutPage() {
   const { openTray, dismiss } = useSHCTrayWeb();
 
   const firstPid = getFirstCartProductId(cart?.items || []);
-  const { data: slots = [] } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
+  const { data: slotsPayload } = useCollectionSlots(firstPid || 'dish_nasi_lemak_prawn_001');
+  const slots = slotsPayload?.slots ?? [];
+  const orderWindowCopy = slotsPayload?.order_window_copy ?? null;
   const oneTime = computeOneTimeOrderSummary(cart?.items || []);
   const amountDue = oneTime.total;
 
@@ -393,11 +395,18 @@ export default function CheckoutPage() {
         </SHCCard>
       ) : null}
       {!dropCart && (
-        <CollectionSlotPicker
-          slots={slots}
-          selected={selected}
-          onSelect={(d, s) => setSelected({ date: d, slot: s })}
-        />
+        <div className="mb-4">
+          {orderWindowCopy ? (
+            <p className="mb-2 text-sm font-bold text-primary" data-testid="checkout-order-window-copy">
+              {orderWindowCopy}
+            </p>
+          ) : null}
+          <CollectionSlotPicker
+            slots={slots}
+            selected={selected}
+            onSelect={(d, s) => setSelected({ date: d, slot: s })}
+          />
+        </div>
       )}
 
       <SHCSectionTitle subtitle="Required before we can process your order">Safety & consent</SHCSectionTitle>

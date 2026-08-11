@@ -7,7 +7,7 @@
  * visibility and copy cannot drift between the two surfaces.
  *
  * IA follows `discoverJourneyZones()`: browse (dishes) · subscribe (kitchens).
- * Occasions live on `/occasions` — linked from the browse spine, not an inline mode.
+ * Occasions are not on customer discover (cooks do not tag dishes by occasion yet).
  */
 
 import type { MealTypeId } from './meal-type';
@@ -19,7 +19,10 @@ export const DISCOVER_MODES: Array<{ id: DiscoverModeId; label: string; testID: 
   { id: 'kitchens', label: 'Kitchens', testID: 'discover-mode-kitchens' },
 ];
 
-/** Third browse-spine action — navigates to dedicated occasions screen. */
+/**
+ * @deprecated Not shown on discover — cooks do not tag dishes by occasion.
+ * Kept for admin config shape / API backward compatibility only.
+ */
 export const DISCOVER_OCCASIONS_NAV = {
   label: 'Occasions',
   testID: 'discover-nav-occasions',
@@ -39,6 +42,10 @@ export type DiscoverFilters = {
   occasion?: string;
   halalOnly?: boolean;
   vegetarianOnly?: boolean;
+  veganOnly?: boolean;
+  /** e.g. "chicken" — protein/ingredient include */
+  includeIngredient?: string;
+  excludeNuts?: boolean;
   /** Present when the "light" preference is on. */
   maxCal?: number;
 };
@@ -58,8 +65,107 @@ export function discoverActiveFilters(filters: DiscoverFilters): string[] {
   if (filters.occasion) active.push(filters.occasion);
   if (filters.halalOnly) active.push('Halal');
   if (filters.vegetarianOnly) active.push('Vegetarian');
-  if (filters.maxCal != null) active.push(`Under ${filters.maxCal} cal`);
+  if (filters.veganOnly) active.push('Vegan');
+  if (filters.includeIngredient?.trim()) {
+    const inc = filters.includeIngredient.trim();
+    active.push(inc.charAt(0).toUpperCase() + inc.slice(1).toLowerCase());
+  }
+  if (filters.excludeNuts) active.push('No nuts');
+  if (filters.maxCal != null) active.push(maxCalFilterLabel(filters.maxCal));
   return active;
+}
+
+/**
+ * Calorie ceiling presets for discover filters — under X cal (not only 500).
+ * Quick chips; the slider covers any value in the slider range.
+ */
+export const DISCOVER_MAX_CAL_PRESETS = [50, 300, 500, 800, 1000] as const;
+
+/** Slider bounds for under-X cal (drag any value in range). */
+export const DISCOVER_MAX_CAL_SLIDER = {
+  min: 50,
+  max: 1500,
+  step: 25,
+  /** Shown when no ceiling is set (Any) before the user drags */
+  defaultPreview: 500,
+} as const;
+
+export function maxCalFilterLabel(maxCal: number): string {
+  return `Under ${maxCal} cal`;
+}
+
+/** Snap a slider/raw value into the calorie slider range. */
+export function snapMaxCalSliderValue(raw: number): number {
+  const { min, max, step } = DISCOVER_MAX_CAL_SLIDER;
+  if (!Number.isFinite(raw)) return min;
+  const clamped = Math.min(max, Math.max(min, raw));
+  return Math.round(clamped / step) * step;
+}
+
+/** Toggle a preset: select X, or clear if the same X is already active. */
+export function toggleMaxCalPreset(
+  current: number | undefined,
+  preset: number
+): number | undefined {
+  if (!Number.isFinite(preset) || preset <= 0) return current;
+  return current === preset ? undefined : Math.floor(preset);
+}
+
+/** Coerce a free-form calorie ceiling for prefs/filter opts. */
+export function coerceMaxCal(value: unknown): number | undefined {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return Math.min(5000, Math.floor(n));
+}
+
+/**
+ * Pull under-X calorie intent from free-text search.
+ * Examples: "under 450", "<500 cal", "less than 300 calories", "max 200 kcal", "chicken 400 cal".
+ */
+export function parseMaxCalFromQuery(query: string | undefined | null): number | undefined {
+  const raw = String(query || '').trim().toLowerCase();
+  if (!raw) return undefined;
+
+  const patterns: RegExp[] = [
+    /(?:under|below|less\s+than|max(?:imum)?|upto|up\s+to)\s*:?\s*(\d{1,4})\s*(?:k?cal(?:ories)?|cals?)?/i,
+    /(?:<|>|<=)\s*(\d{1,4})\s*(?:k?cal(?:ories)?|cals?)?/i,
+    /(\d{1,4})\s*(?:k?cal(?:ories)?|cals?)\b/i,
+  ];
+  for (const re of patterns) {
+    const m = raw.match(re);
+    if (m?.[1]) {
+      const n = coerceMaxCal(m[1]);
+      if (n != null) return n;
+    }
+  }
+  return undefined;
+}
+
+/** Remove calorie-ceiling phrases so remaining text still matches dish/cook names. */
+export function stripMaxCalFromQuery(query: string | undefined | null): string {
+  let q = String(query || '');
+  if (!q.trim()) return '';
+  q = q.replace(
+    /(?:under|below|less\s+than|max(?:imum)?|upto|up\s+to)\s*:?\s*\d{1,4}\s*(?:k?cal(?:ories)?|cals?)?/gi,
+    ' '
+  );
+  q = q.replace(/(?:<|>|<=)\s*\d{1,4}\s*(?:k?cal(?:ories)?|cals?)?/gi, ' ');
+  q = q.replace(/\d{1,4}\s*(?:k?cal(?:ories)?|cals?)\b/gi, ' ');
+  return q.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Effective ceiling: filter sheet value and/or number typed in search.
+ * When both are set, the tighter (lower) cap wins.
+ */
+export function resolveEffectiveMaxCal(
+  filterMaxCal: number | undefined | null,
+  query?: string | null
+): number | undefined {
+  const fromFilter = coerceMaxCal(filterMaxCal ?? undefined);
+  const fromQuery = parseMaxCalFromQuery(query);
+  if (fromFilter != null && fromQuery != null) return Math.min(fromFilter, fromQuery);
+  return fromFilter ?? fromQuery;
 }
 
 export function discoverActiveFilterCount(filters: DiscoverFilters): number {
@@ -77,6 +183,9 @@ export function discoverFilterSummary(filters: DiscoverFilters): string {
 export function clearedDiscoverFilters(): Required<Pick<DiscoverFilters, 'mealType' | 'cuisine' | 'occasion'>> & {
   halalOnly: false;
   vegetarianOnly: false;
+  veganOnly: false;
+  includeIngredient: undefined;
+  excludeNuts: false;
   maxCal: undefined;
 } {
   return {
@@ -85,6 +194,9 @@ export function clearedDiscoverFilters(): Required<Pick<DiscoverFilters, 'mealTy
     occasion: '',
     halalOnly: false,
     vegetarianOnly: false,
+    veganOnly: false,
+    includeIngredient: undefined,
+    excludeNuts: false,
     maxCal: undefined,
   };
 }
@@ -164,14 +276,26 @@ export type DiscoverLayoutState = {
  * browse spine because it expires; evergreen catalogue sits below it.
  */
 export function discoverSections(state: DiscoverLayoutState): DiscoverSection[] {
-  if (state.isSearching) {
-    return [{ id: 'search-results', testID: 'discover-search-results' }];
-  }
-
   const sections: DiscoverSection[] = [];
   const push = (id: DiscoverSectionId) => sections.push({ id, testID: `discover-section-${id}` });
 
-  if (state.isGuest) push('guest');
+  /**
+   * Search keeps the Dishes · Kitchens spine:
+   * - Dishes → grid with multi-kitchen labels (“Available from N kitchens”)
+   * - Kitchens → kitchens that match / serve the query; tap opens cook page
+   */
+  if (state.isSearching) {
+    push('browse-switch');
+    if (state.mode === 'dishes') {
+      push('dish-grid');
+    } else {
+      push('kitchen-list');
+    }
+    return sections;
+  }
+
+  // Guest checkout is first-class — no “sign in to order” chrome on discover.
+  void state.isGuest;
   if (state.hasPromos) push('promos');
   push('cooking-soon');
   if (state.hasForYou) push('for-you');
@@ -210,8 +334,7 @@ export function discoverGridHeading(
 }
 
 /**
- * Only claim proximity when a collection point is set — otherwise the list is
- * every kitchen in API order and "near you" is not true.
+ * Claim “near you” when browse proximity (GPS) is known — not collection address.
  */
 export function discoverKitchensHeading(
   count: number,
@@ -222,7 +345,7 @@ export function discoverKitchensHeading(
   }
   return {
     title: count === 1 ? '1 home kitchen' : `${count} home kitchens`,
-    hint: 'Set your collection point to sort kitchens by distance',
+    hint: 'Enable location to sort kitchens by distance',
   };
 }
 

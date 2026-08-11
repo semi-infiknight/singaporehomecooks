@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   cookDashboardTileImage,
@@ -9,11 +8,10 @@ import {
   cookPortalGreeting,
   formatCookEarningsDisplayCompact,
   getOrderStatusLabel,
-  orderIdFromNotificationType,
   resolveCookEarningsSummary,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
-import { useCookOrders, useOpenRequests, useCookNotifications, useCookEarnings } from '../../../lib/useCookPortal';
+import { useCookOrders, useOpenRequests, useCookEarnings } from '../../../lib/useCookPortal';
 import { useCookConfig } from '../../../lib/useCookConfig';
 import {
   GourmeatCookHeader,
@@ -21,7 +19,6 @@ import {
   GourmeatOrderRow,
   SHCBadge,
   VisualBentoTile,
-  CookNotifBell,
 } from '../../components/SHCWebComponents';
 
 export default function CookDashboardPage() {
@@ -34,8 +31,6 @@ export default function CookDashboardPage() {
   const earningsSummary = resolveCookEarningsSummary(earningsRaw as Record<string, unknown> | undefined);
   const earningsLabel = formatCookEarningsDisplayCompact(earningsSummary.this_week_cents);
   const { data: openReqs = [] } = useOpenRequests();
-  const { data: notifs = [], markRead } = useCookNotifications();
-  const [showNotifs, setShowNotifs] = useState(false);
   const greeting = cookPortalGreeting(new Date(), config.greeting);
 
   const earnings = earningsLabel;
@@ -48,54 +43,8 @@ export default function CookDashboardPage() {
         title={greeting}
         subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
-        action={
-          <CookNotifBell
-            notifications={notifs as Array<{ id?: string; body?: string; read?: boolean; type?: string }>}
-            open={showNotifs}
-            onToggle={() => {
-              const next = !showNotifs;
-              setShowNotifs(next);
-              if (next && (notifs as any[]).some((n) => !n.read)) {
-                markRead({ all: true });
-              }
-            }}
-          />
-        }
       />
 
-      {showNotifs ? (
-        <GourmeatCard className="mb-4" testID="cook-notifs-panel">
-          <p className="font-black text-sm mb-2">Order alerts</p>
-          {(notifs as any[]).length === 0 ? (
-            <p className="text-xs font-semibold text-muted-foreground">
-              No new alerts — paid orders will ping you here.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {(notifs as any[]).map((n, i) => {
-                const orderId = orderIdFromNotificationType(n.type);
-                const row = (
-                  <p className={`text-xs font-semibold ${!n.read ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
-                    {!n.read ? '● ' : ''}
-                    {n.body}
-                  </p>
-                );
-                return (
-                  <li key={n.id || i}>
-                    {orderId ? (
-                      <button type="button" className="text-left w-full" onClick={() => router.push(`/cook-portal/orders/${orderId}`)}>
-                        {row}
-                      </button>
-                    ) : (
-                      row
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </GourmeatCard>
-      ) : null}
 
       <Link
         href="/cook-portal/settings"

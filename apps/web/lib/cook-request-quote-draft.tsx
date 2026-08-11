@@ -49,8 +49,16 @@ export function CookRequestQuoteDraftProvider({
     message: savedParsed?.message || '',
   }));
 
+  // Re-sync when request payload hydrates (id alone is not enough — items_json loads async).
+  const requestLinesKey = useMemo(
+    () =>
+      `${String(request.id || '')}:${String(request.items_json || '')}:${String(request.body || '')}`,
+    [request.id, request.items_json, request.body]
+  );
+
   React.useEffect(() => {
     const nextParsed = parseCustomRequestDisplay(request);
+    if (!nextParsed.lines.length && !initialQuote) return;
     if (initialQuote) {
       const saved = (initialQuote as CookQuoteDisplay).line_items
         ? (initialQuote as CookQuoteDisplay)
@@ -60,12 +68,20 @@ export function CookRequestQuoteDraftProvider({
         message: saved.message || '',
       });
     } else {
-      setDraft({
-        lines: buildDefaultQuoteLines(nextParsed.lines),
-        message: '',
+      setDraft((prev) => {
+        // Keep cook-entered prices when the line set is unchanged.
+        const prevIds = prev.lines.map((l) => l.request_line_id).join('|');
+        const nextIds = nextParsed.lines.map((l) => l.id).join('|');
+        if (prevIds === nextIds && prev.lines.some((l) => l.price_cents > 0)) {
+          return prev;
+        }
+        return {
+          lines: buildDefaultQuoteLines(nextParsed.lines),
+          message: '',
+        };
       });
     }
-  }, [request.id, initialQuote]);
+  }, [requestLinesKey, initialQuote, request]);
 
   const resetFromRequest = useCallback(
     (nextRequest: Record<string, unknown>, nextQuote?: CookQuoteDisplay | Record<string, unknown>) => {

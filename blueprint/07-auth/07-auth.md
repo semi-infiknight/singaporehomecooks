@@ -8,7 +8,7 @@
 - [../multi-agent/tracks.md](../multi-agent/tracks.md)
 - [production/compliance-pdpa.md](../production/compliance-pdpa.md)
 
-**Last Updated:** 2026-07-31 — Production sign-up: strict password policy, `@shc.local` blocked on register in prod, web cook **Create account**, demo creds staging/docs only (never in client bundles).
+**Last Updated:** 2026-08-10 — Guest-first customer: device guest session + local order ids; Orders not auth-gated; phone link after order; sign-in optional for account tools.
 **Owner:** Backend Track
 
 ## Overview
@@ -34,11 +34,12 @@ Authentication and authorization are built on Medusa's native `auth_identity` sy
 4. Finish → `PATCH /store/shc/auth/cook/profile` (story, collection_instructions, pdpa_consent) → cook dashboard.
 5. Returning logins skip onboarding if `hasSeenCookOnboarding()` in SecureStore.
 
-**Customer (target / partial):**
-1. User enters mobile number or email.
-2. OTP sent via Twilio / Singapore SMS provider (or magic link for email).
-3. On verification, `auth_identity` is created or linked.
-4. Push notification token registered on successful login.
+**Customer (guest-first, 2026-08-10):**
+1. Browse + cart without account: `ensureGuestId()` → device guest UUID (`shc_guest_id_v1`).
+2. Checkout collects `guest_contact` (name, email, phone); order recorded in `shc_guest_orders_v1` via `recordGuestOrder`.
+3. **Orders tab** shows those orders without sign-in (`getCustomerOrders`).
+4. Optional later: email/password or phone login; `linkGuestLocalDataToProfile` merges device data; push token on login/register via `registerCustomerPushToken`.
+5. Do **not** reintroduce tab-bar or `SHCAuthSessionGate` walls on Orders.
 
 ### Session & Token Management
 - Medusa issues JWT or session tokens.

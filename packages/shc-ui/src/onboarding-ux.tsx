@@ -23,14 +23,21 @@ const HERO_MAX_FORM = 160;
 export function SHCOnboardingDots({
   total,
   active,
+  compact,
   testID = 'onboarding-dots',
 }: {
   total: number;
   active: number;
+  /** Tighter spacing for header chrome (no bottom margin). */
+  compact?: boolean;
   testID?: string;
 }) {
   return (
-    <View testID={testID} style={styles.dotsRow} accessibilityRole="progressbar">
+    <View
+      testID={testID}
+      style={[styles.dotsRow, compact && styles.dotsRowCompact]}
+      accessibilityRole="progressbar"
+    >
       {Array.from({ length: total }, (_, i) => {
         const on = i === active;
         return (
@@ -54,7 +61,12 @@ export function SHCOnboardingProgressBar({
 }) {
   const clamped = Math.min(100, Math.max(0, percent));
   return (
-    <View style={styles.progressTrack} testID={testID} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: clamped }}>
+    <View
+      style={styles.progressTrack}
+      testID={testID}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: clamped }}
+    >
       <View style={[styles.progressFill, { width: `${clamped}%` }]} />
     </View>
   );
@@ -86,6 +98,13 @@ export function SHCOnboardingOptionStack({
             accessibilityState={{ selected }}
           >
             <Text style={[styles.optionBtnText, selected && styles.optionBtnTextSelected]}>{opt.label}</Text>
+            {selected ? (
+              <View style={styles.optionCheck}>
+                <Text style={styles.optionCheckMark}>✓</Text>
+              </View>
+            ) : (
+              <View style={styles.optionCheckIdle} />
+            )}
           </Pressable>
         );
       })}
@@ -136,8 +155,14 @@ function SHCOnboardingHeroSplash({
 
   return (
     <View style={heroStyles.screen} testID={screenTestID}>
+      {/* Soft depth layers — peach comfort, not flat coral block */}
+      <View style={heroStyles.blobTop} pointerEvents="none" />
+      <View style={heroStyles.blobBottom} pointerEvents="none" />
+
       <View style={[heroStyles.topBar, { paddingTop: insets.top + shcSpacing.sm }]}>
-        <View style={heroStyles.topSpacer} />
+        <View style={heroStyles.brandPill}>
+          <Text style={heroStyles.brandPillText}>Singapore Home Cooks</Text>
+        </View>
         {onSkip ? (
           <Pressable
             onPress={onSkip}
@@ -155,16 +180,12 @@ function SHCOnboardingHeroSplash({
       </View>
 
       <View style={heroStyles.content}>
-        <Text style={heroStyles.wordmark} accessibilityRole="header">
-          home cooks
-        </Text>
-
         <View style={heroStyles.cardStack} accessibilityRole="image">
           {cards.map((uri, i) => {
             const offsets = [
-              { left: 0, rotate: '-10deg', zIndex: 1, top: 8 },
-              { left: 72, rotate: '4deg', zIndex: 3, top: 0 },
-              { left: 144, rotate: '12deg', zIndex: 2, top: 12 },
+              { left: 8, rotate: '-11deg', zIndex: 1, top: 14 },
+              { left: 78, rotate: '2deg', zIndex: 3, top: 0 },
+              { left: 148, rotate: '11deg', zIndex: 2, top: 16 },
             ][i];
             return (
               <View
@@ -185,7 +206,9 @@ function SHCOnboardingHeroSplash({
           })}
         </View>
 
-        <Text style={heroStyles.headline}>{title}</Text>
+        <Text style={heroStyles.headline} accessibilityRole="header">
+          {title}
+        </Text>
         {subtitle ? <Text style={heroStyles.subline}>{subtitle}</Text> : null}
 
         <View style={heroStyles.statsBar}>
@@ -201,7 +224,7 @@ function SHCOnboardingHeroSplash({
         </View>
       </View>
 
-      <View style={[heroStyles.footer, { paddingBottom: Math.max(insets.bottom, shcSpacing.md) }]}>
+      <View style={[heroStyles.footer, { paddingBottom: Math.max(insets.bottom, shcSpacing.lg) }]}>
         <Pressable
           onPress={onNext}
           disabled={disabled || loading}
@@ -355,7 +378,24 @@ export function SHCOnboardingFlowScreen({
         )}
         <View style={styles.headerCenter}>
           <SHCOnboardingProgressBar percent={percent} />
-          {chapterLabel ? <Text style={styles.chapterLabel}>{chapterLabel}</Text> : null}
+          {/* Dots mirror “1 of N” — same language as marketing + profile wizards */}
+          {totalSteps > 1 ? (
+            <View style={styles.headerDotsWrap}>
+              <SHCOnboardingDots total={totalSteps} active={stepIndex} compact testID="onboarding-step-dots" />
+              <Text style={styles.stepOfLabel}>
+                {stepIndex + 1} of {totalSteps}
+              </Text>
+            </View>
+          ) : null}
+          {chapterLabel ? (
+            <View style={styles.chapterRow}>
+              <View style={styles.chapterPill}>
+                <Text style={styles.chapterLabel} numberOfLines={1}>
+                  {chapterLabel}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </View>
         {onSkip ? (
           <Pressable
@@ -387,12 +427,12 @@ export function SHCOnboardingFlowScreen({
           </View>
         ) : null}
 
-        <View style={[styles.body, contentStyle]}>
+        <View style={[styles.body, !heroVisible && styles.bodyNoHero, contentStyle]}>
           <Text style={styles.title} accessibilityRole="header">
             {title}
           </Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-          {children}
+          {children ? <View style={styles.childrenWrap}>{children}</View> : null}
         </View>
       </ScrollView>
 
@@ -445,49 +485,67 @@ export function SHCOnboardingFlowScreen({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: shcColors.background },
+  screen: { flex: 1, backgroundColor: '#FFFBF7' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: shcSpacing.md,
     paddingBottom: shcSpacing.sm,
     gap: shcSpacing.sm,
-    backgroundColor: shcColors.background,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: shcColors.borderLight,
+    backgroundColor: '#FFFBF7',
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: shcRadii.pill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: shcColors.surface,
-    borderWidth: shcBorders.thin,
-    borderColor: shcColors.borderLight,
+    borderWidth: 1.5,
+    borderColor: 'rgba(36,24,18,0.08)',
+    ...shcShadows.brutalSm,
   },
   backIcon: { fontSize: 20, fontWeight: '800', color: shcColors.text },
-  backPlaceholder: { width: 40 },
-  headerCenter: { flex: 1, gap: 4 },
+  backPlaceholder: { width: 42 },
+  headerCenter: { flex: 1, gap: 6 },
+  headerDotsWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 2,
+  },
+  stepOfLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: shcColors.textLight,
+    letterSpacing: 0.2,
+  },
+  chapterRow: { alignItems: 'center' },
+  chapterPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: shcRadii.pill,
+    backgroundColor: '#FFE8DE',
+  },
   chapterLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    color: shcColors.textLight,
+    fontWeight: '800',
+    color: gourmeatColors.primary || shcColors.primary,
     textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.2,
   },
   skipHeaderBtn: {
     paddingHorizontal: shcSpacing.sm,
     paddingVertical: 8,
-    minWidth: 40,
+    minWidth: 42,
     alignItems: 'flex-end',
   },
-  skipHeaderText: { fontSize: 14, fontWeight: '700', color: shcColors.primary },
+  skipHeaderText: { fontSize: 14, fontWeight: '800', color: gourmeatColors.primary || shcColors.primary },
   progressTrack: {
-    height: 6,
+    height: 8,
     borderRadius: shcRadii.pill,
-    backgroundColor: shcColors.borderLight,
+    backgroundColor: '#F0E4D8',
     overflow: 'hidden',
   },
   progressFill: {
@@ -497,21 +555,36 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  hero: { width: '100%', backgroundColor: shcColors.surfaceAlt, overflow: 'hidden' },
+  hero: {
+    width: '100%',
+    backgroundColor: shcColors.surfaceAlt,
+    overflow: 'hidden',
+    borderBottomLeftRadius: shcRadii.xl || 24,
+    borderBottomRightRadius: shcRadii.xl || 24,
+  },
   heroImage: { width: '100%', height: '100%' },
   heroOverlay: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 60,
-    backgroundColor: 'rgba(255,248,240,0.6)',
+    height: 72,
+    backgroundColor: 'transparent',
+    // peach fade into page bg
+    borderBottomLeftRadius: shcRadii.xl || 24,
+    borderBottomRightRadius: shcRadii.xl || 24,
   },
   body: {
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.lg,
     paddingBottom: shcSpacing.md,
-    backgroundColor: shcColors.background,
+    backgroundColor: '#FFFBF7',
+  },
+  bodyNoHero: {
+    paddingTop: shcSpacing.md,
+  },
+  childrenWrap: {
+    marginTop: shcSpacing.xs,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -520,15 +593,19 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: shcSpacing.md,
   },
+  dotsRowCompact: {
+    marginBottom: 0,
+    gap: 6,
+  },
   dot: { height: 8, borderRadius: 4 },
-  dotInactive: { width: 8, backgroundColor: shcColors.borderLight },
+  dotInactive: { width: 8, backgroundColor: '#F0E4D8' },
   dotActive: { width: 24, backgroundColor: gourmeatColors.primary || shcColors.primary },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
     color: shcColors.text,
-    letterSpacing: -0.8,
-    lineHeight: 38,
+    letterSpacing: -0.9,
+    lineHeight: 36,
     marginBottom: shcSpacing.sm,
   },
   subtitle: {
@@ -536,32 +613,52 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: shcColors.textLight,
     lineHeight: 24,
-    marginBottom: shcSpacing.lg,
+    marginBottom: shcSpacing.md,
   },
   optionStack: { gap: shcSpacing.sm, marginTop: shcSpacing.sm },
   optionBtn: {
-    minHeight: 56,
+    minHeight: 58,
     borderRadius: shcRadii.lg,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    borderWidth: 1.5,
+    borderColor: 'rgba(36,24,18,0.12)',
     backgroundColor: shcColors.surface,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
     paddingHorizontal: shcSpacing.lg,
     paddingVertical: shcSpacing.md,
+    ...shcShadows.brutalSm,
   },
   optionBtnSelected: {
-    backgroundColor: shcColors.primary,
-    borderColor: shcColors.primary,
+    backgroundColor: '#FFF5F0',
+    borderColor: gourmeatColors.primary || shcColors.primary,
+    borderWidth: 2,
   },
-  optionBtnText: { fontSize: 17, fontWeight: '700', color: shcColors.text },
-  optionBtnTextSelected: { color: shcColors.onPrimary },
+  optionBtnText: { flex: 1, fontSize: 16, fontWeight: '700', color: shcColors.text, paddingRight: 8 },
+  optionBtnTextSelected: { color: shcColors.text },
+  optionCheck: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: gourmeatColors.primary || shcColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionCheckMark: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  optionCheckIdle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: 'rgba(36,24,18,0.12)',
+    backgroundColor: shcColors.surface,
+  },
   footer: {
     paddingHorizontal: shcSpacing.lg,
-    paddingTop: shcSpacing.sm,
+    paddingTop: shcSpacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: shcColors.borderLight,
-    backgroundColor: shcColors.background,
+    borderTopColor: 'rgba(36,24,18,0.08)',
+    backgroundColor: 'rgba(255,251,247,0.98)',
     gap: 4,
   },
   cta: {
@@ -571,20 +668,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: shcSpacing.lg,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    ...shcShadows.brutal,
   },
-  ctaPressed: { opacity: 0.88 },
+  ctaPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   ctaDisabled: { opacity: 0.45 },
-  ctaText: { color: shcColors.onPrimary, fontSize: 17, fontWeight: '800' },
+  ctaText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900', letterSpacing: -0.2 },
   secondaryBtn: {
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: shcRadii.lg,
-    borderWidth: shcBorders.brutal,
+    borderWidth: 2,
     borderColor: gourmeatColors.primary || shcColors.primary,
     marginTop: 8,
+    backgroundColor: shcColors.surface,
   },
   secondaryText: {
     color: gourmeatColors.primary || shcColors.primary,
@@ -608,25 +705,58 @@ const styles = StyleSheet.create({
 const heroStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: shcColors.primary,
+    backgroundColor: gourmeatColors.primary || shcColors.primary,
+  },
+  blobTop: {
+    position: 'absolute',
+    top: -80,
+    right: -60,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  blobBottom: {
+    position: 'absolute',
+    bottom: 120,
+    left: -70,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(0,0,0,0.06)',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: shcSpacing.lg,
     minHeight: 44,
   },
   topSpacer: { width: 56 },
+  brandPill: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: shcRadii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+  },
+  brandPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: shcColors.onPrimary,
+    letterSpacing: 0.2,
+  },
   skipBtn: {
     paddingHorizontal: shcSpacing.sm,
     paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: shcRadii.pill,
   },
   skipText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: shcColors.onPrimary,
-    opacity: 0.92,
   },
   content: {
     flex: 1,
@@ -634,45 +764,37 @@ const heroStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: shcSpacing.lg,
   },
-  wordmark: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: shcColors.onPrimary,
-    textTransform: 'lowercase',
-    letterSpacing: -1.2,
-    marginBottom: shcSpacing.lg,
-  },
   cardStack: {
-    width: 248,
-    height: 148,
+    width: 268,
+    height: 160,
     marginBottom: shcSpacing.xl,
     position: 'relative',
   },
   card: {
     position: 'absolute',
-    width: 104,
-    height: 132,
-    borderRadius: shcRadii.lg,
-    borderWidth: shcBorders.brutal,
-    borderColor: 'rgba(255,255,255,0.35)',
+    width: 112,
+    height: 142,
+    borderRadius: 18,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.55)',
     overflow: 'hidden',
     backgroundColor: shcColors.surface,
     ...shcShadows.brutal,
   },
   cardImage: { width: '100%', height: '100%' },
   headline: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '900',
     color: shcColors.onPrimary,
     textAlign: 'center',
-    letterSpacing: -0.6,
-    lineHeight: 34,
+    letterSpacing: -0.8,
+    lineHeight: 36,
     marginBottom: shcSpacing.sm,
   },
   subline: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.88)',
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: shcSpacing.lg,
@@ -682,54 +804,54 @@ const heroStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: shcRadii.lg,
-    borderWidth: shcBorders.thin,
-    borderColor: 'rgba(255,255,255,0.22)',
-    paddingVertical: shcSpacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    paddingVertical: 12,
     paddingHorizontal: shcSpacing.md,
     marginTop: shcSpacing.sm,
     width: '100%',
-    maxWidth: 320,
+    maxWidth: 340,
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '900',
     color: shcColors.onPrimary,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.78)',
+    color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   statsDivider: {
     width: 1,
-    height: 28,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.28)',
   },
   footer: {
     paddingHorizontal: shcSpacing.lg,
     paddingTop: shcSpacing.sm,
   },
   cta: {
-    backgroundColor: shcColors.onPrimary,
-    borderRadius: shcRadii.lg,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: shcSpacing.lg,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
+    ...shcShadows.brutal,
   },
-  ctaPressed: { opacity: 0.9 },
+  ctaPressed: { opacity: 0.92, transform: [{ scale: 0.99 }] },
   ctaDisabled: { opacity: 0.5 },
   ctaText: {
-    color: shcColors.primary,
+    color: gourmeatColors.primary || shcColors.primary,
     fontSize: 17,
     fontWeight: '900',
+    letterSpacing: -0.2,
   },
 });

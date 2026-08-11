@@ -61,7 +61,9 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart } = useCart();
   const { data: orders = [] } = useOrders('customer');
-  const ordersLiveCue = user ? getOrdersTabLiveCue(orders as Array<{ shc_status?: string; collection_date?: string }>) : null;
+  const ordersLiveCue = getOrdersTabLiveCue(
+    orders as Array<{ shc_status?: string; collection_date?: string }>
+  );
 
   // Guests browse signed-out — never show sticky cart or tab badge (web parity).
   // Guests can browse and order — cart uses device-local guest session.
@@ -149,23 +151,14 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
-          if (key !== 'cart' && !authLoading && !user) {
-            if (key === 'orders/index') {
-              showGuestAuthTray(
-                'Sign in to view orders',
-                'Browse kitchens on Home — sign in for orders and wallet.',
-                '/(customer)/orders'
-              );
-              return;
-            }
-            if (key === 'profile/index') {
-              showGuestAuthTray(
-                'Sign in for wallet & account',
-                'Browse kitchens on Home — sign in for orders and wallet.',
-                '/(customer)/profile'
-              );
-              return;
-            }
+          // Orders are guest-friendly (device-local order ids). Profile still optional sign-in.
+          if (key === 'profile/index' && !authLoading && !user) {
+            showGuestAuthTray(
+              'Sign in for wallet & account',
+              'Browse kitchens on Home — sign in for account tools. Orders work without signing in.',
+              '/(customer)/profile'
+            );
+            return;
           }
           notifyTabChange(key);
           navigation.navigate(key);

@@ -24,9 +24,7 @@ export default function CookLayout() {
     <CookTabIndexSync>
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: gourmeatColors.background },
-        headerTintColor: gourmeatColors.text,
-        headerTitleStyle: { fontWeight: '800' },
+        headerShown: false,
         tabBarStyle: {
           position: 'absolute',
           left: 0,

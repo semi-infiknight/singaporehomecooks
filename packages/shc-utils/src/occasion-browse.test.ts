@@ -14,7 +14,8 @@ describe('occasion-browse', () => {
   });
 
   it('deep links web and mobile', () => {
-    expect(occasionBrowseRoute('Deepavali').web).toContain('/occasions?occasion=');
-    expect(occasionBrowseRoute('Deepavali').mobile).toContain('/(customer)/occasions');
+    // Browse pages removed — deep links go to custom request
+    expect(occasionBrowseRoute('Deepavali').web).toBe('/request');
+    expect(occasionBrowseRoute('Deepavali').mobile).toBe('/(customer)/request');
   });
 });

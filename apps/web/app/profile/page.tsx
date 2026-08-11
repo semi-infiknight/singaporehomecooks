@@ -1,18 +1,16 @@
 'use client';
 
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bell, ShieldCheck, User } from 'lucide-react';
+import { ShieldCheck, User } from 'lucide-react';
 import {
   accountMenuItemsSignedIn,
   accountMenuItemsGuest,
-  orderIdFromNotificationType,
   BENTO_ACTION_IMAGES,
   favoritesToReorderDishes,
   getDishImageUrl,
 } from '@shc/utils';
-import { useNotifications } from '../../lib/useOrder';
 import { useFavorites } from '../../lib/useFavorites';
 import {
   SHCCard,
@@ -50,12 +48,8 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, logout, loading: authLoading } = useAuth();
-  const { data: notifs = [], markRead } = useNotifications();
   const { favorites } = useFavorites();
   const savedDishes = favoritesToReorderDishes(favorites);
-  const [showNotifs, setShowNotifs] = useState(false);
-
-  const unreadCount = (notifs as Array<{ read?: boolean }>).filter((n) => !n.read).length;
 
   useEffect(() => {
     if (searchParams.get('showRequest') === '1') {
@@ -95,31 +89,7 @@ function ProfileContent() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 shc-tab-bar-pad" data-testid="customer-profile-screen">
-      <div className="flex items-start justify-between gap-2 mb-4">
-        <div className="flex-1 min-w-0">
-          <GourmeatScreenHeader title="Account" subtitle={user.name || 'You'} />
-        </div>
-        <button
-          type="button"
-          className="relative shrink-0 mt-2 p-2 rounded-lg border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal-sm)]"
-          aria-label="Notifications"
-          data-testid="notif-bell"
-          onClick={() => {
-            const next = !showNotifs;
-            setShowNotifs(next);
-            if (next && unreadCount > 0) {
-              markRead({ all: true });
-            }
-          }}
-        >
-          <Bell className="w-[22px] h-[22px] text-foreground" aria-hidden />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 flex items-center justify-center text-[9px] font-black bg-primary text-primary-foreground border-2 border-[var(--shc-border-brutal)] rounded-full px-1">
-              {unreadCount}
-            </span>
-          )}
-        </button>
-      </div>
+      <GourmeatScreenHeader title="Account" subtitle={user.name || 'You'} />
 
       <AccountMenuList items={accountMenuItemsSignedIn()} />
 
@@ -181,42 +151,9 @@ function ProfileContent() {
         </SHCButton>
       </Link>
 
-      {showNotifs && (
-        <SHCCard className="mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell className="w-[18px] h-[18px]" aria-hidden />
-            <p className="font-extrabold text-foreground">Notifications</p>
-          </div>
-          {notifs.length === 0 ? (
-            <p className="text-sm text-muted-foreground font-semibold py-2">No events yet</p>
-          ) : (
-            <ul className="space-y-2">
-              {(notifs as Array<{ id?: string; type?: string; body?: string; read?: boolean }>).map((n, i) => {
-                const orderId = orderIdFromNotificationType(n.type);
-                const row = (
-                  <p className={`text-sm ${!n.read ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>
-                    {!n.read ? '● ' : ''}
-                    {n.body}
-                  </p>
-                );
-                return (
-                  <li key={n.id || i}>
-                    {orderId ? (
-                      <Link href={`/orders/${orderId}`} data-testid={`notif-order-${orderId}`} className="hover:underline">
-                        {row}
-                      </Link>
-                    ) : (
-                      row
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </SHCCard>
-      )}
-
-      <WebPushOptIn />
+      <div className="mb-4" data-testid="profile-push-settings">
+        <WebPushOptIn />
+      </div>
 
       <button
         type="button"

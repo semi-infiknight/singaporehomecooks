@@ -1,0 +1,54 @@
+# Pre-store smoke — discover loads, chrome present, Orders tab works without sign-in wall
+# App: customer · Device: booted iOS sim · Metro :8081 optional (bundled JS may be production)
+appId: com.singaporehomecooks.customer
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: customer-onboarding-if-needed.yaml
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 120000
+- extendedWaitUntil:
+    visible:
+      id: "gourmeat-home-header"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "gourmeat-location-chip"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "gourmeat-profile-avatar"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "bottom-tab-bar"
+    timeout: 30000
+# Search bar on discover
+- extendedWaitUntil:
+    visible:
+      id: "search-input"
+    timeout: 30000
+# Orders is guest-accessible (no "Sign in to view orders" tray)
+- tapOn:
+    id: "orders-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-orders-screen"
+    timeout: 60000
+# Must not show legacy sign-in wall copy
+- assertNotVisible:
+    text: "Sign in to view orders"
+    optional: true
+- assertNotVisible:
+    id: "guest-auth-tray"
+    optional: true
+# Back to discover
+- tapOn:
+    id: "discover-tab"
+- extendedWaitUntil:
+    visible:
+      id: "customer-discover-screen"
+    timeout: 30000

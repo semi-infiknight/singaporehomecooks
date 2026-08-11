@@ -83,8 +83,22 @@ export default function CategoryExploreScreen() {
   const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const cookList = (cooks as Record<string, unknown>[]) ?? [];
   const { openTray, dismiss } = useSHCTray();
-  const { active: collectionLocation } = useCustomerLocation();
-  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
+  const { proximity } = useCustomerLocation();
+  const {
+    halalOnly,
+    maxCal,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  } = useDiscoverPrefs();
   const [chip, setChip] = useState('all');
   const [mealType, setMealType] = useState<MealTypeId>('all');
 
@@ -99,8 +113,16 @@ export default function CategoryExploreScreen() {
   );
 
   const filters = useMemo(
-    () => ({ mealType, halalOnly, vegetarianOnly, maxCal }),
-    [mealType, halalOnly, vegetarianOnly, maxCal]
+    () => ({
+      mealType,
+      halalOnly,
+      vegetarianOnly,
+      veganOnly,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts,
+      maxCal,
+    }),
+    [mealType, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
@@ -110,17 +132,23 @@ export default function CategoryExploreScreen() {
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       vegetarianOnly: vegetarianOnly || undefined,
+      veganOnly: veganOnly || undefined,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts: excludeNuts || undefined,
       maxCal,
     });
-  }, [productList, categoryId, mindCategories, mealType, halalOnly, vegetarianOnly, maxCal]);
+  }, [productList, categoryId, mindCategories, mealType, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]);
 
   const clearFilters = useCallback(() => {
     const cleared = clearedDiscoverFilters();
     setMealType(cleared.mealType);
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
-    if (maxCal != null) toggleLight();
-  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+    if (veganOnly) toggleVeganOnly();
+    if (chickenOnly) toggleChickenOnly();
+    if (excludeNuts) toggleExcludeNuts();
+    if (maxCal != null) setMaxCal(undefined);
+  }, [halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleVeganOnly, toggleChickenOnly, toggleExcludeNuts, setMaxCal]);
 
   const openFilters = useCallback(() => {
     openTray(
@@ -135,10 +163,18 @@ export default function CategoryExploreScreen() {
           onCuisineChange={() => {}}
           halalOnly={halalOnly}
           vegetarianOnly={vegetarianOnly}
+          veganOnly={veganOnly}
+          chickenOnly={chickenOnly}
+          excludeNuts={excludeNuts}
           lightOnly={maxCal != null}
+          maxCal={maxCal}
           onToggleHalal={toggleHalalOnly}
           onToggleVegetarian={toggleVegetarianOnly}
+          onToggleVegan={toggleVeganOnly}
+          onToggleChicken={toggleChickenOnly}
+          onToggleExcludeNuts={toggleExcludeNuts}
           onToggleLight={toggleLight}
+          onMaxCalChange={setMaxCal}
           onClear={clearFilters}
           onApply={dismiss}
           resultCount={categoryProducts.length}
@@ -158,6 +194,7 @@ export default function CategoryExploreScreen() {
     toggleHalalOnly,
     toggleVegetarianOnly,
     toggleLight,
+    setMaxCal,
     clearFilters,
     categoryProducts.length,
     activeFilterCount,
@@ -167,11 +204,11 @@ export default function CategoryExploreScreen() {
 
   const kitchens = useMemo(() => {
     const list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
-    if (collectionLocation?.lat != null && collectionLocation?.lng != null) {
-      return sortByCookProximity(list, { lat: collectionLocation.lat, lng: collectionLocation.lng });
+    if (proximity) {
+      return sortByCookProximity(list, proximity);
     }
     return list;
-  }, [cookList, categoryProducts, categoryId, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, proximity]);
 
   const handleAdd = useCallback(
     (productId: string) => {      addMut.mutate({ productId, qty: 1 });
@@ -256,11 +293,7 @@ export default function CategoryExploreScreen() {
             cookId={cookId}
             cookName={cookName}
             area={c.area ? String(c.area) : undefined}
-            distanceKm={
-              collectionLocation?.lat != null && collectionLocation?.lng != null
-                ? distanceToCookItemKm({ lat: collectionLocation.lat, lng: collectionLocation.lng }, c)
-                : null
-            }
+            distanceKm={proximity ? distanceToCookItemKm(proximity, c) : null}
             tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
             rating={coerceRating(c.rating)}
             reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
@@ -274,7 +307,7 @@ export default function CategoryExploreScreen() {
         </View>
       );
     },
-    [router, title, collectionLocation]
+    [router, title, proximity]
   );
 
   return (

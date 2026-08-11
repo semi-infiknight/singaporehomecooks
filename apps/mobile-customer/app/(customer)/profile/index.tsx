@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Text, ScrollView, View, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, ScrollView, View, Pressable, StyleSheet, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   shcColors,
@@ -11,6 +11,7 @@ import {
   shcSpacing,
   shcBorders,
   shcRadii,
+  gourmeatColors,
   GourmeatScreenHeader,
   DirectionalTabScreen,
   SHCSkeletonAccountScreen,
@@ -22,13 +23,12 @@ import {
   getDishImageUrl,
   accountMenuItemsSignedIn,
   accountMenuItemsGuest,
-  orderIdFromNotificationType,
 } from '@shc/utils';
 import { useFavorites } from '../../../hooks/useFavorites';
 import { SHCZomatoDishRowRail } from '@shc/ui';
 import { useAuth } from '../../../hooks/useAuth';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
-import { useNotifications } from '../../../hooks/useOrder';
+import { registerCustomerPushToken } from '../../../lib/push';
 
 const QUICK_TILES = [
   { iconKey: 'orders' as const, label: 'Orders', image: BENTO_ACTION_IMAGES.orders, href: '/(customer)/orders', testID: 'profile-orders-tile' },
@@ -41,10 +41,9 @@ export default function Profile() {
   const router = useRouter();
   const { showRequest } = useLocalSearchParams<{ showRequest?: string }>();
   const { user, logout, loading: authLoading } = useAuth();
-  const { data: notifs = [], markRead } = useNotifications();
   const { favorites } = useFavorites();
   const savedDishes = favoritesToReorderDishes(favorites);
-  const [showNotifs, setShowNotifs] = useState(false);
+  const [pushOn, setPushOn] = useState(true);
 
   useEffect(() => {
     if (showRequest === '1') {
@@ -140,33 +139,10 @@ export default function Profile() {
       style={{ flex: 1 }}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + shcSpacing.md, paddingBottom: contentPadForTabBar(insets.bottom) }]}
     >
-      <View style={styles.headerRow}>
-        <View style={styles.heroWrap}>
-          <GourmeatScreenHeader
-            title="Account"
-            subtitle={user.name || 'You'}
-          />
-        </View>
-        <Pressable
-          onPress={() => {
-            const next = !showNotifs;
-            setShowNotifs(next);
-            if (next && notifs.some((n: any) => !n.read)) {
-              markRead({ all: true });
-            }
-          }}
-          testID="notif-bell"
-          accessibilityLabel="Notifications"
-          style={styles.bellBtn}
-        >
-          <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
-          {notifs.filter((n: any) => !n.read).length > 0 && (
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellCount}>{notifs.filter((n: any) => !n.read).length}</Text>
-            </View>
-          )}
-        </Pressable>
-      </View>
+      <GourmeatScreenHeader
+        title="Account"
+        subtitle={user.name || 'You'}
+      />
 
       {/* Wireframe Account menu */}
       <View style={styles.accountMenu} testID="account-menu-list">
@@ -191,6 +167,24 @@ export default function Profile() {
           </Pressable>
         ))}
       </View>
+
+      <SHCCard style={styles.pushCard} testID="profile-push-settings">
+        <View style={styles.pushRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.pushTitle}>Push notifications</Text>
+            <Text style={styles.pushHint}>Order updates show on Orders — this only enables device alerts</Text>
+          </View>
+          <Switch
+            value={pushOn}
+            onValueChange={(v) => {
+              setPushOn(v);
+              if (v) void registerCustomerPushToken();
+            }}
+            trackColor={{ true: gourmeatColors.primary, false: '#E5DDD4' }}
+            testID="profile-push-switch"
+          />
+        </View>
+      </SHCCard>
 
       <View style={styles.tilesRow}>
         {QUICK_TILES.map((t) => (
@@ -259,38 +253,8 @@ export default function Profile() {
       >
         <Text style={styles.logout}>Logout</Text>
       </Pressable>
-
-      {showNotifs && (
-        <SHCCard style={styles.notifsCard}>
-          <View style={styles.notifsTitleRow}>
-            <SHCIcon name="notifications" size={18} color={shcColors.text} active />
-            <Text style={styles.notifsTitle}>Notifications</Text>
-          </View>
-          {notifs.length === 0 && <Text style={styles.notifsEmpty}>No events yet</Text>}
-          {notifs.map((n: any, i: number) => {
-            const orderId = orderIdFromNotificationType(n.type);
-            const row = (
-              <Text style={[styles.notifItem, !n.read && styles.notifUnread]}>
-                {!n.read ? '● ' : ''}{n.body}
-              </Text>
-            );
-            return orderId ? (
-              <Pressable
-                key={n.id || i}
-                onPress={() => router.push(`/(customer)/orders/${orderId}` as any)}
-                testID={`notif-order-${orderId}`}
-              >
-                {row}
-              </Pressable>
-            ) : (
-              <View key={n.id || i}>{row}</View>
-            );
-          })}
-        </SHCCard>
-      )}
     </ScrollView>
     </View>
-  
     </DirectionalTabScreen>
   );
 }
@@ -298,30 +262,12 @@ export default function Profile() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: shcColors.background },
   content: { paddingHorizontal: shcSpacing.md },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
-  heroWrap: { flex: 1 },
-  bellBtn: {
-    padding: shcSpacing.sm,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    backgroundColor: shcColors.surface,
-    marginTop: shcSpacing.md,
-  },
-  bellBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: shcColors.error,
-    borderRadius: shcRadii.pill,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellCount: { fontSize: 9, color: '#fff', fontWeight: '800' },
   tilesRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   tileCol: { flex: 1 },
+  pushCard: { marginBottom: shcSpacing.md },
+  pushRow: { flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm },
+  pushTitle: { fontSize: 14, fontWeight: '800', color: shcColors.text },
+  pushHint: { fontSize: 11, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },
   accountMenu: {
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
@@ -358,10 +304,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logout: { color: shcColors.error, textAlign: 'center', fontWeight: '800', fontSize: 15 },
-  notifsCard: { marginTop: shcSpacing.md },
-  notifsTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  notifsTitle: { fontWeight: '800' },
-  notifsEmpty: { color: shcColors.textLight, fontSize: 12 },
-  notifItem: { fontSize: 12, marginTop: 4 },
-  notifUnread: { fontWeight: '700', color: shcColors.primary },
 });

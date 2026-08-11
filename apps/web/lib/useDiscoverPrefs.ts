@@ -7,10 +7,21 @@ const PREFS_KEY = 'shc_discover_prefs';
 type DiscoverPrefs = {
   halalOnly: boolean;
   vegetarianOnly: boolean;
+  veganOnly: boolean;
+  /** When true, filter includeIngredient = 'chicken' */
+  chickenOnly: boolean;
+  excludeNuts: boolean;
   maxCal?: number;
 };
 
-const DEFAULT: DiscoverPrefs = { halalOnly: false, vegetarianOnly: false, maxCal: undefined };
+const DEFAULT: DiscoverPrefs = {
+  halalOnly: false,
+  vegetarianOnly: false,
+  veganOnly: false,
+  chickenOnly: false,
+  excludeNuts: false,
+  maxCal: undefined,
+};
 
 function readPrefs(): DiscoverPrefs {
   if (typeof window === 'undefined') return DEFAULT;
@@ -32,34 +43,62 @@ export function useDiscoverPrefs() {
     setReady(true);
   }, []);
 
-  const persist = useCallback((next: DiscoverPrefs) => {
-    setPrefs(next);
-    try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify(next));
-    } catch {
-      /* non-fatal */
-    }
+  const patch = useCallback((fn: (prev: DiscoverPrefs) => DiscoverPrefs) => {
+    setPrefs((prev) => {
+      const next = fn(prev);
+      try {
+        localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+      } catch {
+        /* non-fatal */
+      }
+      return next;
+    });
   }, []);
 
   const toggleHalalOnly = useCallback(
-    () => persist({ ...prefs, halalOnly: !prefs.halalOnly }),
-    [persist, prefs]
+    () => patch((p) => ({ ...p, halalOnly: !p.halalOnly })),
+    [patch]
   );
 
   const toggleLight = useCallback(
-    () => persist({ ...prefs, maxCal: prefs.maxCal === 500 ? undefined : 500 }),
-    [persist, prefs]
+    () => patch((p) => ({ ...p, maxCal: p.maxCal === 500 ? undefined : 500 })),
+    [patch]
   );
 
   const setMaxCal = useCallback(
-    (maxCal: number | undefined) => persist({ ...prefs, maxCal }),
-    [persist, prefs]
+    (maxCal: number | undefined) => patch((p) => ({ ...p, maxCal })),
+    [patch]
   );
 
   const toggleVegetarianOnly = useCallback(
-    () => persist({ ...prefs, vegetarianOnly: !prefs.vegetarianOnly }),
-    [persist, prefs]
+    () => patch((p) => ({ ...p, vegetarianOnly: !p.vegetarianOnly })),
+    [patch]
   );
 
-  return { ...prefs, ready, toggleHalalOnly, toggleLight, setMaxCal, toggleVegetarianOnly };
+  const toggleVeganOnly = useCallback(
+    () => patch((p) => ({ ...p, veganOnly: !p.veganOnly })),
+    [patch]
+  );
+
+  const toggleChickenOnly = useCallback(
+    () => patch((p) => ({ ...p, chickenOnly: !p.chickenOnly })),
+    [patch]
+  );
+
+  const toggleExcludeNuts = useCallback(
+    () => patch((p) => ({ ...p, excludeNuts: !p.excludeNuts })),
+    [patch]
+  );
+
+  return {
+    ...prefs,
+    ready,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  };
 }

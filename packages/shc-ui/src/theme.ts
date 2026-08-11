@@ -72,6 +72,8 @@ export const shcRadii = {
 
 export const shcBorders = {
   thin: 1,
+  /** 1px divider — alias for thin (cook compliance etc.) */
+  hairline: 1,
   brutal: 2,
   thick: 3,
 };

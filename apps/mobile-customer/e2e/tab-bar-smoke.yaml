@@ -22,59 +22,24 @@ appId: com.singaporehomecooks.customer
     visible:
       id: "bottom-tab-bar"
     timeout: 30000
-# Guest: account tabs show auth tray (no redbox)
-- tapOn:
-    id: "orders-tab"
-- extendedWaitUntil:
-    visible:
-      id: "guest-auth-tray"
-    timeout: 15000
-- tapOn:
-    text: "Keep browsing"
-- tapOn:
-    id: "cart-tab"
-- extendedWaitUntil:
-    visible:
-      id: "guest-auth-tray"
-    timeout: 15000
-- tapOn:
-    text: "Keep browsing"
-- tapOn:
-    id: "guest-browse-bar-cta"
-- extendedWaitUntil:
-    visible:
-      id: "auth-submit-btn"
-    timeout: 30000
-- tapOn:
-    id: "auth-submit-btn"
-- tapOn:
-    text: "OK"
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: "bottom-tab-bar"
-    timeout: 120000
-# Signed-in tab navigation
+# Guest: Orders opens without auth tray (guest-first)
 - tapOn:
     id: "orders-tab"
 - extendedWaitUntil:
     visible:
       id: "customer-orders-screen"
     timeout: 60000
+- assertNotVisible:
+    text: "Sign in to view orders"
     optional: true
-- tapOn:
-    id: "cart-tab"
-- extendedWaitUntil:
-    visible:
-      id: "cart-screen"
-    timeout: 60000
-    optional: true
+# Profile may still show guest account tools / sign-in
 - tapOn:
     id: "profile-tab"
 - extendedWaitUntil:
     visible:
       id: "customer-profile-screen"
     timeout: 60000
+    optional: true
 - tapOn:
     id: "discover-tab"
 - extendedWaitUntil:

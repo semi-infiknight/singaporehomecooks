@@ -17,7 +17,7 @@ const navLinks = [
 
 export function AppHeader() {
   const { user, loading: authLoading } = useAuth();
-  const { locationLabel, active: collectionLocation } = useCustomerLocation();
+  const { proximityLabel, active: collectionLocation, locationLabel } = useCustomerLocation();
   const { data: cart } = useCart();
   const { query, setQuery } = useDiscoverSearch();
   const { data: searchHits = [] } = useProducts(query);
@@ -66,6 +66,9 @@ export function AppHeader() {
                   addMut.mutate({ productId: id, qty: 1 });
                 }}
                 onClear={() => setQuery('')}
+                onRequestCustom={() => {
+                  window.location.href = '/request';
+                }}
               />
             </div>
           </div>
@@ -119,7 +122,7 @@ export function AppHeader() {
         {/* Zomato-style location bar (mobile + desktop discover context) */}
         <div className="pb-2">
           <ZomatoLocationBar
-            areaLabel={collectionLocation ? locationLabel : 'Set collection location'}
+            areaLabel={proximityLabel || (collectionLocation ? locationLabel : 'Near you')}
             avatarName={user?.name}
             onProfileHref={user ? '/profile' : '/login'}
             onLocationHref="/location"
@@ -149,6 +152,9 @@ export function AppHeader() {
                 addMut.mutate({ productId: id, qty: 1 });
               }}
               onClear={() => setQuery('')}
+              onRequestCustom={() => {
+                window.location.href = '/request';
+              }}
             />
           </div>
         </div>

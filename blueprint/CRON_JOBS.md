@@ -20,6 +20,7 @@
 | Compliance Expiry Check    | Daily        | Backend   | Notify cooks of expiring SFA/WSQ docs        | Retry + ops alert |
 | Platform Stats Aggregation | Hourly       | Backend   | Update `shc_platform_stat` for dashboards    | Best effort |
 | Order Escalation           | Every 15 min | Backend   | Auto-cancel unpaid or unaccepted orders      | Full audit log |
+| **Review prompt**          | Every 15 min | Worker    | ~1h after collection → customer review notif (taste/comms/presentation/qty/oily/spicy) | Idempotent `review_prompt:{orderId}` |
 | Notification Retry         | Every 5 min  | Backend   | Retry failed push/SMS                        | Exponential backoff |
 
 ## Implementation

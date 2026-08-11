@@ -37,19 +37,12 @@ function AppShell() {
     <>
       <StatusBar style="dark" />
       <ErrorBoundary>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: shcColors.primary },
-            headerTintColor: shcColors.background,
-            headerTitleStyle: { fontWeight: '600' },
-            headerTitle: 'SHC — Cook',
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(cook)" options={{ headerShown: false }} />
-          <Stack.Screen name="(shared)/auth/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(shared)/onboarding/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(cook)" />
+          <Stack.Screen name="(shared)/auth/index" />
+          <Stack.Screen name="(shared)/onboarding/index" />
+          <Stack.Screen name="(shared)/chat/[orderId]/index" />
         </Stack>
       </ErrorBoundary>
     </>

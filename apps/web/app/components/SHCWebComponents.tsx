@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -34,6 +34,11 @@ import type { LucideIcon } from 'lucide-react';
 import {
   getDishImageUrl,
   getOccasionImageUrl,
+  DISCOVER_MAX_CAL_PRESETS,
+  DISCOVER_MAX_CAL_SLIDER,
+  maxCalFilterLabel,
+  snapMaxCalSliderValue,
+  toggleMaxCalPreset,
   BENTO_ACTION_IMAGES,
   PROMO_BANNER_IMAGES,
   DEFAULT_PROMOS,
@@ -808,24 +813,37 @@ export function SearchResultRow({
   product,
   onAdd,
   href,
+  onClick,
 }: {
   product: DishCardProduct;
   onAdd?: () => void;
-  href: string;
+  href?: string;
+  onClick?: () => void;
 }) {
   const imgUrl = getDishImageUrl({ id: product.id, cuisine: product.cuisine, name: product.name });
+  const body = (
+    <>
+      <div className="relative w-12 h-12 shrink-0 rounded-full overflow-hidden bg-muted">
+        <Image src={imgUrl} alt="" fill className="object-cover" sizes="48px" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="font-bold text-sm truncate">{product.name}</div>
+        <div className="text-xs text-muted-foreground truncate">{product.cook_name}</div>
+        <div className="text-sm font-black font-mono text-primary mt-0.5">S${product.price}</div>
+      </div>
+    </>
+  );
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 border-b border-[var(--shc-border-brutal)]/30 last:border-0">
-      <Link href={href} className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border-2 border-[var(--shc-border-brutal)]">
-          <Image src={imgUrl} alt="" fill className="object-cover" sizes="48px" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="font-bold text-sm truncate">{product.name}</div>
-          <div className="text-xs text-muted-foreground truncate">{product.cook_name}</div>
-          <div className="text-sm font-black font-mono text-primary mt-0.5">S${product.price}</div>
-        </div>
-      </Link>
+    <div className="flex items-center gap-3 py-2.5 px-3 last:border-0">
+      {onClick ? (
+        <button type="button" onClick={onClick} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+          {body}
+        </button>
+      ) : (
+        <Link href={href || `/product/${product.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+          {body}
+        </Link>
+      )}
       {onAdd && (
         <button
           type="button"
@@ -840,49 +858,168 @@ export function SearchResultRow({
   );
 }
 
+export type SearchKitchenHitWeb = {
+  key: string;
+  cook_name: string;
+  routeKey: string;
+  matchingDishCount: number;
+  sampleDishNames: string[];
+  area?: string;
+  image_url?: string;
+};
+
+/** Empty search — request custom dish (parity with mobile SHCSearchNoResultsRequestCard). */
+export function SearchNoResultsRequestCard({
+  query,
+  onRequestPress,
+  requestHref = '/request',
+}: {
+  query?: string;
+  onRequestPress?: () => void;
+  requestHref?: string;
+}) {
+  const q = (query || '').trim();
+  const body = (
+    <div className="p-4 space-y-3" data-testid="search-no-results-request">
+      <p className="text-base font-extrabold text-foreground leading-snug" data-testid="search-no-results-request-title">
+        {q ? `We couldn’t find any results for “${q}”` : 'No matches for that search'}
+      </p>
+      <div className="flex items-center gap-3 rounded-2xl border border-[rgba(248,112,72,0.28)] bg-[#FFF8F3] p-4 shadow-[var(--shc-shadow-soft)]">
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <p className="text-[15px] font-black text-foreground leading-snug">
+            Didn’t find what you’re looking for?
+          </p>
+          <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+            Request a custom dish — home cooks can bid so we can show better matches next time.
+          </p>
+          <p className="text-sm font-extrabold text-primary pt-0.5">Request a custom dish →</p>
+        </div>
+        <span className="w-[72px] h-[72px] shrink-0 rounded-full bg-[var(--shc-bento-peach)] border-2 border-[var(--shc-border-brutal)] flex items-center justify-center">
+          <ChefHat className="w-8 h-8 text-primary" aria-hidden />
+        </span>
+      </div>
+    </div>
+  );
+  if (onRequestPress) {
+    return (
+      <button type="button" onClick={onRequestPress} className="w-full text-left" data-testid="search-no-results-request-cta">
+        {body}
+      </button>
+    );
+  }
+  return (
+    <Link href={requestHref} className="block" data-testid="search-no-results-request-cta">
+      {body}
+    </Link>
+  );
+}
+
 export function SearchResultsDropdown({
   query,
   products,
+  kitchens = [],
   onAdd,
   onClear,
+  onKitchenPress,
+  onDishPress,
+  onRequestCustom,
   inline = false,
 }: {
   query: string;
-  products: DishCardProduct[];
+  products: Array<DishCardProduct & { kitchenLabel?: string; kitchenCount?: number }>;
+  kitchens?: SearchKitchenHitWeb[];
   onAdd?: (productId: string) => void;
   onClear?: () => void;
+  onKitchenPress?: (routeKey: string) => void;
+  onDishPress?: (id: string) => void;
+  onRequestCustom?: () => void;
   /** Inline panel below search (discover) vs absolute dropdown (header) */
   inline?: boolean;
 }) {
   if (!query.trim()) return null;
+  const q = query.trim();
   return (
     <div
-      className={`bg-card border-2 border-[var(--shc-border-brutal)] rounded-xl shadow-[var(--shc-shadow-brutal)] overflow-hidden ${
-        inline ? 'mt-2 mb-2' : 'absolute left-0 right-0 top-full mt-1 z-50'
+      className={`bg-card border border-black/10 rounded-xl overflow-hidden max-h-[420px] overflow-y-auto ${
+        inline ? 'mt-2 mb-2' : 'absolute left-0 right-0 top-full mt-1 z-50 shadow-lg'
       }`}
       data-testid="search-results-panel"
     >
-      <div className="flex justify-between items-center px-3 py-2 bg-[var(--shc-bento-mint)] border-b-2 border-[var(--shc-border-brutal)] text-xs font-bold">
-        <span>{products.length} result{products.length !== 1 ? 's' : ''} for “{query.trim()}”</span>
+      <div className="flex justify-between items-center px-3 py-2 text-xs font-bold text-muted-foreground">
+        <span>Results for “{q}”</span>
         {onClear && (
           <button type="button" onClick={onClear} className="text-primary font-bold">
             Clear
           </button>
         )}
       </div>
-      {products.length === 0 ? (
-        <p className="p-4 text-sm text-muted-foreground text-center">No dishes match — try another occasion or filter</p>
-      ) : (
-        <ContainedVirtualRowList
-          items={products}
-          getKey={(p) => p.id}
-          rowHeight={VIRTUAL_DISH_LIST_ROW_HEIGHT}
-          maxHeightClassName="max-h-72 overflow-y-auto"
-          testID="search-results-virtual-list"
-          renderItem={(p) => (
-            <SearchResultRow product={p} href={`/product/${p.id}`} onAdd={onAdd ? () => onAdd(p.id) : undefined} />
-          )}
+      {kitchens.length === 0 && products.length === 0 ? (
+        <SearchNoResultsRequestCard
+          query={q}
+          onRequestPress={onRequestCustom}
+          requestHref="/request"
         />
+      ) : (
+        <>
+          {kitchens.length > 0 ? (
+            <div data-testid="search-kitchens-section">
+              <p className="px-3 pt-2 pb-1 text-[11px] font-bold text-muted-foreground">
+                Kitchens for “{q}”
+              </p>
+              {kitchens.map((k) => {
+                const dishHint =
+                  k.matchingDishCount === 1
+                    ? k.sampleDishNames[0] || '1 dish'
+                    : `${k.matchingDishCount} dishes match`;
+                return (
+                  <button
+                    key={k.key}
+                    type="button"
+                    onClick={() => {
+                      if (onKitchenPress) onKitchenPress(k.routeKey);
+                      else window.location.href = `/cook/${encodeURIComponent(k.routeKey)}`;
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 border-t border-black/5 text-left hover:bg-muted/40"
+                    data-testid={`search-kitchen-${k.key}`}
+                  >
+                    <span className="relative w-12 h-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                      {k.image_url ? (
+                        <Image src={k.image_url} alt="" fill className="object-cover" sizes="48px" />
+                      ) : null}
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-extrabold truncate">{k.cook_name}</span>
+                      <span className="block text-xs text-muted-foreground font-medium truncate">
+                        {[k.area, dishHint].filter(Boolean).join(' · ')}
+                      </span>
+                    </span>
+                    <span className="text-muted-foreground text-lg">›</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {products.length > 0 ? (
+            <div data-testid="search-dishes-section">
+              <p className="px-3 pt-2 pb-1 text-[11px] font-bold text-muted-foreground">
+                Dishes matching your query
+              </p>
+              {products.map((p) => (
+                <div key={p.id} className="border-t border-black/5">
+                  <SearchResultRow
+                    product={{
+                      ...p,
+                      cook_name: (p as { kitchenLabel?: string }).kitchenLabel || p.cook_name,
+                    }}
+                    href={onDishPress ? undefined : `/product/${p.id}`}
+                    onAdd={onAdd ? () => onAdd(p.id) : undefined}
+                    onClick={onDishPress ? () => onDishPress(p.id) : undefined}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );
@@ -892,22 +1029,32 @@ export function SearchResultsDropdown({
 export function SearchResultsPanel({
   query,
   dishes,
+  kitchens,
   onDishPress,
+  onKitchenPress,
   onAddPress,
   onClose,
+  onRequestCustom,
 }: {
   query: string;
-  dishes: DishCardProduct[];
+  dishes: Array<DishCardProduct & { kitchenLabel?: string; kitchenCount?: number }>;
+  kitchens?: SearchKitchenHitWeb[];
   onDishPress?: (id: string) => void;
+  onKitchenPress?: (routeKey: string) => void;
   onAddPress?: (id: string) => void;
   onClose?: () => void;
+  onRequestCustom?: () => void;
 }) {
   return (
     <SearchResultsDropdown
       query={query}
       products={dishes}
+      kitchens={kitchens}
       onAdd={onAddPress}
       onClear={onClose}
+      onKitchenPress={onKitchenPress}
+      onDishPress={onDishPress}
+      onRequestCustom={onRequestCustom}
       inline
     />
   );
@@ -1051,6 +1198,9 @@ export type DishCardProduct = {
   occasion_tags?: string[];
   rating?: number;
   image_url?: string;
+  /** Multi-kitchen search label e.g. “Available from 2 kitchens” */
+  kitchenLabel?: string;
+  kitchenCount?: number;
 };
 
 export function DishCard({
@@ -2524,39 +2674,18 @@ export function FloatingCartPill(props: {
   );
 }
 
-/** Principle 5: browse first, sign in at checkout */
+/**
+ * @deprecated Guest checkout is first-class — discover no longer shows this bar.
+ * No-op for older imports.
+ */
 export function GuestBrowseBar({
-  onSignInClick,
+  onSignInClick: _onSignInClick,
   testID = 'guest-browse-bar',
 }: {
   onSignInClick?: () => void;
   testID?: string;
 }) {
-  const ctaClass =
-    'shc-btn-primary inline-flex items-center justify-center min-w-[96px] px-4 py-2.5 text-sm font-black border-2 border-[var(--shc-border-brutal)] rounded-lg shadow-[var(--shc-shadow-brutal-sm)] hover:shadow-[var(--shc-shadow-brutal)] active:translate-x-px active:translate-y-px transition-all shrink-0';
-
-  return (
-    <div
-      data-testid={testID}
-      className="flex items-center justify-between gap-3 bg-[var(--shc-bento-yellow)] border-2 border-[var(--shc-border-brutal)] rounded-xl px-4 py-4 mt-[var(--shc-stack-gap)] mb-[var(--shc-section-gap)] min-h-[60px] shadow-[var(--shc-shadow-brutal)]"
-    >
-      <div className="flex-1 min-w-0 pr-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Guest browsing</p>
-        <p className="text-sm font-extrabold text-foreground leading-snug mt-0.5">
-          Sign in to checkout &amp; track orders
-        </p>
-      </div>
-      {onSignInClick ? (
-        <button type="button" onClick={onSignInClick} className={ctaClass}>
-          Sign in
-        </button>
-      ) : (
-        <Link href="/login" className={ctaClass}>
-          Sign in
-        </Link>
-      )}
-    </div>
-  );
+  return <div data-testid={testID} className="hidden" aria-hidden />;
 }
 
 /** Principle 4: personalized rail titles */
@@ -2816,73 +2945,86 @@ export function CalorieBadge({ calories }: { calories: number }) {
 //   return 10 + (hash % 16);
 // }
 
+/**
+ * Discover top chrome — compact Swiggy-style row: location (left) + profile (right).
+ * No large marketing headline so more dish content fits above the fold.
+ */
 export function GourmeatHomeHeader({
-  headline = 'Hungry? Order & Eat.',
-  subtitle,
+  headline: _headline,
+  subtitle: _subtitle,
   locationLabel = 'Katong, Singapore',
   locationHint = 'Collect from',
   avatarUri,
   profileHref = '/profile',
   locationHref = '/location',
-  notificationHref = '/profile',
+  showLoginTag = false,
 }: {
+  /** @deprecated Removed from discover chrome to save vertical space. */
   headline?: string;
+  /** @deprecated Removed from discover chrome. */
   subtitle?: string;
   locationLabel?: string;
   locationHint?: string;
   avatarUri?: string;
   profileHref?: string;
   locationHref?: string;
-  notificationHref?: string;
+  /** Small “Login” chip under the avatar for guests. */
+  showLoginTag?: boolean;
   onLocationPress?: () => void;
 }) {
+  void _headline;
+  void _subtitle;
+
   return (
-    <div className="mb-3" data-testid="gourmeat-home-header">
-      <div className="flex items-start justify-between gap-2 mb-4">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-[26px] md:text-3xl font-extrabold text-foreground tracking-[-0.5px] leading-8">
-            {headline}
-          </h1>
-          {subtitle ? (
-            <p className="text-sm font-semibold text-muted-foreground mt-1" data-testid="gourmeat-home-subtitle">
-              {subtitle}
-            </p>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href={notificationHref}
-            className="w-10 h-10 rounded-full bg-card shadow-[var(--shc-shadow-soft)] flex items-center justify-center"
-            data-testid="gourmeat-notifications"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5 text-foreground" aria-hidden />
-          </Link>
-          <Link
-            href={profileHref}
-            className="w-11 h-11 rounded-full overflow-hidden bg-secondary shadow-[var(--shc-shadow-soft)]"
-            data-testid="gourmeat-profile-avatar"
-          >
+    <div className="mb-2" data-testid="gourmeat-home-header">
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={locationHref}
+          className="flex-1 min-w-0 flex items-start gap-1.5"
+          data-testid="gourmeat-location-chip"
+          aria-label={`${locationHint}, ${locationLabel}`}
+        >
+          <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1 min-w-0">
+              <span className="text-[16px] font-black text-foreground tracking-tight truncate">{locationLabel}</span>
+              <span className="text-[10px] text-muted-foreground font-bold shrink-0">▼</span>
+            </span>
+            {locationHint ? (
+              <span
+                className="block text-xs font-semibold text-muted-foreground truncate mt-0.5"
+                data-testid="gourmeat-location-hint"
+              >
+                {locationHint}
+              </span>
+            ) : null}
+          </span>
+        </Link>
+        <Link
+          href={profileHref}
+          className="relative flex flex-col items-center shrink-0"
+          data-testid="gourmeat-profile-avatar"
+          aria-label={showLoginTag ? 'Log in' : 'Profile'}
+        >
+          <span className="w-10 h-10 rounded-full overflow-hidden bg-secondary shadow-[var(--shc-shadow-soft)] block">
             {avatarUri ? (
-              <Image src={avatarUri} alt="" width={44} height={44} className="object-cover w-full h-full" />
+              <Image src={avatarUri} alt="" width={40} height={40} className="object-cover w-full h-full" />
             ) : (
               <span className="flex items-center justify-center w-full h-full text-primary">
-                <User className="w-[22px] h-[22px]" strokeWidth={2.5} aria-hidden />
+                <User className="w-5 h-5" strokeWidth={2.5} aria-hidden />
               </span>
             )}
-          </Link>
-        </div>
+          </span>
+          {showLoginTag ? (
+            <span
+              data-testid="gourmeat-login-tag"
+              className="-mt-2 z-[1] rounded-full bg-[var(--shc-primary,#F87048)] border-2 border-background px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white"
+            >
+              Login
+            </span>
+          ) : null}
+        </Link>
       </div>
-      <Link
-        href={locationHref}
-        className="inline-flex items-center gap-1 bg-card rounded-full px-3 py-1.5 shadow-[var(--shc-shadow-soft)]"
-        data-testid="gourmeat-location-chip"
-      >
-        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden />
-        <span className="text-[11px] font-semibold text-muted-foreground">{locationHint}</span>
-        <span className="text-xs font-bold text-foreground ml-1 truncate max-w-[200px]">{locationLabel}</span>
-        <span className="text-[10px] text-muted-foreground ml-1">▼</span>
-      </Link>
     </div>
   );
 }
@@ -2942,7 +3084,7 @@ export function GourmeatSearchBar({
 }
 
 /**
- * Browse spine — Dishes · Kitchens · Occasions.
+ * Browse spine — Dishes · Kitchens.
  * Makes the discover IA switchable instead of stacking every zone on one scroll.
  */
 export function GourmeatModeSwitch({
@@ -3013,10 +3155,18 @@ export function DiscoverFilterSheet({
   onCuisineChange,
   halalOnly,
   vegetarianOnly,
+  veganOnly = false,
+  chickenOnly = false,
+  excludeNuts = false,
   lightOnly,
+  maxCal: maxCalProp,
   onToggleHalal,
   onToggleVegetarian,
+  onToggleVegan,
+  onToggleChicken,
+  onToggleExcludeNuts,
   onToggleLight,
+  onMaxCalChange,
   onClear,
   resultCount,
   activeCount = 0,
@@ -3033,16 +3183,37 @@ export function DiscoverFilterSheet({
   onCuisineChange: (id: string) => void;
   halalOnly: boolean;
   vegetarianOnly: boolean;
-  lightOnly: boolean;
+  veganOnly?: boolean;
+  chickenOnly?: boolean;
+  excludeNuts?: boolean;
+  lightOnly?: boolean;
+  maxCal?: number;
   onToggleHalal: () => void;
   onToggleVegetarian: () => void;
-  onToggleLight: () => void;
+  onToggleVegan?: () => void;
+  onToggleChicken?: () => void;
+  onToggleExcludeNuts?: () => void;
+  onToggleLight?: () => void;
+  onMaxCalChange?: (maxCal: number | undefined) => void;
   onClear: () => void;
   resultCount: number;
   activeCount?: number;
   hideCuisine?: boolean;
   testID?: string;
 }) {
+  const [maxCal, setMaxCalLocal] = useState(maxCalProp);
+  useEffect(() => {
+    setMaxCalLocal(maxCalProp);
+  }, [maxCalProp]);
+  const setMaxCal = useCallback(
+    (next: number | undefined) => {
+      setMaxCalLocal(next);
+      onMaxCalChange?.(next);
+    },
+    [onMaxCalChange]
+  );
+  const sliderDisplay =
+    maxCal != null ? snapMaxCalSliderValue(maxCal) : DISCOVER_MAX_CAL_SLIDER.defaultPreview;
   if (!open) return null;
 
   const pill = (id: string, label: string, active: boolean, onClick: () => void) => (
@@ -3105,7 +3276,82 @@ export function DiscoverFilterSheet({
           <>
             {pill('halal', 'Halal', halalOnly, onToggleHalal)}
             {pill('veg', 'Vegetarian', vegetarianOnly, onToggleVegetarian)}
-            {pill('light', 'Under 500 cal', lightOnly, onToggleLight)}
+            {onToggleVegan ? pill('vegan', 'Vegan', veganOnly, onToggleVegan) : null}
+          </>
+        )}
+        {group(
+          'Calories',
+          <>
+            {pill(
+              'cal-any',
+              'Any',
+              maxCal == null && !lightOnly,
+              () => {
+                if (onMaxCalChange) setMaxCal(undefined);
+                else if (lightOnly && onToggleLight) onToggleLight();
+              }
+            )}
+            {onMaxCalChange
+              ? DISCOVER_MAX_CAL_PRESETS.map((n) =>
+                  pill(
+                    `cal-${n}`,
+                    maxCalFilterLabel(n),
+                    maxCal === n,
+                    () => setMaxCal(toggleMaxCalPreset(maxCal, n))
+                  )
+                )
+              : onToggleLight
+                ? pill('light', 'Under 500 cal', !!lightOnly, onToggleLight)
+                : null}
+            {onMaxCalChange ? (
+              <div className="w-full mt-2" data-testid={`${testID}-cal-slider`}>
+                <div className="flex justify-between items-end mb-2">
+                  <div>
+                    <p className="text-[11px] font-bold text-muted-foreground mb-0.5">Max calories</p>
+                    <p
+                      className="text-xl font-black text-foreground tracking-tight"
+                      data-testid={`${testID}-cal-slider-value`}
+                    >
+                      {maxCalFilterLabel(sliderDisplay)}
+                    </p>
+                    <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+                      {maxCal != null
+                        ? 'Filter on — dishes over this are hidden'
+                        : 'Drag to set a calorie ceiling'}
+                    </p>
+                  </div>
+                  <p className="text-[11px] font-semibold text-muted-foreground">
+                    {DISCOVER_MAX_CAL_SLIDER.min}–{DISCOVER_MAX_CAL_SLIDER.max}
+                  </p>
+                </div>
+                <input
+                  type="range"
+                  min={DISCOVER_MAX_CAL_SLIDER.min}
+                  max={DISCOVER_MAX_CAL_SLIDER.max}
+                  step={DISCOVER_MAX_CAL_SLIDER.step}
+                  value={sliderDisplay}
+                  onInput={(e) => {
+                    const n = Number((e.target as HTMLInputElement).value);
+                    if (Number.isFinite(n) && n > 0) setMaxCal(snapMaxCalSliderValue(n));
+                  }}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (Number.isFinite(n) && n > 0) setMaxCal(snapMaxCalSliderValue(n));
+                  }}
+                  data-testid={`${testID}-cal-slider-input`}
+                  aria-label={`Maximum calories, ${sliderDisplay}`}
+                  aria-valuenow={sliderDisplay}
+                  className="w-full h-2 accent-[var(--shc-primary)] cursor-pointer"
+                />
+              </div>
+            ) : null}
+          </>
+        )}
+        {group(
+          'Ingredients',
+          <>
+            {onToggleChicken ? pill('chicken', 'Chicken', chickenOnly, onToggleChicken) : null}
+            {onToggleExcludeNuts ? pill('no-nuts', 'No nuts', excludeNuts, onToggleExcludeNuts) : null}
           </>
         )}
         <div className="flex items-center gap-2 pt-3 border-t border-[var(--shc-border)]">
@@ -3795,6 +4041,14 @@ export function GourmeatDishCard({
             <div className="font-bold text-sm text-foreground truncate mb-0.5" data-testid={`${cardTestID}-name`}>
               {product.name}
             </div>
+            {product.kitchenLabel ? (
+              <div
+                className="text-[11px] font-bold text-primary truncate mb-0.5"
+                data-testid={`${cardTestID}-kitchens`}
+              >
+                {product.kitchenLabel}
+              </div>
+            ) : null}
             {product.cook_name ? (
               <div className="text-[11px] text-muted-foreground truncate mb-1" data-testid={`${cardTestID}-cook`}>
                 {product.cook_name}

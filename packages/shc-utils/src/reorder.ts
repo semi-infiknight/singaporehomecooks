@@ -67,7 +67,7 @@ export function extractReorderDishes(
   return out.slice(0, 6);
 }
 
-/** Prefer nearby kitchens when customer collection point is set. */
+/** Prefer nearby kitchens when browse proximity (GPS) is known. */
 export function sortReorderDishesByProximity<T extends { cook_area?: string }>(
   dishes: T[],
   customer: { lat: number; lng: number } | null | undefined

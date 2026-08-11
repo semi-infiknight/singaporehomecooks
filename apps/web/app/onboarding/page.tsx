@@ -94,13 +94,16 @@ function WebOnboardingContent() {
       secondaryTestID="trust-browse-cta"
       screenTestID="trust-safety-screen"
     >
-      <ul className="space-y-2.5 mb-6" data-testid="onboarding-value-bullets">
+      <ul className="mb-6 space-y-2.5" data-testid="onboarding-value-bullets">
         {current.bullets.map((b) => (
-          <li key={b} className="flex items-start gap-2.5">
-            <span className="shrink-0 w-5 h-5 rounded-full bg-[#FFE8DE] text-primary text-xs font-black flex items-center justify-center">
+          <li
+            key={b}
+            className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-3.5 py-3"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFE8DE] text-sm font-black text-[var(--shc-primary,#F87048)]">
               ✓
             </span>
-            <span className="text-sm font-semibold text-foreground leading-snug">{b}</span>
+            <span className="text-[15px] font-bold leading-snug text-foreground">{b}</span>
           </li>
         ))}
       </ul>

@@ -1,8 +1,14 @@
 // Shared order tray mutation + state — single path for RN content and web content.
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { isMaestroE2eOrderId } from '@shc/utils';
+import {
+  isMaestroE2eOrderId,
+  formatReviewBodyWithDimensions,
+  overallRatingFromDimensions,
+  type ReviewDimensionId,
+  type ReviewDimensionScores,
+} from '@shc/utils';
 import type { SubmitReviewFn, SubmitDisputeFn } from './order-tray-opener-core';
 
 export function useOrderReviewTrayMutation(args: {
@@ -14,9 +20,23 @@ export function useOrderReviewTrayMutation(args: {
   const { orderId, submitReviewFn, onSuccess, onError } = args;
   const [rating, setRating] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const [dimensionScores, setDimensionScores] = useState<ReviewDimensionScores>({});
   const qc = useQueryClient();
+
+  const onDimensionChange = useCallback((id: ReviewDimensionId, score: number) => {
+    setDimensionScores((prev) => {
+      const next = { ...prev, [id]: score };
+      const overall = overallRatingFromDimensions(next);
+      if (overall != null) setRating(overall);
+      return next;
+    });
+  }, []);
+
   const reviewMut = useMutation({
-    mutationFn: () => submitReviewFn(orderId, rating, reviewBody || undefined),
+    mutationFn: () => {
+      const body = formatReviewBodyWithDimensions(reviewBody, dimensionScores);
+      return submitReviewFn(orderId, rating, body);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['review', orderId] });
       onSuccess();
@@ -29,6 +49,8 @@ export function useOrderReviewTrayMutation(args: {
     setRating,
     reviewBody,
     setReviewBody,
+    dimensionScores,
+    onDimensionChange,
     submit: () => reviewMut.mutate(),
     isPending: reviewMut.isPending,
   };

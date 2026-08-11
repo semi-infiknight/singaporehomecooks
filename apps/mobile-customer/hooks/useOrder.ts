@@ -6,7 +6,7 @@ import {
   checkout,
   transitionOrder,
   getOrder,
-  getMyOrders,
+  getCustomerOrders,
   getMessages,
   sendMessage,
   getCart,
@@ -18,12 +18,12 @@ import { SHCOrderStatus } from '@shc/types';
 import type { SHCErrorCode } from '@shc/types';
 import { isActiveOrderStatus } from '@shc/utils';
 
-// useOrders (customer or cook) - primary export per Integration task
+// useOrders (customer) — signed-in or guest device-local order ids
 export function useOrders(role: 'customer' | 'cook' = 'customer') {
   return useQuery({
     queryKey: ['orders', role],
-    queryFn: () => getMyOrders(),
-    enabled: isAuthenticated(),
+    queryFn: () => getCustomerOrders(),
+    // Always enabled: guests load tracked order ids from the device.
     // Do NOT use placeholderData: [] — that paints empty UI during first fetch.
     refetchInterval: (query) => {
       const list = (query.state.data as Array<{ shc_status?: string }>) || [];

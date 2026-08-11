@@ -15,8 +15,6 @@ import {
   SHCTiffinCalendarStrip,
   SHCTiffinOrderStatusCard,
   SHCSkeletonOrderList,
-  SHCSkeletonOrdersDayScreen,
-  SHCAuthSessionGate,
   gourmeatColors,
   shcSpacing,
   DirectionalTabScreen,
@@ -47,7 +45,7 @@ import { addDaysIso, weekStartMonday } from '@shc/business-rules';
 export default function MyOrdersList() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const todayRef = useRef(toIsoDate(new Date()));
   const today = todayRef.current;
   const from = addDaysIso(weekStartMonday(), -7);
@@ -158,117 +156,104 @@ export default function MyOrdersList() {
           subtitle={`${monthLabelForDate(selected)}${isFetching || mealsLoading || ordersLoading ? ' · updating…' : ''}`}
         />
 
-        <SHCAuthSessionGate
-          loading={authLoading}
-          user={user}
-          skeleton={<SHCSkeletonOrdersDayScreen />}
-          guest={
-            <GourmeatCard>
-              <GourmeatEmptyState
-                title="Sign in to see orders"
-                body="Scheduled collections and tiffin meals appear here by day."
-                ctaLabel="Sign in"
-                onCta={() => router.push('/(shared)/auth' as any)}
+        {activeRequests.length > 0 ? (
+          <View style={styles.requestsSection} testID="custom-requests-section">
+            <Text style={styles.requestsTitle}>{CUSTOM_REQUEST_COPY.customerSectionTitle}</Text>
+            <Text style={styles.requestsHint}>{CUSTOM_REQUEST_COPY.customerSectionHint}</Text>
+            {activeRequests.map((req: any) => (
+              <SHCCustomRequestCard
+                key={req.id}
+                request={req}
+                onPress={() => router.push(`/(customer)/requests/${req.id}` as any)}
+                testID={`custom-request-card-${req.id}`}
               />
-            </GourmeatCard>
-          }
-        >
-          <>
-            {activeRequests.length > 0 ? (
-              <View style={styles.requestsSection} testID="custom-requests-section">
-                <Text style={styles.requestsTitle}>{CUSTOM_REQUEST_COPY.customerSectionTitle}</Text>
-                <Text style={styles.requestsHint}>{CUSTOM_REQUEST_COPY.customerSectionHint}</Text>
-                {activeRequests.map((req: any) => (
-                  <SHCCustomRequestCard
-                    key={req.id}
-                    request={req}
-                    onPress={() => router.push(`/(customer)/requests/${req.id}` as any)}
-                    testID={`custom-request-card-${req.id}`}
-                  />
-                ))}
-              </View>
-            ) : null}
+            ))}
+          </View>
+        ) : null}
 
-            {hasCorporatePaid ? (
-              <GourmeatCard style={styles.corpCard}>
-                <Text style={styles.corpTitle}>Corporate invoices</Text>
-                <Text style={styles.corpBody}>
-                  Download paid corporate / group orders as a ZIP for finance.
-                </Text>
-                <GourmeatPrimaryButton
-                  label={corpZipBusy ? 'Preparing ZIP…' : 'Download corporate invoices (ZIP)'}
-                  variant="outline"
-                  onPress={downloadCorporateZip}
-                  disabled={corpZipBusy}
-                  loading={corpZipBusy}
-                  testID="corporate-invoices-zip-btn"
-                />
-              </GourmeatCard>
-            ) : null}
-
-            <SHCTiffinCalendarStrip
-              days={calendarDays}
-              selectedDate={selected}
-              todayDate={today}
-              onSelect={selectDay}
-              testID="orders-calendar-strip"
+        {hasCorporatePaid ? (
+          <GourmeatCard style={styles.corpCard}>
+            <Text style={styles.corpTitle}>Corporate invoices</Text>
+            <Text style={styles.corpBody}>
+              Download paid corporate / group orders as a ZIP for finance.
+            </Text>
+            <GourmeatPrimaryButton
+              label={corpZipBusy ? 'Preparing ZIP…' : 'Download corporate invoices (ZIP)'}
+              variant="outline"
+              onPress={downloadCorporateZip}
+              disabled={corpZipBusy}
+              loading={corpZipBusy}
+              testID="corporate-invoices-zip-btn"
             />
+          </GourmeatCard>
+        ) : null}
 
-            <Text style={styles.dayHeading} testID="orders-selected-date">
-              {selected === today ? 'Today' : selected}
-            </Text>
+        <SHCTiffinCalendarStrip
+          days={calendarDays}
+          selectedDate={selected}
+          todayDate={today}
+          onSelect={selectDay}
+          testID="orders-calendar-strip"
+        />
 
-            {ordersPending && dayCards.length === 0 ? (
-              <SHCSkeletonOrderList count={3} variant="card" />
-            ) : null}
+        <Text style={styles.dayHeading} testID="orders-selected-date">
+          {selected === today ? 'Today' : selected}
+        </Text>
 
-            {dayCards.length === 0 && !ordersPending ? (
-              <View testID="orders-day-empty">
-                <GourmeatEmptyState
-                  illustration="no_orders"
-                  title={emptyOrdersDayCopy({ isToday: selected === today }).title}
-                  ctaLabel="Browse kitchens"
-                  onCta={() => router.push('/(customer)/' as any)}
-                />
-              </View>
-            ) : (
-              dayCards.map((card) => (
-                <View key={card.id} style={styles.cardWrap}>
-                  <SHCTiffinOrderStatusCard
-                    cookName={card.cookName}
-                    planTitle={card.planTitle}
-                    status={card.status}
-                    timeslot={card.timeslot}
-                    menuLines={card.menuLines}
-                    customizable={card.customizable && card.status === 'scheduled'}
-                    menuPending={card.menuPending}
-                    onManage={() => onManage(card)}
-                    manageLabel={primaryActionLabel(card)}
-                    onSkip={
-                      card.kind === 'tiffin' && card.status === 'scheduled'
-                        ? () => skipMut.mutate({ collectionDate: card.collectionDate })
-                        : undefined
-                    }
-                    testID={`orders-day-card-${card.id}`}
-                  />
-                  {card.kind === 'one_off' && card.hrefOrderId ? (
-                    <Pressable
-                      onPress={() => router.push(`/(shared)/chat/${card.hrefOrderId}` as any)}
-                      style={styles.chatLink}
-                    >
-                      <Text style={styles.chatLinkText}>Chat with cook</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              ))
-            )}
+        {ordersPending && dayCards.length === 0 ? (
+          <SHCSkeletonOrderList count={3} variant="card" />
+        ) : null}
 
-            <Text style={styles.legend}>
-              Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
-              Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
-            </Text>
-          </>
-        </SHCAuthSessionGate>
+        {dayCards.length === 0 && !ordersPending ? (
+          <View testID="orders-day-empty">
+            <GourmeatEmptyState
+              illustration="no_orders"
+              title={emptyOrdersDayCopy({ isToday: selected === today }).title}
+              body={
+                user
+                  ? undefined
+                  : 'Orders from this device show here after checkout — no sign-in required.'
+              }
+              ctaLabel="Browse kitchens"
+              onCta={() => router.push('/(customer)/' as any)}
+            />
+          </View>
+        ) : (
+          dayCards.map((card) => (
+            <View key={card.id} style={styles.cardWrap}>
+              <SHCTiffinOrderStatusCard
+                cookName={card.cookName}
+                planTitle={card.planTitle}
+                status={card.status}
+                timeslot={card.timeslot}
+                menuLines={card.menuLines}
+                customizable={card.customizable && card.status === 'scheduled'}
+                menuPending={card.menuPending}
+                onManage={() => onManage(card)}
+                manageLabel={primaryActionLabel(card)}
+                onSkip={
+                  card.kind === 'tiffin' && card.status === 'scheduled'
+                    ? () => skipMut.mutate({ collectionDate: card.collectionDate })
+                    : undefined
+                }
+                testID={`orders-day-card-${card.id}`}
+              />
+              {card.kind === 'one_off' && card.hrefOrderId ? (
+                <Pressable
+                  onPress={() => router.push(`/(shared)/chat/${card.hrefOrderId}` as any)}
+                  style={styles.chatLink}
+                >
+                  <Text style={styles.chatLinkText}>Chat with cook</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))
+        )}
+
+        <Text style={styles.legend}>
+          Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
+          Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
+        </Text>
       </ScrollView>
     </DirectionalTabScreen>
   );

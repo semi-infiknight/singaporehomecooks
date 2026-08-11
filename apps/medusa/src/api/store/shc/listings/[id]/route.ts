@@ -42,7 +42,18 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
 
   const { cookId, meta, metaService } = owned;
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
-  const { paused, price, price_cents, portions_per_day, collection_days, time_slots, ...rest } = parse.data;
+  const {
+    paused,
+    price,
+    price_cents,
+    portions_per_day,
+    collection_days,
+    time_slots,
+    min_order_lead_days,
+    min_order_lead_hours,
+    order_cutoff_time,
+    ...rest
+  } = parse.data;
 
   try {
     const patch: Record<string, unknown> = { product_id: id, cook_id: cookId };
@@ -78,6 +89,18 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     }
     if (time_slots !== undefined) {
       availPatch.time_slots = time_slots;
+      availTouched = true;
+    }
+    if (min_order_lead_days !== undefined) {
+      availPatch.min_order_lead_days = min_order_lead_days;
+      availTouched = true;
+    }
+    if (min_order_lead_hours !== undefined) {
+      availPatch.min_order_lead_hours = min_order_lead_hours;
+      availTouched = true;
+    }
+    if (order_cutoff_time !== undefined) {
+      availPatch.order_cutoff_time = order_cutoff_time;
       availTouched = true;
     }
     if (availTouched) {

@@ -9,7 +9,6 @@ import { useDiscoverPrefs } from '../../lib/useDiscoverPrefs';
 import { useFavorites } from '../../lib/useFavorites';
 import {
   getDishImageUrl,
-  getOccasionImageUrl,
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
@@ -22,8 +21,6 @@ import {
   GourmeatDishCard,
   GourmeatSearchBar,
   SearchResultsPanel,
-  FilterChipRow,
-  MindSectionTitle,
   SHCSkeletonList,
   DiscoverFilterSheet,
   type DishCardProduct,
@@ -34,32 +31,56 @@ export default function SearchPage() {
   const router = useRouter();
   const { requireAuth } = useGuestAuthGate();
   const [q, setQ] = useState('');
-  const [occ, setOcc] = useState('');
   const [cuisine, setCuisine] = useState('');
   const [mealType, setMealType] = useState<MealTypeId>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
+  const {
+    halalOnly,
+    maxCal,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  } = useDiscoverPrefs();
   const { data: products = [], isLoading } = useProducts('');
   const addMut = useAddToCart();
   const { toggle, isFavorite } = useFavorites();
 
   const filters = useMemo(
-    () => ({ mealType, cuisine, halalOnly, vegetarianOnly, maxCal }),
-    [mealType, cuisine, halalOnly, vegetarianOnly, maxCal]
+    () => ({
+      mealType,
+      cuisine,
+      halalOnly,
+      vegetarianOnly,
+      veganOnly,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts,
+      maxCal,
+    }),
+    [mealType, cuisine, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
   const results = useMemo(() => {
     return filterDiscoverProducts(products as Record<string, unknown>[], {
       query: q,
-      occasion: occ || undefined,
       cuisine: cuisine || undefined,
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       vegetarianOnly: vegetarianOnly || undefined,
+      veganOnly: veganOnly || undefined,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts: excludeNuts || undefined,
       maxCal,
     }) as DishCardProduct[];
-  }, [products, q, cuisine, occ, mealType, halalOnly, vegetarianOnly, maxCal]);
+  }, [products, q, cuisine, mealType, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]);
 
   const clearFilters = useCallback(() => {
     const cleared = clearedDiscoverFilters();
@@ -67,8 +88,11 @@ export default function SearchPage() {
     setCuisine(cleared.cuisine);
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
-    if (maxCal != null) toggleLight();
-  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+    if (veganOnly) toggleVeganOnly();
+    if (chickenOnly) toggleChickenOnly();
+    if (excludeNuts) toggleExcludeNuts();
+    if (maxCal != null) setMaxCal(undefined);
+  }, [halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleVeganOnly, toggleChickenOnly, toggleExcludeNuts, setMaxCal]);
 
   const { categories, config: browseConfig } = useCustomerConfig();
 
@@ -91,26 +115,7 @@ export default function SearchPage() {
     [results]
   );
 
-  const occasionChips = useMemo(() => {
-    const opts = browseConfig.occasions.filter((o) => o.enabled);
-    return [
-      { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-      ...opts.map((o) => ({
-        id: o.id,
-        label: o.short_label || o.label,
-        imageUrl: o.image_url || getOccasionImageUrl(o.id),
-        active: occ === o.id,
-      })),
-    ];
-  }, [browseConfig.occasions, occ]);
 
-  const handleOccasion = (id: string) => {
-    if (id === 'any') {
-      setOcc('');
-      return;
-    }
-    setOcc(id);
-  };
 
   const handleAdd = (id: string) => {    addMut.mutate({ productId: id, qty: 1 });
   };
@@ -125,14 +130,11 @@ export default function SearchPage() {
       <GourmeatSearchBar
         value={q}
         onChange={setQ}
-        placeholder="Search dishes, cooks…"
+        placeholder="Search dishes, cooks, under 450 cal…"
         testID="search-input"
         onFilterPress={() => setFiltersOpen(true)}
         filterCount={activeFilterCount}
       />
-
-      <MindSectionTitle testID="search-occasion-title">Occasion</MindSectionTitle>
-      <FilterChipRow chips={occasionChips} onChipClick={handleOccasion} testID="search-occasion-chips" />
 
       <p className="text-sm font-bold text-muted-foreground my-3">
         {isLoading ? 'Searching catalogue…' : `${results.length} results`}
@@ -145,6 +147,7 @@ export default function SearchPage() {
           onDishPress={(id) => router.push(`/product/${id}`)}
           onAddPress={handleAdd}
           onClose={() => setQ('')}
+          onRequestCustom={() => router.push('/request')}
         />
       ) : isLoading ? (
         <div data-testid="search-skeleton">
@@ -183,10 +186,18 @@ export default function SearchPage() {
         onCuisineChange={setCuisine}
         halalOnly={halalOnly}
         vegetarianOnly={vegetarianOnly}
+        veganOnly={veganOnly}
+        chickenOnly={chickenOnly}
+        excludeNuts={excludeNuts}
         lightOnly={maxCal != null}
+        maxCal={maxCal}
         onToggleHalal={toggleHalalOnly}
         onToggleVegetarian={toggleVegetarianOnly}
+        onToggleVegan={toggleVeganOnly}
+        onToggleChicken={toggleChickenOnly}
+        onToggleExcludeNuts={toggleExcludeNuts}
         onToggleLight={toggleLight}
+        onMaxCalChange={setMaxCal}
         onClear={clearFilters}
         resultCount={results.length}
         activeCount={activeFilterCount}

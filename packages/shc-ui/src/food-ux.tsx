@@ -84,14 +84,17 @@ export function SHCSearchResultRow({
   dish,
   onPress,
   onAddPress,
+  subtitle,
   testID,
 }: {
   dish: SHCDishCardData;
   onPress?: () => void;
   onAddPress?: () => void;
+  subtitle?: string;
   testID?: string;
 }) {
   const imageUri = dish.image_url || getDishImageUrl({ id: dish.id, cuisine: dish.cuisine, name: dish.name });
+  const meta = subtitle || dish.kitchenLabel || [dish.cook_name, dish.cuisine].filter(Boolean).join(' · ');
   return (
     <SharedDishNavSurface
       dishId={dish.id}
@@ -110,19 +113,20 @@ export function SHCSearchResultRow({
       {({ measureRef }) => (
       <>
       <View ref={measureRef} collapsable={false}>
-        <SHCFoodImage uri={imageUri} width={52} height={52} rounded={shcRadii.md} />
+        <SHCFoodImage uri={imageUri} width={52} height={52} rounded={26} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontWeight: '800', fontSize: 13, color: shcColors.text }} numberOfLines={1}>
+        <Text style={{ fontWeight: '800', fontSize: 14, color: shcColors.text }} numberOfLines={1}>
           {dish.name}
         </Text>
-        <Text style={{ fontSize: 11, color: shcColors.textLight, marginTop: 2 }} numberOfLines={1}>
-          {dish.cook_name}
-          {dish.cuisine ? ` · ${dish.cuisine}` : ''}
+        <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }} numberOfLines={1}>
+          {meta}
         </Text>
-        <Text style={{ ...shcTypography.mono, fontSize: 12, fontWeight: '800', color: shcColors.primary, marginTop: 4 }}>
-          S${dish.price}
-        </Text>
+        {dish.price != null && Number.isFinite(dish.price) ? (
+          <Text style={{ ...shcTypography.mono, fontSize: 12, fontWeight: '800', color: shcColors.primary, marginTop: 4 }}>
+            S${dish.price}
+          </Text>
+        ) : null}
       </View>
       {onAddPress && (
         <View onStartShouldSetResponder={() => true}>
@@ -135,34 +139,206 @@ export function SHCSearchResultRow({
   );
 }
 
-/** Predictive search panel — add to cart without visiting PDP */
+export type SHCSearchKitchenHit = {
+  key: string;
+  cook_name: string;
+  routeKey: string;
+  matchingDishCount: number;
+  sampleDishNames: string[];
+  area?: string;
+  image_url?: string;
+  rating?: number;
+};
+
+/** Kitchen row in search — tap opens cook profile */
+export function SHCSearchKitchenRow({
+  kitchen,
+  onPress,
+  testID,
+}: {
+  kitchen: SHCSearchKitchenHit;
+  onPress?: () => void;
+  testID?: string;
+}) {
+  const dishHint =
+    kitchen.matchingDishCount === 1
+      ? kitchen.sampleDishNames[0] || '1 dish'
+      : `${kitchen.matchingDishCount} dishes match`;
+  const meta = [kitchen.area, dishHint].filter(Boolean).join(' · ');
+  return (
+    <Pressable
+      onPress={onPress}
+      testID={testID ?? `search-kitchen-${kitchen.key}`}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: shcSpacing.sm,
+        paddingVertical: shcSpacing.sm,
+        paddingHorizontal: shcSpacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: shcColors.borderLight,
+      }}
+    >
+      <SHCFoodImage
+        uri={kitchen.image_url || getDishImageUrl({ name: kitchen.cook_name })}
+        width={52}
+        height={52}
+        rounded={shcRadii.md}
+      />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ fontWeight: '800', fontSize: 14, color: shcColors.text }} numberOfLines={2}>
+          {kitchen.cook_name}
+        </Text>
+        <Text style={{ fontSize: 12, color: shcColors.textLight, marginTop: 2 }} numberOfLines={1}>
+          {meta}
+        </Text>
+      </View>
+      <Text style={{ fontSize: 18, color: shcColors.textLight }}>›</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Empty search — “Didn’t find what you’re looking for?” + request custom dish.
+ * Swiggy-style feedback card for zero dish/kitchen hits.
+ */
+export function SHCSearchNoResultsRequestCard({
+  query,
+  onRequestPress,
+  testID = 'search-no-results-request',
+}: {
+  query?: string;
+  onRequestPress: () => void;
+  testID?: string;
+}) {
+  const q = (query || '').trim();
+  return (
+    <View testID={testID} style={{ padding: shcSpacing.md, gap: shcSpacing.md }}>
+      {q ? (
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: '800',
+            color: shcColors.text,
+            textAlign: 'left',
+            lineHeight: 22,
+          }}
+          testID={`${testID}-title`}
+        >
+          {`We couldn’t find any results for “${q}”`}
+        </Text>
+      ) : (
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: '800',
+            color: shcColors.text,
+            lineHeight: 22,
+          }}
+        >
+          No matches for that search
+        </Text>
+      )}
+
+      <Pressable
+        onPress={onRequestPress}
+        testID={`${testID}-cta`}
+        accessibilityRole="button"
+        accessibilityLabel="Request a custom dish"
+        style={{
+          borderRadius: shcRadii.lg,
+          borderWidth: 1,
+          borderColor: 'rgba(248,112,72,0.28)',
+          backgroundColor: '#FFF8F3',
+          padding: shcSpacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: shcSpacing.md,
+          ...shcShadows.soft,
+        }}
+      >
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text style={{ fontSize: 15, fontWeight: '900', color: shcColors.text, lineHeight: 20 }}>
+            Didn’t find what you’re looking for?
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              color: shcColors.textLight,
+              lineHeight: 18,
+            }}
+          >
+            Request a custom dish — home cooks can bid so we can show better matches next time.
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '800',
+              color: shcColors.primary,
+              marginTop: 4,
+            }}
+          >
+            Request a custom dish →
+          </Text>
+        </View>
+        <View
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            backgroundColor: shcColors.bentoPeach,
+            borderWidth: shcBorders.brutal,
+            borderColor: shcColors.border,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <SHCIcon name="request" size={32} color={shcColors.primary} active />
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+/** Predictive search panel — kitchens first, then dishes with multi-kitchen labels */
 export function SHCSearchResultsPanel({
   query,
   dishes,
+  kitchens = [],
   onDishPress,
+  onKitchenPress,
   onAddPress,
   onClose,
+  onRequestCustom,
   testID = 'search-results-panel',
 }: {
   query: string;
   dishes: SHCDishCardData[];
+  kitchens?: SHCSearchKitchenHit[];
   onDishPress?: (id: string) => void;
+  onKitchenPress?: (routeKey: string) => void;
   onAddPress?: (id: string) => void;
   onClose?: () => void;
+  /** When no kitchens/dishes match — open custom request wizard */
+  onRequestCustom?: () => void;
   testID?: string;
 }) {
   if (!query.trim()) return null;
+  const q = query.trim();
+  const hasKitchens = kitchens.length > 0;
+  const hasDishes = dishes.length > 0;
+
   return (
     <View
       testID={testID}
       style={{
         backgroundColor: shcColors.surface,
-        borderWidth: shcBorders.brutal,
-        borderColor: shcColors.border,
         borderRadius: shcRadii.lg,
         marginTop: shcSpacing.sm,
-        maxHeight: 320,
-        ...shcShadows.brutal,
+        maxHeight: 420,
+        borderWidth: 1,
+        borderColor: 'rgba(36,24,18,0.08)',
         overflow: 'hidden',
       }}
     >
@@ -171,42 +347,80 @@ export function SHCSearchResultsPanel({
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingHorizontal: shcSpacing.sm,
-          paddingVertical: shcSpacing.xs,
-          backgroundColor: shcColors.bentoMint,
-          borderBottomWidth: 1,
-          borderBottomColor: shcColors.border,
+          paddingHorizontal: shcSpacing.md,
+          paddingVertical: shcSpacing.sm,
         }}
       >
-        <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.text }}>
-          {dishes.length} result{dishes.length !== 1 ? 's' : ''} for “{query.trim()}”
+        <Text style={{ fontSize: 12, fontWeight: '700', color: shcColors.textLight }} numberOfLines={1}>
+          Results for “{q}”
         </Text>
         {onClose && (
-          <Pressable onPress={onClose} hitSlop={8}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: shcColors.primary }}>Clear</Text>
+          <Pressable onPress={onClose} hitSlop={8} testID={`${testID}-clear`}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: shcColors.primary }}>Clear</Text>
           </Pressable>
         )}
       </View>
-      {dishes.length === 0 ? (
-        <Text style={{ padding: shcSpacing.md, fontSize: 13, color: shcColors.textLight, textAlign: 'center' }}>
-          No dishes match — try another occasion or filter
-        </Text>
+
+      {!hasKitchens && !hasDishes ? (
+        onRequestCustom ? (
+          <SHCSearchNoResultsRequestCard query={q} onRequestPress={onRequestCustom} />
+        ) : (
+          <Text style={{ padding: shcSpacing.md, fontSize: 13, color: shcColors.textLight, textAlign: 'center' }}>
+            No matches — try a dish or kitchen name
+          </Text>
+        )
       ) : (
         <FlatList
-          data={dishes}
-          keyExtractor={(d) => d.id}
+          data={[
+            ...(hasKitchens
+              ? ([{ type: 'header', id: 'h-kitchens', title: `Kitchens for “${q}”` }] as const)
+              : []),
+            ...kitchens.map((k) => ({ type: 'kitchen' as const, id: `k-${k.key}`, kitchen: k })),
+            ...(hasDishes
+              ? ([{ type: 'header', id: 'h-dishes', title: 'Dishes matching your query' }] as const)
+              : []),
+            ...dishes.map((d) => ({ type: 'dish' as const, id: `d-${d.id}`, dish: d })),
+          ]}
+          keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
-          initialNumToRender={8}
-          maxToRenderPerBatch={12}
-          windowSize={5}
-          renderItem={({ item: dish }) => (
-            <SHCSearchResultRow
-              dish={dish}
-              onPress={() => onDishPress?.(dish.id)}
-              onAddPress={onAddPress ? () => onAddPress(dish.id) : undefined}
-            />
-          )}
+          initialNumToRender={12}
+          maxToRenderPerBatch={16}
+          windowSize={6}
+          renderItem={({ item }) => {
+            if (item.type === 'header') {
+              return (
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '700',
+                    color: shcColors.textLight,
+                    paddingHorizontal: shcSpacing.md,
+                    paddingTop: shcSpacing.sm,
+                    paddingBottom: 4,
+                  }}
+                >
+                  {item.title}
+                </Text>
+              );
+            }
+            if (item.type === 'kitchen') {
+              return (
+                <SHCSearchKitchenRow
+                  kitchen={item.kitchen}
+                  onPress={() => onKitchenPress?.(item.kitchen.routeKey)}
+                />
+              );
+            }
+            return (
+              <SHCSearchResultRow
+                dish={item.dish}
+                onPress={() => onDishPress?.(item.dish.id)}
+                onAddPress={onAddPress ? () => onAddPress(item.dish.id) : undefined}
+                subtitle={item.dish.kitchenLabel}
+              />
+            );
+          }}
         />
       )}
     </View>

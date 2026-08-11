@@ -8,8 +8,6 @@ import {
   resolveImageUrl,
   type PromoBannerKey,
 } from './food-visuals';
-import { occasionBrowseRoute } from './occasion-browse';
-
 export const DISCOVER_PROMOS_STAT_KEY = 'discover_promo_carousel';
 
 export type DiscoverPromoIconKey = 'discover' | 'home' | 'people';
@@ -54,11 +52,8 @@ const PROMO_ROUTES: Record<
   Pick<DiscoverPromoConfig, 'mobile_route' | 'web_route' | 'occasion_filter'>
 > = {
   'promo-tiffin': { mobile_route: '/(customer)/tiffin', web_route: '/tiffin' },
-  'promo-raya': {
-    mobile_route: occasionBrowseRoute('Hari Raya').mobile,
-    web_route: occasionBrowseRoute('Hari Raya').web,
-    occasion_filter: 'Hari Raya',
-  },
+  // Occasion browse removed — festive promos open custom request instead of /occasions
+  'promo-raya': { mobile_route: '/(customer)/request', web_route: '/request' },
   'promo-request': { mobile_route: '/(customer)/request', web_route: '/request' },
   'promo-family': { mobile_route: '/(customer)/tiffin', web_route: '/tiffin' },
   'promo-paynow': { mobile_route: '/(customer)/cart', web_route: '/cart' },

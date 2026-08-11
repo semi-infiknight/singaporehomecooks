@@ -5,6 +5,7 @@ import {
   isGuestCheckoutContactComplete,
   isGuestCartActorId,
   normalizeGuestId,
+  parseGuestOrdersJson,
   toGuestCartActorId,
 } from './guest-session';
 
@@ -23,6 +24,15 @@ describe('guest-session', () => {
   it('tracks guest order ids locally', () => {
     expect(appendGuestOrderId(['a'], 'b')).toEqual(['b', 'a']);
     expect(appendGuestOrderId(['a'], 'a')).toEqual(['a']);
+  });
+
+  it('parses stored guest order id lists for Orders hydration', () => {
+    expect(parseGuestOrdersJson(JSON.stringify(['ord_1', 'ord_2']))).toEqual(['ord_1', 'ord_2']);
+    expect(parseGuestOrdersJson('not-json')).toEqual([]);
+    expect(parseGuestOrdersJson(null)).toEqual([]);
+    // Cap + dedupe via append used at checkout → Orders list
+    const ids = appendGuestOrderId(parseGuestOrdersJson('[]'), 'ord_new');
+    expect(ids[0]).toBe('ord_new');
   });
 
   it('validates guest checkout contact', () => {

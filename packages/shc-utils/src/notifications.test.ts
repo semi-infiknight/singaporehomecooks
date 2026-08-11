@@ -11,4 +11,9 @@ describe('orderIdFromNotificationType', () => {
     expect(orderIdFromNotificationType('credit')).toBeNull();
     expect(isOrderNotification('bid')).toBe(false);
   });
+
+  it('parses review_prompt deep-link types as order ids', () => {
+    expect(orderIdFromNotificationType('review_prompt:ord_xyz')).toBe('ord_xyz');
+    expect(isOrderNotification('review_prompt:ord_xyz')).toBe(true);
+  });
 });

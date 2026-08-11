@@ -95,6 +95,17 @@ async function notificationRetry(): Promise<JobResult> {
   return result;
 }
 
+/** ~1h after collection — prompt customer to review meal dimensions. */
+async function reviewPrompt(): Promise<JobResult> {
+  const result = await callMedusaInternal("/admin/shc/internal/review-prompt");
+  if (internalRoutePending(result)) {
+    log("review-prompt", "skipped (internal route not wired yet)");
+    return { ok: true, detail: "skipped" };
+  }
+  log("review-prompt", result.ok ? "done" : result.detail);
+  return result;
+}
+
 async function tiffinWeeklyOrders(): Promise<JobResult> {
   log("tiffin-weekly-orders", "starting");
   const result = await runMedusaScript("scripts/tiffin-weekly-orders.ts");
@@ -107,6 +118,7 @@ const jobs: Record<string, () => Promise<JobResult>> = {
   "tiffin-weekly-orders": tiffinWeeklyOrders,
   "order-escalation": orderEscalation,
   "notification-retry": notificationRetry,
+  "review-prompt": reviewPrompt,
 };
 
 let running = false;
@@ -149,6 +161,7 @@ async function runJob(name: string): Promise<JobResult> {
 cron.schedule("0 9 * * 1", () => runJob("weekly-payout")); // Monday 09:00 UTC
 cron.schedule("0 8 * * 1", () => runJob("tiffin-weekly-orders")); // Monday 08:00 UTC — before payout
 cron.schedule("*/15 * * * *", () => runJob("order-escalation"));
+cron.schedule("*/15 * * * *", () => runJob("review-prompt")); // post-collection review asks
 cron.schedule("*/5 * * * *", () => runJob("notification-retry"));
 
 const server = createServer((req, res) => {

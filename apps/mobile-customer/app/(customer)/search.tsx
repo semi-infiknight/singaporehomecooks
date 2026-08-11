@@ -6,10 +6,8 @@ import {
   SHCButton,
   SHCButtonText,
   GourmeatSearchBar,
-  SHCFilterChipRow,
   SHCDishCard,
   SHCSearchResultsPanel,
-  SHCMindSectionTitle,
   SHCDiscoverFilterSheet,
   useSHCTray,
   type SHCDishCardData,
@@ -19,11 +17,10 @@ import {
 } from '@shc/ui';
 import {
   getDishImageUrl,
-  getOccasionImageUrl,
   filterDiscoverProducts,
   discoverActiveFilterCount,
   clearedDiscoverFilters,
-  customerOccasionCategories,
+  buildSearchResultGroups,
   type MealTypeId,
   coerceRating,
 } from '@shc/utils';
@@ -32,24 +29,49 @@ import { useProducts, useAddToCart } from '../../hooks/useProducts';
 import { useGuestAuthGate } from '../../hooks/useGuestAuthGate';
 import { useDiscoverPrefs } from '../../hooks/useDiscoverPrefs';
 import { VirtualDishGridFlashList } from '../../components/VirtualLists';
+import { useQuery } from '@tanstack/react-query';
+import { getCooks } from '../../lib/api-client';
 
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { openTray, dismiss } = useSHCTray();
   const [q, setQ] = useState('');
-  const [occ, setOcc] = useState('');
   const [cuisine, setCuisine] = useState('');
   const [mealType, setMealType] = useState<MealTypeId>('all');
-  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
+  const {
+    halalOnly,
+    maxCal,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  } = useDiscoverPrefs();
   const router = useRouter();
   const { data: rawResults = [] } = useProducts('');
+  const { data: cooks } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const addMut = useAddToCart();
   const { requireAuth } = useGuestAuthGate();
   const { categories, config: browseConfig } = useCustomerConfig();
 
   const filters = useMemo(
-    () => ({ mealType, cuisine, halalOnly, vegetarianOnly, maxCal }),
-    [mealType, cuisine, halalOnly, vegetarianOnly, maxCal]
+    () => ({
+      mealType,
+      cuisine,
+      halalOnly,
+      vegetarianOnly,
+      veganOnly,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts,
+      maxCal,
+    }),
+    [mealType, cuisine, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
@@ -57,14 +79,16 @@ export default function SearchScreen() {
     () =>
       filterDiscoverProducts(rawResults as Record<string, unknown>[], {
         query: q,
-        occasion: occ || undefined,
         cuisine: cuisine || undefined,
         mealType: mealType !== 'all' ? mealType : undefined,
         halalOnly: halalOnly || undefined,
         vegetarianOnly: vegetarianOnly || undefined,
+        veganOnly: veganOnly || undefined,
+        includeIngredient: chickenOnly ? 'chicken' : undefined,
+        excludeNuts: excludeNuts || undefined,
         maxCal,
       }),
-    [rawResults, q, cuisine, occ, mealType, halalOnly, vegetarianOnly, maxCal]
+    [rawResults, q, cuisine, mealType, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
 
   const goProduct = useCallback((id: string) => router.push(`/(customer)/product/${id}` as any), [router]);
@@ -77,6 +101,11 @@ export default function SearchScreen() {
       price: Number(p.price),
       cuisine: p.cuisine ? String(p.cuisine) : undefined,
       rating: coerceRating(p.rating),
+      cook_id: p.cook_id ? String(p.cook_id) : undefined,
+      cook_slug: p.cook_slug ? String(p.cook_slug) : undefined,
+      area: p.area ? String(p.area) : p.cook_area ? String(p.cook_area) : undefined,
+      kitchenCount: p.kitchenCount != null ? Number(p.kitchenCount) : undefined,
+      kitchenLabel: p.kitchenLabel ? String(p.kitchenLabel) : undefined,
       image_url: getDishImageUrl({
         id: String(p.id),
         cuisine: p.cuisine ? String(p.cuisine) : undefined,
@@ -87,18 +116,45 @@ export default function SearchScreen() {
     []
   );
 
-  const occasionChips = useMemo(() => {
-    const opts = browseConfig.occasions.filter((o) => o.enabled);
-    return [
-      { id: 'any', label: 'Any', imageUrl: getOccasionImageUrl(''), active: !occ },
-      ...opts.map((o) => ({
-        id: o.id,
-        label: o.short_label || o.label,
-        imageUrl: o.image_url || getOccasionImageUrl(o.id),
-        active: occ === o.id,
-      })),
-    ];
-  }, [browseConfig.occasions, occ]);
+  const searchGroups = useMemo(() => {
+    if (!q.trim()) return { kitchens: [], dishes: [] as ReturnType<typeof buildSearchResultGroups>['dishes'] };
+    const cookList = (cooks as any[]) || [];
+    const byName = new Map(
+      cookList.map((c) => [
+        String(c.display_name || c.name || '').toLowerCase(),
+        { slug: c.slug, id: c.id, area: c.area },
+      ])
+    );
+    const inputs = results.map((p) => {
+      const cookName = String(p.cook_name || '');
+      const hit = byName.get(cookName.toLowerCase()) as { slug?: string; id?: string; area?: string } | undefined;
+      return {
+        id: String(p.id),
+        name: String(p.name),
+        cook_name: cookName,
+        cook_id: p.cook_id ? String(p.cook_id) : hit?.id ? String(hit.id) : undefined,
+        cook_slug: p.cook_slug
+          ? String(p.cook_slug)
+          : hit?.slug
+            ? String(hit.slug)
+            : hit?.id
+              ? String(hit.id)
+              : undefined,
+        price: Number(p.price),
+        cuisine: p.cuisine ? String(p.cuisine) : undefined,
+        area: p.area ? String(p.area) : hit?.area ? String(hit.area) : undefined,
+        image_url: getDishImageUrl({
+          id: String(p.id),
+          cuisine: p.cuisine ? String(p.cuisine) : undefined,
+          name: String(p.name),
+          image_url: p.image_url as string | undefined,
+        }),
+        rating: coerceRating(p.rating),
+      };
+    });
+    return buildSearchResultGroups(inputs, q);
+  }, [results, q, cooks]);
+
 
   const cuisineOptions = useMemo(
     () => categories.map((c) => ({ id: c.id, label: c.label || 'All' })),
@@ -111,8 +167,11 @@ export default function SearchScreen() {
     setCuisine(cleared.cuisine);
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
-    if (maxCal != null) toggleLight();
-  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+    if (veganOnly) toggleVeganOnly();
+    if (chickenOnly) toggleChickenOnly();
+    if (excludeNuts) toggleExcludeNuts();
+    if (maxCal != null) setMaxCal(undefined);
+  }, [halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleVeganOnly, toggleChickenOnly, toggleExcludeNuts, setMaxCal]);
 
   const openFilters = useCallback(() => {
     openTray(
@@ -127,10 +186,18 @@ export default function SearchScreen() {
           onCuisineChange={setCuisine}
           halalOnly={halalOnly}
           vegetarianOnly={vegetarianOnly}
+          veganOnly={veganOnly}
+          chickenOnly={chickenOnly}
+          excludeNuts={excludeNuts}
           lightOnly={maxCal != null}
+          maxCal={maxCal}
           onToggleHalal={toggleHalalOnly}
           onToggleVegetarian={toggleVegetarianOnly}
+          onToggleVegan={toggleVeganOnly}
+          onToggleChicken={toggleChickenOnly}
+          onToggleExcludeNuts={toggleExcludeNuts}
           onToggleLight={toggleLight}
+          onMaxCalChange={setMaxCal}
           onClear={clearFilters}
           onApply={dismiss}
           resultCount={results.length}
@@ -151,14 +218,12 @@ export default function SearchScreen() {
     toggleHalalOnly,
     toggleVegetarianOnly,
     toggleLight,
+    setMaxCal,
     clearFilters,
     results.length,
     activeFilterCount,
   ]);
 
-  const handleOccasion = useCallback((id: string) => {
-    setOcc(id === 'any' ? '' : id);
-  }, []);
 
   const handleAdd = useCallback(
     (id: string) => {      addMut.mutate({ productId: id, qty: 1 });
@@ -178,24 +243,24 @@ export default function SearchScreen() {
       <GourmeatSearchBar
         value={q}
         onChangeText={setQ}
-        placeholder="Search dishes, cooks…"
+        placeholder="Search dishes, cooks, under 450 cal…"
         onFilterPress={openFilters}
         filterCount={activeFilterCount}
         testID="search-input"
       />
-
-      <SHCMindSectionTitle testID="search-occasion-title">Occasion</SHCMindSectionTitle>
-      <SHCFilterChipRow chips={occasionChips} onChipPress={handleOccasion} testID="search-occasion-chips" />
 
       <Text style={styles.resultCount}>{results.length} results</Text>
 
       {q.trim() ? (
         <SHCSearchResultsPanel
           query={q}
-          dishes={results.map(toDish)}
+          dishes={searchGroups.dishes.map((d) => toDish(d as unknown as Record<string, unknown>))}
+          kitchens={searchGroups.kitchens}
           onDishPress={goProduct}
+          onKitchenPress={(routeKey) => router.push(`/(customer)/cook/${routeKey}` as any)}
           onAddPress={handleAdd}
           onClose={() => setQ('')}
+          onRequestCustom={() => router.push('/(customer)/request' as any)}
         />
       ) : (
         <VirtualDishGridFlashList

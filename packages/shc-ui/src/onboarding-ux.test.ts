@@ -36,14 +36,20 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('COOK_ONBOARDING_STEPS');
   });
 
-  it('customer onboarding is warm carousel with guest explore (HomelyEats)', () => {
+  it('customer profile onboarding uses shared shell (cream + progress + peach CTA)', () => {
     const src = readFileSync(CUSTOMER_ONBOARDING, 'utf8');
     expect(src).toContain('SHCOnboardingFlowScreen');
     expect(src).toContain('screenTestID="trust-safety-screen"');
     expect(src).toContain('onboarding-guest-btn');
-    expect(src).toContain('Continue as guest');
-    expect(src).toContain('Welcome home');
-    expect(src).toContain('trust-browse-cta');
     expect(src).toContain('onboarding-signin-cta');
+    expect(src).toContain('What should we call you');
+    expect(src).toContain('trust-onboarding-next-btn');
+    expect(src).toContain('customer-onboarding-name');
+  });
+
+  it('flow screen shows step dots for multi-step wizards', () => {
+    const src = readFileSync(ONBOARDING_UX, 'utf8');
+    expect(src).toContain('onboarding-step-dots');
+    expect(src).toContain('of {totalSteps}');
   });
 });

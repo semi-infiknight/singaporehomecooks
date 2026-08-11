@@ -1,7 +1,17 @@
 // Gourmeat food-app UI (Orbix Studio / Behance) — customer discover, cart, checkout.
 // @ts-nocheck
-import React from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  ScrollView,
+  Image,
+  PanResponder,
+  type LayoutChangeEvent,
+  type GestureResponderEvent,
+} from 'react-native';
 import { gourmeatColors, gourmeatLayout, gourmeatRadii, gourmeatShadows, gourmeatTypography, shcSpacing, shcIconSizes, shcSectionStack, shcTitleBlock, shcHeaderGap, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe } from './theme';
 
 export { gourmeatLayout, contentPadForTabBar, contentPadForStickyFooter, contentPadSafe };
@@ -10,7 +20,14 @@ import { SHCOrdersTabCookingIcon } from './orders-tab-cue';
 import { SHCFoodImage } from './visuals';
 import { SHCSharedDishImage, SharedDishNavSurface } from './family-values-ui';
 import { SHCFavoriteButton } from './delivery-ux';
-import { getDishImageUrl } from '@shc/utils';
+import {
+  getDishImageUrl,
+  DISCOVER_MAX_CAL_PRESETS,
+  DISCOVER_MAX_CAL_SLIDER,
+  maxCalFilterLabel,
+  snapMaxCalSliderValue,
+  toggleMaxCalPreset,
+} from '@shc/utils';
 import type { SHCDishCardData } from './domain';
 import type { SHCBottomTab } from './primitives';
 import { EmptyIllustration } from './empty-illustrations';
@@ -29,19 +46,26 @@ export type GourmeatCategoryItem = {
   imageUrl?: string;
 };
 
+/**
+ * Discover top chrome — compact Swiggy-style row: location (left) + profile (right).
+ * No large marketing headline so more dish content fits above the fold.
+ */
 export function GourmeatHomeHeader({
-  headline = 'Hungry? Order & Eat.',
-  subtitle,
+  headline: _headline,
+  subtitle: _subtitle,
   locationLabel = 'Katong, Singapore',
-  locationHint = 'Deliver to',
+  locationHint = 'Collect from',
   avatarUri,
   onLocationPress,
   onProfilePress,
   onNotificationPress,
+  showLoginTag = false,
   edgeInset = true,
   testID = 'gourmeat-home-header',
 }: {
+  /** @deprecated Removed from discover chrome to save vertical space. Kept for API compat. */
   headline?: string;
+  /** @deprecated Removed from discover chrome. Kept for API compat. */
   subtitle?: string;
   locationLabel?: string;
   locationHint?: string;
@@ -49,38 +73,76 @@ export function GourmeatHomeHeader({
   onLocationPress?: () => void;
   onProfilePress?: () => void;
   onNotificationPress?: () => void;
+  /** Small “Login” chip on the avatar when the customer is a guest. */
+  showLoginTag?: boolean;
   /** When false, parent already applies horizontal padding (e.g. FlashList content). */
   edgeInset?: boolean;
   testID?: string;
 }) {
+  void _headline;
+  void _subtitle;
+
   return (
-    <View testID={testID} style={{ paddingHorizontal: edgeInset ? shcSpacing.md : 0, paddingBottom: shcSpacing.sm }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: shcSpacing.md }}>
-        <View style={{ flex: 1, paddingRight: shcSpacing.sm }}>
-          <Text
-            style={{
-              ...gourmeatTypography.homeHeadline,
-              color: gourmeatColors.text,
-            }}
-          >
-            {headline}
-          </Text>
-          {subtitle ? (
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: '600',
-                color: gourmeatColors.textLight,
-                marginTop: 4,
-              }}
-              testID="gourmeat-home-subtitle"
-            >
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm }}>
-          {onNotificationPress && (
+    <View
+      testID={testID}
+      style={{
+        paddingHorizontal: edgeInset ? shcSpacing.md : 0,
+        paddingBottom: shcSpacing.sm,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: shcSpacing.sm,
+        }}
+      >
+        <Pressable
+          onPress={onLocationPress}
+          style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}
+          testID="gourmeat-location-chip"
+          accessibilityRole="button"
+          accessibilityLabel={`${locationHint}, ${locationLabel}`}
+        >
+          <View style={{ marginTop: 2 }}>
+            <SHCIcon name="location" size={shcIconSizes.md} color={gourmeatColors.primary} active />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '900',
+                  color: gourmeatColors.text,
+                  letterSpacing: -0.2,
+                  flexShrink: 1,
+                }}
+                numberOfLines={1}
+              >
+                {locationLabel}
+              </Text>
+              <Text style={{ fontSize: 10, color: gourmeatColors.textMuted, fontWeight: '700' }}>▼</Text>
+            </View>
+            {locationHint ? (
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: gourmeatColors.textLight,
+                  marginTop: 1,
+                }}
+                numberOfLines={1}
+                testID="gourmeat-location-hint"
+              >
+                {locationHint}
+              </Text>
+            ) : null}
+          </View>
+        </Pressable>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm, flexShrink: 0 }}>
+          {onNotificationPress ? (
             <Pressable
               onPress={onNotificationPress}
               style={{
@@ -96,54 +158,64 @@ export function GourmeatHomeHeader({
             >
               <SHCIcon name="notifications" size={20} color={gourmeatColors.text} />
             </Pressable>
-          )}
-          {onProfilePress && (
-            <Pressable onPress={onProfilePress} testID="gourmeat-profile-avatar">
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  overflow: 'hidden',
-                  backgroundColor: gourmeatColors.primaryLight,
-                  ...gourmeatShadows.soft,
-                }}
-              >
-                {avatarUri ? (
-                  <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                ) : (
-                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <SHCIcon name="profile" size={22} color={gourmeatColors.primary} active />
+          ) : null}
+          {onProfilePress ? (
+            <Pressable
+              onPress={onProfilePress}
+              testID="gourmeat-profile-avatar"
+              accessibilityLabel={showLoginTag ? 'Log in' : 'Profile'}
+            >
+              <View style={{ alignItems: 'center' }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    overflow: 'hidden',
+                    backgroundColor: gourmeatColors.primaryLight,
+                    ...gourmeatShadows.soft,
+                  }}
+                >
+                  {avatarUri ? (
+                    <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  ) : (
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <SHCIcon name="profile" size={20} color={gourmeatColors.primary} active />
+                    </View>
+                  )}
+                </View>
+                {showLoginTag ? (
+                  <View
+                    testID="gourmeat-login-tag"
+                    style={{
+                      marginTop: -8,
+                      paddingHorizontal: 7,
+                      paddingVertical: 2,
+                      borderRadius: 999,
+                      backgroundColor: gourmeatColors.primary,
+                      borderWidth: 1.5,
+                      borderColor: gourmeatColors.background || '#FAFAFA',
+                      zIndex: 2,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        fontWeight: '900',
+                        color: '#FFFFFF',
+                        letterSpacing: 0.3,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Login
+                    </Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </Pressable>
-          )}
+          ) : null}
         </View>
       </View>
-
-      <Pressable
-        onPress={onLocationPress}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          alignSelf: 'flex-start',
-          backgroundColor: gourmeatColors.surface,
-          paddingHorizontal: shcSpacing.sm,
-          paddingVertical: 6,
-          borderRadius: gourmeatRadii.pill,
-          ...gourmeatShadows.soft,
-        }}
-        testID="gourmeat-location-chip"
-      >
-        <SHCIcon name="location" size={shcIconSizes.sm} color={gourmeatColors.primary} active />
-        <View style={{ width: 4 }} />
-        <Text style={{ ...gourmeatTypography.locationHint, color: gourmeatColors.textLight }}>{locationHint}</Text>
-        <Text style={{ ...gourmeatTypography.locationLabel, color: gourmeatColors.text, marginLeft: 4 }} numberOfLines={1}>
-          {locationLabel}
-        </Text>
-        <Text style={{ fontSize: 10, color: gourmeatColors.textMuted, marginLeft: 4 }}>▼</Text>
-      </Pressable>
     </View>
   );
 }
@@ -485,7 +557,20 @@ export function GourmeatDishCard({
                 >
                   {dish.name}
                 </Text>
-                <Text style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }} numberOfLines={1} testID={`${cardTestID}-cook`}>
+                {dish.kitchenLabel ? (
+                  <Text
+                    style={{ fontSize: 11, fontWeight: '700', color: gourmeatColors.primary, marginBottom: 2 }}
+                    numberOfLines={1}
+                    testID={`${cardTestID}-kitchens`}
+                  >
+                    {dish.kitchenLabel}
+                  </Text>
+                ) : null}
+                <Text
+                  style={{ fontSize: 11, color: gourmeatColors.textLight, marginBottom: 6 }}
+                  numberOfLines={1}
+                  testID={`${cardTestID}-cook`}
+                >
                   {dish.cook_name}
                 </Text>
                 <View>
@@ -546,7 +631,7 @@ export function GourmeatSectionTitle({
 }
 
 /**
- * Browse spine — Dishes · Kitchens · Occasions.
+ * Browse spine — Dishes · Kitchens.
  * Makes the discover IA switchable instead of stacking every zone on one scroll.
  */
 export function GourmeatModeSwitch({
@@ -559,7 +644,7 @@ export function GourmeatModeSwitch({
   modes: Array<{ id: string; label: string; testID?: string }>;
   activeId: string;
   onSelect: (id: string) => void;
-  /** Navigates to a dedicated screen (e.g. /occasions) instead of switching inline mode. */
+  /** Optional third action (unused on discover; occasions removed). */
   navAction?: { label: string; onPress: () => void; testID?: string };
   testID?: string;
 }) {
@@ -629,6 +714,154 @@ export function GourmeatModeSwitch({
   );
 }
 
+/** Under-X cal drag control — pure RN (no native slider package). */
+function MaxCalSlider({
+  value,
+  onChange,
+  testID = 'max-cal-slider',
+}: {
+  value: number | undefined;
+  onChange: (maxCal: number) => void;
+  testID?: string;
+}) {
+  const { min, max, defaultPreview } = DISCOVER_MAX_CAL_SLIDER;
+  /** Local live value so the tray can update even if parent maxCal is a stale closure. */
+  const [live, setLive] = useState(() =>
+    value != null ? snapMaxCalSliderValue(value) : defaultPreview
+  );
+  const trackWidthRef = useRef(0);
+  const [trackWidth, setTrackWidth] = useState(0);
+  /** Anchor pageX/localX at grant so moves stay accurate without measureInWindow. */
+  const grantPageXRef = useRef(0);
+  const grantLocalXRef = useRef(0);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  React.useEffect(() => {
+    if (value != null) setLive(snapMaxCalSliderValue(value));
+  }, [value]);
+
+  const commit = useCallback((raw: number) => {
+    const snapped = snapMaxCalSliderValue(raw);
+    setLive(snapped);
+    onChangeRef.current(snapped);
+  }, []);
+
+  const setFromLocalX = useCallback(
+    (localX: number) => {
+      const w = trackWidthRef.current;
+      if (w <= 0) return;
+      const t = Math.min(1, Math.max(0, localX / w));
+      commit(min + t * (max - min));
+    },
+    [commit, max, min]
+  );
+
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
+        onPanResponderGrant: (e: GestureResponderEvent) => {
+          const { pageX, locationX } = e.nativeEvent;
+          grantPageXRef.current = pageX;
+          grantLocalXRef.current = locationX;
+          setFromLocalX(locationX);
+        },
+        onPanResponderMove: (e: GestureResponderEvent) => {
+          const delta = e.nativeEvent.pageX - grantPageXRef.current;
+          setFromLocalX(grantLocalXRef.current + delta);
+        },
+      }),
+    [setFromLocalX]
+  );
+
+  const onTrackLayout = (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    trackWidthRef.current = w;
+    setTrackWidth(w);
+  };
+
+  const ratio = (live - min) / (max - min);
+  const fillW = Math.max(0, ratio * (trackWidth || 1));
+  const thumbLeft = Math.max(0, Math.min((trackWidth || 0) - 24, fillW - 12));
+  const active = value != null;
+
+  return (
+    <View style={{ width: '100%', marginTop: 10 }} testID={testID}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
+        <View style={{ flex: 1, paddingRight: 8 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: gourmeatColors.textLight, marginBottom: 2 }}>
+            Max calories
+          </Text>
+          <Text
+            style={{ fontSize: 20, fontWeight: '900', color: gourmeatColors.text, letterSpacing: -0.3 }}
+            testID={`${testID}-value`}
+          >
+            {maxCalFilterLabel(live)}
+          </Text>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight, marginTop: 2 }}>
+            {active ? 'Filter on — dishes over this are hidden' : 'Drag to set a calorie ceiling'}
+          </Text>
+        </View>
+        <Text style={{ fontSize: 11, fontWeight: '600', color: gourmeatColors.textLight }}>
+          {min}–{max}
+        </Text>
+      </View>
+      <View
+        {...pan.panHandlers}
+        onLayout={onTrackLayout}
+        testID={`${testID}-track`}
+        style={{
+          height: 44,
+          justifyContent: 'center',
+          paddingVertical: 12,
+        }}
+        accessibilityRole="adjustable"
+        accessibilityValue={{ min, max, now: live }}
+        accessibilityLabel={`Maximum calories, ${live}`}
+      >
+        <View
+          style={{
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: gourmeatColors.border,
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              height: 8,
+              width: fillW,
+              borderRadius: 4,
+              backgroundColor: gourmeatColors.primary,
+            }}
+          />
+        </View>
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: thumbLeft,
+            top: 10,
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            backgroundColor: gourmeatColors.primary,
+            borderWidth: 2,
+            borderColor: '#FFFFFF',
+            ...gourmeatShadows.soft,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
 /**
  * Every discover filter in one tray, so the controls sit next to a single
  * Apply action instead of being spread across three chip rows on the scroll.
@@ -642,10 +875,18 @@ export function SHCDiscoverFilterSheet({
   onCuisineChange,
   halalOnly,
   vegetarianOnly,
+  veganOnly = false,
+  chickenOnly = false,
+  excludeNuts = false,
   lightOnly,
+  maxCal: maxCalProp,
   onToggleHalal,
   onToggleVegetarian,
+  onToggleVegan,
+  onToggleChicken,
+  onToggleExcludeNuts,
   onToggleLight,
+  onMaxCalChange,
   onClear,
   onApply,
   resultCount,
@@ -661,10 +902,20 @@ export function SHCDiscoverFilterSheet({
   onCuisineChange: (id: string) => void;
   halalOnly: boolean;
   vegetarianOnly: boolean;
-  lightOnly: boolean;
+  veganOnly?: boolean;
+  chickenOnly?: boolean;
+  excludeNuts?: boolean;
+  /** @deprecated Prefer maxCal + onMaxCalChange */
+  lightOnly?: boolean;
+  maxCal?: number;
   onToggleHalal: () => void;
   onToggleVegetarian: () => void;
-  onToggleLight: () => void;
+  onToggleVegan?: () => void;
+  onToggleChicken?: () => void;
+  onToggleExcludeNuts?: () => void;
+  /** @deprecated Prefer onMaxCalChange */
+  onToggleLight?: () => void;
+  onMaxCalChange?: (maxCal: number | undefined) => void;
   onClear: () => void;
   onApply: () => void;
   resultCount: number;
@@ -672,6 +923,23 @@ export function SHCDiscoverFilterSheet({
   hideCuisine?: boolean;
   testID?: string;
 }) {
+  /**
+   * Local maxCal so chips/slider re-render inside the tray.
+   * Tray content factories often close over a stale parent `maxCal` prop.
+   */
+  const [maxCal, setMaxCalLocal] = useState(maxCalProp);
+  React.useEffect(() => {
+    setMaxCalLocal(maxCalProp);
+  }, [maxCalProp]);
+
+  const setMaxCal = useCallback(
+    (next: number | undefined) => {
+      setMaxCalLocal(next);
+      onMaxCalChange?.(next);
+    },
+    [onMaxCalChange]
+  );
+
   const group = (label: string, children: React.ReactNode) => (
     <View style={{ marginBottom: shcSpacing.lg }}>
       <Text
@@ -734,7 +1002,55 @@ export function SHCDiscoverFilterSheet({
           <>
             {pill('halal', 'Halal', halalOnly, onToggleHalal, 'halal')}
             {pill('veg', 'Vegetarian', vegetarianOnly, onToggleVegetarian, 'veg')}
-            {pill('light', 'Under 500 cal', lightOnly, onToggleLight, 'light')}
+            {onToggleVegan
+              ? pill('vegan', 'Vegan', veganOnly, onToggleVegan, 'vegan')
+              : null}
+          </>
+        )}
+        {group(
+          'Calories',
+          <>
+            {pill(
+              'cal-any',
+              'Any',
+              maxCal == null && !lightOnly,
+              () => {
+                if (onMaxCalChange) setMaxCal(undefined);
+                else if (lightOnly && onToggleLight) onToggleLight();
+              },
+              'cal-any'
+            )}
+            {onMaxCalChange
+              ? DISCOVER_MAX_CAL_PRESETS.map((n) =>
+                  pill(
+                    `cal-${n}`,
+                    maxCalFilterLabel(n),
+                    maxCal === n,
+                    () => setMaxCal(toggleMaxCalPreset(maxCal, n)),
+                    `cal-${n}`
+                  )
+                )
+              : onToggleLight
+                ? pill('light', 'Under 500 cal', !!lightOnly, onToggleLight, 'light')
+                : null}
+            {onMaxCalChange ? (
+              <MaxCalSlider
+                value={maxCal}
+                onChange={(n) => setMaxCal(n)}
+                testID={`${testID}-cal-slider`}
+              />
+            ) : null}
+          </>
+        )}
+        {group(
+          'Ingredients',
+          <>
+            {onToggleChicken
+              ? pill('chicken', 'Chicken', chickenOnly, onToggleChicken, 'chicken')
+              : null}
+            {onToggleExcludeNuts
+              ? pill('no-nuts', 'No nuts', excludeNuts, onToggleExcludeNuts, 'no-nuts')
+              : null}
           </>
         )}
       </ScrollView>

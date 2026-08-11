@@ -71,8 +71,22 @@ export default function CategoryPage() {
   const productList = (products as Record<string, unknown>[]) ?? [];
   const { data: cooks, isLoading: cooksLoading } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const cookList = (cooks as Record<string, unknown>[]) ?? [];
-  const { active: collectionLocation } = useCustomerLocation();
-  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
+  const { proximity } = useCustomerLocation();
+  const {
+    halalOnly,
+    maxCal,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const [mealType, setMealType] = useState<MealTypeId>('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -90,8 +104,16 @@ export default function CategoryPage() {
   const title = category?.label || category?.id || 'Category';
 
   const filters = useMemo(
-    () => ({ mealType, halalOnly, vegetarianOnly, maxCal }),
-    [mealType, halalOnly, vegetarianOnly, maxCal]
+    () => ({
+      mealType,
+      halalOnly,
+      vegetarianOnly,
+      veganOnly,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts,
+      maxCal,
+    }),
+    [mealType, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
@@ -101,31 +123,37 @@ export default function CategoryPage() {
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       vegetarianOnly: vegetarianOnly || undefined,
+      veganOnly: veganOnly || undefined,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts: excludeNuts || undefined,
       maxCal,
     });
-  }, [productList, categoryId, mealType, halalOnly, vegetarianOnly, maxCal]);
+  }, [productList, categoryId, mealType, mindCategories, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]);
 
   const clearFilters = useCallback(() => {
     const cleared = clearedDiscoverFilters();
     setMealType(cleared.mealType);
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
-    if (maxCal != null) toggleLight();
-  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+    if (veganOnly) toggleVeganOnly();
+    if (chickenOnly) toggleChickenOnly();
+    if (excludeNuts) toggleExcludeNuts();
+    if (maxCal != null) setMaxCal(undefined);
+  }, [halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleVeganOnly, toggleChickenOnly, toggleExcludeNuts, setMaxCal]);
 
   const topRated = useMemo(() => topRatedCategoryDishes(categoryProducts, 8), [categoryProducts]);
 
   const kitchens = useMemo(() => {
     const list = scopeKitchensByCategory(cookList, categoryProducts, categoryId);
-    if (collectionLocation) {
-      return sortByCookProximity(list, collectionLocation);
+    if (proximity) {
+      return sortByCookProximity(list, proximity);
     }
     return list;
-  }, [cookList, categoryProducts, categoryId, collectionLocation]);
+  }, [cookList, categoryProducts, categoryId, proximity]);
 
   const handleAdd = useCallback(
     (productId: string) => {
-      if (!requireAuth('Sign in to add dishes to your cart.', `/category/${encodeURIComponent(categoryId)}`)) return;
+
       addMut.mutate({ productId, qty: 1 });
     },
     [requireAuth, addMut, categoryId]
@@ -250,7 +278,7 @@ export default function CategoryPage() {
               cookId={cookId}
               cookName={cookName}
               area={c.area ? String(c.area) : undefined}
-              distanceKm={collectionLocation ? distanceToCookItemKm(collectionLocation, c) : null}
+              distanceKm={proximity ? distanceToCookItemKm(proximity, c) : null}
               tagline={c.story ? String(c.story).slice(0, 80) : `${title} home cooking`}
               coverUri={getCookKitchenHeroUrl(cookId)}
               rating={coerceRating(c.rating)}
@@ -275,10 +303,18 @@ export default function CategoryPage() {
         onCuisineChange={() => {}}
         halalOnly={halalOnly}
         vegetarianOnly={vegetarianOnly}
+        veganOnly={veganOnly}
+        chickenOnly={chickenOnly}
+        excludeNuts={excludeNuts}
         lightOnly={maxCal != null}
+        maxCal={maxCal}
         onToggleHalal={toggleHalalOnly}
         onToggleVegetarian={toggleVegetarianOnly}
+        onToggleVegan={toggleVeganOnly}
+        onToggleChicken={toggleChickenOnly}
+        onToggleExcludeNuts={toggleExcludeNuts}
         onToggleLight={toggleLight}
+        onMaxCalChange={setMaxCal}
         onClear={clearFilters}
         resultCount={categoryProducts.length}
         activeCount={activeFilterCount}

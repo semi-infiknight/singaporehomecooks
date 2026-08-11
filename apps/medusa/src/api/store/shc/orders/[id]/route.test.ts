@@ -25,7 +25,8 @@ describe("GET /store/shc/orders/:id", () => {
     shc_status: "paid",
     collection_date: "2026-07-28",
     collection_slot: "18:00-19:00",
-    address_released_at: "2026-07-27T18:00:00.000Z",
+    // Far-future release so unauthenticated/customer view still hides collection before gate.
+    address_released_at: "2099-07-27T18:00:00.000Z",
     total_cents: 2500,
     items: [{ name: "Laksa", qty: 1, product_id: "p1" }],
   };
@@ -86,7 +87,7 @@ describe("GET /store/shc/orders/:id", () => {
 
   it("exposes collection fields for customer after release time", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-27T19:00:00.000Z"));
+    vi.setSystemTime(new Date("2099-07-27T19:00:00.000Z"));
     const res = makeRes();
     await GET(
       makeReq({ actor_type: "customer", actor_id: "cust_1" }) as any,

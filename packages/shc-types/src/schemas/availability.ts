@@ -7,6 +7,15 @@ export const shcAvailabilitySchema = z.object({
   collection_days: z.array(z.number().int().min(0).max(6)),
   time_slots: z.array(z.string()),
   paused: z.boolean(),
+  /** Calendar days before collection the order must be placed. */
+  min_order_lead_days: z.number().int().min(0).max(30).optional(),
+  /** Hours before collection slot start the order must be placed. */
+  min_order_lead_hours: z.number().int().min(0).max(336).optional(),
+  /** Clock (HH:MM) on the lead day before collection, e.g. "14:00". */
+  order_cutoff_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
+    .optional(),
   created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime().optional(),
 }).strict();

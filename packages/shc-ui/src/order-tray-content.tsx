@@ -26,6 +26,8 @@ export function SHCOrderReviewTrayContent({
       onRatingChange={tray.setRating}
       reviewBody={tray.reviewBody}
       onReviewBodyChange={tray.setReviewBody}
+      dimensionScores={tray.dimensionScores}
+      onDimensionChange={tray.onDimensionChange}
       onSubmit={tray.submit}
       isPending={tray.isPending}
     />

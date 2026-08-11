@@ -17,6 +17,7 @@ import {
   CookCollectionSlotEditorWeb,
   CookAreaPickerWeb,
 } from '../../components/SHCWebComponents';
+import { WebPushOptIn } from '../../components/WebPushOptIn';
 
 type CookProfile = {
   display_name?: string;
@@ -160,6 +161,10 @@ export default function CookSettingsPage() {
         subtitle="Photos, profile, collection details, pause orders"
         testID="cook-settings-hero"
       />
+
+      <div className="mb-4" data-testid="cook-settings-push">
+        <WebPushOptIn />
+      </div>
 
       <GourmeatCard className="mb-4">
         <p className="text-xs font-extrabold text-muted-foreground mb-2">Profile avatar</p>

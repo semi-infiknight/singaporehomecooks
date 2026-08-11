@@ -114,6 +114,13 @@ export function SHCListingAvailabilityEditor({
   onPortionsChange,
   onCollectionDaysChange,
   onTimeSlotsChange,
+  minOrderLeadDays = 0,
+  minOrderLeadHours = 0,
+  orderCutoffTime,
+  onMinOrderLeadDaysChange,
+  onMinOrderLeadHoursChange,
+  onOrderCutoffTimeChange,
+  orderWindowSummary,
   testID = 'listing-availability-editor',
   timeSlotPresets,
 }: {
@@ -123,6 +130,14 @@ export function SHCListingAvailabilityEditor({
   onPortionsChange: (n: number) => void;
   onCollectionDaysChange: (days: number[]) => void;
   onTimeSlotsChange: (slots: string[]) => void;
+  minOrderLeadDays?: number;
+  minOrderLeadHours?: number;
+  orderCutoffTime?: string;
+  onMinOrderLeadDaysChange?: (n: number) => void;
+  onMinOrderLeadHoursChange?: (n: number) => void;
+  onOrderCutoffTimeChange?: (t: string | undefined) => void;
+  /** Live summary for the cook (same wording customers see). */
+  orderWindowSummary?: string;
   testID?: string;
   timeSlotPresets?: readonly string[];
 }) {
@@ -198,6 +213,110 @@ export function SHCListingAvailabilityEditor({
           );
         })}
       </View>
+
+      {onMinOrderLeadDaysChange ? (
+        <View testID="listing-order-window" style={{ marginTop: shcSpacing.sm, gap: 6 }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: colors.text }}>Order ahead rules</Text>
+          <Text style={{ fontSize: 11, color: colors.textLight }}>
+            How far in advance must customers order for a collection date? Optional cutoff clock on the lead day
+            (e.g. 1 day before by 2pm).
+          </Text>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text }}>Min days before collection</Text>
+          <TextInput
+            value={String(minOrderLeadDays ?? 0)}
+            onChangeText={(t) => onMinOrderLeadDaysChange(Math.max(0, Math.min(30, parseInt(t, 10) || 0)))}
+            keyboardType="numeric"
+            testID="listing-lead-days-input"
+            style={{
+              borderWidth: shcBorders.brutal,
+              borderColor: colors.border,
+              padding: shcSpacing.sm,
+              borderRadius: shcRadii.md,
+              backgroundColor: colors.surface,
+              color: colors.text,
+            }}
+          />
+          {onMinOrderLeadHoursChange ? (
+            <>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text }}>
+                Min hours before collection slot
+              </Text>
+              <TextInput
+                value={String(minOrderLeadHours ?? 0)}
+                onChangeText={(t) =>
+                  onMinOrderLeadHoursChange(Math.max(0, Math.min(336, parseInt(t, 10) || 0)))
+                }
+                keyboardType="numeric"
+                testID="listing-lead-hours-input"
+                style={{
+                  borderWidth: shcBorders.brutal,
+                  borderColor: colors.border,
+                  padding: shcSpacing.sm,
+                  borderRadius: shcRadii.md,
+                  backgroundColor: colors.surface,
+                  color: colors.text,
+                }}
+              />
+            </>
+          ) : null}
+          {onOrderCutoffTimeChange ? (
+            <>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text }}>
+                Cutoff time on the lead day
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                <Pressable
+                  onPress={() => onOrderCutoffTimeChange(undefined)}
+                  style={[
+                    chipBase,
+                    { backgroundColor: !orderCutoffTime ? colors.primary : colors.surfaceAlt },
+                  ]}
+                  testID="listing-cutoff-none"
+                >
+                  <Text
+                    style={{
+                      color: !orderCutoffTime ? colors.onPrimary : colors.text,
+                      fontSize: 11,
+                      fontWeight: '700',
+                    }}
+                  >
+                    End of day
+                  </Text>
+                </Pressable>
+                {['10:00', '12:00', '14:00', '16:00', '18:00', '20:00'].map((t) => {
+                  const sel = orderCutoffTime === t;
+                  return (
+                    <Pressable
+                      key={t}
+                      onPress={() => onOrderCutoffTimeChange(t)}
+                      style={[chipBase, { backgroundColor: sel ? colors.primary : colors.surfaceAlt }]}
+                      testID={`listing-cutoff-${t}`}
+                    >
+                      <Text
+                        style={{
+                          color: sel ? colors.onPrimary : colors.text,
+                          fontSize: 11,
+                          fontWeight: '700',
+                        }}
+                      >
+                        {t}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : null}
+          {orderWindowSummary ? (
+            <Text
+              style={{ fontSize: 11, fontWeight: '600', color: colors.primary, marginTop: 4 }}
+              testID="listing-order-window-summary"
+            >
+              Customers see: {orderWindowSummary}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

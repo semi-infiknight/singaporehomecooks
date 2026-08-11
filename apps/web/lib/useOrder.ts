@@ -4,7 +4,7 @@ import {
   checkout,
   transitionOrder,
   getOrder,
-  getMyOrders,
+  getCustomerOrders,
   getMessages,
   sendMessage,
   getReview,
@@ -21,9 +21,8 @@ import { isActiveOrderStatus } from '@shc/utils';
 export function useOrders() {
   return useQuery({
     queryKey: ['orders', 'customer'],
-    queryFn: () => getMyOrders(),
-    enabled: isAuthenticated(),
-    // Do NOT use placeholderData: [] — that paints empty UI during first fetch.
+    queryFn: () => getCustomerOrders(),
+    // Guests hydrate from device-local order ids recorded at checkout.
     refetchInterval: (query) => {
       const list = (query.state.data as Array<{ shc_status?: string }>) || [];
       return list.some((o) => isActiveOrderStatus(String(o.shc_status || ''))) ? 8000 : false;

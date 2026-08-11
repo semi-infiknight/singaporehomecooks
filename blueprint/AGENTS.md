@@ -4,7 +4,7 @@
 
 **Start:** [README.md](./README.md) → [AGENT_PLAYBOOK.md](./AGENT_PLAYBOOK.md)
 
-**Latest:** See [CURRENT_STATE.md](./CURRENT_STATE.md) (updated 2026-07-29).
+**Latest:** See [CURRENT_STATE.md](./CURRENT_STATE.md) (updated 2026-08-10).
 
 ## Cold-start order
 

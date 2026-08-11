@@ -56,6 +56,9 @@ describe("drop → cart → demo-complete funnel", () => {
 
     const dropService = Object.assign(Object.create(ShcDropModuleService.prototype), {
       _dropPgExecutor: createInMemoryDropCasExecutor(store),
+      async getDrop(id: string) {
+        return store.get(id) || null;
+      },
       async listAndCountDrops(filters: any = {}) {
         let rows = Array.from(store.values());
         if (filters.id) rows = rows.filter((r) => r.id === filters.id);

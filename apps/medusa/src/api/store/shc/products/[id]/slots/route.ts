@@ -1,24 +1,41 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
-import { createSHCError } from "@shc/types";
+import {
+  listEligibleCollectionSlots,
+  orderWindowCustomerCopy,
+  normalizeOrderWindowRules,
+} from "@shc/utils";
 import ShcAvailabilityModuleService from "../../../../../../modules/shc-availability/service";
 
-/** GET /store/shc/products/:id/slots — collection slots for product */
+/** GET /store/shc/products/:id/slots — collection slots for product (lead/cutoff enforced). */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const { id } = req.params as { id: string };
   const availService: ShcAvailabilityModuleService = req.scope.resolve("shcAvailability") as any;
   const avail = await availService.getAvailability(id);
   if (!avail || avail.paused) {
-    return res.json({ slots: [], paused: true });
+    return res.json({ slots: [], paused: true, order_window_copy: null, availability: avail });
   }
-  const slots: { date: string; slot: string }[] = [];
-  const today = new Date();
-  for (let d = 1; d <= 4; d++) {
-    const dt = new Date(today);
-    dt.setDate(today.getDate() + d);
-    const dateStr = dt.toISOString().slice(0, 10);
-    for (const slot of avail.time_slots || ["17:00-19:00", "18:00-20:00"]) {
-      slots.push({ date: dateStr, slot });
-    }
+
+  const rules = normalizeOrderWindowRules({
+    collection_days: (avail as any).collection_days || [],
+    time_slots: (avail as any).time_slots || [],
+    paused: Boolean((avail as any).paused),
+    min_order_lead_days: (avail as any).min_order_lead_days,
+    min_order_lead_hours: (avail as any).min_order_lead_hours,
+    order_cutoff_time: (avail as any).order_cutoff_time,
+  });
+
+  // If collection_days empty in legacy rows, allow any day (legacy slots behaviour)
+  if (!rules.collection_days.length) {
+    rules.collection_days = [0, 1, 2, 3, 4, 5, 6];
   }
-  res.json({ slots, availability: avail });
+  if (!rules.time_slots.length) {
+    rules.time_slots = ["17:00-19:00", "18:00-20:00"];
+  }
+
+  const slots = listEligibleCollectionSlots(rules, new Date(), { daysAhead: 14 });
+  res.json({
+    slots,
+    availability: avail,
+    order_window_copy: orderWindowCustomerCopy(rules),
+  });
 }

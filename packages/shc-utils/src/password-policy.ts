@@ -52,6 +52,10 @@ export function assertProductionEmailAllowed(email: string): PasswordPolicyResul
   if (typeof process === 'undefined' || process.env?.NODE_ENV !== 'production') return { ok: true };
   if (process.env.SHC_ALLOW_DEMO_EMAILS === '1') return { ok: true };
   const lower = email.trim().toLowerCase();
+  // Phone-auth synthetic accounts (WhatsApp login) — not human demo seed emails.
+  if (/^wa\.\d+@(cook|customer)\.shc\.local$/.test(lower)) {
+    return { ok: true };
+  }
   if (lower.endsWith('@shc.local')) {
     return {
       ok: false,

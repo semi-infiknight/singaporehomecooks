@@ -135,7 +135,7 @@ export default function CookCustomRequestDetailPage() {
           ) : null}
 
           {showBuilder ? (
-            <div className="mt-4" data-testid={`quote-builder-${requestId}`}>
+            <div className="mt-4" data-testid={`quote-builder-section-${requestId}`}>
               <CookQuoteBuilderWeb
                 request={raw as Record<string, unknown>}
                 lines={lines}

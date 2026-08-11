@@ -6,10 +6,20 @@ const PREFS_KEY = 'shc_discover_prefs';
 type DiscoverPrefs = {
   halalOnly: boolean;
   vegetarianOnly: boolean;
+  veganOnly: boolean;
+  chickenOnly: boolean;
+  excludeNuts: boolean;
   maxCal?: number;
 };
 
-const DEFAULT: DiscoverPrefs = { halalOnly: false, vegetarianOnly: false, maxCal: undefined };
+const DEFAULT: DiscoverPrefs = {
+  halalOnly: false,
+  vegetarianOnly: false,
+  veganOnly: false,
+  chickenOnly: false,
+  excludeNuts: false,
+  maxCal: undefined,
+};
 
 export function useDiscoverPrefs() {
   const [prefs, setPrefs] = useState<DiscoverPrefs>(DEFAULT);
@@ -32,36 +42,65 @@ export function useDiscoverPrefs() {
     };
   }, []);
 
-  const persist = useCallback(async (next: DiscoverPrefs) => {
-    setPrefs(next);
-    try {
-      await SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(next));
-    } catch {
-      /* non-fatal */
-    }
-  }, []);
-
-  const setHalalOnly = useCallback(
-    (halalOnly: boolean) => persist({ ...prefs, halalOnly }),
-    [persist, prefs]
+  /** Functional updates so rapid slider moves never clobber with a stale prefs snapshot. */
+  const patch = useCallback(
+    (fn: (prev: DiscoverPrefs) => DiscoverPrefs) => {
+      setPrefs((prev) => {
+        const next = fn(prev);
+        void SecureStore.setItemAsync(PREFS_KEY, JSON.stringify(next)).catch(() => {});
+        return next;
+      });
+    },
+    []
   );
 
-  const toggleHalalOnly = useCallback(() => persist({ ...prefs, halalOnly: !prefs.halalOnly }), [persist, prefs]);
+  const setHalalOnly = useCallback(
+    (halalOnly: boolean) => patch((p) => ({ ...p, halalOnly })),
+    [patch]
+  );
+
+  const toggleHalalOnly = useCallback(() => patch((p) => ({ ...p, halalOnly: !p.halalOnly })), [patch]);
 
   const setMaxCal = useCallback(
-    (maxCal: number | undefined) => persist({ ...prefs, maxCal }),
-    [persist, prefs]
+    (maxCal: number | undefined) => patch((p) => ({ ...p, maxCal })),
+    [patch]
   );
 
   const toggleLight = useCallback(
-    () => persist({ ...prefs, maxCal: prefs.maxCal === 500 ? undefined : 500 }),
-    [persist, prefs]
+    () => patch((p) => ({ ...p, maxCal: p.maxCal === 500 ? undefined : 500 })),
+    [patch]
   );
 
   const toggleVegetarianOnly = useCallback(
-    () => persist({ ...prefs, vegetarianOnly: !prefs.vegetarianOnly }),
-    [persist, prefs]
+    () => patch((p) => ({ ...p, vegetarianOnly: !p.vegetarianOnly })),
+    [patch]
   );
 
-  return { ...prefs, ready, setHalalOnly, toggleHalalOnly, setMaxCal, toggleLight, toggleVegetarianOnly };
+  const toggleVeganOnly = useCallback(
+    () => patch((p) => ({ ...p, veganOnly: !p.veganOnly })),
+    [patch]
+  );
+
+  const toggleChickenOnly = useCallback(
+    () => patch((p) => ({ ...p, chickenOnly: !p.chickenOnly })),
+    [patch]
+  );
+
+  const toggleExcludeNuts = useCallback(
+    () => patch((p) => ({ ...p, excludeNuts: !p.excludeNuts })),
+    [patch]
+  );
+
+  return {
+    ...prefs,
+    ready,
+    setHalalOnly,
+    toggleHalalOnly,
+    setMaxCal,
+    toggleLight,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  };
 }

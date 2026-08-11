@@ -32,6 +32,8 @@ import {
   validateCookListingDraft,
   validateCookListingForPublish,
   validateCookListingWizardStep,
+  orderWindowCustomerCopy,
+  ORDER_CUTOFF_TIME_PRESETS,
 } from '@shc/utils';
 import { useCookAuth } from '../../../lib/useCookAuth';
 import { useCookConfig } from '../../../lib/useCookConfig';
@@ -150,6 +152,9 @@ export default function CookListingsPage() {
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+  const [minOrderLeadDays, setMinOrderLeadDays] = useState(DEFAULT_LISTING_AVAILABILITY.min_order_lead_days ?? 0);
+  const [minOrderLeadHours, setMinOrderLeadHours] = useState(DEFAULT_LISTING_AVAILABILITY.min_order_lead_hours ?? 0);
+  const [orderCutoffTime, setOrderCutoffTime] = useState<string | undefined>(DEFAULT_LISTING_AVAILABILITY.order_cutoff_time);
   const [ingredients, setIngredients] = useState<import('@shc/utils').IngredientDraft[]>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -331,6 +336,9 @@ export default function CookListingsPage() {
     setPortionsPerDay(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
     setCollectionDays([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
     setTimeSlots([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+    setMinOrderLeadDays(DEFAULT_LISTING_AVAILABILITY.min_order_lead_days ?? 0);
+    setMinOrderLeadHours(DEFAULT_LISTING_AVAILABILITY.min_order_lead_hours ?? 0);
+    setOrderCutoffTime(DEFAULT_LISTING_AVAILABILITY.order_cutoff_time);
     setIngredients([]);
     setMealExtras([]);
     setMealAddons([]);
@@ -354,6 +362,9 @@ export default function CookListingsPage() {
       setPortionsPerDay(avail.portions_per_day);
       setCollectionDays(avail.collection_days);
       setTimeSlots(avail.time_slots);
+      setMinOrderLeadDays(avail.min_order_lead_days ?? 0);
+      setMinOrderLeadHours(avail.min_order_lead_hours ?? 0);
+      setOrderCutoffTime(avail.order_cutoff_time);
       setIngredients(
         normalizeIngredients(listing.ingredients?.length ? listing.ingredients : [{ name: 'Chicken' }])
       );
@@ -406,6 +417,9 @@ export default function CookListingsPage() {
       portions_per_day: portionsPerDay,
       collection_days: collectionDays,
       time_slots: timeSlots,
+      min_order_lead_days: minOrderLeadDays,
+      min_order_lead_hours: minOrderLeadHours,
+      order_cutoff_time: orderCutoffTime,
       image_url: listingImageUrl || undefined,
       calories: aiCal?.calories,
       calories_confidence: aiCal?.confidence,
@@ -917,8 +931,69 @@ export default function CookListingsPage() {
             </div>
           )}
 
+          
+          {editingId ? (
+            <div className="rounded-xl border border-border p-3 space-y-3 mt-6" data-testid="listing-order-window-edit">
+              <p className="text-sm font-extrabold">Order ahead rules</p>
+              <label className="block text-xs font-bold">Min days before collection
+                <input type="number" min={0} max={30} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  value={minOrderLeadDays} onChange={(e) => setMinOrderLeadDays(Math.max(0, Math.min(30, Number(e.target.value) || 0)))} />
+              </label>
+              <label className="block text-xs font-bold">Min hours before collection slot
+                <input type="number" min={0} max={336} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                  value={minOrderLeadHours} onChange={(e) => setMinOrderLeadHours(Math.max(0, Math.min(336, Number(e.target.value) || 0)))} />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={`rounded-full px-3 py-1 text-xs font-bold border ${!orderCutoffTime ? 'bg-primary text-primary-foreground' : 'bg-card'}`}
+                  onClick={() => setOrderCutoffTime(undefined)}>End of day</button>
+                {['10:00','12:00','14:00','16:00','18:00','20:00'].map((ct) => (
+                  <button key={ct} type="button" className={`rounded-full px-3 py-1 text-xs font-bold border ${orderCutoffTime === ct ? 'bg-primary text-primary-foreground' : 'bg-card'}`}
+                    onClick={() => setOrderCutoffTime(ct)}>{ct}</button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {!editingId && step === 4 && (
             <div className="space-y-3" data-testid="listing-wizard-step4">
+              <div className="rounded-xl border border-border p-3 space-y-3" data-testid="listing-order-window">
+                <p className="text-sm font-extrabold text-foreground">Order ahead rules</p>
+                <p className="text-xs text-muted-foreground">
+                  How far ahead must customers order? Optional cutoff clock on the lead day (e.g. 1 day before by 2pm).
+                </p>
+                <label className="block text-xs font-bold">Min days before collection
+                  <input type="number" min={0} max={30} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                    value={minOrderLeadDays} data-testid="listing-lead-days-input"
+                    onChange={(e) => setMinOrderLeadDays(Math.max(0, Math.min(30, Number(e.target.value) || 0)))} />
+                </label>
+                <label className="block text-xs font-bold">Min hours before collection slot
+                  <input type="number" min={0} max={336} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+                    value={minOrderLeadHours} data-testid="listing-lead-hours-input"
+                    onChange={(e) => setMinOrderLeadHours(Math.max(0, Math.min(336, Number(e.target.value) || 0)))} />
+                </label>
+                <div>
+                  <p className="text-xs font-bold mb-1">Cutoff time on the lead day</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" data-testid="listing-cutoff-none"
+                      className={`rounded-full px-3 py-1 text-xs font-bold border ${!orderCutoffTime ? 'bg-primary text-primary-foreground' : 'bg-card'}`}
+                      onClick={() => setOrderCutoffTime(undefined)}>End of day</button>
+                    {['10:00','12:00','14:00','16:00','18:00','20:00'].map((ct) => (
+                      <button key={ct} type="button" data-testid={`listing-cutoff-${ct}`}
+                        className={`rounded-full px-3 py-1 text-xs font-bold border ${orderCutoffTime === ct ? 'bg-primary text-primary-foreground' : 'bg-card'}`}
+                        onClick={() => setOrderCutoffTime(ct)}>{ct}</button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-primary" data-testid="listing-order-window-summary">
+                  Customers see: {orderWindowCustomerCopy({
+                    collection_days: collectionDays,
+                    time_slots: timeSlots,
+                    min_order_lead_days: minOrderLeadDays,
+                    min_order_lead_hours: minOrderLeadHours,
+                    order_cutoff_time: orderCutoffTime,
+                  })}
+                </p>
+              </div>
               <div className="relative h-32 rounded-xl overflow-hidden">
                 <Image src={previewImage} alt="" fill className="object-cover" sizes="100vw" />
                 <div className="absolute inset-0 bg-black/35 flex items-end p-3 gap-2">

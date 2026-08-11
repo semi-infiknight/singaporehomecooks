@@ -75,7 +75,7 @@ const DEFAULT_COPY: CustomerBrowseCopy = {
   guest_headline: 'Hungry? Order & Eat.',
   signed_in_subtitle: 'What would you like today?',
   category_offer_title: 'Explore {{label}} kitchens',
-  category_offer_subtitle: 'Top-rated home cooks · HDB collection · order one dish or plan an occasion spread',
+  category_offer_subtitle: 'Top-rated home cooks · HDB collection · order a single dish or a few favourites',
   empty_dishes_title: 'Nothing on the menu right now',
   empty_dishes_description: 'Cooks post batches through the week. Request a dish and a kitchen can pick it up.',
   empty_kitchens_title: 'No kitchens listed yet',

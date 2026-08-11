@@ -32,6 +32,7 @@ import {
   SHCAllergenTierPicker,
   SHCHalalToggle,
   SHCListingDescriptionInput,
+  SHCListingAvailabilityEditor,
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
@@ -57,6 +58,7 @@ import {
   validateCookListingWizardStep,
   type IngredientDraft,
   type RecipeStepDraft,
+  orderWindowCustomerCopy,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -163,6 +165,9 @@ export function CookListingWizardScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(DEFAULT_LISTING_AVAILABILITY.portions_per_day);
   const [collectionDays, setCollectionDays] = useState<number[]>([...DEFAULT_LISTING_AVAILABILITY.collection_days]);
   const [timeSlots, setTimeSlots] = useState<string[]>([...DEFAULT_LISTING_AVAILABILITY.time_slots]);
+  const [minOrderLeadDays, setMinOrderLeadDays] = useState(DEFAULT_LISTING_AVAILABILITY.min_order_lead_days ?? 0);
+  const [minOrderLeadHours, setMinOrderLeadHours] = useState(DEFAULT_LISTING_AVAILABILITY.min_order_lead_hours ?? 0);
+  const [orderCutoffTime, setOrderCutoffTime] = useState<string | undefined>(DEFAULT_LISTING_AVAILABILITY.order_cutoff_time);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [mealExtras, setMealExtras] = useState<import('@shc/utils').MealOptionDraft[]>([]);
   const [mealAddons, setMealAddons] = useState<import('@shc/utils').MealOptionDraft[]>([]);
@@ -353,6 +358,9 @@ export function CookListingWizardScreen({
       portions_per_day: portionsPerDay,
       collection_days: collectionDays,
       time_slots: timeSlots,
+      min_order_lead_days: minOrderLeadDays,
+      min_order_lead_hours: minOrderLeadHours,
+      order_cutoff_time: orderCutoffTime,
       image_url: listingImageUrl || undefined,
       calories: aiCal?.calories,
       calories_confidence: aiCal?.confidence,
@@ -373,6 +381,9 @@ export function CookListingWizardScreen({
       portionsPerDay,
       collectionDays,
       timeSlots,
+      minOrderLeadDays,
+      minOrderLeadHours,
+      orderCutoffTime,
       listingImageUrl,
       aiCal,
       mealExtras,
@@ -672,6 +683,27 @@ export function CookListingWizardScreen({
         {step === 4 && (
           <View testID="listing-wizard-step4">
             <ListingWizardStep step={4} title="Review & Publish">
+              <SHCListingAvailabilityEditor
+                portionsPerDay={portionsPerDay}
+                collectionDays={collectionDays}
+                timeSlots={timeSlots}
+                onPortionsChange={setPortionsPerDay}
+                onCollectionDaysChange={setCollectionDays}
+                onTimeSlotsChange={setTimeSlots}
+                minOrderLeadDays={minOrderLeadDays}
+                minOrderLeadHours={minOrderLeadHours}
+                orderCutoffTime={orderCutoffTime}
+                onMinOrderLeadDaysChange={setMinOrderLeadDays}
+                onMinOrderLeadHoursChange={setMinOrderLeadHours}
+                onOrderCutoffTimeChange={setOrderCutoffTime}
+                orderWindowSummary={orderWindowCustomerCopy({
+                  collection_days: collectionDays,
+                  time_slots: timeSlots,
+                  min_order_lead_days: minOrderLeadDays,
+                  min_order_lead_hours: minOrderLeadHours,
+                  order_cutoff_time: orderCutoffTime,
+                })}
+              />
               <SHCFoodImage
                 uri={previewImage}
                 height={120}

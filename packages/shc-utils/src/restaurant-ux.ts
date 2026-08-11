@@ -91,17 +91,87 @@ const MEAT_KEYWORDS = [
   'daging',
 ];
 
-/** Heuristic vegetarian filter when products lack a dedicated flag. */
-export function isVegetarianDish(product: Record<string, unknown>): boolean {
+function productDietHaystack(product: Record<string, unknown>): string {
   const name = String(product.name || '').toLowerCase();
   const cuisine = String(product.cuisine || '').toLowerCase();
   const tags = (Array.isArray(product.occasion_tags) ? product.occasion_tags : []).map((t) =>
     String(t).toLowerCase()
   );
-  const haystack = [name, cuisine, ...tags].join(' ');
+  const dietTags = (Array.isArray(product.diet_tags) ? product.diet_tags : []).map((t) =>
+    String(t).toLowerCase()
+  );
+  const ingredients = Array.isArray(product.ingredients)
+    ? product.ingredients.map((row) => {
+        if (row == null) return '';
+        if (typeof row === 'string') return row.toLowerCase();
+        if (typeof row === 'object' && 'name' in (row as object)) {
+          return String((row as { name?: unknown }).name || '').toLowerCase();
+        }
+        return '';
+      })
+    : [];
+  return [name, cuisine, ...tags, ...dietTags, ...ingredients].join(' ');
+}
+
+/** Heuristic vegetarian filter when products lack a dedicated flag. */
+export function isVegetarianDish(product: Record<string, unknown>): boolean {
+  if (product.vegetarian === true || product.is_vegetarian === true) return true;
+  if (product.vegan === true || product.is_vegan === true) return true;
+  const haystack = productDietHaystack(product);
+  const tags = (Array.isArray(product.occasion_tags) ? product.occasion_tags : []).map((t) =>
+    String(t).toLowerCase()
+  );
+  const dietTags = (Array.isArray(product.diet_tags) ? product.diet_tags : []).map((t) =>
+    String(t).toLowerCase()
+  );
   if (MEAT_KEYWORDS.some((k) => haystack.includes(k))) return false;
   if (VEG_KEYWORDS.some((k) => haystack.includes(k))) return true;
-  if (tags.some((t) => t.includes('vegetarian') || t.includes('vegan'))) return true;
+  if ([...tags, ...dietTags].some((t) => t.includes('vegetarian') || t.includes('vegan'))) return true;
+  return false;
+}
+
+const ANIMAL_BYPRODUCT_KEYWORDS = [
+  'egg',
+  'eggs',
+  'dairy',
+  'milk',
+  'cheese',
+  'butter',
+  'ghee',
+  'yogurt',
+  'yoghurt',
+  'cream',
+  'paneer',
+  'honey',
+  'mayo',
+  'mayonnaise',
+  'whey',
+  'casein',
+];
+
+/**
+ * Vegan heuristic: explicit flag/tag, or vegetarian path without animal by-products.
+ * Uses ingredients + diet_tags when present.
+ */
+export function isVeganDish(product: Record<string, unknown>): boolean {
+  if (product.vegan === true || product.is_vegan === true) return true;
+  const dietTags = (Array.isArray(product.diet_tags) ? product.diet_tags : []).map((t) =>
+    String(t).toLowerCase()
+  );
+  const tags = (Array.isArray(product.occasion_tags) ? product.occasion_tags : []).map((t) =>
+    String(t).toLowerCase()
+  );
+  if ([...dietTags, ...tags].some((t) => t === 'vegan' || t.includes('vegan'))) return true;
+
+  const haystack = productDietHaystack(product);
+  if (MEAT_KEYWORDS.some((k) => haystack.includes(k))) return false;
+  if (ANIMAL_BYPRODUCT_KEYWORDS.some((k) => haystack.includes(k))) return false;
+
+  // Positive signal: vegan/veg keyword or known veg dish terms
+  if (VEG_KEYWORDS.some((k) => haystack.includes(k))) return true;
+  if ([...dietTags, ...tags].some((t) => t.includes('vegetarian') || t.includes('plant'))) return true;
+  // Explicit vegetarian flag without by-products already excluded above
+  if (product.vegetarian === true || product.is_vegetarian === true) return true;
   return false;
 }
 

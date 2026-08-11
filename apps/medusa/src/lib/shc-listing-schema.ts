@@ -69,6 +69,12 @@ export const ListingCreateSchema = listingPublishRefines(
       portions_per_day: z.number().int().positive().optional(),
       collection_days: z.array(z.number().int().min(0).max(6)).min(1),
       time_slots: z.array(timeSlotSchema).min(1),
+      min_order_lead_days: z.number().int().min(0).max(30).optional(),
+      min_order_lead_hours: z.number().int().min(0).max(336).optional(),
+      order_cutoff_time: z
+        .string()
+        .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
+        .optional(),
       image_url: z.string().min(1).optional(),
       meal_extras: z.array(mealOptionSchema).max(6).optional(),
       meal_addons: z.array(mealOptionSchema).max(8).optional(),
@@ -96,6 +102,13 @@ export const ListingUpdateSchema = z
     portions_per_day: z.number().int().positive().optional(),
     collection_days: z.array(z.number().int().min(0).max(6)).min(1).optional(),
     time_slots: z.array(timeSlotSchema).min(1).optional(),
+    min_order_lead_days: z.number().int().min(0).max(30).optional(),
+    min_order_lead_hours: z.number().int().min(0).max(336).optional(),
+    order_cutoff_time: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/)
+      .optional()
+      .nullable(),
     image_url: z.string().min(1).optional(),
     meal_extras: z.array(mealOptionSchema).max(6).optional(),
     meal_addons: z.array(mealOptionSchema).max(8).optional(),

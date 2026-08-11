@@ -32,6 +32,11 @@ export type SHCDishCardData = {
   image_url?: string;
   calories?: number;
   halal?: boolean;
+  cook_id?: string;
+  cook_slug?: string;
+  /** Search panel: kitchens offering same dish name */
+  kitchenCount?: number;
+  kitchenLabel?: string;
 };
 
 /** Swiggy/Zomato-style: large food photo, minimal text, ADD chip. */

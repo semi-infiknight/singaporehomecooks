@@ -23,6 +23,7 @@ import {
   SHCAllergenTierPicker,
   SHCHalalToggle,
   SHCListingDescriptionInput,
+  SHCListingAvailabilityEditor,
   SHCMealExtrasEditor,
   SHCMealAddonsEditor,
   SHCRecipeStepsEditor,
@@ -44,6 +45,7 @@ import {
   validateCookListingForPublish,
   type IngredientDraft,
   type RecipeStepDraft,
+  orderWindowCustomerCopy,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -123,6 +125,9 @@ export function CookListingEditScreen({
   const [portionsPerDay, setPortionsPerDay] = useState(18);
   const [collectionDays, setCollectionDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [timeSlots, setTimeSlots] = useState<string[]>(['17:00-19:00', '18:00-20:00']);
+  const [minOrderLeadDays, setMinOrderLeadDays] = useState(0);
+  const [minOrderLeadHours, setMinOrderLeadHours] = useState(0);
+  const [orderCutoffTime, setOrderCutoffTime] = useState<string | undefined>(undefined);
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
   const [aiCal, setAiCal] = useState<any>(null);
   const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
@@ -146,6 +151,9 @@ export function CookListingEditScreen({
     setPortionsPerDay(form.portions_per_day);
     setCollectionDays(form.collection_days);
     setTimeSlots(form.time_slots);
+    setMinOrderLeadDays(form.min_order_lead_days ?? 0);
+    setMinOrderLeadHours(form.min_order_lead_hours ?? 0);
+    setOrderCutoffTime(form.order_cutoff_time);
     setListingImageUrl(form.image_url || null);
     setAiCal(
       form.calories
@@ -276,6 +284,9 @@ export function CookListingEditScreen({
       portions_per_day: portionsPerDay,
       collection_days: collectionDays,
       time_slots: timeSlots,
+      min_order_lead_days: minOrderLeadDays,
+      min_order_lead_hours: minOrderLeadHours,
+      order_cutoff_time: orderCutoffTime,
       image_url: listingImageUrl || undefined,
       calories: aiCal?.calories,
       calories_confidence: aiCal?.confidence,
@@ -446,6 +457,30 @@ export function CookListingEditScreen({
             </View>
           </View>
           <SHCListingDescriptionInput value={description} onChange={setDescription} />
+        </SectionCard>
+
+        <SectionCard title="Availability & order window" hint="Customers only see dates/slots that still meet your lead rules.">
+          <SHCListingAvailabilityEditor
+            portionsPerDay={portionsPerDay}
+            collectionDays={collectionDays}
+            timeSlots={timeSlots}
+            onPortionsChange={setPortionsPerDay}
+            onCollectionDaysChange={setCollectionDays}
+            onTimeSlotsChange={setTimeSlots}
+            minOrderLeadDays={minOrderLeadDays}
+            minOrderLeadHours={minOrderLeadHours}
+            orderCutoffTime={orderCutoffTime}
+            onMinOrderLeadDaysChange={setMinOrderLeadDays}
+            onMinOrderLeadHoursChange={setMinOrderLeadHours}
+            onOrderCutoffTimeChange={setOrderCutoffTime}
+            orderWindowSummary={orderWindowCustomerCopy({
+              collection_days: collectionDays,
+              time_slots: timeSlots,
+              min_order_lead_days: minOrderLeadDays,
+              min_order_lead_hours: minOrderLeadHours,
+              order_cutoff_time: orderCutoffTime,
+            })}
+          />
         </SectionCard>
 
         <SectionCard title="Cuisine & allergens" hint="Helps discovery and AI plate styling.">

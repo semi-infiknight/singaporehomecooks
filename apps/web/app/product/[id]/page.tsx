@@ -55,7 +55,9 @@ function ProductDetailContent() {
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
   const { data: productRaw, isLoading } = useProduct(id || '');
   const product = resolveProductForDisplay(productRaw, id || '', { evidence: evidenceMode });
-  const { data: slots = [] } = useCollectionSlots(id || '');
+  const { data: slotsPayload } = useCollectionSlots(id || '');
+  const slots = slotsPayload?.slots ?? [];
+  const orderWindowCopy = slotsPayload?.order_window_copy ?? null;
   const addMut = useAddToCart({ silent: true });
   const aiMut = useAICalorieEstimate();
   const { isFavorite, toggle } = useFavorites();
@@ -241,6 +243,11 @@ function ProductDetailContent() {
         )}
 
         <SHCSectionTitle>Collection slots</SHCSectionTitle>
+        {orderWindowCopy ? (
+          <p className="mb-2 text-sm font-bold text-primary" data-testid="pdp-order-window-copy">
+            {orderWindowCopy}
+          </p>
+        ) : null}
         <CollectionSlotPicker slots={slots} selected={null} onSelect={() => {}} />
 
         {cookSlug && (

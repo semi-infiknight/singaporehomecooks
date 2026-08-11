@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-07-31 (batch merge: platform gaps, P2 hardening, weekly payouts, custom-request E2E, settlement invoice gate)  
+**Last updated:** 2026-08-10 (pre–App Store E2E gate: verify:ci green; guest Orders; maxCal slider; occasions/notif inbox removed; medusa register/listing tests aligned)
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 
@@ -74,13 +74,16 @@ Turborepo marketplace: **home cooks ↔ customers** in Singapore. HDB collection
 
 | Actor | Mechanism | Key routes |
 |-------|-----------|------------|
-| Customer | Medusa email/pass JWT; `ensureStoreCustomer` required for cart | `POST …/auth/customer/login|register`, `GET …/auth/me` |
+| Customer | Medusa email/pass JWT; optional for browse + guest order | `POST …/auth/customer/login|register`, `GET …/auth/me` |
+| Guest (customer) | Device guest UUID + contact at checkout; order ids in SecureStore/localStorage | `GUEST_*` keys in `@shc/utils/guest-session`; cart actor `guest_<uuid>` |
 | Cook | SHC JWT + scrypt `password_hash` on `shc_cook` | `POST …/auth/cook/login|register`, `PATCH …/auth/cook/profile` |
 | Admin | Medusa admin session | `/app`, `/app/shc-ops/*` |
 
-Protected store routes resolve identity from **Bearer JWT** (`getCustomerId` / `getCookId`) — not `x-shc-*` headers.
+Protected store routes resolve identity from **Bearer JWT** (`getCustomerId` / `getCookId`) — not `x-shc-*` headers. Guest cart/checkout uses guest id headers via `ensureGuestId()`.
 
-Web: customer checkout/PDP gated (`/login?returnTo=…`); cook portal uses separate `useCookAuth` + `cook-api-client.ts` under `/cook-portal/*`.
+**Guest-first customer UX (2026-08-10):** sign-in is **not** required for Home, Cart, Checkout (phone/name contact), or **Orders**. Orders tab + screen never show “Sign in to view orders”. `getCustomerOrders()` = authenticated `GET /store/shc/orders` **or** hydrate `listGuestOrderIds()` → `getOrder(id)` each. Phone login may merge guest local data (`link-guest-to-profile`). Profile tab may still nudge sign-in for account tools; do not gate Orders.
+
+Web cook portal uses separate `useCookAuth` + `cook-api-client.ts` under `/cook-portal/*`.
 
 ### Client state (must-use patterns)
 
@@ -102,31 +105,44 @@ Web: customer checkout/PDP gated (`/login?returnTo=…`); cook portal uses separ
 
 ### Customer discover (`apps/mobile-customer/app/(customer)/index.tsx`)
 
-- Composition: `@shc/utils` `discoverSections()` — promo carousel → cooking soon (7-day drops) → for-you rail → **Dishes | Kitchens** + **Occasions** nav → mode content → request CTA.
-- Filters: `SHCDiscoverFilterSheet` in `@shc/ui/gourmeat.tsx` via `SHCTrayProvider`; `filterDiscoverProducts()` in utils.
-- Occasions: dedicated `/(customer)/occasions` (not inline mode); `occasionBrowseRoute()`.
-- Location: proximity sort on dishes + kitchens when lat/lng set; `SHCLocationNudgeBanner` when unset; header chip → `/(customer)/location`.
-- Honest ratings: `coerceRating()` — no fabricated 4.8/24; discounts only when API sends percent.
+- Composition: `@shc/utils` `discoverSections()` — promo carousel → cooking soon → for-you rail → **Dishes | Kitchens** + mode content → request CTA.
+- **Occasions browse removed** — no `/occasions` or `/(customer)/occasions` “Hari Raya spread” page; cooks do not tag by occasion. Custom **request** wizard may still ask “what’s the occasion?” for context. Festive promos deep-link to `/request`.
+- Filters: multi-criteria AND in `filterDiscoverProducts()` — query, cuisine, mealType, dietary (halal/veg/vegan), include/exclude ingredients, **variable `maxCal`** (presets + slider; free-form “under X cal” via `parseMaxCalFromQuery` / `resolveEffectiveMaxCal` in `@shc/utils/discover.ts`).
+- Search: kitchen grouping + multi-kitchen dish labels (`buildSearchResultGroups` / `@shc/utils/search-results.ts`); kitchen → cook page.
+- **Zero search hits:** `SHCSearchNoResultsRequestCard` / web `SearchNoResultsRequestCard` — “Didn’t find what you’re looking for?” + **Request a custom dish** (Advanced Search panel, home dishes/kitchens empty when searching, header dropdown).
+- Location: GPS browse vs collection; proximity when lat/lng set; header chip → `/(customer)/location`.
+- **No notification bell** on home header. Attention lives in Orders / Requests sections.
+- **Discover chrome (2026-08-10):** compact Swiggy-style row — **location (left) + profile avatar (right)**; no “Hungry? Order & Eat.” headline (more room for dishes).
+- Honest ratings: `coerceRating()` — no fabricated 4.8/24.
 
 ### Location & checkout
 
 - Picker: `LocationPickerExperience` (`@shc/ui/location-ux`); SG quick-pick areas; map confirm on iOS (`react-native-maps`) / Android Carto tiles.
 - Checkout pre-fill: `checkoutCollectionPrefill()`; place-order requires location.
-- Order snapshot: `POST /store/shc/carts/demo-complete` writes `customer_collection_*` on `shc_order_meta` (migration `Migration20260727180000OrderMetaCustomerCollection`, deployed Railway 2026-07-29).
+- **Guest checkout:** contact fields + `recordGuestOrder(orderId)` after place; server stores guest contact / phone link on order meta.
+- Order snapshot: `POST /store/shc/carts/demo-complete` writes `customer_collection_*` on `shc_order_meta`.
+- **Order window (lead time):** listing fields `min_order_lead_days`, `min_order_lead_hours`, `order_cutoff_time` (`@shc/utils/order-window.ts` + availability migration). Customer slots API + checkout use `listEligibleCollectionSlots`; UI copy via `orderWindowCustomerCopy`. Cook wizard/edit + web listings expose controls.
+
+### Customer orders (guest + signed-in)
+
+- Tab + screen: **never** auth-gate (“Sign in to view orders” removed from `CustomerTabBar`, web `AppMobileTabBar`, orders pages).
+- Data: `getCustomerOrders()` in mobile/web `api-client` — JWT list **or** guest local IDs + `GET /store/shc/orders/:id`.
+- Empty state: “orders from this device/browser after checkout” — not a sign-in wall.
+- Tiffin meals / corporate invoices still require signed-in APIs when applicable.
+
+### Notifications (product decision 2026-08-10)
+
+- **No permanent inbox UI**, no home/dashboard/profile **bell**, no `/notifications` routes.
+- Attention items surface in **Orders**, **Requests**, etc.
+- **Push prefs only** in Account (customer profile) / Kitchen settings (cook) — Switch / `WebPushOptIn`. Backend `shc-notification` + push token APIs remain for device pushes and ops; do not rebuild in-app inbox without product ask.
 
 ### Cook app
 
 - Tabs: dashboard, orders, listings, compliance (+ hidden settings, batches, tiffin, earnings, order detail).
-- **Dashboard:** bento quick actions + Collaboration Board link → Orders tab; **no** inline “chat on latest order” CTA (chat from order detail only).
-- **Listings tab** — nested stack (`listings/_layout.tsx`):
-  - `listings/index` — dish list, search/filters, **+** (upper-right, `create-listings-btn`) → new wizard; long-press → `SHCTray` actions (`height: medium`).
-  - `listings/new` — 4-step wizard (`components/CookListingWizardScreen.tsx`); **empty form** (no demo prefills); deep link `?wizardStep=1–4`.
-  - `listings/[id]` — edit wizard (prefilled from API).
-- Settings: pause, collection address/instructions/**time slots**, avatar/hero upload; `SHCCookAreaPicker` + `@shc/utils/sg-areas.ts`.
-- Listings API: `@shc/ui/listing-form` + product meta; PATCH/DELETE `/store/shc/listings/:id`.
-- Earnings: `GET /store/shc/earnings` ledger-backed; **payout status** (last/next PayNow, setup CTA) + **payout history** (`GET /store/shc/payouts/history`); UI `@shc/ui/cook-earnings.tsx` + web mirrors; weekly batch script `apps/medusa/scripts/weekly-payout.ts`.
-- Orders: accept/decline on `cart` (before payment); customer PayNow on `accepted`; compliance gate for accept; **cook settlement PDF** only after `accepted` (provisional until `collected`); decline/dispute trays Maestro-covered.
-- **Layout:** single `settings` tab screen in `(cook)/_layout.tsx` (duplicate entry removed 2026-07-29).
+- **Dashboard:** bento quick actions; **no** notification bell; **no** collapsible notif panel.
+- **Listings:** nested stack; order-window fields on create/edit; empty form on new wizard.
+- Settings: pause, collection address/instructions/time slots, avatar/hero, **push toggle** (not inbox link); `SHCCookAreaPicker`.
+- Earnings / orders / compliance: unchanged patterns (ledger earnings, accept/decline, settlement PDF rules).
 
 ### Admin / SHC Ops (`/app/shc-ops`)
 
@@ -241,8 +257,23 @@ pnpm railway:ship                     # PWA deploy + fingerprint
 15. **Listings wizard** — do not inline on index; route is `/(cook)/listings/new` (not flat `listings.tsx`).
 16. **Listing-actions tray** — use `height: 'medium'`; `@shc/ui/tray` sheet is a `View` (backdrop is separate `Pressable`) — never wrap sheet body in `Pressable` (blocks taps).
 17. **Stale Metro after hook import removal** — `METRO_CLEAR=1 pnpm ios:dev` if redbox `useMemo doesn't exist` after hot reload.
+18. **Guest-first vs leftover gates** — removing “optional auth” in one place is incomplete if tab bars / `SHCAuthSessionGate` / `useOrders({ enabled: isAuthenticated() })` still block. Orders must use `getCustomerOrders()` + always-on query + no tray on Orders tab.
+23. **Tray filter stale maxCal** — filter sheet content is a factory closed over open-time props; calorie slider/chips need **local state** + live value label; prefs setters must use functional `setPrefs` so rapid slider moves do not clobber.
+19. **Incomplete panel removal leaves broken JSX** — deleting a collapsible notif panel must remove the whole block (profile/dashboard); leftover `</Pressable>` fragments → Metro `Expected corresponding JSX closing tag`.
+20. **No in-app notification inbox** — do not re-add `/notifications` screens or home bells; push opt-in lives in settings/profile only. Device push registration exports: `registerCustomerPushToken` / `registerCookPushToken` (not a fictional `registerForPushNotificationsAsync`).
+21. **`getSlots` payload shape** — API may return `{ slots, order_window_copy }`; always unwrap `slotsPayload?.slots` (or equivalent) before `.map` on PDP/checkout.
+22. **Blueprint self-update is mandatory** — same session as code: patch `CURRENT_STATE.md` + section file + `INDEX.md` last-updated ([multi-agent/self-updating-rules.md](./multi-agent/self-updating-rules.md)). Session 2026-08-10 drifted until explicitly caught up — do not ship code-only again for UX/product rules.
 
 ---
+
+## 8b. Pre–App Store E2E (2026-08-10)
+
+- `pnpm verify:ci` green (packages build/test, mobile typecheck, bundle/PWA guards).
+- Customer: guest Orders without sign-in wall; maxCal live label; no occasions catalogue / notif inbox UI.
+- Live Railway: multi-dish `POST /store/shc/requests` (guest_count + items) works after medusa redeploy.
+- Maestro `e2e/discover-smoke.yaml` on booted iPhone 16 Pro: PASS.
+- Playwright `e2e/custom-request-flow.spec.ts`: PASS (wizard → cook quote on dish pages → partial accept → PayNow). Auth cache `e2e/auth-session.ts`; unique quote-builder test ids.
+- Known non-blockers: HitPay live/KYC, ASC submit.
 
 ## 9. Open gaps
 

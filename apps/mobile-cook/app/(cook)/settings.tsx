@@ -34,6 +34,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { getCookProfile, updateCookProfile } from '../../lib/api-client';
 import { pickCookMediaImage, uploadCookMediaImage } from '../../lib/cook-media-upload';
 import { CookKitchenAddressPicker } from '../../components/CookKitchenAddressPicker';
+import { registerCookPushToken } from '../../lib/push';
 
 type CookProfile = {
   display_name?: string;
@@ -67,6 +68,7 @@ export default function CookSettingsScreen() {
   const [payoutLegalName, setPayoutLegalName] = useState('');
   const [profile, setProfile] = useState<CookProfile | null>(null);
   const [busy, setBusy] = useState<'avatar' | 'hero' | null>(null);
+  const [pushOn, setPushOn] = useState(true);
 
   const profileQ = useQuery({
     queryKey: ['cook-profile'],
@@ -156,6 +158,24 @@ export default function CookSettingsScreen() {
         subtitle="Photos, profile, collection details, pause orders"
         testID="cook-settings-hero"
       />
+
+      <GourmeatCard style={styles.card} testID="cook-settings-push">
+        <View style={styles.switchRow}>
+          <View style={{ flex: 1, paddingRight: shcSpacing.md }}>
+            <Text style={styles.switchLabel}>Push notifications</Text>
+            <Text style={styles.hint}>Order alerts go to Orders — this only enables device pushes</Text>
+          </View>
+          <Switch
+            value={pushOn}
+            onValueChange={(v) => {
+              setPushOn(v);
+              if (v && user?.id) void registerCookPushToken(user.id);
+            }}
+            trackColor={{ true: gourmeatColors.primary, false: '#E5DDD4' }}
+            testID="cook-settings-push-switch"
+          />
+        </View>
+      </GourmeatCard>
 
       <GourmeatCard style={styles.card}>
         <Text style={styles.sectionTitle}>Profile avatar</Text>

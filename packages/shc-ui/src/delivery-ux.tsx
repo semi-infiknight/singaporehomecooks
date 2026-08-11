@@ -196,25 +196,18 @@ export function SHCFloatingCartPill(props: {
   );
 }
 
-/** Principle 5: seamless onboarding — browse first, sign in at checkout */
+/**
+ * @deprecated Guest checkout is first-class — discover no longer shows this bar.
+ * Kept as a no-op export so older screens/tests that import it still typecheck.
+ */
 export function SHCGuestBrowseBar({
-  onSignInPress,
+  onSignInPress: _onSignInPress,
   testID = 'guest-browse-bar',
 }: {
   onSignInPress: () => void;
   testID?: string;
 }) {
-  return (
-    <View style={guestBrowseStyles.shell} testID={testID}>
-      <View style={guestBrowseStyles.copyWrap}>
-        <Text style={guestBrowseStyles.eyebrow}>Guest browsing</Text>
-        <Text style={guestBrowseStyles.copy}>Sign in to checkout and track orders</Text>
-      </View>
-      <SHCButton onPress={onSignInPress} size="md" testID={`${testID}-cta`}>
-        Sign in
-      </SHCButton>
-    </View>
-  );
+  return <View testID={testID} style={{ height: 0, overflow: 'hidden' }} accessibilityElementsHidden />;
 }
 
 const guestBrowseStyles = {

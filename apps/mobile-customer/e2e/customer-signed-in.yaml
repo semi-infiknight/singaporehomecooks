@@ -1,4 +1,4 @@
-# Customer signed in on discover (subflow).
+# Customer signed in on discover (subflow) — WhatsApp phone auth.
 appId: com.singaporehomecooks.customer
 ---
 - runFlow:
@@ -14,17 +14,38 @@ appId: com.singaporehomecooks.customer
             id: "auth-submit-btn"
           timeout: 30000
       - tapOn:
-          id: "auth-email-input"
+          id: "auth-mobile-input"
       - eraseText
-      - inputText: customer@shc.local
+      - inputText: "91234567"
       - tapOn:
-          id: "auth-password-input"
+          id: "auth-submit-btn"
+      - extendedWaitUntil:
+          visible:
+            id: "auth-otp-input"
+          timeout: 30000
+      - tapOn:
+          id: "auth-otp-input"
       - eraseText
-      - inputText: customersecret
+      - inputText: "123456"
       - tapOn:
           id: "auth-submit-btn"
       - tapOn:
           text: "OK"
+          optional: true
+      # Profile onboarding if shown
+      - tapOn:
+          id: "customer-onboarding-name"
+          optional: true
+      - inputText: "Test Customer"
+          optional: true
+      - tapOn:
+          id: "onboarding-signin-cta"
+          optional: true
+      - tapOn:
+          id: "trust-onboarding-next-btn"
+          optional: true
+      - tapOn:
+          id: "onboarding-guest-btn"
           optional: true
 - extendedWaitUntil:
     visible:

@@ -118,6 +118,6 @@ export function categoryOfferCopy(category: CuisineCategory | null): { title: st
   const label = category?.label || category?.id || 'Heritage';
   return {
     title: `Explore ${label} kitchens`,
-    subtitle: `Top-rated home cooks · HDB collection · order one dish or plan an occasion spread`,
+    subtitle: `Top-rated home cooks · HDB collection · order a single dish or a few favourites`,
   };
 }

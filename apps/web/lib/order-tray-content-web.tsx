@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { REVIEW_DIMENSIONS } from '@shc/utils';
 import { SHCButton } from './shc-tray-web';
 import { useOrderReviewTrayMutation, useOrderDisputeTrayMutation } from '@shc/ui/order-tray-mutations';
 import type {
@@ -18,7 +19,8 @@ export function SHCOrderReviewTrayContentWeb({
 
   return (
     <div data-testid="order-review-tray">
-      <div className="flex gap-1 mt-2">
+      <p className="text-xs font-extrabold text-foreground mt-1">Overall</p>
+      <div className="flex gap-1 mt-1" data-testid="review-overall-stars">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
@@ -31,6 +33,43 @@ export function SHCOrderReviewTrayContentWeb({
           </button>
         ))}
       </div>
+
+      <p className="text-xs font-extrabold text-foreground mt-3">How was everything?</p>
+      <p className="text-[11px] text-muted-foreground mb-2">
+        Rate taste, communication, presentation, quantity, oily &amp; spicy after you have eaten.
+      </p>
+      <div className="space-y-2">
+        {REVIEW_DIMENSIONS.map((dim) => {
+          const score = tray.dimensionScores[dim.id] ?? 0;
+          return (
+            <div
+              key={dim.id}
+              className="flex items-center gap-2 border-b border-border/60 pb-1.5"
+              data-testid={`review-dim-${dim.id}`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-foreground">{dim.label}</p>
+                {dim.hint ? <p className="text-[10px] text-muted-foreground">{dim.hint}</p> : null}
+              </div>
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    data-testid={`review-dim-${dim.id}-${n}`}
+                    onClick={() => tray.onDimensionChange(dim.id, n)}
+                    className={`text-xl leading-none ${n <= score ? 'text-[#FFB800]' : 'text-muted-foreground/40'}`}
+                    aria-label={`${dim.label} ${n} stars`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       <textarea
         value={tray.reviewBody}
         onChange={(e) => tray.setReviewBody(e.target.value)}

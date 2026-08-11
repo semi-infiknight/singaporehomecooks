@@ -10,17 +10,29 @@ import { shapeProduct } from "../../../../lib/shc-product-shape";
 import { loadBusinessRulesConfigFromScope } from "../../../../lib/shc-business-rules-config";
 
 async function enrichCartMinQty(cart: Awaited<ReturnType<ShcCartModuleService["getCart"]>>, scope: any) {
-  const metaService: ShcProductMetaModuleService = scope.resolve("shcProductMeta") as any;
-  const dropService: ShcDropModuleService = scope.resolve("shcDrop") as any;
+  let metaService: ShcProductMetaModuleService | null = null;
+  let dropService: ShcDropModuleService | null = null;
   const items = await Promise.all(
     cart.items.map(async (item) => {
       if (item.min_qty != null && item.min_qty > 0) return item;
       if (item.drop_id) {
-        const drop = await dropService.getDrop(item.drop_id).catch(() => null);
+        if (!dropService) {
+          try {
+            dropService = scope.resolve("shcDrop") as any;
+          } catch {
+            return { ...item, min_qty: item.min_qty ?? 1 };
+          }
+        }
+        const drop = await dropService!.getDrop(item.drop_id).catch(() => null);
         if (drop) return { ...item, min_qty: Math.max(1, Number(drop.min_qty) || 1) };
       }
-      const meta = await metaService.getMetaForProduct(item.product_id).catch(() => null);
-      if (meta) return { ...item, min_qty: Math.max(1, Number(meta.min_qty) || 1) };
+      try {
+        if (!metaService) metaService = scope.resolve("shcProductMeta") as any;
+        const meta = await metaService!.getMetaForProduct(item.product_id).catch(() => null);
+        if (meta) return { ...item, min_qty: Math.max(1, Number(meta.min_qty) || 1) };
+      } catch {
+        /* product meta optional for drop-only carts in tests */
+      }
       return { ...item, min_qty: item.min_qty ?? 1 };
     })
   );

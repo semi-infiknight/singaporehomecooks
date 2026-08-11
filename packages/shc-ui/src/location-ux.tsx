@@ -498,9 +498,9 @@ export function SHCLocationNudgeBanner({
   return (
     <Pressable onPress={onPress} testID={testID} style={nudgeBanner}>
       <View style={{ flex: 1 }}>
-        <Text style={nudgeTitle}>Set your collection area</Text>
+        <Text style={nudgeTitle}>Share your location</Text>
         <Text style={nudgeBody}>
-          See kitchens and dishes sorted by distance. Singapore HDB pickup only.
+          See kitchens and dishes near you. Collection address is chosen only at checkout.
         </Text>
       </View>
       <Text style={nudgeCta}>Set →</Text>

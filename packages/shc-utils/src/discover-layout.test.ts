@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
+  DISCOVER_MAX_CAL_PRESETS,
   DISCOVER_MODES,
   clearedDiscoverFilters,
+  coerceMaxCal,
   discoverActiveFilterCount,
   discoverActiveFilters,
   discoverEmptyCopy,
@@ -11,13 +13,26 @@ import {
   discoverKitchensHeading,
   discoverSectionIds,
   isDiscoverMode,
+  parseMaxCalFromQuery,
+  resolveEffectiveMaxCal,
+  snapMaxCalSliderValue,
+  stripMaxCalFromQuery,
+  toggleMaxCalPreset,
+  DISCOVER_MAX_CAL_SLIDER,
 } from './discover-layout';
 
 const browsing = { isSearching: false, isGuest: false, mode: 'dishes' as const, hasPromos: true, hasForYou: true };
 
 describe('discoverSections', () => {
-  it('collapses to search results only while searching', () => {
-    expect(discoverSectionIds({ ...browsing, isSearching: true })).toEqual(['search-results']);
+  it('keeps Dishes · Kitchens spine while searching (no compact panel only)', () => {
+    expect(discoverSectionIds({ ...browsing, isSearching: true, mode: 'dishes' })).toEqual([
+      'browse-switch',
+      'dish-grid',
+    ]);
+    expect(discoverSectionIds({ ...browsing, isSearching: true, mode: 'kitchens' })).toEqual([
+      'browse-switch',
+      'kitchen-list',
+    ]);
   });
 
   it('puts time-sensitive content above the browse spine', () => {
@@ -51,8 +66,8 @@ describe('discoverSections', () => {
     expect(ids).not.toContain('for-you');
   });
 
-  it('shows the guest bar only to guests', () => {
-    expect(discoverSectionIds({ ...browsing, isGuest: true })[0]).toBe('guest');
+  it('never shows guest sign-in bar (guest checkout is first-class)', () => {
+    expect(discoverSectionIds({ ...browsing, isGuest: true })).not.toContain('guest');
     expect(discoverSectionIds(browsing)).not.toContain('guest');
   });
 
@@ -83,10 +98,20 @@ describe('discoverForYouRail', () => {
 });
 
 describe('filters', () => {
-  it('counts every narrowing filter', () => {
+  it('counts every narrowing filter and reflects any maxCal ceiling', () => {
     expect(
-      discoverActiveFilters({ mealType: 'lunch', cuisine: 'Malay', halalOnly: true, maxCal: 500 })
-    ).toEqual(['Lunch', 'Malay', 'Halal', 'Under 500 cal']);
+      discoverActiveFilters({
+        mealType: 'lunch',
+        cuisine: 'Malay',
+        halalOnly: true,
+        veganOnly: true,
+        includeIngredient: 'chicken',
+        excludeNuts: true,
+        maxCal: 500,
+      })
+    ).toEqual(['Lunch', 'Malay', 'Halal', 'Vegan', 'Chicken', 'No nuts', 'Under 500 cal']);
+    expect(discoverActiveFilters({ maxCal: 50 })).toEqual(['Under 50 cal']);
+    expect(discoverActiveFilters({ maxCal: 1000 })).toEqual(['Under 1000 cal']);
   });
 
   it('ignores the "all meals" sentinel', () => {
@@ -103,6 +128,32 @@ describe('filters', () => {
   it('clears to an empty filter set', () => {
     expect(discoverActiveFilterCount(clearedDiscoverFilters())).toBe(0);
   });
+
+  it('exposes multi value calorie presets including 50, 500, 1000', () => {
+    expect(DISCOVER_MAX_CAL_PRESETS).toEqual(expect.arrayContaining([50, 500, 1000]));
+    expect(toggleMaxCalPreset(undefined, 50)).toBe(50);
+    expect(toggleMaxCalPreset(50, 50)).toBeUndefined();
+    expect(toggleMaxCalPreset(50, 1000)).toBe(1000);
+    expect(coerceMaxCal('800')).toBe(800);
+    expect(coerceMaxCal(-1)).toBeUndefined();
+  });
+
+  it('parses any typed under-X calorie amount from search', () => {
+    expect(parseMaxCalFromQuery('under 450')).toBe(450);
+    expect(parseMaxCalFromQuery('< 75 cal')).toBe(75);
+    expect(parseMaxCalFromQuery('less than 1000 calories')).toBe(1000);
+    expect(parseMaxCalFromQuery('max 200 kcal')).toBe(200);
+    expect(parseMaxCalFromQuery('chicken 350 cal')).toBe(350);
+    expect(stripMaxCalFromQuery('chicken under 400 cal')).toBe('chicken');
+    expect(resolveEffectiveMaxCal(500, 'under 200')).toBe(200);
+    expect(resolveEffectiveMaxCal(undefined, 'under 333')).toBe(333);
+  });
+
+  it('snaps slider values into the under-X cal range', () => {
+    expect(snapMaxCalSliderValue(447)).toBe(450);
+    expect(snapMaxCalSliderValue(10)).toBe(DISCOVER_MAX_CAL_SLIDER.min);
+    expect(snapMaxCalSliderValue(9999)).toBe(DISCOVER_MAX_CAL_SLIDER.max);
+  });
 });
 
 describe('headings', () => {
@@ -112,11 +163,11 @@ describe('headings', () => {
     expect(discoverGridHeading('dishes', {}, true).hint).toMatch(/nearest kitchen/i);
   });
 
-  it('only claims proximity when a collection point is set', () => {
+  it('only claims proximity when browse location is set', () => {
     expect(discoverKitchensHeading(4, true).title).toBe('4 kitchens near you');
     const noLocation = discoverKitchensHeading(4, false);
     expect(noLocation.title).toBe('4 home kitchens');
-    expect(noLocation.hint).toMatch(/collection point/i);
+    expect(noLocation.hint).toMatch(/location/i);
   });
 
   it('names the offending filters in the empty state', () => {

@@ -127,10 +127,6 @@ appId: com.singaporehomecooks.customer
     visible:
       id: "customer-profile-screen"
     timeout: 45000
-- tapOn:
-    id: "notif-bell"
-- tapOn:
-    id: "notif-bell"
 # Immersive request dish — multi-dish wizard (Phase 4)
 - openLink: shc-customer:///(customer)/request
 - tapOn:

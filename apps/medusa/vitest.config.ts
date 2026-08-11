@@ -4,6 +4,12 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    // Unit/integration tests must not inherit host NODE_ENV=production (blocks @shc.local, strict passwords).
+    env: {
+      NODE_ENV: "test",
+      SHC_ALLOW_DEMO_EMAILS: "1",
+      SHC_STRICT_PASSWORD: "0",
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],

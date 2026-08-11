@@ -37,27 +37,12 @@ function AppShell() {
       <StatusBar style="dark" />
       <ErrorBoundary>
         <SHCTrayProvider queryClient={queryClient}>
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: shcColors.primary },
-              headerTintColor: shcColors.onPrimary,
-              headerTitleStyle: { fontWeight: '700', color: shcColors.onPrimary },
-              headerTitle: 'SHC — Customer',
-            }}
-          >
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="(customer)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="(shared)/auth/index"
-              options={{
-                title: 'Sign in',
-                headerStyle: { backgroundColor: shcColors.primary },
-                headerTintColor: shcColors.onPrimary,
-                headerTitleStyle: { fontWeight: '800', color: shcColors.onPrimary },
-              }}
-            />
-            <Stack.Screen name="(shared)/onboarding/index" options={{ title: 'Welcome', headerShown: false }} />
-            <Stack.Screen name="(shared)/chat/[orderId]/index" options={{ title: 'Order Chat' }} />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(customer)" />
+            <Stack.Screen name="(shared)/auth/index" />
+            <Stack.Screen name="(shared)/onboarding/index" />
+            <Stack.Screen name="(shared)/chat/[orderId]/index" />
           </Stack>
         </SHCTrayProvider>
       </ErrorBoundary>

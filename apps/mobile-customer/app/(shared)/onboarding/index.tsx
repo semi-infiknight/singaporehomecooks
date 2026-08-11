@@ -1,123 +1,297 @@
 /**
- * Customer onboarding — friendly guide.
- * Warm home-food heroes, short value props, guest explore + sign-in.
+ * Customer post-login profile setup — shared onboarding shell (cream + progress + peach CTA).
+ * Name (required) → optional pickup photo → area only if none saved.
  */
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
+  Image,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { SHCOnboardingFlowScreen, shcColors, shcSpacing } from '@shc/ui';
+import { StatusBar } from 'expo-status-bar';
+import {
+  SHCOnboardingFlowScreen,
+  shcColors,
+  shcSpacing,
+  shcRadii,
+  gourmeatColors,
+} from '@shc/ui';
 import { BENTO_ACTION_IMAGES, PROMO_BANNER_IMAGES } from '@shc/utils';
 import { markOnboardingSeen } from '../../../lib/onboarding';
+import {
+  hasCompletedProfileOnboarding,
+  markProfileOnboardingDone,
+  readCustomerDisplayName,
+  saveCustomerDisplayName,
+  saveCustomerPickupPhoto,
+  readCustomerPickupPhoto,
+} from '../../../lib/link-guest-to-profile';
+import { useCustomerLocation } from '../../../hooks/useCustomerLocation';
 
-type Step = {
-  imageUri: string;
-  title: string;
-  subtitle: string;
-  bullets?: string[];
+type Step = 'name' | 'photo' | 'address';
+
+const STEP_ORDER: Step[] = ['name', 'photo', 'address'];
+
+const STEP_META: Record<
+  Step,
+  { title: string; subtitle: string; chapter: string; next: string; imageUri: string }
+> = {
+  name: {
+    chapter: 'Profile',
+    title: 'What should we call you?',
+    subtitle: "We'll use this on your orders. Guest details on this phone are already linked.",
+    next: 'Continue',
+    imageUri: PROMO_BANNER_IMAGES.family,
+  },
+  photo: {
+    chapter: 'Pickup',
+    title: 'Add a pickup photo',
+    subtitle: 'Optional — a photo helps cooks recognise you at collection.',
+    next: 'Continue',
+    imageUri: BENTO_ACTION_IMAGES.listings,
+  },
+  address: {
+    chapter: 'Near you',
+    title: 'Set your area',
+    subtitle: 'So we can show kitchens nearby. You can change this anytime.',
+    next: 'Choose area',
+    imageUri: PROMO_BANNER_IMAGES.paynow,
+  },
 };
 
-/** Warm home-kitchen carousel (SG heritage, not a separate product). */
-const STEPS: Step[] = [
-  {
-    imageUri: PROMO_BANNER_IMAGES.family,
-    title: 'Welcome home',
-    subtitle:
-      'Singapore Home Cooks brings auntie-and-uncle kitchens to your collection point — heritage recipes, HDB warmth, no stranger delivery.',
-    bullets: ['Real home cooks, real stories', 'Occasion spreads & everyday meals', 'Collection from HDB kitchens'],
-  },
-  {
-    imageUri: PROMO_BANNER_IMAGES.hariRaya,
-    title: 'Tiffin & occasions',
-    subtitle:
-      'Subscribe to weekly tiffin from one kitchen, or order one-off dishes for Hari Raya, CNY, birthdays and more.',
-    bullets: ['2 · 3 · 4 meals a week', 'One kitchen you trust', 'Plan ahead for big occasions'],
-  },
-  {
-    imageUri: BENTO_ACTION_IMAGES.compliance,
-    title: 'Cooked with care',
-    subtitle: 'See the kitchen story, allergens, and clear receipts before you pay — trust you can feel.',
-    bullets: ['Kitchen transparency', 'Tier 1 allergen acks', 'Safe HDB collection slots'],
-  },
-  {
-    imageUri: PROMO_BANNER_IMAGES.newCook,
-    title: 'Browse freely',
-    subtitle:
-      'Explore kitchens and dishes as a guest. Sign in when you’re ready to subscribe or checkout — no pressure.',
-    bullets: ['Continue as guest anytime', 'Sign in to subscribe & order', 'Your pace, your table'],
-  },
-];
-
-export default function CustomerOnboardingScreen() {
+export default function CustomerProfileOnboardingScreen() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
+  const { saved, ready: locationReady } = useCustomerLocation();
 
-  const exploreGuest = () => {
-    void markOnboardingSeen();
+  const [step, setStep] = useState<Step>('name');
+  const [name, setName] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [booting, setBooting] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const existing = await readCustomerDisplayName();
+      const photo = await readCustomerPickupPhoto();
+      if (cancelled) return;
+      if (existing) setName(existing);
+      if (photo) setPhotoUri(photo);
+      setBooting(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stepIndex = STEP_ORDER.indexOf(step);
+  const meta = STEP_META[step];
+  /** Address step only when no saved areas — dots still count name + photo as 1–2 of 2 or 3. */
+  const totalSteps = useMemo(() => {
+    if (!locationReady) return 2;
+    if (saved.length > 0 && step !== 'address') return 2;
+    return 3;
+  }, [locationReady, saved.length, step]);
+
+  const finish = async () => {
+    await markOnboardingSeen();
+    await markProfileOnboardingDone();
     router.replace('/(customer)' as any);
   };
-  const goAuth = () => {
-    void markOnboardingSeen();
-    router.push('/(shared)/auth' as any);
-  };
 
-  const goNext = () => {
-    if (isLast) {
-      void goAuth();
+  const onNameContinue = async () => {
+    const trimmed = name.trim();
+    if (trimmed.length < 2) {
+      Alert.alert('Your name', 'Enter the name we should use for your orders.');
       return;
     }
-    setStep((s) => s + 1);
+    setBusy(true);
+    try {
+      await saveCustomerDisplayName(trimmed);
+      setStep('photo');
+    } finally {
+      setBusy(false);
+    }
   };
 
+  const pickPhoto = async () => {
+    try {
+      const ImagePicker = await import('expo-image-picker');
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Photo access', 'Allow photo library access to add a pickup photo.');
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.7,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      if (res.canceled || !res.assets?.[0]?.uri) return;
+      const uri = res.assets[0].uri;
+      setPhotoUri(uri);
+      await saveCustomerPickupPhoto(uri);
+    } catch {
+      Alert.alert('Photo unavailable', 'You can add a photo later from Profile.');
+    }
+  };
+
+  const afterPhoto = async () => {
+    if (!locationReady) {
+      await finish();
+      return;
+    }
+    if (saved.length === 0) {
+      setStep('address');
+      return;
+    }
+    await finish();
+  };
+
+  const onNext = async () => {
+    if (step === 'name') {
+      await onNameContinue();
+      return;
+    }
+    if (step === 'photo') {
+      await afterPhoto();
+      return;
+    }
+    router.push('/(customer)/location' as any);
+  };
+
+  const onBack = () => {
+    if (step === 'photo') setStep('name');
+    else if (step === 'address') setStep('photo');
+  };
+
+  if (booting) {
+    return (
+      <View style={[styles.boot, styles.center]} testID="trust-safety-screen">
+        <ActivityIndicator color={gourmeatColors.primary} />
+      </View>
+    );
+  }
+
   return (
-    <SHCOnboardingFlowScreen
-      imageUri={current.imageUri}
-      title={current.title}
-      subtitle={current.subtitle}
-      stepIndex={step}
-      totalSteps={STEPS.length}
-      onNext={goNext}
-      onSkip={!isLast ? exploreGuest : undefined}
-      skipLabel="Explore as guest"
-      onGuest={isLast ? exploreGuest : undefined}
-      guestLabel="Continue as guest"
-      nextLabel={isLast ? 'Sign in / Create account' : 'Continue'}
-      nextTestID={isLast ? 'onboarding-signin-cta' : 'trust-onboarding-next-btn'}
-      guestTestID="onboarding-guest-btn"
-      skipTestID="onboarding-skip-btn"
-      secondaryLabel={isLast ? 'Browse dishes first' : undefined}
-      onSecondary={isLast ? exploreGuest : undefined}
-      secondaryTestID="trust-browse-cta"
-      screenTestID="trust-safety-screen"
-    >
-      {current.bullets ? (
-        <View style={styles.bullets} testID="onboarding-value-bullets">
-          {current.bullets.map((b) => (
-            <View key={b} style={styles.bulletRow}>
-              <View style={styles.bulletDotWrap}>
-                <Text style={styles.bulletDot}>✓</Text>
-              </View>
-              <Text style={styles.bulletText}>{b}</Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-    </SHCOnboardingFlowScreen>
+    <>
+      <StatusBar style="dark" />
+      <SHCOnboardingFlowScreen
+        screenTestID="trust-safety-screen"
+        imageUri={meta.imageUri}
+        showHero={false}
+        title={meta.title}
+        subtitle={meta.subtitle}
+        stepIndex={Math.min(stepIndex, totalSteps - 1)}
+        totalSteps={totalSteps}
+        chapterLabel={meta.chapter}
+        nextLabel={
+          step === 'photo' && !photoUri ? 'Skip for now' : step === 'address' ? 'Choose area' : meta.next
+        }
+        nextTestID={
+          step === 'name'
+            ? 'onboarding-signin-cta'
+            : step === 'photo'
+              ? 'trust-onboarding-next-btn'
+              : 'customer-onboarding-address'
+        }
+        onNext={() => void onNext()}
+        onBack={step === 'name' ? undefined : onBack}
+        onSkip={step === 'address' ? () => void finish() : undefined}
+        skipLabel="Skip for now"
+        skipTestID="onboarding-guest-btn"
+        disabled={busy}
+        loading={busy}
+      >
+        {step === 'name' ? (
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            placeholderTextColor={shcColors.textLight}
+            style={styles.input}
+            testID="customer-onboarding-name"
+            autoFocus
+            returnKeyType="done"
+            onSubmitEditing={() => void onNameContinue()}
+          />
+        ) : null}
+
+        {step === 'photo' ? (
+          <Pressable onPress={() => void pickPhoto()} style={styles.photoBox} testID="customer-onboarding-photo">
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.photo} />
+            ) : (
+              <Text style={styles.photoPlaceholder}>Tap to add photo</Text>
+            )}
+          </Pressable>
+        ) : null}
+
+        {step === 'address' ? (
+          <View style={styles.addressHintCard}>
+            <Text style={styles.addressHintText}>
+              Your area only sorts nearby kitchens. Exact kitchen pickup is set by the cook.
+            </Text>
+          </View>
+        ) : null}
+      </SHCOnboardingFlowScreen>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  bullets: { gap: shcSpacing.sm, marginTop: shcSpacing.xs },
-  bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  bulletDotWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  boot: { flex: 1, backgroundColor: '#FFFBF7' },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  input: {
+    borderWidth: 1.5,
+    borderColor: 'rgba(36,24,18,0.12)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 17,
+    fontWeight: '600',
+    color: shcColors.text,
+    backgroundColor: '#FFF',
+    marginTop: shcSpacing.md,
+  },
+  photoBox: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    alignSelf: 'center',
     backgroundColor: '#FFE8DE',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    marginTop: shcSpacing.lg,
+    borderWidth: 3,
+    borderColor: '#FFF',
   },
-  bulletDot: { fontSize: 12, fontWeight: '800', color: shcColors.primary },
-  bulletText: { flex: 1, fontSize: 15, fontWeight: '600', color: shcColors.text, lineHeight: 22 },
+  photo: { width: '100%', height: '100%' },
+  photoPlaceholder: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: gourmeatColors.primary,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+  },
+  addressHintCard: {
+    marginTop: shcSpacing.lg,
+    padding: shcSpacing.md,
+    borderRadius: shcRadii.lg,
+    backgroundColor: '#FFE8DE',
+  },
+  addressHintText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: shcColors.text,
+    lineHeight: 20,
+  },
 });

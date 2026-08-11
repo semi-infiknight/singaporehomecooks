@@ -20,6 +20,12 @@ export type ListingAvailabilityDraft = {
   portions_per_day: number;
   collection_days: number[];
   time_slots: string[];
+  /** Order at least this many calendar days before collection. */
+  min_order_lead_days?: number;
+  /** Order at least this many hours before collection slot start. */
+  min_order_lead_hours?: number;
+  /** HH:MM cutoff on the lead day (e.g. 14:00 = by 2pm). */
+  order_cutoff_time?: string;
 };
 
 /** Tier-1 allergens cooks must disclose (Singapore home-kitchen presets). */
@@ -117,7 +123,12 @@ export const DEFAULT_LISTING_AVAILABILITY: ListingAvailabilityDraft = {
   portions_per_day: 18,
   collection_days: [0, 1, 2, 3, 4, 5, 6],
   time_slots: ['17:00-19:00', '18:00-20:00'],
+  min_order_lead_days: 0,
+  min_order_lead_hours: 0,
+  order_cutoff_time: undefined,
 };
+
+export const ORDER_CUTOFF_TIME_PRESETS = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '23:59'] as const;
 
 export function emptyAllergenTiers(): AllergenTiers {
   return { tier1: [], tier2: [], tier3: [] };
@@ -141,6 +152,16 @@ export function toggleTimeSlot(slots: string[], slot: string): string[] {
 export function availabilityFromListing(
   avail?: Partial<ListingAvailabilityDraft> | null
 ): ListingAvailabilityDraft {
+  const leadDays =
+    avail?.min_order_lead_days != null && Number.isFinite(Number(avail.min_order_lead_days))
+      ? Math.max(0, Math.min(30, Math.floor(Number(avail.min_order_lead_days))))
+      : DEFAULT_LISTING_AVAILABILITY.min_order_lead_days;
+  const leadHours =
+    avail?.min_order_lead_hours != null && Number.isFinite(Number(avail.min_order_lead_hours))
+      ? Math.max(0, Math.min(336, Math.floor(Number(avail.min_order_lead_hours))))
+      : DEFAULT_LISTING_AVAILABILITY.min_order_lead_hours;
+  const cutoffRaw = String(avail?.order_cutoff_time || '').trim();
+  const cutoff = /^([01]\d|2[0-3]):([0-5]\d)$/.test(cutoffRaw) ? cutoffRaw : undefined;
   return {
     portions_per_day: avail?.portions_per_day ?? DEFAULT_LISTING_AVAILABILITY.portions_per_day,
     collection_days:
@@ -149,6 +170,9 @@ export function availabilityFromListing(
         : [...DEFAULT_LISTING_AVAILABILITY.collection_days],
     time_slots:
       avail?.time_slots?.length ? [...avail.time_slots] : [...DEFAULT_LISTING_AVAILABILITY.time_slots],
+    min_order_lead_days: leadDays,
+    min_order_lead_hours: leadHours,
+    order_cutoff_time: cutoff,
   };
 }
 
@@ -179,6 +203,9 @@ export type CookListingFormDraft = {
   calories_confidence?: string;
   collection_days: number[];
   time_slots: string[];
+  min_order_lead_days?: number;
+  min_order_lead_hours?: number;
+  order_cutoff_time?: string;
   meal_extras?: MealOptionDraft[];
   meal_addons?: MealOptionDraft[];
   recipe_steps?: RecipeStepDraft[];
@@ -205,6 +232,9 @@ export function cookListingToFormDraft(listing: Record<string, unknown>): CookLi
     portions_per_day: avail.portions_per_day,
     collection_days: avail.collection_days,
     time_slots: avail.time_slots,
+    min_order_lead_days: avail.min_order_lead_days,
+    min_order_lead_hours: avail.min_order_lead_hours,
+    order_cutoff_time: avail.order_cutoff_time,
     occasion_tags: Array.isArray(listing.occasion_tags) ? (listing.occasion_tags as string[]) : [],
     ingredients: normalizeIngredients(
       ingredientsRaw?.length ? ingredientsRaw : [{ name: 'Chicken' }]
@@ -234,6 +264,9 @@ export function buildCookListingPayload(draft: CookListingFormDraft): Record<str
     collection_days: draft.collection_days,
     time_slots: draft.time_slots,
   };
+  if (draft.min_order_lead_days != null) payload.min_order_lead_days = draft.min_order_lead_days;
+  if (draft.min_order_lead_hours != null) payload.min_order_lead_hours = draft.min_order_lead_hours;
+  if (draft.order_cutoff_time) payload.order_cutoff_time = draft.order_cutoff_time;
   if (draft.description?.trim()) payload.description = draft.description.trim();
   if (draft.image_url) payload.image_url = draft.image_url;
   if (draft.calories != null) {

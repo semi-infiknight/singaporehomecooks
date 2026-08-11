@@ -1,5 +1,15 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { POST } from "./route";
+import { storeRegisterOtpForMobile } from "../../../../../../lib/shc-cook-whatsapp-otp";
+
+vi.mock("../../../../../../lib/shc-cook-whatsapp-otp", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../../../../lib/shc-cook-whatsapp-otp")>();
+  return {
+    ...actual,
+    verifyCookWhatsappOtp: vi.fn(async () => true),
+    clearCookWhatsappOtp: vi.fn(async () => undefined),
+  };
+});
 
 function makeRes() {
   const res: any = {
@@ -16,6 +26,16 @@ function makeRes() {
   };
   return res;
 }
+
+const baseBody = {
+  email: "newcook@shc.local",
+  password: "secret12",
+  mobile: "91234567",
+  whatsapp_otp: "123456",
+  display_name: "Auntie New",
+  area: "Bedok",
+  story: "HDB kitchen heritage",
+};
 
 describe("POST /store/shc/auth/cook/register", () => {
   let created: any;
@@ -36,6 +56,7 @@ describe("POST /store/shc/auth/cook/register", () => {
             return {
               findByLoginEmail: async (email: string) =>
                 existingEmail && email === existingEmail ? { id: "cook_existing" } : null,
+              findByContactMobile: async () => null,
               createCook: async (data: any) => {
                 created = data;
                 return data;
@@ -59,8 +80,8 @@ describe("POST /store/shc/auth/cook/register", () => {
     const res = makeRes();
     await POST(
       makeReq({
+        ...baseBody,
         email: "taken@shc.local",
-        password: "secret12",
         display_name: "Auntie Taken",
         area: "Tampines",
       }) as any,
@@ -71,16 +92,8 @@ describe("POST /store/shc/auth/cook/register", () => {
 
   it("creates cook with hashed password and returns JWT", async () => {
     const res = makeRes();
-    await POST(
-      makeReq({
-        email: "newcook@shc.local",
-        password: "secret12",
-        display_name: "Auntie New",
-        area: "Bedok",
-        story: "HDB kitchen heritage",
-      }) as any,
-      res
-    );
+    await storeRegisterOtpForMobile("+6591234567", "123456").catch(() => undefined);
+    await POST(makeReq(baseBody) as any, res);
     expect(res.statusCode).toBe(201);
     expect(res.body?.token).toBeTruthy();
     expect(res.body?.user?.role).toBe("cook");

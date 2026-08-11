@@ -111,6 +111,27 @@ export const getCorporateInvoicesDownloadUrl = (opts?: { from?: string; to?: str
 export const createOrderPayNow = (id: string) => client.createOrderPayNow(id);
 export const createTiffinRechargePayNow = (weeks: number) => client.createTiffinRechargePayNow(weeks);
 export const getMyOrders = () => client.getMyOrders('customer');
+
+/** Signed-in: server list. Guest: hydrate from device-local order ids recorded at checkout. */
+export async function getCustomerOrders(): Promise<unknown[]> {
+  if (isAuthenticated()) {
+    return getMyOrders();
+  }
+  const { listGuestOrderIds } = await import('./guest-session');
+  const ids = await listGuestOrderIds();
+  if (!ids.length) return [];
+  const rows = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        return await getOrder(id);
+      } catch {
+        return null;
+      }
+    })
+  );
+  return rows.filter(Boolean);
+}
+
 export const getMessages = (orderId: string) => client.getMessages(orderId);
 export const sendMessage = (orderId: string, body: string, from: 'customer' | 'cook') =>
   client.sendMessage(orderId, body, from);

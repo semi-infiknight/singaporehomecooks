@@ -62,7 +62,7 @@ function TextField({
   multiline?: boolean;
 }) {
   const className =
-    'w-full rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-3 text-sm font-semibold mb-2';
+    'w-full rounded-2xl border border-black/[0.12] bg-white px-4 py-3.5 text-sm font-semibold mb-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--shc-primary,#F87048)]/30';
   if (multiline) {
     return (
       <textarea
@@ -99,7 +99,7 @@ function ChipRow({
   testIDPrefix?: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 mb-3">
+    <div className="flex flex-col gap-2 mb-3">
       {options.map((opt) => {
         const sel = value === opt;
         return (
@@ -107,14 +107,21 @@ function ChipRow({
             key={opt}
             type="button"
             onClick={() => onChange(opt)}
-            className={`px-3 py-2 rounded-full text-sm font-bold border-2 transition-colors ${
+            className={`w-full min-h-[52px] px-4 py-3 rounded-2xl text-sm font-bold border text-left flex items-center justify-between transition-colors ${
               sel
-                ? 'bg-primary border-primary text-primary-foreground'
-                : 'bg-card border-[var(--shc-border-brutal)] text-foreground'
+                ? 'bg-[#FFF5F0] border-[var(--shc-primary,#F87048)] border-2 text-foreground'
+                : 'bg-white border-black/[0.12] text-foreground shadow-sm'
             }`}
             data-testid={testIDPrefix ? `${testIDPrefix}-${opt.replace(/\s+/g, '-').toLowerCase()}` : undefined}
           >
-            {opt}
+            <span>{opt}</span>
+            <span
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
+                sel ? 'bg-[var(--shc-primary,#F87048)] text-white' : 'bg-[#F0E4D8] text-transparent'
+              }`}
+            >
+              ✓
+            </span>
           </button>
         );
       })}
@@ -134,13 +141,20 @@ function ConsentRow({
   testID?: string;
 }) {
   return (
-    <button type="button" onClick={onToggle} className="flex items-start gap-3 text-left mb-3" data-testid={testID}>
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex items-start gap-3 text-left mb-3 w-full rounded-2xl border border-black/[0.12] bg-white p-4 shadow-sm"
+      data-testid={testID}
+    >
       <span
-        className={`shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center text-xs font-black ${
-          checked ? 'bg-primary border-primary text-primary-foreground' : 'border-[var(--shc-border-brutal)] bg-card'
+        className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${
+          checked
+            ? 'bg-[var(--shc-primary,#F87048)] text-white'
+            : 'bg-[#F0E4D8] text-transparent'
         }`}
       >
-        {checked ? '✓' : ''}
+        ✓
       </span>
       <span className="text-sm font-semibold text-foreground leading-snug">{label}</span>
     </button>
@@ -598,17 +612,21 @@ export default function CookOnboardingFlow() {
     }
   };
 
+  const isWelcome = stepMeta.id === 'welcome';
+
   return (
     <SHCOnboardingFlowScreenWeb
+      variant={isWelcome ? 'hero' : 'default'}
       imageUri={IMAGE_BY_KEY[stepMeta.imageKey] || BENTO_ACTION_IMAGES.listings}
       title={stepMeta.title}
       subtitle={stepMeta.subtitle}
       stepIndex={linear.current - 1}
       totalSteps={linear.total}
+      progressPercent={linear.percent}
+      chapterLabel={isWelcome ? undefined : `Step ${linear.current} of ${linear.total}`}
       onNext={handlePrimary}
       onSkip={stepMeta.skippable ? goNext : undefined}
-      onSecondary={canGoBack ? goBack : undefined}
-      secondaryLabel={canGoBack ? 'Back' : undefined}
+      onBack={canGoBack ? goBack : undefined}
       secondaryTestID="cook-onboarding-back-btn"
       nextLabel={isLast ? (busy ? 'Finishing…' : stepMeta.nextLabel || 'Finish') : stepMeta.nextLabel || 'Continue'}
       nextTestID={isLast ? 'cook-onboarding-finish-btn' : 'cook-onboarding-next-btn'}

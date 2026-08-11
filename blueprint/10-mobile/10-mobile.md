@@ -10,7 +10,7 @@
 - [production/testing-strategy.md](../production/testing-strategy.md)
 - `.agents/skills/tri-platform-ui-sync/SKILL.md`
 
-**Last Updated:** 2026-07-31 — Cook listings stack (`index` / `new` / `[id]`); tray safe-area + touch fix; dashboard chat CTA removed.
+**Last Updated:** 2026-08-10 — Guest-first Orders (no sign-in gate); no notif inbox/bell; push prefs in profile/settings; discover multi-criteria maxCal; order-window on listings.
 **Owner:** Mobile Track
 
 ## Overview
@@ -32,12 +32,16 @@ Two separate Expo apps deliver the primary customer and cook interfaces. Built w
 
 | Tab | Route | Screen |
 |---|---|---|
-| Discover | `index` | `GourmeatHomeHeader` + location chip → `location`, promo rail, photo bento tiles (`SHCVisualBentoTile`), filter chips, “Order again” rail, dish list, `SHCRequestDishHomeCTA` footer |
-| Orders | `orders/index` | `SHCZomatoOrderRow` + track/chat |
-| Cart | `cart` | `SHCCartPageHero` + line items + sticky checkout CTA |
-| Profile | `profile/index` | Wallet bento hero, credits, `SHCHeritageStoryBanner`, My Requests → accept cook bids |
+| Discover | `index` | `GourmeatHomeHeader` (profile + location only — **no bell**), promo rail, filters, dishes/kitchens, request CTA |
+| Orders | `orders/index` | Day calendar + status cards; **guest-safe** via `getCustomerOrders()` (local order ids) |
+| Cart | `cart` | Guest session cart OK |
+| Profile | `profile/index` | Account menu + **push switch**; optional sign-in for wallet tools (not required for Orders) |
 
-**Hidden from tab bar** (`href: null`): `search` (with `SHCSearchResultsPanel` ADD), `location` (`LocationPickerExperience` + `SHCLocationDraggableMap`), `request` (custom dish wizard), `cook/[slug]`, `product/[id]` (sticky add-to-cart), `checkout` (`SHCCheckoutStepper`), `orders/[id]` (review form post-collection).
+**Guest rules:** `CustomerTabBar` must **not** intercept Orders with guest-auth tray. Profile may still open sign-in tray. After checkout as guest, `recordGuestOrder` → Orders list hydrates via `GET /store/shc/orders/:id`.
+
+**Hidden from tab bar** (`href: null`): `search`, `location`, `request`, `cook/[slug]`, `product/[id]`, `checkout`, `orders/[id]`, `orders/manage`. **No** `notifications` route.
+
+**Cook app:** no dashboard bell; push toggle on `/(cook)/settings` only.
 
 ```
 apps/mobile-customer/app/

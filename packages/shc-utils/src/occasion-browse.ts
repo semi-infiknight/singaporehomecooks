@@ -1,5 +1,7 @@
 /**
- * Occasion browse — dedicated /occasions screen (not inline on discover home).
+ * Occasion labels for request wizard + admin config.
+ * Customer **browse** pages `/occasions` and `/(customer)/occasions` were removed
+ * (cooks do not tag dishes by occasion). Prefer `/request` for festive demand.
  */
 
 import { getOccasionImageUrl } from './food-visuals';
@@ -50,13 +52,8 @@ export function occasionBrowseHeading(occasion: string): { title: string; hint: 
 }
 
 /** Web + mobile deep link with optional pre-selected occasion. */
+/** @deprecated Browse pages removed — returns custom request routes. */
 export function occasionBrowseRoute(occasion?: string): { web: string; mobile: string } {
-  if (!occasion?.trim()) {
-    return { web: '/occasions', mobile: '/(customer)/occasions' };
-  }
-  const q = encodeURIComponent(occasion.trim());
-  return {
-    web: `/occasions?occasion=${q}`,
-    mobile: `/(customer)/occasions?occasion=${q}`,
-  };
+  void occasion;
+  return { web: '/request', mobile: '/(customer)/request' };
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +15,6 @@ import {
   GourmeatCookHeader,
   SHCFadeIn,
   SHCBentoIconBadge,
-  SHCIcon,
   gourmeatColors,
   shcColors,
   shcSpacing,
@@ -34,10 +33,9 @@ import {
   getDishImageUrl,
   isCookComplianceVerified,
   formatCookEarningsDisplayCompact,
-  orderIdFromNotificationType,
   resolveCookEarningsSummary,
 } from '@shc/utils';
-import { useMyOrders, useRequests, useCookNotifications } from '../../../hooks/useOrder';
+import { useMyOrders, useRequests } from '../../../hooks/useOrder';
 import { useCookEarnings } from '../../../hooks/useCookEarnings';
 import { useAuth } from '../../../hooks/useAuth';
 import { useCookConfig } from '../../../hooks/useCookConfig';
@@ -48,8 +46,6 @@ export default function CookDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [showNotifs, setShowNotifs] = useState(false);
-  const { data: notifs = [], markRead } = useCookNotifications();
 
   const handleLogout = async () => {
     await logout();
@@ -91,53 +87,8 @@ export default function CookDashboard() {
         title={greeting}
         subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
-        action={
-          <Pressable
-            onPress={() => {
-              const next = !showNotifs;
-              setShowNotifs(next);
-              if (next && notifs.some((n: any) => !n.read)) {
-                markRead({ all: true });
-              }
-            }}
-            testID="cook-notif-bell"
-            accessibilityLabel="Notifications"
-            style={styles.bellBtn}
-          >
-            <SHCIcon name="notifications" size={22} color={shcColors.text} active={showNotifs} />
-            {notifs.filter((n: any) => !n.read).length > 0 && (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellCount}>{notifs.filter((n: any) => !n.read).length}</Text>
-              </View>
-            )}
-          </Pressable>
-        }
       />
 
-      {showNotifs ? (
-        <SHCCard style={styles.notifsCard} testID="cook-notifs-panel">
-          <Text style={styles.notifsTitle}>Order alerts</Text>
-          {notifs.length === 0 ? (
-            <Text style={styles.notifsEmpty}>No new alerts — paid orders will ping you here.</Text>
-          ) : (
-            notifs.map((n: any, i: number) => {
-              const orderId = orderIdFromNotificationType(n.type);
-              const row = (
-                <Text style={[styles.notifItem, !n.read && styles.notifUnread]}>
-                  {!n.read ? '● ' : ''}{n.body}
-                </Text>
-              );
-              return orderId ? (
-                <Pressable key={n.id || i} onPress={() => router.push(`/(cook)/orders/${orderId}` as any)}>
-                  {row}
-                </Pressable>
-              ) : (
-                <View key={n.id || i}>{row}</View>
-              );
-            })
-          )}
-        </SHCCard>
-      ) : null}
 
       <Pressable
         onPress={() => router.push('/(cook)/settings' as any)}
@@ -431,31 +382,4 @@ const styles = StyleSheet.create({
     ...shcShadows.brutalSm,
   },
   logoutText: { color: shcColors.error, textAlign: 'center', fontWeight: '800', fontSize: 15 },
-  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: shcSpacing.sm, marginBottom: shcSpacing.sm },
-  headerMain: { flex: 1 },
-  bellBtn: {
-    padding: shcSpacing.sm,
-    borderWidth: shcBorders.brutal,
-    borderColor: shcColors.border,
-    borderRadius: shcRadii.md,
-    backgroundColor: shcColors.surface,
-    marginTop: shcSpacing.md,
-  },
-  bellBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: shcColors.error,
-    borderRadius: shcRadii.pill,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellCount: { color: shcColors.onPrimary, fontSize: 10, fontWeight: '800' },
-  notifsCard: { marginBottom: shcSpacing.md },
-  notifsTitle: { fontWeight: '800', marginBottom: 6 },
-  notifsEmpty: { color: shcColors.textLight, fontSize: 12 },
-  notifItem: { fontSize: 12, marginTop: 4, color: shcColors.text },
-  notifUnread: { fontWeight: '700', color: shcColors.primary },
 });

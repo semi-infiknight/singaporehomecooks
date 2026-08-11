@@ -295,7 +295,18 @@ export function createShcApiClient(config: ShcApiClientConfig) {
 
     async getSlots(productId: string) {
       const r = await request(`/store/shc/products/${encodeURIComponent(productId)}/slots`, { method: "GET" });
-      return (r as any).slots || [];
+      const body = r as {
+        slots?: Array<{ date: string; slot: string }>;
+        order_window_copy?: string | null;
+        availability?: unknown;
+        paused?: boolean;
+      };
+      return {
+        slots: body.slots || [],
+        order_window_copy: body.order_window_copy ?? null,
+        availability: body.availability ?? null,
+        paused: Boolean(body.paused),
+      };
     },
 
     async addToCart(productId: string, qty: number) {

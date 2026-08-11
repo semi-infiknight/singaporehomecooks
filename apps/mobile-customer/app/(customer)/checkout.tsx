@@ -141,7 +141,9 @@ export default function Checkout() {
     checkoutProduct?.allergen_tiers?.tier1?.length
       ? checkoutProduct.allergen_tiers.tier1
       : ['Shellfish / Nuts (typical)'];
-  const { data: slots = [] } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
+  const { data: slotsPayload } = useCollectionSlots(firstProdId || 'dish_nasi_lemak_prawn_001');
+  const slots = slotsPayload?.slots ?? [];
+  const orderWindowCopy = slotsPayload?.order_window_copy ?? null;
   const total = (cart.items || []).reduce((s: number, i: any) => s + i.price * i.qty, 0);
   const amountDue = total;
   const itemCount = (cart.items || []).reduce((s: number, i: any) => s + i.qty, 0);
@@ -447,7 +449,14 @@ export default function Checkout() {
                 </Text>
               </View>
             ) : (
-              <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
+              <>
+                {orderWindowCopy ? (
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: gourmeatColors.primary, marginBottom: 8 }} testID="checkout-order-window-copy">
+                    {orderWindowCopy}
+                  </Text>
+                ) : null}
+                <CollectionSlotPicker availableSlots={slots} onSelect={handleSlot} selected={selectedSlot || undefined} />
+              </>
             )}
           </SHCCard>
 

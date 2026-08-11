@@ -39,6 +39,7 @@ function buildInMemoryWiringScope() {
 
   const cookService = {
     findByLoginEmail: async () => null,
+    findByContactMobile: async () => null,
     createCook: async (data: any) => {
       cooks.push(data);
       return data;
@@ -203,7 +204,16 @@ describe("cook ↔ customer wiring (handler chain)", () => {
     const listRes = makeRes();
     await createListing(
       {
-        body: { name: "Wiring Dish", price: 12, min_qty: 3, cuisine: "Local" },
+        body: {
+          name: "Wiring Dish",
+          price: 12,
+          min_qty: 3,
+          cuisine: "Local",
+          ingredients: [{ name: "Spice", quantity: 1 }],
+          collection_days: [6, 0],
+          time_slots: ["18:00-19:00"],
+          allergen_none_confirmed: true,
+        },
         headers: { authorization: `Bearer ${cookToken}` },
         scope,
       } as any,

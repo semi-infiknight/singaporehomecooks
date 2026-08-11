@@ -28,7 +28,6 @@ import {
   filterCustomerCookingSoonDrops,
   getDropImageUrl,
   getCookKitchenHeroUrl,
-  discoverHomeHeadline,
   topRatedCategoryDishes,
   coerceRating,
   discoverSections,
@@ -39,7 +38,7 @@ import {
   customerDiscoverEmptyCopy,
   customerForYouRail,
   customerIsPopularDish,
-  occasionBrowseRoute,
+  buildSearchResultGroups,
   type DiscoverModeId,
   type MealTypeId,
 } from '@shc/utils';
@@ -54,7 +53,6 @@ import {
   SHCSkeletonCookingSoonRail,
   SHCSkeletonKitchenList,
   SHCEmptyState,
-  GuestBrowseBar,
   ZomatoDishRowRail,
   GourmeatHomeHeader,
   GourmeatSearchBar,
@@ -62,8 +60,8 @@ import {
   GourmeatModeSwitch,
   GourmeatSectionTitle,
   DiscoverFilterSheet,
-  SearchResultsPanel,
   RequestDishHomeCTA,
+  SearchNoResultsRequestCard,
   HomePromoCarousel,
   LocationNudgeBanner,
   TiffinKitchenCard,
@@ -101,8 +99,22 @@ export default function DiscoverHome() {
   );
   const { data: cooks, isLoading: cooksLoading, refetch: refetchCooks } = useQuery({ queryKey: ['cooks'], queryFn: getCooks, staleTime: 60_000 });
   const { favorites, toggle, isFavorite } = useFavorites();
-  const { active: collectionLocation, locationLabel, ready: locationReady } = useCustomerLocation();
-  const { halalOnly, maxCal, vegetarianOnly, toggleHalalOnly, toggleLight, toggleVegetarianOnly } = useDiscoverPrefs();
+  const { proximity, proximityLabel, ready: locationReady } = useCustomerLocation();
+  const {
+    halalOnly,
+    maxCal,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    toggleHalalOnly,
+    toggleLight,
+    setMaxCal,
+    toggleVegetarianOnly,
+    toggleVeganOnly,
+    toggleChickenOnly,
+    toggleExcludeNuts,
+  } = useDiscoverPrefs();
   const addMut = useAddToCart();
   const evidenceMode = process.env.NEXT_PUBLIC_FAMILY_VALUES_EVIDENCE === '1';
 
@@ -158,9 +170,12 @@ export default function DiscoverHome() {
       cuisine: cuisineFilter,
       halalOnly,
       vegetarianOnly,
+      veganOnly,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts,
       maxCal,
     }),
-    [mealType, cuisineFilter, halalOnly, vegetarianOnly, maxCal]
+    [mealType, cuisineFilter, halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal]
   );
   const activeFilterCount = discoverActiveFilterCount(filters);
 
@@ -171,25 +186,96 @@ export default function DiscoverHome() {
       mealType: mealType !== 'all' ? mealType : undefined,
       halalOnly: halalOnly || undefined,
       vegetarianOnly: vegetarianOnly || undefined,
+      veganOnly: veganOnly || undefined,
+      includeIngredient: chickenOnly ? 'chicken' : undefined,
+      excludeNuts: excludeNuts || undefined,
       maxCal,
     });
     return sortByCookProximity(
       list as Array<DishCardProduct & { cook_area?: string; area?: string }>,
-      collectionLocation
+      proximity
     ) as DishCardProduct[];
-  }, [productList, query, cuisineFilter, mealType, halalOnly, vegetarianOnly, maxCal, collectionLocation]);
+  }, [
+    productList,
+    query,
+    cuisineFilter,
+    mealType,
+    halalOnly,
+    vegetarianOnly,
+    veganOnly,
+    chickenOnly,
+    excludeNuts,
+    maxCal,
+    proximity,
+  ]);
 
   const isSearching = query.trim().length > 0;
-  const gridProducts = useMemo(() => (isSearching ? [] : filteredProducts), [filteredProducts, isSearching]);
-  const searchDishes = useMemo(
-    () => (isSearching ? filteredProducts.map((p) => toDishCard(p)) : []),
-    [filteredProducts, isSearching]
-  );
 
   const { categories: cuisineItems, promos: homePromos, config: browseConfig } = useCustomerConfig();
 
   const cookList = (cooks as Array<Record<string, unknown>>) ?? [];
   const cookAreaById = useMemo(() => buildCookAreaById(cookList, productList), [cookList, productList]);
+
+  const searchGroups = useMemo(() => {
+    if (!isSearching) return { kitchens: [], dishes: [] as ReturnType<typeof buildSearchResultGroups>['dishes'] };
+    const byName = new Map(
+      cookList.map((c) => [
+        String(c.display_name || c.name || '').toLowerCase(),
+        { slug: c.slug, id: c.id, area: c.area },
+      ])
+    );
+    const inputs = filteredProducts.map((raw) => {
+      const p = raw as DishCardProduct & {
+        cook_slug?: string;
+        area?: string;
+        cook_area?: string;
+      };
+      const cookName = String(p.cook_name || '');
+      const hit = byName.get(cookName.toLowerCase()) as { slug?: string; id?: string; area?: string } | undefined;
+      return {
+        id: String(p.id),
+        name: String(p.name),
+        cook_name: cookName,
+        cook_id: p.cook_id ? String(p.cook_id) : hit?.id ? String(hit.id) : undefined,
+        cook_slug: p.cook_slug
+          ? String(p.cook_slug)
+          : hit?.slug
+            ? String(hit.slug)
+            : hit?.id
+              ? String(hit.id)
+              : undefined,
+        price: Number(p.price),
+        cuisine: p.cuisine ? String(p.cuisine) : undefined,
+        area: p.area ? String(p.area) : hit?.area ? String(hit.area) : p.cook_area ? String(p.cook_area) : undefined,
+        image_url: getDishImageUrl({
+          id: String(p.id),
+          cuisine: p.cuisine ? String(p.cuisine) : undefined,
+          name: String(p.name),
+          image_url: p.image_url as string | undefined,
+        }),
+        rating: coerceRating(p.rating),
+      };
+    });
+    return buildSearchResultGroups(inputs, query);
+  }, [isSearching, filteredProducts, cookList, query]);
+
+  const searchDishes = useMemo(
+    () =>
+      searchGroups.dishes.map((d) => ({
+        ...toDishCard(d as DishCardProduct),
+        kitchenLabel: d.kitchenLabel,
+        kitchenCount: d.kitchenCount,
+      })),
+    [searchGroups.dishes]
+  );
+
+  const searchKitchens = searchGroups.kitchens;
+
+  const gridProducts = useMemo(() => {
+    if (!isSearching) return filteredProducts;
+    if (mode !== 'dishes') return [];
+    return searchDishes as typeof filteredProducts;
+  }, [isSearching, mode, filteredProducts, searchDishes]);
 
   const forYou = useMemo(() => {
     if (isSearching) return null;
@@ -199,29 +285,69 @@ export default function DiscoverHome() {
       ) as DishCardProduct[];
     const reorder = sortReorderDishesByProximity(
       extractReorderDishes(orders as Record<string, unknown>[], cookAreaById),
-      collectionLocation
+      proximity
     );
     const topRated = sortByCookProximity(
       topRatedCategoryDishes(productList as Record<string, unknown>[], 8) as Array<{ cook_area?: string }>,
-      collectionLocation
+      proximity
     );
     return customerForYouRail(browseConfig, {
       reorder: asCards(reorder),
       saved: asCards(favoritesToReorderDishes(favorites)),
       topRated: topRated.map((p) => toDishCard(p as DishCardProduct)) as DishCardProduct[],
     });
-  }, [isSearching, orders, favorites, productList, browseConfig, collectionLocation, cookAreaById]);
+  }, [isSearching, orders, favorites, productList, browseConfig, proximity, cookAreaById]);
 
-  const headerLocation = collectionLocation ? locationLabel : 'Set collection location';
+  const headerLocation = proximityLabel || 'Near you';
   const isGuest = !user;
-  const homeGreeting = discoverHomeHeadline(user?.name, user?.email, browseConfig.copy);
+
   const sortedCookList = useMemo(
-    () => sortByCookProximity(cookList, collectionLocation),
-    [cookList, collectionLocation]
+    () => sortByCookProximity(cookList, proximity),
+    [cookList, proximity]
   );
-  const gridHeading = discoverGridHeading(mode, filters, Boolean(collectionLocation));
-  const kitchensHeading = discoverKitchensHeading(cookList.length, Boolean(collectionLocation));
-  const emptyCopy = customerDiscoverEmptyCopy(browseConfig, mode, discoverActiveFilters(filters).length > 0);
+  const kitchenCards = useMemo(() => {
+    if (!isSearching) return sortedCookList;
+    return searchKitchens.map((k) => ({
+      id: k.routeKey,
+      slug: k.routeKey,
+      display_name: k.cook_name,
+      name: k.cook_name,
+      area: k.area,
+      rating: k.rating,
+      story:
+        k.matchingDishCount === 1
+          ? k.sampleDishNames[0]
+          : `${k.matchingDishCount} matching dishes · ${k.sampleDishNames.slice(0, 2).join(', ')}`,
+      cover: k.image_url,
+    }));
+  }, [isSearching, sortedCookList, searchKitchens]);
+  const gridHeading = isSearching
+    ? {
+        title: `Dishes for “${query.trim()}”`,
+        hint:
+          searchDishes.some((d) => (d.kitchenCount ?? 0) > 1)
+            ? 'Same dish at multiple kitchens is labelled for you'
+            : 'Tap a dish for details · kitchens that cook it are under Kitchens',
+      }
+    : discoverGridHeading(mode, filters, Boolean(proximity));
+  const kitchensHeading = isSearching
+    ? {
+        title:
+          searchKitchens.length === 1
+            ? `1 kitchen for “${query.trim()}”`
+            : `${searchKitchens.length} kitchens for “${query.trim()}”`,
+        hint: searchKitchens.length > 0 ? 'Tap a kitchen to open their page' : undefined,
+      }
+    : discoverKitchensHeading(cookList.length, Boolean(proximity));
+  const emptyCopy = isSearching
+    ? {
+        title: mode === 'kitchens' ? 'No kitchens match that search' : 'No dishes match that search',
+        description:
+          mode === 'kitchens'
+            ? 'Try another kitchen name, or switch to Dishes to search by food.'
+            : 'Try a dish name, cuisine, or switch to Kitchens.',
+      }
+    : customerDiscoverEmptyCopy(browseConfig, mode, discoverActiveFilters(filters).length > 0);
 
   const sections = useMemo(
     () =>
@@ -267,17 +393,17 @@ export default function DiscoverHome() {
     setCuisineFilter('');
     if (halalOnly) toggleHalalOnly();
     if (vegetarianOnly) toggleVegetarianOnly();
-    if (maxCal != null) toggleLight();
-  }, [halalOnly, vegetarianOnly, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleLight]);
+    if (veganOnly) toggleVeganOnly();
+    if (chickenOnly) toggleChickenOnly();
+    if (excludeNuts) toggleExcludeNuts();
+    if (maxCal != null) setMaxCal(undefined);
+  }, [halalOnly, vegetarianOnly, veganOnly, chickenOnly, excludeNuts, maxCal, toggleHalalOnly, toggleVegetarianOnly, toggleVeganOnly, toggleChickenOnly, toggleExcludeNuts, setMaxCal]);
 
   const handleHomePromoPress = useCallback(
     (id: string) => {
       const promo = homePromos.find((item) => item.id === id);
       if (!promo) return;
-      if (promo.occasionFilter) {
-        router.push(occasionBrowseRoute(promo.occasionFilter).web);
-        return;
-      }
+      // Occasions browse removed from discover — use promo route only.
       router.push(promo.webRoute);
     },
     [homePromos, router]
@@ -286,18 +412,10 @@ export default function DiscoverHome() {
   const renderSection = (id: string) => {
     switch (id) {
       case 'search-results':
-        return (
-          <SearchResultsPanel
-            query={query}
-            dishes={searchDishes}
-            onDishPress={goToProduct}
-            onAddPress={(pid) => handleAddToCart(pid, 1)}
-            onClose={() => setQuery('')}
-          />
-        );
+        return null;
 
       case 'guest':
-        return <GuestBrowseBar onSignInClick={() => router.push('/login')} />;
+        return null;
 
       case 'promos':
         return <HomePromoCarousel promos={homePromos} onPromoPress={handleHomePromoPress} />;
@@ -368,18 +486,13 @@ export default function DiscoverHome() {
       case 'browse-switch':
         return (
           <div className="shc-section-stack">
-            {locationReady && !collectionLocation ? (
+            {locationReady && !proximity ? (
               <LocationNudgeBanner onPress={() => router.push('/location')} />
             ) : null}
             <GourmeatModeSwitch
               modes={browseConfig.discover_modes}
               activeId={mode}
               onSelect={(id) => setMode(id as DiscoverModeId)}
-              navAction={{
-                label: browseConfig.occasions_nav.label,
-                href: occasionBrowseRoute().web,
-                testID: browseConfig.occasions_nav.testID,
-              }}
             />
           </div>
         );
@@ -398,39 +511,64 @@ export default function DiscoverHome() {
         return (
           <div data-testid="home-kitchens-section">
             <GourmeatSectionTitle
-              title={cooksLoading && cookList.length === 0 ? 'Home kitchens' : kitchensHeading.title}
-              actionLabel="Tiffin plans"
-              actionHref="/tiffin"
+              title={
+                !isSearching && cooksLoading && cookList.length === 0
+                  ? 'Home kitchens'
+                  : kitchensHeading.title
+              }
+              actionLabel={isSearching ? undefined : 'Tiffin plans'}
+              actionHref={isSearching ? undefined : '/tiffin'}
             />
-            {kitchensHeading.hint && !cooksLoading ? (
+            {kitchensHeading.hint && !(cooksLoading && !isSearching) ? (
               <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">
-                <Link href="/location" className="text-primary hover:underline">
-                  {kitchensHeading.hint}
-                </Link>
+                {isSearching ? (
+                  kitchensHeading.hint
+                ) : (
+                  <Link href="/location" className="text-primary hover:underline">
+                    {kitchensHeading.hint}
+                  </Link>
+                )}
               </p>
             ) : null}
-            {cooksLoading && sortedCookList.length === 0 ? (
+            {!isSearching && cooksLoading && kitchenCards.length === 0 ? (
               <SHCSkeletonKitchenList count={3} />
-            ) : sortedCookList.length === 0 ? (
-              <SHCEmptyState title={emptyCopy.title} description={emptyCopy.description} />
+            ) : kitchenCards.length === 0 ? (
+              isSearching ? (
+                <SearchNoResultsRequestCard query={query} requestHref="/request" />
+              ) : (
+                <SHCEmptyState title={emptyCopy.title} description={emptyCopy.description} />
+              )
             ) : (
               <ul>
-                {sortedCookList.map((c) => {
+                {kitchenCards.map((c) => {
                   const cid = String(c.id || c.slug || '');
                   const slug = String(c.slug || c.id || '');
-                  const distanceLabel = formatDistanceKm(distanceToCookItemKm(collectionLocation, c));
+                  const distanceLabel =
+                    !isSearching && proximity
+                      ? formatDistanceKm(distanceToCookItemKm(proximity, c))
+                      : null;
                   return (
                     <li key={cid || slug}>
                       <TiffinKitchenCard
                         cookId={cid || slug}
                         cookName={String(c.display_name || c.name || 'Home kitchen')}
                         area={c.area ? String(c.area) : undefined}
-                        distanceKm={distanceLabel ? distanceToCookItemKm(collectionLocation, c) : null}
+                        distanceKm={distanceLabel ? distanceToCookItemKm(proximity, c) : null}
                         tagline={c.story ? String(c.story).slice(0, 80) : undefined}
-                        coverUri={getCookKitchenHeroUrl(cid || slug)}
+                        coverUri={
+                          (c as { cover?: string }).cover || getCookKitchenHeroUrl(cid || slug)
+                        }
                         rating={c.rating != null ? Number(c.rating) : undefined}
-                        reviewCount={c.review_count != null ? Number(c.review_count) : undefined}
-                        subscriberCount={c.subscriber_count != null ? Number(c.subscriber_count) : undefined}
+                        reviewCount={
+                          (c as { review_count?: number }).review_count != null
+                            ? Number((c as { review_count?: number }).review_count)
+                            : undefined
+                        }
+                        subscriberCount={
+                          (c as { subscriber_count?: number }).subscriber_count != null
+                            ? Number((c as { subscriber_count?: number }).subscriber_count)
+                            : undefined
+                        }
                         onPress={() => {
                           if (slug) router.push(`/cook/${encodeURIComponent(slug)}`);
                         }}
@@ -451,21 +589,25 @@ export default function DiscoverHome() {
             <p className="text-xs font-semibold text-muted-foreground mb-3 -mt-1">{gridHeading.hint}</p>
             {isLoading && <SHCSkeletonGrid />}
             {!isLoading && gridProducts.length === 0 && (
-              <SHCEmptyState
-                title={emptyCopy.title}
-                description={emptyCopy.description}
-                action={
-                  activeFilterCount > 0 ? (
-                    <SHCButton variant="outline" onClick={clearFilters}>
-                      Clear filters
-                    </SHCButton>
-                  ) : (
-                    <SHCButton variant="outline" onClick={() => router.push('/request')}>
-                      Request a dish
-                    </SHCButton>
-                  )
-                }
-              />
+              isSearching ? (
+                <SearchNoResultsRequestCard query={query} requestHref="/request" />
+              ) : (
+                <SHCEmptyState
+                  title={emptyCopy.title}
+                  description={emptyCopy.description}
+                  action={
+                    activeFilterCount > 0 ? (
+                      <SHCButton variant="outline" onClick={clearFilters}>
+                        Clear filters
+                      </SHCButton>
+                    ) : (
+                      <SHCButton variant="outline" onClick={() => router.push('/request')}>
+                        Request a dish
+                      </SHCButton>
+                    )
+                  }
+                />
+              )
             )}
             {!isLoading && gridProducts.length > 0 && (
               <VirtualDishGrid
@@ -499,32 +641,35 @@ export default function DiscoverHome() {
         </p>
       ) : null}
 
-      {/* Mobile chrome — desktop uses AppHeader */}
+      {/* Mobile chrome — compact location + profile; desktop uses AppHeader */}
       <div className="md:hidden">
         <GourmeatHomeHeader
-          headline={homeGreeting.headline}
-          subtitle={homeGreeting.subtitle}
           locationLabel={headerLocation}
           locationHint="Collect from"
           avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+          showLoginTag={isGuest}
+          profileHref={isGuest ? '/login' : '/profile'}
           locationHref="/location"
         />
       </div>
-      <h1 className="hidden md:block text-3xl font-extrabold text-foreground tracking-[-0.5px] mb-1">
-        {homeGreeting.headline}
-      </h1>
-      {homeGreeting.subtitle ? (
-        <p className="hidden md:block text-sm font-semibold text-muted-foreground mb-4">{homeGreeting.subtitle}</p>
-      ) : (
-        <div className="hidden md:block mb-4" />
-      )}
+      {/* Desktop: location row only (no marketing headline — more catalogue space) */}
+      <div className="hidden md:block mb-3">
+        <GourmeatHomeHeader
+          locationLabel={headerLocation}
+          locationHint="Collect from"
+          avatarUri={user?.name ? getCookAvatarUrl(user.id, user.name) : undefined}
+          showLoginTag={isGuest}
+          profileHref={isGuest ? '/login' : '/profile'}
+          locationHref="/location"
+        />
+      </div>
 
       {/* Single control surface — search + every filter, pinned so it is reachable at any scroll depth */}
       <div className="sticky top-0 z-30 -mx-4 px-4 py-2 bg-background/95 backdrop-blur md:hidden">
         <GourmeatSearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Search kitchen, dish or cuisine"
+          placeholder="Search dish, kitchen, under 450 cal…"
           onFilterPress={() => setFiltersOpen(true)}
           filterCount={activeFilterCount}
         />
@@ -558,10 +703,18 @@ export default function DiscoverHome() {
         onCuisineChange={setCuisineFilter}
         halalOnly={halalOnly}
         vegetarianOnly={vegetarianOnly}
+        veganOnly={veganOnly}
+        chickenOnly={chickenOnly}
+        excludeNuts={excludeNuts}
         lightOnly={maxCal != null}
+        maxCal={maxCal}
         onToggleHalal={toggleHalalOnly}
         onToggleVegetarian={toggleVegetarianOnly}
+        onToggleVegan={toggleVeganOnly}
+        onToggleChicken={toggleChickenOnly}
+        onToggleExcludeNuts={toggleExcludeNuts}
         onToggleLight={toggleLight}
+        onMaxCalChange={setMaxCal}
         onClear={clearFilters}
         resultCount={filteredProducts.length}
         activeCount={activeFilterCount}

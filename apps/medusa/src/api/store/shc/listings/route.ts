@@ -72,6 +72,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       collection_days: parse.data.collection_days ?? [0, 1, 2, 3, 4, 5, 6],
       time_slots: parse.data.time_slots ?? ["17:00-19:00", "18:00-20:00"],
       paused: parse.data.paused ?? false,
+      min_order_lead_days: parse.data.min_order_lead_days ?? 0,
+      min_order_lead_hours: parse.data.min_order_lead_hours ?? 0,
+      order_cutoff_time: parse.data.order_cutoff_time,
     } as any);
     const product = await shapeProduct(meta, req.scope);
     return res.status(201).json({ product, listing: product });

@@ -8,8 +8,23 @@ import { SHCRequest, shcRequestSchema, createSHCError } from "@shc/types";
  * Uses frozen shcRequestSchema. Emits events for bids/accept. Production: rate limit + audit in routes.
  */
 class ShcRequestModuleService extends MedusaService({ Request }) {
-  async createRequest(data: Partial<SHCRequest>): Promise<SHCRequest> {
-    const validated = shcRequestSchema.partial().parse(data);
+  async createRequest(data: Partial<SHCRequest> & Record<string, unknown>): Promise<SHCRequest> {
+    // Explicit pick so older deployed schemas never see client-only keys like `items`/`corporate`.
+    const candidate = {
+      id: data.id,
+      customer_id: data.customer_id,
+      body: data.body,
+      youtube_url: data.youtube_url,
+      party_size: data.party_size,
+      guest_count: data.guest_count,
+      items_json: data.items_json,
+      budget_cents: data.budget_cents,
+      date: data.date,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+    const validated = shcRequestSchema.partial().parse(candidate);
     if (!validated.body || validated.body.length < 10) {
       throw createSHCError("SHC-REQ-001", "Request body must be descriptive (>=10 chars)");
     }

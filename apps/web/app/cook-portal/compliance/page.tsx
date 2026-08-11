@@ -29,6 +29,7 @@ export default function CookCompliancePage() {
   const [type, setType] = useState<'sfa' | 'wsq'>('sfa');
   const [fileName, setFileName] = useState('');
   const [result, setResult] = useState<string | null>(null);
+  const [howToGetCertOpen, setHowToGetCertOpen] = useState(false);
   const {
     show: showApprovedCelebration,
     triggerIfFirst: triggerComplianceApproved,
@@ -90,7 +91,10 @@ export default function CookCompliancePage() {
           imageUrl={BENTO_ACTION_IMAGES.compliance}
           label={hasComplianceDocOfType(docs as any[], 'sfa') ? 'SFA ✓' : 'SFA'}
           badge={type === 'sfa' ? '✓' : undefined}
-          onClick={() => setType('sfa')}
+          onClick={() => {
+            setType('sfa');
+            setHowToGetCertOpen(false);
+          }}
           variant={type === 'sfa' ? 'bento-mint' : 'default'}
           testID="compliance-type-sfa"
         />
@@ -98,34 +102,55 @@ export default function CookCompliancePage() {
           imageUrl={BENTO_ACTION_IMAGES.listings}
           label={hasComplianceDocOfType(docs as any[], 'wsq') ? 'WSQ ✓' : 'WSQ'}
           badge={type === 'wsq' ? '✓' : undefined}
-          onClick={() => setType('wsq')}
+          onClick={() => {
+            setType('wsq');
+            setHowToGetCertOpen(false);
+          }}
           variant={type === 'wsq' ? 'bento-yellow' : 'default'}
           testID="compliance-type-wsq"
         />
       </div>
 
-      {/* Course links when this cert type is missing */}
-      {!hasSelected && (
-        <div className="mb-4 space-y-2" data-testid={`compliance-courses-${type}`}>
-          <p className="text-sm font-extrabold">
-            {type === 'sfa' ? 'SFA registration & guides' : 'WSQ Food Safety Course links'}
-          </p>
-          <p className="text-xs font-semibold text-muted-foreground">
-            Official .gov.sg / SkillsFuture destinations — complete the course, then upload your cert below.
-          </p>
-          {courseLinks.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              data-testid={`compliance-course-link-${link.id}`}
-              className="block rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 shadow-[var(--shc-shadow-brutal-sm)] hover:opacity-95"
-            >
-              <p className="text-sm font-black text-primary">{link.title} →</p>
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">{link.description}</p>
-            </a>
-          ))}
+      {/* Official links collapsed under “How to get the certificate” when cert type is missing */}
+      {!hasSelected && courseLinks.length > 0 && (
+        <div
+          className="mb-4 rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card shadow-[var(--shc-shadow-brutal-sm)] overflow-hidden"
+          data-testid={`compliance-courses-${type}`}
+        >
+          <button
+            type="button"
+            onClick={() => setHowToGetCertOpen((v) => !v)}
+            data-testid="compliance-how-to-get-cert"
+            aria-expanded={howToGetCertOpen}
+            className="w-full flex items-center gap-3 p-4 text-left hover:bg-muted/40"
+          >
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-extrabold text-foreground">How to get the certificate</span>
+              <span className="mt-0.5 block text-xs font-semibold text-muted-foreground">
+                {type === 'sfa' ? 'SFA / GoBusiness official guides' : 'WSQ Food Safety Course links'}
+              </span>
+            </span>
+            <span className="text-primary font-black text-lg" aria-hidden>
+              {howToGetCertOpen ? '▾' : '▸'}
+            </span>
+          </button>
+          {howToGetCertOpen ? (
+            <div className="space-y-2 px-4 pb-4 border-t border-border" data-testid={`compliance-courses-list-${type}`}>
+              {courseLinks.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid={`compliance-course-link-${link.id}`}
+                  className="block rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card p-4 hover:opacity-95"
+                >
+                  <p className="text-sm font-black text-primary">{link.title} →</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">{link.description}</p>
+                </a>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
 

@@ -1,25 +1,20 @@
 'use client';
 
 import { useCallback } from 'react';
-import { usePathname } from 'next/navigation';
 import { isAuthenticated } from './api-client';
 import { useAuth } from './useAuth';
-import { useGuestAuthTray } from './useGuestAuthTray';
 
+/**
+ * Guest checkout is first-class: cart / checkout / orders work without account.
+ * Phone + contact captured at checkout and stored locally + on the order.
+ */
 export function useGuestAuthGate() {
   const { user, loading } = useAuth();
-  const { showGuestAuthTray } = useGuestAuthTray();
-  const pathname = usePathname();
 
-  const requireAuth = useCallback(
-    (message = 'Sign in to add to cart, checkout, and track orders.', returnTo?: string) => {
-      if (loading) return false;
-      if (user || isAuthenticated()) return true;
-      showGuestAuthTray('Sign in to order', message, returnTo || pathname || '/');
-      return false;
-    },
-    [loading, pathname, showGuestAuthTray, user]
-  );
+  const requireAuth = useCallback((_message?: string, _returnTo?: string) => true, []);
 
-  return { isGuest: !loading && !user && !isAuthenticated(), requireAuth };
+  return {
+    isGuest: !loading && !user && !isAuthenticated(),
+    requireAuth,
+  };
 }

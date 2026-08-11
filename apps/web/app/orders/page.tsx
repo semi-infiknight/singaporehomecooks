@@ -30,12 +30,10 @@ import { downloadBlobInBrowser } from '../../lib/download-pdf';
 import { useTiffinMealOrders, useTiffinSubscription, useSkipTiffinMeal } from '../../lib/useTiffin';
 import {
   GourmeatScreenHeader,
-  SHCEmptyState,
   SHCButton,
   SHCCard,
   IllustratedEmptyState,
   SHCSkeletonOrderList,
-  SHCSkeletonOrdersDayScreen,
   OrdersCalendarStrip,
   TiffinOrderStatusCard,
   type TiffinOrderCardStatus,
@@ -178,94 +176,81 @@ export default function OrdersList() {
         </SHCCard>
       ) : null}
 
-      {authLoading ? (
-        <SHCSkeletonOrdersDayScreen />
-      ) : !user ? (
-        <SHCCard>
-          <SHCEmptyState
-            title="Sign in to see orders"
-            description="Scheduled collections and tiffin meals appear here by day."
+      <OrdersCalendarStrip
+        days={calendarDays}
+        selectedDate={selected}
+        todayDate={today}
+        onSelect={selectDay}
+        testID="orders-calendar-strip"
+      />
+
+      <h2 className="text-sm font-extrabold text-foreground mb-3" data-testid="orders-selected-date">
+        {selected === today ? 'Today' : selected}
+      </h2>
+
+      {(authLoading || isLoading || mealsLoading) && dayCards.length === 0 && (
+        <SHCSkeletonOrderList count={3} variant="card" />
+      )}
+
+      {!authLoading && !isLoading && !mealsLoading && dayCards.length === 0 && (
+        <div data-testid="orders-day-empty">
+          <IllustratedEmptyState
+            kind="no_orders"
+            title={emptyOrdersDayCopy({ isToday: selected === today }).title}
+            description={
+              user
+                ? undefined
+                : 'Orders from this browser show here after checkout — no sign-in required.'
+            }
             action={
-              <Link href="/login?next=/orders" className="text-sm font-bold text-primary">
-                Sign in →
+              <Link href="/" className="text-sm font-bold text-primary">
+                Browse kitchens →
               </Link>
             }
           />
-        </SHCCard>
-      ) : (
-        <>
-          <OrdersCalendarStrip
-            days={calendarDays}
-            selectedDate={selected}
-            todayDate={today}
-            onSelect={selectDay}
-            testID="orders-calendar-strip"
-          />
-
-          <h2 className="text-sm font-extrabold text-foreground mb-3" data-testid="orders-selected-date">
-            {selected === today ? 'Today' : selected}
-          </h2>
-
-          {(isLoading || mealsLoading) && dayCards.length === 0 && (
-            <SHCSkeletonOrderList count={3} variant="card" />
-          )}
-
-          {!isLoading && !mealsLoading && dayCards.length === 0 && (
-            <div data-testid="orders-day-empty">
-              <IllustratedEmptyState
-                kind="no_orders"
-                title={emptyOrdersDayCopy({ isToday: selected === today }).title}
-                action={
-                  <Link href="/" className="text-sm font-bold text-primary">
-                    Browse kitchens →
-                  </Link>
-                }
-              />
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {dayCards.map((card) => {
-              const action = primaryActionLabel(card);
-              return (
-                <div key={card.id} className="space-y-2">
-                  <TiffinOrderStatusCard
-                    cookName={card.cookName}
-                    planTitle={card.planTitle}
-                    status={card.status as TiffinOrderCardStatus}
-                    timeslot={card.timeslot}
-                    menuLines={card.menuLines}
-                    customizable={card.customizable && card.status === 'scheduled'}
-                    menuPending={card.menuPending}
-                    onManage={() => onManage(card)}
-                    manageLabel={action}
-                    onSkip={
-                      card.kind === 'tiffin' && card.status === 'scheduled'
-                        ? () => skipMut.mutate({ collectionDate: card.collectionDate })
-                        : undefined
-                    }
-                    testID={`orders-day-card-${card.id}`}
-                  />
-                  {card.kind === 'one_off' && card.hrefOrderId ? (
-                    <Link
-                      href={`/chat/${card.hrefOrderId}`}
-                      className="block text-sm font-bold text-primary pl-1"
-                      data-testid={`orders-chat-link-${card.id}`}
-                    >
-                      Chat with cook
-                    </Link>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="text-[11px] font-semibold text-muted-foreground mt-6 leading-relaxed">
-            Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
-            Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
-          </p>
-        </>
+        </div>
       )}
+
+      <div className="space-y-3">
+        {dayCards.map((card) => {
+          const action = primaryActionLabel(card);
+          return (
+            <div key={card.id} className="space-y-2">
+              <TiffinOrderStatusCard
+                cookName={card.cookName}
+                planTitle={card.planTitle}
+                status={card.status as TiffinOrderCardStatus}
+                timeslot={card.timeslot}
+                menuLines={card.menuLines}
+                customizable={card.customizable && card.status === 'scheduled'}
+                menuPending={card.menuPending}
+                onManage={() => onManage(card)}
+                manageLabel={action}
+                onSkip={
+                  card.kind === 'tiffin' && card.status === 'scheduled'
+                    ? () => skipMut.mutate({ collectionDate: card.collectionDate })
+                    : undefined
+                }
+                testID={`orders-day-card-${card.id}`}
+              />
+              {card.kind === 'one_off' && card.hrefOrderId ? (
+                <Link
+                  href={`/chat/${card.hrefOrderId}`}
+                  className="block text-sm font-bold text-primary pl-1"
+                  data-testid={`orders-chat-link-${card.id}`}
+                >
+                  Chat with cook
+                </Link>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] font-semibold text-muted-foreground mt-6 leading-relaxed">
+        Each card is one meal collection. Tiffin plans create meals ahead of time. Statuses:
+        Upcoming · Scheduled · Collected · Skipped · Canceled by kitchen.
+      </p>
     </div>
   );
 }

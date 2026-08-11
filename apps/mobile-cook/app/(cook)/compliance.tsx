@@ -50,6 +50,8 @@ export default function ComplianceUpload() {
   const [docs, setDocs] = useState<any[]>([]);
   const [result, setResult] = useState<{ status: string; type: string; fileName: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  /** Official course links stay collapsed until cook needs them. */
+  const [howToGetCertOpen, setHowToGetCertOpen] = useState(false);
   const { show: showApprovedCelebration, triggerIfFirst, dismiss } = useMilestoneCelebration(
     'compliance_approved',
     user?.id || '',
@@ -145,7 +147,13 @@ export default function ComplianceUpload() {
       <SHCFadeIn delay={80}>
         <View style={styles.bentoRow}>
           <View style={styles.bentoCol}>
-            <Pressable onPress={() => setType('sfa')} testID="compliance-type-sfa">
+            <Pressable
+              onPress={() => {
+                setType('sfa');
+                setHowToGetCertOpen(false);
+              }}
+              testID="compliance-type-sfa"
+            >
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.compliance}
                 iconKey="document"
@@ -156,7 +164,13 @@ export default function ComplianceUpload() {
             </Pressable>
           </View>
           <View style={styles.bentoCol}>
-            <Pressable onPress={() => setType('wsq')} testID="compliance-type-wsq">
+            <Pressable
+              onPress={() => {
+                setType('wsq');
+                setHowToGetCertOpen(false);
+              }}
+              testID="compliance-type-wsq"
+            >
               <SHCVisualBentoTile
                 imageUri={BENTO_ACTION_IMAGES.listings}
                 iconKey="education"
@@ -169,23 +183,39 @@ export default function ComplianceUpload() {
         </View>
       </SHCFadeIn>
 
-      {!hasSelected && (
+      {!hasSelected && courseLinks.length > 0 && (
         <SHCFadeIn delay={100}>
-          <SHCSectionTitle>
-            {type === 'sfa' ? 'SFA registration & guides' : 'WSQ Food Safety Course'}
-          </SHCSectionTitle>
-          <View testID={`compliance-courses-${type}`}>
-            {courseLinks.map((link) => (
-              <Pressable
-                key={link.id}
-                testID={`compliance-course-link-${link.id}`}
-                onPress={() => void Linking.openURL(link.url)}
-                style={styles.courseCard}
-              >
-                <Text style={styles.courseTitle}>{link.title} →</Text>
-                <Text style={styles.courseBody}>{link.description}</Text>
-              </Pressable>
-            ))}
+          <View testID={`compliance-courses-${type}`} style={styles.howToWrap}>
+            <Pressable
+              onPress={() => setHowToGetCertOpen((v) => !v)}
+              style={styles.howToHeader}
+              testID="compliance-how-to-get-cert"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: howToGetCertOpen }}
+            >
+              <View style={styles.howToHeaderText}>
+                <Text style={styles.howToTitle}>How to get the certificate</Text>
+                <Text style={styles.howToSubtitle}>
+                  {type === 'sfa' ? 'SFA / GoBusiness official guides' : 'WSQ Food Safety Course links'}
+                </Text>
+              </View>
+              <Text style={styles.howToChevron}>{howToGetCertOpen ? '▾' : '▸'}</Text>
+            </Pressable>
+            {howToGetCertOpen ? (
+              <View style={styles.howToBody} testID={`compliance-courses-list-${type}`}>
+                {courseLinks.map((link) => (
+                  <Pressable
+                    key={link.id}
+                    testID={`compliance-course-link-${link.id}`}
+                    onPress={() => void Linking.openURL(link.url)}
+                    style={styles.courseCard}
+                  >
+                    <Text style={styles.courseTitle}>{link.title} →</Text>
+                    <Text style={styles.courseBody}>{link.description}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
           </View>
         </SHCFadeIn>
       )}
@@ -322,14 +352,38 @@ const styles = StyleSheet.create({
   heroBadges: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
   bentoRow: { flexDirection: 'row', gap: shcSpacing.sm, marginBottom: shcSpacing.md },
   bentoCol: { flex: 1 },
+  howToWrap: {
+    marginBottom: shcSpacing.md,
+    borderRadius: shcRadii.md,
+    borderWidth: shcBorders.brutal,
+    borderColor: shcColors.border,
+    backgroundColor: shcColors.surface,
+    overflow: 'hidden',
+    ...shcShadows.brutalSm,
+  },
+  howToHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: shcSpacing.md,
+    gap: shcSpacing.sm,
+  },
+  howToHeaderText: { flex: 1 },
+  howToTitle: { fontSize: 15, fontWeight: '900', color: shcColors.text },
+  howToSubtitle: { marginTop: 2, fontSize: 12, fontWeight: '600', color: shcColors.textLight },
+  howToChevron: { fontSize: 18, fontWeight: '800', color: gourmeatColors.primary },
+  howToBody: {
+    paddingHorizontal: shcSpacing.md,
+    paddingBottom: shcSpacing.md,
+    borderTopWidth: shcBorders.hairline || 1,
+    borderTopColor: shcColors.border,
+  },
   courseCard: {
-    marginBottom: shcSpacing.sm,
+    marginTop: shcSpacing.sm,
     padding: shcSpacing.md,
     borderRadius: shcRadii.md,
     borderWidth: shcBorders.brutal,
     borderColor: shcColors.border,
     backgroundColor: shcColors.surface,
-    ...shcShadows.brutalSm,
   },
   courseTitle: { fontSize: 14, fontWeight: '900', color: gourmeatColors.primary },
   courseBody: { marginTop: 4, fontSize: 12, fontWeight: '600', color: shcColors.textLight, lineHeight: 17 },
