@@ -14,7 +14,7 @@ import { SHCTrayProvider } from '@shc/ui';
 import { useSHCFonts } from '@shc/ui/fonts';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { CookSessionEnforcer } from '../components/CookSessionEnforcer';
+import { useCookSessionGate } from '../hooks/useCookSessionGate';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,30 +23,57 @@ const queryClient = new QueryClient({
   },
 });
 
+function SessionLoadingShell() {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: shcColors.background }}>
+      <ActivityIndicator color={shcColors.primary} />
+    </View>
+  );
+}
+
+/** Expo Router 6 protected stacks — mirrors web CookLoginGate using useCookSessionGate. */
+function CookRootStack() {
+  const gate = useCookSessionGate();
+
+  if (gate.status === 'loading') {
+    return <SessionLoadingShell />;
+  }
+
+  const isReady = gate.status === 'ready';
+  const isUnauthed = gate.status === 'unauthenticated';
+  const needsOnboarding = gate.status === 'needs_onboarding';
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={isReady}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(cook)" />
+        <Stack.Screen name="(shared)/chat/[orderId]/index" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={needsOnboarding}>
+        <Stack.Screen name="(shared)/onboarding/index" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isUnauthed}>
+        <Stack.Screen name="(shared)/auth/index" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
+
 function AppShell() {
   const fontsLoaded = useSHCFonts();
 
   if (!fontsLoaded) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: shcColors.background }}>
-        <ActivityIndicator color={shcColors.primary} />
-      </View>
-    );
+    return <SessionLoadingShell />;
   }
 
   return (
     <>
       <StatusBar style="dark" />
       <ErrorBoundary>
-        <CookSessionEnforcer>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(cook)" />
-            <Stack.Screen name="(shared)/auth/index" />
-            <Stack.Screen name="(shared)/onboarding/index" />
-            <Stack.Screen name="(shared)/chat/[orderId]/index" />
-          </Stack>
-        </CookSessionEnforcer>
+        <CookRootStack />
       </ErrorBoundary>
     </>
   );
