@@ -48,15 +48,6 @@ const TAB_ROUTES: Array<{
     testID: 'cart-tab',
     match: (p) => p === '/cart' || p === '/checkout',
   },
-  {
-    key: 'profile/index',
-    href: '/profile',
-    label: 'Profile',
-    iconKey: 'profile',
-    testID: 'profile-tab',
-    match: (p) => p.startsWith('/profile'),
-    needsAuth: true,
-  },
 ];
 
 function resolveActiveKey(pathname: string): string {

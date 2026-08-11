@@ -8,13 +8,11 @@ import { summarizeCart, getOrdersTabLiveCue } from '@shc/utils';
 import { useCart } from '../hooks/useProducts';
 import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrder';
-import { useGuestAuthTray } from '../hooks/useGuestAuthTray';
 
-const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart' | 'profile'; testID: string }> = {
+const TAB_META: Record<string, { label: string; iconKey: 'discover' | 'orders' | 'cart'; testID: string }> = {
   index: { label: 'Home', iconKey: 'discover', testID: 'discover-tab' },
   'orders/index': { label: 'Orders', iconKey: 'orders', testID: 'orders-tab' },
   cart: { label: 'Cart', iconKey: 'cart', testID: 'cart-tab' },
-  'profile/index': { label: 'Profile', iconKey: 'profile', testID: 'profile-tab' },
 };
 
 const VISIBLE_TABS = new Set(Object.keys(TAB_META));
@@ -34,6 +32,7 @@ const HIDE_CART_BAR = new Set([
   'tiffin/manage',
 ]);
 const HIDE_TAB_BAR = new Set([
+  'profile/index',
   'request',
   'location',
   'checkout',
@@ -56,9 +55,8 @@ const HIDE_TAB_BAR = new Set([
 
 export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   const { notifyTabChange } = useTabDirection();
-  const { showGuestAuthTray } = useGuestAuthTray();
   const { data: cart } = useCart();
   const { data: orders = [] } = useOrders('customer');
   const ordersLiveCue = getOrdersTabLiveCue(
@@ -151,15 +149,6 @@ export function CustomerTabBar({ state, navigation }: BottomTabBarProps) {
         tabs={tabs}
         activeKey={activeRoute?.name ?? 'index'}
         onTabPress={(key) => {
-          // Orders are guest-friendly (device-local order ids). Profile still optional sign-in.
-          if (key === 'profile/index' && !authLoading && !user) {
-            showGuestAuthTray(
-              'Sign in for wallet & account',
-              'Browse kitchens on Home — sign in for account tools. Orders work without signing in.',
-              '/(customer)/profile'
-            );
-            return;
-          }
           notifyTabChange(key);
           navigation.navigate(key);
         }}

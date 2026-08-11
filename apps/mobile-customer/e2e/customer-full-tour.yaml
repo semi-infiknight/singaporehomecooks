@@ -122,7 +122,7 @@ appId: com.singaporehomecooks.customer
       id: "bottom-tab-bar"
     timeout: 30000
 - tapOn:
-    id: "profile-tab"
+    id: "gourmeat-profile-avatar"
 - extendedWaitUntil:
     visible:
       id: "customer-profile-screen"

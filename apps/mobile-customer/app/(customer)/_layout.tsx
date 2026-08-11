@@ -6,7 +6,7 @@ import { CustomerTabBar } from '../../components/CustomerTabBar';
 import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
 import { CustomerLocationProvider } from '../../hooks/useCustomerLocation';
 
-const CUSTOMER_TAB_ORDER = ['index', 'orders/index', 'cart', 'profile/index'];
+const CUSTOMER_TAB_ORDER = ['index', 'orders/index', 'cart'];
 
 function CustomerTabIndexSync({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -42,7 +42,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="index" options={{ title: 'Discover', headerShown: false }} />
       <Tabs.Screen name="orders/index" options={{ title: 'My Orders', headerShown: false }} />
       <Tabs.Screen name="cart" options={{ title: 'Cart', headerShown: false }} />
-      <Tabs.Screen name="profile/index" options={{ title: 'Profile', headerShown: false }} />
+      <Tabs.Screen name="profile/index" options={{ href: null, title: 'Profile', headerShown: false, tabBarStyle: { display: 'none' } }} />
 
       <Tabs.Screen name="search" options={{ href: null, title: 'Advanced Search', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="category/[id]" options={{ href: null, title: 'Category', headerShown: false, tabBarStyle: { display: 'none' } }} />

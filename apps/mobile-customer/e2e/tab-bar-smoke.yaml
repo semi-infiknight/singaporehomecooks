@@ -32,13 +32,15 @@ appId: com.singaporehomecooks.customer
 - assertNotVisible:
     text: "Sign in to view orders"
     optional: true
-# Profile may still show guest account tools / sign-in
+# Profile opens from discover header avatar (not a tab)
 - tapOn:
-    id: "profile-tab"
+    id: "gourmeat-profile-avatar"
 - extendedWaitUntil:
     visible:
       id: "customer-profile-screen"
     timeout: 60000
+    optional: true
+- back
     optional: true
 - tapOn:
     id: "discover-tab"
