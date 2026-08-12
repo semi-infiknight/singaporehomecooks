@@ -54,7 +54,7 @@ export async function assertCookCanAcceptOrder(
   return { ok: true };
 }
 
-/** Gate cook listing publish (POST /store/shc/listings). */
+/** Gate cook listing create (POST /store/shc/listings). Compliance is not required to save dishes. */
 export async function assertCookCanPublishListing(
   scope: any,
   cookId: string

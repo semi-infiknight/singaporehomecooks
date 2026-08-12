@@ -16,9 +16,7 @@ export function canCookListProducts(ctx: CookGateContext): { valid: boolean; err
   if (ctx.availabilityPaused) {
     return { valid: false, error: 'Availability paused for this cook', code: 'SHC-COOK-001' };
   }
-  if (ctx.hasVerifiedCompliance === false) {
-    return { valid: false, error: 'Verified SFA/WSQ required before publishing listings', code: 'SHC-COMPLIANCE-002' };
-  }
+  // Certificates are not required to create/save menu dishes — SFA/WSQ still gate Accept + payouts.
   return { valid: true };
 }
 

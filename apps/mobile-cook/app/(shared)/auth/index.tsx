@@ -128,17 +128,8 @@ export default function CookAuthScreen() {
 
     setBusy(true);
     try {
-      if (__DEV__) {
-        setIsReturningUser(false);
-        setWhatsappUrl('');
-        setOtpHint(`Demo code: ${COOK_ONBOARDING_DEMO_OTP}`);
-        setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
-        setOtpReady(true);
-        setStep('verify');
-        await saveCookSignupMobile(trimmedMobile);
-        return true;
-      }
-
+      // Always hit the API so the server stores an OTP (demo or live). Dev-only
+      // short-circuit previously skipped this and made Continue fail against a real API.
       const res = await sendCookRegisterWhatsappOtp(trimmedMobile);
       setIsReturningUser(false);
       setWhatsappUrl(res.whatsapp_url || '');
@@ -160,14 +151,27 @@ export default function CookAuthScreen() {
     } catch (e) {
       const msg = (e as Error).message || '';
       const exists = /already exists|409/i.test(msg);
-      if (exists || __DEV__) {
-        setIsReturningUser(exists);
+      if (exists) {
+        // Existing cook — Continue should attempt phone login, not wait on register OTP ready.
+        setIsReturningUser(true);
         setWhatsappUrl('');
-        setOtpHint(__DEV__ ? `Demo code: ${COOK_ONBOARDING_DEMO_OTP}` : 'We sent a code to your WhatsApp.');
-        if (__DEV__) {
-          setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
-          setOtpReady(true);
-        }
+        setOtpHint(
+          __DEV__
+            ? `Demo code: ${COOK_ONBOARDING_DEMO_OTP}`
+            : 'This number is registered. Enter your code to continue, or use the number you signed up with.'
+        );
+        if (__DEV__) setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
+        setOtpReady(true);
+        setStep('verify');
+        await saveCookSignupMobile(trimmedMobile);
+        return true;
+      }
+      if (__DEV__) {
+        setIsReturningUser(false);
+        setWhatsappUrl('');
+        setOtpHint(`Demo code: ${COOK_ONBOARDING_DEMO_OTP}`);
+        setWhatsappOtp(COOK_ONBOARDING_DEMO_OTP);
+        setOtpReady(true);
         setStep('verify');
         await saveCookSignupMobile(trimmedMobile);
         return true;
@@ -192,45 +196,41 @@ export default function CookAuthScreen() {
   const completePhoneAuth = async () => {
     const trimmedMobile = mobile.trim();
     const otp = whatsappOtp.trim();
-    if (!otp) {
+    if (!otp || otp.length < 4) {
       Alert.alert('Missing code', 'Enter the 6-digit code from WhatsApp.');
       return;
     }
-    if (!isDemoWhatsappOtp(otp) && !otpReady) {
-      Alert.alert('Waiting for WhatsApp', 'Message us on WhatsApp first, then enter your code.');
+    if (otp.length !== 6) {
+      Alert.alert('Invalid code', 'Enter the 6-digit code.');
       return;
     }
 
     const email = cookPhoneSyntheticEmail(trimmedMobile);
     setBusy(true);
     try {
-      if (__DEV__ && isDemoWhatsappOtp(otp)) {
-        try {
-          await login(email, COOK_PHONE_AUTH_PASSWORD);
-          await saveCookSignupMobile(trimmedMobile);
-          await afterAuth(false);
-          return;
-        } catch {
-          /* new number — register below */
-        }
-      }
-
-      if (!isReturningUser) {
-        await register(email, COOK_PHONE_AUTH_PASSWORD, trimmedMobile, otp);
-        await saveCookSignupMobile(trimmedMobile);
-        await afterAuth(true);
-        return;
-      }
+      // Mirror customer auth: try login first (returning / reinstall), then register.
+      // Do not hard-block on otpReady — polling can lag, and returning users never
+      // get otpReady from the register endpoint (that was why Continue looked dead).
       try {
         await login(email, COOK_PHONE_AUTH_PASSWORD);
         await saveCookSignupMobile(trimmedMobile);
         await afterAuth(false);
+        return;
       } catch {
+        /* new number — register below */
+      }
+
+      if (isReturningUser) {
         Alert.alert(
           'Sign in',
           'This number is registered. Full WhatsApp login for existing accounts is coming soon — use the number you signed up with.'
         );
+        return;
       }
+
+      await register(email, COOK_PHONE_AUTH_PASSWORD, trimmedMobile, otp);
+      await saveCookSignupMobile(trimmedMobile);
+      await afterAuth(true);
     } catch (e) {
       Alert.alert('Verification failed', (e as Error).message);
     } finally {
@@ -361,6 +361,10 @@ export default function CookAuthScreen() {
               testID="auth-otp-input"
               inputAccessoryViewID={Platform.OS === 'ios' ? INPUT_ACCESSORY_ID : undefined}
               autoFocus
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                void submit();
+              }}
             />
 
             {otpHint ? <Text style={styles.hint}>{otpHint}</Text> : null}

@@ -38,6 +38,7 @@ import {
 import { useMyOrders, useRequests } from '../../../hooks/useOrder';
 import { useCookEarnings } from '../../../hooks/useCookEarnings';
 import { useAuth } from '../../../hooks/useAuth';
+import { useCookProfile } from '../../../hooks/useCookProfile';
 import { useCookConfig } from '../../../hooks/useCookConfig';
 import { useQuery } from '@tanstack/react-query';
 import { getComplianceDocs } from '../../../lib/api-client';
@@ -46,10 +47,15 @@ export default function CookDashboard() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { data: cookProfile } = useCookProfile();
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/(shared)/auth' as any);
+    try {
+      await logout();
+    } finally {
+      // Gate + AuthProvider flip to unauthenticated; replace is belt-and-suspenders.
+      router.replace('/(shared)/auth' as any);
+    }
   };
   const { data: orders, isLoading: ordersLoading } = useMyOrders();
   const orderList = (orders as any[]) ?? [];
@@ -73,7 +79,18 @@ export default function CookDashboard() {
   ).this_week_cents;
   const earningsLabel = formatCookEarningsDisplayCompact(earningsCents);
 
-  const greeting = cookPortalGreeting(new Date(), config.greeting);
+  // Prefer kitchen profile name from onboarding — JWT/session still says "New Home Cook".
+  const kitchenName = String(
+    (cookProfile as { display_name?: string } | undefined)?.display_name || user?.name || ''
+  ).trim();
+  const firstName = kitchenName.split(/\s+/)[0] || '';
+  const greeting = firstName
+    ? cookPortalGreeting(new Date(), {
+        morning: `Good morning, ${firstName}`,
+        afternoon: `Good afternoon, ${firstName}`,
+        evening: `Good evening, ${firstName}`,
+      })
+    : cookPortalGreeting(new Date(), config.greeting);
 
   return (
     <DirectionalTabScreen testID="cook-dashboard-tab-scene">
@@ -85,7 +102,7 @@ export default function CookDashboard() {
     >
       <GourmeatCookHeader
         title={greeting}
-        subtitle={`${user?.name || 'Chef'} · HDB kitchen`}
+        subtitle={`${kitchenName || 'Chef'} · HDB kitchen`}
         testID="cook-dashboard-hero"
       />
 

@@ -6,10 +6,9 @@ describe('cook-status-gates rule (10+ tests, 05 shc_cook.status + 08 marketplace
     expect(canCookListProducts({ status: 'active', availabilityPaused: false, hasVerifiedCompliance: true }).valid).toBe(true);
   });
 
-  it('blocks list without verified compliance', () => {
+  it('allows list without verified compliance (certs gate Accept/payout only)', () => {
     const r = canCookListProducts({ status: 'active', availabilityPaused: false, hasVerifiedCompliance: false });
-    expect(r.valid).toBe(false);
-    expect(r.code).toBe('SHC-COMPLIANCE-002');
+    expect(r.valid).toBe(true);
   });
 
   it('non active cannot list', () => {

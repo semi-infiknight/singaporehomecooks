@@ -77,5 +77,10 @@ export async function clearCookOnboardingSeen(): Promise<void> {
   } catch {
     /* ignore */
   }
+  try {
+    await SecureStore.deleteItemAsync('shc_cook_onboarding_seen_v1');
+  } catch {
+    /* ignore */
+  }
   notifyCookOnboardingSeen();
 }

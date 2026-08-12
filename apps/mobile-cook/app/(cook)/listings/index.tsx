@@ -37,12 +37,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCookListings } from '../../../hooks/useProducts';
 import { deleteCookListing, updateCookListing } from '../../../lib/api-client';
 import { useAuth } from '../../../hooks/useAuth';
+import { useCookProfile } from '../../../hooks/useCookProfile';
 import { VirtualRowFlashList } from '../../../components/VirtualLists';
 
 export default function CookListingsIndex() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
+  const { data: cookProfile } = useCookProfile();
+  const kitchenName = String((cookProfile as { display_name?: string } | undefined)?.display_name || user?.name || '').trim();
   const qc = useQueryClient();
   const { data: myListings, isLoading: listingsLoading } = useCookListings();
   const listingList = (myListings as any[]) ?? [];
@@ -54,7 +57,7 @@ export default function CookListingsIndex() {
 
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const listingsForDisplay = useMemo(
-    () => resolveCookListingsForDisplay(listingList as Array<Record<string, unknown>>, { dev: __DEV__, maestroE2e }) as typeof listingList,
+    () => resolveCookListingsForDisplay(listingList as Array<Record<string, unknown>>, { maestroE2e }) as typeof listingList,
     [listingList, maestroE2e]
   );
 
@@ -192,7 +195,7 @@ export default function CookListingsIndex() {
           subtitle={
             listingsForDisplay.length
               ? `${filteredListings.length} of ${listingsForDisplay.length} dishes`
-              : user?.name
+              : kitchenName || user?.name
           }
           testID="listings-hero"
           action={

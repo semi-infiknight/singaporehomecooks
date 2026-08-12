@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import {
   SHCOnboardingFlowScreen,
@@ -56,6 +57,7 @@ import {
   getCookProfile,
 } from '../lib/api-client';
 import { loadCookSignupMobile } from '../lib/cook-signup-mobile';
+import { useAuth } from '../hooks/useAuth';
 import { CookKitchenAddressPicker } from './CookKitchenAddressPicker';
 import { CookListingPhotoPanel } from './CookListingPhotoPanel';
 import { pickComplianceCertificate, uploadComplianceCertificate } from '../lib/compliance-upload';
@@ -167,6 +169,8 @@ function resolveOnboardingPhotoUri(stored: string, preview?: string): string | u
 }
 
 export default function CookOnboardingFlow() {
+  const qc = useQueryClient();
+  const { setSessionUser, refreshUser } = useAuth();
   const router = useRouter();
   const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
   const [stepId, setStepId] = useState<CookOnboardingStepId>('kitchen');
@@ -300,27 +304,36 @@ export default function CookOnboardingFlow() {
     setBusy(true);
     try {
       await updateCookProfile(buildCookOnboardingProfilePayload(draft) as any);
+      // Prefer /me (now returns DB display_name), then force local session name so the
+      // dashboard never flashes "New Home Cook" if Medusa hasn't picked up the route yet.
+      await refreshUser().catch(() => null);
+      const kitchenName = draft.display_name.trim();
+      if (kitchenName) {
+        await setSessionUser({ name: kitchenName });
+      }
+      await qc.invalidateQueries({ queryKey: ['cook-profile'] });
+
       const dishes = collectCookOnboardingDishes(draft);
+      let listingError: string | null = null;
       for (const dish of dishes) {
         try {
           await createCookListing(
             buildCookOnboardingFirstListingPayload({ ...dish, kitchen_halal_certified: draft.kitchen_halal_certified })
           );
         } catch (listingErr) {
-          const listingMsg = (listingErr as Error).message || '';
-          await markCookOnboardingSeen();
-          router.replace('/(cook)/dashboard');
-          Alert.alert(
-            'Profile saved',
-            listingMsg.includes('Compliance') || listingMsg.includes('SFA') || listingMsg.includes('WSQ')
-              ? 'Your kitchen profile is ready. Upload SFA & WSQ certificates in Compliance to publish your first dish.'
-              : `Your kitchen profile is saved. We could not publish your dish yet — ${listingMsg || 'try again from Listings.'}`
-          );
-          return;
+          listingError = (listingErr as Error).message || 'Could not publish dish';
+          break;
         }
       }
+      await qc.invalidateQueries({ queryKey: ['cook-listings'] });
       await markCookOnboardingSeen();
       router.replace('/(cook)/dashboard');
+      if (listingError) {
+        Alert.alert(
+          'Profile saved',
+          `You are signed in and your kitchen profile is saved. We could not save a dish yet — ${listingError}. Try adding it again from Listings.`
+        );
+      }
     } catch (e) {
       Alert.alert('Could not finish setup', (e as Error).message);
     } finally {

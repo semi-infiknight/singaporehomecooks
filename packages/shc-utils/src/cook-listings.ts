@@ -52,7 +52,9 @@ export function resolveCookListingsForDisplay<T extends { id?: string }>(
   opts: { dev?: boolean; maestroE2e?: boolean } = {}
 ): T[] {
   if (myListings.length > 0) return myListings;
-  if (opts.dev || opts.maestroE2e) return [E2E_COOK_SEED_LISTING as unknown as T];
+  // Seed only for Maestro — __DEV__ alone was showing a fake dish after onboarding
+  // when createCookListing failed (e.g. compliance), which looked like a glitched dashboard.
+  if (opts.maestroE2e) return [E2E_COOK_SEED_LISTING as unknown as T];
   return [];
 }
 
@@ -72,7 +74,7 @@ export function resolveCookListingById<T extends { id?: string }>(
   if (!id) return undefined;
   const fromApi = (myListings || []).find((row) => String(row.id) === id);
   if (fromApi) return fromApi;
-  if (id === E2E_COOK_SEED_LISTING.id && (opts.dev || opts.maestroE2e)) {
+  if (id === E2E_COOK_SEED_LISTING.id && opts.maestroE2e) {
     return E2E_COOK_SEED_LISTING as unknown as T;
   }
   return undefined;

@@ -131,33 +131,45 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
   const showCheck = isOutline;
   const shadow = isPrimary ? shcShadows.ctaPill : shcShadows.ctaPillSoft;
 
+  const labelTextStyle = {
+    color: textColor,
+    textAlign: 'left' as const,
+    fontWeight: '700' as const,
+    fontSize: sz.fontSize,
+    flexShrink: 1,
+  };
+
   const renderLabel = () => {
-    if (typeof children === 'string') {
+    if (typeof children === 'string' || typeof children === 'number') {
       return (
-        <Text
-          style={{
-            color: textColor,
-            textAlign: 'left',
-            fontWeight: '700',
-            fontSize: sz.fontSize,
-            flexShrink: 1,
-          }}
-          numberOfLines={1}
-        >
+        <Text style={labelTextStyle} numberOfLines={2}>
           {children}
         </Text>
       );
     }
     return React.Children.map(children, (child) => {
+      if (typeof child === 'string' || typeof child === 'number') {
+        return (
+          <Text style={labelTextStyle} numberOfLines={2}>
+            {child}
+          </Text>
+        );
+      }
       if (!React.isValidElement(child)) return child;
-      const isLabel =
-        child.type === Text ||
-        (child.type as { displayName?: string })?.displayName === 'SHCButtonText';
+      const typeName =
+        typeof child.type === 'string'
+          ? child.type
+          : (child.type as { displayName?: string; name?: string })?.displayName ||
+            (child.type as { name?: string })?.name;
+      const isLabel = child.type === Text || typeName === 'SHCButtonText' || typeName === 'Text';
       if (isLabel) {
-        return React.cloneElement(child as React.ReactElement<{ style?: any; variant?: ButtonVariant }>, {
-          variant,
-          style: [{ color: textColor, textAlign: 'left', fontWeight: '700', fontSize: sz.fontSize }, child.props.style],
-        });
+        // Re-render as Text with forced contrast color — cloneElement + displayName
+        // misses can leave SHCButtonText on primary (white) over outline (white).
+        return (
+          <Text style={[labelTextStyle, (child.props as { style?: any }).style]} numberOfLines={2}>
+            {(child.props as { children?: React.ReactNode }).children}
+          </Text>
+        );
       }
       return child;
     });
@@ -171,7 +183,8 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
             variantStyle,
             {
               paddingLeft: sz.paddingH,
-              paddingRight: showArrow ? 6 : sz.paddingH,
+              // Outline check sits on the trailing edge (same role as primary arrow).
+              paddingRight: showArrow || showCheck ? 6 : sz.paddingH,
               paddingVertical: sz.paddingV,
               borderRadius: shcRadii.pill,
               flexDirection: 'row',
@@ -179,6 +192,9 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
               justifyContent: 'space-between',
               gap: 8,
               minHeight: sz.minH,
+              // Intrinsic width by default so labels don't collapse in wrap rows.
+              // Callers pass width/alignSelf stretch for full-bleed CTAs.
+              alignSelf: 'flex-start',
               opacity: disabled ? 0.5 : 1,
               transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
               backgroundColor: isPrimary && pressed && !disabled ? shcColors.ctaInkPressed : variantStyle.backgroundColor,
@@ -187,10 +203,19 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
             style,
           ]}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-            {showCheck ? <SHCButtonCheckDot size={size} /> : null}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              // Only grow for primary (arrow at end). flex:1 + minWidth:0 in a
+              // horizontal wrap row was collapsing outline labels to zero width.
+              ...(showArrow ? { flex: 1, minWidth: 0 } : { flexShrink: 1 }),
+            }}
+          >
             {renderLabel()}
           </View>
+          {showCheck ? <SHCButtonCheckDot size={size} /> : null}
           {showArrow ? <SHCButtonArrowWell size={size} /> : null}
         </View>
       )}

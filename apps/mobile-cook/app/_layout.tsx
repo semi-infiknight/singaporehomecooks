@@ -14,6 +14,7 @@ import { SHCTrayProvider } from '@shc/ui';
 import { useSHCFonts } from '@shc/ui/fonts';
 import { shcColors } from '@shc/ui/theme';
 import ErrorBoundary from '../components/ErrorBoundary';
+import { AuthProvider } from '../hooks/useAuth';
 import { useCookSessionGate } from '../hooks/useCookSessionGate';
 
 const queryClient = new QueryClient({
@@ -38,8 +39,18 @@ function CookRootStack() {
   const segments = useSegments();
 
   useEffect(() => {
-    if (gate.status !== 'ready') return;
-    if (segments.includes('onboarding')) {
+    if (gate.status === 'unauthenticated' && !segments.includes('auth')) {
+      // Logout (and cold unauth) must land on auth — Protected alone can leave a blank stack.
+      router.replace('/(shared)/auth');
+      return;
+    }
+    if (gate.status === 'needs_onboarding' && !segments.includes('onboarding')) {
+      // After OTP register/login, auth unmounts before afterAuth replace may land.
+      // Drive onboarding from the gate so Continue always reaches the wizard.
+      router.replace('/(shared)/onboarding');
+      return;
+    }
+    if (gate.status === 'ready' && segments.includes('onboarding')) {
       router.replace('/(cook)/dashboard');
     }
   }, [gate.status, segments, router]);
@@ -98,7 +109,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <SHCTrayProvider queryClient={queryClient}>
-            <AppShell />
+            <AuthProvider>
+              <AppShell />
+            </AuthProvider>
           </SHCTrayProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -32,6 +32,11 @@ export function useCookSessionGate(): CookSessionGateState {
       return;
     }
 
+    // Unauthenticated phase leaves onboardingChecked=true + needsOnboarding=false.
+    // Without resetting, the first paint after setUser reports "ready" and the
+    // dashboard flashes before hasSeenCookOnboarding resolves.
+    setOnboardingChecked(false);
+
     let cancelled = false;
     (async () => {
       const maestroE2e = process.env.EXPO_PUBLIC_MAESTRO_E2E === '1';
