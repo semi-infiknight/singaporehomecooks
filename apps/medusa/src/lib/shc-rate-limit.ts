@@ -109,15 +109,18 @@ function requestPath(req: MedusaRequest) {
   return String(req.originalUrl || req.url || "");
 }
 
-/** Tiered limits for /store/shc/* — auth paths get stricter caps. */
+/** Tiered limits for /store/shc/* — auth login/register are not rate-limited (OTP testing / cook onboarding). */
 export async function resolveStoreShcRateLimit(req: MedusaRequest): Promise<RateLimitResult> {
   const path = requestPath(req);
 
-  if (path.includes("/auth/") && path.includes("/login")) {
-    return checkRateLimit(getRateLimitKey(req, "auth.login"), { max: 5, windowMs: 15 * 60 * 1000 });
-  }
-  if (path.includes("/auth/") && path.includes("/register")) {
-    return checkRateLimit(getRateLimitKey(req, "auth.register"), { max: 10, windowMs: 60 * 60 * 1000 });
+  // Skip login/register entirely — the old 5/15m and 10/1h caps blocked OTP verify during cook testing.
+  if (path.includes("/auth/") && (path.includes("/login") || path.includes("/register"))) {
+    return {
+      allowed: true,
+      remaining: Number.MAX_SAFE_INTEGER,
+      resetAt: Date.now() + 60_000,
+      limit: Number.MAX_SAFE_INTEGER,
+    };
   }
   if (path.includes("/ops/client-crash")) {
     return checkRateLimit(getRateLimitKey(req, "ops.client-crash"), { max: 20, windowMs: 60 * 60 * 1000 });
@@ -127,9 +130,7 @@ export async function resolveStoreShcRateLimit(req: MedusaRequest): Promise<Rate
   return checkRateLimit(getRateLimitKey(req, "store.shc"), { max: perMin, windowMs: 60 * 1000 });
 }
 
-export function rateLimitExceededMessage(path: string) {
-  if (path.includes("/login")) return "Too many login attempts. Try again later.";
-  if (path.includes("/register")) return "Too many registration attempts. Try again later.";
+export function rateLimitExceededMessage(_path: string) {
   return "Too many requests. Please slow down and try again.";
 }
 
