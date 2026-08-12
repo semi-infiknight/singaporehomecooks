@@ -7,7 +7,7 @@ import {
   StyleSheet,
   Alert,
   Image,
-  Modal,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,11 +25,12 @@ import {
   PROMO_BANNER_IMAGES,
   COOK_ONBOARDING_STEPS,
   COOK_ONBOARDING_CUISINE_PRESETS,
-  COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
   COOK_ONBOARDING_LEAD_TIME_SLOTS,
+  filterIngredientSuggestions,
   createEmptyCookOnboardingDraft,
   createEmptyCookOnboardingDish,
   snapshotCookOnboardingDish,
+  cookOnboardingHasDishDraft,
   validateCookOnboardingStep,
   validateCookOnboardingDish,
   cookOnboardingNextStep,
@@ -174,7 +175,9 @@ export default function CookOnboardingFlow() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ dish_image_url?: string }>({});
   const [draftReady, setDraftReady] = useState(false);
-  const [ingredientOpen, setIngredientOpen] = useState(false);
+  const [ingredientQuery, setIngredientQuery] = useState('');
+  const [formOpen, setFormOpen] = useState(true);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,17 +334,59 @@ export default function CookOnboardingFlow() {
     else goNext();
   };
 
-  const addAnotherDish = () => {
+  const saveDishToMenu = () => {
     const gate = validateCookOnboardingDish(draft);
     if (!gate.ok) {
       Alert.alert('Almost there', gate.message);
       return;
     }
+    const snap = snapshotCookOnboardingDish(draft);
+    const nextSaved =
+      editingIndex != null
+        ? draft.saved_dishes.map((d, i) => (i === editingIndex ? snap : d))
+        : [...draft.saved_dishes, snap];
     patch({
-      saved_dishes: [...draft.saved_dishes, snapshotCookOnboardingDish(draft)],
+      saved_dishes: nextSaved,
       ...createEmptyCookOnboardingDish(),
     });
+    setEditingIndex(null);
+    setFormOpen(false);
     setMediaPreview({});
+    setIngredientQuery('');
+  };
+
+  const addNewDish = () => {
+    if (formOpen && cookOnboardingHasDishDraft(draft)) {
+      const gate = validateCookOnboardingDish(draft);
+      if (!gate.ok) {
+        Alert.alert('Almost there', gate.message);
+        return;
+      }
+      const snap = snapshotCookOnboardingDish(draft);
+      const nextSaved =
+        editingIndex != null
+          ? draft.saved_dishes.map((d, i) => (i === editingIndex ? snap : d))
+          : [...draft.saved_dishes, snap];
+      patch({
+        saved_dishes: nextSaved,
+        ...createEmptyCookOnboardingDish(),
+      });
+    } else if (formOpen) {
+      patch(createEmptyCookOnboardingDish());
+    }
+    setEditingIndex(null);
+    setFormOpen(true);
+    setMediaPreview({});
+    setIngredientQuery('');
+  };
+
+  const editSavedDish = (index: number) => {
+    const dish = draft.saved_dishes[index];
+    if (!dish) return;
+    patch({ ...dish });
+    setEditingIndex(index);
+    setFormOpen(true);
+    setIngredientQuery('');
   };
 
   const markCert = async (type: 'sfa' | 'wsq' | 'halal') => {
@@ -525,13 +570,45 @@ export default function CookOnboardingFlow() {
         );
       case 'menu': {
         const dishUri = resolveOnboardingPhotoUri(draft.dish_image_url, mediaPreview.dish_image_url);
+        const ingredientMatches = filterIngredientSuggestions(ingredientQuery, selectedIngredients);
+        const addCustom =
+          ingredientQuery.trim().length > 0 &&
+          !ingredientMatches.some((ing) => ing.toLowerCase() === ingredientQuery.trim().toLowerCase()) &&
+          !selectedIngredients.some((ing) => ing.toLowerCase() === ingredientQuery.trim().toLowerCase());
         return (
           <>
-            {draft.saved_dishes.length > 0 ? (
-              <Text style={styles.savedNote}>
-                {draft.saved_dishes.length} dish{draft.saved_dishes.length === 1 ? '' : 'es'} saved
-              </Text>
-            ) : null}
+            {draft.saved_dishes.map((dish, index) => {
+              const thumb = resolveOnboardingPhotoUri(dish.dish_image_url);
+              return (
+              <Pressable
+                key={`${dish.dish_name}-${index}`}
+                onPress={() => editSavedDish(index)}
+                style={styles.listingCard}
+                testID={`cook-onboarding-saved-dish-${index}`}
+              >
+                <View style={styles.listingRow}>
+                  {thumb ? (
+                    <Image source={{ uri: thumb }} style={styles.listingThumb} />
+                  ) : (
+                    <View style={styles.listingThumbFallback}>
+                      <Text style={styles.listingThumbLetter}>{(dish.dish_name || 'D').slice(0, 1).toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <View style={styles.listingInfo}>
+                    <Text style={styles.listingName} numberOfLines={1}>
+                      {dish.dish_name}
+                    </Text>
+                    <Text style={styles.listingMeta} numberOfLines={1}>
+                      {dish.dish_cuisine ? `${dish.dish_cuisine} · ` : ''}S${dish.dish_price}
+                    </Text>
+                  </View>
+                  <Text style={styles.listingEdit}>Edit</Text>
+                </View>
+              </Pressable>
+              );
+            })}
+            {formOpen ? (
+              <>
             <FieldLabel>Cuisine</FieldLabel>
             <ChipRow
               options={COOK_ONBOARDING_CUISINE_PRESETS}
@@ -580,22 +657,62 @@ export default function CookOnboardingFlow() {
               </Text>
             ) : null}
             <FieldLabel>Ingredients</FieldLabel>
-            <Pressable
-              onPress={() => setIngredientOpen(true)}
-              style={styles.dropdownBtn}
-              testID="cook-onboarding-ingredients-open"
-            >
-              <Text style={selectedIngredients.length ? styles.dropdownValue : styles.dropdownPlaceholder}>
-                {selectedIngredients.length ? selectedIngredients.join(', ') : 'Choose ingredients'}
-              </Text>
-            </Pressable>
-            <TextField
-              value={draft.dish_ingredients}
-              onChangeText={(dish_ingredients) => patch({ dish_ingredients })}
-              placeholder="Rice, coconut milk, sambal…"
-              multiline
-              testID="cook-onboarding-ingredients"
-            />
+            {selectedIngredients.length ? (
+              <View style={styles.chipRow}>
+                {selectedIngredients.map((ing) => (
+                  <Pressable
+                    key={ing}
+                    onPress={() => toggleIngredient(ing)}
+                    style={[styles.chip, styles.chipOn]}
+                    testID={`cook-onboarding-ingredient-${ing.replace(/\s+/g, '-').toLowerCase()}`}
+                  >
+                    <Text style={[styles.chipText, styles.chipTextOn]}>× {ing}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            <View testID="cook-onboarding-ingredients-open">
+              <TextField
+                value={ingredientQuery}
+                onChangeText={setIngredientQuery}
+                placeholder="Search ingredients"
+                testID="cook-onboarding-ingredients"
+              />
+              {(ingredientQuery.length > 0 || ingredientMatches.length > 0) && ingredientQuery.length > 0 ? (
+                <View style={styles.suggestBox}>
+                  <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={styles.suggestScroll}>
+                    {ingredientMatches.map((ing) => (
+                      <Pressable
+                        key={ing}
+                        onPress={() => {
+                          toggleIngredient(ing);
+                          setIngredientQuery('');
+                        }}
+                        style={styles.suggestRow}
+                        testID={`cook-onboarding-ingredient-suggest-${ing.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <Text style={styles.suggestText}>{ing}</Text>
+                      </Pressable>
+                    ))}
+                    {addCustom ? (
+                      <Pressable
+                        onPress={() => {
+                          const name = ingredientQuery.trim();
+                          patch({
+                            dish_ingredients: [...selectedIngredients, name].join(', '),
+                          });
+                          setIngredientQuery('');
+                        }}
+                        style={styles.suggestRow}
+                        testID="cook-onboarding-ingredient-custom"
+                      >
+                        <Text style={styles.suggestText}>Add “{ingredientQuery.trim()}”</Text>
+                      </Pressable>
+                    ) : null}
+                  </ScrollView>
+                </View>
+              ) : null}
+            </View>
             <FieldLabel>Brief description</FieldLabel>
             <TextField
               value={draft.dish_description}
@@ -635,47 +752,23 @@ export default function CookOnboardingFlow() {
                 {uploadingPhoto ? 'Uploading…' : dishUri || draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}
               </SHCButtonText>
             </SHCButton>
-            <Pressable onPress={addAnotherDish} style={styles.addMoreBtn} testID="cook-onboarding-add-dish">
-              <Text style={styles.addMoreText}>Add another dish</Text>
-            </Pressable>
+            <View style={{ marginTop: shcSpacing.md }}>
+              <SHCButton onPress={saveDishToMenu} testID="cook-onboarding-save-dish">
+                <SHCButtonText>Save dish to menu</SHCButtonText>
+              </SHCButton>
+            </View>
+              </>
+            ) : null}
+            <View style={{ marginTop: shcSpacing.sm }}>
+              <SHCButton variant="ghost" onPress={addNewDish} testID="cook-onboarding-add-dish">
+                <SHCButtonText variant="ghost">+ Add new dish</SHCButtonText>
+              </SHCButton>
+            </View>
             {maestroE2e ? (
               <SHCButton onPress={finish} testID="cook-onboarding-maestro-finish" style={{ marginTop: shcSpacing.md }}>
                 <SHCButtonText>Maestro: save & finish</SHCButtonText>
               </SHCButton>
             ) : null}
-            <Modal visible={ingredientOpen} animationType="slide" transparent onRequestClose={() => setIngredientOpen(false)}>
-              <Pressable style={styles.sheetScrim} onPress={() => setIngredientOpen(false)}>
-                <Pressable style={styles.sheet} onPress={() => undefined}>
-                  <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Add ingredient</Text>
-                    <Pressable onPress={() => setIngredientOpen(false)} testID="cook-onboarding-ingredients-close">
-                      <Text style={styles.sheetClose}>×</Text>
-                    </Pressable>
-                  </View>
-                  <View style={styles.chipRow}>
-                    {COOK_ONBOARDING_INGREDIENT_SUGGESTIONS.map((ing) => {
-                      const on = selectedIngredients.includes(ing);
-                      return (
-                        <Pressable
-                          key={ing}
-                          onPress={() => toggleIngredient(ing)}
-                          style={[styles.chip, on && styles.chipOn]}
-                          testID={`cook-onboarding-ingredient-${ing.replace(/\s+/g, '-').toLowerCase()}`}
-                        >
-                          <Text style={[styles.chipText, on && styles.chipTextOn]}>
-                            {on ? '× ' : '+ '}
-                            {ing}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                  <SHCButton onPress={() => setIngredientOpen(false)} testID="cook-onboarding-ingredients-done">
-                    <SHCButtonText>Done</SHCButtonText>
-                  </SHCButton>
-                </Pressable>
-              </Pressable>
-            </Modal>
           </>
         );
       }
@@ -840,6 +933,42 @@ const styles = StyleSheet.create({
   },
   dropdownValue: { fontSize: 15, fontWeight: '600', color: shcColors.text },
   dropdownPlaceholder: { fontSize: 15, fontWeight: '500', color: shcColors.textLight },
+  listingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(36,24,18,0.08)',
+  },
+  listingRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  listingThumb: { width: 56, height: 56, borderRadius: 12 },
+  listingThumbFallback: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: '#F0E4D8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listingThumbLetter: { fontSize: 20, fontWeight: '800', color: shcColors.text },
+  listingInfo: { flex: 1, minWidth: 0 },
+  listingName: { fontSize: 15, fontWeight: '800', color: shcColors.text },
+  listingMeta: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 2 },
+  listingEdit: { fontSize: 13, fontWeight: '800', color: shcColors.ctaInk },
+  suggestBox: {
+    marginTop: -6,
+    marginBottom: shcSpacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(36,24,18,0.1)',
+    maxHeight: 180,
+    overflow: 'hidden',
+  },
+  suggestScroll: { maxHeight: 180 },
+  suggestRow: { paddingHorizontal: 14, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(36,24,18,0.08)' },
+  suggestText: { fontSize: 14, fontWeight: '600', color: shcColors.text },
   addMoreBtn: { marginTop: shcSpacing.md, alignItems: 'center', paddingVertical: 12 },
   addMoreText: { fontSize: 15, fontWeight: '800', color: shcColors.primary },
   sheetScrim: { flex: 1, backgroundColor: 'rgba(36,24,18,0.35)', justifyContent: 'flex-end' },

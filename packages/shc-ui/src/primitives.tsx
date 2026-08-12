@@ -14,14 +14,59 @@ import {
 import { shcBadgeVariant, type ShcBadgeSemanticKind } from '@shc/utils';
 import { SHCIcon, SHCTabIcon, type SHCTabIconKey } from './icons';
 
-type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
+type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost' | 'hero';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
-const buttonSizes: Record<ButtonSize, { paddingH: number; paddingV: number; fontSize: number }> = {
-  sm: { paddingH: 12, paddingV: 6, fontSize: 12 },
-  md: { paddingH: 16, paddingV: 10, fontSize: 14 },
-  lg: { paddingH: 20, paddingV: 14, fontSize: 16 },
+const buttonSizes: Record<ButtonSize, { paddingH: number; paddingV: number; fontSize: number; minH: number; wellH: number }> = {
+  sm: { paddingH: 10, paddingV: 4, fontSize: 12, minH: 32, wellH: 22 },
+  md: { paddingH: 14, paddingV: 8, fontSize: 14, minH: 44, wellH: 28 },
+  lg: { paddingH: 18, paddingV: 10, fontSize: 16, minH: 56, wellH: 36 },
 };
+
+export function SHCButtonArrowWell({ size = 'md' }: { size?: ButtonSize }) {
+  const sz = buttonSizes[size];
+  return (
+    <View
+      style={{
+        height: sz.wellH,
+        minWidth: sz.wellH + 16,
+        paddingHorizontal: size === 'sm' ? 8 : 12,
+        borderRadius: shcRadii.pill,
+        backgroundColor: shcColors.ctaArrowWell,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#FFFFFF',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.45,
+        shadowRadius: 8,
+      }}
+    >
+      <Text style={{ color: shcColors.onPrimary, fontSize: size === 'sm' ? 13 : 16, fontWeight: '300', lineHeight: size === 'sm' ? 16 : 20 }}>
+        →
+      </Text>
+    </View>
+  );
+}
+
+export function SHCButtonCheckDot({ size = 'md' }: { size?: ButtonSize }) {
+  const d = size === 'sm' ? 18 : size === 'lg' ? 26 : 22;
+  return (
+    <View
+      style={{
+        width: d,
+        height: d,
+        borderRadius: d / 2,
+        backgroundColor: shcColors.ctaInk,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={{ color: shcColors.onPrimary, fontSize: size === 'sm' ? 10 : 12, fontWeight: '800', lineHeight: size === 'sm' ? 12 : 14 }}>
+        ✓
+      </Text>
+    </View>
+  );
+}
 
 export const SHCButtonText = ({
   children,
@@ -33,11 +78,13 @@ export const SHCButtonText = ({
   style?: any;
 }) => {
   const color =
-    variant === 'outline' || variant === 'ghost'
+    variant === 'outline'
       ? shcColors.text
-      : variant === 'accent'
-        ? shcColors.text
-        : shcColors.onPrimary;
+      : variant === 'ghost' || variant === 'hero'
+        ? shcColors.ctaHeroText
+        : variant === 'accent'
+          ? shcColors.ctaInk
+          : shcColors.onPrimary;
   return <Text style={[{ color, fontWeight: '700' }, style]}>{children}</Text>;
 };
 
@@ -58,21 +105,63 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
   ref
 ) {
   const sz = buttonSizes[size];
-  const variantStyle =
-    variant === 'outline'
-      ? { backgroundColor: shcColors.surface, borderWidth: shcBorders.brutal, borderColor: shcColors.border }
-      : variant === 'accent'
-        ? { backgroundColor: shcColors.accent, borderWidth: shcBorders.brutal, borderColor: shcColors.border }
-        : variant === 'ghost'
-          ? { backgroundColor: 'transparent', borderWidth: 0 }
-          : { backgroundColor: shcColors.primary, borderWidth: shcBorders.brutal, borderColor: shcColors.border };
+  const isPrimary = variant === 'primary';
+  const isOutline = variant === 'outline';
+  const isGhost = variant === 'ghost';
+  const isHero = variant === 'hero';
+  const isAccent = variant === 'accent';
 
-  const textColor =
-    variant === 'outline' || variant === 'ghost'
-      ? shcColors.text
-      : variant === 'accent'
-        ? shcColors.text
-        : shcColors.onPrimary;
+  const variantStyle = isOutline
+    ? { backgroundColor: shcColors.surface, borderWidth: 1, borderColor: shcColors.ctaInk }
+    : isAccent
+      ? { backgroundColor: shcColors.surface, borderWidth: 0 }
+      : isGhost
+        ? { backgroundColor: shcColors.surface, borderWidth: 0 }
+        : isHero
+          ? { backgroundColor: shcColors.surface, borderWidth: 0 }
+          : { backgroundColor: shcColors.ctaInk, borderWidth: 0 };
+
+  const textColor = isOutline
+    ? shcColors.ctaInk
+    : isGhost || isHero || isAccent
+      ? shcColors.ctaHeroText
+      : shcColors.onPrimary;
+
+  const showArrow = isPrimary;
+  const showCheck = isOutline;
+  const shadow = isPrimary ? shcShadows.ctaPill : shcShadows.ctaPillSoft;
+
+  const renderLabel = () => {
+    if (typeof children === 'string') {
+      return (
+        <Text
+          style={{
+            color: textColor,
+            textAlign: 'left',
+            fontWeight: '700',
+            fontSize: sz.fontSize,
+            flexShrink: 1,
+          }}
+          numberOfLines={1}
+        >
+          {children}
+        </Text>
+      );
+    }
+    return React.Children.map(children, (child) => {
+      if (!React.isValidElement(child)) return child;
+      const isLabel =
+        child.type === Text ||
+        (child.type as { displayName?: string })?.displayName === 'SHCButtonText';
+      if (isLabel) {
+        return React.cloneElement(child as React.ReactElement<{ style?: any; variant?: ButtonVariant }>, {
+          variant,
+          style: [{ color: textColor, textAlign: 'left', fontWeight: '700', fontSize: sz.fontSize }, child.props.style],
+        });
+      }
+      return child;
+    });
+  };
 
   return (
     <Pressable ref={ref} onPress={onPress} disabled={disabled} testID={testID} accessibilityRole="button">
@@ -81,36 +170,28 @@ export const SHCButton = React.forwardRef<View, SHCButtonProps>(function SHCButt
           style={[
             variantStyle,
             {
-              paddingHorizontal: sz.paddingH,
+              paddingLeft: sz.paddingH,
+              paddingRight: showArrow ? 6 : sz.paddingH,
               paddingVertical: sz.paddingV,
-              borderRadius: shcRadii.md,
+              borderRadius: shcRadii.pill,
+              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: size === 'lg' ? 52 : size === 'sm' ? 36 : 44,
+              justifyContent: 'space-between',
+              gap: 8,
+              minHeight: sz.minH,
               opacity: disabled ? 0.5 : 1,
               transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
-              ...(pressed && !disabled ? shcShadows.brutalPressed : shcShadows.brutalSm),
+              backgroundColor: isPrimary && pressed && !disabled ? shcColors.ctaInkPressed : variantStyle.backgroundColor,
+              ...shadow,
             },
             style,
           ]}
         >
-          {typeof children === 'string' ? (
-            <Text style={{ color: textColor, textAlign: 'center', fontWeight: '800', fontSize: sz.fontSize }}>{children}</Text>
-          ) : (
-            React.Children.map(children, (child) => {
-              if (!React.isValidElement(child)) return child;
-              const isLabel =
-                child.type === Text ||
-                (child.type as { displayName?: string })?.displayName === 'SHCButtonText';
-              if (isLabel) {
-                return React.cloneElement(child as React.ReactElement<{ style?: any; variant?: ButtonVariant }>, {
-                  variant,
-                  style: [{ color: textColor, textAlign: 'center', fontWeight: '800', fontSize: sz.fontSize }, child.props.style],
-                });
-              }
-              return child;
-            })
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+            {showCheck ? <SHCButtonCheckDot size={size} /> : null}
+            {renderLabel()}
+          </View>
+          {showArrow ? <SHCButtonArrowWell size={size} /> : null}
         </View>
       )}
     </Pressable>

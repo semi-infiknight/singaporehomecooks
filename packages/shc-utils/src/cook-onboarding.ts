@@ -333,9 +333,7 @@ export function validateCookOnboardingStep(
       }
       return { ok: true };
     case 'menu':
-      if (!cookOnboardingHasDishDraft(draft) && draft.saved_dishes.length === 0) {
-        return { ok: true };
-      }
+      if (!cookOnboardingHasDishDraft(draft)) return { ok: true };
       return validateCookOnboardingDish(draft);
     default:
       return { ok: true };
@@ -502,4 +500,30 @@ export const COOK_ONBOARDING_INGREDIENT_SUGGESTIONS = [
   'Tofu',
   'Fish',
   'Beef',
+  'Pork',
+  'Garlic',
+  'Ginger',
+  'Onion',
+  'Shallot',
+  'Turmeric',
+  'Coriander',
+  'Kaffir lime',
+  'Belacan',
+  'Sambal',
+  'Coconut',
+  'Noodles',
+  'Tamarind',
+  'Peanut',
+  'Cabbage',
+  'Bean sprout',
 ] as const;
+
+export function filterIngredientSuggestions(query: string, selected: string[] = []): string[] {
+  const q = query.trim().toLowerCase();
+  const selectedLc = new Set(selected.map((s) => s.toLowerCase()));
+  return COOK_ONBOARDING_INGREDIENT_SUGGESTIONS.filter((ing) => {
+    if (selectedLc.has(ing.toLowerCase())) return false;
+    if (!q) return true;
+    return ing.toLowerCase().includes(q);
+  }).slice(0, 8);
+}

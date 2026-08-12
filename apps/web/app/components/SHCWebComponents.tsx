@@ -144,7 +144,7 @@ export type { TiffinOrderCardStatus };
 
 export type { TrayFrame, TrayHeight };
 
-type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost';
+type ButtonVariant = 'primary' | 'outline' | 'accent' | 'ghost' | 'hero';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 export function SHCButton({
@@ -167,18 +167,22 @@ export function SHCButton({
   type?: 'button' | 'submit';
 }) {
   const base =
-    'inline-flex items-center justify-center gap-2 font-bold rounded-lg border-2 border-[var(--shc-border-brutal)] shadow-[var(--shc-shadow-brutal-sm)] transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:translate-x-px active:translate-y-px active:shadow-none';
+    'shc-btn inline-flex items-center justify-between gap-2 font-semibold rounded-full transition-all duration-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   const sizes: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2.5 text-sm',
-    lg: 'px-6 py-3.5 text-base',
+    sm: 'pl-3 pr-1 py-1 text-xs min-h-8',
+    md: 'pl-4 pr-1.5 py-1.5 text-sm min-h-11',
+    lg: 'pl-5 pr-1.5 py-2 text-base min-h-14',
   };
   const variants: Record<ButtonVariant, string> = {
     primary: 'shc-btn-primary',
-    outline: 'border-2 border-[var(--shc-border-brutal)] text-primary hover:bg-secondary bg-card',
-    accent: 'bg-[var(--shc-accent)] hover:opacity-90 text-[var(--shc-text)]',
-    ghost: 'border-transparent shadow-none text-muted-foreground hover:bg-secondary',
+    outline: 'shc-btn-outline',
+    accent: 'shc-btn-ghost',
+    ghost: 'shc-btn-ghost',
+    hero: 'shc-btn-hero',
   };
+  const showArrow = variant === 'primary';
+  const showCheck = variant === 'outline';
+  const well = size === 'sm' ? 'shc-btn-arrow shc-btn-arrow-sm' : 'shc-btn-arrow';
   return (
     <button
       type={type}
@@ -188,7 +192,15 @@ export function SHCButton({
       className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
       aria-disabled={disabled}
     >
-      {children}
+      <span className="inline-flex min-w-0 items-center gap-2">
+        {showCheck ? <span className="shc-btn-check" aria-hidden>✓</span> : null}
+        <span className="truncate">{children}</span>
+      </span>
+      {showArrow ? (
+        <span className={well} aria-hidden>
+          →
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -4190,16 +4202,16 @@ export function GourmeatPayButton({
   testID?: string;
 }) {
   return (
-    <button
-      type="button"
+    <SHCButton
       onClick={onClick}
       disabled={disabled || loading}
-      data-testid={testID}
-      className="w-full flex items-center justify-center gap-2 bg-[var(--shc-gourmeat-pay)] text-white font-extrabold text-base py-4 rounded-xl shadow-[var(--shc-shadow-soft)] disabled:opacity-50 transition-opacity hover:opacity-90"
+      variant="primary"
+      size="lg"
+      testID={testID}
+      className="w-full"
     >
-      {loading ? 'Processing…' : label}
-      {amount && !loading ? <span>{amount}</span> : null}
-    </button>
+      {loading ? 'Processing…' : amount && !loading ? `${label}  ${amount}` : label}
+    </SHCButton>
   );
 }
 
@@ -4285,21 +4297,16 @@ export function GourmeatPrimaryButton({
   const isSm = size === 'sm';
   const stretch = fullWidth ?? !isSm;
   return (
-    <button
-      type="button"
+    <SHCButton
       onClick={onClick}
       disabled={disabled || loading}
-      data-testid={testID}
-      className={`inline-flex items-center justify-center rounded-xl font-extrabold transition-opacity disabled:opacity-50 ${
-        isSm ? 'h-9 min-h-[36px] px-3.5 py-0 text-[13px] leading-none' : 'min-h-12 px-4 py-3 text-sm'
-      } ${stretch ? 'w-full' : 'w-auto shrink-0'} ${
-        outline
-          ? 'bg-card border border-border text-foreground'
-          : 'bg-primary text-primary-foreground hover:bg-[var(--shc-primary-dark)]'
-      } ${className}`}
+      variant={outline ? 'outline' : 'primary'}
+      size={isSm ? 'sm' : 'md'}
+      testID={testID}
+      className={`${stretch ? 'w-full' : 'w-auto shrink-0'} ${className}`}
     >
       {loading ? '…' : label}
-    </button>
+    </SHCButton>
   );
 }
 

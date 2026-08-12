@@ -125,4 +125,20 @@ describe('cook-onboarding steps', () => {
     expect(linear.current).toBe(9);
     expect(linear.percent).toBe(100);
   });
+
+  it('allows finishing menu when dishes are saved and the form is collapsed', () => {
+    const draft = createEmptyCookOnboardingDraft();
+    draft.saved_dishes = [
+      {
+        ...createEmptyCookOnboardingDraft(),
+        dish_name: 'Nasi Lemak',
+        dish_cuisine: 'Malay',
+        dish_price: '12',
+        dish_ingredients: 'Rice',
+        dish_description: 'Coconut rice',
+      },
+    ];
+    expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
+    expect(collectCookOnboardingDishes(draft)).toHaveLength(1);
+  });
 });

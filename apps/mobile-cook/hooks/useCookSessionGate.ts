@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from './useAuth';
-import { hasSeenCookOnboarding } from '../lib/onboarding';
+import { hasSeenCookOnboarding, subscribeCookOnboardingSeen } from '../lib/onboarding';
 
 export type CookSessionGateState =
   | { status: 'loading' }
@@ -13,6 +13,15 @@ export function useCookSessionGate(): CookSessionGateState {
   const { user, loading } = useAuth();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+
+  useEffect(() => {
+    return subscribeCookOnboardingSeen(() => {
+      void hasSeenCookOnboarding().then((seen) => {
+        setNeedsOnboarding(!seen);
+        setOnboardingChecked(true);
+      });
+    });
+  }, []);
 
   useEffect(() => {
     if (loading) return;

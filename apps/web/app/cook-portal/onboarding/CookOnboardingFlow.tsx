@@ -8,11 +8,12 @@ import {
   PROMO_BANNER_IMAGES,
   COOK_ONBOARDING_STEPS,
   COOK_ONBOARDING_CUISINE_PRESETS,
-  COOK_ONBOARDING_INGREDIENT_SUGGESTIONS,
   COOK_ONBOARDING_LEAD_TIME_SLOTS,
+  filterIngredientSuggestions,
   createEmptyCookOnboardingDraft,
   createEmptyCookOnboardingDish,
   snapshotCookOnboardingDish,
+  cookOnboardingHasDishDraft,
   validateCookOnboardingStep,
   validateCookOnboardingDish,
   cookOnboardingNextStep,
@@ -42,6 +43,7 @@ import {
   getCookProfile,
 } from '../../../lib/cook-api-client';
 import { SHCOnboardingFlowScreenWeb } from '../../components/SHCOnboardingWeb';
+import { SHCButton } from '../../components/SHCWebComponents';
 
 const IMAGE_BY_KEY: Record<string, string> = {
   listings: BENTO_ACTION_IMAGES.listings,
@@ -230,7 +232,9 @@ export default function CookOnboardingFlow() {
   const [draft, setDraft] = useState<CookOnboardingDraft>(createEmptyCookOnboardingDraft);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [ingredientOpen, setIngredientOpen] = useState(false);
+  const [ingredientQuery, setIngredientQuery] = useState('');
+  const [formOpen, setFormOpen] = useState(true);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const saved = loadCookOnboardingDraft();
@@ -314,17 +318,53 @@ export default function CookOnboardingFlow() {
     else goNext();
   };
 
-  const addAnotherDish = () => {
+  const saveDishToMenu = () => {
     const gate = validateCookOnboardingDish(draft);
     if (!gate.ok) {
       setError(gate.message);
       return;
     }
     setError('');
-    patch({
-      saved_dishes: [...draft.saved_dishes, snapshotCookOnboardingDish(draft)],
-      ...createEmptyCookOnboardingDish(),
-    });
+    const snap = snapshotCookOnboardingDish(draft);
+    const nextSaved =
+      editingIndex != null
+        ? draft.saved_dishes.map((d, i) => (i === editingIndex ? snap : d))
+        : [...draft.saved_dishes, snap];
+    patch({ saved_dishes: nextSaved, ...createEmptyCookOnboardingDish() });
+    setEditingIndex(null);
+    setFormOpen(false);
+    setIngredientQuery('');
+  };
+
+  const addNewDish = () => {
+    if (formOpen && cookOnboardingHasDishDraft(draft)) {
+      const gate = validateCookOnboardingDish(draft);
+      if (!gate.ok) {
+        setError(gate.message);
+        return;
+      }
+      const snap = snapshotCookOnboardingDish(draft);
+      const nextSaved =
+        editingIndex != null
+          ? draft.saved_dishes.map((d, i) => (i === editingIndex ? snap : d))
+          : [...draft.saved_dishes, snap];
+      patch({ saved_dishes: nextSaved, ...createEmptyCookOnboardingDish() });
+    } else if (formOpen) {
+      patch(createEmptyCookOnboardingDish());
+    }
+    setError('');
+    setEditingIndex(null);
+    setFormOpen(true);
+    setIngredientQuery('');
+  };
+
+  const editSavedDish = (index: number) => {
+    const dish = draft.saved_dishes[index];
+    if (!dish) return;
+    patch({ ...dish });
+    setEditingIndex(index);
+    setFormOpen(true);
+    setIngredientQuery('');
   };
 
   const markCert = async (type: 'sfa' | 'wsq' | 'halal') => {
@@ -472,14 +512,36 @@ export default function CookOnboardingFlow() {
             ))}
           </>
         );
-      case 'menu':
+      case 'menu': {
+        const ingredientMatches = filterIngredientSuggestions(ingredientQuery, selectedIngredients);
+        const addCustom =
+          ingredientQuery.trim().length > 0 &&
+          !ingredientMatches.some((ing) => ing.toLowerCase() === ingredientQuery.trim().toLowerCase()) &&
+          !selectedIngredients.some((ing) => ing.toLowerCase() === ingredientQuery.trim().toLowerCase());
         return (
           <>
-            {draft.saved_dishes.length > 0 ? (
-              <p className="text-xs font-bold text-muted-foreground mb-2">
-                {draft.saved_dishes.length} dish{draft.saved_dishes.length === 1 ? '' : 'es'} saved
-              </p>
-            ) : null}
+            {draft.saved_dishes.map((dish, index) => (
+              <button
+                key={`${dish.dish_name}-${index}`}
+                type="button"
+                onClick={() => editSavedDish(index)}
+                className="mb-2 flex w-full items-center gap-3 rounded-2xl border border-black/10 bg-white p-3 text-left"
+                data-testid={`cook-onboarding-saved-dish-${index}`}
+              >
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#F0E4D8] text-lg font-extrabold">
+                  {(dish.dish_name || 'D').slice(0, 1).toUpperCase()}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-extrabold">{dish.dish_name}</span>
+                  <span className="block truncate text-xs font-semibold text-muted-foreground">
+                    {dish.dish_cuisine ? `${dish.dish_cuisine} · ` : ''}S${dish.dish_price}
+                  </span>
+                </span>
+                <span className="text-sm font-extrabold">Edit</span>
+              </button>
+            ))}
+            {formOpen ? (
+              <>
             <FieldLabel>Cuisine</FieldLabel>
             <ChipRow
               options={COOK_ONBOARDING_CUISINE_PRESETS}
@@ -522,21 +584,69 @@ export default function CookOnboardingFlow() {
               </p>
             ) : null}
             <FieldLabel>Ingredients</FieldLabel>
-            <button
-              type="button"
-              onClick={() => setIngredientOpen(true)}
-              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3.5 text-left text-sm font-semibold mb-2"
-              data-testid="cook-onboarding-ingredients-open"
-            >
-              {selectedIngredients.length ? selectedIngredients.join(', ') : 'Choose ingredients'}
-            </button>
-            <TextField
-              value={draft.dish_ingredients}
-              onChange={(dish_ingredients) => patch({ dish_ingredients })}
-              placeholder="Rice, coconut milk, sambal…"
-              testID="cook-onboarding-ingredients"
-              multiline
-            />
+            {selectedIngredients.length ? (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {selectedIngredients.map((ing) => (
+                  <button
+                    key={ing}
+                    type="button"
+                    className="rounded-full bg-[#1F3D2B] px-3 py-1.5 text-xs font-bold text-white"
+                    data-testid={`cook-onboarding-ingredient-${ing.replace(/\s+/g, '-').toLowerCase()}`}
+                    onClick={() =>
+                      patch({
+                        dish_ingredients: selectedIngredients.filter((i) => i !== ing).join(', '),
+                      })
+                    }
+                  >
+                    × {ing}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <div className="relative mb-2" data-testid="cook-onboarding-ingredients-open">
+              <TextField
+                value={ingredientQuery}
+                onChange={setIngredientQuery}
+                placeholder="Search ingredients"
+                testID="cook-onboarding-ingredients"
+              />
+              {ingredientQuery.trim() ? (
+                <ul className="absolute z-20 mt-[-6px] max-h-44 w-full overflow-auto rounded-2xl border border-black/10 bg-white shadow-lg">
+                  {ingredientMatches.map((ing) => (
+                    <li key={ing}>
+                      <button
+                        type="button"
+                        className="w-full px-4 py-2.5 text-left text-sm font-semibold"
+                        data-testid={`cook-onboarding-ingredient-suggest-${ing.replace(/\s+/g, '-').toLowerCase()}`}
+                        onClick={() => {
+                          patch({ dish_ingredients: [...selectedIngredients, ing].join(', ') });
+                          setIngredientQuery('');
+                        }}
+                      >
+                        {ing}
+                      </button>
+                    </li>
+                  ))}
+                  {addCustom ? (
+                    <li>
+                      <button
+                        type="button"
+                        className="w-full px-4 py-2.5 text-left text-sm font-semibold"
+                        data-testid="cook-onboarding-ingredient-custom"
+                        onClick={() => {
+                          patch({
+                            dish_ingredients: [...selectedIngredients, ingredientQuery.trim()].join(', '),
+                          });
+                          setIngredientQuery('');
+                        }}
+                      >
+                        Add “{ingredientQuery.trim()}”
+                      </button>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
+            </div>
             <FieldLabel>Brief description</FieldLabel>
             <TextField
               value={draft.dish_description}
@@ -579,55 +689,24 @@ export default function CookOnboardingFlow() {
               className="hidden"
               onChange={(e) => onPhotoPick(e.target.files?.[0])}
             />
-            <button
-              type="button"
+            <SHCButton
               onClick={() => dishInputRef.current?.click()}
-              className="w-full rounded-2xl border border-black/10 font-bold py-3 mb-2"
-              data-testid="cook-onboarding-dish-photo"
+              testID="cook-onboarding-dish-photo"
+              className="w-full mb-3"
             >
               {draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}
-            </button>
-            <button
-              type="button"
-              onClick={addAnotherDish}
-              className="w-full py-3 text-sm font-extrabold text-[var(--shc-primary,#F87048)]"
-              data-testid="cook-onboarding-add-dish"
-            >
-              Add another dish
-            </button>
-            {ingredientOpen ? (
-              <div className="fixed inset-0 z-50 bg-black/40 flex items-end" data-testid="cook-onboarding-ingredients-sheet">
-                <div className="w-full rounded-t-3xl bg-[#FFFBF7] p-5 pb-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-xl font-black">Add ingredient</p>
-                    <button type="button" onClick={() => setIngredientOpen(false)} data-testid="cook-onboarding-ingredients-close">
-                      ×
-                    </button>
-                  </div>
-                  <ChipRow
-                    options={COOK_ONBOARDING_INGREDIENT_SUGGESTIONS}
-                    value=""
-                    onChange={(ing) => {
-                      const next = selectedIngredients.includes(ing)
-                        ? selectedIngredients.filter((i) => i !== ing)
-                        : [...selectedIngredients, ing];
-                      patch({ dish_ingredients: next.join(', ') });
-                    }}
-                    testIDPrefix="cook-onboarding-ingredient"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIngredientOpen(false)}
-                    className="w-full min-h-[52px] rounded-full bg-[var(--shc-primary,#F87048)] text-white font-black"
-                    data-testid="cook-onboarding-ingredients-done"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
+            </SHCButton>
+            <SHCButton onClick={saveDishToMenu} testID="cook-onboarding-save-dish" className="w-full mb-2">
+              Save dish to menu
+            </SHCButton>
+              </>
             ) : null}
+            <SHCButton variant="ghost" onClick={addNewDish} testID="cook-onboarding-add-dish" className="w-full">
+              + Add new dish
+            </SHCButton>
           </>
         );
+      }
       default:
         return null;
     }

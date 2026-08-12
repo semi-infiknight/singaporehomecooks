@@ -12,6 +12,7 @@ import {
   updateRecipeStepRow,
   updateIngredientRow,
   defaultIngredientRow,
+  filterIngredientSuggestions,
   type MealOptionDraft,
   type RecipeStepDraft,
   type IngredientDraft,
@@ -153,27 +154,56 @@ export function SHCIngredientsEditor({
         Ingredient names only — families see the list, not amounts (we don&apos;t publish exact recipes).
       </Text>
       {rows.map((row, index) => (
-        <View key={`ingredient-${index}`} style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: shcSpacing.xs }}>
-          <TextInput
-            style={[fieldStyle, { flex: 1 }]}
-            value={row.name}
-            onChangeText={(text) => patchRows(updateIngredientRow(rows, index, { name: text }))}
-            placeholder="e.g. Coconut milk"
-            testID={`${testID}-name-${index}`}
-          />
-          <Pressable
-            onPress={() => patchRows(removeIngredientRow(rows, index))}
-            style={{
-              borderWidth: shcBorders.brutal,
-              borderColor: colors.border,
-              borderRadius: shcRadii.md,
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-            }}
-            testID={`${testID}-remove-${index}`}
-          >
-            <Text style={{ fontWeight: '800', color: colors.text }}>Remove</Text>
-          </Pressable>
+        <View key={`ingredient-${index}`} style={{ marginBottom: shcSpacing.xs }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TextInput
+              style={[fieldStyle, { flex: 1 }]}
+              value={row.name}
+              onChangeText={(text) => patchRows(updateIngredientRow(rows, index, { name: text }))}
+              placeholder="Search ingredients"
+              testID={`${testID}-name-${index}`}
+            />
+            <Pressable
+              onPress={() => patchRows(removeIngredientRow(rows, index))}
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: shcRadii.pill,
+                paddingHorizontal: 10,
+                paddingVertical: 8,
+                backgroundColor: colors.surface,
+              }}
+              testID={`${testID}-remove-${index}`}
+            >
+              <Text style={{ fontWeight: '800', color: colors.text }}>Remove</Text>
+            </Pressable>
+          </View>
+          {row.name.trim() ? (
+            <View
+              style={{
+                marginTop: 4,
+                backgroundColor: colors.surface,
+                borderRadius: shcRadii.lg,
+                borderWidth: 1,
+                borderColor: colors.borderLight,
+                overflow: 'hidden',
+              }}
+            >
+              {filterIngredientSuggestions(
+                row.name,
+                rows.map((r) => r.name).filter((n, i) => i !== index && n.trim())
+              ).map((ing) => (
+                <Pressable
+                  key={ing}
+                  onPress={() => patchRows(updateIngredientRow(rows, index, { name: ing }))}
+                  style={{ paddingHorizontal: 12, paddingVertical: 10 }}
+                  testID={`${testID}-suggest-${index}-${ing.replace(/\s+/g, '-').toLowerCase()}`}
+                >
+                  <Text style={{ fontWeight: '600', color: colors.text }}>{ing}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       ))}
       <SHCButton variant="outline" onPress={() => patchRows(addIngredientRow(rows))} testID={`${testID}-add`}>

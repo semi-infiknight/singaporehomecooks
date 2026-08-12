@@ -46,6 +46,19 @@ export async function hasSeenCookOnboarding(): Promise<boolean> {
   return legacy === 'true' || legacy === '1';
 }
 
+const onboardingSeenListeners = new Set<() => void>();
+
+export function subscribeCookOnboardingSeen(listener: () => void): () => void {
+  onboardingSeenListeners.add(listener);
+  return () => {
+    onboardingSeenListeners.delete(listener);
+  };
+}
+
+function notifyCookOnboardingSeen(): void {
+  onboardingSeenListeners.forEach((listener) => listener());
+}
+
 export async function markCookOnboardingSeen(): Promise<void> {
   await SecureStore.setItemAsync(COOK_ONBOARDING_SEEN_KEY, '1');
   await clearCookOnboardingDraft();
@@ -54,6 +67,7 @@ export async function markCookOnboardingSeen(): Promise<void> {
   } catch {
     /* ignore */
   }
+  notifyCookOnboardingSeen();
 }
 
 export async function clearCookOnboardingSeen(): Promise<void> {
@@ -63,4 +77,5 @@ export async function clearCookOnboardingSeen(): Promise<void> {
   } catch {
     /* ignore */
   }
+  notifyCookOnboardingSeen();
 }

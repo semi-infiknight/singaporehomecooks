@@ -4,7 +4,7 @@ A heritage home-cooked food marketplace for planned occasions — verified HDB c
 
 **Design system:** **Gourmeat** customer skin (Orbix Studio) + Neo-Brutalist cook app. Customer discover/checkout uses soft shadows, orange `#F87048`, floating dark nav.
 
-_Last updated: 2026-06-19 — Gourmeat Behance implementation + tri-platform sync._
+_Last updated: 2026-08-12 — pill CTAs (black + nested arrow) across web + mobile._
 
 ---
 
@@ -21,6 +21,7 @@ Reference: [Gourmeat Food APP UI/UX](https://www.behance.net/gallery/239040745/G
 | `gourmeat-primary` | `#F87048` | Add buttons, discounts, active tab, prices |
 | `gourmeat-nav` | `#1C1C1C` | Floating bottom tab bar |
 | `gourmeat-pay` | `#1C1C1C` | Pay Now / checkout CTA |
+| `cta-ink` | `#111111` | Pill primary buttons (label left, nested → well) |
 | `gourmeat-bg` | `#FAFAFA` | Discover background |
 | `gourmeat-surface` | `#FFFFFF` | Cards, search pill |
 | `gourmeat-text` | `#1C1C1C` | Headlines (“Hungry? Order & Eat.”) |

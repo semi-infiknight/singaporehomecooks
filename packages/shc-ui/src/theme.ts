@@ -40,6 +40,12 @@ export const shcColors = {
   warningDark: '#E65100',
   surfaceErrorAlt: '#FFEBEE',
   errorDark: '#C62828',
+  /** Pill CTA ink (Order now / Pay / Next) */
+  ctaInk: '#111111',
+  ctaInkPressed: '#2A2A2A',
+  ctaArrowWell: 'rgba(255,255,255,0.16)',
+  /** White pill over photos */
+  ctaHeroText: '#4A2410',
 };
 
 export const shcSpacing = {
@@ -99,6 +105,21 @@ export const shcShadows = {
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 1,
+  },
+  /** Soft elevation under pill CTAs (screenshots: Order now / Add more). */
+  ctaPill: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  ctaPillSoft: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
 };
 

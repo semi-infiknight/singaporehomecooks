@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { shcColors, shcSpacing, shcRadii, shcBorders, gourmeatColors, shcShadows } from './theme';
+import { SHCButton } from './primitives';
 
 const HERO_RATIO = 0.42;
 const HERO_RATIO_FORM = 0.22;
@@ -225,25 +226,15 @@ function SHCOnboardingHeroSplash({
       </View>
 
       <View style={[heroStyles.footer, { paddingBottom: Math.max(insets.bottom, shcSpacing.lg) }]}>
-        <Pressable
+        <SHCButton
+          variant="hero"
+          size="lg"
           onPress={onNext}
           disabled={disabled || loading}
           testID={nextTestID}
-          accessibilityRole="button"
-          accessibilityLabel={nextLabel}
         >
-          {({ pressed }) => (
-            <View
-              style={[
-                heroStyles.cta,
-                (disabled || loading) && heroStyles.ctaDisabled,
-                pressed && !disabled && !loading && heroStyles.ctaPressed,
-              ]}
-            >
-              <Text style={heroStyles.ctaText}>{loading ? 'Please wait…' : nextLabel || 'Continue'}</Text>
-            </View>
-          )}
-        </Pressable>
+          {loading ? 'Please wait…' : nextLabel || 'Continue'}
+        </SHCButton>
       </View>
     </View>
   );
@@ -419,25 +410,15 @@ export function SHCOnboardingFlowScreen({
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, shcSpacing.md) }]}>
-        <Pressable
+        <SHCButton
+          variant="primary"
+          size="lg"
           onPress={onNext}
           disabled={disabled || loading}
           testID={nextTestID}
-          accessibilityRole="button"
-          accessibilityLabel={nextLabel}
         >
-          {({ pressed }) => (
-            <View
-              style={[
-                styles.cta,
-                (disabled || loading) && styles.ctaDisabled,
-                pressed && !disabled && !loading && styles.ctaPressed,
-              ]}
-            >
-              <Text style={styles.ctaText}>{loading ? 'Please wait…' : nextLabel}</Text>
-            </View>
-          )}
-        </Pressable>
+          {loading ? 'Please wait…' : nextLabel}
+        </SHCButton>
 
         {onSecondary && secondaryLabel && !onBack ? (
           <Pressable

@@ -75,6 +75,8 @@
     --shc-offer-navy: #1E3A5F;
     --shc-rating-star: #F5A623;
     --shc-hero-cream: #FFF8F0;
+    --shc-cta-ink: #111111;
+    --shc-cta-hero-text: #4A2410;
     --shc-overlay-dark: rgba(36, 24, 18, 0.45);
     --shc-overlay-hero: rgba(36, 24, 18, 0.42);
     --shc-gourmeat-nav: #1C1C1C;
@@ -205,17 +207,71 @@ a {
 }
 
 /* Primary CTA — explicit vars (Tailwind bg-primary can fail to paint in some builds) */
+.shc-btn {
+  border: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
 .shc-btn-primary {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--shc-cta-ink, #111111);
+  color: #ffffff;
 }
 
 .shc-btn-primary:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: brightness(1.12);
 }
 
 .shc-btn-primary:disabled {
   opacity: 0.55;
+}
+
+.shc-btn-outline {
+  background-color: #ffffff;
+  color: var(--shc-cta-ink, #111111);
+  border: 1px solid var(--shc-cta-ink, #111111);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.shc-btn-ghost,
+.shc-btn-hero {
+  background-color: #ffffff;
+  color: var(--shc-cta-hero-text, #4A2410);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.shc-btn-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 1.75rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-weight: 300;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.28);
+}
+
+.shc-btn-arrow-sm {
+  min-width: 2rem;
+  height: 1.35rem;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.shc-btn-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--shc-cta-ink, #111111);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 .shc-chip-inactive {

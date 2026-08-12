@@ -110,7 +110,7 @@ Web mirrors: `CheckoutStepper`, `SearchResultsDropdown`, `HeritageStoryBanner`, 
 
 | Component | Purpose |
 |---|---|
-| `SHCButton` / `SHCButtonText` | Primary, outline, accent, ghost variants with brutal shadow press |
+| `SHCButton` / `SHCButtonText` | Pill CTAs: primary = black + nested → well; outline = white + check; ghost/hero = white + brown text. All sizes including `sm`. |
 | `SHCCard` | Default + `bento-mint` / `bento-peach` / `bento-yellow` variants |
 | `SHCBadge` | Status chips (`success`, `warning`, `error`, `warm`) — prefer **`SHCMetaBadge`** with semantic `kind` |
 | `SHCMetaBadge` | Product/ops chips — `kind` from `@shc/utils/badge-ux` maps to variant + label (cuisine → warm, price → warm, status → success/warning/error) |

@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-08-12 (cook onboarding: 9 screens + address search; header overlap fixed)
+**Last updated:** 2026-08-12 (cook onboarding completes to dashboard; pill CTAs; save-dish listing rows)
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 

@@ -3,9 +3,9 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,6 +34,15 @@ function SessionLoadingShell() {
 /** Expo Router 6 protected stacks — mirrors web CookLoginGate using useCookSessionGate. */
 function CookRootStack() {
   const gate = useCookSessionGate();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (gate.status !== 'ready') return;
+    if (segments.includes('onboarding')) {
+      router.replace('/(cook)/dashboard');
+    }
+  }, [gate.status, segments, router]);
 
   if (gate.status === 'loading') {
     return <SessionLoadingShell />;

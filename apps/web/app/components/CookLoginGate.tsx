@@ -48,8 +48,21 @@ export function CookLoginGate({ children }: { children: React.ReactNode }) {
     setOnboardingReady(true);
     if (!seen && !isOnboardingPath) {
       router.replace('/cook-portal/onboarding');
+    } else if (seen && isOnboardingPath) {
+      router.replace('/cook-portal/dashboard');
     }
   }, [loading, user, isOnboardingPath, router]);
+
+  useEffect(() => {
+    const onSeen = () => {
+      const seen = hasSeenCookOnboarding();
+      setNeedsOnboarding(!seen);
+      setOnboardingReady(true);
+      if (seen) router.replace('/cook-portal/dashboard');
+    };
+    window.addEventListener('shc-cook-onboarding-seen', onSeen);
+    return () => window.removeEventListener('shc-cook-onboarding-seen', onSeen);
+  }, [router]);
 
   const resetRegister = () => {
     setRegisterStep('details');

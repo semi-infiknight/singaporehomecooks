@@ -74,6 +74,7 @@ export function markCookOnboardingSeen(): void {
   try {
     localStorage.setItem(COOK_ONBOARDING_SEEN_KEY, '1');
     clearCookOnboardingDraft();
+    window.dispatchEvent(new Event('shc-cook-onboarding-seen'));
   } catch {
     /* ignore */
   }

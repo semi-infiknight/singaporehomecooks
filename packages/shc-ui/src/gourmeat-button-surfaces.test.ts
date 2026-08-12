@@ -30,7 +30,7 @@ describe('Gourmeat button surfaces (mobile-customer)', () => {
   it('GourmeatAddButton uses inner View backgroundColor', () => {
     const block = extractFunctionBlock(gourmeat, 'GourmeatAddButton', 'GourmeatDishCard');
     expectInnerViewBackground(block, 'GourmeatAddButton');
-    expect(block).toContain('gourmeatColors.primary');
+    expect(block).toContain('gourmeatColors.pay');
   });
 
   it('GourmeatStickyCartBar uses inner View with border and shadow', () => {
@@ -72,7 +72,7 @@ describe('Gourmeat button surfaces (mobile-customer)', () => {
     const addBlock = block.slice(addStart);
     expectInnerViewBackground(addBlock, 'GourmeatProductStickyBar add');
     expect(addBlock).toContain('testID="add-to-cart-btn"');
-    expect(addBlock).toContain('gourmeatColors.primary');
+    expect(addBlock).toContain('gourmeatColors.pay');
   });
 });
 
