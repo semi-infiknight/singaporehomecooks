@@ -224,23 +224,8 @@ export function SHCOnboardingFlowScreenWeb({
         ) : (
           <div className="w-[42px] shrink-0" />
         )}
-        <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="min-w-0 flex-1">
           <SHCOnboardingProgressBarWeb percent={percent} />
-          {totalSteps > 1 ? (
-            <div className="flex items-center justify-center gap-2.5">
-              <SHCOnboardingDotsWeb total={totalSteps} active={stepIndex} testID="onboarding-step-dots" />
-              <span className="text-[11px] font-extrabold text-muted-foreground">
-                {stepIndex + 1} of {totalSteps}
-              </span>
-            </div>
-          ) : null}
-          {chapterLabel ? (
-            <div className="flex justify-center">
-              <span className="rounded-full bg-[#FFE8DE] px-2.5 py-0.5 text-[11px] font-extrabold text-[var(--shc-primary,#F87048)]">
-                {chapterLabel}
-              </span>
-            </div>
-          ) : null}
         </div>
         {onSkip ? (
           <button
@@ -280,7 +265,7 @@ export function SHCOnboardingFlowScreenWeb({
         <SHCButton
           type="button"
           size="lg"
-          className="w-full min-h-[56px] rounded-2xl font-black shadow-md"
+          className="w-full min-h-[56px] rounded-full font-black shadow-md"
           onClick={onNext}
           disabled={disabled || loading}
           testID={nextTestID}

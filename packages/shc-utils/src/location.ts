@@ -171,6 +171,19 @@ export async function reverseGeocodeSingapore(lat: number, lng: number): Promise
   };
 }
 
+export function nearestSgAreaName(lat: number, lng: number): string {
+  let nearest = SG_AREA_CENTROIDS[0];
+  let bestKm = Infinity;
+  for (const a of SG_AREA_CENTROIDS) {
+    const d = haversineDistanceKm({ lat, lng }, a);
+    if (d < bestKm) {
+      bestKm = d;
+      nearest = a;
+    }
+  }
+  return nearest?.name ?? 'Singapore';
+}
+
 export function distanceToCookAreaKm(
   customer: { lat: number; lng: number },
   cookArea: string

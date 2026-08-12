@@ -378,24 +378,6 @@ export function SHCOnboardingFlowScreen({
         )}
         <View style={styles.headerCenter}>
           <SHCOnboardingProgressBar percent={percent} />
-          {/* Dots mirror “1 of N” — same language as marketing + profile wizards */}
-          {totalSteps > 1 ? (
-            <View style={styles.headerDotsWrap}>
-              <SHCOnboardingDots total={totalSteps} active={stepIndex} compact testID="onboarding-step-dots" />
-              <Text style={styles.stepOfLabel}>
-                {stepIndex + 1} of {totalSteps}
-              </Text>
-            </View>
-          ) : null}
-          {chapterLabel ? (
-            <View style={styles.chapterRow}>
-              <View style={styles.chapterPill}>
-                <Text style={styles.chapterLabel} numberOfLines={1}>
-                  {chapterLabel}
-                </Text>
-              </View>
-            </View>
-          ) : null}
         </View>
         {onSkip ? (
           <Pressable
@@ -490,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: shcSpacing.md,
-    paddingBottom: shcSpacing.sm,
+    paddingBottom: shcSpacing.md,
     gap: shcSpacing.sm,
     backgroundColor: '#FFFBF7',
   },
@@ -507,34 +489,7 @@ const styles = StyleSheet.create({
   },
   backIcon: { fontSize: 20, fontWeight: '800', color: shcColors.text },
   backPlaceholder: { width: 42 },
-  headerCenter: { flex: 1, gap: 6 },
-  headerDotsWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 2,
-  },
-  stepOfLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: shcColors.textLight,
-    letterSpacing: 0.2,
-  },
-  chapterRow: { alignItems: 'center' },
-  chapterPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: shcRadii.pill,
-    backgroundColor: '#FFE8DE',
-  },
-  chapterLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: gourmeatColors.primary || shcColors.primary,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
+  headerCenter: { flex: 1, justifyContent: 'center' },
   skipHeaderBtn: {
     paddingHorizontal: shcSpacing.sm,
     paddingVertical: 8,
@@ -663,7 +618,7 @@ const styles = StyleSheet.create({
   },
   cta: {
     backgroundColor: gourmeatColors.primary || shcColors.primary,
-    borderRadius: shcRadii.lg,
+    borderRadius: 999,
     minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',

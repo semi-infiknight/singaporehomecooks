@@ -3,9 +3,9 @@ import type { CookOnboardingDraft, CookOnboardingStepId } from '@shc/utils';
 
 export const ONBOARDING_SEEN_KEY = 'shc_onboarding_seen_v1';
 
-/** Cook portal onboarding v2 — full kitchen setup wizard. */
+/** Cook portal onboarding v4 screens; seen flag stays v3 so live cooks are not re-prompted. */
 export const COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen_v3';
-export const COOK_ONBOARDING_DRAFT_KEY = 'shc_cook_onboarding_draft_v4';
+export const COOK_ONBOARDING_DRAFT_KEY = 'shc_cook_onboarding_draft_v5';
 
 export type SavedCookOnboardingState = {
   stepId: CookOnboardingStepId;

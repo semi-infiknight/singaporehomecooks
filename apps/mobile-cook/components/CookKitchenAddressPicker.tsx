@@ -1,115 +1,176 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { LocationPickerExperience } from '@shc/ui/location-ux';
-import { shcColors, shcSpacing, SHCCard } from '@shc/ui';
-import { useSingaporeAddressPicker } from '../lib/use-singapore-address-picker';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { shcColors, shcSpacing, SHCIcon } from '@shc/ui';
+import {
+  formatLocationLabel,
+  nearestSgAreaName,
+  searchSingaporeAddresses,
+  type AddressSearchResult,
+} from '@shc/utils';
 
 type Props = {
   kitchenAddress: string;
-  collectionInstructions: string;
-  /** Neighbourhood already chosen in onboarding — shown as hint, not re-picked. */
-  areaHint?: string;
-  onConfirm: (patch: { kitchen_address: string; collection_instructions?: string }) => void;
+  onConfirm: (patch: { kitchen_address: string; area?: string }) => void;
   testID?: string;
 };
 
-/** Swiggy-style SG address search + map pin — cook kitchen collection point. */
+/** Type-to-search Singapore addresses — OneMap results in a dropdown, tap to pin the exact block. */
 export function CookKitchenAddressPicker({
   kitchenAddress,
-  collectionInstructions,
-  areaHint,
   onConfirm,
   testID = 'cook-kitchen-address-picker',
 }: Props) {
-  const picker = useSingaporeAddressPicker();
-  const [showPicker, setShowPicker] = React.useState(() => !kitchenAddress.trim());
+  const [query, setQuery] = useState(kitchenAddress);
+  const [results, setResults] = useState<AddressSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  React.useEffect(() => {
-    if (!kitchenAddress.trim()) setShowPicker(true);
-  }, [kitchenAddress]);
+  const runSearch = useCallback(async (q: string) => {
+    if (q.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      setResults(await searchSingaporeAddresses(q.trim()));
+    } finally {
+      setSearching(false);
+    }
+  }, []);
 
-  const showSummary = !showPicker && kitchenAddress.trim().length >= 8;
+  useEffect(() => {
+    const q = query.trim();
+    const t = setTimeout(() => {
+      if (/^\d{6}$/.test(q) || q.length >= 3) void runSearch(q);
+      else setResults([]);
+    }, /^\d{6}$/.test(q) ? 100 : 350);
+    return () => clearTimeout(t);
+  }, [query, runSearch]);
 
-  if (showSummary) {
-    return (
-      <View testID={testID}>
-        <SHCCard variant="bento-peach" style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Kitchen address</Text>
-          <Text style={styles.summaryText}>{kitchenAddress}</Text>
-          {collectionInstructions ? (
-            <Text style={styles.summaryHint}>{collectionInstructions}</Text>
-          ) : null}
-        </SHCCard>
-        <Pressable
-          onPress={() => {
-            setShowPicker(true);
-            picker.setStep(1);
-          }}
-          testID="cook-kitchen-address-change"
-        >
-          <Text style={styles.changeLink}>Change address on map</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const select = (r: AddressSearchResult) => {
+    const kitchen_address = formatLocationLabel({
+      line1: r.line1,
+      postal_code: r.postal_code,
+    });
+    setQuery(kitchen_address);
+    setOpen(false);
+    setResults([]);
+    onConfirm({
+      kitchen_address,
+      area: nearestSgAreaName(r.lat, r.lng),
+    });
+  };
 
   return (
-    <View testID={testID} style={styles.pickerWrap}>
-      <LocationPickerExperience
-        embedded
-        uiVariant="swiggy"
-        showSavedAddresses={false}
-        showQuickPick={false}
-        areaHint={areaHint}
-        confirmLabel="Confirm & proceed"
-        step={picker.step}
-        onStepChange={picker.setStep}
-        query={picker.query}
-        onQueryChange={picker.setQuery}
-        results={picker.results}
-        searching={picker.searching}
-        onSearch={picker.runSearch}
-        saved={[]}
-        onSelectSaved={() => undefined}
-        onUseCurrentLocation={picker.onUseGps}
-        locating={picker.locating}
-        draft={picker.draft}
-        onDraftChange={picker.onDraftChange}
-        onSelectResult={picker.onSelectResult}
-        onConfirm={() => {
-          const next = picker.buildConfirmedAddress();
-          if (!next) return;
-          onConfirm({
-            kitchen_address: next.kitchen_address,
-            collection_instructions: next.collection_instructions ?? collectionInstructions,
-          });
-          picker.resetPicker();
-          setShowPicker(false);
-        }}
-        busy={picker.busy}
-        onNudgePin={picker.onPinMove}
-        onPinDrag={picker.onPinDrag}
-        searchNotice={picker.searchNotice}
-        testID={`${testID}-flow`}
-      />
+    <View testID={testID} style={styles.wrap}>
+      <View style={styles.searchWrap}>
+        <View style={styles.searchIcon}>
+          <SHCIcon name="search" size={18} color={shcColors.textLight} />
+        </View>
+        <TextInput
+          value={query}
+          onChangeText={(t) => {
+            setQuery(t);
+            setOpen(true);
+            onConfirm({ kitchen_address: t });
+          }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search block, street, or postal code"
+          placeholderTextColor={shcColors.textLight}
+          style={styles.searchInput}
+          testID="location-search-input"
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {query.length > 0 ? (
+          <Pressable
+            onPress={() => {
+              setQuery('');
+              setResults([]);
+              onConfirm({ kitchen_address: '' });
+            }}
+            hitSlop={8}
+            testID="location-search-clear"
+            style={styles.clearBtn}
+          >
+            <Text style={styles.clearText}>×</Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      {searching ? <ActivityIndicator color={shcColors.primary} style={{ marginVertical: 8 }} /> : null}
+
+      {open && results.length > 0 ? (
+        <View style={styles.dropdown} testID={`${testID}-results`}>
+          {results.map((r) => (
+            <Pressable
+              key={r.id}
+              onPress={() => select(r)}
+              testID={`location-result-${r.id}`}
+              style={styles.resultRow}
+            >
+              <View style={styles.resultIcon}>
+                <SHCIcon name="location" size={16} color={shcColors.textLight} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.resultTitle}>{r.title}</Text>
+                <Text style={styles.resultSub}>{r.subtitle}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pickerWrap: { minHeight: 520, marginBottom: shcSpacing.sm },
-  summaryCard: { marginBottom: shcSpacing.sm },
-  summaryLabel: { fontSize: 11, fontWeight: '800', color: shcColors.textLight, marginBottom: 4 },
-  summaryText: { fontSize: 15, fontWeight: '800', color: shcColors.text, lineHeight: 22 },
-  summaryHint: { fontSize: 12, fontWeight: '600', color: shcColors.textLight, marginTop: 6 },
-  changeLink: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: shcColors.primary,
-    marginTop: shcSpacing.xs,
-    marginBottom: shcSpacing.md,
+  wrap: { marginBottom: shcSpacing.sm, zIndex: 4 },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: shcColors.text,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    minHeight: 56,
   },
-  previewCard: { marginTop: shcSpacing.sm },
-  previewLabel: { fontSize: 11, fontWeight: '800', color: shcColors.textLight, marginBottom: 4 },
-  previewText: { fontSize: 13, fontWeight: '700', color: shcColors.text },
+  searchIcon: { paddingLeft: shcSpacing.md },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    fontWeight: '600',
+    color: shcColors.text,
+  },
+  clearBtn: { paddingRight: shcSpacing.md },
+  clearText: { fontSize: 22, fontWeight: '700', color: shcColors.textLight },
+  dropdown: {
+    marginTop: 8,
+    borderWidth: 1.5,
+    borderColor: 'rgba(36,24,18,0.12)',
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+  },
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: shcSpacing.md,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(36,24,18,0.08)',
+  },
+  resultIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFF5F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultTitle: { fontWeight: '800', fontSize: 14, color: shcColors.text },
+  resultSub: { fontSize: 12, color: shcColors.textLight, marginTop: 2, lineHeight: 17 },
 });

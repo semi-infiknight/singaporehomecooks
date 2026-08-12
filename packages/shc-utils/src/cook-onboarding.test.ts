@@ -3,53 +3,80 @@ import {
   COOK_ONBOARDING_STEPS,
   createEmptyCookOnboardingDraft,
   validateCookOnboardingStep,
+  validateCookOnboardingDish,
   buildCookOnboardingProfilePayload,
   buildCookOnboardingFirstListingPayload,
   cookOnboardingChapterProgress,
   cookOnboardingNextStep,
   cookOnboardingPrevStep,
-  cookOnboardingChapterDotProgress,
   cookOnboardingLinearProgress,
+  coerceCookOnboardingStepId,
+  cookOnboardingCookTakeHome,
+  collectCookOnboardingDishes,
 } from './cook-onboarding';
 
 describe('cook-onboarding steps', () => {
-  it('has welcome and complete bookends (Notion Flow order)', () => {
-    expect(COOK_ONBOARDING_STEPS[0]?.id).toBe('welcome');
-    expect(COOK_ONBOARDING_STEPS.at(-1)?.id).toBe('complete');
-    expect(COOK_ONBOARDING_STEPS.length).toBe(26);
-    expect(COOK_ONBOARDING_STEPS[1]?.id).toBe('area');
-    expect(COOK_ONBOARDING_STEPS[2]?.id).toBe('paynow');
-    expect(COOK_ONBOARDING_STEPS.find((s) => s.id === 'mobile')).toBeUndefined();
-    expect(COOK_ONBOARDING_STEPS.find((s) => s.id === 'kitchen_address')?.chapter).toBe('identity');
-    expect(COOK_ONBOARDING_STEPS.find((s) => s.id === 'menu_cuisine')).toBeTruthy();
+  it('is a 9-screen kitchen-to-menu flow', () => {
+    expect(COOK_ONBOARDING_STEPS.map((s) => s.id)).toEqual([
+      'kitchen',
+      'paynow',
+      'legal',
+      'responsible_person',
+      'nric_fin',
+      'alternate_contact',
+      'halal',
+      'certificates',
+      'menu',
+    ]);
+    expect(COOK_ONBOARDING_STEPS[0]?.id).toBe('kitchen');
+    expect(COOK_ONBOARDING_STEPS.at(-1)?.id).toBe('menu');
+    expect(COOK_ONBOARDING_STEPS.length).toBe(9);
   });
 
-  it('validates paynow from WhatsApp when same-as toggle is on', () => {
-    const draft = createEmptyCookOnboardingDraft();
-    draft.whatsapp_same = true;
-    draft.contact_mobile = '91234567';
-    draft.paynow_mobile = '';
-    draft.paynow_mobile_confirm = '';
-    expect(validateCookOnboardingStep('paynow', draft).ok).toBe(true);
+  it('coerces stale draft step ids onto kitchen', () => {
+    expect(coerceCookOnboardingStepId('welcome')).toBe('kitchen');
+    expect(coerceCookOnboardingStepId('menu')).toBe('menu');
   });
 
-  it('validates paynow same-as when only prefilled paynow fields exist', () => {
+  it('validates kitchen name + selected address together', () => {
     const draft = createEmptyCookOnboardingDraft();
-    draft.whatsapp_same = true;
-    draft.contact_mobile = '';
-    draft.paynow_mobile = '91234567';
-    draft.paynow_mobile_confirm = '91234567';
-    expect(validateCookOnboardingStep('paynow', draft).ok).toBe(true);
+    expect(validateCookOnboardingStep('kitchen', draft).ok).toBe(false);
+    draft.display_name = 'Auntie Rose';
+    draft.kitchen_address = 'Blk 88 Tampines Street 1';
+    expect(validateCookOnboardingStep('kitchen', draft).ok).toBe(true);
   });
 
   it('validates paynow confirm match', () => {
     const draft = createEmptyCookOnboardingDraft();
-    draft.whatsapp_same = false;
     draft.paynow_mobile = '91234567';
     draft.paynow_mobile_confirm = '91234568';
     expect(validateCookOnboardingStep('paynow', draft).ok).toBe(false);
     draft.paynow_mobile_confirm = '91234567';
     expect(validateCookOnboardingStep('paynow', draft).ok).toBe(true);
+  });
+
+  it('lets cooks skip the menu card with no dish filled', () => {
+    const draft = createEmptyCookOnboardingDraft();
+    expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
+  });
+
+  it('validates a filled menu card before publish', () => {
+    const draft = createEmptyCookOnboardingDraft();
+    draft.dish_name = 'Nasi';
+    expect(validateCookOnboardingStep('menu', draft).ok).toBe(false);
+    draft.dish_cuisine = 'Malay';
+    draft.dish_name = 'Nasi Lemak';
+    draft.dish_price = '12';
+    draft.dish_ingredients = 'Rice, sambal';
+    draft.dish_description = 'Coconut rice with sambal';
+    expect(validateCookOnboardingDish(draft).ok).toBe(true);
+    expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
+  });
+
+  it('shows cook take-home after the 15% cut', () => {
+    const preview = cookOnboardingCookTakeHome(12);
+    expect(preview?.cook).toBe(10.2);
+    expect(preview?.fee).toBe(1.8);
   });
 
   it('builds profile payload with onboarding completion', () => {
@@ -78,25 +105,24 @@ describe('cook-onboarding steps', () => {
       { name: 'sambal', quantity: 1, unit: 'serving' },
     ]);
     expect(payload.min_qty).toBe(5);
+    expect(collectCookOnboardingDishes(draft)).toHaveLength(1);
   });
 
   it('reports chapter progress', () => {
     const p = cookOnboardingChapterProgress('paynow');
     expect(p.chapterLabel).toBe('Get paid');
-    expect(p.overallStep).toBeGreaterThan(1);
+    expect(p.overallStep).toBe(2);
   });
 
-  it('goes area → paynow after phone auth (no mobile steps in wizard)', () => {
-    expect(cookOnboardingNextStep('area')).toBe('paynow');
-    expect(cookOnboardingPrevStep('paynow')).toBe('area');
+  it('goes kitchen → paynow', () => {
+    expect(cookOnboardingNextStep('kitchen')).toBe('paynow');
+    expect(cookOnboardingPrevStep('paynow')).toBe('kitchen');
   });
 
-  it('supports back navigation, chapter dots, and linear progress', () => {
-    const dots = cookOnboardingChapterDotProgress('menu_cuisine');
-    expect(dots.totalChapters).toBe(8);
-    expect(dots.percentComplete).toBeGreaterThan(50);
-    const linear = cookOnboardingLinearProgress('menu_cuisine');
-    expect(linear.total).toBe(26);
-    expect(linear.percent).toBeGreaterThan(50);
+  it('tracks linear progress across 9 screens', () => {
+    const linear = cookOnboardingLinearProgress('menu');
+    expect(linear.total).toBe(9);
+    expect(linear.current).toBe(9);
+    expect(linear.percent).toBe(100);
   });
 });

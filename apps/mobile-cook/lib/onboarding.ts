@@ -1,9 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 import type { CookOnboardingDraft, CookOnboardingStepId } from '@shc/utils';
 
-/** Cook onboarding v3 — Notion Flow order, one screen per step. */
+/** Cook onboarding v4 screens; seen flag stays v3 so live cooks are not re-prompted. */
 export const COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen_v3';
-export const COOK_ONBOARDING_DRAFT_KEY = 'shc_cook_onboarding_draft_v4';
+export const COOK_ONBOARDING_DRAFT_KEY = 'shc_cook_onboarding_draft_v5';
 const LEGACY_COOK_ONBOARDING_SEEN_KEY = 'shc_cook_onboarding_seen';
 
 export type SavedCookOnboardingState = {

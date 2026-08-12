@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-08-10 (pre–App Store E2E gate: verify:ci green; guest Orders; maxCal slider; occasions/notif inbox removed; medusa register/listing tests aligned)
+**Last updated:** 2026-08-12 (cook onboarding: 9 screens + address search; header overlap fixed)
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 
@@ -139,6 +139,7 @@ Web cook portal uses separate `useCookAuth` + `cook-api-client.ts` under `/cook-
 ### Cook app
 
 - Tabs: dashboard, orders, listings, compliance (+ hidden settings, batches, tiffin, earnings, order detail).
+- **Onboarding (2026-08-12):** 9 screens — kitchen name + OneMap address search, PayNow (enter twice), PDPA/terms, legal name, NRIC last 4, alternate contact, halal, skippable certificates, menu card (add more or finish later). Header is back + progress bar only (no stacked dots / “step of 26”).
 - **Dashboard:** bento quick actions; **no** notification bell; **no** collapsible notif panel.
 - **Listings:** nested stack; order-window fields on create/edit; empty form on new wizard.
 - Settings: pause, collection address/instructions/time slots, avatar/hero, **push toggle** (not inbox link); `SHCCookAreaPicker`.

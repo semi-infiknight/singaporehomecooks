@@ -14,6 +14,7 @@ import {
   buildOsmStaticMapUrl,
   buildOsmTileUrl,
   getOsmTileGrid,
+  nearestSgAreaName,
 } from './location';
 
 describe('location utils', () => {
@@ -26,6 +27,10 @@ describe('location utils', () => {
   it('validates Singapore bounds', () => {
     expect(isWithinSingapore(1.3, 103.8)).toBe(true);
     expect(isWithinSingapore(2, 103.8)).toBe(false);
+  });
+
+  it('maps Tampines coords to the Tampines area', () => {
+    expect(nearestSgAreaName(1.3521, 103.9448)).toBe('Tampines');
   });
 
   it('rejects coordinates outside Singapore', () => {

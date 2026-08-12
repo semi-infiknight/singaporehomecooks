@@ -26,31 +26,28 @@ appId: com.singaporehomecooks.cook
         id: "cook-onboarding-screen"
     commands:
       - tapOn:
-          id: "cook-onboarding-next-btn"
-      - tapOn:
-          id: "cook-onboarding-story-input"
+          id: "cook-onboarding-cook-name"
+          optional: true
       - inputText: "Railway E2E kitchen"
-      - tapOn: "Your heritage story"
-      - tapOn:
-          id: "cook-onboarding-next-btn"
-      - extendedWaitUntil:
-          visible:
-            id: "cook-onboarding-collection-input"
-          timeout: 15000
-      - tapOn:
-          id: "cook-onboarding-collection-input"
-      - inputText: "Block 123 lift lobby"
-      - tapOn: "Collection instructions"
-      - tapOn:
-          id: "cook-onboarding-next-btn"
-      - extendedWaitUntil:
-          visible:
-            id: "cook-onboarding-pdpa-checkbox"
-          timeout: 15000
+        optional: true
       - tapOn:
           id: "cook-onboarding-pdpa-checkbox"
+          optional: true
       - tapOn:
-          id: "cook-onboarding-finish-btn"
+          id: "cook-onboarding-terms-checkbox"
+          optional: true
+      - repeat:
+          times: 10
+          commands:
+            - tapOn:
+                id: "cook-onboarding-skip-btn"
+                optional: true
+            - tapOn:
+                id: "cook-onboarding-next-btn"
+                optional: true
+            - tapOn:
+                id: "cook-onboarding-finish-btn"
+                optional: true
 - extendedWaitUntil:
     visible:
       id: "cook-dashboard"

@@ -1,4 +1,4 @@
-# Sign up → navigate to kitchen address step (step 9)
+# Sign up → kitchen name + address search (step 1)
 # Run: maestro test -e COOK_MOBILE=90025225 apps/mobile-cook/e2e/cook-to-kitchen-address.yaml
 appId: com.singaporehomecooks.cook
 env:
@@ -26,45 +26,7 @@ env:
     id: "auth-submit-btn"
 - extendedWaitUntil:
     visible:
-      id: "cook-onboarding-screen"
-    timeout: 90000
-# welcome → area
-- tapOn:
-    id: "cook-onboarding-next-btn"
-- tapOn:
-    id: "cook-onboarding-area-input"
-- inputText: "Tampines"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-# paynow (same as WhatsApp prefilled)
-- tapOn:
-    id: "cook-onboarding-next-btn"
-# legal
-- tapOn:
-    id: "cook-onboarding-pdpa-checkbox"
-- tapOn:
-    id: "cook-onboarding-terms-checkbox"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-# profile photo — skip
-- tapOn:
-    id: "cook-onboarding-skip-btn"
-# responsible person
-- tapOn:
-    id: "cook-onboarding-responsible-name"
-- inputText: "Test Cook"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-# nric
-- tapOn:
-    id: "cook-onboarding-nric"
-- inputText: "123B"
-- tapOn:
-    id: "cook-onboarding-next-btn"
-# alternate contact — skip
-- tapOn:
-    id: "cook-onboarding-skip-btn"
-- extendedWaitUntil:
-    visible:
       id: "cook-onboarding-kitchen-address"
-    timeout: 15000
+    timeout: 90000
+- tapOn:
+    id: "location-search-input"

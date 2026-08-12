@@ -253,13 +253,8 @@ export default function CookSettingsScreen() {
         <Text style={styles.fieldLabel}>HDB address</Text>
         <CookKitchenAddressPicker
           kitchenAddress={collectionAddress}
-          collectionInstructions={collectionInstructions}
-          areaHint={area || profile?.area || undefined}
-          onConfirm={({ kitchen_address, collection_instructions }) => {
+          onConfirm={({ kitchen_address }) => {
             setCollectionAddress(kitchen_address);
-            if (collection_instructions !== undefined) {
-              setCollectionInstructions(collection_instructions);
-            }
           }}
           testID="cook-settings-address"
         />

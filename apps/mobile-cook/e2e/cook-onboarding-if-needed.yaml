@@ -1,4 +1,4 @@
-# Dismiss multi-step cook onboarding when shown after login (rose@ first launch on clearState).
+# Dismiss cook onboarding when shown after login (rose@ first launch on clearState).
 appId: com.singaporehomecooks.cook
 ---
 - runFlow:
@@ -7,20 +7,20 @@ appId: com.singaporehomecooks.cook
         id: "cook-onboarding-screen"
     commands:
       - tapOn:
-          id: "cook-onboarding-next-btn"
-      - tapOn:
-          id: "cook-onboarding-next-btn"
-      - tapOn:
-          id: "cook-onboarding-next-btn"
-      - extendedWaitUntil:
-          visible: "Safety & PDPA"
-          timeout: 15000
-      - scrollUntilVisible:
-          element:
-            id: "cook-onboarding-pdpa-checkbox"
-          direction: DOWN
-          timeout: 20000
-      - tapOn:
           id: "cook-onboarding-pdpa-checkbox"
+          optional: true
       - tapOn:
-          id: "cook-onboarding-finish-btn"
+          id: "cook-onboarding-terms-checkbox"
+          optional: true
+      - repeat:
+          times: 10
+          commands:
+            - tapOn:
+                id: "cook-onboarding-skip-btn"
+                optional: true
+            - tapOn:
+                id: "cook-onboarding-next-btn"
+                optional: true
+            - tapOn:
+                id: "cook-onboarding-finish-btn"
+                optional: true

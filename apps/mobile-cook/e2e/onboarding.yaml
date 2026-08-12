@@ -28,7 +28,7 @@ appId: com.singaporehomecooks.cook
       id: "cook-onboarding-screen"
     timeout: 60000
 - repeat:
-    times: 24
+    times: 8
     commands:
       - tapOn:
           id: "cook-onboarding-next-btn"

@@ -29,10 +29,8 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('cook-onboarding-next-btn');
     expect(src).toContain('cook-onboarding-finish-btn');
     expect(src).toContain('cook-onboarding-kitchen-address');
-    expect(src).toContain('cook-onboarding-collection-input');
     expect(src).toContain('cook-onboarding-pdpa-checkbox');
     expect(src).toContain('cook-onboarding-back-btn');
-    expect(src).toContain('variant={isWelcome ? \'hero\' : \'default\'}');
     expect(src).toContain('COOK_ONBOARDING_STEPS');
   });
 
@@ -47,9 +45,10 @@ describe('HomelyEats-style onboarding shell', () => {
     expect(src).toContain('customer-onboarding-name');
   });
 
-  it('flow screen shows step dots for multi-step wizards', () => {
+  it('flow screen keeps a single progress bar in the header', () => {
     const src = readFileSync(ONBOARDING_UX, 'utf8');
-    expect(src).toContain('onboarding-step-dots');
-    expect(src).toContain('of {totalSteps}');
+    expect(src).toContain('SHCOnboardingProgressBar');
+    expect(src).not.toContain('onboarding-step-dots');
+    expect(src).not.toContain('of {totalSteps}');
   });
 });
