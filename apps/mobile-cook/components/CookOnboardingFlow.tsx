@@ -57,7 +57,7 @@ import {
 } from '../lib/api-client';
 import { loadCookSignupMobile } from '../lib/cook-signup-mobile';
 import { CookKitchenAddressPicker } from './CookKitchenAddressPicker';
-import { pickCookMediaImage, uploadCookMediaImage } from '../lib/cook-media-upload';
+import { CookListingPhotoPanel } from './CookListingPhotoPanel';
 import { pickComplianceCertificate, uploadComplianceCertificate } from '../lib/compliance-upload';
 
 const IMAGE_BY_KEY: Record<string, string> = {
@@ -172,7 +172,6 @@ export default function CookOnboardingFlow() {
   const [stepId, setStepId] = useState<CookOnboardingStepId>('kitchen');
   const [draft, setDraft] = useState<CookOnboardingDraft>(createEmptyCookOnboardingDraft);
   const [busy, setBusy] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ dish_image_url?: string }>({});
   const [draftReady, setDraftReady] = useState(false);
   const [ingredientQuery, setIngredientQuery] = useState('');
@@ -406,29 +405,6 @@ export default function CookOnboardingFlow() {
     } catch (e) {
       Alert.alert('Upload', (e as Error).message);
     } finally {
-      setBusy(false);
-    }
-  };
-
-  const pickPhoto = async () => {
-    const cookId = getCurrentUser()?.id;
-    if (!cookId) {
-      Alert.alert('Photo', 'Sign in again to upload photos.');
-      return;
-    }
-    setUploadingPhoto(true);
-    setBusy(true);
-    try {
-      const file = await pickCookMediaImage();
-      if (!file) return;
-      if (file.uri) setMediaPreview({ dish_image_url: file.uri });
-      const uploaded = await uploadCookMediaImage(cookId, 'hero', file);
-      patch({ dish_image_url: uploaded.key });
-      if (uploaded.url) setMediaPreview({ dish_image_url: uploaded.url });
-    } catch (e) {
-      Alert.alert('Photo', (e as Error).message);
-    } finally {
-      setUploadingPhoto(false);
       setBusy(false);
     }
   };
@@ -746,13 +722,17 @@ export default function CookOnboardingFlow() {
               onChange={(v) => patch({ dish_available: v === 'yes' })}
               testIDPrefix="cook-onboarding-dish-available"
             />
-            <FieldLabel>Photo of dish</FieldLabel>
-            {dishUri ? <Image source={{ uri: dishUri }} style={styles.dishPhoto} /> : null}
-            <SHCButton onPress={pickPhoto} testID="cook-onboarding-dish-photo" disabled={uploadingPhoto}>
-              <SHCButtonText>
-                {uploadingPhoto ? 'Uploading…' : dishUri || draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}
-              </SHCButtonText>
-            </SHCButton>
+            <View testID="cook-onboarding-dish-photo">
+              <CookListingPhotoPanel
+                dishName={draft.dish_name}
+                cuisine={draft.dish_cuisine}
+                imageUrl={draft.dish_image_url || dishUri || null}
+                onImageUrl={(url) => {
+                  patch({ dish_image_url: url });
+                  setMediaPreview({ dish_image_url: url });
+                }}
+              />
+            </View>
             <View style={{ marginTop: shcSpacing.md }}>
               <SHCButton onPress={saveDishToMenu} testID="cook-onboarding-save-dish">
                 <SHCButtonText>Save dish to menu</SHCButtonText>

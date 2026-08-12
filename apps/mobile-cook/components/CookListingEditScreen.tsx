@@ -58,6 +58,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
+import { CookListingPhotoPanel } from './CookListingPhotoPanel';
 
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
 
@@ -525,40 +526,12 @@ export function CookListingEditScreen({
         </SectionCard>
 
         <SectionCard title="Dish photo">
-          <View style={styles.photoPanel} testID="listing-photo-panel">
-            {listingImageUrl ? (
-              <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
-            ) : (
-              <SHCFoodImage uri={previewImage} height={140} rounded={shcRadii.md} testID="listing-photo-preview" />
-            )}
-            <View style={styles.photoActions}>
-              <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-upload" onPress={() => void polishFromPicker('upload')}>
-                <SHCButtonText>Upload</SHCButtonText>
-              </SHCButton>
-              <SHCButton variant="outline" disabled={aiPhotoBusy} testID="listing-photo-brighten" onPress={() => void polishFromPicker('brighten')}>
-                <SHCButtonText>Brighten</SHCButtonText>
-              </SHCButton>
-              <SHCButton variant="outline" disabled={aiPhotoBusy || !name.trim() || !generateAvailable} testID="listing-photo-generate" onPress={() => void runGenerateAi()}>
-                <SHCButtonText>{aiPhotoBusy ? '…' : 'Generate AI'}</SHCButtonText>
-              </SHCButton>
-            </View>
-            {aiPhotoNote ? <Text style={styles.photoNote}>{aiPhotoNote}</Text> : null}
-          </View>
-          <Pressable
-            onPress={async () => {
-              openTray(
-                { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
-                <ScrollView>
-                  <PhotoTipsModalContent onClose={dismiss} />
-                </ScrollView>
-              );
-            }}
-            testID="photo-tips-btn"
-            style={styles.photoTipsBtn}
-          >
-            <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-            <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
-          </Pressable>
+          <CookListingPhotoPanel
+            dishName={name}
+            cuisine={cuisine}
+            imageUrl={listingImageUrl}
+            onImageUrl={setListingImageUrl}
+          />
         </SectionCard>
 
         <SectionCard title="Meal options">

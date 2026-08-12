@@ -17,7 +17,6 @@ import {
   SHCIcon,
   gourmeatColors,
   shcColors,
-  PhotoTipsModalContent,
   useSHCTray,
   SHCTrayAction,
   SHCWizardPane,
@@ -62,25 +61,16 @@ import {
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  getPhotoTips,
   createCookListing,
   updateCookListing,
-  generateListingImage,
   getAiImageStatus,
   estimateCaloriesAI,
 } from '../lib/api-client';
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
+import { CookListingPhotoPanel } from './CookListingPhotoPanel';
 const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
-
-async function loadImagePicker(): Promise<typeof import('expo-image-picker') | null> {
-  try {
-    return await import('expo-image-picker');
-  } catch {
-    return null;
-  }
-}
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -175,8 +165,6 @@ export function CookListingWizardScreen({
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<{ calories: number; confidence?: string; source?: string } | null>(null);
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
-  const [aiPhotoBusy, setAiPhotoBusy] = useState(false);
-  const [aiPhotoNote, setAiPhotoNote] = useState<string | null>(null);
   const [aiImageStatus, setAiImageStatus] = useState<{
     configured?: boolean;
     generate_available?: boolean;
@@ -231,10 +219,6 @@ export function CookListingWizardScreen({
   const cuisinePresets = aiImageStatus?.cuisine_presets?.length
     ? aiImageStatus.cuisine_presets
     : DEFAULT_CUISINE_PRESETS;
-  const generateAvailable = aiImageStatus?.generate_available === true || aiImageStatus?.configured === true;
-  const generateBlockedReason =
-    aiImageStatus?.generate_unavailable_reason ||
-    (!generateAvailable && aiImageStatus ? 'AI generate offline — upload a kitchen photo' : null);
 
   const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
 
@@ -247,101 +231,6 @@ export function CookListingWizardScreen({
     },
     [dismiss, openTray]
   );
-
-  const pickImageBase64 = async (): Promise<string | null> => {
-    const ImagePicker = await loadImagePicker();
-    if (!ImagePicker?.requestMediaLibraryPermissionsAsync) {
-      showErrorTray(
-        'Photo library needs app rebuild',
-        'Generate AI still works. For Upload/Brighten, rebuild the cook app (native ImagePicker module missing).'
-      );
-      return null;
-    }
-    try {
-      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!perm.granted) {
-        showErrorTray('Permission needed', 'Allow photo library access to upload a dish photo.');
-        return null;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions?.Images ?? ('images' as any),
-        quality: 0.7,
-        base64: true,
-      });
-      if (result.canceled || !result.assets?.[0]?.base64) return null;
-      const asset = result.assets[0];
-      const mime = asset.mimeType || 'image/jpeg';
-      return `data:${mime};base64,${asset.base64}`;
-    } catch (e: any) {
-      const msg = String(e?.message || e || '');
-      if (/ExponentImagePicker|native module/i.test(msg)) {
-        showErrorTray(
-          'Photo library needs app rebuild',
-          'Generate AI still works without Upload. Rebuild cook iOS/Android to enable camera roll.'
-        );
-        return null;
-      }
-      showErrorTray('Photo pick failed', msg || 'Could not open photo library.');
-      return null;
-    }
-  };
-
-  const runGenerateAi = async () => {
-    if (!generateAvailable) {
-      showErrorTray('AI generate offline', generateBlockedReason || 'Upload a real kitchen photo instead.');
-      return;
-    }
-    if (!name.trim()) {
-      showErrorTray('Dish name needed', 'Enter a dish name before generating an AI plate.');
-      return;
-    }
-    setAiPhotoBusy(true);
-    setAiPhotoNote(null);
-    try {
-      const res = await generateListingImage({
-        mode: 'generate',
-        dish_name: name,
-        cuisine,
-      });
-      const url = res.webp_url || res.image_url || res.jpeg_url;
-      if (!url) throw new Error('No image URL returned');
-      setListingImageUrl(url);
-      setAiPhotoNote('Illustrative AI plate — real dish may vary. Prefer a kitchen photo when you can.');
-    } catch (e) {
-      showErrorTray('AI generate failed', (e as Error).message);
-    } finally {
-      setAiPhotoBusy(false);
-    }
-  };
-
-  const polishFromPicker = async (label: 'upload' | 'brighten') => {
-    const b64 = await pickImageBase64();
-    if (!b64) return;
-    setAiPhotoBusy(true);
-    setAiPhotoNote(null);
-    try {
-      const res = await generateListingImage({
-        mode: 'enhance',
-        dish_name: name || 'Dish',
-        cuisine,
-        image_base64: b64,
-        enhance_style: 'polish',
-        ai_restyle: false,
-      });
-      const url = res.webp_url || res.image_url;
-      if (!url) throw new Error('Photo processing failed');
-      setListingImageUrl(url);
-      setAiPhotoNote(
-        label === 'brighten'
-          ? 'Brightened your photo (still your kitchen shot)'
-          : 'Kitchen photo uploaded & optimized'
-      );
-    } catch (e) {
-      showErrorTray(label === 'brighten' ? 'Brighten failed' : 'Upload failed', (e as Error).message);
-    } finally {
-      setAiPhotoBusy(false);
-    }
-  };
 
   const listingDraft = useMemo(
     () => ({
@@ -602,78 +491,12 @@ export function CookListingWizardScreen({
             <Text style={styles.photoPanelHint}>
               Calorie estimate is applied automatically when you publish with ingredients listed.
             </Text>
-            <View style={styles.photoPanel} testID="listing-photo-panel">
-              <Text style={styles.photoPanelTitle}>Dish photo</Text>
-              <Text style={styles.photoPanelHint}>
-                Kitchen photo recommended. AI plate is illustrative only.
-              </Text>
-              {listingImageUrl ? (
-                <SHCFoodImage uri={listingImageUrl} height={140} rounded={shcRadii.md} />
-              ) : (
-                <SHCFoodImage uri={previewImage} height={140} rounded={shcRadii.md} testID="listing-photo-preview" />
-              )}
-              <View style={styles.photoActions}>
-                <SHCButton
-                  variant="outline"
-                  disabled={aiPhotoBusy}
-                  testID="listing-photo-upload"
-                  onPress={() => void polishFromPicker('upload')}
-                >
-                  <SHCButtonText>Upload photo</SHCButtonText>
-                </SHCButton>
-                <SHCButton
-                  variant="outline"
-                  disabled={aiPhotoBusy}
-                  testID="listing-photo-brighten"
-                  onPress={() => void polishFromPicker('brighten')}
-                >
-                  <SHCButtonText>Brighten</SHCButtonText>
-                </SHCButton>
-                <SHCButton
-                  variant="outline"
-                  disabled={aiPhotoBusy || !name.trim() || !generateAvailable}
-                  testID="listing-photo-generate"
-                  onPress={() => void runGenerateAi()}
-                >
-                  <SHCButtonText>
-                    {aiPhotoBusy ? '…' : generateAvailable ? 'Generate AI' : 'AI offline'}
-                  </SHCButtonText>
-                </SHCButton>
-              </View>
-              <Text style={styles.photoNote} testID="listing-photo-help">
-                Upload = your shot · Brighten = lighting only · Generate = illustrative AI plate
-              </Text>
-              {!generateAvailable && generateBlockedReason ? (
-                <Text style={styles.photoOffline} testID="listing-photo-ai-offline">
-                  {generateBlockedReason}
-                </Text>
-              ) : null}
-              {aiPhotoNote ? (
-                <Text style={styles.photoNote} testID="listing-photo-note">
-                  {aiPhotoNote}
-                </Text>
-              ) : null}
-            </View>
-            <Pressable
-              onPress={async () => {
-                const tips = await getPhotoTips();
-                const tipList = (tips as { tips?: string[] }).tips || [];
-                openTray(
-                  { id: 'photo-tips', title: 'Photo tips', height: 'tall' },
-                  <ScrollView>
-                    <PhotoTipsModalContent onClose={dismiss} />
-                    {tipList.map((t: string, i: number) => (
-                      <Text key={i} style={styles.tipItem}>• {t}</Text>
-                    ))}
-                  </ScrollView>
-                );
-              }}
-              testID="photo-tips-btn"
-              style={styles.photoTipsBtn}
-            >
-              <SHCFoodImage uri={BENTO_ACTION_IMAGES.listings} height={48} width={48} rounded={shcRadii.sm} />
-              <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
-            </Pressable>
+            <CookListingPhotoPanel
+              dishName={name}
+              cuisine={cuisine}
+              imageUrl={listingImageUrl}
+              onImageUrl={setListingImageUrl}
+            />
             <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
             <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
             <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />

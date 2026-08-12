@@ -73,6 +73,7 @@ import {
   RecipeStepsEditorWeb,
 } from '../../components/SHCWebComponents';
 import { VirtualRowList } from '../../components/VirtualLists';
+import { ListingPhotoPanelWeb } from '../ListingPhotoPanel';
 
 type ListingRow = Record<string, unknown> & {
   id?: string;
@@ -847,84 +848,12 @@ export default function CookListingsPage() {
               {aiCal?.calories != null ? (
                 <p className="text-sm font-bold text-muted-foreground">~{aiCal.calories} cal per portion (auto)</p>
               ) : null}
-              <div className="rounded-xl border-2 border-[var(--shc-border-brutal)] p-3 space-y-2" data-testid="listing-photo-panel">
-                <p className="text-sm font-extrabold">Dish photo</p>
-                <p className="text-xs text-muted-foreground">
-                  <strong>Kitchen photo recommended.</strong> AI plate is illustrative only — customers should see the real dish when you can.
-                </p>
-                {listingImageUrl ? (
-                  <div className="relative h-36 w-full rounded-lg overflow-hidden border border-border">
-                    <Image src={listingImageUrl} alt="" fill className="object-cover" sizes="400px" unoptimized />
-                  </div>
-                ) : null}
-                <div className="flex flex-wrap gap-2">
-                  <label className={`cursor-pointer ${aiPhotoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-[var(--shc-bento-mint)] px-3 py-2 text-xs font-extrabold">
-                      Upload kitchen photo
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      data-testid="listing-photo-upload"
-                      disabled={aiPhotoBusy}
-                      onChange={(e) => void onPolishPhoto(e.target.files?.[0] || null, 'upload')}
-                    />
-                  </label>
-                  <label className={`cursor-pointer ${aiPhotoBusy ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <span className="inline-flex rounded-xl border-2 border-[var(--shc-border-brutal)] bg-card px-3 py-2 text-xs font-extrabold">
-                      Brighten my photo
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      data-testid="listing-photo-brighten"
-                      disabled={aiPhotoBusy}
-                      onChange={(e) => void onPolishPhoto(e.target.files?.[0] || null, 'brighten')}
-                    />
-                  </label>
-                  <SHCButton
-                    size="sm"
-                    variant="outline"
-                    disabled={aiPhotoBusy || !name.trim() || !generateAvailable}
-                    onClick={() => void runGenerateAi()}
-                    testID="listing-photo-generate"
-                  >
-                    {aiPhotoBusy ? 'Working…' : generateAvailable ? 'Generate AI plate' : 'AI offline'}
-                  </SHCButton>
-                </div>
-                <p
-                  className="text-[11px] font-semibold text-muted-foreground leading-snug"
-                  data-testid="listing-photo-help"
-                >
-                  <span className="font-extrabold">Upload</span> = your shot, optimized ·{' '}
-                  <span className="font-extrabold">Brighten</span> = lighting/contrast only (still your photo) ·{' '}
-                  <span className="font-extrabold">Generate AI</span> = new illustrative plate from dish name + cuisine
-                  {generateAvailable ? ` (${aiImageStatus?.model?.split('/').pop() || 'FLUX'})` : ''}
-                </p>
-                {!generateAvailable && generateBlockedReason ? (
-                  <p className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5" data-testid="listing-photo-ai-offline">
-                    {generateBlockedReason}
-                  </p>
-                ) : null}
-                {aiPhotoNote ? (
-                  <p className="text-[11px] font-semibold text-muted-foreground" data-testid="listing-photo-note">
-                    {aiPhotoNote}
-                  </p>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={openPhotoTipsTray}
-                className="flex items-center gap-2 w-full rounded-xl border border-border p-3 text-left"
-                data-testid="photo-tips-btn"
-              >
-                <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
-                  <Image src={BENTO_ACTION_IMAGES.listings} alt="" fill className="object-cover" sizes="48px" />
-                </div>
-                <SHCMetaBadge kind="photo_tips">📸 Photo tips</SHCMetaBadge>
-              </button>
+              <ListingPhotoPanelWeb
+                dishName={name}
+                cuisine={cuisine}
+                imageUrl={listingImageUrl}
+                onImageUrl={setListingImageUrl}
+              />
               <MealExtrasEditorWeb value={mealExtras} onChange={setMealExtras} />
               <MealAddonsEditorWeb value={mealAddons} onChange={setMealAddons} />
               <RecipeStepsEditorWeb value={recipeSteps} onChange={setRecipeSteps} />

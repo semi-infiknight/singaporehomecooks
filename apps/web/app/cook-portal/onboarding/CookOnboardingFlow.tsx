@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   BENTO_ACTION_IMAGES,
@@ -44,6 +43,7 @@ import {
 } from '../../../lib/cook-api-client';
 import { SHCOnboardingFlowScreenWeb } from '../../components/SHCOnboardingWeb';
 import { SHCButton } from '../../components/SHCWebComponents';
+import { ListingPhotoPanelWeb } from '../ListingPhotoPanel';
 
 const IMAGE_BY_KEY: Record<string, string> = {
   listings: BENTO_ACTION_IMAGES.listings,
@@ -227,7 +227,6 @@ function KitchenAddressSearch({
 
 export default function CookOnboardingFlow() {
   const router = useRouter();
-  const dishInputRef = useRef<HTMLInputElement>(null);
   const [stepId, setStepId] = useState<CookOnboardingStepId>('kitchen');
   const [draft, setDraft] = useState<CookOnboardingDraft>(createEmptyCookOnboardingDraft);
   const [busy, setBusy] = useState(false);
@@ -379,11 +378,6 @@ export default function CookOnboardingFlow() {
     } catch (e) {
       setError((e as Error).message);
     }
-  };
-
-  const onPhotoPick = (file?: File | null) => {
-    if (!file) return;
-    patch({ dish_image_url: URL.createObjectURL(file) });
   };
 
   const renderStep = () => {
@@ -680,26 +674,14 @@ export default function CookOnboardingFlow() {
               onChange={(v) => patch({ dish_available: v === 'Yes' })}
               testIDPrefix="cook-onboarding-dish-available"
             />
-            <FieldLabel>Photo of dish</FieldLabel>
-            {draft.dish_image_url ? (
-              <div className="relative w-full h-40 mb-4 rounded-xl overflow-hidden">
-                <Image src={draft.dish_image_url} alt="" fill className="object-cover" unoptimized />
-              </div>
-            ) : null}
-            <input
-              ref={dishInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => onPhotoPick(e.target.files?.[0])}
-            />
-            <SHCButton
-              onClick={() => dishInputRef.current?.click()}
-              testID="cook-onboarding-dish-photo"
-              className="w-full mb-3"
-            >
-              {draft.dish_image_url ? 'Change dish photo' : 'Add dish photo'}
-            </SHCButton>
+            <div data-testid="cook-onboarding-dish-photo">
+              <ListingPhotoPanelWeb
+                dishName={draft.dish_name}
+                cuisine={draft.dish_cuisine}
+                imageUrl={draft.dish_image_url || null}
+                onImageUrl={(url) => patch({ dish_image_url: url })}
+              />
+            </div>
             <SHCButton onClick={saveDishToMenu} testID="cook-onboarding-save-dish" className="w-full mb-2">
               Save dish to menu
             </SHCButton>
