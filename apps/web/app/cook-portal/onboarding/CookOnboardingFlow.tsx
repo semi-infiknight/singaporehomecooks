@@ -564,11 +564,15 @@ export default function CookOnboardingFlow() {
               testIDPrefix="cook-onboarding-portion"
             />
             <FieldLabel>Recommended pax</FieldLabel>
-            <ChipRow
-              options={['2', '3']}
-              value={String(draft.dish_recommended_pax)}
-              onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 })}
-              testIDPrefix="cook-onboarding-pax"
+            <TextField
+              value={draft.dish_recommended_pax ? String(draft.dish_recommended_pax) : ''}
+              onChange={(t) => {
+                const n = parseInt(t.replace(/\D/g, ''), 10);
+                patch({ dish_recommended_pax: Number.isFinite(n) ? n : 0 });
+              }}
+              placeholder="e.g. 4"
+              testID="cook-onboarding-pax"
+              type="number"
             />
             <FieldLabel>List price (S$)</FieldLabel>
             <TextField

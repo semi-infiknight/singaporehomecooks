@@ -634,14 +634,15 @@ export default function CookOnboardingFlow() {
               testIDPrefix="cook-onboarding-portion"
             />
             <FieldLabel>Recommended pax</FieldLabel>
-            <SHCOnboardingOptionStack
-              options={[
-                { label: '2 pax', value: '2' },
-                { label: '3 pax', value: '3' },
-              ]}
-              value={String(draft.dish_recommended_pax)}
-              onChange={(v) => patch({ dish_recommended_pax: Number(v) as 2 | 3 })}
-              testIDPrefix="cook-onboarding-pax"
+            <TextField
+              value={draft.dish_recommended_pax ? String(draft.dish_recommended_pax) : ''}
+              onChangeText={(t) => {
+                const n = parseInt(t.replace(/\D/g, ''), 10);
+                patch({ dish_recommended_pax: Number.isFinite(n) ? n : 0 });
+              }}
+              placeholder="e.g. 4"
+              keyboardType="number-pad"
+              testID="cook-onboarding-pax"
             />
             <FieldLabel>List price (S$)</FieldLabel>
             <TextField

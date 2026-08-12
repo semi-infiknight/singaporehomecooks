@@ -140,7 +140,7 @@ export type CookOnboardingDishDraft = {
   dish_cuisine: string;
   dish_name: string;
   dish_portion_unit: 'plate' | 'piece';
-  dish_recommended_pax: 2 | 3;
+  dish_recommended_pax: number;
   dish_price: string;
   dish_ingredients: string;
   dish_description: string;
@@ -276,6 +276,9 @@ export function validateCookOnboardingDish(draft: CookOnboardingDishDraft): Cook
   }
   if (draft.dish_description.trim().length < 10) {
     return { ok: false, message: 'Add a brief description (10+ characters).' };
+  }
+  if (!Number.isFinite(draft.dish_recommended_pax) || draft.dish_recommended_pax < 1) {
+    return { ok: false, message: 'Enter how many people this dish serves.' };
   }
   if (!Number.isFinite(draft.dish_lead_days) || draft.dish_lead_days < 1) {
     return { ok: false, message: 'Minimum order time must be at least 1 day.' };

@@ -71,6 +71,10 @@ describe('cook-onboarding steps', () => {
     draft.dish_description = 'Coconut rice with sambal';
     expect(validateCookOnboardingDish(draft).ok).toBe(true);
     expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
+    draft.dish_recommended_pax = 0;
+    expect(validateCookOnboardingDish(draft).ok).toBe(false);
+    draft.dish_recommended_pax = 8;
+    expect(validateCookOnboardingDish(draft).ok).toBe(true);
   });
 
   it('shows cook take-home after the 15% cut', () => {
