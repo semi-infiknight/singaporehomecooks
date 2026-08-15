@@ -75,7 +75,7 @@ appId: com.singaporehomecooks.cook
     text: "Open"
     optional: true
 - extendedWaitUntil:
-    visible: "Ingredients & photo"
+    visible: "Lead time & photo"
     timeout: 15000
 - scrollUntilVisible:
     element:

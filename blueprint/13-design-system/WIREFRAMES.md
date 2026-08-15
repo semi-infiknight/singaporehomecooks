@@ -134,29 +134,35 @@ See [brand.md § Cart / Checkout](../../brand.md#3-cart--checkout).
 ## 4. Cook Dashboard
 
 **Route:** `/(cook)/dashboard`  
-**Components:** `SHCBentoGrid`, `SHCBentoCell`, `OrderCard`, `SHCSectionTitle`
+**Components:** `GourmeatCookHeader`, kitchen snapshot card, glance stats, setup checklist, tool chips, order rows  
+**Helpers:** `@shc/utils` `buildCookDashboardSetupItems`, `cookDashboardKitchenSubtitle`, `cookDashboardOrdersNeedingCook`
 
 ### Zones
 
 | Zone | Spec |
 |---|---|
-| Greeting | H1 "Good morning, {cook}" |
-| Earnings bento | 2-up: weekly earnings (`bento-mint`) + rating/orders (`bento-peach`) |
-| Quick actions | 4-col `SHCBentoGrid`: New listing, Calendar, Collaboration board, Messages |
-| Orders list | `OrderCard` with action buttons per status |
+| Greeting | `Good morning, {firstName}` + kitchen · area · Open/Paused |
+| Kitchen card | Onboarding snapshot: address, PayNow, halal, certs → settings |
+| At a glance | This week earnings · active orders · menu dish count |
+| Setup checklist | Incomplete items only (menu / PayNow / SFA·WSQ / profile) |
+| Requests | Single custom-requests row (not duplicated in glance) |
+| Tools | Compact chips: listings, orders, cooking soon, compliance, tiffin, earnings |
+| Orders | Needs-action first; `order-card-{id}` |
 
 ### testIDs
 
 | Element | testID |
 |---|---|
+| Screen | `cook-dashboard` |
+| Hero | `cook-dashboard-hero` |
+| Kitchen card | `cook-kitchen-settings-link` |
+| Setup row | `cook-setup-{id}` |
 | Order card | `order-card-{id}` |
-| Cook quick action cells | `bento-cell-{action}` (set per screen impl) |
+| Logout | `logout-btn` |
 
 ### ASCII
 
 See [brand.md § Cook Dashboard](../../brand.md#4-cook-dashboard).
-
----
 
 ## Component → screen matrix
 

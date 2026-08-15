@@ -58,6 +58,13 @@ import {
   type IngredientDraft,
   type RecipeStepDraft,
   orderWindowCustomerCopy,
+  COOK_ONBOARDING_CUISINE_PRESETS,
+  COOK_ONBOARDING_LEAD_TIME_SLOTS,
+  cookOnboardingCookTakeHome,
+  cookOnboardingDishFromWizardFields,
+  buildCookOnboardingFirstListingPayload,
+  validateCookOnboardingDish,
+  onboardingLeadSlotToTimeSlots,
 } from '@shc/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -69,8 +76,9 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useBusinessRules } from '../hooks/useBusinessRules';
 import { useCookConfig } from '../hooks/useCookConfig';
+import { useCookProfile } from '../hooks/useCookProfile';
 import { CookListingPhotoPanel } from './CookListingPhotoPanel';
-const DEFAULT_CUISINE_PRESETS = ['Peranakan', 'Malay', 'Chinese', 'Indian', 'Eurasian', 'Western', 'Fusion'];
+const DEFAULT_CUISINE_PRESETS = [...COOK_ONBOARDING_CUISINE_PRESETS];
 
 const inputStyle = {
   borderWidth: shcBorders.brutal,
@@ -128,6 +136,8 @@ export function CookListingWizardScreen({
   const { wizardStep } = useLocalSearchParams<{ wizardStep?: string }>();
   const { user } = useAuth();
   const { config } = useCookConfig();
+  const { data: cookProfile } = useCookProfile();
+  const isNewListing = !editingId;
   const { commissionRatePct } = useBusinessRules();
   const qc = useQueryClient();
   const { openTray, dismiss } = useSHCTray();
@@ -165,6 +175,14 @@ export function CookListingWizardScreen({
   const [published, setPublished] = useState<any>(null);
   const [aiCal, setAiCal] = useState<{ calories: number; confidence?: string; source?: string } | null>(null);
   const [listingImageUrl, setListingImageUrl] = useState<string | null>(null);
+  // Onboarding-aligned dish fields (New Listing uses these as the source of truth)
+  const [portionUnit, setPortionUnit] = useState<'plate' | 'piece'>('plate');
+  const [recommendedPax, setRecommendedPax] = useState(2);
+  const [ingredientsText, setIngredientsText] = useState('');
+  const [leadDays, setLeadDays] = useState(2);
+  const [leadTimeSlot, setLeadTimeSlot] = useState<string>(COOK_ONBOARDING_LEAD_TIME_SLOTS[2]);
+  const [dishAvailable, setDishAvailable] = useState(true);
+
   const [aiImageStatus, setAiImageStatus] = useState<{
     configured?: boolean;
     generate_available?: boolean;
@@ -174,6 +192,32 @@ export function CookListingWizardScreen({
   } | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [hydrated, setHydrated] = useState(!initialListing);
+
+  useEffect(() => {
+    if (!isNewListing) return;
+    const halal = (cookProfile as { kitchen_halal_certified?: boolean | null } | undefined)?.kitchen_halal_certified;
+    if (halal === true || halal === false) setHalal(halal);
+    setAllergenNoneConfirmed(true);
+  }, [isNewListing, cookProfile]);
+
+  useEffect(() => {
+    if (!isNewListing) return;
+    const rows = ingredientsText
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, quantity: 1, unit: portionUnit === 'piece' ? 'pc' : 'serving' }));
+    setIngredients(rows.length ? rows : []);
+  }, [ingredientsText, portionUnit, isNewListing]);
+
+  useEffect(() => {
+    if (!isNewListing) return;
+    setTimeSlots(onboardingLeadSlotToTimeSlots(leadTimeSlot));
+    setMinOrderLeadDays(leadDays);
+    setMinOrderLeadHours(0);
+    const priceNum = price ?? 0;
+    if (priceNum > 0) setMinQty(Math.max(5, Math.ceil(50 / priceNum)));
+  }, [isNewListing, leadTimeSlot, leadDays, price]);
 
   useEffect(() => {
     if (!initialListing) return;
@@ -219,6 +263,7 @@ export function CookListingWizardScreen({
   const cuisinePresets = aiImageStatus?.cuisine_presets?.length
     ? aiImageStatus.cuisine_presets
     : DEFAULT_CUISINE_PRESETS;
+  const takeHome = useMemo(() => cookOnboardingCookTakeHome(price ?? 0), [price]);
 
   const previewImage = listingImageUrl || getDishImageUrl({ name, cuisine });
 
@@ -283,7 +328,64 @@ export function CookListingWizardScreen({
 
   const basicsValidation = useMemo(() => validateCookListingDraft(listingDraft), [listingDraft]);
 
+  const onboardingDishDraft = useMemo(
+    () =>
+      cookOnboardingDishFromWizardFields({
+        cuisine,
+        name,
+        portionUnit,
+        recommendedPax,
+        price: price ?? '',
+        ingredientsText: ingredientsText || ingredients.map((i) => i.name).filter(Boolean).join(', '),
+        description,
+        leadDays,
+        leadTimeSlot,
+        available: dishAvailable,
+        calories: aiCal?.calories,
+        imageUrl: listingImageUrl,
+      }),
+    [
+      cuisine,
+      name,
+      portionUnit,
+      recommendedPax,
+      price,
+      ingredientsText,
+      ingredients,
+      description,
+      leadDays,
+      leadTimeSlot,
+      dishAvailable,
+      aiCal,
+      listingImageUrl,
+    ]
+  );
+
   const advanceStep = () => {
+    if (isNewListing) {
+      // Step gates mirror onboarding dish validation gradually
+      if (step === 1) {
+        if (cuisine.trim().length < 2) return showErrorTray('Complete this step', 'Select a cuisine.');
+        if (name.trim().length < 3) return showErrorTray('Complete this step', 'Dish name must be at least 3 characters.');
+        if (price == null || price <= 0) return showErrorTray('Complete this step', 'Enter a valid list price.');
+        if (!Number.isFinite(recommendedPax) || recommendedPax < 1) {
+          return showErrorTray('Complete this step', 'Enter how many people this dish serves.');
+        }
+      } else if (step === 2) {
+        const text = ingredientsText.trim() || ingredients.map((i) => i.name).filter(Boolean).join(', ');
+        if (text.trim().length < 3) return showErrorTray('Complete this step', 'List at least one main ingredient.');
+        if (description.trim().length < 10) {
+          return showErrorTray('Complete this step', 'Add a brief description (10+ characters).');
+        }
+      } else if (step === 3) {
+        if (!Number.isFinite(leadDays) || leadDays < 1) {
+          return showErrorTray('Complete this step', 'Minimum order time must be at least 1 day.');
+        }
+        if (!leadTimeSlot.trim()) return showErrorTray('Complete this step', 'Pick a preferred collection time window.');
+      }
+      goToStep(step + 1);
+      return;
+    }
     const gate = validateCookListingWizardStep(step, listingDraft);
     if (!gate.ok) {
       showErrorTray('Complete this step', gate.message || 'Fix the highlighted fields.');
@@ -302,17 +404,33 @@ export function CookListingWizardScreen({
       showErrorTray('Sign in required', 'Please log in as a cook before publishing a listing.');
       return;
     }
-    const validation = validateCookListingForPublish(listingDraft);
-    if (!validation.valid) {
-      showErrorTray('Cannot publish yet', validation.errors.join(' '));
-      if (step !== 1) goToStep(1);
-      return;
+    if (isNewListing) {
+      const dishGate = validateCookOnboardingDish(onboardingDishDraft);
+      if (!dishGate.ok) {
+        showErrorTray('Cannot publish yet', dishGate.message || 'Finish the dish details.');
+        return;
+      }
+    } else {
+      const validation = validateCookListingForPublish(listingDraft);
+      if (!validation.valid) {
+        showErrorTray('Cannot publish yet', validation.errors.join(' '));
+        if (step !== 1) goToStep(1);
+        return;
+      }
     }
     setPublishing(true);
     // Auto AI calories when ingredients are listed (no manual button).
     let calories = aiCal?.calories;
     let calories_confidence = aiCal?.confidence as 'full' | 'category' | undefined;
-    const calPayload = ingredientsForCalorieEstimate(ingredients);
+    const calPayload = ingredientsForCalorieEstimate(
+      ingredients.length
+        ? ingredients
+        : onboardingDishDraft.dish_ingredients
+            .split(/[,;\n]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((n) => ({ name: n, quantity: 1, unit: 'serving' as const }))
+    );
     if (calPayload.length > 0) {
       try {
         const est = (await estimateCaloriesAI(calPayload)) as {
@@ -328,15 +446,28 @@ export function CookListingWizardScreen({
         // Non-blocking — publish still proceeds without calories.
       }
     }
-    const input = buildCookListingPayload({
-      ...listingDraft,
-      name: name.trim(),
-      price: price as number,
-      min_qty: minQty as number,
-      image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
-      calories,
-      calories_confidence,
-    });
+    const kitchenHalal = (cookProfile as { kitchen_halal_certified?: boolean | null } | undefined)
+      ?.kitchen_halal_certified;
+    const input = isNewListing
+      ? {
+          ...buildCookOnboardingFirstListingPayload({
+            ...onboardingDishDraft,
+            dish_calories: calories != null ? String(calories) : onboardingDishDraft.dish_calories,
+            kitchen_halal_certified: kitchenHalal === true ? true : kitchenHalal === false ? false : halal,
+          }),
+          image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
+          calories,
+          calories_confidence,
+        }
+      : buildCookListingPayload({
+          ...listingDraft,
+          name: name.trim(),
+          price: price as number,
+          min_qty: minQty as number,
+          image_url: listingImageUrl || getDishImageUrl({ name, cuisine }),
+          calories,
+          calories_confidence,
+        });
     try {
       const prod = editingId
         ? await updateCookListing(editingId, input)
@@ -398,56 +529,7 @@ export function CookListingWizardScreen({
         {step === 1 && (
           <ListingWizardStep step={1} title="Dish Basics">
             <SHCFoodImage uri={previewImage} height={100} rounded={shcRadii.md} />
-            <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} testID="listing-name-input" />
-            {basicsValidation.fieldErrors.name ? (
-              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.name}</Text>
-            ) : null}
-            <TextInput
-              value={price != null ? String(price) : ''}
-              onChangeText={(t) => {
-                const trimmed = t.trim();
-                if (!trimmed) {
-                  setPrice(null);
-                  return;
-                }
-                const n = parseInt(trimmed, 10);
-                setPrice(Number.isNaN(n) ? null : n);
-              }}
-              keyboardType="numeric"
-              placeholder="Price S$"
-              style={inputStyle}
-              testID="listing-price-input"
-            />
-            {basicsValidation.fieldErrors.price ? (
-              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.price}</Text>
-            ) : null}
-            <TextInput
-              value={minQty != null ? String(minQty) : ''}
-              onChangeText={(t) => {
-                const trimmed = t.trim();
-                if (!trimmed) {
-                  setMinQty(null);
-                  return;
-                }
-                const n = parseInt(trimmed, 10);
-                setMinQty(Number.isNaN(n) ? null : n);
-              }}
-              keyboardType="numeric"
-              placeholder="Min Qty"
-              style={inputStyle}
-              testID="listing-min-qty-input"
-            />
-            {basicsValidation.fieldErrors.min_qty ? (
-              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.min_qty}</Text>
-            ) : null}
-            <SHCListingDescriptionInput value={description} onChange={setDescription} />
-          </ListingWizardStep>
-        )}
-
-        {step === 2 && (
-          <ListingWizardStep step={2} title="Cuisine & allergens">
-            <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
-            <Text style={styles.photoPanelHint}>Cuisine (helps AI plate + discovery)</Text>
+            <Text style={styles.photoPanelHint}>Cuisine</Text>
             <View style={styles.cuisinePresets} testID="listing-cuisine-presets">
               {cuisinePresets.map((c) => (
                 <Pressable
@@ -467,66 +549,264 @@ export function CookListingWizardScreen({
               placeholder="Or type a cuisine"
               testID="listing-cuisine-input"
             />
-            <SHCHalalToggle value={halal} onChange={setHalal} />
-            <SHCAllergenTierPicker
-              value={allergenTiers}
-              onChange={setAllergenTiers}
-              tier1Presets={cookAllergenTier1Presets(config)}
+            <TextInput value={name} onChangeText={setName} placeholder="Dish name" style={inputStyle} testID="listing-name-input" />
+            {basicsValidation.fieldErrors.name ? (
+              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.name}</Text>
+            ) : null}
+            {isNewListing ? (
+              <>
+                <Text style={styles.photoPanelHint}>Portion</Text>
+                <View style={styles.cuisinePresets} testID="listing-portion-unit">
+                  {(['plate', 'piece'] as const).map((u) => (
+                    <Pressable
+                      key={u}
+                      onPress={() => setPortionUnit(u)}
+                      style={[styles.cuisineChip, portionUnit === u && styles.cuisineChipActive]}
+                    >
+                      <Text style={[styles.cuisineChipText, portionUnit === u && styles.cuisineChipTextActive]}>
+                        {u === 'plate' ? 'Plate / serving' : 'Piece'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <TextInput
+                  value={recommendedPax ? String(recommendedPax) : ''}
+                  onChangeText={(txt) => {
+                    const n = parseInt(txt.trim(), 10);
+                    setRecommendedPax(Number.isFinite(n) ? n : 0);
+                  }}
+                  keyboardType="numeric"
+                  placeholder="Recommended pax"
+                  style={inputStyle}
+                  testID="listing-pax-input"
+                />
+              </>
+            ) : null}
+            <TextInput
+              value={price != null ? String(price) : ''}
+              onChangeText={(txt) => {
+                const trimmed = txt.trim();
+                if (!trimmed) {
+                  setPrice(null);
+                  return;
+                }
+                const n = parseInt(trimmed, 10);
+                setPrice(Number.isNaN(n) ? null : n);
+              }}
+              keyboardType="numeric"
+              placeholder="Price S$"
+              style={inputStyle}
+              testID="listing-price-input"
             />
-            <Pressable
-              onPress={() => setAllergenNoneConfirmed((v) => !v)}
-              style={{ marginTop: shcSpacing.sm }}
-              testID="listing-allergen-none"
-            >
-              <Text style={{ fontWeight: '700', color: allergenNoneConfirmed ? shcColors.primary : shcColors.text }}>
-                {allergenNoneConfirmed ? '✓ ' : ''}No tier-1 allergens in this dish
+            {basicsValidation.fieldErrors.price ? (
+              <Text style={styles.fieldError}>{basicsValidation.fieldErrors.price}</Text>
+            ) : null}
+            {isNewListing && price != null && price > 0 ? (
+              <Text style={styles.photoPanelHint}>
+                You take home about S${(takeHome?.cook ?? 0).toFixed(2)} after platform fee ({commissionRatePct}%)
               </Text>
-            </Pressable>
+            ) : null}
+            {!isNewListing ? (
+              <>
+                <TextInput
+                  value={minQty != null ? String(minQty) : ''}
+                  onChangeText={(txt) => {
+                    const trimmed = txt.trim();
+                    if (!trimmed) {
+                      setMinQty(null);
+                      return;
+                    }
+                    const n = parseInt(trimmed, 10);
+                    setMinQty(Number.isNaN(n) ? null : n);
+                  }}
+                  keyboardType="numeric"
+                  placeholder="Min Qty"
+                  style={inputStyle}
+                  testID="listing-min-qty-input"
+                />
+                {basicsValidation.fieldErrors.min_qty ? (
+                  <Text style={styles.fieldError}>{basicsValidation.fieldErrors.min_qty}</Text>
+                ) : null}
+                <SHCListingDescriptionInput value={description} onChange={setDescription} />
+              </>
+            ) : (
+              <Text style={styles.photoPanelHint}>
+                Min order qty is set automatically from price (same as onboarding).
+              </Text>
+            )}
+          </ListingWizardStep>
+        )}
+
+        {step === 2 && (
+          <ListingWizardStep step={2} title={isNewListing ? 'Ingredients & story' : 'Cuisine & allergens'}>
+            <View testID="listing-wizard-step-2" />
+            {isNewListing ? (
+              <>
+                <Text style={styles.photoPanelHint}>Main ingredients (comma-separated)</Text>
+                <TextInput
+                  value={ingredientsText}
+                  onChangeText={setIngredientsText}
+                  placeholder="Rice, coconut milk, sambal, egg"
+                  style={[inputStyle, { minHeight: 72 }]}
+                  multiline
+                  testID="listing-ingredients-input"
+                />
+                <SHCListingDescriptionInput value={description} onChange={setDescription} />
+                <Text style={styles.photoPanelHint}>
+                  Halal follows your kitchen setting{halal ? ' (halal certified)' : ' (not marked halal)'}. Change it in Settings.
+                </Text>
+              </>
+            ) : (
+              <>
+                <SHCFoodImage uri={CUISINE_IMAGE[cuisine] || BENTO_ACTION_IMAGES.listings} height={80} rounded={shcRadii.md} />
+                <Text style={styles.photoPanelHint}>Cuisine (helps AI plate + discovery)</Text>
+                <View style={styles.cuisinePresets} testID="listing-cuisine-presets-edit">
+                  {cuisinePresets.map((c) => (
+                    <Pressable
+                      key={c}
+                      onPress={() => setCuisine(c)}
+                      style={[styles.cuisineChip, cuisine === c && styles.cuisineChipActive]}
+                      testID={`cuisine-preset-${c}`}
+                    >
+                      <Text style={[styles.cuisineChipText, cuisine === c && styles.cuisineChipTextActive]}>{c}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <TextInput
+                  value={cuisine}
+                  onChangeText={setCuisine}
+                  style={inputStyle}
+                  placeholder="Or type a cuisine"
+                  testID="listing-cuisine-input-edit"
+                />
+                <SHCHalalToggle value={halal} onChange={setHalal} />
+                <SHCAllergenTierPicker
+                  value={allergenTiers}
+                  onChange={setAllergenTiers}
+                  tier1Presets={cookAllergenTier1Presets(config)}
+                />
+                <Pressable
+                  onPress={() => setAllergenNoneConfirmed((v) => !v)}
+                  style={{ marginTop: shcSpacing.sm }}
+                  testID="listing-allergen-none"
+                >
+                  <Text style={{ fontWeight: '700', color: allergenNoneConfirmed ? shcColors.primary : shcColors.text }}>
+                    {allergenNoneConfirmed ? '✓ ' : ''}No tier-1 allergens in this dish
+                  </Text>
+                </Pressable>
+              </>
+            )}
           </ListingWizardStep>
         )}
 
         {step === 3 && (
-          <ListingWizardStep step={3} title="Ingredients & photo">
-            <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
-            <Text style={styles.photoPanelHint}>
-              Calorie estimate is applied automatically when you publish with ingredients listed.
-            </Text>
-            <CookListingPhotoPanel
-              dishName={name}
-              cuisine={cuisine}
-              imageUrl={listingImageUrl}
-              onImageUrl={setListingImageUrl}
-            />
-            <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
-            <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
-            <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />
+          <ListingWizardStep step={3} title={isNewListing ? 'Lead time & photo' : 'Ingredients & photo'}>
+            {isNewListing ? (
+              <>
+                <Text style={styles.photoPanelHint}>Minimum order lead time (days)</Text>
+                <TextInput
+                  value={String(leadDays)}
+                  onChangeText={(txt) => setLeadDays(Number(txt) || 1)}
+                  keyboardType="numeric"
+                  style={inputStyle}
+                  testID="listing-lead-days-input"
+                />
+                <Text style={styles.photoPanelHint}>Preferred collection window</Text>
+                <View style={styles.cuisinePresets} testID="listing-lead-slots">
+                  {COOK_ONBOARDING_LEAD_TIME_SLOTS.map((slot) => (
+                    <Pressable
+                      key={slot}
+                      onPress={() => setLeadTimeSlot(slot)}
+                      style={[styles.cuisineChip, leadTimeSlot === slot && styles.cuisineChipActive]}
+                    >
+                      <Text style={[styles.cuisineChipText, leadTimeSlot === slot && styles.cuisineChipTextActive]}>
+                        {slot}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={styles.photoPanelHint}>Available on menu?</Text>
+                <View style={styles.cuisinePresets}>
+                  {(
+                    [
+                      ['yes', true],
+                      ['no', false],
+                    ] as const
+                  ).map(([label, val]) => (
+                    <Pressable
+                      key={label}
+                      onPress={() => setDishAvailable(val)}
+                      style={[styles.cuisineChip, dishAvailable === val && styles.cuisineChipActive]}
+                    >
+                      <Text style={[styles.cuisineChipText, dishAvailable === val && styles.cuisineChipTextActive]}>
+                        {label === 'yes' ? 'Yes — show it' : 'No — keep paused'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <CookListingPhotoPanel
+                  dishName={name}
+                  cuisine={cuisine}
+                  imageUrl={listingImageUrl}
+                  onImageUrl={setListingImageUrl}
+                />
+              </>
+            ) : (
+              <>
+                <SHCIngredientsEditor value={ingredients} onChange={setIngredients} />
+                <Text style={styles.photoPanelHint}>
+                  Calorie estimate is applied automatically when you publish with ingredients listed.
+                </Text>
+                <CookListingPhotoPanel
+                  dishName={name}
+                  cuisine={cuisine}
+                  imageUrl={listingImageUrl}
+                  onImageUrl={setListingImageUrl}
+                />
+                <SHCMealExtrasEditor value={mealExtras} onChange={setMealExtras} />
+                <SHCMealAddonsEditor value={mealAddons} onChange={setMealAddons} />
+                <SHCRecipeStepsEditor value={recipeSteps} onChange={setRecipeSteps} />
+              </>
+            )}
           </ListingWizardStep>
         )}
 
         {step === 4 && (
           <View testID="listing-wizard-step4">
             <ListingWizardStep step={4} title="Review & Publish">
-              <SHCListingAvailabilityEditor
-                portionsPerDay={portionsPerDay}
-                collectionDays={collectionDays}
-                timeSlots={timeSlots}
-                onPortionsChange={setPortionsPerDay}
-                onCollectionDaysChange={setCollectionDays}
-                onTimeSlotsChange={setTimeSlots}
-                minOrderLeadDays={minOrderLeadDays}
-                minOrderLeadHours={minOrderLeadHours}
-                orderCutoffTime={orderCutoffTime}
-                onMinOrderLeadDaysChange={setMinOrderLeadDays}
-                onMinOrderLeadHoursChange={setMinOrderLeadHours}
-                onOrderCutoffTimeChange={setOrderCutoffTime}
-                orderWindowSummary={orderWindowCustomerCopy({
-                  collection_days: collectionDays,
-                  time_slots: timeSlots,
-                  min_order_lead_days: minOrderLeadDays,
-                  min_order_lead_hours: minOrderLeadHours,
-                  order_cutoff_time: orderCutoffTime,
-                })}
-              />
+              {isNewListing ? (
+                <View style={styles.reviewSummary}>
+                  <Text style={styles.photoPanelHint}>
+                    {cuisine} · {portionUnit} · serves ~{recommendedPax} · lead {leadDays}d · {leadTimeSlot}
+                  </Text>
+                  <Text style={styles.photoPanelHint}>
+                    Min order ~{minQty ?? '—'} · {dishAvailable ? 'Live when published' : 'Paused'} ·{' '}
+                    {halal ? 'Halal' : 'Not halal'}
+                  </Text>
+                </View>
+              ) : (
+                <SHCListingAvailabilityEditor
+                  portionsPerDay={portionsPerDay}
+                  collectionDays={collectionDays}
+                  timeSlots={timeSlots}
+                  onPortionsChange={setPortionsPerDay}
+                  onCollectionDaysChange={setCollectionDays}
+                  onTimeSlotsChange={setTimeSlots}
+                  minOrderLeadDays={minOrderLeadDays}
+                  minOrderLeadHours={minOrderLeadHours}
+                  orderCutoffTime={orderCutoffTime}
+                  onMinOrderLeadDaysChange={setMinOrderLeadDays}
+                  onMinOrderLeadHoursChange={setMinOrderLeadHours}
+                  onOrderCutoffTimeChange={setOrderCutoffTime}
+                  orderWindowSummary={orderWindowCustomerCopy({
+                    collection_days: collectionDays,
+                    time_slots: timeSlots,
+                    min_order_lead_days: minOrderLeadDays,
+                    min_order_lead_hours: minOrderLeadHours,
+                    order_cutoff_time: orderCutoffTime,
+                  })}
+                />
+              )}
               <SHCFoodImage
                 uri={previewImage}
                 height={120}
@@ -545,7 +825,9 @@ export function CookListingWizardScreen({
                 commissionRatePct={commissionRatePct}
               />
               <Text style={styles.availabilityHint}>
-                Pause or unpause this dish from My Listings when you want it off the menu.
+                {isNewListing
+                  ? 'Same dish fields as cook onboarding — publish saves via the shared listing payload.'
+                  : 'Pause or unpause this dish from My Listings when you want it off the menu.'}
               </Text>
               {publishing ? <ActivityIndicator color={gourmeatColors.primary} style={{ marginTop: 8 }} /> : null}
               {published && (
@@ -570,7 +852,7 @@ export function CookListingWizardScreen({
             step={step}
             editing={!!editingId}
             onPress={step >= 4 ? publish : advanceStep}
-            disabled={(step < 4 && step === 1 && !basicsValidation.valid) || (step >= 4 && publishing)}
+            disabled={(step < 4 && step === 1 && !isNewListing && !basicsValidation.valid) || (step >= 4 && publishing)}
             testID={step >= 4 ? 'listing-wizard-publish' : `listing-wizard-next-step${step}`}
             showChevron={step < 4}
           />
@@ -656,6 +938,7 @@ const styles = StyleSheet.create({
   cuisineChipActive: { backgroundColor: gourmeatColors.primary, borderColor: gourmeatColors.primary },
   cuisineChipText: { fontSize: 12, fontWeight: '800', color: shcColors.text },
   cuisineChipTextActive: { color: '#fff' },
+  reviewSummary: { marginBottom: shcSpacing.sm, gap: 4 },
   publishedCard: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: shcSpacing.sm },
   tipItem: { marginTop: 4, fontSize: 13 },
 });

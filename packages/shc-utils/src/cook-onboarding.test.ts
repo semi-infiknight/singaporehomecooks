@@ -13,6 +13,8 @@ import {
   coerceCookOnboardingStepId,
   cookOnboardingCookTakeHome,
   collectCookOnboardingDishes,
+  onboardingLeadSlotToTimeSlots,
+  cookOnboardingDishFromWizardFields,
 } from './cook-onboarding';
 
 describe('cook-onboarding steps', () => {
@@ -55,9 +57,9 @@ describe('cook-onboarding steps', () => {
     expect(validateCookOnboardingStep('paynow', draft).ok).toBe(true);
   });
 
-  it('lets cooks skip the menu card with no dish filled', () => {
+  it('requires at least one dish on the menu card', () => {
     const draft = createEmptyCookOnboardingDraft();
-    expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
+    expect(validateCookOnboardingStep('menu', draft).ok).toBe(false);
   });
 
   it('validates a filled menu card before publish', () => {
@@ -144,5 +146,39 @@ describe('cook-onboarding steps', () => {
     ];
     expect(validateCookOnboardingStep('menu', draft).ok).toBe(true);
     expect(collectCookOnboardingDishes(draft)).toHaveLength(1);
+  });
+});
+
+
+describe('listing wizard / onboarding dish parity', () => {
+  it('maps lead slots to time windows', () => {
+    expect(onboardingLeadSlotToTimeSlots('Morning (9am-12pm)')).toEqual(['09:00-12:00']);
+    expect(onboardingLeadSlotToTimeSlots('Evening (5pm-9pm)')).toEqual(['17:00-21:00']);
+  });
+
+  it('wizard fields build the same create payload as onboarding', () => {
+    const dish = cookOnboardingDishFromWizardFields({
+      cuisine: 'Malay',
+      name: 'Nasi Lemak',
+      portionUnit: 'plate',
+      recommendedPax: 2,
+      price: 12,
+      ingredientsText: 'Rice, sambal, egg',
+      description: 'Coconut rice with sambal.',
+      leadDays: 2,
+      leadTimeSlot: 'Evening (5pm-9pm)',
+      available: true,
+      imageUrl: '',
+    });
+    const payload = buildCookOnboardingFirstListingPayload({
+      ...dish,
+      kitchen_halal_certified: true,
+    });
+    expect(payload.name).toBe('Nasi Lemak');
+    expect(payload.cuisine).toBe('Malay');
+    expect(payload.halal).toBe(true);
+    expect(payload.min_order_lead_days).toBe(2);
+    expect(payload.time_slots).toEqual(['17:00-21:00']);
+    expect(String(payload.description)).toContain('Serves about 2');
   });
 });

@@ -66,5 +66,6 @@ export * from './password-policy';
 export * from './payment-poll';
 export * from './cook-payout';
 export * from './cook-payout-history';
+export * from './cook-dashboard';
 export * from './cook-onboarding';
 export * from './crash-report';

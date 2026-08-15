@@ -340,23 +340,27 @@ flowchart TB
 
 ### 4. Cook Dashboard
 
+Wired to onboarding/profile data (kitchen name, address, PayNow, halal, SFA/WSQ, menu count). No duplicate banners.
+
 ```
 ┌─────────────────────────────────────┐
 │ Good morning, Auntie Rose           │
+│ Auntie Rose Kitchen · Katong · Open │
 ├─────────────────────────────────────┤
-│ ┌────────────┐ ┌────────────┐       │  ← earnings bento
-│ │ S$1,240    │ │ 4.9★       │       │
-│ │ This week  │ │ 312 orders │       │
-│ └────────────┘ └────────────┘       │
+│ Kitchen card → settings             │
+│ Address · PayNow · Halal · Certs    │
 ├─────────────────────────────────────┤
-│ Quick actions (SHCBentoGrid)        │
-│ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ │
-│ │ List │ │ Cal  │ │ Board│ │ Chat │ │
-│ └──────┘ └──────┘ └──────┘ └──────┘ │
+│ At a glance                         │
+│ [This week $] [Active] [Menu #]     │
 ├─────────────────────────────────────┤
-│ Today's orders                      │
+│ Finish kitchen setup (if incomplete)│
+│ Menu / PayNow / SFA·WSQ rows        │
+├─────────────────────────────────────┤
+│ Custom requests                     │
+│ Kitchen tools (chips, not 6 bentos) │
+├─────────────────────────────────────┤
+│ Orders (prioritise needs-action)    │
 │ OrderCard × N                       │
-│ [Accept] [Mark ready] [Complete]    │
 └─────────────────────────────────────┘
 ```
 

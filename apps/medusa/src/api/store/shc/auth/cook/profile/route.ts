@@ -80,6 +80,13 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       mobile_verified_at: cook.mobile_verified_at ?? null,
       contact_mobile: cook.contact_mobile ?? null,
       whatsapp_number: cook.whatsapp_number ?? null,
+      alternate_contact: cook.alternate_contact ?? null,
+      responsible_person_name: cook.responsible_person_name ?? null,
+      nric_fin_last4: cook.nric_fin_last4 ?? null,
+      kitchen_halal_certified:
+        cook.kitchen_halal_certified === null || cook.kitchen_halal_certified === undefined
+          ? null
+          : Boolean(cook.kitchen_halal_certified),
     },
   });
 }

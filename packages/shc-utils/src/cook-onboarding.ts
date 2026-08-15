@@ -129,9 +129,8 @@ export const COOK_ONBOARDING_STEPS: CookOnboardingStepMeta[] = [
     id: 'menu',
     chapter: 'menu',
     title: 'Create your menu card',
-    subtitle: 'Add your first dish, or finish setup and add dishes later.',
+    subtitle: 'Add at least one dish to finish kitchen setup.',
     imageKey: 'listings',
-    skippable: true,
     nextLabel: 'Complete onboarding',
   },
 ];
@@ -335,9 +334,12 @@ export function validateCookOnboardingStep(
         return { ok: false, message: 'Let us know if your kitchen is halal certified.' };
       }
       return { ok: true };
-    case 'menu':
-      if (!cookOnboardingHasDishDraft(draft)) return { ok: true };
-      return validateCookOnboardingDish(draft);
+    case 'menu': {
+      const dishes = collectCookOnboardingDishes(draft);
+      if (dishes.length > 0) return { ok: true };
+      if (cookOnboardingHasDishDraft(draft)) return validateCookOnboardingDish(draft);
+      return { ok: false, message: 'Add at least one dish to finish onboarding.' };
+    }
     default:
       return { ok: true };
   }
@@ -437,6 +439,15 @@ export function buildCookOnboardingProfilePayload(draft: CookOnboardingDraft): R
   };
 }
 
+/** Map onboarding collection window label to listing time_slots. */
+export function onboardingLeadSlotToTimeSlots(slot: string): string[] {
+  const s = String(slot || '');
+  if (s.includes('Morning')) return ['09:00-12:00'];
+  if (s.includes('Afternoon')) return ['12:00-17:00'];
+  return ['17:00-21:00'];
+}
+
+/** Same create payload used by onboarding finish and New Listing wizard. */
 export function buildCookOnboardingFirstListingPayload(
   draft: CookOnboardingDishDraft & Pick<CookOnboardingDraft, 'kitchen_halal_certified'>
 ): Record<string, unknown> {
@@ -450,10 +461,16 @@ export function buildCookOnboardingFirstListingPayload(
     .map((name) => ({ name, quantity: 1, unit: ingredientUnit }));
 
   const minOrderQty = Number.isFinite(price) && price > 0 ? Math.max(5, Math.ceil(50 / price)) : 5;
+  const leadDays = Number.isFinite(draft.dish_lead_days) && draft.dish_lead_days >= 1 ? draft.dish_lead_days : 2;
+  const paxNote =
+    Number.isFinite(draft.dish_recommended_pax) && draft.dish_recommended_pax >= 1
+      ? `Serves about ${draft.dish_recommended_pax} (${draft.dish_portion_unit}).`
+      : '';
+  const description = [draft.dish_description.trim(), paxNote].filter(Boolean).join(' ');
 
   return {
     name: draft.dish_name.trim(),
-    description: draft.dish_description.trim(),
+    description,
     cuisine: draft.dish_cuisine.trim(),
     price,
     min_qty: minOrderQty,
@@ -462,15 +479,44 @@ export function buildCookOnboardingFirstListingPayload(
     allergen_none_confirmed: true,
     portions_per_day: 12,
     collection_days: [0, 1, 2, 3, 4, 5, 6],
-    time_slots: draft.dish_lead_time_slot.includes('Morning')
-      ? ['09:00-12:00']
-      : draft.dish_lead_time_slot.includes('Afternoon')
-        ? ['12:00-17:00']
-        : ['17:00-21:00'],
+    time_slots: onboardingLeadSlotToTimeSlots(draft.dish_lead_time_slot),
+    min_order_lead_days: leadDays,
+    min_order_lead_hours: 0,
     paused: !draft.dish_available,
     image_url: draft.dish_image_url.trim() || undefined,
     calories: draft.dish_calories ? Number(draft.dish_calories) : undefined,
     occasion_tags: [],
+  };
+}
+
+/** Build onboarding dish draft from New Listing wizard fields (shared shape). */
+export function cookOnboardingDishFromWizardFields(input: {
+  cuisine: string;
+  name: string;
+  portionUnit: 'plate' | 'piece';
+  recommendedPax: number;
+  price: number | string;
+  ingredientsText: string;
+  description: string;
+  leadDays: number;
+  leadTimeSlot: string;
+  available: boolean;
+  calories?: string | number | null;
+  imageUrl?: string | null;
+}): CookOnboardingDishDraft {
+  return {
+    dish_cuisine: String(input.cuisine || '').trim(),
+    dish_name: String(input.name || '').trim(),
+    dish_portion_unit: input.portionUnit === 'piece' ? 'piece' : 'plate',
+    dish_recommended_pax: Number(input.recommendedPax) || 1,
+    dish_price: String(input.price ?? ''),
+    dish_ingredients: String(input.ingredientsText || '').trim(),
+    dish_description: String(input.description || '').trim(),
+    dish_lead_days: Number(input.leadDays) || 1,
+    dish_lead_time_slot: String(input.leadTimeSlot || COOK_ONBOARDING_LEAD_TIME_SLOTS[2]),
+    dish_available: input.available !== false,
+    dish_calories: input.calories != null && String(input.calories).trim() ? String(input.calories) : '',
+    dish_image_url: String(input.imageUrl || '').trim(),
   };
 }
 

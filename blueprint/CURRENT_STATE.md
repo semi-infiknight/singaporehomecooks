@@ -1,6 +1,6 @@
 # Current State — Singapore Home Cooks
 
-**Last updated:** 2026-08-13 (cook OTP/auth session; listings create without SFA/WSQ; kitchen name after onboarding)
+**Last updated:** 2026-08-13 (cook dashboard overhaul wired to onboarding; listings without cert gate)
 **Branch:** `main` (work here only; no feature branches unless asked)  
 **Authority:** This file is the live integration snapshot. On conflict: `blueprint/` wins over `.cursor/rules/`, skills, and root `STATUS.md`.
 
@@ -138,7 +138,7 @@ Web cook portal uses separate `useCookAuth` + `cook-api-client.ts` under `/cook-
 
 ### Cook app
 
-- Tabs: dashboard, orders, listings, compliance (+ hidden settings, batches, tiffin, earnings, order detail).
+- Tabs: dashboard, orders, listings, compliance (+ hidden settings, batches, tiffin, earnings, order detail). **Dashboard (2026-08-13):** kitchen snapshot from onboarding/profile (address, PayNow, halal, certs), glance row (earnings / active orders / menu count), incomplete setup checklist, compact tools — removed stacked duplicate banners + misleading “active = all orders”.
 - **Onboarding (2026-08-13):** 9 screens — kitchen name + OneMap address search, PayNow (enter twice), PDPA/terms, legal name, NRIC last 4, alternate contact, halal, skippable certificates, menu card (add more or finish later). Header is back + progress bar only (no stacked dots / “step of 26”). Finish syncs session display_name, lands on `/(cook)/dashboard` while staying logged in. **Listing create does not require verified SFA/WSQ** (certs still gate Accept + payouts). `/auth/me` returns cook DB `display_name`.
 - **Dashboard:** bento quick actions; **no** notification bell; **no** collapsible notif panel.
 - **Listings:** nested stack; order-window fields on create/edit; empty form on new wizard. Cooks can save dishes without certificates; empty-state fake seed is Maestro-only (not all `__DEV__`).

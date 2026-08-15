@@ -5,7 +5,7 @@ import { TabDirectionProvider, useTabDirection } from '@shc/ui';
 import { CookTabBar } from '../../components/CookTabBar';
 import { usePushNotificationRouting } from '../../lib/usePushNotificationRouting';
 
-const COOK_TAB_ORDER = ['dashboard', 'orders', 'listings', 'compliance'];
+const COOK_TAB_ORDER = ['dashboard', 'orders', 'listings'];
 
 function CookTabIndexSync({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -41,7 +41,7 @@ export default function CookLayout() {
       {/* Folder route: orders/index + orders/[id] (never orders.tsx + orders/ together) */}
       <Tabs.Screen name="orders" options={{ title: 'Cook Orders', headerShown: false }} />
       <Tabs.Screen name="listings" options={{ title: 'My Listings', headerShown: false }} />
-      <Tabs.Screen name="compliance" options={{ title: 'Compliance', headerShown: false }} />
+      <Tabs.Screen name="compliance" options={{ href: null, title: 'Compliance', headerShown: false, tabBarStyle: { display: 'none' } }} />
 
       <Tabs.Screen name="earnings" options={{ href: null, title: 'Earnings', tabBarStyle: { display: 'none' } }} />
       <Tabs.Screen name="settings" options={{ href: null, title: 'Settings', headerShown: false, tabBarStyle: { display: 'none' } }} />

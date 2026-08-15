@@ -707,13 +707,13 @@ export default function CookOnboardingFlow() {
       totalSteps={linear.total}
       progressPercent={linear.percent}
       onNext={handlePrimary}
-      onSkip={stepMeta.skippable ? (isLast ? () => void finish() : goNext) : undefined}
+      onSkip={stepMeta.skippable && !isLast ? goNext : undefined}
       onBack={canGoBack ? goBack : undefined}
       secondaryTestID="cook-onboarding-back-btn"
       nextLabel={isLast ? (busy ? 'Finishing…' : stepMeta.nextLabel || 'Complete onboarding') : 'Next'}
       nextTestID={isLast ? 'cook-onboarding-finish-btn' : 'cook-onboarding-next-btn'}
       skipTestID="cook-onboarding-skip-btn"
-      skipLabel={isLast ? 'Add dishes later' : 'Skip'}
+      skipLabel="Skip"
       disabled={busy}
       loading={busy}
       screenTestID="cook-onboarding-screen"

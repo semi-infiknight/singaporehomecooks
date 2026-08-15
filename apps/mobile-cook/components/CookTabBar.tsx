@@ -5,11 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { GourmeatFloatingTabBar, type SHCBottomTab, useTabDirection } from '@shc/ui';
 
-const TAB_META: Record<string, { label: string; iconKey: 'dashboard' | 'orders' | 'listings' | 'compliance'; testID: string }> = {
+const TAB_META: Record<string, { label: string; iconKey: 'dashboard' | 'orders' | 'listings'; testID: string }> = {
   dashboard: { label: 'Home', iconKey: 'dashboard', testID: 'tab-cook-dashboard' },
   orders: { label: 'Orders', iconKey: 'orders', testID: 'tab-cook-orders' },
   listings: { label: 'Listings', iconKey: 'listings', testID: 'tab-cook-listings' },
-  compliance: { label: 'Docs', iconKey: 'compliance', testID: 'tab-cook-compliance' },
 };
 
 const VISIBLE_TABS = new Set(Object.keys(TAB_META));
